@@ -794,9 +794,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateEnabledForProject() {
-    PluginEnabledState state = myPluginModel.getState(myPlugin);
+    ProjectDependentPluginEnabledState state = myPluginModel.getProjectDependentState(myPlugin);
     myEnabledForProject.setText(state.toString());
-    myEnabledForProject.setIcon(UIUtils.perProjectIcon(state));
+    myEnabledForProject.setIcon(state.getIcon());
   }
 
   public void startLoading() {

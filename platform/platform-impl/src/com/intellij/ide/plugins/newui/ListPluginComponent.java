@@ -566,12 +566,12 @@ public class ListPluginComponent extends JPanel {
   }
 
   private void updateEnabledStateUI() {
-    PluginEnabledState state = myPluginModel.getState(myPlugin);
+    ProjectDependentPluginEnabledState state = myPluginModel.getProjectDependentState(myPlugin);
 
     if (myEnableDisableButton != null) {
       myEnableDisableButton.setSelected(state.isEnabled());
     }
-    myNameComponent.setIcon(UIUtils.perProjectIcon(state));
+    myNameComponent.setIcon(state.getIcon());
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {

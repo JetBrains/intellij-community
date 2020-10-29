@@ -814,6 +814,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return getState(descriptor.getPluginId());
   }
 
+  public @NotNull ProjectDependentPluginEnabledState getProjectDependentState(@NotNull IdeaPluginDescriptor descriptor) {
+    PluginId pluginId = descriptor.getPluginId();
+    return new ProjectDependentPluginEnabledState(
+      pluginId,
+      getState(pluginId),
+      getProject()
+    );
+  }
+
   /**
    * @see #isEnabled(PluginId, Map)
    */

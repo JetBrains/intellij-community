@@ -12,8 +12,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ProjectPluginTracker(
-  private val project: Project,
-  private val state: ProjectPluginTrackerState) {
+  internal val project: Project,
+  private val state: ProjectPluginTrackerState
+) {
 
   companion object {
 
@@ -22,7 +23,7 @@ class ProjectPluginTracker(
       @get:XCollection
       internal var enabledPlugins by stringSet()
 
-    @get:XCollection
+      @get:XCollection
       internal var disabledPlugins by stringSet()
 
       fun register(id: PluginId, enable: Boolean) {
@@ -32,25 +33,25 @@ class ProjectPluginTracker(
         }
       }
 
-    fun unregister(id: PluginId) {
-      val idString = id.idString
-      if (!enabledPlugins.remove(idString)) {
-        disabledPlugins.remove(idString)
+      fun unregister(id: PluginId) {
+        val idString = id.idString
+        if (!enabledPlugins.remove(idString)) {
+          disabledPlugins.remove(idString)
+        }
       }
-    }
 
-    internal fun loadUnloadPlugins(project: Project, enable: Boolean) {
-      ProjectPluginTrackerManager.loadPlugins(
-        setToAddTo(enable).findPluginById(),
-      )
+      internal fun loadUnloadPlugins(project: Project, enable: Boolean) {
+        ProjectPluginTrackerManager.loadPlugins(
+          setToAddTo(enable).findPluginById(),
+        )
 
-      ProjectPluginTrackerManager.unloadPlugins(
-        setToRemoveFrom(enable).findPluginById(),
-        project,
-      )
-    }
+        ProjectPluginTrackerManager.unloadPlugins(
+          setToRemoveFrom(enable).findPluginById(),
+          project,
+        )
+      }
 
-    private fun setToAddTo(enable: Boolean) = if (enable) enabledPlugins else disabledPlugins
+      private fun setToAddTo(enable: Boolean) = if (enable) enabledPlugins else disabledPlugins
 
       private fun setToRemoveFrom(enable: Boolean) = if (enable) disabledPlugins else enabledPlugins
 

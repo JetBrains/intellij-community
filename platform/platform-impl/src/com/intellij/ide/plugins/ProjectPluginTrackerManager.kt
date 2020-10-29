@@ -95,13 +95,17 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       var trackers by map<String, ProjectPluginTracker.Companion.ProjectPluginTrackerState>()
     }
 
-    private fun shouldUnload(project: Project?): (IdeaPluginDescriptor) -> Boolean {
-      val managers = ProjectManager
+    @JvmStatic
+    internal fun openProjectsManagers(project: Project?) =
+      ProjectManager
         .getInstance()
         .openProjects
         .filterNot { it == project }
         .mapNotNull { createPluginTrackerOrNull(it) }
         .toList()
+
+    private fun shouldUnload(project: Project?): (IdeaPluginDescriptor) -> Boolean {
+      val managers = openProjectsManagers(project)
 
       return { descriptor ->
         val pluginId = descriptor.pluginId
