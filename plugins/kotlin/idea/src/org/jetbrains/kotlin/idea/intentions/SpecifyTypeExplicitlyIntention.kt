@@ -154,7 +154,8 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
                 // This helps to be sure something except Nothing is suggested
                 if (contextElement.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
                         it.text == "// DO_NOT_CHOOSE_NOTHING"
-                    } != null) {
+                    } != null
+                ) {
                     val targetType = types.firstOrNull { !KotlinBuiltIns.isNothingOrNullableNothing(it) } ?: types.first()
                     return TypeChooseValueExpression(listOf(targetType), targetType)
                 }
@@ -195,15 +196,13 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
             declaration: KtCallableDeclaration,
             iterator: Iterator<KtCallableDeclaration>? = null,
             editor: Editor? = null
-        ): TemplateEditingAdapter {
-            return object : TemplateEditingAdapter() {
-                override fun templateFinished(template: Template, brokenOff: Boolean) {
-                    val typeRef = declaration.typeReference
-                    if (typeRef != null && typeRef.isValid) {
-                        runWriteAction {
-                            ShortenReferences.DEFAULT.process(typeRef)
-                            if (iterator != null && editor != null) addTypeAnnotationWithTemplate(editor, iterator)
-                        }
+        ): TemplateEditingAdapter = object : TemplateEditingAdapter() {
+            override fun templateFinished(template: Template, brokenOff: Boolean) {
+                val typeRef = declaration.typeReference
+                if (typeRef != null && typeRef.isValid) {
+                    runWriteAction {
+                        ShortenReferences.DEFAULT.process(typeRef)
+                        if (iterator != null && editor != null) addTypeAnnotationWithTemplate(editor, iterator)
                     }
                 }
             }
