@@ -8,7 +8,8 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
-import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -49,7 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
@@ -571,12 +572,16 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   private static void instantiateElementTypesFromFields() {
     // load stub serializers before usage
     FileTypeRegistry.getInstance().getRegisteredFileTypes();
-    getExtensions(BinaryFileStubBuilders.INSTANCE).forEach(builder -> {});
-    getExtensions(LanguageParserDefinitions.INSTANCE).forEach(ParserDefinition::getFileNodeType);
+    getExtensions(BinaryFileStubBuilders.INSTANCE, builder -> {});
+    getExtensions(LanguageParserDefinitions.INSTANCE, ParserDefinition::getFileNodeType);
   }
 
-  private static @NotNull <T> Stream<T> getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector) {
-    ExtensionPoint<KeyedLazyInstance<T>> point = collector.getPoint();
-    return point == null ? Stream.empty() : point.extensions().map(KeyedLazyInstance::getInstance);
+  private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<T> consumer) {
+    ExtensionPointImpl<KeyedLazyInstance<T>> point = (ExtensionPointImpl<KeyedLazyInstance<T>>)collector.getPoint();
+    if (point != null) {
+      ExtensionProcessingHelper.forEachExtensionSafe(point, instance -> {
+        consumer.accept(instance.getInstance());
+      });
+    }
   }
 }
