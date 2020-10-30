@@ -157,21 +157,21 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     PsiManager psiManager = myFixture.getPsiManager();
 
-    PsiFile pkgOrigin = psiManager.findFile(myFixture.findFileInTempDir("dir/main.py"));
-    PyQualifiedNameResolveContext pkgContext = PyResolveImportUtil.fromFoothold(pkgOrigin).copyWithRelative(0);
-    List<PsiElement> pkgResults = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString("os"), pkgContext);
-    PsiElement pkgSingleResult = assertOneElement(pkgResults);
-    PsiFileSystemItem pkgOsModule = assertInstanceOf(pkgSingleResult, PsiFileSystemItem.class);
-    assertEquals(myFixture.findFileInTempDir("dir/os.py"), pkgOsModule.getVirtualFile());
-    assertTrue(psiManager.isInProject(pkgOsModule));
+    PsiFile sameDirResolveOrigin = psiManager.findFile(myFixture.findFileInTempDir("dir/main.py"));
+    PyQualifiedNameResolveContext sameDirContext = PyResolveImportUtil.fromFoothold(sameDirResolveOrigin).copyWithRelative(0);
+    List<PsiElement> sameDirResults = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString("os"), sameDirContext);
+    PsiElement sameDirOnlyResult = assertOneElement(sameDirResults);
+    PsiFileSystemItem sameDirOsModule = assertInstanceOf(sameDirOnlyResult, PsiFileSystemItem.class);
+    assertEquals(myFixture.findFileInTempDir("dir/os.py"), sameDirOsModule.getVirtualFile());
+    assertTrue(psiManager.isInProject(sameDirOsModule));
 
-    PsiFile absOrigin = psiManager.findFile(myFixture.findFileInTempDir("main.py"));
-    PyQualifiedNameResolveContext absContext = PyResolveImportUtil.fromFoothold(absOrigin).copyWithRelative(0);
+    PsiFile absResolveOrigin = psiManager.findFile(myFixture.findFileInTempDir("main.py"));
+    PyQualifiedNameResolveContext absContext = PyResolveImportUtil.fromFoothold(absResolveOrigin).copyWithRelative(0);
     List<PsiElement> absResults = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString("os"), absContext);
-    PsiElement absSingleResult = assertOneElement(absResults);
-    PsiFileSystemItem absOsModule = assertInstanceOf(absSingleResult, PsiFileSystemItem.class);
-    assertNotEquals(myFixture.findFileInTempDir("dir/os.py"), absOsModule.getVirtualFile());
-    assertFalse(psiManager.isInProject(absOsModule));
+    PsiElement absOnlyResult = assertOneElement(absResults);
+    PsiFileSystemItem stdlibOsModule = assertInstanceOf(absOnlyResult, PsiFileSystemItem.class);
+    assertNotEquals(myFixture.findFileInTempDir("dir/os.py"), stdlibOsModule.getVirtualFile());
+    assertFalse(psiManager.isInProject(stdlibOsModule));
   }
 
   private void toggleNamespacePackageDirectory(@NotNull String directory) {
