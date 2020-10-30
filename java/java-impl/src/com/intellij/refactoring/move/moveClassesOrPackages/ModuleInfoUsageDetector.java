@@ -4,20 +4,22 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Detector helps to find exports/opens associated with package
@@ -26,58 +28,73 @@ import java.util.stream.Collectors;
 class ModuleInfoUsageDetector {
   private final Project myProject;
   private final PsiElement[] myElementsToMove;
-  private final PsiPackage myTargetPackage;
+  private final MoveDestination myMoveDestination;
 
-  ModuleInfoUsageDetector(@NotNull Project project, PsiElement @NotNull [] elementsToMove, @NotNull PsiPackage targetPackage) {
+  ModuleInfoUsageDetector(@NotNull Project project, PsiElement @NotNull [] elementsToMove, @NotNull MoveDestination moveDestination) {
     myProject = project;
     myElementsToMove = elementsToMove;
-    myTargetPackage = targetPackage;
+    myMoveDestination = moveDestination;
   }
 
   void detectModuleStatementsUsed(@NotNull List<UsageInfo> usageInfos, @NotNull MultiMap<PsiElement, String> conflicts) {
-    MultiMap<PsiPackage, PsiClass> classesBySourcePackages = groupClassesBySourcePackages(myElementsToMove);
-    if (classesBySourcePackages.isEmpty()) return;
-    MultiMap<PsiJavaModule, PsiPackage> packagesByModuleDescriptor = groupModuleDescriptorsByPkg(classesBySourcePackages.keySet());
-    if (packagesByModuleDescriptor.isEmpty()) return;
-    PsiDirectory firstTargetDir = ArrayUtil.getFirstElement(myTargetPackage.getDirectories(GlobalSearchScope.projectScope(myProject)));
-    PsiJavaModule targetModuleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(firstTargetDir);
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
+    PsiPackage targetPackage = psiFacade.findPackage(myMoveDestination.getTargetPackage().getQualifiedName());
+    if (targetPackage == null) return;
+    MultiMap<PsiDirectory, PsiClass> sourceClassesByDir = groupClassesByDir(myElementsToMove);
+    if (sourceClassesByDir.isEmpty()) return;
+    MultiMap<PsiJavaModule, PsiDirectory> sourceDirsByModuleDescriptor = groupDirsByModuleDescriptor(sourceClassesByDir.keySet());
+    if (sourceDirsByModuleDescriptor.isEmpty()) return;
+    PsiDirectory targetDirectory = null;
+    for (PsiDirectory dir : targetPackage.getDirectories(GlobalSearchScope.projectScope(myProject))) {
+      targetDirectory = myMoveDestination.getTargetDirectory(dir);
+      if (targetDirectory != null) {
+        break;
+      }
+    }
+    if (targetDirectory == null) return;
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
+    PsiJavaModule targetModuleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(targetDirectory);
     List<PsiPackageAccessibilityStatement> sourcePkgModuleStatements = new SmartList<>();
-    for (var entry : packagesByModuleDescriptor.entrySet()) {
-      PsiJavaModule moduleDescriptor = entry.getKey();
-      Collection<PsiPackage> packages = entry.getValue();
-      MultiMap<PsiPackage, PsiPackageAccessibilityStatement> exports = collectModuleStatements(moduleDescriptor.getExports());
-      MultiMap<PsiPackage, PsiPackageAccessibilityStatement> opens = collectModuleStatements(moduleDescriptor.getOpens());
-      for (PsiPackage psiPackage : packages) {
-        List<PsiPackageAccessibilityStatement>  moduleStatements = findModuleStatementsForPkg(psiPackage, exports, opens);
+    for (var entry : sourceDirsByModuleDescriptor.entrySet()) {
+      PsiJavaModule sourceModuleDescriptor = entry.getKey();
+      Collection<PsiDirectory> sourceDirs = entry.getValue();
+      MultiMap<PsiPackage, PsiPackageAccessibilityStatement> exports = collectModuleStatements(sourceModuleDescriptor.getExports());
+      MultiMap<PsiPackage, PsiPackageAccessibilityStatement> opens = collectModuleStatements(sourceModuleDescriptor.getOpens());
+      for (PsiDirectory sourceDir : sourceDirs) {
+        String packageName = fileIndex.getPackageNameByDirectory(sourceDir.getVirtualFile());
+        if (packageName == null) continue;
+        PsiPackage psiPackage = psiFacade.findPackage(packageName);
+        if (psiPackage == null) continue;
+        List<PsiPackageAccessibilityStatement> moduleStatements = findModuleStatementsForPkg(psiPackage, exports, opens);
         if (moduleStatements.isEmpty()) continue;
-        Collection<PsiClass> classes = classesBySourcePackages.get(psiPackage);
         // if a package doesn't contain any other classes except moved ones then we need to delete a corresponding export statement
-        if (pkgContainsOnlyClasses(psiPackage, classes)) {
-          moduleStatements.forEach(statement -> usageInfos.add(ModifyModuleStatementUsageInfo.createDeletionInfo(statement, moduleDescriptor)));
+        Collection<PsiClass> sourceClasses = sourceClassesByDir.get(sourceDir);
+        if (dirContainsOnlyClasses(sourceDir, sourceClasses)) {
+          moduleStatements.forEach(statement -> usageInfos.add(ModifyModuleStatementUsageInfo.createDeletionInfo(statement, sourceModuleDescriptor)));
         }
         // so far we don't take into account a motion between separate JPMS-modules
-        if (moduleDescriptor == targetModuleDescriptor) {
+        if (sourceModuleDescriptor == targetModuleDescriptor) {
           sourcePkgModuleStatements.addAll(moduleStatements);
         }
         else if (targetModuleDescriptor != null) {
-          classes.forEach(c -> conflicts.put(c, List.of(
+          sourceClasses.forEach(c -> conflicts.put(c, List.of(
             JavaRefactoringBundle.message("move.classes.or.packages.different.modules.exports.conflict",
                                           RefactoringUIUtil.getDescription(c, false),
-                                          StringUtil.htmlEmphasize(moduleDescriptor.getName()),
+                                          StringUtil.htmlEmphasize(sourceModuleDescriptor.getName()),
                                           StringUtil.htmlEmphasize(targetModuleDescriptor.getName())))));
         }
       }
     }
     if (targetModuleDescriptor == null) return;
-    List<PsiPackageAccessibilityStatement> targetPkgModuleStatements = findModuleStatementsForPkg(targetModuleDescriptor, myTargetPackage);
+    List<PsiPackageAccessibilityStatement> targetPkgModuleStatements = findModuleStatementsForPkg(targetModuleDescriptor, targetPackage);
     List<PsiPackageAccessibilityStatement> statementsToCreate = new SmartList<>();
     List<PsiPackageAccessibilityStatement> statementsToDelete = new SmartList<>();
-    mergeModuleStatements(sourcePkgModuleStatements, targetPkgModuleStatements, myTargetPackage, statementsToCreate, statementsToDelete);
+    mergeModuleStatements(sourcePkgModuleStatements, targetPkgModuleStatements, targetPackage, statementsToCreate, statementsToDelete);
     if (statementsToCreate.isEmpty()) return;
-    if (!pkgContainsOnlyClasses(myTargetPackage, Collections.emptyList())) {
+    if (!dirContainsOnlyClasses(targetDirectory, Collections.emptyList())) {
       conflicts.put(targetModuleDescriptor.getNameIdentifier(), List.of(
         JavaRefactoringBundle.message("move.classes.or.packages.new.module.exports.conflict",
-                                      StringUtil.htmlEmphasize(myTargetPackage.getQualifiedName()))));
+                                      StringUtil.htmlEmphasize(targetPackage.getQualifiedName()))));
     }
     statementsToDelete.stream().map(pkgStatement -> ModifyModuleStatementUsageInfo.createDeletionInfo(pkgStatement, targetModuleDescriptor))
       .forEach(usageInfos::add);
@@ -86,34 +103,29 @@ class ModuleInfoUsageDetector {
   }
 
   @NotNull
-  private static MultiMap<PsiPackage, PsiClass> groupClassesBySourcePackages(PsiElement @NotNull [] elementsToMove) {
-    MultiMap<PsiPackage, PsiClass> classesByPackage = new MultiMap<>();
+  private static MultiMap<PsiDirectory, PsiClass> groupClassesByDir(PsiElement @NotNull [] elementsToMove) {
+    MultiMap<PsiDirectory, PsiClass> result = new MultiMap<>();
     for (PsiElement element : elementsToMove) {
-      if (!(element instanceof PsiClass)) continue;
-      PsiClass psiClass = (PsiClass)element;
+      PsiClass psiClass = ObjectUtils.tryCast(element, PsiClass.class);
       // grant access only to public/protected classes
-      if (!psiClass.hasModifierProperty(PsiModifier.PUBLIC) && !psiClass.hasModifierProperty(PsiModifier.PROTECTED)) continue;
+      if (psiClass == null || !classVisibleToOtherModules(psiClass)) continue;
       PsiJavaFile javaFile = ObjectUtils.tryCast(psiClass.getContainingFile(), PsiJavaFile.class);
       if (javaFile == null) continue;
-      PsiPackageStatement packageStatement = javaFile.getPackageStatement();
-      if (packageStatement == null) continue;
-      PsiPackage psiPackage = (PsiPackage)packageStatement.getPackageReference().resolve();
-      if (psiPackage != null) {
-        classesByPackage.putValues(psiPackage, List.of(javaFile.getClasses()));
+      PsiDirectory directory = javaFile.getContainingDirectory();
+      if (directory != null) {
+        result.putValue(directory, psiClass);
       }
     }
-    return classesByPackage;
+    return result;
   }
 
   @NotNull
-  private MultiMap<PsiJavaModule, PsiPackage> groupModuleDescriptorsByPkg(@NotNull Set<PsiPackage> packages) {
-    MultiMap<PsiJavaModule, PsiPackage> result = new MultiMap<>();
-    for (PsiPackage psiPackage : packages) {
-      PsiDirectory firstDir = ArrayUtil.getFirstElement(psiPackage.getDirectories(GlobalSearchScope.projectScope(myProject)));
-      if (firstDir == null) continue;
-      PsiJavaModule moduleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(firstDir);
+  private static MultiMap<PsiJavaModule, PsiDirectory> groupDirsByModuleDescriptor(@NotNull Set<PsiDirectory> dirs) {
+    MultiMap<PsiJavaModule, PsiDirectory> result = new MultiMap<>();
+    for (PsiDirectory directory : dirs) {
+      PsiJavaModule moduleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(directory);
       if (moduleDescriptor != null) {
-        result.putValue(moduleDescriptor, psiPackage);
+        result.putValue(moduleDescriptor, directory);
       }
     }
     return result;
@@ -150,10 +162,20 @@ class ModuleInfoUsageDetector {
     return result;
   }
 
-  private boolean pkgContainsOnlyClasses(@NotNull PsiPackage psiPackage, @NotNull Collection<PsiClass> classes) {
-    List<PsiClass> result = new SmartList<>(psiPackage.getClasses(GlobalSearchScope.projectScope(myProject)));
-    result.removeAll(new HashSet<>(classes));
-    return result.isEmpty();
+  private static boolean dirContainsOnlyClasses(@NotNull PsiDirectory psiDirectory, @NotNull Collection<PsiClass> classes) {
+    List<PsiClass> javaClassesInDir = new SmartList<>();
+    for (PsiFile file : psiDirectory.getFiles()) {
+      PsiJavaFile javaFile = ObjectUtils.tryCast(file, PsiJavaFile.class);
+      if (javaFile == null) continue;
+      for (PsiClass psiClass : javaFile.getClasses()) {
+        if (classVisibleToOtherModules(psiClass)) {
+          javaClassesInDir.add(psiClass);
+        }
+
+      }
+    }
+    javaClassesInDir.removeAll(new SmartHashSet<>(classes));
+    return javaClassesInDir.isEmpty();
   }
 
   /**
@@ -166,14 +188,20 @@ class ModuleInfoUsageDetector {
    * -- module-info exports pack1 to module2, pack2 to module 3, pack1.pack2 to module2
    * We move S1, S2 to pack1.pack2 and merge exports in such a way that module1 exports pack1.pack2 both to module2 and module3.
    * The same is true for opens one.
+   *
+   * @param sourceStatements corresponds to the statements in all source directories
+   * @param targetStatements corresponds to the statements in target directory
+   * @param targetPackage corresponds the target package
+   * @param statementsToDelete statements to be deleted in target module descriptor
+   * @param statementsToCreate statements to be created in target module descriptor
    */
-  private void mergeModuleStatements(@NotNull List<PsiPackageAccessibilityStatement> first,
-                                     @NotNull List<PsiPackageAccessibilityStatement> second,
-                                     @NotNull PsiPackage newPackage,
+  private void mergeModuleStatements(@NotNull List<PsiPackageAccessibilityStatement> sourceStatements,
+                                     @NotNull List<PsiPackageAccessibilityStatement> targetStatements,
+                                     @NotNull PsiPackage targetPackage,
                                      @NotNull List<PsiPackageAccessibilityStatement> statementsToCreate,
                                      @NotNull List<PsiPackageAccessibilityStatement> statementsToDelete) {
-    List<PsiPackageAccessibilityStatement> allModuleStatements = new SmartList<>(first);
-    allModuleStatements.addAll(second);
+    List<PsiPackageAccessibilityStatement> allModuleStatements = new SmartList<>(sourceStatements);
+    allModuleStatements.addAll(targetStatements);
     Map<Role, Set<String>> allModuleRefNamesByRole = new EnumMap<>(Role.class);
     for (PsiPackageAccessibilityStatement moduleStatement : allModuleStatements) {
       Role moduleStatementRole = moduleStatement.getRole();
@@ -192,15 +220,21 @@ class ModuleInfoUsageDetector {
         existingModuleRefNames.addAll(moduleRefNames);
       }
     }
-    removeRedundantModuleStatements(second, statementsToDelete, allModuleRefNamesByRole);
-    statementsToCreate.addAll(createNewModuleStatements(newPackage, allModuleRefNamesByRole));
+    removeRedundantModuleStatements(targetStatements, statementsToDelete, allModuleRefNamesByRole);
+    statementsToCreate.addAll(createNewModuleStatements(targetPackage, allModuleRefNamesByRole));
+  }
+
+  private static boolean classVisibleToOtherModules(@NotNull PsiClass psiClass) {
+    return psiClass.hasModifierProperty(PsiModifier.PUBLIC) || psiClass.hasModifierProperty(PsiModifier.PROTECTED);
   }
 
   private static void removeRedundantModuleStatements(@NotNull List<PsiPackageAccessibilityStatement> sourceStatements,
                                                       @NotNull List<PsiPackageAccessibilityStatement> statementsToDelete,
                                                       @NotNull Map<Role, Set<String>> allModuleRefNamesByRole) {
-    Map<Role, PsiPackageAccessibilityStatement> moduleStatementsByRole = sourceStatements.stream()
-      .collect(Collectors.toMap(statement -> statement.getRole(), statement -> statement, (stmt1, stmt2) -> stmt1, () -> new EnumMap<>(Role.class)));
+    Map<Role, PsiPackageAccessibilityStatement> moduleStatementsByRole = new EnumMap<>(Role.class);
+    for (PsiPackageAccessibilityStatement sourceStatement : sourceStatements) {
+      moduleStatementsByRole.put(sourceStatement.getRole(), sourceStatement);
+    }
     for (var entry : moduleStatementsByRole.entrySet()) {
       Role role = entry.getKey();
       Set<String> moduleRefNames = allModuleRefNamesByRole.get(role);
@@ -215,15 +249,16 @@ class ModuleInfoUsageDetector {
   }
 
   @NotNull
-  private List<PsiPackageAccessibilityStatement> createNewModuleStatements(@NotNull PsiPackage newPackage,
+  private List<PsiPackageAccessibilityStatement> createNewModuleStatements(@NotNull PsiPackage targetPackage,
                                                                            @NotNull Map<Role, Set<String>> allModuleRefNamesByRole) {
     List<PsiPackageAccessibilityStatement> result = new SmartList<>();
     PsiElementFactory psiFactory = PsiElementFactory.getInstance(myProject);
+    CodeStyleManager styleManager = CodeStyleManager.getInstance(myProject);
     for (var entry : allModuleRefNamesByRole.entrySet()) {
-      String moduleStatementText = formModuleStatementText(entry.getKey(), new TreeSet<>(entry.getValue()), newPackage.getQualifiedName());
+      String moduleStatementText = formModuleStatementText(entry.getKey(), new TreeSet<>(entry.getValue()), targetPackage.getQualifiedName());
       PsiPackageAccessibilityStatement moduleStatement =
-        (PsiPackageAccessibilityStatement)psiFactory.createModuleStatementFromText(moduleStatementText, newPackage);
-      result.add(moduleStatement);
+        (PsiPackageAccessibilityStatement)psiFactory.createModuleStatementFromText(moduleStatementText, targetPackage);
+      result.add((PsiPackageAccessibilityStatement)styleManager.reformat(moduleStatement));
     }
     return result;
   }

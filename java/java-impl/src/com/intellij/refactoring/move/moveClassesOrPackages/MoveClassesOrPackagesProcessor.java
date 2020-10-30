@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -187,10 +186,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     final UsageInfo[] usageInfos = allUsages.toArray(UsageInfo.EMPTY_ARRAY);
     detectPackageLocalsMoved(usageInfos, myConflicts);
     detectPackageLocalsUsed(myConflicts, myElementsToMove, myTargetPackage);
-    PsiPackage newPackage = JavaPsiFacade.getInstance(myProject).findPackage(getTargetPackage().getQualifiedName());
-    if (newPackage != null) {
-      new ModuleInfoUsageDetector(myProject, myElementsToMove, newPackage).detectModuleStatementsUsed(allUsages, myConflicts);
-    }
+    new ModuleInfoUsageDetector(myProject, myElementsToMove, myMoveDestination).detectModuleStatementsUsed(allUsages, myConflicts);
     allUsages.removeAll(usagesToSkip);
     return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(UsageInfo.EMPTY_ARRAY));
   }
@@ -625,7 +621,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void modifyModuleStatementsInDescriptor(UsageInfo @NotNull [] usages, @Nullable ModelBranch branch) {
+  private static void modifyModuleStatementsInDescriptor(UsageInfo @NotNull [] usages, @Nullable ModelBranch branch) {
     Map<PsiJavaModule, List<ModifyModuleStatementUsageInfo>> moduleStatementsByDescriptor = StreamEx.of(usages)
       .select(ModifyModuleStatementUsageInfo.class).groupingBy(usage -> branch == null ? usage.getModuleDescriptor() :
                                                                         branch.obtainPsiCopy(usage.getModuleDescriptor()));
@@ -654,7 +650,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    moduleStatementsByDescriptor.keySet().forEach(descriptor -> CodeStyleManager.getInstance(myProject).reformat(descriptor));
   }
 
   private void afterMovement(List<RefactoringElementListener> listeners,
