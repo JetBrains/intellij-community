@@ -121,7 +121,7 @@ class OptimizedImportsBuilder(
 
     private val DeclarationDescriptor.importDescriptorWithMapping: FqName?
         get() = importableFqName?.let { fqName ->
-            ImportMapper.findActualKotlinFqName(fqName, apiVersion) ?: fqName
+          ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
         }
 
     private fun tryBuildOptimizedImports(): List<ImportPath>? {
@@ -134,7 +134,7 @@ class OptimizedImportsBuilder(
             for (name in data.namesToImport.getValue(fqName)) {
                 val alias = if (name != fqName.shortName()) name else null
 
-                val resultFqName = ImportMapper.findActualKotlinFqName(fqName, apiVersion) ?: fqName
+                val resultFqName = ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
                 val explicitImportPath = ImportPath(resultFqName, false, alias)
                 if (explicitImportPath in importsToGenerate) continue
 

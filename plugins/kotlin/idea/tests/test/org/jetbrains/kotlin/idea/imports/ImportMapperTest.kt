@@ -47,10 +47,10 @@ class ImportMapperTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test old version`() {
-        TestCase.assertNull(ImportMapper.findActualKotlinFqName(FqName("kotlin.jvm.Throws"), ApiVersion.KOTLIN_1_3))
+        TestCase.assertNull(ImportMapper.findCorrespondingKotlinFqName(FqName("kotlin.jvm.Throws"), ApiVersion.KOTLIN_1_3))
     }
 
     fun `test new version`() {
-        TestCase.assertNotNull(ImportMapper.findActualKotlinFqName(FqName("kotlin.jvm.Throws"), ApiVersion.KOTLIN_1_4))
+        TestCase.assertNotNull(ImportMapper.findCorrespondingKotlinFqName(FqName("kotlin.jvm.Throws"), ApiVersion.KOTLIN_1_4))
     }
 }
