@@ -792,8 +792,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void showFailedTestInfoIfNecessary(@NotNull PyStackFrame frame) throws PyDebuggerException {
-    PyExecutionStack executionStack = ((PyExecutionStack)getSession().getSuspendContext().getActiveExecutionStack());
-    if (executionStack == null || !isFailedTestStop(executionStack.getThreadInfo())) return;
+    PyExecutionStack pyExecutionStack = null;
+    XDebugSession session = getSession();
+    if (session != null) {
+      XSuspendContext suspendContext = session.getSuspendContext();
+      if (suspendContext != null) {
+        XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
+        pyExecutionStack = executionStack != null ? (PyExecutionStack)executionStack : null;
+      }
+    }
+
+    if (pyExecutionStack == null || !isFailedTestStop(pyExecutionStack.getThreadInfo())) return;
 
     XValueChildrenList values = getFrameFromCache(frame);
     if (values == null) return;
@@ -814,14 +823,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         errorMessage = errorMessage.replaceFirst(" :: ", "");
       }
 
-      PyThreadInfo threadInfo = executionStack.getThreadInfo();
+      PyThreadInfo threadInfo = pyExecutionStack.getThreadInfo();
       List<PyStackFrameInfo> threadFrames = threadInfo.getFrames();
       boolean isTestSetUpFail = false;
       if (threadFrames != null && (threadFrames.size() == 1 || threadFrames.size() > 1 && PyUnitTestsDebuggingService.isErrorInTestSetUpOrTearDown(threadFrames))) {
         isTestSetUpFail = true;
       }
       getProject().getService(PyUnitTestsDebuggingService.class).showFailedTestInlay(
-        getSession(), frame, exceptionType, errorMessage, isTestSetUpFail);
+        session, frame, exceptionType, errorMessage, isTestSetUpFail);
     }
   }
 
