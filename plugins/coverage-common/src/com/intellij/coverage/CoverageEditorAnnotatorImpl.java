@@ -59,8 +59,8 @@ import java.util.*;
 /**
  * @author ven
  */
-public final class SrcFileAnnotator implements SrcFileAnnotatorBase, Disposable {
-  private static final Logger LOG = Logger.getInstance(SrcFileAnnotator.class);
+public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Disposable {
+  private static final Logger LOG = Logger.getInstance(CoverageEditorAnnotatorImpl.class);
   public static final Key<List<RangeHighlighter>> COVERAGE_HIGHLIGHTERS = Key.create("COVERAGE_HIGHLIGHTERS");
   private static final Key<DocumentListener> COVERAGE_DOCUMENT_LISTENER = Key.create("COVERAGE_DOCUMENT_LISTENER");
   public static final Key<Map<FileEditor, EditorNotificationPanel>> NOTIFICATION_PANELS = Key.create("NOTIFICATION_PANELS");
@@ -77,7 +77,7 @@ public final class SrcFileAnnotator implements SrcFileAnnotatorBase, Disposable 
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
-  public SrcFileAnnotator(final PsiFile file, final Editor editor) {
+  public CoverageEditorAnnotatorImpl(final PsiFile file, final Editor editor) {
     myFile = file;
     myEditor = editor;
     myProject = file.getProject();
@@ -85,7 +85,7 @@ public final class SrcFileAnnotator implements SrcFileAnnotatorBase, Disposable 
   }
 
   @Override
-  public void hideCoverageData() {
+  public void hideCoverage() {
     Editor editor = myEditor;
     PsiFile file = myFile;
     Document document = myDocument;
@@ -259,7 +259,7 @@ public final class SrcFileAnnotator implements SrcFileAnnotatorBase, Disposable 
   }
 
   @Override
-  public void showCoverageInformation(final CoverageSuitesBundle suite) {
+  public void showCoverage(final CoverageSuitesBundle suite) {
     // Store the values of myFile and myEditor in local variables to avoid an NPE after dispose() has been called in the EDT.
     final PsiFile psiFile = myFile;
     final Editor editor = myEditor;
@@ -616,7 +616,7 @@ public final class SrcFileAnnotator implements SrcFileAnnotatorBase, Disposable 
 
   @Override
   public void dispose() {
-    hideCoverageData();
+    hideCoverage();
     myEditor = null;
     myDocument = null;
     myFile = null;
