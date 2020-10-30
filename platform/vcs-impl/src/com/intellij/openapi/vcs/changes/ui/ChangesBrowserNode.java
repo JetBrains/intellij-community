@@ -111,27 +111,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return new ChangesBrowserLocallyDeletedNode(change);
   }
 
-  @Deprecated
-  @NotNull
-  public static ChangesBrowserNode create(@NotNull Project project, @NotNull Object userObject) {
-    if (userObject instanceof Change) {
-      return new ChangesBrowserChangeNode(project, (Change)userObject, null);
-    }
-    if (userObject instanceof VirtualFile) {
-      return new ChangesBrowserFileNode(project, (VirtualFile) userObject);
-    }
-    if (userObject instanceof FilePath) {
-      return new ChangesBrowserFilePathNode((FilePath) userObject);
-    }
-    if (userObject == LOCKED_FOLDERS_TAG) {
-      return new ChangesBrowserLockedFoldersNode(project);
-    }
-    if (userObject instanceof ChangesBrowserLogicallyLockedFile) {
-      return (ChangesBrowserNode) userObject;
-    }
-    return new ChangesBrowserUserObjectNode(userObject);
-  }
-
   @Override
   public ChangesBrowserNode<?> getParent() {
     return (ChangesBrowserNode<?>)super.getParent();
