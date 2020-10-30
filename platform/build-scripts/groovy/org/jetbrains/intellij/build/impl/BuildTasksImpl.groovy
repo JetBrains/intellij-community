@@ -637,10 +637,10 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkPluginDuplicates(List<PluginLayout> nonTrivialPlugins) {
-    def duplicatePlugins = nonTrivialPlugins.groupBy { it.mainModule }.values()
-    for (List<PluginLayout> duplicatedPlugins : duplicatePlugins) {
-      if (duplicatePlugins.size() > 1) {
-        buildContext.messages.error("Duplicated plugin description in productLayout.allNonTrivialPlugins: ${duplicatePlugins[0].mainModule}")
+    def pluginsGroupedByMainModule = nonTrivialPlugins.groupBy { it.mainModule }.values()
+    for (List<PluginLayout> duplicatedPlugins : pluginsGroupedByMainModule) {
+      if (duplicatedPlugins.size() > 1) {
+        buildContext.messages.error("Duplicated plugin description in productLayout.allNonTrivialPlugins: ${duplicatedPlugins[0].mainModule}")
       }
     }
   }
