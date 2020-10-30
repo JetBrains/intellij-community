@@ -90,13 +90,18 @@ class TestingOptions {
   String testDiscoveryExcludePatterns = System.getProperty("intellij.build.test.discovery.exclude.class.patterns")
 
   /**
+   * Specifies a list of semicolon separated project artifacts that need to be built before running the tests.
+   */
+  String beforeRunProjectArtifacts = System.getProperty("intellij.build.test.beforeRun.projectArtifacts")
+
+  /**
    * If {@code true} causal profiler agent will be attached to the testing process.
    */
   boolean enableCausalProfiling = SystemProperties.getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
 
   /**
    * Pattern to match tests in {@link #mainModule} or default main module tests compilation outputs.
-   * Tests from each matched class will be executed in a fresh JVM.
+   * Tests from each matched class will be executed in a fresh jdk.jfr.internal.JVM.
    *
    * E.g. "com/intellij/util/ui/standalone/**Test.class"
    */
