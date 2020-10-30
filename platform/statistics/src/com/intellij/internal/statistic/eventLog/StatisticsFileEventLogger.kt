@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import java.util.concurrent.CompletableFuture
@@ -118,6 +119,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   override fun dispose() {
     flush()
     logExecutor.shutdown()
+    Disposer.dispose(writer)
   }
 
   fun flush(): CompletableFuture<Void> {
