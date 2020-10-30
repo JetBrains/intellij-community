@@ -7,6 +7,8 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.keymap.KeymapUtil
@@ -39,6 +41,13 @@ import javax.swing.event.AncestorEvent
 import javax.swing.plaf.basic.BasicHTML
 import javax.swing.text.View
 
+/**
+ * id is a unique id for the tooltip that will be used to store the tooltip state in <code>PropertiesComponent</code>
+ * id has the following format: place.where.used - lowercase words separated with dots.
+ * GotIt tooltip usage statistics can be properly gathered if its id prefix is registered in plugin.xml (PlatformExtensions.xml)
+ * with gotItTooltipAllowlist extension point. Prefix can cover a whole class of different gotit tooltips.
+ * If prefix is shorter than the whole ID then all different tooltip usages will be reported in one category described by the prefix.
+ */
 class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable: Disposable) {
   @Nls
   private var header : String = ""
@@ -53,15 +62,15 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
   private var linkAction : () -> Unit = {}
   private var maxWidth = MAX_WIDTH
   private var showCloseShortcut = false
-  private var showCount = 1
+  private var maxCount = 1
   private var chainFunction: () -> Unit = {}
 
-  var canShow : (String) -> Boolean = { PropertiesComponent.getInstance().getInt(it, showCount) > 0 }
-  var onGotIt : (String) -> Unit = {
-    PropertiesComponent.getInstance().let { pc ->
-      val value = pc.getInt(it, showCount)
-      if (value > 0) pc.setValue(it, (value - 1).toString())
-    }
+  // Ease the access (remove private or val to var) if fine tuning is needed.
+  private val savedCount : (String) -> Int = { PropertiesComponent.getInstance().getInt(it, 0) }
+  private val canShow : (String) -> Boolean = { savedCount(it) < maxCount }
+  private val onGotIt : (String) -> Unit = {
+    val count = savedCount(it)
+    if (count in 0 until maxCount) PropertiesComponent.getInstance().setValue(it, (count + 1).toString())
   }
 
   private val alarm = Alarm()
@@ -146,7 +155,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
    * Set number of times the tooltip is shown.
    */
   fun withShowCount(count: Int) : GotItTooltip {
-    if (count > 0) showCount = count
+    if (count > 0) maxCount = count
     return this
   }
 
@@ -175,7 +184,10 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
         }
 
         override fun ancestorRemoved(event: AncestorEvent?) {
-            balloon?.hide()
+            balloon?.let {
+              it.hide(true)
+              GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+            }
             balloon = null
         }
       })
@@ -208,8 +220,9 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
         override fun onClosed(event: LightweightWindowEvent) {
           onGotIt("$PROPERTY_PREFIX.$id")
           HelpTooltip.setMasterPopupOpenCondition(tracker.component, null)
-
           (tracker.component as JComponent).putClientProperty(PROPERTY_PREFIX, null)
+
+          if (!event.isOk) GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.OutsideClick)
 
           Disposer.dispose(dispatcherDisposable)
           chainFunction()
@@ -218,7 +231,8 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
 
       IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { e ->
         if (e is KeyEvent && KeymapUtil.isEventForAction(e, CLOSE_ACTION_NAME)) {
-          it.hide()
+          it.hide(true)
+          GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.EscapeShortcutPressed)
           true
         }
         else false
@@ -229,6 +243,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
       }
 
       it.show(tracker, position)
+      GotItUsageCollector.instance.logOpen(id, savedCount("$PROPERTY_PREFIX.$id") + 1)
     }
 
   private fun createBalloon() : Balloon {
@@ -247,20 +262,29 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
         createBalloon().
       apply { setAnimationEnabled(false) }
 
+    val collector = GotItUsageCollector.instance
+
     link?.apply{
       setListener(LinkListener { _, _ ->
         linkAction()
         balloon.hide(true)
+        collector.logClose(id, GotItUsageCollectorGroup.CloseType.LinkClick)
       }, null)
     }
 
     button?.apply {
-      addActionListener(ActionListener { balloon.hide() })
+      addActionListener(ActionListener {
+        balloon.hide(true)
+        collector.logClose(id, GotItUsageCollectorGroup.CloseType.ButtonClick)
+      })
     }
 
     if (timeout > 0) {
       alarm.cancelAllRequests()
-      alarm.addRequest({ balloon.hide() }, timeout)
+      alarm.addRequest({
+         balloon.hide(true)
+         collector.logClose(id, GotItUsageCollectorGroup.CloseType.Timeout)
+       }, timeout)
     }
 
     return balloon
