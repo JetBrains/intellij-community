@@ -171,12 +171,13 @@ public abstract class Decompressor {
       protected Entry nextEntry() throws IOException {
         myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
         if (myEntry == null) return null;
-        String target = myEntry.isUnixSymlink() ? myZip.getUnixSymlink(myEntry) : null;
-        return new Entry(myEntry.getName(), type(myEntry), isSet(myEntry.getUnixMode(), 0200), isSet(myEntry.getUnixMode(), 0100), target);
+        int mode = myEntry.getUnixMode();
+        return mode != 0 ? new Entry(myEntry.getName(), type(myEntry), isSet(mode, 0200), isSet(mode, 0100), myZip.getUnixSymlink(myEntry))
+                         : new Entry(myEntry.getName(), myEntry.isDirectory());
       }
 
-      private static Type type(ZipArchiveEntry te) {
-        return te.isUnixSymlink() ? Type.SYMLINK : te.isDirectory() ? Type.DIR : Type.FILE;
+      private static Type type(ZipArchiveEntry e) {
+        return e.isUnixSymlink() ? Type.SYMLINK : e.isDirectory() ? Type.DIR : Type.FILE;
       }
 
       @Override
