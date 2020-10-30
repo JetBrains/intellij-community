@@ -11,12 +11,13 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +27,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-abstract class RenameChooser {
+public abstract class RenameChooser {
   @NonNls private static final String CODE_OCCURRENCES = "Rename code occurrences";
   @NonNls private static final String ALL_OCCURRENCES = "Rename all occurrences";
+  public static final Key<Boolean> CHOOSE_ALL_OCCURRENCES_IN_TEST = Key.create("RenameChooser.CHOOSE_ALL_OCCURRENCES_IN_TEST");
   private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<>();
   private final Editor myEditor;
 
@@ -41,8 +43,7 @@ abstract class RenameChooser {
   public void showChooser(final Collection<? extends PsiReference> refs,
                           final Collection<Pair<PsiElement, TextRange>> stringUsages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runRenameTemplate(
-        RefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FILE ? stringUsages : new ArrayList<>());
+      runRenameTemplate(TestModeFlags.is(CHOOSE_ALL_OCCURRENCES_IN_TEST) ? stringUsages : new ArrayList<>());
       return;
     }
 
