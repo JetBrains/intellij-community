@@ -224,13 +224,12 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
 
             val project = declaration.project
             val expression = createTypeExpressionForTemplate(exprType, declaration, useTypesFromOverridden = true) ?: return
-
             declaration.setType(KotlinBuiltIns.FQ_NAMES.any.asString())
 
             PsiDocumentManager.getInstance(project).commitAllDocuments()
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
-            val newTypeRef = declaration.typeReference!!
+            val newTypeRef = declaration.typeReference ?: return
             val builder = TemplateBuilderImpl(newTypeRef)
             builder.replaceElement(newTypeRef, expression)
 
