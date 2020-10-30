@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -40,6 +41,10 @@ public abstract class Location<E extends PsiElement> {
     return null;
   }
 
+  public Navigatable getNavigatable() {
+    return getOpenFileDescriptor();
+  }
+  
   @Nullable
   public OpenFileDescriptor getOpenFileDescriptor() {
     VirtualFile file = getVirtualFile();
