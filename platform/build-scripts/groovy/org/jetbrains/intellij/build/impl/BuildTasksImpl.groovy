@@ -599,6 +599,8 @@ idea.fatal.error.notification=disabled
     }
 
     List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
+    checkPluginDuplicates(nonTrivialPlugins)
+
     checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules")
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish")
 
@@ -631,6 +633,15 @@ idea.fatal.error.notification=disabled
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries.collect {it.libraryName}, "'$plugin.mainModule' plugin")
       checkArtifacts(plugin.includedArtifacts.keySet(), "'$plugin.mainModule' plugin")
+    }
+  }
+
+  private void checkPluginDuplicates(List<PluginLayout> nonTrivialPlugins) {
+    def duplicatePlugins = nonTrivialPlugins.groupBy { it.mainModule }.values()
+    for (List<PluginLayout> duplicatedPlugins : duplicatePlugins) {
+      if (duplicatePlugins.size() > 1) {
+        buildContext.messages.error("Duplicated plugin description in productLayout.allNonTrivialPlugins: ${duplicatePlugins[0].mainModule}")
+      }
     }
   }
 
