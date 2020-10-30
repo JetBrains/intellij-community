@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -17,6 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.Stack;
 import org.gradle.tooling.model.GradleProject;
@@ -28,6 +31,9 @@ import org.gradle.wrapper.WrapperExecutor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -290,5 +296,34 @@ public final class GradleUtil {
   @Deprecated
   public static boolean isCustomSerializationEnabled(@NotNull GradleVersion gradleVersion) {
     return Registry.is("gradle.tooling.custom.serializer", true) && gradleVersion.compareTo(GradleVersion.version("3.0")) >= 0;
+  }
+
+  public static @Nullable GradleVersion getGradleVersion(Project project, PsiFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null) {
+      String filePath = virtualFile.getPath();
+      return getGradleVersion(project, filePath);
+    }
+    return null;
+  }
+
+  public static @Nullable GradleVersion getGradleVersion(Project project, String filePath) {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
+    if (manager instanceof GradleManager) {
+      GradleManager gradleManager = (GradleManager)manager;
+      String externalProjectPath = gradleManager.getAffectedExternalProjectPath(filePath, project);
+      if (externalProjectPath != null) {
+        GradleSettings settings = GradleSettings.getInstance(project);
+        GradleProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
+        if (projectSettings != null) {
+          return projectSettings.resolveGradleVersion();
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean isSupportedImplementationScope(@Nullable GradleVersion gradleVersion) {
+    return gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("3.4")) >= 0;
   }
 }
