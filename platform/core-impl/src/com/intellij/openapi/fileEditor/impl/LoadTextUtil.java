@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -434,7 +435,9 @@ public final class LoadTextUtil {
     }
     setDetectedFromBytesFlagBack(virtualFile, buffer);
 
-    virtualFile.setBinaryContent(buffer, newModificationStamp, -1, requestor);
+    try (OutputStream stream = virtualFile.getOutputStream(requestor, newModificationStamp, -1)) {
+      stream.write(buffer);
+    }
   }
 
   @NotNull
