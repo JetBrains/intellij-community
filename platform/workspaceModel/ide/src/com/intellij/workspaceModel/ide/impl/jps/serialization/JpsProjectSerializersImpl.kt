@@ -155,8 +155,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     val affectedFileLoaders = LinkedHashSet<JpsFileEntitiesSerializer<*>>(newFileSerializers)
-    addedFileUrls.flatMapTo(affectedFileLoaders) { fileSerializersByUrl.getValues(it) }
-    change.changedFileUrls.flatMapTo(affectedFileLoaders) { fileSerializersByUrl.getValues(it) }
+    val urlsSet: Set<String> = addedFileUrls + change.changedFileUrls
+    urlsSet.flatMapTo(affectedFileLoaders) { fileSerializersByUrl.getValues(it) }
 
     val changedSources = affectedFileLoaders.mapTo(HashSet()) { it.internalEntitySource }
     for (fileUrl in change.removedFileUrls) {
