@@ -23,26 +23,28 @@ public final class DecodeDefaultsUtil {
 
   public static URL getDefaults(Object requestor, @NotNull String componentResourcePath) {
     URL url = RESOURCE_CACHE.get(componentResourcePath);
-    if (url == null) {
-      if (StringUtil.startsWithChar(componentResourcePath, '/')) {
-        url = getResource(appendExt(componentResourcePath), requestor);
-        if (url == null && !(requestor instanceof UrlClassLoader)) {
-          url = getResource(appendExt(componentResourcePath.substring(1)), requestor);
-        }
-      }
-      else {
-        url = getResource(appendExt("/idea/" + componentResourcePath), requestor);
-        if (url == null) {
-          if (requestor instanceof ClassLoader) {
-            url = getResource(appendExt(componentResourcePath), requestor);
-          }
-          else {
-            url = getResource(appendExt('/' + componentResourcePath), requestor);
-          }
-        }
-      }
-      RESOURCE_CACHE.put(componentResourcePath, url);
+    if (url != null) {
+      return url;
     }
+
+    if (StringUtil.startsWithChar(componentResourcePath, '/')) {
+      url = getResource(appendExt(componentResourcePath), requestor);
+      if (url == null && !(requestor instanceof UrlClassLoader)) {
+        url = getResource(appendExt(componentResourcePath.substring(1)), requestor);
+      }
+    }
+    else {
+      url = getResource(appendExt("/idea/" + componentResourcePath), requestor);
+      if (url == null) {
+        if (requestor instanceof ClassLoader) {
+          url = getResource(appendExt(componentResourcePath), requestor);
+        }
+        else {
+          url = getResource(appendExt('/' + componentResourcePath), requestor);
+        }
+      }
+    }
+    RESOURCE_CACHE.put(componentResourcePath, url);
     return url;
   }
 

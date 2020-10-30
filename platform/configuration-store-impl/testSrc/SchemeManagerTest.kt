@@ -422,8 +422,8 @@ internal class SchemeManagerTest {
   @Test fun `save only if scheme differs from bundled`() {
     val dir = tempDirManager.newPath()
     var schemeManager = createSchemeManager(dir)
-    val bundledPath = "/com/intellij/configurationStore/bundledSchemes/default"
-    schemeManager.loadBundledScheme(bundledPath, this)
+    val bundledPath = "/com/intellij/configurationStore/bundledSchemes/default.xml"
+    schemeManager.loadBundledScheme(bundledPath, this, null)
     val customScheme = TestScheme("default")
     assertThat(schemeManager.allSchemes).containsOnly(customScheme)
 
@@ -441,7 +441,7 @@ internal class SchemeManagerTest {
     assertThat(dir.resolve("default.xml")).isRegularFile()
 
     schemeManager = createSchemeManager(dir)
-    schemeManager.loadBundledScheme(bundledPath, this)
+    schemeManager.loadBundledScheme(bundledPath, this, null)
     schemeManager.loadSchemes()
 
     assertThat(schemeManager.allSchemes).containsOnly(customScheme)

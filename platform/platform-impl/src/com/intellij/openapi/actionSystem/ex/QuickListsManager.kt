@@ -12,10 +12,14 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
+import java.util.function.BiConsumer
 import java.util.function.Function
+
+private var EP_NAME = ExtensionPointName<BundledQuickListsProvider>("com.intellij.bundledQuickListsProvider")
 
 class QuickListsManager {
   private val mySchemeManager: SchemeManager<QuickList>
@@ -35,11 +39,11 @@ class QuickListsManager {
                                                                     return item
                                                                   }
                                                                 }, presentableName = IdeBundle.message("quick.lists.presentable.name"))
-    for (provider in BundledQuickListsProvider.EP_NAME.extensionList) {
+    EP_NAME.processWithPluginDescriptor(BiConsumer { provider, pluginDescriptor ->
       for (path in provider.bundledListsRelativePaths) {
-        mySchemeManager.loadBundledScheme(path, provider)
+        mySchemeManager.loadBundledScheme(if (path.endsWith(".xml")) path else "$path.xml", null, pluginDescriptor)
       }
-    }
+    })
     mySchemeManager.loadSchemes()
   }
 
