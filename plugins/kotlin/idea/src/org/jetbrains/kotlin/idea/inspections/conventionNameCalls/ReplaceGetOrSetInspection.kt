@@ -83,10 +83,10 @@ class ReplaceGetOrSetInspection : AbstractApplicabilityBasedInspection<KtDotQual
     override fun inspectionHighlightRangeInElement(element: KtDotQualifiedExpression) = element.calleeTextRangeInThis()
 
     override fun applyTo(element: KtDotQualifiedExpression, project: Project, editor: Editor?) {
-        val isSet = element.calleeName == OperatorNameConventions.SET.identifier
-        val allArguments = element.callExpression!!.valueArguments
+        val allArguments = element.callExpression?.valueArguments ?: return
         assert(allArguments.isNotEmpty())
 
+        val isSet = element.calleeName == OperatorNameConventions.SET.identifier
         val newExpression = KtPsiFactory(element).buildExpression {
             appendExpression(element.receiverExpression)
 
