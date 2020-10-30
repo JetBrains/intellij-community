@@ -1,25 +1,67 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.logger
 
+import com.intellij.application.subscribe
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService.EventLogThresholdConfigOptionsListener
 import com.intellij.internal.statistic.utils.EventRateThrottleResult
 import com.intellij.internal.statistic.utils.EventsIdentityWindowThrottle
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle
+import com.intellij.openapi.util.Disposer
 
-class StatisticsEventLogThrottleWriter(private val recorderVersion: String,
+class StatisticsEventLogThrottleWriter(configOptionsService: EventLogConfigOptionsService,
+                                       private val recorderVersion: String,
                                        private val delegate: StatisticsEventLogWriter): StatisticsEventLogWriter {
   private val ourLock: Any = Object()
 
   /**
-   * Allow up to 24000 events per hour
+   * Allow up to 24000 events per hour or another threshold loaded from config
    */
-  private val ourThrottle: EventsRateWindowThrottle = EventsRateWindowThrottle(24000, 60L * 60 * 1000, System.currentTimeMillis())
+  private val ourThrottle: EventsRateWindowThrottle
 
   /**
-   * Allow up to 12000 events per group per hour
+   * Allow up to 12000 events per group per hour or another threshold loaded from config
    */
-  private val ourGroupThrottle: EventsIdentityWindowThrottle = EventsIdentityWindowThrottle(12000, 6000, 60L * 60 * 1000)
+  private val ourGroupThrottle: EventsIdentityWindowThrottle
 
+  init {
+    val threshold = getOrDefault(configOptionsService.threshold, 24000)
+    ourThrottle = EventsRateWindowThrottle(threshold, 60L * 60 * 1000, System.currentTimeMillis())
+
+    val groupThreshold = getOrDefault(configOptionsService.groupThreshold, 12000)
+    val groupAlertThreshold = getOrDefault(configOptionsService.groupAlertThreshold, 6000)
+    ourGroupThrottle = EventsIdentityWindowThrottle(groupThreshold, groupAlertThreshold, 60L * 60 * 1000)
+
+    EventLogConfigOptionsService.TOPIC.subscribe(this, object : EventLogThresholdConfigOptionsListener() {
+      override fun onThresholdChanged(newValue: Int) {
+        if (newValue > 0) {
+          synchronized(ourLock) {
+            ourThrottle.setThreshold(newValue)
+          }
+        }
+      }
+
+      override fun onGroupThresholdChanged(newValue: Int) {
+        if (newValue > 0) {
+          synchronized(ourLock) {
+            ourGroupThrottle.setThreshold(newValue)
+          }
+        }
+      }
+
+      override fun onGroupAlertThresholdChanged(newValue: Int) {
+        if (newValue > 0) {
+          synchronized(ourLock) {
+            ourGroupThrottle.setAlertThreshold(newValue)
+          }
+        }
+      }
+    })
+  }
+
+  private fun getOrDefault(value: Int, defaultValue: Int): Int {
+    return if (value > 0) value else defaultValue
+  }
 
   override fun log(logEvent: LogEvent) {
     val shouldLog = tryPass(logEvent.group.id, System.currentTimeMillis())
@@ -73,6 +115,8 @@ class StatisticsEventLogThrottleWriter(private val recorderVersion: String,
   override fun cleanup() = delegate.cleanup()
 
   override fun rollOver() = delegate.rollOver()
+
+  override fun dispose() = Disposer.dispose(delegate)
 }
 
 private data class EventsRateResult(val type: EventsRateResultType, val report: Boolean)

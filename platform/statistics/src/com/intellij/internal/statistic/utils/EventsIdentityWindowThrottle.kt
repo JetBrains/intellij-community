@@ -4,6 +4,14 @@ package com.intellij.internal.statistic.utils
 class EventsIdentityWindowThrottle(private var threshold: Int, private var alertThreshold: Int, private val periodMs: Long) {
   private var keyToCount = hashMapOf<String, EventDescriptor>()
 
+  fun setThreshold(newThreshold: Int) {
+    threshold = newThreshold
+  }
+
+  fun setAlertThreshold(newThreshold: Int) {
+    alertThreshold = newThreshold
+  }
+
   @Synchronized
   fun tryPass(key: String, now: Long): EventRateThrottleResult {
     val period = now / periodMs

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.openapi.Disposable
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
@@ -8,7 +9,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 
-interface StatisticsEventLogWriter {
+interface StatisticsEventLogWriter: Disposable {
   fun log(logEvent: LogEvent)
 
   fun getActiveFile(): EventLogFile?
@@ -70,4 +71,6 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
   override fun rollOver() {
     fileAppender?.rollOver()
   }
+
+  override fun dispose() = Unit
 }
