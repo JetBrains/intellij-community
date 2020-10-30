@@ -99,11 +99,11 @@ class GotItUsageCollectorGroup : CounterUsagesCollector() {
     private val GROUP = EventLogGroup("gotit.usage.collector", 1)
 
     internal val showEvent = GROUP.registerEvent("show",
-                                                 EventFields.StringValidatedByCustomRule("id.prefix", GotItTooltip.PROPERTY_PREFIX),
+                                                 EventFields.StringValidatedByCustomRule("id_prefix", GotItTooltip.PROPERTY_PREFIX),
                                                  EventFields.Int("count"))
 
     internal val closeEvent = GROUP.registerEvent("close",
-                                                  EventFields.StringValidatedByCustomRule("id.prefix", GotItTooltip.PROPERTY_PREFIX),
+                                                  EventFields.StringValidatedByCustomRule("id_prefix", GotItTooltip.PROPERTY_PREFIX),
                                                   EventFields.Enum<CloseType>("type"))
   }
 }
