@@ -50,6 +50,12 @@ public abstract class SettingsConnectionService {
   }
 
   @Nullable
+  public String getOptionValue(@NotNull String attribute) {
+    EventLogExternalSendSettings settings = getExternalSettings();
+    return settings != null ? settings.getOption(attribute) : null;
+  }
+
+  @Nullable
   protected synchronized EventLogExternalSendSettings getExternalSettings() {
     return myCachedExternalSettings.get();
   }
