@@ -41,11 +41,8 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Dennis.Ushakov
- */
 @Tag("GitHub")
-public class GithubRepository extends BaseRepository {
+final class GithubRepository extends BaseRepository {
   private static final Logger LOG = Logger.getInstance(GithubRepository.class);
 
   private Pattern myPattern = Pattern.compile("($^)");
@@ -55,17 +52,17 @@ public class GithubRepository extends BaseRepository {
   private boolean myAssignedIssuesOnly = false;
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public GithubRepository() {
+  GithubRepository() {
   }
 
-  public GithubRepository(GithubRepository other) {
+  GithubRepository(GithubRepository other) {
     super(other);
     setRepoName(other.myRepoName);
     setRepoAuthor(other.myRepoAuthor);
     setAssignedIssuesOnly(other.myAssignedIssuesOnly);
   }
 
-  public GithubRepository(GithubRepositoryType type) {
+  GithubRepository(GithubRepositoryType type) {
     super(type);
     setUrl("https://" + GithubServerPath.DEFAULT_HOST);
   }

@@ -44,13 +44,19 @@ internal class GHOAuthService {
   }
 
   companion object {
-    val instance: GHOAuthService = service()
+    val instance: GHOAuthService
+      get() = service()
 
     private val SERVICE_URL: Url = newFromEncoded("https://account.jetbrains.com/github/oauth/intellij")
-    val AUTHORIZE_URL: Url get() = SERVICE_URL.resolve("authorize")
-    val ACCESS_TOKEN_URL: Url get() = SERVICE_URL.resolve("access_token")
-    val SUCCESS_URL: Url get() = SERVICE_URL.resolve("complete")
-    val ERROR_URL: Url get() = SERVICE_URL.resolve("error")
+
+    val AUTHORIZE_URL: Url
+      get() = SERVICE_URL.resolve("authorize")
+    val ACCESS_TOKEN_URL: Url
+      get() = SERVICE_URL.resolve("access_token")
+    val SUCCESS_URL: Url
+      get() = SERVICE_URL.resolve("complete")
+    val ERROR_URL: Url
+      get() = SERVICE_URL.resolve("error")
   }
 }
 

@@ -67,7 +67,8 @@ final class ClassLoaderConfigurator {
         PluginId.getId("org.jetbrains.plugins.yaml"),
         PluginId.getId("org.jetbrains.plugins.vue"),
         PluginId.getId("org.jetbrains.plugins.go-template"),
-        PluginId.getId("com.intellij.kubernetes")
+        PluginId.getId("com.intellij.kubernetes"),
+        PluginId.getId("org.jetbrains.plugins.github")
       ));
     }
     else {

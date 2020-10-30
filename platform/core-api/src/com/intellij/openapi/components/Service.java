@@ -11,4 +11,9 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Service {
+  Level[] value() default {};
+
+  enum Level {
+    APP, PROJECT
+  }
 }

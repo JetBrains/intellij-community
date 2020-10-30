@@ -1,15 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.plugins.pipelines.ui
 
-import com.intellij.space.messages.SpaceBundle
 import circlet.pipelines.DefaultDslFileName
 import circlet.pipelines.config.api.ScriptConfig
 import circlet.pipelines.config.api.ScriptStep
-import com.intellij.space.plugins.pipelines.services.SpaceKtsModelBuilder
-import com.intellij.space.plugins.pipelines.viewmodel.SpaceModelTreeNode
-import com.intellij.space.plugins.pipelines.viewmodel.ScriptState
-import com.intellij.space.utils.LifetimedDisposable
-import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
@@ -17,11 +11,18 @@ import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.plugins.pipelines.services.SpaceKtsModelBuilder
+import com.intellij.space.plugins.pipelines.viewmodel.ScriptState
+import com.intellij.space.plugins.pipelines.viewmodel.SpaceModelTreeNode
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.ui.DumbAwareActionButton
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.ToolbarDecorator
@@ -54,8 +55,8 @@ class SpaceToolWindowViewModel(val lifetime: Lifetime) {
   val extendedViewModeEnabled = mutableProperty(true)
 }
 
+@Service
 class SpaceToolWindowService(val project: Project) : LifetimedDisposable by LifetimedDisposableImpl(), KLogging() {
-
   val modelBuilder = project.service<SpaceKtsModelBuilder>()
 
   val viewModel = SpaceToolWindowViewModel(lifetime)

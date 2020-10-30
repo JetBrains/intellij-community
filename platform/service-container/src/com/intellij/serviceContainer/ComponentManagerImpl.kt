@@ -608,7 +608,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
 
     val prevValue = cache.put(serviceClass, result)
-    LOG.assertTrue(prevValue == null)
+    if (prevValue != null) {
+      LOG.error("Light service ${serviceClass.name} is already created (existingInstance=$prevValue)")
+    }
     return result!!
   }
 

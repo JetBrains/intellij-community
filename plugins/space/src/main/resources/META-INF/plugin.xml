@@ -38,11 +38,6 @@
                 doNotActivateOnStart="true"
                 factoryClass="com.intellij.space.vcs.review.SpaceReviewToolWindowFactory"/>
 
-    <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.SpaceKtsFileDetector"/>
-    <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.SpaceKtsModelBuilder"/>
-    <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.SyncDslViewManager"/>
-    <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.execution.SpaceTaskRunner"/>
-    <projectService serviceImplementation="com.intellij.space.plugins.pipelines.ui.SpaceToolWindowService"/>
     <runLineMarkerContributor
       language="kotlin"
       id="spaceScriptRunLineMarkerProvider"
