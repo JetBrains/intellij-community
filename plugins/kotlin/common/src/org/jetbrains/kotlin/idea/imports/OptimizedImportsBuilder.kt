@@ -53,8 +53,13 @@ class OptimizedImportsBuilder(
         fun resolve(bindingContext: BindingContext): Collection<DeclarationDescriptor>
     }
 
+    data class ImportableDescriptor(
+        val descriptor: DeclarationDescriptor,
+        val fqName: FqName,
+    )
+
     class InputData(
-        val descriptorsToImport: Set<DeclarationDescriptor>,
+        val descriptorsToImport: Set<ImportableDescriptor>,
         val namesToImport: Map<FqName, Set<Name>>,
         val references: Collection<AbstractReference>,
         val unresolvedNames: Set<Name>,
@@ -121,16 +126,19 @@ class OptimizedImportsBuilder(
 
     private val DeclarationDescriptor.importDescriptorWithMapping: FqName?
         get() = importableFqName?.let { fqName ->
-          ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
+            ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
         }
+
+    private val ImportableDescriptor.importDescriptorWithMapping: FqName
+        get() = ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
 
     private fun tryBuildOptimizedImports(): List<ImportPath>? {
         val importsToGenerate = hashSetOf<ImportPath>()
         importRules.filterIsInstance<ImportRule.Add>().mapTo(importsToGenerate) { it.importPath }
 
-        val descriptorsByParentFqName = HashMap<FqName, MutableSet<DeclarationDescriptor>>()
-        for (descriptor in data.descriptorsToImport) {
-            val fqName = descriptor.importableFqName!!
+        val descriptorsByParentFqName = HashMap<FqName, MutableSet<ImportableDescriptor>>()
+        for (importableDescriptor in data.descriptorsToImport) {
+            val (descriptor, fqName) = importableDescriptor
             for (name in data.namesToImport.getValue(fqName)) {
                 val alias = if (name != fqName.shortName()) name else null
 
@@ -140,7 +148,7 @@ class OptimizedImportsBuilder(
 
                 val parentFqName = resultFqName.parent()
                 if (alias == null && canUseStarImport(descriptor, resultFqName) && ImportPath(parentFqName, true).isAllowedByRules()) {
-                    descriptorsByParentFqName.getOrPut(parentFqName) { hashSetOf() }.add(descriptor)
+                    descriptorsByParentFqName.getOrPut(parentFqName) { hashSetOf() }.add(importableDescriptor)
                 } else {
                     importsToGenerate.add(explicitImportPath)
                 }
@@ -148,25 +156,24 @@ class OptimizedImportsBuilder(
         }
 
         val classNamesToCheck = hashSetOf<FqName>()
-        for (parentFqName in descriptorsByParentFqName.keys) {
+        for ((parentFqName, descriptors) in descriptorsByParentFqName) {
             ProgressManager.checkCanceled()
 
             val starImportPath = ImportPath(parentFqName, true)
             if (starImportPath in importsToGenerate) continue
 
-            val descriptors = descriptorsByParentFqName[parentFqName]!!
-            val fqNames = descriptors.map { it.importDescriptorWithMapping!! }.toSet()
+            val fqNames = descriptors.map { it.importDescriptorWithMapping }.toSet()
 
-            val nameCountToUseStar = descriptors.first().nameCountToUseStar()
-            val useExplicitImports = fqNames.size < nameCountToUseStar && !options.isInPackagesToUseStarImport(parentFqName)
-                    || !starImportPath.isAllowedByRules()
+            val nameCountToUseStar = descriptors.first().descriptor.nameCountToUseStar()
+            val useExplicitImports = fqNames.size < nameCountToUseStar && !options.isInPackagesToUseStarImport(parentFqName) ||
+                    !starImportPath.isAllowedByRules()
 
             if (useExplicitImports) {
                 fqNames.filter(this::needExplicitImport).mapTo(importsToGenerate) { ImportPath(it, false) }
             } else {
                 descriptors.asSequence()
-                    .filterIsInstance<ClassDescriptor>()
-                    .map { it.importDescriptorWithMapping!! }
+                    .filter { it.descriptor is ClassDescriptor }
+                    .map { it.importDescriptorWithMapping }
                     .filterTo(classNamesToCheck, this::needExplicitImport)
 
                 if (fqNames.all(this::needExplicitImport)) {
@@ -214,7 +221,8 @@ class OptimizedImportsBuilder(
                         val oldTarget = originalFileScope.findClassifier(name, NoLookupLocation.FROM_IDE) ?: continue
                         val newTarget = newScope.findClassifier(name, NoLookupLocation.FROM_IDE)
                         if (newTarget == null && !oldTarget.fromCurrentFile ||
-                            newTarget != null && !areTargetsEqual(oldTarget, newTarget)) {
+                            newTarget != null && !areTargetsEqual(oldTarget, newTarget)
+                        ) {
                             testLog?.append("Changed resolve type of $ref\n")
                             lockImportForDescriptor(oldTarget, names)
                         }
@@ -268,7 +276,7 @@ class OptimizedImportsBuilder(
 
     private fun addExplicitImportsForClassesWhenRequired(
         classNamesToCheck: Collection<FqName>,
-        descriptorsByParentFqName: Map<FqName, MutableSet<DeclarationDescriptor>>,
+        descriptorsByParentFqName: Map<FqName, MutableSet<ImportableDescriptor>>,
         importsToGenerate: MutableSet<ImportPath>,
         originalFile: KtFile
     ) {
@@ -281,7 +289,7 @@ class OptimizedImportsBuilder(
                 val parentFqName = fqName.parent()
 
                 val siblingsToImport = descriptorsByParentFqName.getValue(parentFqName)
-                for (descriptor in siblingsToImport.filter { it.importableFqName == fqName }) {
+                for (descriptor in siblingsToImport.filter { it.fqName == fqName }) {
                     siblingsToImport.remove(descriptor)
                 }
 

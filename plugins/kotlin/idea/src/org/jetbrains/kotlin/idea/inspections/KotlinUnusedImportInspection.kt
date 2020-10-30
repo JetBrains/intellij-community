@@ -77,13 +77,12 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
 
             val fqNames = optimizerData.namesToImport
             val parentFqNames = HashSet<FqName>()
-            for (descriptor in optimizerData.descriptorsToImport) {
-                val fqName = descriptor.importableFqName!!
-                if (fqName !in explicitlyImportedFqNames) { // we don't add parents of explicitly imported fq-names because such imports are not needed
-                    val parentFqName = fqName.parent()
-                    if (!parentFqName.isRoot) {
-                        parentFqNames.add(parentFqName)
-                    }
+            for ((_, fqName) in optimizerData.descriptorsToImport) {
+                // we don't add parents of explicitly imported fq-names because such imports are not needed
+                if (fqName in explicitlyImportedFqNames) continue
+                val parentFqName = fqName.parent()
+                if (!parentFqName.isRoot) {
+                    parentFqNames.add(parentFqName)
                 }
             }
 

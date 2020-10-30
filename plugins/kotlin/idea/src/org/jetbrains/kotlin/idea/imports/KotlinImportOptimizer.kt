@@ -120,7 +120,7 @@ class KotlinImportOptimizer : ImportOptimizer {
             .mapNotNull { it.importPath }
             .groupBy(keySelector = { it.fqName }, valueTransform = { it.importedName as Name })
 
-        private val descriptorsToImport = hashSetOf<DeclarationDescriptor>()
+        private val descriptorsToImport = hashSetOf<OptimizedImportsBuilder.ImportableDescriptor>()
         private val namesToImport = hashMapOf<FqName, MutableSet<Name>>()
         private val abstractRefs = ArrayList<OptimizedImportsBuilder.AbstractReference>()
         private val unresolvedNames = hashSetOf<Name>()
@@ -180,7 +180,7 @@ class KotlinImportOptimizer : ImportOptimizer {
 
                     val descriptorNames = (aliases[importableFqName].orEmpty() + importableFqName.shortName()).intersect(names)
                     namesToImport.getOrPut(importableFqName) { hashSetOf() } += descriptorNames
-                    descriptorsToImport += importableDescriptor
+                    descriptorsToImport += OptimizedImportsBuilder.ImportableDescriptor(importableDescriptor, importableFqName)
                 }
             }
         }
