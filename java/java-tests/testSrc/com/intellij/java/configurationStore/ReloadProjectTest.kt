@@ -10,6 +10,8 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.packaging.artifacts.ArtifactManager
+import com.intellij.packaging.impl.elements.FileCopyPackagingElement
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
@@ -68,6 +70,19 @@ class ReloadProjectTest {
       assertThat(module.name).isEqualTo("foo")
       copyFilesAndReload(project, "addModuleFromSubDir/update")
       assertThat(ModuleManager.getInstance(project).modules).hasSize(2)
+    }
+  }
+
+  @Test
+  fun `change artifact`() {
+    loadProjectAndCheckResults("changeArtifact/initial") { project ->
+      val artifact = ArtifactManager.getInstance(project).artifacts.single()
+      assertThat(artifact.name).isEqualTo("a")
+      assertThat((artifact.rootElement.children.single() as FileCopyPackagingElement).filePath).endsWith("/a.txt")
+      copyFilesAndReload(project, "changeArtifact/update")
+      val artifact2 = ArtifactManager.getInstance(project).artifacts.single()
+      assertThat(artifact2.name).isEqualTo("a")
+      assertThat((artifact2.rootElement.children.single() as FileCopyPackagingElement).filePath).endsWith("/bbb.txt")
     }
   }
 
