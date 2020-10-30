@@ -149,7 +149,7 @@ internal class ChangeMethodParameters(
             when (action) {
                 is ParameterModification.Add -> {
                     val parameter = parametersGenerated.getValue(action)
-                    for (expectedAnnotation in action.expectedAnnotations) {
+                    for (expectedAnnotation in action.expectedAnnotations.reversed()) {
                         addAnnotationEntry(parameter, expectedAnnotation, null)
                     }
                     val anchor = action.beforeAnchor

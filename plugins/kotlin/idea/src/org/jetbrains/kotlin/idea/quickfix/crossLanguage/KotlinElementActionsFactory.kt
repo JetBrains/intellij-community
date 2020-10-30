@@ -421,10 +421,6 @@ internal fun addAnnotationEntry(
     request: AnnotationRequest,
     annotationTarget: AnnotationUseSiteTarget?
 ): KtAnnotationEntry {
-    val annotationClass = JavaPsiFacade.getInstance(target.project).findClass(request.qualifiedName, target.resolveScope)
-
-    val kotlinAnnotation = annotationClass?.language == KotlinLanguage.INSTANCE
-
     val annotationUseSiteTargetPrefix = run prefixEvaluation@{
         if (annotationTarget == null) return@prefixEvaluation ""
 
@@ -441,25 +437,44 @@ internal fun addAnnotationEntry(
         "${annotationTarget.renderName}:"
     }
 
+    val javaPsiFacade = JavaPsiFacade.getInstance(target.project)
+    fun isKotlinAnnotation(annotation: AnnotationRequest): Boolean =
+        javaPsiFacade.findClass(annotation.qualifiedName, target.resolveScope)?.language == KotlinLanguage.INSTANCE
+    val psiFactory = KtPsiFactory(target)
     // could be generated via descriptor when KT-30478 is fixed
-    val entry = target.addAnnotationEntry(
-        KtPsiFactory(target)
-            .createAnnotationEntry(
-                "@$annotationUseSiteTargetPrefix${request.qualifiedName}${
-                request.attributes.takeIf { it.isNotEmpty() }?.mapIndexed { i, p ->
-                    if (!kotlinAnnotation && i == 0 && p.name == "value")
-                        renderAttributeValue(p.value).toString()
-                    else
-                        "${p.name} = ${renderAttributeValue(p.value)}"
-                }?.joinToString(", ", "(", ")") ?: ""
-                }"
-            )
-    )
-    return entry
+    val annotationText = '@' + annotationUseSiteTargetPrefix + renderAnnotation(request, psiFactory, ::isKotlinAnnotation)
+    return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
 }
 
-private fun renderAttributeValue(annotationAttributeRequest: AnnotationAttributeValueRequest) =
+private fun renderAnnotation(
+    request: AnnotationRequest,
+    psiFactory: KtPsiFactory,
+    isKotlinAnnotation: (AnnotationRequest) -> Boolean
+): String {
+    return "${request.qualifiedName}${
+        request.attributes.takeIf { it.isNotEmpty() }?.mapIndexed { i, p ->
+            if (!isKotlinAnnotation(request) && i == 0 && p.name == "value")
+                renderAttributeValue(p.value, psiFactory, isKotlinAnnotation)
+            else
+                "${p.name} = ${renderAttributeValue(p.value, psiFactory, isKotlinAnnotation)}"
+        }?.joinToString(", ", "(", ")") ?: ""
+    }"
+}
+
+private fun renderAttributeValue(
+    annotationAttributeRequest: AnnotationAttributeValueRequest,
+    psiFactory: KtPsiFactory,
+    isKotlinAnnotation: (AnnotationRequest) -> Boolean,
+): String =
     when (annotationAttributeRequest) {
-        is AnnotationAttributeValueRequest.PrimitiveValue -> annotationAttributeRequest.value
+        is AnnotationAttributeValueRequest.PrimitiveValue -> annotationAttributeRequest.value.toString()
         is AnnotationAttributeValueRequest.StringValue -> "\"" + annotationAttributeRequest.value + "\""
+        is AnnotationAttributeValueRequest.ClassValue -> annotationAttributeRequest.classFqn + "::class"
+        is AnnotationAttributeValueRequest.ConstantValue -> annotationAttributeRequest.text
+        is AnnotationAttributeValueRequest.NestedAnnotation ->
+            renderAnnotation(annotationAttributeRequest.annotationRequest, psiFactory, isKotlinAnnotation)
+        is AnnotationAttributeValueRequest.ArrayValue ->
+            annotationAttributeRequest.members.joinToString(", ", "[", "]") { memberRequest ->
+                renderAttributeValue(memberRequest, psiFactory, isKotlinAnnotation)
+            }
     }

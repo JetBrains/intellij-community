@@ -22,6 +22,9 @@ class CommonIntentionActionsParametersTest : LightPlatformCodeInsightFixtureTest
     override fun setUp() {
         super.setUp()
         myFixture.configureByText("Anno.kt", "annotation class Anno(val i: Int)")
+        myFixture.configureByText("ClassRef.kt", "annotation class ClassRef(val klass: KClass<*>)")
+        myFixture.configureByText("Root.kt", "annotation class Root(val children: Array<Child>")
+        myFixture.configureByText("Child.kt", "annotation class Child(val s: String)")
     }
 
     fun testSetParameters() {
@@ -142,6 +145,31 @@ class CommonIntentionActionsParametersTest : LightPlatformCodeInsightFixtureTest
 
             class Foo {
                 fun bar(@Anno(1) a: Int, @Anno(i = 8) file: File, @Anno(3) c: Int) {}
+            }
+            """.trimIndent(), true
+        )
+    }
+
+    fun testChangeTypeWithComplexAnnotations() {
+        myFixture.configureByText(
+            "foo.kt",
+            """
+            class Foo {
+                fun ba<caret>r(@Anno(1) @Root([Child("a"), Child("b")]) a: Int) {}
+            }
+            """.trimIndent()
+        )
+
+        runParametersTransformation("Change method parameters to '(a: Long)'") { currentParameters ->
+            ArrayList<ExpectedParameter>(currentParameters).apply {
+                this[0] = expectedParameter(PsiType.LONG, this[0].semanticNames.first(), this[0].expectedAnnotations)
+            }
+        }
+
+        myFixture.checkResult(
+            """
+            class Foo {
+                fun bar(@Anno(i = 1) @Root(children = [Child(s = "a"), Child(s = "b")]) a: Long) {}
             }
             """.trimIndent(), true
         )
