@@ -5,9 +5,9 @@ import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
-public interface SrcFileAnnotatorBase extends Disposable {
+public interface CoverageEditorAnnotator extends Disposable {
 
-  void hideCoverageData();
+  void showCoverage(final CoverageSuitesBundle suite);
 
-  void showCoverageInformation(final CoverageSuitesBundle suite);
+  void hideCoverage();
 }

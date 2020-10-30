@@ -354,8 +354,8 @@ public abstract class CoverageEngine {
 
   @ApiStatus.Experimental
   @NotNull
-  public SrcFileAnnotatorBase createSrcFileAnnotator(PsiFile file, Editor editor) {
-    return new SrcFileAnnotator(file, editor);
+  public CoverageEditorAnnotator createSrcFileAnnotator(PsiFile file, Editor editor) {
+    return new CoverageEditorAnnotatorImpl(file, editor);
   }
 
   public static @TabTitle String getEditorTitle() {

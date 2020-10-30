@@ -112,7 +112,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   private CoverageSuitesBundle myCurrentSuitesBundle;
 
   private final Object ANNOTATORS_LOCK = new Object();
-  private final Map<Editor, SrcFileAnnotatorBase> myAnnotators = new HashMap<>();
+  private final Map<Editor, CoverageEditorAnnotator> myAnnotators = new HashMap<>();
 
   public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -486,7 +486,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           final Editor textEditor = ((TextEditor)editor).getEditor();
-          SrcFileAnnotatorBase annotator;
+          CoverageEditorAnnotator annotator;
           synchronized (ANNOTATORS_LOCK) {
             annotator = myAnnotators.remove(textEditor);
           }
@@ -500,7 +500,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           final Editor textEditor = ((TextEditor)editor).getEditor();
-          SrcFileAnnotatorBase annotator = getAnnotator(textEditor);
+          CoverageEditorAnnotator annotator = getAnnotator(textEditor);
           if (annotator == null) {
             annotator = engine.createSrcFileAnnotator(psiFile, textEditor);
             synchronized (ANNOTATORS_LOCK) {
@@ -509,7 +509,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
           }
 
           if (myCurrentSuitesBundle != null && engine.acceptedByFilters(psiFile, myCurrentSuitesBundle)) {
-            annotator.showCoverageInformation(myCurrentSuitesBundle);
+            annotator.showCoverage(myCurrentSuitesBundle);
           }
         }
       }
@@ -610,7 +610,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Nullable
-  public SrcFileAnnotatorBase getAnnotator(Editor editor) {
+  public CoverageEditorAnnotator getAnnotator(Editor editor) {
     synchronized (ANNOTATORS_LOCK) {
       return myAnnotators.get(editor);
     }
@@ -618,7 +618,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   public void disposeAnnotators() {
     synchronized (ANNOTATORS_LOCK) {
-      for (SrcFileAnnotatorBase annotator : myAnnotators.values()) {
+      for (CoverageEditorAnnotator annotator : myAnnotators.values()) {
         if (annotator != null) {
           Disposer.dispose(annotator);
         }
@@ -693,12 +693,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
             return;
           }
 
-          SrcFileAnnotatorBase annotator = manager.getAnnotator(editor);
+          CoverageEditorAnnotator annotator = manager.getAnnotator(editor);
           if (annotator == null) {
             annotator = engine.createSrcFileAnnotator(psiFile, editor);
           }
 
-          final SrcFileAnnotatorBase finalAnnotator = annotator;
+          final CoverageEditorAnnotator finalAnnotator = annotator;
 
           synchronized (manager.ANNOTATORS_LOCK) {
             manager.myAnnotators.put(editor, finalAnnotator);
@@ -709,7 +709,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
             CoverageSuitesBundle suitesBundle = manager.myCurrentSuitesBundle;
             if (suitesBundle != null) {
               if (engine.acceptedByFilters(psiFile, suitesBundle)) {
-                finalAnnotator.showCoverageInformation(suitesBundle);
+                finalAnnotator.showCoverage(suitesBundle);
               }
             }
           };
@@ -727,7 +727,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       CoverageDataManagerImpl manager = project.getServiceIfCreated(CoverageDataManagerImpl.class);
       try {
         if (manager == null) return;
-        final SrcFileAnnotatorBase fileAnnotator;
+        final CoverageEditorAnnotator fileAnnotator;
         synchronized (manager.ANNOTATORS_LOCK) {
           fileAnnotator = manager.myAnnotators.remove(editor);
         }
