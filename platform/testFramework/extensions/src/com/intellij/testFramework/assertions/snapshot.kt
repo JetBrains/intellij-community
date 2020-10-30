@@ -88,10 +88,14 @@ fun compareFileContent(actual: Any, snapshotFile: Path, updateIfMismatch: Boolea
     snapshotFile.write(StringBuilder(actualContent))
   }
   else {
+    val firstMismatch = StringUtil.commonPrefixLength(actualContent, expected)
+
     @Suppress("SpellCheckingInspection")
-    throw FileComparisonFailure(
-      "Received value does not match stored snapshot ${snapshotFile.fileName}.\nInspect your code changes or run with `-Dtest.update.snapshots` to update",
-      expected.toString(), actualContent.toString(), snapshotFile.toString())
+    val message = "Received value does not match stored snapshot ${snapshotFile.fileName} at ${firstMismatch}.\n" +
+                  "Expected: '${expected.contextAround(firstMismatch, 10)}'\n" +
+                  "Actual  : '${actualContent.contextAround(firstMismatch, 10)}'\n" +
+                  "Inspect your code changes or run with `-Dtest.update.snapshots` to update"
+    throw FileComparisonFailure(message, expected.toString(), actualContent.toString(), snapshotFile.toString())
   }
 }
 
@@ -111,3 +115,6 @@ private fun isUpdateSnapshotIfMismatch(): Boolean {
   val value = System.getProperty("test.update.snapshots")
   return value != null && (value.isEmpty() || value.toBoolean())
 }
+
+private fun CharSequence.contextAround(offset: Int, context: Int): String =
+  substring((offset - context).coerceAtLeast(0), (offset + context).coerceAtMost(length))
