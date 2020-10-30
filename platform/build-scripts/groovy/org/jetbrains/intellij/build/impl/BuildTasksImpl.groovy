@@ -640,7 +640,7 @@ idea.fatal.error.notification=disabled
     def pluginsGroupedByMainModule = nonTrivialPlugins.groupBy { it.mainModule }.values()
     for (List<PluginLayout> duplicatedPlugins : pluginsGroupedByMainModule) {
       if (duplicatedPlugins.size() > 1) {
-        buildContext.messages.error("Duplicated plugin description in productLayout.allNonTrivialPlugins: ${duplicatedPlugins[0].mainModule}")
+        buildContext.messages.warning("Duplicated plugin description in productLayout.allNonTrivialPlugins: ${duplicatedPlugins[0].mainModule}")
       }
     }
   }
