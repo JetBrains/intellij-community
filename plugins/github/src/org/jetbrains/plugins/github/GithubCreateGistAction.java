@@ -16,10 +16,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
@@ -44,6 +46,7 @@ import java.util.List;
  */
 public class GithubCreateGistAction extends DumbAwareAction {
   private static final Logger LOG = GithubUtil.LOG;
+  private static final Condition<@Nullable VirtualFile> FILE_WITH_CONTENT = f -> f != null && !(f.getFileType().isBinary());
 
   protected GithubCreateGistAction() {
     super(GithubBundle.messagePointer("create.gist.action.title"),
@@ -61,8 +64,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    boolean hasFilesWithContent = FILE_WITH_CONTENT.value(file) || (files != null && ContainerUtil.exists(files, FILE_WITH_CONTENT));
 
-    if ((editor == null && file == null && files == null) || (editor != null && editor.getDocument().getTextLength() == 0)) {
+    if (!hasFilesWithContent || editor != null && editor.getDocument().getTextLength() == 0) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -83,7 +87,13 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    createGistAction(project, editor, file, files);
+    createGistAction(project, editor, FILE_WITH_CONTENT.value(file) ? file : null, filterFilesWithContent(files));
+  }
+
+  private static VirtualFile @Nullable [] filterFilesWithContent(@Nullable VirtualFile @Nullable [] files) {
+    if (files == null) return null;
+
+    return ContainerUtil.filter(files, FILE_WITH_CONTENT).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   private static void createGistAction(@NotNull final Project project,
