@@ -21,7 +21,10 @@ sealed class Result<SUCC, ERR> {
     }
 
   val successOrNull: SUCC? get() = if (this is Success) result else null
-  fun successOr(@NonNls errorForLog: String): SUCC {
-    return (this as? Success)?.result ?: throw AssertionError(errorForLog)
+  fun orThrow(onError: (ERR) -> Throwable = { e -> AssertionError(e) }): SUCC {
+    when (this) {
+      is Success -> return result
+      is Failure -> throw onError(this.error)
+    }
   }
 }
