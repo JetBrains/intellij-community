@@ -19,7 +19,7 @@ import java.util.Map;
 import static java.util.Collections.emptyMap;
 
 public class EventLogExternalSettings {
-  public static final EventLogExternalSendSettings EMPTY = new EventLogExternalSendSettings(emptyMap(), emptyMap());
+  public static final EventLogExternalSendSettings EMPTY = new EventLogExternalSendSettings(emptyMap(), emptyMap(), emptyMap());
 
   public String productCode;
   public List<EventLogConfigVersions> versions;
@@ -60,7 +60,7 @@ public class EventLogExternalSettings {
         }
       }
     }
-    return new EventLogExternalSendSettings(version.getEndpoints(), configurations);
+    return new EventLogExternalSendSettings(version.getEndpoints(), version.getOptions(), configurations);
   }
 
   @Nullable
