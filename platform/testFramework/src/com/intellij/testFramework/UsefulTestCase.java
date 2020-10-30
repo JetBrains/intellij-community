@@ -126,7 +126,9 @@ public abstract class UsefulTestCase extends TestCase {
 
   static {
     IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
-    Logger.setFactory(TestLoggerFactory.class);
+    if (!Logger.isInitialized()) {
+      Logger.setFactory(TestLoggerFactory.class);
+    }
 
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
