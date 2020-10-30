@@ -7,11 +7,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor;
+import org.intellij.plugins.markdown.util.MarkdownPsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class MarkdownListImpl extends MarkdownCompositePsiElementBase {
+  private static final String ORDERED_LIST_TEXT = "Ordered list";
+  private static final String UNORDERED_LIST_TEXT = "Unordered list";
+
   public MarkdownListImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -39,27 +43,26 @@ public class MarkdownListImpl extends MarkdownCompositePsiElementBase {
     return new ItemPresentation() {
       @Override
       public String getPresentableText() {
-        PsiElement parent = getParent();
-
-        if (parent instanceof MarkdownListItemImpl) {
-          ItemPresentation itemPresentation = parent.getNode().getPsi(MarkdownListItemImpl.class).getPresentation();
-          if (itemPresentation != null) {
-            return itemPresentation.getPresentableText();
+        PsiElement[] parentChildren = getParent().getChildren();
+        if (MarkdownPsiUtil.isSimpleNestedList(parentChildren)) {
+          ItemPresentation parentPresentation = getParent().getNode().getPsi(MarkdownListItemImpl.class).getPresentation();
+          if (parentPresentation != null) {
+            return parentPresentation.getPresentableText();
           }
         }
 
         return getNode().getElementType() == MarkdownElementTypes.ORDERED_LIST
-               ? "Ordered list"
-               : "Unordered list";
+               ? ORDERED_LIST_TEXT
+               : UNORDERED_LIST_TEXT;
       }
 
       @Override
       public String getLocationString() {
-        PsiElement parent = getParent();
-        if (parent instanceof MarkdownListItemImpl) {
-          ItemPresentation itemPresentation = parent.getNode().getPsi(MarkdownListItemImpl.class).getPresentation();
-          if (itemPresentation != null) {
-            return itemPresentation.getLocationString();
+        PsiElement[] parentChildren = getParent().getChildren();
+        if (MarkdownPsiUtil.isSimpleNestedList(parentChildren)) {
+          ItemPresentation parentPresentation = getParent().getNode().getPsi(MarkdownListItemImpl.class).getPresentation();
+          if (parentPresentation != null) {
+            return parentPresentation.getLocationString();
           }
         }
 
@@ -68,11 +71,9 @@ public class MarkdownListImpl extends MarkdownCompositePsiElementBase {
 
       @Override
       public Icon getIcon(final boolean open) {
-        PsiElement parent = getParent();
-        if (parent instanceof MarkdownListItemImpl) {
-          return null;
-        }
-        return AllIcons.Actions.ListFiles;
+        return MarkdownPsiUtil.isSimpleNestedList(getParent().getChildren())
+               ? null
+               : AllIcons.Actions.ListFiles;
       }
     };
   }

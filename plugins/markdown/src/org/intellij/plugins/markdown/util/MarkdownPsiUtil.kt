@@ -37,16 +37,17 @@ internal object MarkdownPsiUtil {
   val PRESENTABLE_TYPES: TokenSet = MarkdownTokenTypeSets.HEADERS
 
   @JvmField
-  val PRESENTABLE_CONTAINERS = TokenSet.create(
-    MarkdownElementTypes.UNORDERED_LIST,
-    MarkdownElementTypes.ORDERED_LIST)
-
-  @JvmField
   val TRANSPARENT_CONTAINERS = TokenSet.create(
     MarkdownElementTypes.MARKDOWN_FILE,
     MarkdownElementTypes.UNORDERED_LIST,
     MarkdownElementTypes.ORDERED_LIST,
     MarkdownElementTypes.BLOCK_QUOTE)
+
+  private val PRESENTABLE_CONTAINERS = TokenSet.create(
+    MarkdownElementTypes.UNORDERED_LIST,
+    MarkdownElementTypes.ORDERED_LIST)
+
+  private val IGNORED_CONTAINERS = TokenSet.create(MarkdownElementTypes.BLOCK_QUOTE)
 
   private val HEADER_ORDER = listOf(
     TokenSet.create(MarkdownElementTypes.MARKDOWN_FILE_ELEMENT_TYPE),
@@ -79,6 +80,12 @@ internal object MarkdownPsiUtil {
     return null
   }
 
+  @JvmStatic
+  fun isSimpleNestedList(itemChildren: Array<PsiElement>) =
+    itemChildren.size == 2 &&
+    PsiUtilCore.getElementType(itemChildren[0]) == MarkdownElementTypes.PARAGRAPH &&
+    itemChildren[1] is MarkdownListImpl
+
   /*
    * nextHeaderConsumer 'null' means reaching EOF
    */
@@ -94,6 +101,11 @@ internal object MarkdownPsiUtil {
     when (myElement) {
       is MarkdownHeaderImpl -> processHeader(structureContainer, myElement, myElement, consumer, nextHeaderConsumer)
       is MarkdownListImpl -> processList(myElement, consumer)
+      is MarkdownListItemImpl -> {
+        if (!myElement.hasTrivialChildren()) {
+          processListItem(myElement, consumer)
+        }
+      }
       else -> processHeader(structureContainer, null, null, consumer, nextHeaderConsumer)
     }
   }
@@ -112,7 +124,8 @@ internal object MarkdownPsiUtil {
 
     while (nextSibling != null) {
       if (TRANSPARENT_CONTAINERS.contains(PsiUtilCore.getElementType(nextSibling)) && maxContentLevel == null) {
-        if (PRESENTABLE_CONTAINERS.contains(PsiUtilCore.getElementType(nextSibling))) {
+        if (!IGNORED_CONTAINERS.contains(PsiUtilCore.getElementType(container)) &&
+            PRESENTABLE_CONTAINERS.contains(PsiUtilCore.getElementType(nextSibling))) {
           resultConsumer.consume(nextSibling)
         }
         processHeader(nextSibling, null, null, resultConsumer, nextHeaderConsumer)
@@ -140,17 +153,34 @@ internal object MarkdownPsiUtil {
     var listItem = from.firstChild
 
     while (listItem != null) {
-      val itemChild = listItem.lastChild
-      if (TRANSPARENT_CONTAINERS.contains(PsiUtilCore.getElementType(itemChild))) {
-        if (PRESENTABLE_CONTAINERS.contains(PsiUtilCore.getElementType(itemChild))) {
-          resultConsumer.consume(itemChild)
-        }
-      }
-      else if (listItem is MarkdownListItemImpl) {
-        resultConsumer.consume(listItem)
+      val itemChildren = listItem.children
+      val isContainerIsFirst = (itemChildren.isNotEmpty() && PRESENTABLE_TYPES.contains(itemChildren[0].node.elementType)) ||
+                               (itemChildren.size == 1 && PRESENTABLE_CONTAINERS.contains(PsiUtilCore.getElementType(itemChildren[0])))
+
+      when {
+        isContainerIsFirst -> resultConsumer.consume(itemChildren[0])
+        isSimpleNestedList(itemChildren) -> resultConsumer.consume(itemChildren[1])
+        listItem is MarkdownListItemImpl -> resultConsumer.consume(listItem)
       }
 
       listItem = listItem.nextSibling
+    }
+  }
+
+  private fun processListItem(from: PsiElement,
+                              resultConsumer: Consumer<in PsiElement>) {
+    var itemChild = from.firstChild
+
+    while (itemChild != null) {
+      if (PRESENTABLE_TYPES.contains(itemChild.node.elementType)) {
+        resultConsumer.consume(itemChild)
+        break
+      }
+      else if (PRESENTABLE_CONTAINERS.contains(PsiUtilCore.getElementType(itemChild))) {
+        resultConsumer.consume(itemChild)
+      }
+
+      itemChild = itemChild.nextSibling
     }
   }
 
