@@ -185,13 +185,19 @@ public class JavaHomeFinderBasic {
    * Finds Java home directories installed by SDKMAN: https://github.com/sdkman
    */
   private @NotNull Set<@NotNull String> findJavaInstalledBySdkMan() {
-    Path candidatesDir = findSdkManCandidatesDir();
-    if (candidatesDir == null) return emptySet();
-    Path javasDir = candidatesDir.resolve("java");
-    if (!isDirectory(javasDir)) return emptySet();
-    //noinspection UnnecessaryLocalVariable
-    var homes = listJavaHomeDirsInstalledBySdkMan(javasDir);
-    return homes;
+    try {
+      Path candidatesDir = findSdkManCandidatesDir();
+      if (candidatesDir == null) return emptySet();
+      Path javasDir = candidatesDir.resolve("java");
+      if (!isDirectory(javasDir)) return emptySet();
+      //noinspection UnnecessaryLocalVariable
+      var homes = listJavaHomeDirsInstalledBySdkMan(javasDir);
+      return homes;
+    }
+    catch (Exception e) {
+      log.warn("Unexpected exception while looking for Sdkman directory: " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+      return emptySet();
+    }
   }
 
   @Nullable
@@ -251,7 +257,12 @@ public class JavaHomeFinderBasic {
             home = realHome;
           }
           catch (IOException ioe) {
-            log.warn("Failed to resolve the target file (exception) for: " + releaseFile.toString() + ": " + ioe.getMessage());
+            log.warn("Failed to resolve the target file for: " + releaseFile.toString() + ": " + ioe.getMessage());
+            continue;
+          }
+          catch (Exception e) {
+            log.warn("Failed to resolve the target file for: " + releaseFile.toString() + ": Unexpected exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            continue;
           }
         }
 
@@ -259,7 +270,11 @@ public class JavaHomeFinderBasic {
       }
     }
     catch (IOException ioe) {
-      log.warn("Unexpected exception while listing Java home directories installed by Sdkman: "+ioe.getMessage(), ioe);
+      log.warn("I/O exception while listing Java home directories installed by Sdkman: "+ioe.getMessage(), ioe);
+      return emptySet();
+    }
+    catch (Exception e) {
+      log.warn("Unexpected exception while listing Java home directories installed by Sdkman: " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
       return emptySet();
     }
 
