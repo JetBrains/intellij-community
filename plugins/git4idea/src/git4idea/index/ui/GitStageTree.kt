@@ -416,7 +416,8 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
                        else IconLoader.getDisabledIcon(baseIcon, this)
 
       val componentWidth = tree.getComponentWidth(foreground)
-      val background = ColorIcon(componentWidth, tree.getRowHeight(), componentWidth, tree.getRowHeight(),
+      val componentHeight = tree.getRowHeight().takeIf { it != 0 } ?: this.preferredSize.height
+      val background = ColorIcon(componentWidth, componentHeight, componentWidth, componentHeight,
                                  tree.getBackground(row, selected), false)
 
       val icon = LayeredIcon(2).apply {
