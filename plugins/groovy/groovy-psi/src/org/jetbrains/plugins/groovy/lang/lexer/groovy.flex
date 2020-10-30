@@ -117,6 +117,7 @@ mNUM_BIG_DECIMAL = {mNUM_DEC} (
 mLETTER = [:letter:] | "_"
 mIDENT = ({mLETTER}|\$) ({mLETTER} | {mDIGIT} | \$)*
 mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
+NOT_IDENT_PART=[^_[:letter:]0-9$]
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// String & regexprs ///////////////////////////////////////////////////////////////////////////////////////////
@@ -488,8 +489,8 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 "==="                                     { return storeToken(T_ID); }
 "=="                                      { return storeToken(T_EQ); }
 "!"                                       { return storeToken(T_NOT); }
-"!in"                                     { return storeToken(T_NOT_IN); }
-"!instanceof"                             { return storeToken(T_NOT_INSTANCEOF); }
+"!in"/{NOT_IDENT_PART}                    { return storeToken(T_NOT_IN); }
+"!instanceof"/{NOT_IDENT_PART}            { return storeToken(T_NOT_INSTANCEOF); }
 "~"                                       { return storeToken(T_BNOT); }
 "!=="                                     { return storeToken(T_NID); }
 "!="                                      { return storeToken(T_NEQ); }
