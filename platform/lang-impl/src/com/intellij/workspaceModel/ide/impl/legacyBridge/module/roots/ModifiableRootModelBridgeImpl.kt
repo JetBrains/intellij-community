@@ -105,6 +105,10 @@ class ModifiableRootModelBridgeImpl(
     return sourceRootPropertiesMap.computeIfAbsent(sourceRootUrl) { creator() }
   }
 
+  override fun removeCachedJpsRootProperties(sourceRootUrl: VirtualFileUrl) {
+    sourceRootPropertiesMap.remove(sourceRootUrl)
+  }
+
   private val contentEntries
     get() = entityStorageOnDiff.cachedValue(contentEntriesImplValue)
 
