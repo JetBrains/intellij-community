@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -579,9 +578,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<T> consumer) {
     ExtensionPointImpl<KeyedLazyInstance<T>> point = (ExtensionPointImpl<KeyedLazyInstance<T>>)collector.getPoint();
     if (point != null) {
-      ExtensionProcessingHelper.forEachExtensionSafe(point, instance -> {
+      for (KeyedLazyInstance<T> instance : point) {
         consumer.accept(instance.getInstance());
-      });
+      }
     }
   }
 }
