@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="libraryTable">
+  <library name="classgraph" type="repository">
+    <properties maven-id="io.github.classgraph:classgraph:4.8.90" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.90/classgraph-4.8.90.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.90/classgraph-4.8.90-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
