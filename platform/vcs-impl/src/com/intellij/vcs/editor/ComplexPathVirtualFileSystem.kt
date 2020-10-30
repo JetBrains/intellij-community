@@ -5,12 +5,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 
 abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.ComplexPath>(
   private val pathSerializer: ComplexPathSerializer<P>
-) : DeprecatedVirtualFileSystem() {
+) : DeprecatedVirtualFileSystem(), NonPhysicalFileSystem {
   protected abstract fun findOrCreateFile(project: Project, path: P): VirtualFile?
 
   fun getPath(path: P): String = pathSerializer.serialize(path)
