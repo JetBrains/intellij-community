@@ -18,6 +18,7 @@ import java.util.Map;
 public class EventLogMetadataSettingsPersistence implements PersistentStateComponent<Element> {
   private final Map<String, Long> myLastModifications = new HashMap<>();
   private final Map<String, EventsSchemePathSettings> myRecorderToPathSettings = new HashMap<>();
+  private final Map<String, String> myOptions = new HashMap<>();
 
   private static final String MODIFY = "update";
   private static final String RECORDER_ID = "recorder-id";
@@ -25,9 +26,21 @@ public class EventLogMetadataSettingsPersistence implements PersistentStateCompo
   private static final String PATH = "path";
   private static final String CUSTOM_PATH = "custom-path";
   private static final String USE_CUSTOM_PATH = "use-custom-path";
+  private static final String OPTIONS = "option";
+  private static final String OPTION_NAME = "name";
+  private static final String OPTION_VALUE = "value";
 
   public static EventLogMetadataSettingsPersistence getInstance() {
     return ApplicationManager.getApplication().getService(EventLogMetadataSettingsPersistence.class);
+  }
+
+  @Nullable
+  public String getOptionValue(@NotNull String name) {
+    return myOptions.get(name);
+  }
+
+  public void setOptionValue(@NotNull String name, @NotNull String value) {
+    myOptions.put(name, value);
   }
 
   public long getLastModified(@NotNull String recorderId) {
@@ -68,6 +81,15 @@ public class EventLogMetadataSettingsPersistence implements PersistentStateCompo
         myRecorderToPathSettings.put(recorder, new EventsSchemePathSettings(customPath, useCustomPath));
       }
     }
+
+    myOptions.clear();
+    for (Element option : element.getChildren(OPTIONS)) {
+      String name = option.getAttributeValue(OPTION_NAME);
+      String value = option.getAttributeValue(OPTION_VALUE);
+      if (name != null && value != null) {
+        myOptions.put(name, value);
+      }
+    }
   }
 
   private static boolean parseUseCustomPath(@NotNull Element update) {
@@ -106,6 +128,13 @@ public class EventLogMetadataSettingsPersistence implements PersistentStateCompo
       path.setAttribute(CUSTOM_PATH, value.getCustomPath());
       path.setAttribute(USE_CUSTOM_PATH, String.valueOf(value.isUseCustomPath()));
       element.addContent(path);
+    }
+
+    for (Map.Entry<String, String> entry : myOptions.entrySet()) {
+      Element option = new Element(OPTIONS);
+      option.setAttribute(OPTION_NAME, entry.getKey());
+      option.setAttribute(OPTION_VALUE, entry.getValue());
+      element.addContent(option);
     }
 
     return element;
