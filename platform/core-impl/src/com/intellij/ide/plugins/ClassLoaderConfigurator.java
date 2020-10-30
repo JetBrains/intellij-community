@@ -260,6 +260,13 @@ final class ClassLoaderConfigurator {
       }
     }
 
+    // for classes like com.intellij.thymeleaf.lang.ThymeleafParserDefinition$SPRING_SECURITY_EXPRESSIONS
+    // we must not try to load the containing package
+    if (name.indexOf('$') != -1) {
+      packagePrefixes.add(name);
+      return;
+    }
+
     int lastPackageDot = name.lastIndexOf('.');
     if (lastPackageDot > 0 && lastPackageDot != name.length()) {
       addPackagePrefixIfNeeded(packagePrefixes, name.substring(0, lastPackageDot + 1));
@@ -272,7 +279,7 @@ final class ClassLoaderConfigurator {
       if (packagePrefix.startsWith(existingPackagePrefix)) {
         return;
       }
-      else if (existingPackagePrefix.startsWith(packagePrefix)) {
+      else if (existingPackagePrefix.startsWith(packagePrefix) && existingPackagePrefix.indexOf('$') == -1) {
         packagePrefixes.set(i, packagePrefix);
         for (int j = packagePrefixes.size() - 1; j > i; j--) {
           existingPackagePrefix = packagePrefixes.get(i);

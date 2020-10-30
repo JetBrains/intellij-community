@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.ApplicationStarter
@@ -40,7 +40,6 @@ class JarOrderStarter : ApplicationStarter {
    * path/to/intellij.platform.bootstrap
    * path/to/intellij.platform.impl
    * path/to/log4j-1.4.5.jar
-   * path/to/trove-4.4.4.jar
    * path/to/intellij.platform.api
    * ...
    * Afterward the build scripts convert the output file to the final list of jar files (classpath-order.txt)
@@ -62,7 +61,7 @@ class JarOrderStarter : ApplicationStarter {
 
   /**
    * Generates class loading order file.
-   * 
+   *
    * Format:
    * com/package/ClassName.class:path/to/intellij.platform.impl
    * com/package2/ClassName2.class:path/to/module
