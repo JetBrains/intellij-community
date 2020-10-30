@@ -611,7 +611,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
       }
 
-      lifecycleListener.appWillBeClosed(restart);
+      try {
+        lifecycleListener.appWillBeClosed(restart);
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+      }
+
       LifecycleUsageTriggerCollector.onIdeClose(restart);
 
       if (BitUtil.isSet(flags, SAVE)) {
