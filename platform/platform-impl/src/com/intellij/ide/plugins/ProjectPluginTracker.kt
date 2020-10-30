@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class ProjectPluginTracker(
   internal val project: Project,
-  private val state: ProjectPluginTrackerState
+  private val state: ProjectPluginTrackerState,
 ) {
 
   companion object {
@@ -28,8 +28,10 @@ class ProjectPluginTracker(
 
       fun register(id: PluginId, enable: Boolean) {
         val idString = id.idString
-        if (!setToRemoveFrom(enable).remove(idString)) {
-          setToAddTo(enable).add(idString)
+        val setToRemoveFrom = if (enable) disabledPlugins else enabledPlugins
+        if (!setToRemoveFrom.remove(idString)) {
+          val setToAddTo = if (enable) enabledPlugins else disabledPlugins
+          setToAddTo.add(idString)
         }
       }
 
@@ -39,23 +41,6 @@ class ProjectPluginTracker(
           disabledPlugins.remove(idString)
         }
       }
-
-      internal fun loadUnloadPlugins(project: Project, enable: Boolean) {
-        ProjectPluginTrackerManager.loadPlugins(
-          setToAddTo(enable).findPluginById(),
-        )
-
-        ProjectPluginTrackerManager.unloadPlugins(
-          setToRemoveFrom(enable).findPluginById(),
-          project,
-        )
-      }
-
-      private fun setToAddTo(enable: Boolean) = if (enable) enabledPlugins else disabledPlugins
-
-      private fun setToRemoveFrom(enable: Boolean) = if (enable) disabledPlugins else enabledPlugins
-
-      private fun Set<String>.findPluginById() = mapNotNull { PluginId.findId(it) }.mapNotNull { PluginManagerCore.getPlugin(it) }
     }
 
     internal class EnableDisablePluginsActivity : StartupActivity.RequiredForSmartMode {
@@ -67,12 +52,25 @@ class ProjectPluginTracker(
       }
 
       override fun runActivity(project: Project) {
-        ProjectPluginTrackerManager.getInstance()
-          .createPluginTracker(project)
-          .loadUnloadPlugins(true)
+        val manager = ProjectPluginTrackerManager.getInstance()
+        val tracker = manager.createPluginTracker(project)
+        val trackers = manager.openProjectsPluginTrackers(project)
+
+        ProjectPluginTrackerManager.loadPlugins(
+          tracker.enabledPluginIds(trackers)
+        )
+
+        manager.unloadPlugins(
+          tracker.disabledPluginIds,
+          project,
+        )
       }
     }
   }
+
+  private val enabledPluginIds get() = state.enabledPlugins.findPluginId()
+
+  private val disabledPluginIds get() = state.disabledPlugins.findPluginId()
 
   fun changeEnableDisable(pluginId: PluginId, newState: PluginEnabledState) {
     if (newState.isPerProject) {
@@ -87,5 +85,19 @@ class ProjectPluginTracker(
 
   fun isDisabled(pluginId: PluginId) = state.disabledPlugins.contains(pluginId.idString)
 
-  internal fun loadUnloadPlugins(enable: Boolean) = state.loadUnloadPlugins(project, enable)
+  internal fun enabledPluginIds(trackers: List<ProjectPluginTracker>): Collection<PluginId> {
+    return trackers
+      .flatMap { it.disabledPluginIds() }
+      .union(enabledPluginIds)
+  }
+
+  internal fun disabledPluginIds(trackers: List<ProjectPluginTracker> = listOf()): Collection<PluginId> {
+    return disabledPluginIds
+      .filterNot { pluginId ->
+        DisabledPluginsState.disabledPlugins().contains(pluginId) ||
+        trackers.isNotEmpty() && trackers.all { it.isDisabled(pluginId) }
+      }
+  }
+
+  private fun Set<String>.findPluginId() = mapNotNull { PluginId.findId(it) }
 }

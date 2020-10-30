@@ -23,7 +23,8 @@ class ProjectDependentPluginEnabledState(
           ""
         else
           ProjectPluginTrackerManager
-            .openProjectsManagers(project)
+            .getInstance()
+            .openProjectsPluginTrackers(project)
             .filter { it.isEnabled(pluginId) }
             .joinToString(limit = 3) { "<code>${it.project.name}</code>" }
       }

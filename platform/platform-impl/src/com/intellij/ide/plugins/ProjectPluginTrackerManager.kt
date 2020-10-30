@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -49,44 +50,26 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       return if (state.isEnabled)
         loadPlugins(descriptors)
       else
-        unloadPlugins(descriptors, project, parentComponent)
+        getInstance().unloadPlugins(descriptors, project, parentComponent)
     }
 
     @JvmStatic
-    internal fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
-      /*
-      model: enabled (descriptor, disabledList, load), enabled per project (descriptor, load)
-      project opening: enabled per project (descriptor, load)
-      project closing: disabled per project (descriptor, load iff not is disabled globally)
+    internal fun loadPlugins(candidatesToLoad: Collection<PluginId>) {
+      loadPlugins(
+        candidatesToLoad.findPluginById()
+      )
+    }
 
-      P1, plugin is disabled per project
-      try to open P2 (new window)
-      how to enable the plugin?
-      */
+    @JvmStatic
+    private fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
+      /*
+     model: enabled (descriptor, disabledList, load), enabled per project (descriptor, load)
+     project opening: enabled per project (descriptor, load)
+     project closing: disabled per project (descriptor, load iff not is disabled globally)
+     */
 
       return descriptors.isEmpty() ||
              DynamicPlugins.loadPlugins(descriptors).requireRestartIfNecessary()
-    }
-
-    @JvmStatic
-    @JvmOverloads
-    internal fun unloadPlugins(
-      descriptors: Collection<IdeaPluginDescriptor>,
-      project: Project? = null,
-      parentComponent: JComponent? = null,
-    ): Boolean {
-      /*
-      model: disabled (descriptor, disabledList, unload iff not is used), enabled per project (descriptor, unload if not is used)
-      project opening: disabled per project (descriptor, unload if not is used)
-      project closing: enabled per project (descriptor, unload ???)
-       */
-
-      return descriptors.isEmpty() ||
-             DynamicPlugins.unloadPlugins(
-               descriptors.filter(shouldUnload(project)),
-               project,
-               parentComponent,
-             ).requireRestartIfNecessary()
     }
 
     class ProjectPluginTrackerManagerState : BaseState() {
@@ -95,31 +78,14 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       var trackers by map<String, ProjectPluginTracker.Companion.ProjectPluginTrackerState>()
     }
 
-    @JvmStatic
-    internal fun openProjectsManagers(project: Project?) =
-      ProjectManager
-        .getInstance()
-        .openProjects
-        .filterNot { it == project }
-        .mapNotNull { createPluginTrackerOrNull(it) }
-        .toList()
-
-    private fun shouldUnload(project: Project?): (IdeaPluginDescriptor) -> Boolean {
-      val managers = openProjectsManagers(project)
-
-      return { descriptor ->
-        val pluginId = descriptor.pluginId
-        managers.all { !it.isEnabled(pluginId) } &&
-        (DisabledPluginsState.disabledPlugins().contains(pluginId) || managers.all { it.isDisabled(pluginId) })
-      }
-    }
-
     private fun Boolean.requireRestartIfNecessary(): Boolean {
       if (!this) {
         InstalledPluginsState.getInstance().isRestartRequired = true
       }
       return this
     }
+
+    private fun Collection<PluginId>.findPluginById() = mapNotNull { PluginManagerCore.getPlugin(it) }
   }
 
   private var applicationShuttingDown = false
@@ -131,7 +97,18 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       object : ProjectManagerListener {
         override fun projectClosing(project: Project) {
           if (applicationShuttingDown) return
-          createPluginTracker(project).loadUnloadPlugins(false)
+
+          val tracker = createPluginTracker(project)
+          val trackers = openProjectsPluginTrackers(project)
+
+          loadPlugins(
+            tracker.disabledPluginIds(trackers)
+          )
+
+          unloadPlugins(
+            tracker.enabledPluginIds(trackers),
+            project,
+          )
         }
       }
     )
@@ -151,7 +128,54 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     val key = workspaceId ?: project.name
     return ProjectPluginTracker(
       project,
-      state.trackers.getOrPut(key) { ProjectPluginTracker.Companion.ProjectPluginTrackerState() }
+      state.trackers.getOrPut(key) { ProjectPluginTracker.Companion.ProjectPluginTrackerState() },
     )
+  }
+
+  internal fun unloadPlugins(
+    candidatesToUnload: Collection<PluginId>,
+    project: Project? = null,
+  ) {
+    unloadPlugins(
+      candidatesToUnload.findPluginById(),
+      project,
+    )
+  }
+
+  private fun unloadPlugins(
+    descriptors: Collection<IdeaPluginDescriptor>,
+    project: Project? = null,
+    parentComponent: JComponent? = null,
+  ): Boolean {
+    /*
+    model: disabled (descriptor, disabledList, unload iff not is used), enabled per project (descriptor, unload if not is used)
+    project opening: disabled per project (descriptor, unload if not is used)
+    project closing: enabled per project (descriptor, unload ???)
+     */
+
+    return descriptors.isEmpty() ||
+           DynamicPlugins.unloadPlugins(
+             descriptors.filter(shouldUnload(project)),
+             project,
+             parentComponent,
+           ).requireRestartIfNecessary()
+  }
+
+  internal fun openProjectsPluginTrackers(project: Project?): List<ProjectPluginTracker> {
+    return ProjectManager
+      .getInstance()
+      .openProjects
+      .filterNot { it == project }
+      .map { createPluginTracker(it) }
+  }
+
+  private fun shouldUnload(project: Project?): (IdeaPluginDescriptor) -> Boolean {
+    val trackers = openProjectsPluginTrackers(project)
+
+    return { descriptor ->
+      val pluginId = descriptor.pluginId
+      trackers.all { !it.isEnabled(pluginId) } &&
+      (DisabledPluginsState.disabledPlugins().contains(pluginId) || trackers.all { it.isDisabled(pluginId) })
+    }
   }
 }
