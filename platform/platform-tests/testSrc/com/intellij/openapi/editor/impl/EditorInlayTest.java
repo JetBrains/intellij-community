@@ -364,15 +364,17 @@ public class EditorInlayTest extends AbstractEditorTest {
   public void testInlayIsAddedIntoCollapsedFoldRegion() {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
-    EditorTestUtil.addBlockInlay(getEditor(), 0, true, false, 0, null);
+    Inlay inlay = EditorTestUtil.addBlockInlay(getEditor(), 0, true, false, 0, null);
     assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT), getEditor().visualLineToY(1));
+    assertNull(inlay.getBounds());
   }
 
   public void testInlayIsAddedIntoCollapsedFoldRegionDifferentRelatesFlag() {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
-    EditorTestUtil.addBlockInlay(getEditor(), 0, false, false, 0, null);
+    Inlay inlay = EditorTestUtil.addBlockInlay(getEditor(), 0, false, false, 0, null);
     assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT) * 2, getEditor().visualLineToY(1));
+    assertNotNull(inlay.getBounds());
   }
 
   public void testVerticalCaretMovementInPresenceOfBothTypesOfInlays() {
