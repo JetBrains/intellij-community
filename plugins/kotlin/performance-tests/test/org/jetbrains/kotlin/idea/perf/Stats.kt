@@ -5,12 +5,16 @@
 
 package org.jetbrains.kotlin.idea.perf
 
-import org.jetbrains.kotlin.idea.perf.whole.WholeProjectPerformanceTest.Companion.nsToMs
+import org.jetbrains.kotlin.idea.perf.WholeProjectPerformanceTest.Companion.nsToMs
 import org.jetbrains.kotlin.idea.perf.profilers.*
 import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
+import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.util.PerformanceCounter
 import java.io.*
 import java.lang.ref.WeakReference
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.HashMap
@@ -49,7 +53,7 @@ class Stats(
 
         metricChildren.add(
             Metric(
-                "_value", metricValue = calcMean.mean.toLong(),
+                "", metricValue = calcMean.mean.toLong(),
                 hasError = hasError,
                 metricError = calcMean.stdDev.toLong(),
                 rawMetrics = rawMetricChildren
@@ -137,9 +141,6 @@ class Stats(
                         TeamCity.test(stabilityName, errorDetails = error, includeStats = false) {
                             metricChildren.add(Metric("stability", metricValue = stabilityPercentage.toLong()))
                         }
-
-                        TeamCity.test("$name: $testName geomMean", durationMs = calcMean.geomMean.toLong()) {}
-                        TeamCity.test("$name: $testName stdDev", durationMs = calcMean.stdDev.toLong()){}
                     }
 
                     processTimings(testName, statInfoArray, metricChildren)
@@ -161,8 +162,6 @@ class Stats(
         } else {
             block()
         }
-
-        flush()
     }
 
     private fun convertStatInfoIntoMetrics(
@@ -323,8 +322,8 @@ class Stats(
         phaseName: String,
         profilerConfig: ProfilerConfig
     ): PhaseProfiler {
-        profilerConfig.name = "$testName${if (phaseName.isEmpty()) "" else "-$phaseName"}"
-        profilerConfig.path = pathToResource("profile/${plainname(name)}").path
+        profilerConfig.name = "$testName${if (phaseName.isEmpty()) "" else "-"+phaseName}"
+        profilerConfig.path = pathToResource("profile/${plainname(name)}")
         val profilerHandler = if (profilerConfig.enabled && !profilerConfig.warmup)
             ProfilerHandler.getInstance(profilerConfig)
         else
@@ -351,7 +350,7 @@ class Stats(
         flush()
     }
 
-    private fun flush() {
+    fun flush() {
         val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
 //        properties["buildTimestamp"] = simpleDateFormat.format(Date())
@@ -362,7 +361,6 @@ class Stats(
         var buildId: Int? = null
         var agentName: String? = null
         var buildBranch: String? = null
-        var commit: String? = null
 
         System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE")?.let { teamcityConfig ->
             val buildProperties = Properties()
@@ -371,7 +369,6 @@ class Stats(
             buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
             agentName = buildProperties["agent.name"]?.toString()
             buildBranch = buildProperties["teamcity.build.branch"]?.toString()
-            commit = buildProperties["build.vcs.number"]?.toString()
         }
 
         if (perfTestRawDataMs.isNotEmpty()) {
@@ -384,7 +381,6 @@ class Stats(
                 val benchmark = Benchmark(
                     agentName = agentName,
                     buildBranch = buildBranch,
-                    commit = commit,
                     buildId = buildId,
                     benchmark = name,
                     name = it.metricName,
@@ -395,12 +391,38 @@ class Stats(
                 )
 
                 benchmark.writeJson()
-                ESUploader.upload(benchmark)
+
+                //rebuildGeomMean(agentName, buildBranch, buildId, simpleDateFormat, benchmark)
             }
         } finally {
             metric = null
         }
         //metrics.writeCSV(name, header)
+    }
+
+    private fun rebuildGeomMean(
+        agentName: String?,
+        buildBranch: String?,
+        buildId: Int?,
+        simpleDateFormat: SimpleDateFormat,
+        benchmark: Benchmark
+    ) {
+        with(
+            Benchmark(
+                agentName = agentName,
+                buildBranch = buildBranch,
+                buildId = buildId,
+                benchmark = name,
+                synthetic = true,
+                name = "geomMean",
+                buildTimestamp = simpleDateFormat.format(Date())
+            )
+        ) {
+            loadJson()
+            merge(benchmark)
+
+            writeJson()
+        }
     }
 
     companion object {
@@ -410,7 +432,7 @@ class Stats(
         const val WARM_UP = "warm-up"
         const val GEOM_MEAN = "geomMean"
 
-        internal val extraMetricNames = setOf("", "_value", GEOM_MEAN, "mean", "stdDev")
+        internal val extraMetricNames = setOf("", GEOM_MEAN, "mean", "stdDev")
 
         inline fun runAndMeasure(note: String, block: () -> Unit) {
             val openProjectMillis = measureTimeMillis {
