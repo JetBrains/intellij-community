@@ -321,7 +321,7 @@ public class SMTestProxy extends AbstractTestProxy {
       }
     }
 
-    return location.getOpenFileDescriptor();
+    return location.getNavigatable();
   }
 
   public boolean isSuite() {
