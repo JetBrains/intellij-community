@@ -273,9 +273,6 @@ class CommunityRepositoryModules {
     plugin("intellij.gauge"),
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
-    },
-    plugin("intellij.codeWithMe.plugin") {
-      withModule("intellij.codeWithMe.plugin.terminal")
     }
   ]
 
