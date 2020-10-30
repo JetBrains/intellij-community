@@ -33,7 +33,7 @@ final class ClassLoaderConfigurator {
 
   // this list doesn't duplicate of PluginXmlFactory.CLASS_NAMES - interface related must be not here
   private static final @NonNls Set<String> IMPL_CLASS_NAMES = new ReferenceOpenHashSet<>(Arrays.asList(
-    "implementation", "implementationClass",
+    "implementation", "implementationClass", "builderClass",
     "serviceImplementation", "class", "className",
     "instance", "implementation-class"));
 
@@ -221,11 +221,16 @@ final class ClassLoaderConfigurator {
       loaders.add(mainDependentClassLoader);
       addLoaderOrLogError(dependent, dependency, loaders);
 
-      dependent.setClassLoader(new SubPluginClassLoader(dependent,
-                                                        urlClassLoaderBuilder,
-                                                        loaders.toArray(EMPTY_CLASS_LOADER_ARRAY),
-                                                        packagePrefixes.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY),
-                                                        coreLoader));
+      SubPluginClassLoader subClassloader = new SubPluginClassLoader(dependent,
+                                                                     urlClassLoaderBuilder,
+                                                                     loaders.toArray(EMPTY_CLASS_LOADER_ARRAY),
+                                                                     packagePrefixes.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY),
+                                                                     coreLoader);
+      dependent.setClassLoader(subClassloader);
+
+      if (dependent.pluginDependencies != null) {
+        configureSubPlugins(subClassloader, dependent.pluginDependencies, urlClassLoaderBuilder);
+      }
     }
   }
 

@@ -189,7 +189,7 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   // doesn't make sense to intern class name since it is unique
   // ouch, do we really cannot agree how to name implementation class attribute?
   private static final @NonNls Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(Arrays.asList(
-    "implementation", "implementationClass",
+    "implementation", "implementationClass", "builderClass",
     "serviceImplementation", "class", "className", "beanClass",
     "serviceInterface", "interface", "interfaceClass", "instance", "implementation-class",
     "qualifiedName"));
