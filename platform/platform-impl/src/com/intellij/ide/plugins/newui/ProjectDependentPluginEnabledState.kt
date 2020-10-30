@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui
 import com.intellij.icons.AllIcons.General.ProjectConfigurable
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginEnabledState
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.ProjectPluginTrackerManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -25,7 +26,7 @@ class ProjectDependentPluginEnabledState(
           ProjectPluginTrackerManager
             .getInstance()
             .openProjectsPluginTrackers(project)
-            .filter { it.isEnabled(pluginId) }
+            .filter { !PluginManagerCore.isDisabled(pluginId) || it.isEnabled(pluginId) }
             .joinToString(limit = 3) { "<code>${it.project.name}</code>" }
       }
       return _projectNames ?: throw IllegalStateException("Should not be used outside EDT")
