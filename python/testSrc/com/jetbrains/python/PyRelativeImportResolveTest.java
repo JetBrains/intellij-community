@@ -16,10 +16,7 @@
 package com.jetbrains.python;
 
 import com.intellij.application.options.RegistryManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
@@ -160,18 +157,20 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     PsiManager psiManager = myFixture.getPsiManager();
 
-    PsiFile pkgOrigin = psiManager.findFile(myFixture.findFileInTempDir("pkg/main.py"));
+    PsiFile pkgOrigin = psiManager.findFile(myFixture.findFileInTempDir("dir/main.py"));
     PyQualifiedNameResolveContext pkgContext = PyResolveImportUtil.fromFoothold(pkgOrigin).copyWithRelative(0);
     List<PsiElement> pkgResults = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString("os"), pkgContext);
-    PsiElement pkgOsModule = assertOneElement(pkgResults);
-    assertEquals(myFixture.findFileInTempDir("pkg/os.py"), pkgOsModule.getContainingFile().getVirtualFile());
+    PsiElement pkgSingleResult = assertOneElement(pkgResults);
+    PsiFileSystemItem pkgOsModule = assertInstanceOf(pkgSingleResult, PsiFileSystemItem.class);
+    assertEquals(myFixture.findFileInTempDir("dir/os.py"), pkgOsModule.getVirtualFile());
     assertTrue(psiManager.isInProject(pkgOsModule));
 
     PsiFile absOrigin = psiManager.findFile(myFixture.findFileInTempDir("main.py"));
     PyQualifiedNameResolveContext absContext = PyResolveImportUtil.fromFoothold(absOrigin).copyWithRelative(0);
     List<PsiElement> absResults = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString("os"), absContext);
-    PsiElement absOsModule = assertOneElement(absResults);
-    assertNotEquals(myFixture.findFileInTempDir("pkg/os.py"), absOrigin.getContainingFile().getVirtualFile());
+    PsiElement absSingleResult = assertOneElement(absResults);
+    PsiFileSystemItem absOsModule = assertInstanceOf(absSingleResult, PsiFileSystemItem.class);
+    assertNotEquals(myFixture.findFileInTempDir("dir/os.py"), absOsModule.getVirtualFile());
     assertFalse(psiManager.isInProject(absOsModule));
   }
 
