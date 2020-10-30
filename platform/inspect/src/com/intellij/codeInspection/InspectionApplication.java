@@ -8,6 +8,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.targets.QodanaConfig;
+import com.intellij.codeInspection.targets.QodanaProfile;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.diagnostic.ThreadDumper;
@@ -247,10 +248,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
     myQodanaConfig = loadQodanaConfig(projectPath);
-    myInspectionProfile = myQodanaConfig.getProfile().loadProfile(this, project);
-    if (myInspectionProfile == null) {
-      myInspectionProfile = loadInspectionProfile(project);
-    }
+    myInspectionProfile = loadInspectionProfile(project);
+
     if (myInspectionProfile == null) return;
     myQodanaConfig.updateToolsScopes(myInspectionProfile, project);
 
@@ -267,7 +266,17 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
   private QodanaConfig loadQodanaConfig(Path projectPath) {
     if (myQodanaRun) {
-      return QodanaConfig.Companion.load(projectPath);
+      QodanaConfig config = QodanaConfig.Companion.load(projectPath);
+      QodanaProfile profile = config.getProfile();
+      String name = profile.getName();
+      if (!name.isEmpty()) {
+        myProfileName = name;
+        return config;
+      }
+
+      String path = profile.getPath();
+      if (!path.isEmpty()) myProfilePath = path;
+      return config;
     } else {
       return QodanaConfig.EMPTY;
     }
