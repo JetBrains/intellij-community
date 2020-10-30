@@ -23,33 +23,33 @@ public class EventLogConfigOptionsService {
     return ApplicationManager.getApplication().getService(EventLogConfigOptionsService.class);
   }
 
-  public void updateOptions(@NotNull EventLogMetadataLoader loader) {
+  public void updateOptions(@NotNull String recorderId, @NotNull EventLogMetadataLoader loader) {
     EventLogMetadataSettingsPersistence persisted = EventLogMetadataSettingsPersistence.getInstance();
     for (String option : ourOptions) {
-      String value = persisted.getOptionValue(option);
+      String value = persisted.getOptionValue(recorderId, option);
       String newValue = loader.getOptionValue(option);
       if (newValue != null && !StringUtil.equals(value, newValue)) {
-        persisted.setOptionValue(option, newValue);
+        persisted.setOptionValue(recorderId, option, newValue);
 
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).optionChanged(option, newValue);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).optionChanged(recorderId, option, newValue);
       }
     }
   }
 
-  public int getThreshold() {
-    return getPersistedOption(DATA_THRESHOLD);
+  public int getThreshold(@NotNull String recorderId) {
+    return getPersistedOption(recorderId, DATA_THRESHOLD);
   }
 
-  public int getGroupThreshold() {
-    return getPersistedOption(GROUP_THRESHOLD);
+  public int getGroupThreshold(@NotNull String recorderId) {
+    return getPersistedOption(recorderId, GROUP_THRESHOLD);
   }
 
-  public int getGroupAlertThreshold() {
-    return getPersistedOption(GROUP_ALERT_THRESHOLD);
+  public int getGroupAlertThreshold(@NotNull String recorderId) {
+    return getPersistedOption(recorderId, GROUP_ALERT_THRESHOLD);
   }
 
-  private static int getPersistedOption(@NotNull String name) {
-    return tryParseInt(EventLogMetadataSettingsPersistence.getInstance().getOptionValue(name));
+  private static int getPersistedOption(@NotNull String recorderId, @NotNull String name) {
+    return tryParseInt(EventLogMetadataSettingsPersistence.getInstance().getOptionValue(recorderId, name));
   }
 
   private static int tryParseInt(@Nullable String value) {
@@ -68,20 +68,28 @@ public class EventLogConfigOptionsService {
     Topic<EventLogConfigOptionsListener> TOPIC =
       Topic.create("EventLogExternalConfigOptionsListener", EventLogConfigOptionsListener.class);
 
-    void optionChanged(@NotNull String name, @NotNull String value);
+    void optionChanged(@NotNull String recorderId, @NotNull String name, @NotNull String value);
   }
 
   public abstract static class EventLogThresholdConfigOptionsListener implements EventLogConfigOptionsListener {
+    private final String myRecorderId;
+
+    protected EventLogThresholdConfigOptionsListener(@NotNull String recorderId) {
+      myRecorderId = recorderId;
+    }
+
     @Override
-    public void optionChanged(@NotNull String name, @NotNull String value) {
-      if (StringUtil.equals(name, DATA_THRESHOLD)) {
-        onThresholdChanged(tryParseInt(value));
-      }
-      else if (StringUtil.equals(name, GROUP_THRESHOLD)) {
-        onGroupThresholdChanged(tryParseInt(value));
-      }
-      else if (StringUtil.equals(name, GROUP_ALERT_THRESHOLD)) {
-        onGroupAlertThresholdChanged(tryParseInt(value));
+    public void optionChanged(@NotNull String recorderId, @NotNull String name, @NotNull String value) {
+      if (StringUtil.equals(myRecorderId, recorderId)) {
+        if (StringUtil.equals(name, DATA_THRESHOLD)) {
+          onThresholdChanged(tryParseInt(value));
+        }
+        else if (StringUtil.equals(name, GROUP_THRESHOLD)) {
+          onGroupThresholdChanged(tryParseInt(value));
+        }
+        else if (StringUtil.equals(name, GROUP_ALERT_THRESHOLD)) {
+          onGroupAlertThresholdChanged(tryParseInt(value));
+        }
       }
     }
 

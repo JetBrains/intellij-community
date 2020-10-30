@@ -91,7 +91,7 @@ public class ValidationRulesPersistedStorage extends BaseValidationRulesPersiste
 
   @Override
   public void update() {
-    EventLogConfigOptionsService.getInstance().updateOptions(myMetadataLoader);
+    EventLogConfigOptionsService.getInstance().updateOptions(myRecorderId, myMetadataLoader);
 
     long lastModifiedLocally = myMetadataPersistence.getLastModified();
     long lastModifiedOnServer = myMetadataLoader.getLastModifiedOnServer();
