@@ -186,8 +186,8 @@ public class SensitiveDataValidator {
                                    @Nullable EventGroupRules groupRules,
                                    @NotNull String key,
                                    @NotNull Object entryValue) {
-    if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA;
-    if (groupRules == null) return UNDEFINED_RULE;
+    if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA.getDescription();
+    if (groupRules == null) return UNDEFINED_RULE.getDescription();
     return groupRules.validateEventData(key, entryValue, context);
   }
 
