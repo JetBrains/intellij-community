@@ -238,7 +238,11 @@ public class JavaHomeFinderBasic {
         var home = innerDir;
         var releaseFile = home.resolve("release");
         if (!exists(releaseFile)) continue;
-        if (mac && Files.isSymbolicLink(releaseFile) && home.getFileName().toString().contains("zulu")) {
+
+        // Zulu JDK on MacOS has a rogue layout, with which Gradle failed to operate (see the bugreport IDEA-253051),
+        // and in order to get Gradle working with Zulu JDK we should use it's second home (when symbolic links are resolved),
+        boolean zuluOnMac = mac && Files.isSymbolicLink(releaseFile) && home.getFileName().toString().contains("zulu");
+        if (zuluOnMac) {
           try {
             var realReleaseFile = releaseFile.toRealPath();
             if (!exists(realReleaseFile)) { log.warn("Failed to resolve the target file (it doesn't exist) for: " + releaseFile.toString()); continue; }
@@ -250,6 +254,7 @@ public class JavaHomeFinderBasic {
             log.warn("Failed to resolve the target file (exception) for: " + releaseFile.toString() + ": " + ioe.getMessage());
           }
         }
+
         result.add(home.toString());
       }
     }
