@@ -453,4 +453,9 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
                          "sub = SubFoo(1<warning descr=\"Parameter 'p2' unfilled\">)</warning>")
     );
   }
+
+  // PY-43915
+  public void testWeakUnionClassMethodParameters() {
+    doTest();
+  }
 }
