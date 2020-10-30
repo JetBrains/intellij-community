@@ -75,6 +75,9 @@ class ModuleRootComponentBridge(
     return creator()
   }
 
+  override fun removeCachedJpsRootProperties(sourceRootUrl: VirtualFileUrl) {
+  }
+
   override fun dispose() = Unit
 
   override fun dropCaches() {
