@@ -203,47 +203,47 @@ class OptimizedImportsBuilder(
         }
 
         for ((names, refs) in references.groupBy { it.dependsOnNames }) {
-            if (!areScopeSlicesEqual(originalFileScope, newFileScope, names)) {
-                for (ref in refs) {
-                    ProgressManager.checkCanceled()
+            if (areScopeSlicesEqual(originalFileScope, newFileScope, names)) continue
 
-                    val element = ref.element
-                    val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
-                    val newScope = element.getResolutionScope(
+            for (ref in refs) {
+                ProgressManager.checkCanceled()
+
+                val element = ref.element
+                val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
+                val newScope = element.getResolutionScope(
+                    bindingContext,
+                    file.getResolutionFacade()
+                ).replaceImportingScopes(newFileScope)
+
+                val parent = element.parent
+                if (parent is KtUserType) {
+                    val qualifier: KtUserType = generateSequence(parent) { it.qualifier }.last()
+                    val name = qualifier.referencedName?.let { Name.identifier(it) } ?: continue
+                    val oldTarget = originalFileScope.findClassifier(name, NoLookupLocation.FROM_IDE) ?: continue
+                    val newTarget = newScope.findClassifier(name, NoLookupLocation.FROM_IDE)
+                    if (newTarget == null && !oldTarget.fromCurrentFile ||
+                        newTarget != null && !areTargetsEqual(oldTarget, newTarget)
+                    ) {
+                        testLog?.append("Changed resolve type of $ref\n")
+                        lockImportForDescriptor(oldTarget, names)
+                    }
+                } else {
+                    val expressionToAnalyze = getExpressionToAnalyze(element) ?: continue
+                    val newBindingContext = expressionToAnalyze.analyzeAsReplacement(
+                        expressionToAnalyze,
                         bindingContext,
-                        file.getResolutionFacade()
-                    ).replaceImportingScopes(newFileScope)
+                        newScope,
+                        trace = BindingTraceContext()
+                    )
 
-                    val parent = element.parent
-                    if (parent is KtUserType) {
-                        val qualifier: KtUserType = generateSequence(parent) { it.qualifier }.last()
-                        val name = qualifier.referencedName?.let { Name.identifier(it) } ?: continue
-                        val oldTarget = originalFileScope.findClassifier(name, NoLookupLocation.FROM_IDE) ?: continue
-                        val newTarget = newScope.findClassifier(name, NoLookupLocation.FROM_IDE)
-                        if (newTarget == null && !oldTarget.fromCurrentFile ||
-                            newTarget != null && !areTargetsEqual(oldTarget, newTarget)
-                        ) {
-                            testLog?.append("Changed resolve type of $ref\n")
-                            lockImportForDescriptor(oldTarget, names)
-                        }
-                    } else {
-                        val expressionToAnalyze = getExpressionToAnalyze(element) ?: continue
-                        val newBindingContext = expressionToAnalyze.analyzeAsReplacement(
-                            expressionToAnalyze,
-                            bindingContext,
-                            newScope,
-                            trace = BindingTraceContext()
-                        )
+                    testLog?.append("Additional checking of reference $ref\n")
 
-                        testLog?.append("Additional checking of reference $ref\n")
-
-                        val oldTargets = ref.resolve(bindingContext)
-                        val newTargets = ref.resolve(newBindingContext)
-                        if (!areTargetsEqual(oldTargets, newTargets)) {
-                            testLog?.append("Changed resolve of $ref\n")
-                            (oldTargets + newTargets).forEach {
-                                lockImportForDescriptor(it, names)
-                            }
+                    val oldTargets = ref.resolve(bindingContext)
+                    val newTargets = ref.resolve(newBindingContext)
+                    if (!areTargetsEqual(oldTargets, newTargets)) {
+                        testLog?.append("Changed resolve of $ref\n")
+                        (oldTargets + newTargets).forEach {
+                            lockImportForDescriptor(it, names)
                         }
                     }
                 }
