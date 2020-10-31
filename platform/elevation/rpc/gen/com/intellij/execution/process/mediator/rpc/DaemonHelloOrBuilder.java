@@ -18,4 +18,10 @@ public interface DaemonHelloOrBuilder extends
    * @return The token.
    */
   com.google.protobuf.ByteString getToken();
+
+  /**
+   * <code>uint64 pid = 3;</code>
+   * @return The pid.
+   */
+  long getPid();
 }

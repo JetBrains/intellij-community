@@ -37,25 +37,31 @@ object ProcessMediatorDaemonLauncher {
 
     val helloIpc = appExecutorService.submitAndAwaitCloseable { tryCreateHelloIpc() }
                    ?: throw ExecutionException(ElevationBundle.message("dialog.message.daemon.hello.failed"))
-    val daemonLaunchOptions = helloIpc.getDaemonLaunchOptions()
+    // sudo on Linux and macOS may take different forms, and not all of them are reliable in terms of process lifecycle management,
+    // input/output redirection, and so on. To overcome the limitations we use an RSA-secured channel for initial communication
+    // instead of process stdio, and run it in a trampoline mode. In this mode the sudo'ed process forks the real daemon process,
+    // relays the initial hello from it, and exits, so that the sudo process is done as soon as the initial hello is exchanged.
+    // In particular, this is a workaround for high CPU consumption of the osascript (used on macOS instead of sudo) process;
+    // we want it to finish as soon as possible.
+    val daemonLaunchOptions = helloIpc.getDaemonLaunchOptions().copy(trampoline = sudo && SystemInfo.isUnix)
 
     return helloIpc.use {
       appExecutorService.submitAndAwait {
-        val daemonCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
+        val trampolineCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
           .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
           .withParameters(daemonLaunchOptions.asCmdlineArgs())
           .let {
             if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
           }
 
-        val daemonProcessHandler = helloIpc.createDaemonProcessHandler(daemonCommandLine).also {
+        val trampolineProcessHandler = helloIpc.createDaemonProcessHandler(trampolineCommandLine).also {
           it.startNotify()
         }
 
-        val daemonHello = helloIpc.readHello()
-                          ?: throw ProcessCanceledException()
+        val daemonHello = helloIpc.readHello() ?: throw ProcessCanceledException()
+        val daemonProcessHandle = ProcessHandle.of(daemonHello.pid).orElseThrow(::ProcessCanceledException)
 
-        ProcessMediatorDaemonImpl(daemonProcessHandler.process,
+        ProcessMediatorDaemonImpl(daemonProcessHandle,
                                   daemonHello.port,
                                   DaemonClientCredentials(daemonHello.token))
       }
@@ -98,22 +104,22 @@ private fun <R> awaitWithCheckCanceled(future: CompletableFuture<R>): R {
   return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
 }
 
-private class ProcessMediatorDaemonImpl(private val process: Process,
+private class ProcessMediatorDaemonImpl(private val processHandle: ProcessHandle,
                                         private val port: Port,
                                         private val credentials: DaemonClientCredentials) : ProcessMediatorDaemon {
 
   override fun createChannel(): ManagedChannel {
     return ManagedChannelBuilder.forAddress(LOOPBACK_IP, port).usePlaintext()
       .intercept(MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata()))
-      .build()
+      .build().also { channel ->
+        processHandle.onExit().whenComplete { _, _ -> channel.shutdown() }
+      }
   }
 
-  override fun stop() {
-    process.destroy()
-  }
+  override fun stop() = Unit
 
   override fun blockUntilShutdown() {
-    process.waitFor()
+    processHandle.onExit().get()
   }
 }
 

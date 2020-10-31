@@ -16,6 +16,7 @@ service Daemon {
 message DaemonHello {
   uint32 port = 1;
   bytes token = 2;
+  uint64 pid = 3;
 }
 
 service ProcessManager {
