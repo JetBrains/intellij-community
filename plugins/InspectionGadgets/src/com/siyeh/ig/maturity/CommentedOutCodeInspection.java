@@ -15,6 +15,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -156,12 +157,12 @@ public class CommentedOutCodeInspection extends BaseInspection {
           if (lines < minLines) {
             return;
           }
-          final Code code = isCode(text, comment);
-          if (code == Code.YES) {
+          final ThreeState code = isCode(text, comment);
+          if (code == ThreeState.YES) {
             registerErrorAtOffset(comment, 0, 2, lines);
             return;
           }
-          else if (code == Code.NO) {
+          else if (code == ThreeState.NO) {
             return;
           }
           final PsiElement after = PsiTreeUtil.skipWhitespacesForward(comment);
@@ -173,7 +174,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
       }
       else {
         final String text = getCommentText(comment);
-        if (StringUtil.countNewLines(text) + 1 < minLines || isCode(text, comment) != Code.YES) {
+        if (StringUtil.countNewLines(text) + 1 < minLines || isCode(text, comment) != ThreeState.YES) {
           return;
         }
         registerErrorAtOffset(comment, 0, 2, StringUtil.countNewLines(text) + 1);
@@ -181,13 +182,10 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
   }
 
-  private enum Code {
-    YES, NO, MAYBE
-  }
 
-  private static Code isCode(String text, PsiElement context) {
+  private static ThreeState isCode(String text, PsiElement context) {
     if (text.isEmpty()) {
-      return Code.NO;
+      return ThreeState.NO;
     }
     final Project project = context.getProject();
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
@@ -219,12 +217,12 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
     final boolean allowDanglingElse = isIfStatementWithoutElse(PsiTreeUtil.getPrevSiblingOfType(context, PsiStatement.class));
     if (!isInvalidCode(fragment, allowDanglingElse)) {
-      return Code.YES;
+      return ThreeState.YES;
     }
     else if (PsiTreeUtil.getDeepestLast(fragment) instanceof PsiErrorElement) {
-      return Code.NO;
+      return ThreeState.NO;
     }
-    return Code.MAYBE;
+    return ThreeState.UNSURE;
   }
 
   private static boolean isIfStatementWithoutElse(PsiStatement statement) {
