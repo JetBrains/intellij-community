@@ -43,7 +43,9 @@ object ProcessMediatorDaemonLauncher {
     // relays the initial hello from it, and exits, so that the sudo process is done as soon as the initial hello is exchanged.
     // In particular, this is a workaround for high CPU consumption of the osascript (used on macOS instead of sudo) process;
     // we want it to finish as soon as possible.
-    val daemonLaunchOptions = helloIpc.getDaemonLaunchOptions().copy(trampoline = sudo && SystemInfo.isUnix)
+    val daemonLaunchOptions = helloIpc.getDaemonLaunchOptions()
+      .copy(trampoline = sudo && SystemInfo.isUnix,
+            leaderPid = ProcessHandle.current().pid())
 
     return helloIpc.use {
       appExecutorService.submitAndAwait {
