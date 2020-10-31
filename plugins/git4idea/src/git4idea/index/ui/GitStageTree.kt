@@ -427,28 +427,18 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
 
   private data class FloatingIcon(val icon: Icon, val location: Int)
 
-  private inner class MyMouseListener : MouseAdapter(), MouseMotionListener {
+  private inner class MyMouseListener : MouseAdapter() {
 
     override fun mouseMoved(e: MouseEvent?) {
-      val hoverData = e?.let { getHoverData(it.point) }
-      if (hoverData == null) {
-        toolTipText = null
-        this@GitStageTree.hoverData = null
-        expandableItemsHandler.isEnabled = true
-        return
-      }
-
-      this@GitStageTree.hoverData = hoverData
-      toolTipText = if (hoverData.isOverOperationIcon) hoverData.operation.actionText.get() else null
-      expandableItemsHandler.isEnabled = !hoverData.isOverOperationIcon
+      hoverData = e?.let { getHoverData(it.point) }
+      toolTipText = hoverData?.takeIf { it.isOverOperationIcon }?.operation?.actionText?.get()
+      expandableItemsHandler.isEnabled = hoverData?.isOverOperationIcon != true
     }
 
     override fun mouseExited(e: MouseEvent?) {
-      this@GitStageTree.hoverData = null
+      hoverData = null
       expandableItemsHandler.isEnabled = true
     }
-
-    override fun mouseDragged(e: MouseEvent?) = Unit
   }
 
   private data class HoverData(val node: ChangesBrowserNode<*>,
