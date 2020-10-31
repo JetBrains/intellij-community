@@ -106,9 +106,23 @@ private fun DaemonHelloWriter?.writeHello(daemonHello: DaemonHello) {
   this?.write(daemonHello::writeDelimitedTo) ?: println(daemonHello)
 }
 
+// the order matters
+@Suppress("unused")
+enum class ExitCode {
+  SUCCESS,
+  GENERAL_ERROR,
+  LEADER_EXITED,
+}
 
 fun main(args: Array<String>) {
   val launchOptions = DaemonLaunchOptions.parseFromArgsOrDie("ProcessMediatorDaemonMain", args)
+
+  val leaderProcessHandle = launchOptions.leaderPid?.let { leaderPid ->
+    ProcessHandle.of(leaderPid).orElse(null) ?: run {
+      System.err.println("Leader process with PID $leaderPid not found, exiting immediately")
+      exitProcess(ExitCode.LEADER_EXITED.ordinal)
+    }
+  }
 
   if (launchOptions.trampoline) {
     trampoline(launchOptions)  // never returns
@@ -147,5 +161,9 @@ fun main(args: Array<String>) {
       daemon.stop()
     }
   )
+  leaderProcessHandle?.onExit()?.whenComplete { handle, _ ->
+    System.err.println("Leader process with PID ${handle.pid()} exited, shutting down")
+    exitProcess(ExitCode.LEADER_EXITED.ordinal)
+  }
   daemon.blockUntilShutdown()
 }

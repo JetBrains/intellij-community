@@ -13,6 +13,7 @@ import kotlin.system.exitProcess
 
 data class DaemonLaunchOptions(
   val trampoline: Boolean = false,
+  val leaderPid: Long? = null,
   val helloOption: HelloOption? = null,
   val tokenEncryptionOption: TokenEncryptionOption? = null,
 ) {
@@ -48,6 +49,7 @@ data class DaemonLaunchOptions(
   fun asCmdlineArgs(): List<String> {
     return listOf(
       "--trampoline".takeIf { trampoline },
+      leaderPid?.let { "--leader-pid=$it" },
       helloOption,
       tokenEncryptionOption,
     ).mapNotNull { it?.toString() }
@@ -62,6 +64,7 @@ data class DaemonLaunchOptions(
       System.err.println(
         "Usage: $programName" +
         " [ --trampoline ]" +
+        " [ --leader-pid=pid ]" +
         " [ --hello-file=file|- | --hello-port=port ]" +
         " [ --token-encrypt-rsa=public-key ]"
       )
@@ -80,6 +83,7 @@ data class DaemonLaunchOptions(
 
     private fun parseFromArgs(args: Array<String>): DaemonLaunchOptions {
       var trampoline = false
+      var leaderPid: Long? = null
       var helloOption: HelloOption? = null
       var tokenEncryptionOption: TokenEncryptionOption? = null
 
@@ -92,6 +96,10 @@ data class DaemonLaunchOptions(
         value ?: continue
 
         when (option) {
+          "--leader-pid" -> {
+            leaderPid = value.toLong()
+          }
+
           "--hello-file" -> {
             if (helloOption == null) {
               helloOption =
@@ -120,6 +128,7 @@ data class DaemonLaunchOptions(
 
       return DaemonLaunchOptions(
         trampoline = trampoline,
+        leaderPid = leaderPid,
         helloOption = helloOption,
         tokenEncryptionOption = tokenEncryptionOption,
       )
