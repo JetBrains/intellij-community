@@ -1,14 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.actions;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.jcef.JCEFHtmlPanel;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nls;
@@ -23,28 +29,29 @@ import java.io.IOException;
  * @author Konstantin Bulenkov
  */
 public class WebPreviewFileEditor extends UserDataHolderBase implements FileEditor {
-
-  private final Project myProject;
   private final VirtualFile myFile;
   private final JCEFHtmlPanel myPanel;
 
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
-    myProject = project;
     myFile = file.getOriginalFile();
     myPanel = new JCEFHtmlPanel(myFile.getUrl());
     myPanel.getCefBrowser().createImmediately();
     reloadHtml();
     Alarm alarm = new Alarm(this);
-    Runnable run = new Runnable() {
-      @Override
-      public void run() {
-        reloadHtml();
-        alarm.addRequest(this, 10000);
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(myFile);
+    if (psiFile != null) {
+      Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+      if (document != null) {
+        document.addDocumentListener(new DocumentListener() {
+          @Override
+          public void documentChanged(@NotNull DocumentEvent event) {
+            FileDocumentManager.getInstance().saveDocument(document);
+            alarm.cancelAllRequests();
+            alarm.addRequest(() -> reloadHtml(), 100);
+          }
+        });
       }
-    };
-    alarm.addRequest(run, 10000);
-
-    VirtualFileManager.getInstance().addVirtualFileManagerListener(new MyVirtualFileListener(), this);
+    }
   }
 
   private void reloadHtml() {
@@ -104,21 +111,5 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
   @Override
   public void dispose() {
 
-  }
-
-  class MyVirtualFileListener implements VirtualFileListener, @NotNull VirtualFileManagerListener {
-    @Override
-    public void contentsChanged(@NotNull VirtualFileEvent event) {
-      if (myFile.equals(event.getFile())) {
-        reloadHtml();
-      }
-    }
-
-    @Override
-    public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-      if (myFile.equals(event.getFile())) {
-        FileEditorManager.getInstance(myProject).closeFile(myFile);
-      }
-    }
   }
 }
