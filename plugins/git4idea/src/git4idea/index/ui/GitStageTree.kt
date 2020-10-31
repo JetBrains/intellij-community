@@ -119,7 +119,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   }
 
   private fun getComponentWidth(icon: Icon): Int {
-    val hasTransparentScrollbar = JBScrollPane.findScrollPane(this)?.verticalScrollBar?.let { it.isVisible && !it.isOpaque } ?: false
+    val hasTransparentScrollbar = JBScrollPane.findScrollPane(this)?.verticalScrollBar?.let { it.isVisible && !it.isOpaque } == true
     if (hasTransparentScrollbar) return icon.iconWidth + UIUtil.getScrollBarWidth()
     return icon.iconWidth
   }
