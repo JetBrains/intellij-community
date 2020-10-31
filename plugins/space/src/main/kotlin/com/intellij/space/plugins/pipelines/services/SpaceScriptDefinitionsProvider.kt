@@ -3,15 +3,14 @@ package com.intellij.space.plugins.pipelines.services
 
 import circlet.pipelines.config.utils.ScriptConstants
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.extensions.PluginId
 import java.io.File
 import java.nio.file.Paths
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
-class SpaceScriptDefinitionsProvider : ScriptDefinitionsProvider {
-
-  override val id: String = "SpaceScriptDefinitionsProvider"
+private class SpaceScriptDefinitionsProvider : ScriptDefinitionsProvider {
+  override val id = "SpaceScriptDefinitionsProvider"
 
   override fun getDefinitionClasses(): Iterable<String> {
     return listOf(ScriptConstants.ScriptTemplateClassQualifiedName)

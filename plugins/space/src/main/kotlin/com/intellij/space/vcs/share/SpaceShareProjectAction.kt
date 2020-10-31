@@ -26,7 +26,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.actions.SpaceActionUtils
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.CloneType
 import com.intellij.space.settings.SpaceSettings
@@ -50,7 +50,6 @@ import libraries.coroutines.extra.launch
 import libraries.klogging.KLogger
 import libraries.klogging.logger
 import runtime.Ui
-import java.util.*
 
 class SpaceShareProjectAction : DumbAwareAction() {
   private val log: KLogger = logger<SpaceShareProjectAction>()
@@ -151,6 +150,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
   }
 
   private suspend fun checkAndSetGitHttpPassword(): SpaceHttpPasswordState {
+    val space = SpaceWorkspaceComponent.getInstance()
     val client = space.workspace.value?.client ?: return SpaceHttpPasswordState.NotSet
     val me = space.workspace.value?.me?.value ?: return SpaceHttpPasswordState.NotSet
     val td = client.td

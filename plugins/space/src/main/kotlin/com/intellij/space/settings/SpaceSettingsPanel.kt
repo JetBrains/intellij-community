@@ -12,7 +12,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.space.components.SpaceUserAvatarProvider
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.cleanupUrl
 import com.intellij.space.ui.resizeIcon
@@ -53,7 +53,7 @@ class SpaceSettingsPanel :
   }
 
   init {
-    space.loginState.forEach(uiLifetime) { st ->
+    SpaceWorkspaceComponent.getInstance().loginState.forEach(uiLifetime) { st ->
       accountPanel.removeAll()
       accountPanel.add(createView(st), BorderLayout.NORTH)
       updateUi(st)
@@ -86,7 +86,7 @@ class SpaceSettingsPanel :
   private fun createView(st: SpaceLoginState): JComponent {
     when (st) {
       is SpaceLoginState.Disconnected -> return buildLoginPanel(st) { server ->
-        space.signInManually(server, uiLifetime, accountPanel)
+        SpaceWorkspaceComponent.getInstance().signInManually(server, uiLifetime, accountPanel)
       }
 
       is SpaceLoginState.Connecting -> return buildConnectingPanel(st) {
@@ -99,7 +99,7 @@ class SpaceSettingsPanel :
         }
         val logoutButton = JButton(SpaceBundle.message("settings.panel.log.out.button.text")).apply {
           addActionListener {
-            space.signOut()
+            SpaceWorkspaceComponent.getInstance().signOut()
           }
         }
 
@@ -128,7 +128,7 @@ class SpaceSettingsPanel :
     when (st) {
       is SpaceLoginState.Connected -> {
         linkLabel.isVisible = true
-        val profile = space.workspace.value?.me?.value ?: return
+        val profile = SpaceWorkspaceComponent.getInstance().workspace.value?.me?.value ?: return
         val gitConfigPage = Navigator.m.member(profile.username).git.absoluteHref(st.server)
         linkLabel.setListener({ _, _ -> BrowserUtil.browse(gitConfigPage) }, null)
       }

@@ -22,7 +22,7 @@ import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.chat.ui.message.MessageTitleComponent
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
@@ -220,7 +220,7 @@ internal class SpaceChatItemComponentFactory(
         editingStateModel.value = false
         return@forEach
       }
-      val workspace = space.workspace.value ?: return@forEach
+      val workspace = SpaceWorkspaceComponent.getInstance().workspace.value ?: return@forEach
       runWriteAction {
         submittableModel.document.setText(workspace.completion.editable(editingVm.message.text))
       }
