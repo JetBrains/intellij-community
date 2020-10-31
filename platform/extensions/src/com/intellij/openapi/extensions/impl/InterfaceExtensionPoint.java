@@ -22,6 +22,24 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     super(name, className, pluginDescriptor, clazz, dynamic);
   }
 
+  static final class InterfaceExtensionImplementationClassResolver implements ImplementationClassResolver {
+    static final ImplementationClassResolver INSTANCE = new InterfaceExtensionImplementationClassResolver();
+
+    private InterfaceExtensionImplementationClassResolver() {
+    }
+
+    @Override
+    public @NotNull Class<?> resolveImplementationClass(@NotNull ComponentManager componentManager,
+                                                        @NotNull ExtensionComponentAdapter adapter) throws ClassNotFoundException {
+      Object implementationClassOrName = adapter.implementationClassOrName;
+      if (implementationClassOrName instanceof String) {
+        implementationClassOrName = componentManager.loadClass((String)implementationClassOrName, adapter.getPluginDescriptor());
+        adapter.implementationClassOrName = implementationClassOrName;
+      }
+      return (Class<?>)implementationClassOrName;
+    }
+  }
+
   @Override
   public @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
     InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), null, isDynamic());
@@ -43,7 +61,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
     Element effectiveElement = shouldDeserializeInstance(extensionElement) ? extensionElement : null;
-    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement, InterfaceExtensionImplementationClassResolver.INSTANCE);
   }
 
   @Override

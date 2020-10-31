@@ -3,15 +3,18 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.serviceContainer.ComponentManagerImpl
 import io.github.classgraph.AnnotationEnumValue
 import io.github.classgraph.ClassGraph
@@ -22,15 +25,33 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
   companion object {
     @JvmStatic
     fun createAllServicesAndExtensions() {
+      val errors = mutableListOf<Throwable>()
       runModalTask("Creating All Services And Extensions", cancellable = true) { indicator ->
-        checkContainer(ApplicationManager.getApplication() as ComponentManagerImpl, indicator)
+        val logger = logger<ComponentManagerImpl>()
+        val taskExecutor: (task: () -> Unit) -> Unit = { task ->
+          try {
+            task()
+          }
+          catch (e: ProcessCanceledException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            logger.error(e)
+            errors.add(e)
+          }
+        }
+
+        checkContainer(ApplicationManager.getApplication() as ComponentManagerImpl, indicator, taskExecutor)
         ProjectUtil.getOpenProjects().firstOrNull()?.let {
-          checkContainer(it as ComponentManagerImpl, indicator)
+          checkContainer(it as ComponentManagerImpl, indicator, taskExecutor)
         }
 
         indicator.text2 = "Checking light services..."
-        checkLightServices()
+        checkLightServices(taskExecutor)
       }
+
+      Notification("Error Report", null, "", if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged", NotificationType.INFORMATION, null)
+        .notify(null)
     }
   }
 
@@ -39,25 +60,22 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
   }
 }
 
-private val LOG = logger<ComponentManagerImpl>()
-
 @Suppress("HardCodedStringLiteral")
-private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressIndicator) {
+private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressIndicator, taskExecutor: (task: () -> Unit) -> Unit) {
   indicator.text2 = "Checking ${container.activityNamePrefix()}services..."
   ComponentManagerImpl.createAllServices(container)
   indicator.text2 = "Checking ${container.activityNamePrefix()}extensions..."
   container.extensionArea.processExtensionPoints {
     // requires read action
     if (it.name != "com.intellij.favoritesListProvider" && it.name != "com.intellij.favoritesListProvider") {
-      LOG.runAndLogException {
+      taskExecutor {
         it.extensionList
       }
     }
   }
 }
 
-private fun checkLightServices() {
-
+private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit) {
   for (plugin in PluginManagerCore.getLoadedPlugins(null)) {
     // we don't check classloader for sub descriptors because url set is the same
     if (plugin.classLoader !is PluginClassLoader || plugin.pluginDependencies == null) {
@@ -70,20 +88,32 @@ private fun checkLightServices() {
       .overrideClassLoaders(plugin.classLoader)
       .scan()
       .use { scanResult ->
-        val lightServices = scanResult.getClassesWithAnnotation("com.intellij.openapi.components.Service")
+        val lightServices = scanResult.getClassesWithAnnotation(Service::class.java.name)
         for (lightService in lightServices) {
           // not clear - from what classloader light service will be loaded in reality
           val lightServiceClass = loadLightServiceClass(lightService, plugin)
-          // check only app-level light services for now
-          if (lightService.getAnnotationInfo("com.intellij.openapi.components.Service").parameterValues.find { it.name == "value" }?.let {
-              (it.value as Array<*>).any { v -> (v as AnnotationEnumValue).valueName == Service.Level.PROJECT.name }
-          } == true) {
-            continue
+
+          val isProjectLevel: Boolean
+          val isAppLevel: Boolean
+          val annotationParameterValue = lightService.getAnnotationInfo(Service::class.java.name).parameterValues.find { it.name == "value" }
+          if (annotationParameterValue == null) {
+            isAppLevel = lightServiceClass.declaredConstructors.any { it.parameterCount == 0 }
+            isProjectLevel = lightServiceClass.declaredConstructors.any { it.parameterCount == 1 && it.parameterTypes.get(0) == Project::class.java }
+          }
+          else {
+            val list = annotationParameterValue.value as Array<*>
+            isAppLevel = list.any { v -> (v as AnnotationEnumValue).valueName == Service.Level.APP.name }
+            isProjectLevel = list.any { v -> (v as AnnotationEnumValue).valueName == Service.Level.PROJECT.name }
           }
 
-          LOG.runAndLogException {
-            lightServiceClass.declaredConstructors.find { it.parameterCount == 0 }?.let {
+          if (isAppLevel) {
+            taskExecutor {
               ApplicationManager.getApplication().getService(lightServiceClass)
+            }
+          }
+          if (isProjectLevel) {
+            taskExecutor {
+              ProjectUtil.getOpenProjects().firstOrNull()?.getService(lightServiceClass)
             }
           }
         }

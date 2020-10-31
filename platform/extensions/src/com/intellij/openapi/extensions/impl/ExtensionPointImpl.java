@@ -318,13 +318,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   public final void processIdentifiableImplementations(@NotNull BiConsumer<? super @NotNull Supplier<T>, ? super @Nullable String> consumer) {
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
-      String id = adapter.getOrderId();
-      // https://github.com/JetBrains/kotlin/pull/3522
-      if (id == null && "org.jetbrains.kotlin.idea.roots.KotlinNonJvmSourceRootConverterProvider".equals(adapter.getAssignableToClassName())) {
-        id = "kotlin-non-jvm-source-roots";
-      }
-      Supplier<T> supplier = () -> adapter.createInstance(componentManager);
-      consumer.accept(supplier, id);
+      consumer.accept((Supplier<T>)() -> adapter.createInstance(componentManager), adapter.getOrderId());
     }
   }
 
@@ -1103,7 +1097,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     private ObjectComponentAdapter(@NotNull T extension,
                                    @NotNull PluginDescriptor pluginDescriptor,
                                    @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), pluginDescriptor, null, loadingOrder);
+      super(extension.getClass().getName(), pluginDescriptor, null, loadingOrder, (componentManager1, adapter) -> extension.getClass());
 
       componentInstance = extension;
     }

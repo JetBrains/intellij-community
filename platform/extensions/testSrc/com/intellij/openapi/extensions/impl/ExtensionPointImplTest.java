@@ -336,7 +336,7 @@ public class ExtensionPointImplTest {
     private Runnable myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null);
+      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null, InterfaceExtensionPoint.InterfaceExtensionImplementationClassResolver.INSTANCE);
     }
 
     public synchronized void setFire(@Nullable Runnable fire) {

@@ -30,6 +30,7 @@ final class ClassLoaderConfigurator {
   private static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
   static final boolean SEPARATE_CLASSLOADER_FOR_SUB = Boolean.parseBoolean(System.getProperty("idea.classloader.per.descriptor", "true"));
   private static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_ONLY;
+  private static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE;
 
   // this list doesn't duplicate of PluginXmlFactory.CLASS_NAMES - interface related must be not here
   private static final @NonNls Set<String> IMPL_CLASS_NAMES = new ReferenceOpenHashSet<>(Arrays.asList(
@@ -40,7 +41,7 @@ final class ClassLoaderConfigurator {
   // grab classes from platform loader only if nothing is found in any of plugin dependencies
   private final boolean usePluginClassLoader;
   private final ClassLoader coreLoader;
-  private final Map<PluginId, IdeaPluginDescriptorImpl> idMap;
+  final Map<PluginId, IdeaPluginDescriptorImpl> idMap;
   private final Map<String, String[]> additionalLayoutMap;
 
   private Optional<IdeaPluginDescriptorImpl> javaDep;
@@ -58,8 +59,7 @@ final class ClassLoaderConfigurator {
   static {
     String value = System.getProperty("idea.classloader.per.descriptor.only");
     if (value == null) {
-      //noinspection SSBasedInspection
-      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new HashSet<>(Arrays.asList(
+       SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new ReferenceOpenHashSet<>(new PluginId[]{
         PluginId.getId("com.intellij.thymeleaf"),
         PluginId.getId("org.jetbrains.plugins.ruby"),
         PluginId.getId("org.jetbrains.plugins.slim"),
@@ -68,15 +68,24 @@ final class ClassLoaderConfigurator {
         PluginId.getId("org.jetbrains.plugins.vue"),
         PluginId.getId("org.jetbrains.plugins.go-template"),
         PluginId.getId("com.intellij.kubernetes"),
+        PluginId.getId("JavaScript"),
+        PluginId.getId("com.jetbrains.space"),
         PluginId.getId("org.jetbrains.plugins.github")
-      ));
+      });
+    }
+    else if (value.isEmpty()) {
+      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = Collections.emptySet();
     }
     else {
-      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new HashSet<>();
+      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new ReferenceOpenHashSet<>();
       for (String id : value.split(",")) {
         SEPARATE_CLASSLOADER_FOR_SUB_ONLY.add(PluginId.getId(id));
       }
     }
+
+    SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE = new ReferenceOpenHashSet<>(new PluginId[]{
+      PluginId.getId("org.jetbrains.kotlin")
+    });
   }
 
   ClassLoaderConfigurator(boolean usePluginClassLoader,
@@ -97,6 +106,30 @@ final class ClassLoaderConfigurator {
     // do not use class reference here
     //noinspection SSBasedInspection
     return Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
+  }
+
+  void configureDependenciesIfNeeded(@NotNull Map<IdeaPluginDescriptorImpl, @NotNull List<IdeaPluginDescriptorImpl>> mainToSub, @NotNull IdeaPluginDescriptorImpl dependencyPlugin) {
+    for (Map.Entry<IdeaPluginDescriptorImpl, @NotNull List<IdeaPluginDescriptorImpl>> entry : mainToSub.entrySet()) {
+      IdeaPluginDescriptorImpl mainDependent = entry.getKey();
+      PluginClassLoader mainDependentClassLoader = (PluginClassLoader)Objects.requireNonNull(mainDependent.getClassLoader());
+
+      if (isClassloaderPerDescriptorEnabled(mainDependent)) {
+        for (PluginDependency dependency : Objects.requireNonNull(mainDependent.pluginDependencies)) {
+          for (IdeaPluginDescriptorImpl subDescriptor : entry.getValue()) {
+            if (subDescriptor == dependency.subDescriptor) {
+              configureSubPlugin(dependency, mainDependentClassLoader);
+              break;
+            }
+          }
+        }
+      }
+      else {
+        mainDependentClassLoader.attachParent(Objects.requireNonNull(dependencyPlugin.getClassLoader()));
+        for (IdeaPluginDescriptorImpl subDescriptor : entry.getValue()) {
+          subDescriptor.setClassLoader(mainDependentClassLoader);
+        }
+      }
+    }
   }
 
   void configure(@NotNull IdeaPluginDescriptorImpl mainDependent) {
@@ -185,7 +218,9 @@ final class ClassLoaderConfigurator {
     // second, set class loaders for sub descriptors
     if (usePluginClassLoader && isClassloaderPerDescriptorEnabled(mainDependent)) {
       mainDependent.setClassLoader(mainDependentClassLoader);
-      configureSubPlugins(mainDependentClassLoader, pluginDependencies, urlClassLoaderBuilder);
+      for (PluginDependency dependencyInfo : pluginDependencies) {
+        configureSubPlugin(dependencyInfo, mainDependentClassLoader);
+      }
     }
     else {
       setPluginClassLoaderForMainAndSubPlugins(mainDependent, mainDependentClassLoader);
@@ -193,44 +228,45 @@ final class ClassLoaderConfigurator {
   }
 
   private static boolean isClassloaderPerDescriptorEnabled(@NotNull IdeaPluginDescriptorImpl mainDependent) {
-    return SEPARATE_CLASSLOADER_FOR_SUB && SEPARATE_CLASSLOADER_FOR_SUB_ONLY.contains(mainDependent.getPluginId());
+    if (!SEPARATE_CLASSLOADER_FOR_SUB || SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE.contains(mainDependent.getPluginId())) {
+      return false;
+    }
+    return SEPARATE_CLASSLOADER_FOR_SUB_ONLY.isEmpty() || SEPARATE_CLASSLOADER_FOR_SUB_ONLY.contains(mainDependent.getPluginId());
   }
 
-  private void configureSubPlugins(@NotNull ClassLoader mainDependentClassLoader,
-                                   @NotNull List<PluginDependency> pluginDependencies,
-                                   @NotNull UrlClassLoader.Builder urlClassLoaderBuilder) {
-    for (PluginDependency dependencyInfo : pluginDependencies) {
-      IdeaPluginDescriptorImpl dependent = dependencyInfo.isDisabledOrBroken ? null : dependencyInfo.subDescriptor;
-      if (dependent == null) {
-        continue;
-      }
+  private void configureSubPlugin(@NotNull PluginDependency dependencyInfo, @NotNull ClassLoader mainDependentClassLoader) {
+    IdeaPluginDescriptorImpl dependent = dependencyInfo.isDisabledOrBroken ? null : dependencyInfo.subDescriptor;
+    if (dependent == null) {
+      return;
+    }
 
-      assert !dependent.isUseIdeaClassLoader();
-      IdeaPluginDescriptorImpl dependency = idMap.get(dependencyInfo.id);
-      if (dependency == null || !dependency.isEnabled()) {
-        continue;
-      }
+    assert !dependent.isUseIdeaClassLoader();
+    IdeaPluginDescriptorImpl dependency = idMap.get(dependencyInfo.id);
+    if (dependency == null || !dependency.isEnabled()) {
+      return;
+    }
 
-      packagePrefixes.clear();
-      collectPackagePrefixes(dependent, packagePrefixes);
-      if (packagePrefixes.isEmpty()) {
-        getLogger().error("Optional descriptor " + dependencyInfo + " doesn't define extra classes");
-      }
+    packagePrefixes.clear();
+    collectPackagePrefixes(dependent, packagePrefixes);
+    if (packagePrefixes.isEmpty()) {
+      getLogger().error("Optional descriptor " + dependencyInfo + " doesn't define extra classes");
+    }
 
-      loaders.clear();
-      // add main descriptor classloader as parent
-      loaders.add(mainDependentClassLoader);
-      addLoaderOrLogError(dependent, dependency, loaders);
+    loaders.clear();
+    // add main descriptor classloader as parent
+    loaders.add(mainDependentClassLoader);
+    addLoaderOrLogError(dependent, dependency, loaders);
 
-      SubPluginClassLoader subClassloader = new SubPluginClassLoader(dependent,
-                                                                     urlClassLoaderBuilder,
-                                                                     loaders.toArray(EMPTY_CLASS_LOADER_ARRAY),
-                                                                     packagePrefixes.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY),
-                                                                     coreLoader);
-      dependent.setClassLoader(subClassloader);
+    SubPluginClassLoader subClassloader = new SubPluginClassLoader(dependent,
+                                                                   urlClassLoaderBuilder,
+                                                                   loaders.toArray(EMPTY_CLASS_LOADER_ARRAY),
+                                                                   packagePrefixes.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY),
+                                                                   coreLoader);
+    dependent.setClassLoader(subClassloader);
 
-      if (dependent.pluginDependencies != null) {
-        configureSubPlugins(subClassloader, dependent.pluginDependencies, urlClassLoaderBuilder);
+    if (dependent.pluginDependencies != null) {
+      for (PluginDependency dependencyInfo1 : dependent.pluginDependencies) {
+        configureSubPlugin(dependencyInfo1, subClassloader);
       }
     }
   }

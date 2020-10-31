@@ -22,14 +22,15 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
                       @NotNull PluginDescriptor pluginDescriptor,
                       @Nullable String orderId,
                       @NotNull LoadingOrder order,
-                      @Nullable Element extensionElement) {
-    super(implementationClassName, pluginDescriptor, orderId, order);
+                      @Nullable Element extensionElement,
+                      @NotNull ImplementationClassResolver implementationClassResolver) {
+    super(implementationClassName, pluginDescriptor, orderId, order, implementationClassResolver);
 
     myExtensionElement = extensionElement;
   }
 
   @Override
-  synchronized boolean isInstanceCreated() {
+  final synchronized boolean isInstanceCreated() {
     return extensionInstance != null;
   }
 
@@ -81,8 +82,9 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
                                       @NotNull PluginDescriptor pluginDescriptor,
                                       @Nullable String orderId,
                                       @NotNull LoadingOrder order,
-                                      @Nullable Element extensionElement) {
-      super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
+                                      @Nullable Element extensionElement,
+                                      @NotNull ImplementationClassResolver implementationClassResolver) {
+      super(implementationClassName, pluginDescriptor, orderId, order, extensionElement, implementationClassResolver);
     }
 
     @Override

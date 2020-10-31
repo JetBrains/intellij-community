@@ -188,11 +188,11 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   // doesn't make sense to intern class name since it is unique
   // ouch, do we really cannot agree how to name implementation class attribute?
-  private static final @NonNls Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(Arrays.asList(
+  private static final @NonNls Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(new String[]{
     "implementation", "implementationClass", "builderClass",
     "serviceImplementation", "class", "className", "beanClass",
     "serviceInterface", "interface", "interfaceClass", "instance", "implementation-class",
-    "qualifiedName"));
+    "qualifiedName"});
 
   private static final List<String> EXTRA_STRINGS = Arrays.asList("id",
                                                                   PluginManagerCore.VENDOR_JETBRAINS,

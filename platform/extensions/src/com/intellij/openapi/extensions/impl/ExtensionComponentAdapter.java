@@ -12,8 +12,10 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
   private final @NotNull PluginDescriptor pluginDescriptor;
+
   // Class or String
   @NotNull Object implementationClassOrName;
+  private final ImplementationClassResolver implementationClassResolver;
 
   private final String orderId;
   private final LoadingOrder order;
@@ -21,12 +23,15 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   ExtensionComponentAdapter(@NotNull String implementationClassName,
                             @NotNull PluginDescriptor pluginDescriptor,
                             @Nullable String orderId,
-                            @NotNull LoadingOrder order) {
+                            @NotNull LoadingOrder order,
+                            @NotNull ImplementationClassResolver implementationClassResolver) {
     implementationClassOrName = implementationClassName;
     this.pluginDescriptor = pluginDescriptor;
 
     this.orderId = orderId;
     this.order = order;
+
+    this.implementationClassResolver = implementationClassResolver;
   }
 
   abstract boolean isInstanceCreated();
@@ -66,13 +71,8 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   }
 
   public final @NotNull <T> Class<T> getImplementationClass(@NotNull ComponentManager componentManager) throws ClassNotFoundException {
-    Object implementationClassOrName = this.implementationClassOrName;
-    if (implementationClassOrName instanceof String) {
-      implementationClassOrName = componentManager.loadClass((String)implementationClassOrName, pluginDescriptor);
-      this.implementationClassOrName = implementationClassOrName;
-    }
     //noinspection unchecked
-    return (Class<T>)implementationClassOrName;
+    return (Class<T>)implementationClassResolver.resolveImplementationClass(componentManager, this);
   }
 
   // used externally - cannot be package-local
@@ -85,7 +85,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   }
 
   @Override
-  public String toString() {
-    return "ExtensionComponentAdapter(impl=" + getAssignableToClassName() + ", plugin=" + pluginDescriptor + ")";
+  public final String toString() {
+    return "ExtensionComponentAdapter(implementation=" + getAssignableToClassName() + ", plugin=" + pluginDescriptor + ")";
   }
 }

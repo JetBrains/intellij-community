@@ -848,13 +848,12 @@ public final class PluginManagerCore {
    * not used by plugin manager - only for dynamic plugin reloading.
    * Building plugin graph and using `getInList` as it is done for regular loading is not required - all that magic and checks
    * are not required here because only regular plugins maybe dynamically reloaded.
+   * @return
    */
   @ApiStatus.Internal
-  public static void initClassLoaderForDynamicPlugin(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
+  public static @NotNull ClassLoaderConfigurator createClassLoaderConfiguratorForDynamicPlugin(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = buildPluginIdMap(ContainerUtil.concat(getLoadedPlugins(null), Collections.singletonList(pluginDescriptor)));
-    ClassLoaderConfigurator classLoaderConfigurator =
-      new ClassLoaderConfigurator(true, PluginManagerCore.class.getClassLoader(), idMap, ourAdditionalLayoutMap);
-    classLoaderConfigurator.configure(pluginDescriptor);
+    return new ClassLoaderConfigurator(true, PluginManagerCore.class.getClassLoader(), idMap, ourAdditionalLayoutMap);
   }
 
   public static @NotNull BuildNumber getBuildNumber() {

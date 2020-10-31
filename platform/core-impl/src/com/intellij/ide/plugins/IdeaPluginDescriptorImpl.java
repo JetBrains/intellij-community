@@ -41,8 +41,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   final Path basePath;
 
   private final boolean isBundled;
+
   String name;
   PluginId id;
+  // only for sub descriptors
+  String descriptorPath;
+
   private volatile String myDescription;
   private @Nullable String myProductCode;
   private @Nullable Date myReleaseDate;
@@ -941,6 +945,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String toString() {
-    return "PluginDescriptor(name=" + name + ", id=" + id + ", path=" + path + ", version=" + myVersion + ")";
+    return "PluginDescriptor(name=" + name + ", id=" + id + ", path=" + path + ", version=" + myVersion + ", descriptorPath=" + (descriptorPath == null ? "plugin.xml" : descriptorPath) + ")";
   }
 }
