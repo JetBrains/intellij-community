@@ -77,7 +77,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   init {
     isKeepTreeState = true
     isScrollToSelection = false
-    setCellRenderer(GitStageTreeRenderer(ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, true)))
+    setCellRenderer(GitStageTreeRenderer(myProject) { isShowFlatten })
     MyMouseListener().also {
       addMouseMotionListener(it)
       addMouseListener(it)
@@ -364,17 +364,8 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     override fun getSortWeight(): Int = sortOrder.getValue(NodeKind.UNTRACKED)
   }
 
-  private class GitStageTreeRenderer(textRenderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(textRenderer) {
+  private class GitStageTreeRenderer(project: Project, isShowFlatten: () -> Boolean) : ChangesBrowserNodeRenderer(project, isShowFlatten, true) {
     private var floatingIcon: FloatingIcon? = null
-
-    init {
-      buildLayout()
-    }
-
-    private fun buildLayout() {
-      layout = BorderLayout()
-      add(textRenderer)
-    }
 
     override fun paint(g: Graphics) {
       super.paint(g)
@@ -384,16 +375,15 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       }
     }
 
-    override fun getTreeCellRendererComponent(tree: JTree,
-                                              value: Any,
-                                              selected: Boolean,
-                                              expanded: Boolean,
-                                              leaf: Boolean,
-                                              row: Int,
-                                              hasFocus: Boolean): Component {
-      val treeCellRendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
+    override fun customizeCellRenderer(tree: JTree,
+                                       value: Any?,
+                                       selected: Boolean,
+                                       expanded: Boolean,
+                                       leaf: Boolean,
+                                       row: Int,
+                                       hasFocus: Boolean) {
+      super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
       floatingIcon = prepareIcon(tree as GitStageTree, value as ChangesBrowserNode<*>, row, selected)
-      return treeCellRendererComponent
     }
 
     fun prepareIcon(tree: GitStageTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): FloatingIcon? {
@@ -432,21 +422,6 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
 
       if (selected) return UIUtil.getTreeBackground(selected, treeFocused)
       return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: UIUtil.getTreeBackground(selected, treeFocused)
-    }
-
-    override fun getAccessibleContext(): AccessibleContext {
-      if (accessibleContext == null) {
-        accessibleContext = object : AccessibleContextDelegate(textRenderer.accessibleContext) {
-          override fun getDelegateParent(): Container? = parent
-
-          override fun getAccessibleRole(): AccessibleRole {
-            // Because of a problem with NVDA we have to make this a LABEL,
-            // or otherwise NVDA will read out the entire tree path, causing confusion.
-            return AccessibleRole.LABEL
-          }
-        }
-      }
-      return accessibleContext
     }
   }
 
