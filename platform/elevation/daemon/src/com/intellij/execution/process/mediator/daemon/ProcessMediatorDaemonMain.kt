@@ -129,6 +129,7 @@ fun main(args: Array<String>) {
       val daemonHello = DaemonHello.newBuilder()
         .setPort(daemon.port)
         .setToken(token)
+        .setPid(ProcessHandle.current().pid())
         .build()
 
       helloWriter.writeHello(daemonHello)

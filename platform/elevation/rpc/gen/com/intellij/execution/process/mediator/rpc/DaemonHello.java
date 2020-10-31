@@ -63,6 +63,11 @@ private static final long serialVersionUID = 0L;
             token_ = input.readBytes();
             break;
           }
+          case 24: {
+
+            pid_ = input.readUInt64();
+            break;
+          }
           default: {
             if (!parseUnknownField(
                 input, unknownFields, extensionRegistry, tag)) {
@@ -117,6 +122,17 @@ private static final long serialVersionUID = 0L;
     return token_;
   }
 
+  public static final int PID_FIELD_NUMBER = 3;
+  private long pid_;
+  /**
+   * <code>uint64 pid = 3;</code>
+   * @return The pid.
+   */
+  @java.lang.Override
+  public long getPid() {
+    return pid_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -137,6 +153,9 @@ private static final long serialVersionUID = 0L;
     if (!token_.isEmpty()) {
       output.writeBytes(2, token_);
     }
+    if (pid_ != 0L) {
+      output.writeUInt64(3, pid_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -153,6 +172,10 @@ private static final long serialVersionUID = 0L;
     if (!token_.isEmpty()) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(2, token_);
+    }
+    if (pid_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(3, pid_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -173,6 +196,8 @@ private static final long serialVersionUID = 0L;
         != other.getPort()) return false;
     if (!getToken()
         .equals(other.getToken())) return false;
+    if (getPid()
+        != other.getPid()) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
     return true;
   }
@@ -188,6 +213,9 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getPort();
     hash = (37 * hash) + TOKEN_FIELD_NUMBER;
     hash = (53 * hash) + getToken().hashCode();
+    hash = (37 * hash) + PID_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getPid());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -329,6 +357,8 @@ private static final long serialVersionUID = 0L;
 
       token_ = com.google.protobuf.ByteString.EMPTY;
 
+      pid_ = 0L;
+
       return this;
     }
 
@@ -357,6 +387,7 @@ private static final long serialVersionUID = 0L;
       com.intellij.execution.process.mediator.rpc.DaemonHello result = new com.intellij.execution.process.mediator.rpc.DaemonHello(this);
       result.port_ = port_;
       result.token_ = token_;
+      result.pid_ = pid_;
       onBuilt();
       return result;
     }
@@ -410,6 +441,9 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getToken() != com.google.protobuf.ByteString.EMPTY) {
         setToken(other.getToken());
+      }
+      if (other.getPid() != 0L) {
+        setPid(other.getPid());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -501,6 +535,37 @@ private static final long serialVersionUID = 0L;
     public Builder clearToken() {
       
       token_ = getDefaultInstance().getToken();
+      onChanged();
+      return this;
+    }
+
+    private long pid_ ;
+    /**
+     * <code>uint64 pid = 3;</code>
+     * @return The pid.
+     */
+    @java.lang.Override
+    public long getPid() {
+      return pid_;
+    }
+    /**
+     * <code>uint64 pid = 3;</code>
+     * @param value The pid to set.
+     * @return This builder for chaining.
+     */
+    public Builder setPid(long value) {
+      
+      pid_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint64 pid = 3;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearPid() {
+      
+      pid_ = 0L;
       onChanged();
       return this;
     }
