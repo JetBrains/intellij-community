@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.targets
 
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.InspectionApplication
 import com.intellij.codeInspection.ex.InspectionProfileImpl
@@ -13,6 +14,8 @@ import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.search.scope.packageSet.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.isAncestor
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -20,6 +23,7 @@ import java.nio.file.StandardCopyOption
 
 private const val QODANA_GLOBAL_SCOPE = "qodana.global"
 private const val QODANA_CONFIG_FILENAME = "qodana.json"
+private const val DEFAULT_QODANA_PROFILE = "qodana.recommended"
 
 
 class QodanaConfig(val profile: QodanaProfile = QodanaProfile(), val excludes: List<ExclusionFilter> = emptyList()) {
@@ -27,13 +31,34 @@ class QodanaConfig(val profile: QodanaProfile = QodanaProfile(), val excludes: L
     @JvmField
     val EMPTY = QodanaConfig()
 
-    fun load(projectPath: Path): QodanaConfig {
+    fun load(projectPath: Path, application: InspectionApplication): QodanaConfig {
       val path = projectPath.resolve(QODANA_CONFIG_FILENAME)
-      if (!path.exists()) return EMPTY
-      val logTarget = Paths.get(PathManager.getLogPath(), QODANA_CONFIG_FILENAME)
-      Files.copy(path, logTarget, StandardCopyOption.REPLACE_EXISTING)
-      return Gson().fromJson(path.toFile().readText(), QodanaConfig::class.java)
+      val qodanaConfig = if (!path.exists()) {
+        return EMPTY
+      }
+      else {
+        Gson().fromJson(path.toFile().readText(), QodanaConfig::class.java)
+      }
+
+      if (qodanaConfig.profile.name.isEmpty() && qodanaConfig.profile.path.isEmpty()) {
+        if (application.myProfileName != null) {
+          return QodanaConfig(QodanaProfile("", application.myProfileName), qodanaConfig.excludes)
+        }
+        if (application.myProfilePath != null) {
+          return QodanaConfig(QodanaProfile("", application.myProfilePath), qodanaConfig.excludes)
+        }
+        return QodanaConfig(QodanaProfile(DEFAULT_QODANA_PROFILE, application.myProfilePath), qodanaConfig.excludes)
+      } else {
+        return qodanaConfig
+      }
     }
+  }
+
+  fun write() {
+    val logTarget = Paths.get(PathManager.getLogPath(), QODANA_CONFIG_FILENAME)
+    val gson = GsonBuilder().setPrettyPrinting().create()
+    val writer = OutputStreamWriter(FileOutputStream(logTarget.toFile()), Charsets.UTF_8)
+    writer.use { gson.toJson(this, writer) }
   }
 
   fun getGlobalScope(project: Project): GlobalSearchScope? {
