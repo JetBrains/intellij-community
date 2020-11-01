@@ -42,7 +42,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
       //noinspection SpellCheckingInspection
       if (result.getClassLoader() != pluginDescriptor.getPluginClassLoader() && pluginDescriptor.getPluginClassLoader() != null &&
           !className.equals("com.intellij.internal.statistic.updater.StatisticsJobsScheduler") &&
-          !className.equals("com.intellij.webcore.resourceRoots.ResourceRootIconProvider") &&
+          !className.startsWith("com.intellij.webcore.resourceRoots.") &&
           !className.startsWith("com.intellij.tasks.impl.") &&
           !className.equals("com.intellij.javascript.debugger.execution.DebuggableProgramRunner")) {
         String idString = pluginDescriptor.getPluginId().getIdString();

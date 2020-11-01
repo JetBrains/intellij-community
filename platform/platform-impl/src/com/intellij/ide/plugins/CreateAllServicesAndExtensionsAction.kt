@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
@@ -19,6 +20,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import io.github.classgraph.AnnotationEnumValue
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ClassInfo
+import java.util.function.BiConsumer
 
 @Suppress("HardCodedStringLiteral")
 private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
@@ -65,12 +67,18 @@ private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressI
   indicator.text2 = "Checking ${container.activityNamePrefix()}services..."
   ComponentManagerImpl.createAllServices(container)
   indicator.text2 = "Checking ${container.activityNamePrefix()}extensions..."
-  container.extensionArea.processExtensionPoints {
+  container.extensionArea.processExtensionPoints { extensionPoint ->
     // requires read action
-    if (it.name != "com.intellij.favoritesListProvider" && it.name != "com.intellij.favoritesListProvider") {
-      taskExecutor {
-        it.extensionList
-      }
+    if (extensionPoint.name != "com.intellij.favoritesListProvider" && extensionPoint.name != "com.intellij.favoritesListProvider") {
+      extensionPoint.processImplementations(false, BiConsumer { supplier, _ ->
+        taskExecutor {
+          try {
+            supplier.get()
+          }
+          catch (ignore: ExtensionNotApplicableException) {
+          }
+        }
+      })
     }
   }
 }

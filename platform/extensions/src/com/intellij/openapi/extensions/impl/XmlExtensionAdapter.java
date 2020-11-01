@@ -63,7 +63,10 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
           //noinspection unchecked
           aClass = (Class<T>)implementationClassResolver.resolveImplementationClass(componentManager, this);
         }
-        catch (ClassNotFoundException e) {
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
           throw componentManager.createError(e, pluginDescriptor.getPluginId());
         }
 

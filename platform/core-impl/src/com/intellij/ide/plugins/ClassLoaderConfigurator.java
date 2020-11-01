@@ -70,6 +70,11 @@ final class ClassLoaderConfigurator {
         PluginId.getId("com.intellij.kubernetes"),
         PluginId.getId("JavaScript"),
         PluginId.getId("com.jetbrains.space"),
+        PluginId.getId("com.intellij.micronaut"),
+        PluginId.getId("com.jetbrains.php.phpspec"),
+        PluginId.getId("Docker"),
+        PluginId.getId("AWSCloudFormation"),
+        PluginId.getId("com.intellij.diagram"),
         PluginId.getId("org.jetbrains.plugins.github")
       });
     }
@@ -84,7 +89,21 @@ final class ClassLoaderConfigurator {
     }
 
     SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE = new ReferenceOpenHashSet<>(new PluginId[]{
-      PluginId.getId("org.jetbrains.kotlin")
+      PluginId.getId("org.jetbrains.kotlin"),
+      PluginId.getId("com.intellij.java"),
+      PluginId.getId("com.intellij.spring.batch"),
+      PluginId.getId("com.intellij.spring.integration"),
+      PluginId.getId("com.intellij.spring.messaging"),
+      PluginId.getId("com.intellij.spring.ws"),
+      PluginId.getId("com.intellij.spring.websocket"),
+      PluginId.getId("com.intellij.spring.webflow"),
+      PluginId.getId("com.intellij.spring.security"),
+      PluginId.getId("com.intellij.spring.osgi"),
+      PluginId.getId("com.intellij.spring.mvc"),
+      PluginId.getId("com.intellij.spring.data"),
+      PluginId.getId("com.intellij.spring.boot.run.tests"),
+      PluginId.getId("com.intellij.spring.boot"),
+      PluginId.getId("com.intellij.spring"),
     });
   }
 
@@ -187,20 +206,8 @@ final class ClassLoaderConfigurator {
     // no need to process dependencies recursively because dependency will use own classloader
     // (that in turn will delegate class searching to parent class loader if needed)
     for (PluginDependency dependency : pluginDependencies) {
-      if (dependency.isDisabledOrBroken || (isClassloaderPerDescriptorEnabled(mainDependent) && dependency.subDescriptor != null)) {
-        continue;
-      }
-
-      IdeaPluginDescriptorImpl dependencyDescriptor = idMap.get(dependency.id);
-      if (dependencyDescriptor != null) {
-        ClassLoader loader = dependencyDescriptor.getClassLoader();
-        if (loader == null) {
-          getLogger().error(PluginLoadingError.formatErrorMessage(mainDependent,
-                                                                  "requires missing class loader for '" + dependencyDescriptor.getName() + "'"));
-        }
-        else if (loader != coreLoader) {
-          loaders.add(loader);
-        }
+      if (!dependency.isDisabledOrBroken && (!isClassloaderPerDescriptorEnabled(mainDependent) || dependency.subDescriptor == null)) {
+        addClassloaderIfDependencyEnabled(dependency.id, mainDependent);
       }
     }
 
@@ -256,7 +263,8 @@ final class ClassLoaderConfigurator {
 
     packagePrefixes.clear();
     collectPackagePrefixes(dependent, packagePrefixes);
-    if (packagePrefixes.isEmpty()) {
+    // no package prefixes if only bean extension points are configured
+    if (packagePrefixes.isEmpty() && !dependent.getUnsortedEpNameToExtensionElements().containsKey("org.intellij.intelliLang.injectionConfig")) {
       getLogger().error("Optional descriptor " + dependencyInfo + " doesn't define extra classes");
     }
 
@@ -265,6 +273,17 @@ final class ClassLoaderConfigurator {
     loaders.add(mainDependentClassLoader);
     addLoaderOrLogError(dependent, dependency, loaders);
 
+    List<PluginDependency> pluginDependencies = dependent.pluginDependencies;
+
+    // add config-less dependencies to classloader parents
+    if (pluginDependencies != null) {
+      for (PluginDependency subDependency : pluginDependencies) {
+        if (!subDependency.isDisabledOrBroken && subDependency.subDescriptor == null) {
+          addClassloaderIfDependencyEnabled(subDependency.id, dependent);
+        }
+      }
+    }
+
     SubPluginClassLoader subClassloader = new SubPluginClassLoader(dependent,
                                                                    urlClassLoaderBuilder,
                                                                    loaders.toArray(EMPTY_CLASS_LOADER_ARRAY),
@@ -272,10 +291,28 @@ final class ClassLoaderConfigurator {
                                                                    coreLoader);
     dependent.setClassLoader(subClassloader);
 
-    if (dependent.pluginDependencies != null) {
-      for (PluginDependency dependencyInfo1 : dependent.pluginDependencies) {
-        configureSubPlugin(dependencyInfo1, subClassloader);
+    if (pluginDependencies != null) {
+      for (PluginDependency subDependency : pluginDependencies) {
+        configureSubPlugin(subDependency, subClassloader);
       }
+    }
+  }
+
+  private void addClassloaderIfDependencyEnabled(@NotNull PluginId dependencyId, @NotNull IdeaPluginDescriptorImpl dependent) {
+    IdeaPluginDescriptorImpl dependency = idMap.get(dependencyId);
+    if (dependency == null) {
+      return;
+    }
+
+    ClassLoader loader = dependency.getClassLoader();
+    if (loader == null) {
+      getLogger().error(PluginLoadingError.formatErrorMessage(dependent,
+                                                              "requires missing class loader for '" +
+                                                              dependency.getName() +
+                                                              "'"));
+    }
+    else if (loader != coreLoader) {
+      loaders.add(loader);
     }
   }
 
