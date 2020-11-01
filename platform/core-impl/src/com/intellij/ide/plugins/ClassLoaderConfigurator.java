@@ -115,6 +115,7 @@ final class ClassLoaderConfigurator {
 
       if (isClassloaderPerDescriptorEnabled(mainDependent)) {
         for (PluginDependency dependency : Objects.requireNonNull(mainDependent.pluginDependencies)) {
+          urlClassLoaderBuilder.urls(mainDependentClassLoader.getUrls());
           for (IdeaPluginDescriptorImpl subDescriptor : entry.getValue()) {
             if (subDescriptor == dependency.subDescriptor) {
               configureSubPlugin(dependency, mainDependentClassLoader);
@@ -130,6 +131,9 @@ final class ClassLoaderConfigurator {
         }
       }
     }
+
+    loaders.clear();
+    urlClassLoaderBuilder.urls(Collections.emptyList());
   }
 
   void configure(@NotNull IdeaPluginDescriptorImpl mainDependent) {
@@ -225,6 +229,10 @@ final class ClassLoaderConfigurator {
     else {
       setPluginClassLoaderForMainAndSubPlugins(mainDependent, mainDependentClassLoader);
     }
+
+    // reset to ensure that stalled data will be not reused somehow later
+    loaders.clear();
+    urlClassLoaderBuilder.urls(Collections.emptyList());
   }
 
   private static boolean isClassloaderPerDescriptorEnabled(@NotNull IdeaPluginDescriptorImpl mainDependent) {

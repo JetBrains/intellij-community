@@ -13,8 +13,6 @@
 
     <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromEditorRenameHandler"/>
 
-    <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
-
     <localInspection language="Properties" shortName="IncompleteProperty" unfair="true" bundle="messages.ResourceBundleEditorBundle"
                      key="incomplete.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="ERROR"
@@ -26,9 +24,6 @@
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoPropertyDeclarationsProvider"/>
 
     <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandlerEx" order="before properties"/>
-
-    <gotoDeclarationHandler implementation="com.intellij.lang.properties.editor.GotoPropertyParentDeclarationHandler"/>
-
   </extensions>
 
   <actions>

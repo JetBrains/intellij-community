@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
@@ -143,8 +144,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return componentManager;
   }
 
-  private synchronized void doRegisterExtension(@NotNull T extension, @NotNull LoadingOrder order,
-                                                @NotNull PluginDescriptor pluginDescriptor, @Nullable Disposable parentDisposable) {
+  private synchronized void doRegisterExtension(@NotNull T extension,
+                                                @NotNull LoadingOrder order,
+                                                @NotNull PluginDescriptor pluginDescriptor,
+                                                @Nullable Disposable parentDisposable) {
     assertNotReadOnlyMode();
     checkExtensionType(extension, getExtensionClass(), null);
 
@@ -226,11 +229,14 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   private void checkExtensionType(@NotNull T extension, @NotNull Class<T> extensionClass, @Nullable ExtensionComponentAdapter adapter) {
     if (!extensionClass.isInstance(extension)) {
-      @NonNls String message = "Extension " + extension.getClass() + " does not implement " + extensionClass;
-      if (adapter != null) {
-        message += " (adapter=" + adapter + ")";
+      @NonNls String message = "Extension " + extension.getClass().getName() + " does not implement " + extensionClass;
+      if (adapter == null) {
+        throw new RuntimeException(message);
       }
-      throw new ExtensionException(message, extension.getClass());
+      else {
+        message += " (adapter=" + adapter + ")\n" + ThreadDumper.dumpThreadsToString();
+        throw componentManager.createError(message, adapter.getPluginDescriptor().getPluginId());
+      }
     }
   }
 

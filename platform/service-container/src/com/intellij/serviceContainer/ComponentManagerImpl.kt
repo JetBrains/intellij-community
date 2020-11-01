@@ -1098,13 +1098,13 @@ internal fun isGettingServiceAllowedDuringPluginUnloading(descriptor: PluginDesc
   return descriptor.isRequireRestart || descriptor.pluginId == PluginManagerCore.CORE_ID || descriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID
 }
 
-private fun resolveClass(className: String, pluginDescriptor: PluginDescriptor): Class<*> {
+private fun resolveClass(name: String, pluginDescriptor: PluginDescriptor): Class<*> {
   // maybe null in unit tests
   val classLoader = pluginDescriptor.pluginClassLoader ?: ComponentManagerImpl::class.java.classLoader
   if (classLoader is PluginAwareClassLoader.SubClassLoader) {
-    return classLoader.loadOrDelegate(className)
+    return classLoader.loadOrDelegate(name)
   }
   else {
-    return Class.forName(className, true, classLoader)
+    return Class.forName(name, true, classLoader)
   }
 }

@@ -378,7 +378,7 @@
         implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeFileReferenceHelper"/>
 
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
-    <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
+    <console.folding order="first" implementation="org.jetbrains.idea.devkit.FailedTestDebugLogConsoleFolding"/>
 
     <!--cached value profiler-->
     <fileType extensions="cvp" name="CVP"

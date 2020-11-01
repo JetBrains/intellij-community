@@ -32,11 +32,31 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     public @NotNull Class<?> resolveImplementationClass(@NotNull ComponentManager componentManager,
                                                         @NotNull ExtensionComponentAdapter adapter) throws ClassNotFoundException {
       Object implementationClassOrName = adapter.implementationClassOrName;
-      if (implementationClassOrName instanceof String) {
-        implementationClassOrName = componentManager.loadClass((String)implementationClassOrName, adapter.getPluginDescriptor());
-        adapter.implementationClassOrName = implementationClassOrName;
+      if (!(implementationClassOrName instanceof String)) {
+        return (Class<?>)implementationClassOrName;
       }
-      return (Class<?>)implementationClassOrName;
+
+      PluginDescriptor pluginDescriptor = adapter.getPluginDescriptor();
+      String className = (String)implementationClassOrName;
+      Class<?> result = componentManager.loadClass(className, pluginDescriptor);
+      //noinspection SpellCheckingInspection
+      if (result.getClassLoader() != pluginDescriptor.getPluginClassLoader() && pluginDescriptor.getPluginClassLoader() != null &&
+          !className.equals("com.intellij.internal.statistic.updater.StatisticsJobsScheduler") &&
+          !className.equals("com.intellij.webcore.resourceRoots.ResourceRootIconProvider") &&
+          !className.startsWith("com.intellij.tasks.impl.") &&
+          !className.equals("com.intellij.javascript.debugger.execution.DebuggableProgramRunner")) {
+        String idString = pluginDescriptor.getPluginId().getIdString();
+        if (!idString.equals("com.intellij.java") && !idString.equals("com.intellij.java.ide")) {
+          ExtensionPointImpl.LOG.error(componentManager.createError("Created extension classloader is not equal to plugin's one (" +
+                                                                    "className=" + className + ", " +
+                                                                    "extensionInstanceClassloader=" + result.getClassLoader() + ", " +
+                                                                    "pluginClassloader=" + pluginDescriptor.getPluginClassLoader() +
+                                                                    ")", pluginDescriptor.getPluginId()));
+        }
+      }
+      implementationClassOrName = result;
+      adapter.implementationClassOrName = implementationClassOrName;
+      return result;
     }
   }
 

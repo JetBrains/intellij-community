@@ -1,16 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
 
-/**
- * @author gregsh
- */
-public class BundledKeymapBean extends AbstractExtensionPointBean {
-
-  public static final ExtensionPointName<BundledKeymapBean> EP_NAME = ExtensionPointName.create("com.intellij.bundledKeymap");
+public final class BundledKeymapBean {
+  public static final ExtensionPointName<BundledKeymapBean> EP_NAME = new ExtensionPointName<>("com.intellij.bundledKeymap");
 
   /**
    * Keymap resource name is as follows: /keymaps/$file$.

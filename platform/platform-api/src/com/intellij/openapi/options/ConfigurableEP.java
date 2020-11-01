@@ -7,7 +7,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -319,7 +318,12 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       return Class.forName(className, true, classLoader);
     }
     catch (Throwable t) {
-      LOG.error(new ExtensionInstantiationException(t, pluginDescriptor));
+      if (pluginDescriptor == null) {
+        LOG.error(t);
+      }
+      else {
+        LOG.error(new PluginException(t, pluginDescriptor.getPluginId()));
+      }
       return null;
     }
   }

@@ -4,6 +4,7 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.DefaultPicoContainer;
@@ -39,9 +40,6 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     @SuppressWarnings("unchecked")
     T instance = (T)extensionInstance;
     if (instance != null) {
-      // todo add assert that createInstance was already called
-      // problem is that ExtensionPointImpl clears cache on runtime modification and so adapter instance need to be recreated
-      // it will be addressed later, for now better to reduce scope of changes
       return instance;
     }
 
@@ -54,13 +52,25 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       }
 
       if (initializing) {
-        componentManager.logError(new IllegalStateException("Cyclic extension initialization: " + this), getPluginDescriptor().getPluginId());
+        throw componentManager.createError("Cyclic extension initialization: " + this, pluginDescriptor.getPluginId());
       }
 
       try {
         initializing = true;
 
-        instance = super.createInstance(componentManager);
+        Class<T> aClass;
+        try {
+          //noinspection unchecked
+          aClass = (Class<T>)implementationClassResolver.resolveImplementationClass(componentManager, this);
+        }
+        catch (ClassNotFoundException e) {
+          throw componentManager.createError(e, pluginDescriptor.getPluginId());
+        }
+
+        instance = instantiateClass(aClass, componentManager);
+        if (instance instanceof PluginAware) {
+          ((PluginAware)instance).setPluginDescriptor(pluginDescriptor);
+        }
 
         Element element = myExtensionElement;
         if (element != null) {
@@ -75,6 +85,10 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       }
     }
     return instance;
+  }
+
+  protected @NotNull <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
+    return componentManager.instantiateClass(aClass, pluginDescriptor.getPluginId());
   }
 
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {
@@ -105,8 +119,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
           String message = "Cannot create extension without pico container (class=" + aClass.getName() + ")," +
                            " please remove extra constructor parameters";
-          PluginDescriptor pluginDescriptor = getPluginDescriptor();
-          if (pluginDescriptor.isBundled() && !isKnownBadPlugin(pluginDescriptor)) {
+          if (pluginDescriptor.isBundled()) {
             ExtensionPointImpl.LOG.error(message, e);
           }
           else {
@@ -114,13 +127,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
           }
         }
       }
-      return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, getPluginDescriptor().getPluginId());
-    }
-
-    private static boolean isKnownBadPlugin(@NotNull PluginDescriptor pluginDescriptor) {
-      String id = pluginDescriptor.getPluginId().getIdString();
-      //noinspection SpellCheckingInspection
-      return id.equals("Lombook Plugin");
+      return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.getPluginId());
     }
   }
 }

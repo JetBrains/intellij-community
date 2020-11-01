@@ -66,6 +66,8 @@ import java.util.function.Function;
   additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC
 )
 public final class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
+  public static final ExtensionPointName<AdditionalTextAttributesEP> ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME = new ExtensionPointName<>("com.intellij.additionalTextAttributes");
+
   private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
   private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = new ExtensionPointName<>("com.intellij.bundledColorScheme");
 
@@ -380,7 +382,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @NotNull
   private static MultiMap<String, AdditionalTextAttributesEP> collectAdditionalTextAttributesEPs() {
     MultiMap<String, AdditionalTextAttributesEP> schemeNameToAttributesFile = MultiMap.create();
-    AdditionalTextAttributesEP.EP_NAME.forEachExtensionSafe(attributesEP -> {
+    ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME.forEachExtensionSafe(attributesEP -> {
       schemeNameToAttributesFile.putValue(attributesEP.scheme, attributesEP);
     });
     return schemeNameToAttributesFile;

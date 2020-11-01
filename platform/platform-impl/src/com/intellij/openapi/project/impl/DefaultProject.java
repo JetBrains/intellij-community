@@ -62,7 +62,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  public <T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
+  public <T> @NotNull T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
     return getDelegate().instantiateClass(className, pluginDescriptor);
   }
 
@@ -77,7 +77,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  public <T> Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+  public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
     return getDelegate().loadClass(className, pluginDescriptor);
   }
 

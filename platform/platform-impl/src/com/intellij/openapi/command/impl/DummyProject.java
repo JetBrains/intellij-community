@@ -124,7 +124,7 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   public void dispose() { }
 
   @Override
-  public <T> Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+  public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
     //noinspection unchecked
     return (Class<T>)Class.forName(className);
   }

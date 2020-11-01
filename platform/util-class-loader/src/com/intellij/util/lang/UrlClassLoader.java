@@ -321,17 +321,17 @@ public class UrlClassLoader extends ClassLoader {
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
-  public void addURL(@NotNull URL url) {
+  public final void addURL(@NotNull URL url) {
     getClassPath().addURL(UrlUtilRt.internProtocol(url));
     myURLs.add(url);
   }
 
   @NotNull
-  public List<URL> getUrls() {
+  public final List<URL> getUrls() {
     return Collections.unmodifiableList(myURLs);
   }
 
-  public boolean hasLoadedClass(String name) {
+  public final boolean hasLoadedClass(String name) {
     Class<?> aClass = findLoadedClass(name);
     return aClass != null && aClass.getClassLoader() == this;
   }

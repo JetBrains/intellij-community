@@ -5,11 +5,11 @@ import com.intellij.CodeStyleBundle;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.UnknownElementCollector;
 import com.intellij.configurationStore.UnknownElementWriter;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
@@ -912,12 +912,12 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-  private static IndentOptions getFileTypeIndentOptions(FileTypeIndentOptionsFactory factory) {
+  private static IndentOptions getFileTypeIndentOptions(@NotNull FileTypeIndentOptionsFactory factory) {
     try {
       return factory.createIndentOptions();
     }
     catch (AbstractMethodError error) {
-      LOG.error("Plugin uses obsolete API.", new ExtensionException(factory.getClass()));
+      LOG.error(PluginException.createByClass("Plugin uses obsolete API", null, factory.getClass()));
       return new IndentOptions();
     }
   }

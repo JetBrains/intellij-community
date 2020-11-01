@@ -80,11 +80,11 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
    */
   @Deprecated
   public final @NotNull <T> T instantiate(@NotNull String className, @NotNull PicoContainer container) throws ClassNotFoundException {
-    return instantiate(findClass(className), container);
+    return instantiate(findClass(className), container, true);
   }
 
   public final @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PicoContainer container) {
-    return instantiate(findExtensionClass(className), container);
+    return instantiate(findExtensionClass(className), container, true);
   }
 
   public static @NotNull <T> T instantiate(@NotNull Class<T> aClass, @NotNull PicoContainer container) {

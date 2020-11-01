@@ -146,7 +146,7 @@ public class ExtensionPointImplTest {
     extensionPoint.addExtensionAdapter(newStringAdapter());
     assertThatThrownBy(() -> {
       extensionPoint.getExtensionList();
-    }).hasMessageContaining("Extension class java.lang.String does not implement class java.lang.Integer");
+    }).hasMessageContaining("Extension java.lang.String does not implement class java.lang.Integer");
   }
 
   @Test
@@ -381,7 +381,7 @@ public class ExtensionPointImplTest {
     }
 
     @Override
-    public <T> Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+    public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
       //noinspection unchecked
       return (Class<T>)Class.forName(className);
     }

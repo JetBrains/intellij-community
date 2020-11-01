@@ -8,6 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.function.BiConsumer;
+
+/**
+ * Use only if you need to cache created instance.
+ * @see {@link com.intellij.openapi.extensions.ExtensionPointName#processWithPluginDescriptor(BiConsumer)}
+ */
 public abstract class LazyExtensionInstance<T> {
   private volatile T instance;
 

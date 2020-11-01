@@ -1,18 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
-import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.PicoContainer;
 
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
@@ -23,20 +19,21 @@ import java.util.List;
 public abstract class KeyedExtensionFactory<T, KeyT> {
   private final Class<T> myInterfaceClass;
   private final ExtensionPointName<KeyedFactoryEPBean> myEpName;
-  private final PicoContainer myPicoContainer;
+  private final ComponentManager componentManager;
 
-  public KeyedExtensionFactory(final @NotNull Class<T> interfaceClass, @NonNls final @NotNull ExtensionPointName<KeyedFactoryEPBean> epName,
-                               @NotNull PicoContainer picoContainer) {
+  public KeyedExtensionFactory(@NotNull Class<T> interfaceClass,
+                               @NotNull ExtensionPointName<KeyedFactoryEPBean> epName,
+                               @NotNull ComponentManager componentManager) {
     myInterfaceClass = interfaceClass;
     myEpName = epName;
-    myPicoContainer = picoContainer;
+    this.componentManager = componentManager;
   }
 
   public @NotNull T get() {
     InvocationHandler handler = new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) {
-        final List<KeyedFactoryEPBean> epBeans = myEpName.getExtensionList();
+        List<KeyedFactoryEPBean> epBeans = myEpName.getExtensionList();
         //noinspection unchecked
         KeyT keyArg = (KeyT) args [0];
         String key = getKey(keyArg);
@@ -48,69 +45,54 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
       }
     };
     //noinspection unchecked
-    return (T)Proxy.newProxyInstance(myInterfaceClass.getClassLoader(), new Class<?>[] { myInterfaceClass }, handler );
+    return (T)Proxy.newProxyInstance(myInterfaceClass.getClassLoader(), new Class<?>[]{myInterfaceClass}, handler);
   }
 
   public T getByKey(@NotNull KeyT key) {
-    return findByKey(getKey(key), myEpName, myPicoContainer);
+    return findByKey(getKey(key), myEpName, componentManager);
   }
 
-  public static @Nullable <T> T findByKey(@NotNull String key, @NotNull ExtensionPointName<KeyedFactoryEPBean> point, @NotNull PicoContainer picoContainer) {
+  public static @Nullable <T> T findByKey(@NotNull String key,
+                                          @NotNull ExtensionPointName<KeyedFactoryEPBean> point,
+                                          @NotNull ComponentManager componentManager) {
     for (KeyedFactoryEPBean epBean : point.getExtensionList()) {
       if (!key.equals(epBean.key) || epBean.implementationClass == null) {
         continue;
       }
-
-      try {
-        return epBean.instantiateClass(epBean.implementationClass, picoContainer);
-      }
-      catch (ProcessCanceledException | ExtensionInstantiationException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new ExtensionInstantiationException(e, epBean.getPluginDescriptor());
-      }
+      return componentManager.instantiateClass(epBean.implementationClass, epBean.getPluginDescriptor());
     }
     return null;
   }
 
-  private T getByKey(final List<? extends KeyedFactoryEPBean> epBeans, final String key, final Method method, final Object[] args) {
-    T result = null;
-    for(KeyedFactoryEPBean epBean: epBeans) {
-      if (Comparing.strEqual(epBean.key, key, true)) {
-        try {
-          if (epBean.implementationClass != null) {
-            result = epBean.instantiateClass(epBean.implementationClass, myPicoContainer);
-          }
-          else {
-            Object factory = epBean.instantiateClass(epBean.factoryClass, myPicoContainer);
-            //noinspection unchecked
-            result = (T)method.invoke(factory, args);
-          }
-          if (result != null) {
-            break;
-          }
-        }
-        catch (InvocationTargetException e) {
-          Throwable t = e.getCause();
-          if (t instanceof ControlFlowException && t instanceof RuntimeException) throw (RuntimeException)t;
-          throw new ExtensionInstantiationException(e, epBean.getPluginDescriptor());
-        }
-        catch (ExtensionInstantiationException e) {
-          throw e;
-        }
-        catch (RuntimeException e) {
-          if (e instanceof ControlFlowException) {
-            throw e;
-          }
-          throw new ExtensionInstantiationException(e, epBean.getPluginDescriptor());
-        }
-        catch (Exception e) {
-          throw new ExtensionInstantiationException(e, epBean.getPluginDescriptor());
+  private T getByKey(@NotNull List<KeyedFactoryEPBean> epBeans, @Nullable String key, @NotNull Method method, Object[] args) {
+    for (KeyedFactoryEPBean epBean : epBeans) {
+      if (!(epBean.key == null ? "" : epBean.key).equals(key == null ? "" : key)) {
+        continue;
+      }
+
+      if (epBean.implementationClass != null) {
+        return componentManager.instantiateClass(epBean.implementationClass, epBean.getPluginDescriptor());
+      }
+
+      Object factory = componentManager.instantiateClass(epBean.factoryClass, epBean.getPluginDescriptor());
+      try {
+        //noinspection unchecked
+        T result = (T)method.invoke(factory, args);
+        if (result != null) {
+          return result;
         }
       }
+      catch (RuntimeException e) {
+        if (e instanceof ControlFlowException) {
+          throw e;
+        }
+        throw componentManager.createError(e, epBean.getPluginDescriptor().getPluginId());
+      }
+      catch (Exception e) {
+        throw componentManager.createError(e, epBean.getPluginDescriptor().getPluginId());
+      }
     }
-    return result;
+    return null;
   }
 
   public abstract @NotNull String getKey(@NotNull KeyT key);

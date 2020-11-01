@@ -764,12 +764,15 @@ object DynamicPlugins {
       try {
         addToLoadedPlugins(pluginDescriptor)
         val pluginStateChecker = PluginStateChecker(classLoaderConfigurator?.idMap)
-        loadPluginDescriptor(pluginDescriptor, app, pluginStateChecker)
-        loadOptionalDependenciesOnPlugin(pluginDescriptor, loader, pluginStateChecker, classLoaderConfigurator)
+        val listenerCallbacks = mutableListOf<Runnable>()
+        loadPluginDescriptor(pluginDescriptor, app, pluginStateChecker, listenerCallbacks)
+        loadOptionalDependenciesOnPlugin(pluginDescriptor, loader, pluginStateChecker, classLoaderConfigurator, listenerCallbacks)
 
         for (openProject in ProjectUtil.getOpenProjects()) {
           (CachedValuesManager.getManager(openProject) as CachedValuesManagerImpl).clearCachedValues()
         }
+
+        listenerCallbacks.forEach(Runnable::run)
 
         val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
         @Suppress("DEPRECATION")
@@ -936,7 +939,8 @@ private class OptionalDependencyDescriptorLoader {
 private fun loadOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDescriptorImpl,
                                              loader: Lazy<OptionalDependencyDescriptorLoader>,
                                              pluginStateChecker: PluginStateChecker,
-                                             classLoaderConfigurator: ClassLoaderConfigurator?) {
+                                             classLoaderConfigurator: ClassLoaderConfigurator?,
+                                             listenerCallbacks: MutableList<Runnable>) {
   val mainToSub = LinkedHashMap<IdeaPluginDescriptorImpl, MutableList<IdeaPluginDescriptorImpl>>()
   // 1. read and collect optional descriptors
   for (descriptor in PluginManagerCore.getLoadedPlugins(null)) {
@@ -958,7 +962,7 @@ private fun loadOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDescrip
   // 3. load into service container
   for (entry in mainToSub.entries) {
     for (subDescriptor in entry.value) {
-      loadPluginDescriptor(subDescriptor, app, pluginStateChecker)
+      loadPluginDescriptor(subDescriptor, app, pluginStateChecker, listenerCallbacks)
     }
   }
 }
@@ -999,10 +1003,10 @@ private fun updateDependenciesStatus(pluginDescriptor: IdeaPluginDescriptorImpl,
 
 private fun loadPluginDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl,
                                  app: ComponentManagerImpl,
-                                 pluginStateChecker: PluginStateChecker) {
+                                 pluginStateChecker: PluginStateChecker,
+                                 listenerCallbacks: MutableList<Runnable>) {
   updateDependenciesStatus(pluginDescriptor, pluginStateChecker)
 
-  val listenerCallbacks = mutableListOf<Runnable>()
   val list = listOf(pluginDescriptor)
   app.registerComponents(list, listenerCallbacks)
   for (openProject in ProjectUtil.getOpenProjects()) {
@@ -1014,7 +1018,6 @@ private fun loadPluginDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl,
 
   val actionManager = ActionManager.getInstance() as ActionManagerImpl
   actionManager.registerActions(list, false)
-  listenerCallbacks.forEach(Runnable::run)
 }
 
 private class PluginStateChecker(private val loadedIdMap: MutableMap<PluginId, IdeaPluginDescriptorImpl>? = null) {

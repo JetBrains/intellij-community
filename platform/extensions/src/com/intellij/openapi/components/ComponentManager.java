@@ -168,10 +168,10 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Internal
-  <@NotNull T> Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
+  <@NotNull T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
 
   @ApiStatus.Internal
-  default <@NotNull T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
+  default @NotNull <@NotNull T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
     try {
       return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
     }

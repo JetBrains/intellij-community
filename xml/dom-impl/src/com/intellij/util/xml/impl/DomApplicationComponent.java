@@ -20,7 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -145,9 +148,8 @@ public final class DomApplicationComponent {
     }
   }
 
-  void initDescription(DomFileDescription<?> description) {
-    Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
-    for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
+  void initDescription(@NotNull DomFileDescription<?> description) {
+    for (Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : description.getImplementations().entrySet()) {
       registerImplementation(entry.getKey(), entry.getValue(), null);
     }
 

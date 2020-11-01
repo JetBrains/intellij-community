@@ -9,8 +9,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * This exception is thrown if some extension (service, extension point) failed to initialize. Use this exception inside 'intellij.platform.extensions'
  * module only, in other parts of IntelliJ Platform and its plugins use {@link com.intellij.diagnostic.PluginException} instead.
- *
- * @see ExtensionException
  */
 public final class ExtensionInstantiationException extends RuntimeException {
   private final PluginDescriptor myExtensionOwner;

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist
+import com.intellij.internal.statistic.collectors.fus.ActionPlaceHolder
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
@@ -514,6 +515,6 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   private fun registerCustomActionPlace(place: String) {
     val extension = ActionCustomPlaceAllowlist()
     extension.places = place
-    ApplicationManager.getApplication().registerExtension(ActionCustomPlaceAllowlist.EP_NAME, extension, testRootDisposable)
+    ApplicationManager.getApplication().registerExtension(ActionPlaceHolder.EP_NAME, extension, testRootDisposable)
   }
 }
