@@ -57,16 +57,13 @@ public class LombokProcessorProvider implements Disposable {
     registeredAnnotationNames.clear();
 
     for (Processor processor : LombokProcessorManager.getLombokProcessors()) {
-      if (processor.isEnabled(myProject)) {
-
-        @NotNull String[] annotationClasses = processor.getSupportedAnnotationClasses();
+        String[] annotationClasses = processor.getSupportedAnnotationClasses();
         for (@NotNull String annotationClass : annotationClasses) {
           putProcessor(lombokProcessors, annotationClass, processor);
           putProcessor(lombokProcessors, StringUtil.getShortName(annotationClass), processor);
         }
 
         putProcessor(lombokTypeProcessors, processor.getSupportedClass(), processor);
-      }
     }
 
     registeredAnnotationNames.addAll(lombokProcessors.keySet());

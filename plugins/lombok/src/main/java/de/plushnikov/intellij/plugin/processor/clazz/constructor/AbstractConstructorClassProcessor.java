@@ -37,11 +37,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_CONSTRUCTOR_ENABLED);
-  }
-
-  @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (!validateAnnotationOnRightType(psiClass, builder)) {

@@ -17,9 +17,6 @@ public abstract class AbstractValVarIntentionAction extends AbstractLombokIntent
     if (!super.isAvailable(project, editor, element)) {
       return false;
     }
-    if (!ProjectSettings.isEnabled(project, ProjectSettings.IS_VAL_ENABLED)) {
-      return false;
-    }
     if (element instanceof PsiCompiledElement || !canModify(element) || !element.getLanguage().is(JavaLanguage.INSTANCE)) {
       return false;
     }

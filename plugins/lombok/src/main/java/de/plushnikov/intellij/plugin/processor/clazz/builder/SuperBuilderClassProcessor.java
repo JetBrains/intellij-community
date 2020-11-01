@@ -33,10 +33,6 @@ public class SuperBuilderClassProcessor extends AbstractClassProcessor {
     return ApplicationManager.getApplication().getService(SuperBuilderHandler.class);
   }
 
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_SUPER_BUILDER_ENABLED);
-  }
-
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     return getBuilderHandler().validate(psiClass, psiAnnotation, builder);

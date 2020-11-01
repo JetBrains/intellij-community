@@ -23,11 +23,6 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
 
   protected abstract SuperBuilderHandler getBuilderHandler();
 
-  @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_SUPER_BUILDER_ENABLED);
-  }
-
   @NotNull
   @Override
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {

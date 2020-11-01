@@ -28,11 +28,6 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
   }
 
   @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
-  }
-
-  @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
     // we skip validation here, bacause it will be validated by other BuilderClassProcessor
     return true;//builderHandler.validate(psiMethod, psiAnnotation, builder);

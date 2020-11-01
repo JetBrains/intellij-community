@@ -41,11 +41,6 @@ public class BuilderProcessor extends AbstractClassProcessor {
     return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
   }
 
-  @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
-  }
-
   @NotNull
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {

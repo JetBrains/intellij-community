@@ -25,10 +25,6 @@ public interface Processor {
   @NotNull
   Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation);
 
-  default boolean isEnabled(@NotNull Project project) {
-    return true;
-  }
-
   @NotNull
   default List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     return Collections.emptyList();
