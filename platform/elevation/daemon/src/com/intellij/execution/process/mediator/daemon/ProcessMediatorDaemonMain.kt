@@ -127,6 +127,9 @@ fun main(args: Array<String>) {
   if (launchOptions.trampoline) {
     trampoline(launchOptions)  // never returns
   }
+  if (launchOptions.daemonize) {
+    UnixDaemonizer.daemonize()
+  }
 
   val daemon: ProcessMediatorServerDaemon
 
@@ -153,6 +156,9 @@ fun main(args: Array<String>) {
       daemon.stop()
       throw e
     }
+  }
+  if (launchOptions.daemonize) {
+    UnixDaemonizer.closeStdStreams()
   }
 
   Runtime.getRuntime().addShutdownHook(
