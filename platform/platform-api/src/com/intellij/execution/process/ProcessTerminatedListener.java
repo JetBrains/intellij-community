@@ -50,11 +50,16 @@ public final class ProcessTerminatedListener extends ProcessAdapter {
   public void processTerminated(@NotNull ProcessEvent event) {
     ProcessHandler processHandler = event.getProcessHandler();
     processHandler.removeProcessListener(this);
-    @NlsSafe String message = myProcessFinishedMessage.replaceAll(EXIT_CODE_REGEX, stringifyExitCode(Platform.current(), event.getExitCode()));
+    @NlsSafe String message = myProcessFinishedMessage.replaceAll(EXIT_CODE_REGEX, stringifyExitCode(event.getExitCode()));
     processHandler.notifyTextAvailable(message, ProcessOutputTypes.SYSTEM);
     if (myProject != null) {
       ApplicationManager.getApplication().invokeLater(() -> StatusBar.Info.set(message, myProject), myProject.getDisposed());
     }
+  }
+
+  @NotNull
+  public static String stringifyExitCode(int exitCode) {
+    return stringifyExitCode(Platform.current(), exitCode);
   }
 
   @NotNull
