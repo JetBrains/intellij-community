@@ -988,6 +988,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             testClass<AbstractFirLazyDeclarationResolveTest> {
                 model("lazyResolve")
             }
+            testClass<AbstractFileStructureTest> {
+                model("fileStructure")
+            }
         }
 
     testGroup("idea/idea-fir/tests", "idea") {
