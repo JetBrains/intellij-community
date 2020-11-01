@@ -1,4 +1,4 @@
-# WinJumpListBridge
+# WinShellIntegration
 
 This project based on the [origin jumplistbridge project](https://github.com/JetBrains/intellij-community/tree/4635352640ed54ef9379082171f33837d099ebb8/native/jumplistbridge)
 by Denis Fokin.
@@ -8,13 +8,16 @@ TODO: description
 ## Build dependencies
 * C++17-compatible compiler
 * [CMake](https://cmake.org/download/) >= `v3.15` (Note: it is already shipped with CLion)
-* An implementation of Java SE 11 or newer. It's highly recommended to use the JDK you are using to build IDEA;
+* [Optional for building [winshellintegrationbridge](src/winshellintegrationbridge) target]:
+  An implementation of Java SE 11 or newer. It's highly recommended to use the JDK you are using to build IDEA;
 
 ## Build
-1. You have to set the variable `JDK_PATH` to the path of JDK which will be used for build.
+Just use CMake normally.
+
+If you want to build [winshellintegrationbridge](src/winshellintegrationbridge) target too
+you have to set the variable `JDK_PATH` to the path of JDK which will be used for build.
 For example if your `javac.exe` is located at `C:\Soft\jdk\bin\javac.exe` you should set the variable like
-`-DJDK_PATH="C:\Soft\jdk"`
-2.
+`-DJDK_PATH="C:\Soft\jdk"`.
 
 ## Integration with CLion
 TODO: description

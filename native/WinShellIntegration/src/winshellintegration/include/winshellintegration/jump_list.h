@@ -8,8 +8,8 @@
  * @author Nikita Provotorov
  */
 
-#ifndef WINJUMPLISTBRIDGE_JUMPLIST_H
-#define WINJUMPLISTBRIDGE_JUMPLIST_H
+#ifndef WINSHELLINTEGRATION_JUMPLIST_H
+#define WINSHELLINTEGRATION_JUMPLIST_H
 
 #include "jump_task.h"              // JumpTask
 #include "jump_item.h"              // JumpItem
@@ -122,4 +122,4 @@ namespace intellij::ui::win
 
 } // namespace intellij::ui::win
 
-#endif // ndef WINJUMPLISTBRIDGE_JUMPLIST_H
+#endif // ndef WINSHELLINTEGRATION_JUMPLIST_H

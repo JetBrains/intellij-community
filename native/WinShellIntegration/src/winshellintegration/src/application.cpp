@@ -1,19 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-#include "application.h"
-#include "winapi.h"         // SetCurrentProcessExplicitAppUserModelID,
-                            // GetCurrentProcessExplicitAppUserModelID,
-                            // COM,
-                            // Shell
+#include "winshellintegration/application.h"
+#include "winshellintegration/winapi.h"         // SetCurrentProcessExplicitAppUserModelID,
+                                                // GetCurrentProcessExplicitAppUserModelID,
+                                                // COM,
+                                                // Shell
 
-#include "COM_errors.h"     // errors::throwCOMException
-#include "jump_item.h"      // JumpItem
-#include "jump_task.h"      // JumpTask
-#include "jump_list.h"      // JumpList
-#include <string_view>      // std::string_view
-#include <exception>        // std::uncaught_exceptions
-#include <stdexcept>        // std::logic_error
-#include <cassert>          // assert
+#include "winshellintegration/COM_errors.h"     // errors::throwCOMException
+#include "winshellintegration/jump_item.h"      // JumpItem
+#include "winshellintegration/jump_task.h"      // JumpTask
+#include "winshellintegration/jump_list.h"      // JumpList
+#include <string_view>                          // std::string_view
+#include <exception>                            // std::uncaught_exceptions
+#include <stdexcept>                            // std::logic_error
+#include <cassert>                              // assert
 
 
 namespace intellij::ui::win

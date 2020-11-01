@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-#ifndef WINJUMPLISTBRIDGE_WIDE_STRING_H
-#define WINJUMPLISTBRIDGE_WIDE_STRING_H
+#ifndef WINSHELLINTEGRATION_WIDE_STRING_H
+#define WINSHELLINTEGRATION_WIDE_STRING_H
 
 #include "winapi.h"     // WCHAR
 #include <string>       // std::basic_string
@@ -17,4 +17,4 @@ namespace intellij::ui::win
 
 } // namespace intellij::ui::win
 
-#endif // ndef WINJUMPLISTBRIDGE_WIDE_STRING_H
+#endif // ndef WINSHELLINTEGRATION_WIDE_STRING_H

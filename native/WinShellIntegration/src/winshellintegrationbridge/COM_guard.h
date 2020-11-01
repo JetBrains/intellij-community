@@ -6,11 +6,14 @@
  * @author Nikita Provotorov
  */
 
-#ifndef WINJUMPLISTBRIDGE_COM_GUARD_H
-#define WINJUMPLISTBRIDGE_COM_GUARD_H
+#ifndef WINSHELLINTEGRATIONBRIDGE_COM_GUARD_H
+#define WINSHELLINTEGRATIONBRIDGE_COM_GUARD_H
 
-#include "winapi.h" // DWORD, CoInitializeEx, CoUninitialize
-#include <memory>   // std::shared_ptr
+#ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+#endif // ndef WIN32_LEAN_AND_MEAN
+#include <Windows.h>    // DWORD
+#include <memory>       // std::shared_ptr
 
 
 namespace intellij::ui::win
@@ -49,4 +52,4 @@ namespace intellij::ui::win
 } // namespace intellij::ui::win
 
 
-#endif // ndef WINJUMPLISTBRIDGE_COM_GUARD_H
+#endif // ndef WINSHELLINTEGRATIONBRIDGE_COM_GUARD_H

@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-#include "jump_task.h"
-#include "COM_errors.h" // errors::throwCOMException
-#include <string_view>  // std::string_view
-#include <type_traits>  // std::is_same_v
-#include <cassert>      // assert
+#include "winshellintegration/jump_task.h"
+#include "winshellintegration/COM_errors.h" // errors::throwCOMException
+#include <string_view>                      // std::string_view
+#include <type_traits>                      // std::is_same_v
+#include <cassert>                          // assert
 
 
 namespace intellij::ui::win

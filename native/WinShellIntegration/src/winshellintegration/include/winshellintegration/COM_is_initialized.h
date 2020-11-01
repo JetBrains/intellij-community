@@ -9,8 +9,8 @@
  * @author Nikita Provotorov
  */
 
-#ifndef WINJUMPLISTBRIDGE_COM_IS_INITIALIZED_H
-#define WINJUMPLISTBRIDGE_COM_IS_INITIALIZED_H
+#ifndef WINSHELLINTEGRATION_COM_IS_INITIALIZED_H
+#define WINSHELLINTEGRATION_COM_IS_INITIALIZED_H
 
 
 namespace intellij::ui::win
@@ -26,4 +26,4 @@ namespace intellij::ui::win
 
 } // namespace intellij::ui::win
 
-#endif // ndef WINJUMPLISTBRIDGE_COM_IS_INITIALIZED_H
+#endif // ndef WINSHELLINTEGRATION_COM_IS_INITIALIZED_H

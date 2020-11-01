@@ -7,17 +7,16 @@
  */
 
 #include "com_intellij_ui_win_RecentTasks.h"
-#include "COM_guard.h"      // intellij::ui::win::COMGuard
-#include "jump_list.h"      // intellij::ui::win::JumpList
-#include "application.h"    // intellij::ui::win::Application
-#include <string_view>      // std::string_view
-#include <thread>           // std::thread::id
-#include <stdexcept>        // std::system_error, std::runtime_error, std::logic_error, std::exception
-#include <optional>         // std::optional
-#include <vector>           // std::vector
-#include <sstream>          // std::stringstream
-#include <type_traits>      // std::decay_t, std::is_base_of
-#include <cassert>          // assert
+#include "COM_guard.h"              // COMGuard
+#include "winshellintegration.h"    // intellij::ui::win::*
+#include <string_view>              // std::string_view
+#include <thread>                   // std::thread::id
+#include <stdexcept>                // std::system_error, std::runtime_error, std::logic_error, std::exception
+#include <optional>                 // std::optional
+#include <vector>                   // std::vector
+#include <sstream>                  // std::stringstream
+#include <type_traits>              // std::decay_t, std::is_base_of
+#include <cassert>                  // assert
 
 
 namespace intellij::ui::win::jni

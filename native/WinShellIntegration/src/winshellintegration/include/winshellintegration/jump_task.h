@@ -8,8 +8,8 @@
  * @author Nikita Provotorov
  */
 
-#ifndef WINJUMPLISTBRIDGE_JUMPTASK_H
-#define WINJUMPLISTBRIDGE_JUMPTASK_H
+#ifndef WINSHELLINTEGRATION_JUMPTASK_H
+#define WINSHELLINTEGRATION_JUMPTASK_H
 
 #include "winapi.h"                 // IShellLinkW, CComPtr
 #include "COM_is_initialized.h"     // COMIsInitializedInThisThreadTag
@@ -170,4 +170,4 @@ namespace intellij::ui::win
 
 } // namespace intellij::ui::win
 
-#endif // ndef WINJUMPLISTBRIDGE_JUMPTASK_H
+#endif // ndef WINSHELLINTEGRATION_JUMPTASK_H

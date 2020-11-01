@@ -8,8 +8,8 @@
  * @author Nikita Provotorov
  */
 
-#ifndef WINJUMPLISTBRIDGE_APPLICATION_H
-#define WINJUMPLISTBRIDGE_APPLICATION_H
+#ifndef WINSHELLINTEGRATION_APPLICATION_H
+#define WINSHELLINTEGRATION_APPLICATION_H
 
 #include "app_user_model_id.h"      // AppUserModelId
 #include "COM_is_initialized.h"     // COMIsInitializedInThisThreadTag
@@ -149,4 +149,4 @@ namespace intellij::ui::win
 
 } // namespace intellij::ui::win
 
-#endif // ndef WINJUMPLISTBRIDGE_APPLICATION_H
+#endif // ndef WINSHELLINTEGRATION_APPLICATION_H

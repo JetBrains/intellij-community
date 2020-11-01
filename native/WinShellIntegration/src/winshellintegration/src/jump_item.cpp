@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-#include "jump_item.h"
-#include "COM_errors.h" // errors::throwCOMException
+#include "winshellintegration/jump_item.h"
+#include "winshellintegration/COM_errors.h" // errors::throwCOMException
 
 
 namespace intellij::ui::win

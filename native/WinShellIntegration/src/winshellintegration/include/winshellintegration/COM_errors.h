@@ -16,8 +16,8 @@
  *  @author Nikita Provotorov
  */
 
-#ifndef WINJUMPLISTBRIDGE_COM_ERRORS_H
-#define WINJUMPLISTBRIDGE_COM_ERRORS_H
+#ifndef WINSHELLINTEGRATION_COM_ERRORS_H
+#define WINSHELLINTEGRATION_COM_ERRORS_H
 
 #include "winapi.h"     // HRESULT
 #include <system_error> // std::error_code, std::error_category, std::is_error_code_enum
@@ -79,4 +79,4 @@ template<>
 struct std::is_error_code_enum<intellij::ui::win::errors::COMResultHandle> : std::true_type {};
 
 
-#endif // ndef WINJUMPLISTBRIDGE_COM_ERRORS_H
+#endif // ndef WINSHELLINTEGRATION_COM_ERRORS_H

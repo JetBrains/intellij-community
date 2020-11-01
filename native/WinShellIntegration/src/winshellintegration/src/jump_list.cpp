@@ -1,6 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-#include "jump_list.h"
+#include "winshellintegration/jump_list.h"
 
 
 namespace intellij::ui::win
