@@ -29,7 +29,13 @@ class GitStashContentProvider(private val project: Project) : ChangesViewContent
     project.service<GitStashTracker>().scheduleRefresh()
 
     disposable = Disposer.newDisposable("Git Stash Content Provider")
-    return GitStashUi(project, false, disposable!!).mainComponent
+    val gitStashUi = GitStashUi(project, ChangesViewContentManager.isCommitToolWindow(project), disposable!!)
+    project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+      override fun toolWindowMappingChanged() {
+        gitStashUi.setDiffPreviewInEditor(ChangesViewContentManager.isCommitToolWindow(project))
+      }
+    })
+    return gitStashUi.mainComponent
   }
 
   override fun disposeContent() {
@@ -44,12 +50,7 @@ class GitStashContentProvider(private val project: Project) : ChangesViewContent
 
 class GitStashContentPreloader(val project: Project) : ChangesViewContentProvider.Preloader {
   override fun preloadTabContent(content: Content) {
-    val weight = if (ChangesViewContentManager.isCommitToolWindow(project))
-      ChangesViewContentManager.TabOrderWeight.OTHER.weight
-    else
-      ChangesViewContentManager.TabOrderWeight.SHELF.weight + 1
-
-    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, weight)
+    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.SHELF.weight + 1)
   }
 }
 

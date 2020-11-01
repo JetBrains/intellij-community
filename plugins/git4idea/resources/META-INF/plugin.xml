@@ -564,7 +564,8 @@
     <changesViewContent id="git.stash" tabName="Stash" className="git4idea.stash.ui.GitStashContentProvider"
                         predicateClassName="git4idea.stash.ui.GitStashContentVisibilityPredicate"
                         preloaderClassName="git4idea.stash.ui.GitStashContentPreloader"
-                        displayNameSupplierClassName="git4idea.stash.ui.GitStashDisplayNameSupplier"/>
+                        displayNameSupplierClassName="git4idea.stash.ui.GitStashDisplayNameSupplier"
+                        isInCommitToolWindow="true"/>
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
     <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
     <backgroundPostStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
