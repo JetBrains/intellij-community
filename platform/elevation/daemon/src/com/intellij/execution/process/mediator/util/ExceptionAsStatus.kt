@@ -68,8 +68,8 @@ data class ExceptionAsStatus private constructor(val status: Status,
       ExceptionDescriptor.withInitCause(::IllegalThreadStateException)     asStatus INVALID_ARGUMENT,
       ExceptionDescriptor.withInitCause(::NumberFormatException)           asStatus INVALID_ARGUMENT,
 
-      ExceptionDescriptor.withThrowable(::IOException)                     asStatus RESOURCE_EXHAUSTED,
-      ExceptionDescriptor.withInitCause(::EOFException)                    asStatus RESOURCE_EXHAUSTED,
+      ExceptionDescriptor.withThrowable(::IOException)                     asStatus NOT_FOUND,
+      ExceptionDescriptor.withInitCause(::EOFException)                    asStatus NOT_FOUND,
       ExceptionDescriptor.withInitCause(::FileNotFoundException)           asStatus NOT_FOUND,
     ).associateByTo(LinkedHashMap()) { it.exceptionDescriptor.type.java }
     // @formatter:on
