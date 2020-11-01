@@ -48,7 +48,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     }
 
     final DataContext dataContext = event.getDataContext();
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     if (null != editor) {
       final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
@@ -59,7 +59,7 @@ public abstract class AbstractDelombokAction extends AnAction {
         }
       }
     } else {
-      final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       if (null != files) {
         for (VirtualFile file : files) {
           if (file.isDirectory()) {
@@ -118,7 +118,7 @@ public abstract class AbstractDelombokAction extends AnAction {
       return;
     }
 
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (null != editor) {
       final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
       presentation.setEnabled(file != null && isValidForFile(editor, file));
@@ -126,7 +126,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     }
 
     boolean isValid = false;
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (null != files) {
       PsiManager psiManager = PsiManager.getInstance(project);
       for (VirtualFile file : files) {

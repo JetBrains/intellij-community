@@ -30,10 +30,12 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
     super(PsiMethod.class, LombokClassNames.BUILDER);
   }
 
+  @Override
   protected BuilderHandler getBuilderHandler() {
     return ApplicationManager.getApplication().getService(BuilderHandler.class);
   }
 
+  @Override
   protected Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass) {
     final Collection<PsiMethod> result = new ArrayList<>();
 

@@ -8,17 +8,17 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.ResourceBundle;
 
 /**
- * {@link java.util.ResourceBundle}/localization utils for the lombok plugin.
+ * {@link ResourceBundle}/localization utils for the lombok plugin.
  */
 public class LombokBundle {
   /**
-   * The {@link java.util.ResourceBundle} path.
+   * The {@link ResourceBundle} path.
    */
   @NonNls
   private static final String BUNDLE_NAME = "messages.lombokBundle";
 
   /**
-   * The {@link java.util.ResourceBundle} instance.
+   * The {@link ResourceBundle} instance.
    */
   private static final ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 

@@ -17,6 +17,7 @@ import de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor;
 
 public class DelombokEverythingAction extends AbstractDelombokAction {
 
+  @Override
   protected DelombokHandler createHandler() {
     return new DelombokHandler(true,
                                ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class),

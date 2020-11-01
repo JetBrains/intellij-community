@@ -26,6 +26,7 @@ public class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProce
     super(PsiClass.class, LombokClassNames.FIELD_NAME_CONSTANTS);
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation);
     if (!psiFields.isEmpty()) {

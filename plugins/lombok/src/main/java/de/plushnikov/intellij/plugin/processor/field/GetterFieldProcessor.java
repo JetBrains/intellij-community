@@ -26,6 +26,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     super(PsiMethod.class, LombokClassNames.GETTER);
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     final PsiClass psiClass = psiField.getContainingClass();

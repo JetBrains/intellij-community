@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LombokEqualsAndHashcodeHandler extends BaseLombokHandler {
 
+  @Override
   protected void processClass(@NotNull PsiClass psiClass) {
     final PsiMethod equalsMethod = findPublicNonStaticMethod(psiClass, "equals", PsiType.BOOLEAN,
       PsiType.getJavaLangObject(psiClass.getManager(), psiClass.getResolveScope()));

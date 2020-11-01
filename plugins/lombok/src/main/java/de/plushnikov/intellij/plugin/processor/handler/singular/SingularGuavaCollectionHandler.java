@@ -24,6 +24,7 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
       ? SingularCollectionClassNames.GUAVA_IMMUTABLE_LIST : collectionQualifiedName;
   }
 
+  @Override
   @NotNull
   protected PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -32,6 +33,7 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
     return PsiTypeUtil.createCollectionType(psiManager, typeCollectionQualifiedName + ".Builder", elementType);
   }
 
+  @Override
   protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
     final PsiType elementType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager);
@@ -40,12 +42,14 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
+  @Override
   protected String getClearMethodBody(@NotNull BuilderInfo info) {
     final String codeBlockFormat = "this.{0} = null;\n" +
       "return {1};";
     return MessageFormat.format(codeBlockFormat, info.getFieldName(), info.getBuilderChainResult());
   }
 
+  @Override
   protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
       "this.{0}.add({1});\n" +
@@ -55,6 +59,7 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
       sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
   }
 
+  @Override
   protected String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
       + "this.{0}.addAll({0});\n" +

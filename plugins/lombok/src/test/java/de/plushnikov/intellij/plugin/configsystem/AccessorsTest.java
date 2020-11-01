@@ -5,6 +5,7 @@ package de.plushnikov.intellij.plugin.configsystem;
  */
 public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
 
+  @Override
   protected boolean shouldCompareAnnotations() {
     return true;
   }

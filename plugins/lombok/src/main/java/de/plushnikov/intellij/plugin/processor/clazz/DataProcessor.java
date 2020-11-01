@@ -51,7 +51,8 @@ public class DataProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final PsiAnnotation equalsAndHashCodeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokClassNames.EQUALS_AND_HASHCODE);
+    final PsiAnnotation equalsAndHashCodeAnnotation =
+      PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokClassNames.EQUALS_AND_HASHCODE);
     if (null == equalsAndHashCodeAnnotation) {
       getEqualsAndHashCodeProcessor().validateCallSuperParamExtern(psiAnnotation, psiClass, builder);
     }
@@ -73,7 +74,10 @@ public class DataProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  @Override
+  protected void generatePsiElements(@NotNull PsiClass psiClass,
+                                     @NotNull PsiAnnotation psiAnnotation,
+                                     @NotNull List<? super PsiElement> target) {
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.GETTER)) {
       target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
@@ -90,10 +94,12 @@ public class DataProcessor extends AbstractClassProcessor {
     final boolean hasConstructorWithoutParamaters;
     final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
     if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
-      target.addAll(getRequiredArgsConstructorProcessor().createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, true));
+      target.addAll(
+        getRequiredArgsConstructorProcessor().createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, true));
       // if there are no required field, it will already have a default constructor without parameters
       hasConstructorWithoutParamaters = getRequiredArgsConstructorProcessor().getRequiredFields(psiClass).isEmpty();
-    } else {
+    }
+    else {
       hasConstructorWithoutParamaters = false;
     }
 
@@ -105,12 +111,12 @@ public class DataProcessor extends AbstractClassProcessor {
   private boolean shouldGenerateRequiredArgsConstructor(@NotNull PsiClass psiClass, @Nullable String staticName) {
     boolean result = false;
     // create required constructor only if there are no other constructor annotations
-    @SuppressWarnings("unchecked") final boolean notAnnotatedWith = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass,
-                                                                                                               LombokClassNames.NO_ARGS_CONSTRUCTOR,
-                                                                                                               LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
-                                                                                                               LombokClassNames.ALL_ARGS_CONSTRUCTOR,
-                                                                                                               LombokClassNames.BUILDER,
-                                                                                                               LombokClassNames.SUPER_BUILDER);
+    final boolean notAnnotatedWith = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass,
+                                                                                LombokClassNames.NO_ARGS_CONSTRUCTOR,
+                                                                                LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
+                                                                                LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+                                                                                LombokClassNames.BUILDER,
+                                                                                LombokClassNames.SUPER_BUILDER);
     if (notAnnotatedWith) {
       final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = getRequiredArgsConstructorProcessor();
       final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);

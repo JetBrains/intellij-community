@@ -27,6 +27,7 @@ public class ChangeAnnotationParameterQuickFix extends LocalQuickFixOnPsiElement
     myNewValue = newValue;
   }
 
+  @Override
   @NotNull
   public String getText() {
     if (null == myNewValue) {
@@ -36,6 +37,7 @@ public class ChangeAnnotationParameterQuickFix extends LocalQuickFixOnPsiElement
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
@@ -93,6 +95,7 @@ public class ChangeAnnotationParameterQuickFix extends LocalQuickFixOnPsiElement
     return result;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
