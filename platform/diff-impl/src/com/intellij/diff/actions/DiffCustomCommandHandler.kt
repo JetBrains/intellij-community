@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.actions
 
 import com.intellij.diff.DiffDialogHints
@@ -13,7 +13,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class DiffCustomCommandHandler : TerminalShellCommandHandler {
+private class DiffCustomCommandHandler : TerminalShellCommandHandler {
   override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor): Boolean {
     val parameters = parse(workingDirectory, localSession, command)
 

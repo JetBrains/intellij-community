@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.terminal.impl
+package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.Executor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.TerminalShellCommandHandler
 import java.io.File
 
-class OpenFileShellCommandHandler : TerminalShellCommandHandler {
+private class OpenFileShellCommandHandler : TerminalShellCommandHandler {
   override fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String) =
     handleCommand(command, localSession, workingDirectory) { file -> checkRegisteredFileType(file) }
 

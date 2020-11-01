@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything
 
 import com.intellij.execution.Executor
@@ -14,10 +14,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.terminal.TerminalShellCommandHandler
 
-class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalFusAwareHandler {
+private class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalFusAwareHandler {
   override fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {
     val dataContext = createDataContext(project, localSession, workingDirectory)
     return RunAnythingProvider.EP_NAME.extensionList
+      .asSequence()
       .filter { checkForCLI(it) }
       .any { provider -> provider.findMatchingValue(dataContext, command) != null }
   }
@@ -25,6 +26,7 @@ class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalFusAwareH
   override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor): Boolean {
     val dataContext = createDataContext(project, localSession, workingDirectory, executor)
     return RunAnythingProvider.EP_NAME.extensionList
+      .asSequence()
       .filter { checkForCLI(it) }
       .any { provider ->
         provider.findMatchingValue(dataContext, command)?.let { provider.execute(dataContext, it); return true } ?: false
@@ -41,21 +43,26 @@ class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalFusAwareH
               if (localSession && workingDirectory != null) LocalFileSystem.getInstance().findFileByPath(workingDirectory) else null
             if (virtualFile != null) {
               it[CommonDataKeys.VIRTUAL_FILE.name] = virtualFile
-              it[RunAnythingProvider.EXECUTING_CONTEXT.name] = RunAnythingContext.RecentDirectoryContext(virtualFile.path)
+              it[RunAnythingProvider.EXECUTING_CONTEXT.name] = RunAnythingContext.RecentDirectoryContext(
+                virtualFile.path)
             }
             it[RunAnythingAction.EXECUTOR_KEY.name] = executor
           }, null)
     }
 
-    private fun checkForCLI(it: RunAnythingProvider<*>?) = it !is RunAnythingCommandProvider
-                                                           && it !is RunAnythingRecentProjectProvider
-                                                           && it !is RunAnythingRunConfigurationProvider
+    private fun checkForCLI(it: RunAnythingProvider<*>?): Boolean {
+      return (it !is RunAnythingCommandProvider
+              && it !is RunAnythingRecentProjectProvider
+              && it !is RunAnythingRunConfigurationProvider)
+    }
   }
 
   override fun fillData(project: Project, workingDirectory: String?, localSession: Boolean, command: String, data: FeatureUsageData) {
     val dataContext = createDataContext(project, localSession, workingDirectory)
     val runAnythingProvider = RunAnythingProvider.EP_NAME.extensionList
-      .filter { checkForCLI(it) }.ifEmpty { return }.first { provider -> provider.findMatchingValue(dataContext, command) != null }
+      .filter { checkForCLI(it) }
+      .ifEmpty { return }
+      .first { provider -> provider.findMatchingValue(dataContext, command) != null }
 
     data.addData("runAnythingProvider", runAnythingProvider::class.java.name)
   }
