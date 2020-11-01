@@ -6,10 +6,10 @@ by Denis Fokin.
 TODO: description
 
 ## Build dependencies
-* C++17-compatible compiler
-* [CMake](https://cmake.org/download/) >= `v3.15` (Note: it is already shipped with CLion)
-* [Optional for building [winshellintegrationbridge](src/winshellintegrationbridge) target]:
-  An implementation of Java SE 11 or newer. It's highly recommended to use the JDK you are using to build IDEA;
+* C++17-compatible compiler;
+* [CMake](https://cmake.org/download/) >= `v3.15` (Note: it is already shipped with CLion);
+* [Optional: only for building [winshellintegrationbridge](src/winshellintegrationbridge) target]:
+  An implementation of Java SE 11 or newer. It's highly recommended to use the JDK you are using to build IDEA.
 
 ## Build
 Just use CMake normally.
