@@ -26,7 +26,7 @@ class ProjectPluginTracker(
       @get:XCollection
       internal var disabledPlugins by stringSet()
 
-      fun register(id: PluginId, enable: Boolean) {
+      internal fun register(id: PluginId, enable: Boolean) {
         val idString = id.idString
         val setToRemoveFrom = if (enable) disabledPlugins else enabledPlugins
         if (!setToRemoveFrom.remove(idString)) {
@@ -35,7 +35,7 @@ class ProjectPluginTracker(
         }
       }
 
-      fun unregister(id: PluginId) {
+      internal fun unregister(id: PluginId) {
         val idString = id.idString
         if (!enabledPlugins.remove(idString)) {
           disabledPlugins.remove(idString)
@@ -72,13 +72,12 @@ class ProjectPluginTracker(
 
   private val disabledPluginIds get() = state.disabledPlugins.findPluginId()
 
-  fun changeEnableDisable(pluginId: PluginId, newState: PluginEnabledState) {
-    if (newState.isPerProject) {
-      state.register(pluginId, enable = newState.isEnabled)
-    }
-    else {
-      state.unregister(pluginId)
-    }
+  fun startTrackingPerProject(pluginId: PluginId, enable: Boolean) {
+    state.register(pluginId, enable)
+  }
+
+  fun stopTrackingPerProject(pluginId: PluginId) {
+    state.unregister(pluginId)
   }
 
   fun isEnabled(pluginId: PluginId) = state.enabledPlugins.contains(pluginId.idString)

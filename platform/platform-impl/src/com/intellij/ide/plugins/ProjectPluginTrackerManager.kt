@@ -132,6 +132,13 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     )
   }
 
+  fun stopTracking(pluginId: PluginId) {
+    state
+      .trackers
+      .values
+      .forEach { it.unregister(pluginId) }
+  }
+
   internal fun unloadPlugins(
     candidatesToUnload: Collection<PluginId>,
     project: Project? = null,

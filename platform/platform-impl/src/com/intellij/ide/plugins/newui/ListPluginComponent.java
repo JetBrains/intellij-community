@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -670,13 +669,11 @@ public class ListPluginComponent extends JPanel {
       return;
     }
 
-    group.add(createAction(selection, KeyEvent.VK_SPACE));
-    group.add(createAction(selection, KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK));
-
-    if (group.getChildrenCount() > 0) {
-      group.addSeparator();
-    }
-    group.add(createAction(selection, EventHandler.DELETE_CODE));
+    SelectionBasedPluginModelAction.addActionsTo(
+      group,
+      state -> new EnableDisableAction(state, selection),
+      () -> new UninstallAction(selection)
+    );
   }
 
   public void handleKeyAction(@NotNull KeyEvent event,
@@ -735,17 +732,21 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else if (!restart && !update && !myOnlyUpdateMode) {
-      DumbAwareAction action = createAction(
-        selection,
-        KeyStroke.getKeyStrokeForEvent(event)
-      );
-      ActionManager.getInstance().tryToExecute(
-        action,
-        event,
-        this,
-        ActionPlaces.UNKNOWN,
-        true
-      );
+      DumbAwareAction action = keyCode == KeyEvent.VK_SPACE && event.getModifiersEx() == 0 ?
+                               createEnableDisableAction(selection) :
+                               keyCode == EventHandler.DELETE_CODE ?
+                               new UninstallAction(selection) :
+                               null;
+
+      if (action != null) {
+        ActionManager.getInstance().tryToExecute(
+          action,
+          event,
+          this,
+          ActionPlaces.UNKNOWN,
+          true
+        );
+      }
     }
   }
 
@@ -761,59 +762,36 @@ public class ListPluginComponent extends JPanel {
     return myPlugin;
   }
 
-  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
-                                                                                     int keyCode) {
-    return createAction(selection, keyCode, 0);
-  }
+  private @NotNull ListPluginComponent.EnableDisableAction createEnableDisableAction(@NotNull List<ListPluginComponent> selection) {
+    boolean firstEnabled = selection.get(0).isEnabledState();
+    boolean setTrue = false;
 
-  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
-                                                                                     int keyCode,
-                                                                                     int modifiers) {
-    return createAction(selection, KeyStroke.getKeyStroke(keyCode, modifiers));
-  }
-
-  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
-                                                                                     @NotNull KeyStroke keyStroke) {
-    int keyCode = keyStroke.getKeyCode();
-    if (keyCode == KeyEvent.VK_SPACE) {
-      boolean firstEnabled = selection.get(0).isEnabledState();
-      boolean setTrue = false;
-
-      for (ListIterator<ListPluginComponent> iterator = selection.listIterator(1); iterator.hasNext(); ) {
-        if (firstEnabled != iterator.next().isEnabledState()) {
-          setTrue = true;
-          break;
-        }
+    for (ListIterator<ListPluginComponent> iterator = selection.listIterator(1); iterator.hasNext(); ) {
+      if (firstEnabled != iterator.next().isEnabledState()) {
+        setTrue = true;
+        break;
       }
+    }
 
-      PluginEnabledState newState = PluginEnabledState.getState(
-        setTrue || !firstEnabled,
-        (keyStroke.getModifiers() & InputEvent.SHIFT_DOWN_MASK) == InputEvent.SHIFT_DOWN_MASK
-      );
+    return new EnableDisableAction(
+      PluginEnabledState.getState(setTrue || !firstEnabled),
+      selection
+    );
+  }
 
-      return new EnableDisableAction(
-        myPluginModel,
+  private final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> {
+
+    private EnableDisableAction(@NotNull PluginEnabledState newState,
+                                @NotNull List<ListPluginComponent> selection) {
+      super(
+        ListPluginComponent.this.myPluginModel,
         selection,
-        keyStroke,
         newState
       );
-    }
-    else if (keyCode == EventHandler.DELETE_CODE) {
-      return new UninstallAction(selection, keyStroke);
-    }
-    else {
-      throw new IllegalArgumentException();
-    }
-  }
 
-  private static final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> {
-
-    private EnableDisableAction(@NotNull MyPluginModel pluginModel,
-                                @NotNull List<ListPluginComponent> selection,
-                                @NotNull KeyStroke keyStroke,
-                                @NotNull PluginEnabledState newState) {
-      super(pluginModel, selection, newState);
-      setShortcutSet(new CustomShortcutSet(keyStroke));
+      if (!newState.isPerProject()) {
+        setShortcutSet(new CustomShortcutSet(KeyEvent.VK_SPACE));
+      }
     }
 
     @Override
@@ -824,8 +802,7 @@ public class ListPluginComponent extends JPanel {
 
   private class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> {
 
-    UninstallAction(@NotNull List<ListPluginComponent> selection,
-                    @NotNull KeyStroke keyStroke) {
+    UninstallAction(@NotNull List<ListPluginComponent> selection) {
       super(
         ListPluginComponent.this.myPluginModel,
         ListPluginComponent.this,
@@ -835,7 +812,7 @@ public class ListPluginComponent extends JPanel {
       ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
       ShortcutSet shortcutSet = deleteShortcutSet != null ?
                                 deleteShortcutSet :
-                                new CustomShortcutSet(keyStroke);
+                                new CustomShortcutSet(EventHandler.DELETE_CODE);
       setShortcutSet(shortcutSet);
     }
 

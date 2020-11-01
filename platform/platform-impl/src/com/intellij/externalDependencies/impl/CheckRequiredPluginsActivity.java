@@ -163,7 +163,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     LOG.info("Required plugins to enable: [" + join(pluginIds, ", ") + "]");
 
     ProjectPluginTracker pluginTracker = ProjectPluginTrackerManager.getInstance().createPluginTracker(project);
-    pluginIds.forEach(id -> pluginTracker.changeEnableDisable(id, PluginEnabledState.ENABLED));
+    pluginIds.forEach(pluginTracker::stopTrackingPerProject);
 
     ProjectPluginTrackerManager.updatePluginsState(plugins, PluginEnabledState.ENABLED_FOR_PROJECT, project);
   }

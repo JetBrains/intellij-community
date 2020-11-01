@@ -153,18 +153,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         getEnabledMap().remove(pluginId);
       }
 
-      ProjectPluginTracker pluginTracker = getPluginTracker();
-      if (pluginTracker != null) {
-        pluginTracker.changeEnableDisable(pluginId, PluginEnabledState.DISABLED);
-      }
-      else {
-        ProjectPluginTrackerManager
-          .getInstance()
-          .getState()
-          .getTrackers()
-          .values()
-          .forEach(state -> state.unregister(pluginId));
-      }
+      ProjectPluginTrackerManager
+        .getInstance()
+        .stopTracking(pluginId);
     }
 
     boolean installsRequiringRestart = myInstallsRequiringRestart;
@@ -235,14 +226,27 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         continue;
       }
 
+      PluginEnabledState oldState = entry.getValue();
       PluginEnabledState newState = getState(pluginId);
-      ProjectPluginTracker pluginTracker = getPluginTracker();
-      if (pluginTracker != null) {
-        pluginTracker.changeEnableDisable(pluginId, newState);
+      if (newState.isPerProject()) {
+        if (oldState == PluginEnabledState.ENABLED &&
+            newState == PluginEnabledState.ENABLED_FOR_PROJECT) {
+          ProjectPluginTrackerManager
+            .getInstance()
+            .stopTracking(pluginId);
+        }
+
+        Objects.requireNonNull(getPluginTracker())
+          .startTrackingPerProject(pluginId, newState.isEnabled());
+      }
+      else {
+        ProjectPluginTrackerManager
+          .getInstance()
+          .stopTracking(pluginId);
       }
 
       boolean shouldEnable = newState.isEnabled();
-      boolean isEnabled = entry.getValue().isEnabled();
+      boolean isEnabled = oldState.isEnabled();
       if (shouldEnable != isEnabled ||
           !shouldEnable && myErrorPluginsToDisable.contains(pluginId)) {
         descriptorsByState.computeIfAbsent(

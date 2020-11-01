@@ -5,7 +5,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginEnabledState;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.Producer;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +19,9 @@ import org.jetbrains.annotations.PropertyKey;
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 abstract class SelectionBasedPluginModelAction<C extends JComponent> extends DumbAwareAction {
 
@@ -34,6 +40,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
   static abstract class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
 
+    private static final boolean IS_PER_PROJECT_ENABLED = SystemProperties.is("idea.classloader.per.descriptor");
+
     protected final @NotNull PluginEnabledState myNewState;
 
     protected EnableDisableAction(@NotNull MyPluginModel pluginModel,
@@ -49,16 +57,46 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
     }
 
     @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Set<IdeaPluginDescriptor> plugins = mySelection.stream()
-        .map(this::getPluginDescriptor)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
+    public void update(@NotNull AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+      Project project = e.getProject();
 
+      getAllDescriptors()
+        .map(myPluginModel::getState)
+        .forEach(state -> update(state, presentation, project));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myPluginModel.changeEnableDisable(
-        plugins,
+        getAllDescriptors().collect(Collectors.toSet()),
         myNewState
       );
+    }
+
+    protected boolean isInvisible(@NotNull PluginEnabledState oldState,
+                                  @Nullable Project project) {
+      return myNewState == oldState ||
+             oldState == PluginEnabledState.DISABLED && myNewState == PluginEnabledState.DISABLED_FOR_PROJECT ||
+             myNewState.isPerProject() && (!IS_PER_PROJECT_ENABLED || project == null);
+    }
+
+    private void update(@NotNull PluginEnabledState oldState,
+                        @NotNull Presentation presentation,
+                        @Nullable Project project) {
+      boolean enabled = !isInvisible(oldState, project);
+      presentation.setEnabledAndVisible(enabled);
+
+      if (oldState == PluginEnabledState.ENABLED && myNewState == PluginEnabledState.ENABLED_FOR_PROJECT) {
+        presentation.setText(IdeBundle.message("plugins.configurable.enable.for.current.project.only"));
+      }
+    }
+
+    private @NotNull Stream<IdeaPluginDescriptor> getAllDescriptors() {
+      return mySelection
+        .stream()
+        .map(this::getPluginDescriptor)
+        .filter(Objects::nonNull);
     }
 
     private static @NotNull @NonNls String getActionTextPropertyKey(@NotNull PluginEnabledState newState) {
@@ -126,5 +164,18 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
         }
       }
     }
+  }
+
+  static <C extends JComponent> void addActionsTo(@NotNull DefaultActionGroup group,
+                                                  @NotNull Function<@NotNull PluginEnabledState, @NotNull ? extends EnableDisableAction<C>> createEnableDisableAction,
+                                                  @NotNull Producer<@NotNull ? extends UninstallAction<C>> createUninstallAction) {
+    PluginEnabledState[] states = PluginEnabledState.values();
+    for (int i = 0; i < states.length; i++) {
+      group.add(createEnableDisableAction.apply(states[i]));
+      if ((i + 1) % 2 == 0) {
+        group.addSeparator();
+      }
+    }
+    group.add(createUninstallAction.produce());
   }
 }

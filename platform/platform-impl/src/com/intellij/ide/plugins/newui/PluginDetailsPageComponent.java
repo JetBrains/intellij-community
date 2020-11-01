@@ -8,11 +8,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
@@ -29,7 +29,6 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
@@ -57,7 +56,6 @@ import java.util.function.Consumer;
 public class PluginDetailsPageComponent extends MultiPanel {
 
   private static final String MARKETPLACE_LINK = "https://plugins.jetbrains.com/plugin/index?xmlId=";
-  private static final boolean IS_PER_PROJECT_ENABLED = SystemProperties.is("idea.classloader.per.descriptor");
 
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
@@ -521,7 +519,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myVersion.setText(version);
     myVersionSize.setText(version);
     myVersion
-      .setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersionSize.getPreferredSize().height));
+      .setPreferredSize(
+        new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersionSize.getPreferredSize().height));
 
     myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
 
@@ -550,7 +549,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     else {
       myVendor.show(vendor, () -> mySearchListener
-        .linkSelected(null, SearchWords.ORGANIZATION.getValue() + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
+        .linkSelected(null,
+                      SearchWords.ORGANIZATION.getValue() + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
     }
 
     showLicensePanel();
@@ -850,15 +850,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private @NotNull DefaultActionGroup createGearActions() {
     DefaultActionGroup result = new DefaultActionGroup();
-
-    result.add(new EnableDisableAction(PluginEnabledState.ENABLED));
-    result.add(new EnableDisableAction(PluginEnabledState.ENABLED_FOR_PROJECT));
-    result.addSeparator();
-    result.add(new EnableDisableAction(PluginEnabledState.DISABLED));
-    result.add(new EnableDisableAction(PluginEnabledState.DISABLED_FOR_PROJECT));
-    result.addSeparator();
-    result.add(new UninstallAction());
-
+    SelectionBasedPluginModelAction.addActionsTo(
+      result,
+      state -> new EnableDisableAction(state),
+      () -> new UninstallAction()
+    );
     return result;
   }
 
@@ -878,13 +874,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
 
     @Override
-    public void update(@NotNull AnActionEvent e) {
-      PluginEnabledState state = myPluginModel.getState(myPlugin);
-
-      boolean invisible = myNewState == state ||
-                          myNewState.isPerProject() && (!IS_PER_PROJECT_ENABLED || myRequiresRestart || e.getProject() == null) ||
-                          !myNewState.isEnabled() && myPluginIsRequired;
-      e.getPresentation().setVisible(!invisible);
+    protected boolean isInvisible(@NotNull PluginEnabledState oldState,
+                                  @Nullable Project project) {
+      return super.isInvisible(oldState, project) ||
+             myNewState.isPerProject() && myRequiresRestart ||
+             !myNewState.isEnabled() && myPluginIsRequired;
     }
   }
 
@@ -900,7 +894,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     @Override
     protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull PluginDetailsPageComponent component) {
-      return component.myPlugin;
+      return myPlugin;
     }
   }
 }
