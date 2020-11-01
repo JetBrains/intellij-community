@@ -37,7 +37,6 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
    * will be able to report such exception as a plugin problem, not core problem. Also it isn't a checked exception so you won't need to wrap
    * it to unchecked exception in your code.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public final @NotNull <T> Class<T> findClass(@NotNull String className) throws ClassNotFoundException {
     return findClass(className, myPluginDescriptor);
@@ -60,7 +59,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
 
   public final @Nullable <T> Class<T> findClassNoExceptions(String className) {
     try {
-      return findClass(className);
+      return findClass(className, myPluginDescriptor);
     }
     catch (Throwable t) {
       LOG.error(new ExtensionInstantiationException(t, myPluginDescriptor));
@@ -80,7 +79,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
    */
   @Deprecated
   public final @NotNull <T> T instantiate(@NotNull String className, @NotNull PicoContainer container) throws ClassNotFoundException {
-    return instantiate(findClass(className), container, true);
+    return instantiate(findClass(className, myPluginDescriptor), container, true);
   }
 
   public final @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PicoContainer container) {

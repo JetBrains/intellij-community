@@ -238,16 +238,14 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     ExtensionPoint<InternalTemplateBean> point = InternalTemplateBean.EP_NAME.getPoint();
     InternalTemplateBean bean = new InternalTemplateBean();
     bean.name = "Unknown";
-    bean.setPluginDescriptor(new DefaultPluginDescriptor("test"));
-    point.registerExtension(bean, getTestRootDisposable());
+    point.registerExtension(bean, new DefaultPluginDescriptor("testInternalTemplatePlugin"), getTestRootDisposable());
     try {
       myTemplateManager.getInternalTemplates();
       fail();
     }
     catch (Throwable e) {
-      assertEquals("Can't find template Unknown", e.getMessage());
-      PluginException pluginException = ((PluginException)e.getCause());
-      assertEquals("test", pluginException.getPluginId().getIdString());
+      assertThat(e.getMessage()).isEqualTo("Can't find template Unknown");
+      assertThat(((PluginException)e.getCause()).getPluginId().getIdString()).isEqualTo("testInternalTemplatePlugin");
     }
   }
 
