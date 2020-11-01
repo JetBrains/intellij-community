@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.intention.valvar.AbstractValVarIntentionAction;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
@@ -23,7 +24,7 @@ public abstract class AbstractReplaceVariableWithExplicitTypeIntentionAction ext
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace '" + StringUtil.getShortName(variableClassName) + "' with explicixt type (Lombok)";
+    return LombokBundle.message("replace.0.with.explicit.type.lombok", StringUtil.getShortName(variableClassName));
   }
 
   @Override

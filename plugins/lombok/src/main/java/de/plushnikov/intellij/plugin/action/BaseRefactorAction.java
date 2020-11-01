@@ -1,12 +1,15 @@
 package de.plushnikov.intellij.plugin.action;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -19,38 +22,29 @@ public abstract class BaseRefactorAction extends AnAction {
   protected abstract BaseRefactorHandler initHandler(Project project, DataContext dataContext);
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    super.update(e);
+  public void update(@NotNull AnActionEvent event) {
+    super.update(event);
 
-    boolean visible = isActionAvailable(e);
+    boolean visible = false;
 
-    final Presentation presentation = e.getPresentation();
-    presentation.setVisible(visible);
-    presentation.setEnabled(visible);
-  }
-
-  private boolean isActionAvailable(AnActionEvent e) {
-    final VirtualFile file = getVirtualFiles(e);
-    if (getEventProject(e) != null && file != null) {
+    final VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (getEventProject(event) != null && file != null) {
       final FileType fileType = file.getFileType();
-      return StdFileTypes.JAVA.equals(fileType);
+      visible = JavaFileType.INSTANCE.equals(fileType);
     }
-    return false;
-  }
 
-  private VirtualFile getVirtualFiles(AnActionEvent e) {
-    return CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    event.getPresentation().setEnabledAndVisible(visible);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getProject();
-    final BaseRefactorHandler handler = initHandler(project, e.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final Project project = event.getProject();
+    final BaseRefactorHandler handler = initHandler(project, event.getDataContext());
 
     boolean processChooser = handler.processChooser();
 
     if (processChooser) {
-      final Editor editor = getEditor(e);
+      final Editor editor = event.getData(CommonDataKeys.EDITOR);
 
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
@@ -59,9 +53,5 @@ public abstract class BaseRefactorAction extends AnAction {
         }
       }, getClass().getName() + "-Commandname", DocCommandGroupId.noneGroupId(editor.getDocument()));
     }
-  }
-
-  private Editor getEditor(AnActionEvent e) {
-    return CommonDataKeys.EDITOR.getData(e.getDataContext());
   }
 }

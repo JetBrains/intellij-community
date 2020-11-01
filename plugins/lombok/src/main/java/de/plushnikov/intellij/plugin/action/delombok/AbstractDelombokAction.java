@@ -1,10 +1,10 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,7 +85,7 @@ public abstract class AbstractDelombokAction extends AnAction {
   }
 
   private void processFile(Project project, VirtualFile file) {
-    if (StdFileTypes.JAVA.equals(file.getFileType())) {
+    if (JavaFileType.INSTANCE.equals(file.getFileType())) {
       final PsiManager psiManager = PsiManager.getInstance(project);
       PsiJavaFile psiFile = (PsiJavaFile) psiManager.findFile(file);
       if (psiFile != null) {
@@ -135,7 +135,7 @@ public abstract class AbstractDelombokAction extends AnAction {
           isValid = true;
           break;
         }
-        if (StdFileTypes.JAVA.equals(file.getFileType())) {
+        if (JavaFileType.INSTANCE.equals(file.getFileType())) {
           PsiJavaFile psiFile = (PsiJavaFile) psiManager.findFile(file);
           if (psiFile != null) {
             isValid = Stream.of(psiFile.getClasses()).anyMatch(this::isValidForClass);
