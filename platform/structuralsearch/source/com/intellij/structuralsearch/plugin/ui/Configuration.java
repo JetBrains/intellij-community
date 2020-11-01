@@ -45,6 +45,13 @@ public abstract class Configuration implements JDOMExternalizable {
   private String suppressId;
   private String problemDescriptor;
   private int order;
+
+  /**
+   * String used to refer to this configuration. It should be unique or null.
+   * 1. {@link com.intellij.structuralsearch.PredefinedConfigurationUtil#createConfiguration} -> refName = "Template name (language)"
+   * 2. {@link com.intellij.structuralsearch.PredefinedConfigurationUtil#createLegacyConfiguration} -> refName = "Template name"
+   * 3. User defined configuration -> refName = null / getRefName = "Template name"
+   */
   private @NonNls String refName;
 
   private transient String myCurrentVariableName;
