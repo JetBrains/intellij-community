@@ -22,6 +22,7 @@ data class DaemonLaunchOptions(
     override fun toString(): String
   }
 
+  // handling multiple hello writers is too complicated w.r.t. resource management, and we never need it anyway
   sealed class HelloOption(private val arg: String) : CmdlineOption {
     override fun toString(): String = arg
 
@@ -107,20 +108,13 @@ data class DaemonLaunchOptions(
           }
 
           "--hello-file" -> {
-            if (helloOption == null) {
-              helloOption =
-                if (value == "-") HelloOption.Stdout
-                else HelloOption.File(value)
-            }
-            else System.err.println("Ignoring '$option'")
+            helloOption =
+              if (value == "-") HelloOption.Stdout
+              else HelloOption.File(value)
           }
 
           "--hello-port" -> {
-            // handling multiple hello writers is too complicated w.r.t. resource management
-            if (helloOption == null) {
-              helloOption = HelloOption.Port(value)
-            }
-            else System.err.println("Ignoring '$option'")
+            helloOption = HelloOption.Port(value)
           }
 
           "--token-encrypt-rsa" -> {
