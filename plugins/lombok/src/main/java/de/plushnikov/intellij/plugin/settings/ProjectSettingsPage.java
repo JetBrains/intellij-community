@@ -32,7 +32,7 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   @Nls
   @Override
   public String getDisplayName() {
-    return Version.PLUGIN_NAME;
+    return LombokBundle.message("plugin.settings.title");
   }
 
   @Override
