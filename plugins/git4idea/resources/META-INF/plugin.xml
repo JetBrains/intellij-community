@@ -536,7 +536,8 @@
     <changesViewContent id="git.stage" tabName="Staging Area" className="git4idea.index.GitStageContentProvider"
                         predicateClassName="git4idea.index.GitStageContentVisibilityPredicate"
                         preloaderClassName="git4idea.index.GitStageContentPreloader"
-                        displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"/>
+                        displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"
+                        isInCommitToolWindow="true"/>
     <projectService serviceImplementation="git4idea.index.ui.GitStageUiSettingsImpl"/>
 
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>

@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.CONTENT_PROVIDER_SUPPLIER_KEY
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowIdFor
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.IS_IN_COMMIT_TOOLWINDOW_KEY
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
@@ -102,7 +102,9 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> {
-    return ChangesViewContentEP.EP_NAME.getExtensions(project).filter { getToolWindowIdFor(project, it.tabName) == toolWindow.id }
+    return ChangesViewContentEP.EP_NAME.getExtensions(project).filter {
+      ChangesViewContentManager.getInstanceImpl(project)?.getToolWindowId(it.isInCommitToolWindow) == toolWindow.id
+    }
   }
 
   private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content {
@@ -113,6 +115,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       tabName = extension.tabName
       putUserData(CHANGES_VIEW_EXTENSION, extension)
       putUserData(CONTENT_PROVIDER_SUPPLIER_KEY) { extension.getInstance(project) }
+      putUserData(IS_IN_COMMIT_TOOLWINDOW_KEY, extension.isInCommitToolWindow)
 
       extension.newPreloaderInstance(project)?.preloadTabContent(this)
     }

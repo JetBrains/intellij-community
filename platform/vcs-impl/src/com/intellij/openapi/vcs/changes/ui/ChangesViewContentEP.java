@@ -42,6 +42,9 @@ public class ChangesViewContentEP implements PluginAware {
   @Attribute("displayNameSupplierClassName")
   public String displayNameSupplierClassName;
 
+  @Attribute("isInCommitToolWindow")
+  public boolean isInCommitToolWindow;
+
   private PluginDescriptor myPluginDescriptor;
   private ChangesViewContentProvider myInstance;
 
@@ -88,6 +91,14 @@ public class ChangesViewContentEP implements PluginAware {
 
   public void setDisplayNameSupplierClassName(String displayNameSupplierClassName) {
     this.displayNameSupplierClassName = displayNameSupplierClassName;
+  }
+
+  public boolean isInCommitToolWindow() {
+    return isInCommitToolWindow;
+  }
+
+  public void setInCommitToolWindow(boolean isInCommitToolWindow) {
+    this.isInCommitToolWindow = isInCommitToolWindow;
   }
 
   public ChangesViewContentProvider getInstance(@NotNull Project project) {
