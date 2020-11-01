@@ -10,8 +10,8 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor;
+import de.plushnikov.intellij.plugin.provider.LombokAugmentorKillSwitch;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,15 +80,16 @@ public class DelombokHandler {
 
     final List<? super PsiElement> psiElements = lombokProcessor.process(psiClass);
 
-    ProjectSettings.setLombokEnabledInProject(project, false);
     try {
+      LombokAugmentorKillSwitch.deactivateLombokAugmentor();
+
       if (lombokProcessor instanceof FieldNameConstantsPredefinedInnerClassFieldProcessor) {
         rebuildElementsBeforeExistingFields(project, psiClass, psiElements);
       } else {
         rebuildElements(project, psiClass, psiElements);
       }
     } finally {
-      ProjectSettings.setLombokEnabledInProject(project, true);
+      LombokAugmentorKillSwitch.activateLombokAugmentor();
     }
 
     return psiAnnotations;

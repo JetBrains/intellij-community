@@ -4,7 +4,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import de.plushnikov.intellij.plugin.LombokBundle;
-import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -15,10 +14,6 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
 
   private JPanel myGeneralPanel;
 
-  private JPanel mySupportPanel;
-  private JCheckBox myEnableLombokInProject;
-
-  private JPanel mySettingsPanel;
   private JCheckBox myEnableLombokVersionWarning;
   private JCheckBox myMissingLombokWarning;
   private JCheckBox myAnnotationProcessingWarning;
@@ -42,28 +37,28 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   }
 
   private void initFromSettings() {
-    myEnableLombokInProject.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.LOMBOK_ENABLED_IN_PROJECT));
-
     myEnableLombokVersionWarning.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false));
     myMissingLombokWarning.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false));
-    myAnnotationProcessingWarning.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true));
+    myAnnotationProcessingWarning
+      .setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true));
   }
 
   @Override
   public boolean isModified() {
-    return myEnableLombokInProject.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.LOMBOK_ENABLED_IN_PROJECT) ||
-      myEnableLombokVersionWarning.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false) ||
-      myAnnotationProcessingWarning.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true) ||
+    return
+      myEnableLombokVersionWarning.isSelected() !=
+      ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false) ||
+      myAnnotationProcessingWarning.isSelected() !=
+      ProjectSettings.isEnabled(myProject, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true) ||
       myMissingLombokWarning.isSelected() != ProjectSettings.isEnabled(myProject, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false);
   }
 
   @Override
   public void apply() {
-    ProjectSettings.setEnabled(myProject, ProjectSettings.LOMBOK_ENABLED_IN_PROJECT, myEnableLombokInProject.isSelected());
-
     ProjectSettings.setEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
     ProjectSettings.setEnabled(myProject, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, myMissingLombokWarning.isSelected());
-    ProjectSettings.setEnabled(myProject, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, myAnnotationProcessingWarning.isSelected());
+    ProjectSettings
+      .setEnabled(myProject, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, myAnnotationProcessingWarning.isSelected());
 
     LombokProcessorProvider lombokProcessorProvider = myProject.getService(LombokProcessorProvider.class);
     lombokProcessorProvider.initProcessors();
@@ -79,5 +74,4 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   public String getId() {
     return getDisplayName();
   }
-
 }
