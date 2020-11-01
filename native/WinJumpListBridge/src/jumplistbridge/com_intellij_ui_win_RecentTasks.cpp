@@ -16,6 +16,7 @@
 #include <optional>         // std::optional
 #include <vector>           // std::vector
 #include <sstream>          // std::stringstream
+#include <type_traits>      // std::decay_t, std::is_base_of
 #include <cassert>          // assert
 
 
@@ -52,31 +53,14 @@ namespace intellij::ui::win::jni
         static RecentTasks& getInstance() noexcept(false);
 
     private: // exception handling
+        template<typename E>
         static void handleException(
-            const std::system_error& exception,
+            const E& exception,
             JNIEnv* jEnv,
-            std::string_view pass_func_here /* __func */
+            std::string_view pass_func_here /* __func__ */
         ) noexcept;
 
-        static void handleException(
-            const std::runtime_error& exception,
-            JNIEnv* jEnv,
-            std::string_view pass_func_here /* __func */
-        ) noexcept;
-
-        static void handleException(
-            const std::logic_error& exception,
-            JNIEnv* jEnv,
-            std::string_view pass_func_here /* __func */
-        ) noexcept;
-
-        static void handleException(
-            const std::exception& exception,
-            JNIEnv* jEnv,
-            std::string_view pass_func_here /* __func */
-        ) noexcept;
-
-        static void handleUnknownException(JNIEnv* jEnv, std::string_view pass_func_here /* __func */) noexcept;
+        static void handleUnknownException(JNIEnv* jEnv, std::string_view pass_func_here /* __func__ */) noexcept;
 
     private:
         static constexpr std::string_view thisCtxName = "intellij::ui::win::jni::RecentTasks";
@@ -190,6 +174,39 @@ namespace intellij::ui::win::jni
             return result;
         }
 
+
+        std::string&& cleanExceptionDescription(std::string&& description)
+        {
+            // remove \r\n and \n at the end of the description
+            while (!description.empty())
+            {
+                if (description.back() != '\n')
+                    break;
+
+                description.pop_back();
+
+                if (description.empty())
+                    break;
+
+                if (description.back() == '\r')
+                    description.pop_back();
+            }
+
+            // remove \r\n and \n at the start of the description
+            std::string::size_type prefixToRemoveLength = 0;
+            while (prefixToRemoveLength < description.size())
+            {
+                if ( (description[prefixToRemoveLength] != '\r') && (description[prefixToRemoveLength] != '\n') )
+                    break;
+
+                ++prefixToRemoveLength;
+            }
+            description.erase(0, prefixToRemoveLength);
+
+            return std::move(description);
+        }
+
+
     } // namespace
 
 
@@ -216,7 +233,9 @@ namespace intellij::ui::win::jni
                 throw std::logic_error("intellij::ui::win::jni::RecentTasks has already been initialized");
 
             const auto appId = jStringToWideString(jEnv, jAppId);
-            //Application::getInstance().setAppUserModelId(appId);
+
+            if (Application::getInstance().obtainAppUserModelId() != appId)
+                Application::getInstance().setAppUserModelId(appId);
 
             storage.emplace(PrivateCtorTag{});
         }
@@ -500,11 +519,28 @@ namespace intellij::ui::win::jni
     }
 
 
+    template<typename E>
     void RecentTasks::handleException(
-        const std::system_error& exception,
+        const E& exception,
         JNIEnv* jEnv,
-        std::string_view pass_func_here /* __func */) noexcept
+        std::string_view funcName /* __func__ */) noexcept
     {
+        using ExceptionType = std::decay_t<E>;
+
+        constexpr std::string_view exceptionTypeName =
+            std::is_base_of_v<std::system_error, ExceptionType>     ? "std::system_error"
+            : std::is_base_of_v<std::runtime_error, ExceptionType>  ? "std::runtime_error"
+            : std::is_base_of_v<std::logic_error, ExceptionType>    ? "std::logic_error"
+            : std::is_base_of_v<std::exception, ExceptionType>      ? "std::exception"
+                                                                    : "<failed-to-deduce-exception-type>";
+
+        constexpr const char* catchDescription =
+            std::is_base_of_v<std::system_error, ExceptionType>     ? "RecentTasks::handleException: failed to handle std::system_error exception"
+            : std::is_base_of_v<std::runtime_error, ExceptionType>  ? "RecentTasks::handleException: failed to handle std::runtime_error exception"
+            : std::is_base_of_v<std::logic_error, ExceptionType>    ? "RecentTasks::handleException: failed to handle std::logic_error exception"
+            : std::is_base_of_v<std::exception, ExceptionType>      ? "RecentTasks::handleException: failed to handle std::exception exception"
+                                                                    : "RecentTasks::handleException: failed to handle <failed-to-deduce-exception-type> exception";
+
         try
         {
             assert( (jEnv != nullptr) );
@@ -514,8 +550,12 @@ namespace intellij::ui::win::jni
 
             std::stringstream description;
 
-            description << "Caught std::system_error in \"" << thisCtxName << "::" << pass_func_here << "\" with code "
-                        << exception.code() << " meaning \"" << exception.what() << '\"';
+            description << "Caught " << exceptionTypeName << " in \"" << thisCtxName << "::" << funcName << '\"';
+            if constexpr (std::is_base_of_v<std::system_error, ExceptionType>)
+            {
+                description << " with code " << exception.code();
+            }
+            description << " meaning \"" << cleanExceptionDescription(exception.what()) << '\"';
 
             jEnv->ThrowNew(
                 jEnv->FindClass("java/lang/RuntimeException"),
@@ -526,15 +566,14 @@ namespace intellij::ui::win::jni
         {
             jEnv->ThrowNew(
                 jEnv->FindClass("java/lang/RuntimeException"),
-                "RecentTasks::handleException: failed to handle std::system_error exception"
+                catchDescription
             );
         }
     }
 
-    void RecentTasks::handleException(
-        const std::runtime_error& exception,
+    void RecentTasks::handleUnknownException(
         JNIEnv* jEnv,
-        std::string_view pass_func_here) noexcept
+        std::string_view funcName /* __func__ */) noexcept
     {
         try
         {
@@ -545,97 +584,7 @@ namespace intellij::ui::win::jni
 
             std::stringstream description;
 
-            description << "Caught std::runtime_error in \"" << thisCtxName << "::" << pass_func_here << "\" meaning \""
-                        << exception.what() << '\"';
-
-            jEnv->ThrowNew(
-                jEnv->FindClass("java/lang/RuntimeException"),
-                description.str().c_str()
-            );
-        }
-        catch (...)
-        {
-            jEnv->ThrowNew(
-                jEnv->FindClass("java/lang/RuntimeException"),
-                "RecentTasks::handleException: failed to handle std::runtime_error exception"
-            );
-        }
-    }
-
-    void RecentTasks::handleException(
-        const std::logic_error& exception,
-        JNIEnv* jEnv,
-        std::string_view pass_func_here) noexcept
-    {
-        try
-        {
-            assert( (jEnv != nullptr) );
-
-            if (jEnv->ExceptionCheck() == JNI_TRUE)
-                return;
-
-            std::stringstream description;
-
-            description << "Caught std::logic_error in \"" << thisCtxName << "::" << pass_func_here << "\" meaning \""
-                        << exception.what() << '\"';
-
-            jEnv->ThrowNew(
-                    jEnv->FindClass("java/lang/RuntimeException"),
-                    description.str().c_str()
-            );
-        }
-        catch (...)
-        {
-            jEnv->ThrowNew(
-                jEnv->FindClass("java/lang/RuntimeException"),
-                "RecentTasks::handleException: failed to handle std::logic_error exception"
-            );
-        }
-    }
-
-    void RecentTasks::handleException(
-        const std::exception& exception,
-        JNIEnv* jEnv,
-        std::string_view pass_func_here) noexcept
-    {
-        try
-        {
-            assert( (jEnv != nullptr) );
-
-            if (jEnv->ExceptionCheck() == JNI_TRUE)
-                return;
-
-            std::stringstream description;
-
-            description << "Caught std::exception in \"" << thisCtxName << "::" << pass_func_here << "\" meaning \""
-                        << exception.what() << '\"';
-
-            jEnv->ThrowNew(
-                jEnv->FindClass("java/lang/RuntimeException"),
-                description.str().c_str()
-            );
-        }
-        catch (...)
-        {
-            jEnv->ThrowNew(
-                jEnv->FindClass("java/lang/RuntimeException"),
-                "RecentTasks::handleException: failed to handle std::exception exception"
-            );
-        }
-    }
-
-    void RecentTasks::handleUnknownException(JNIEnv* jEnv, std::string_view pass_func_here /* __func */) noexcept
-    {
-        try
-        {
-            assert( (jEnv != nullptr) );
-
-            if (jEnv->ExceptionCheck() == JNI_TRUE)
-                return;
-
-            std::stringstream description;
-
-            description << "Caught an unknown exception in \"" << thisCtxName << "::" << pass_func_here << '\"';
+            description << "Caught an unknown exception in \"" << thisCtxName << "::" << funcName << '\"';
 
             jEnv->ThrowNew(
                 jEnv->FindClass("java/lang/RuntimeException"),
