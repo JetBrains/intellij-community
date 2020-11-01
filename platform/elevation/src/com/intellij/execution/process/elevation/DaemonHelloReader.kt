@@ -38,9 +38,7 @@ internal class DaemonHelloSocketReader(port: Int = 0) : AbstractDaemonHelloStrea
   override fun close() = cleanup.close()  // don't call super.close() to avoid computing inputStream Lazy.
 }
 
-internal class DaemonHelloStdoutReader : AbstractDaemonHelloStreamReader() {
-  override lateinit var inputStream: InputStream
-}
+internal class DaemonHelloStreamReader(override val inputStream: InputStream) : AbstractDaemonHelloStreamReader()
 
 internal abstract class DaemonHelloFileReader(val path: Path) : AbstractDaemonHelloStreamReader()
 
