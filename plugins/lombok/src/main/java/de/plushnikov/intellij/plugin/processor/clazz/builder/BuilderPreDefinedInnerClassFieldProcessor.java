@@ -24,6 +24,7 @@ public class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPr
     super(PsiField.class, LombokClassNames.BUILDER);
   }
 
+  @Override
   protected BuilderHandler getBuilderHandler() {
     return ApplicationManager.getApplication().getService(BuilderHandler.class);
   }

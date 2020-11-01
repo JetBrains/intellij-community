@@ -32,6 +32,7 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
     return ApplicationManager.getApplication().getService(BuilderHandler.class).validate(psiMethod, psiAnnotation, builder);
   }
 
+  @Override
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiMethod.getContainingClass();
     if (null != psiClass) {

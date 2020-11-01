@@ -5,6 +5,7 @@ import com.intellij.psi.PsiJavaFile;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 public abstract class AbstractLombokConfigSystemTestCase extends AbstractLombokParsingTestCase {
+  @Override
   public void doTest() {
     final String fullFileName = getTestName(true).replace('$', '/') + ".java";
     final int lastIndexOf = fullFileName.lastIndexOf('/');

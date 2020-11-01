@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 
 public class LombokLoggerActionTest extends LombokLightActionTestCase {
 
+  @Override
   protected AnAction getAction() {
     return new LombokLoggerAction();
   }

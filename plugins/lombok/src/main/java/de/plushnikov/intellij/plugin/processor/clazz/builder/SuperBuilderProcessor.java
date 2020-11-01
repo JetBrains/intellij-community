@@ -44,6 +44,7 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
     return true;//builderHandler.validate(psiClass, psiAnnotation, builder);
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     SuperBuilderHandler builderHandler = getBuilderHandler();
     final String builderClassName = builderHandler.getBuilderClassName(psiClass);

@@ -8,6 +8,7 @@ import de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProc
 import org.jetbrains.annotations.NotNull;
 
 public class DelombokFieldNameConstantsAction extends AbstractDelombokAction {
+  @Override
   @NotNull
   protected DelombokHandler createHandler() {
     return new DelombokHandler(true,

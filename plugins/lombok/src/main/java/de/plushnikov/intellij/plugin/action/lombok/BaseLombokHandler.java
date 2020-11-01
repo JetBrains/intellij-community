@@ -21,10 +21,12 @@ import java.util.Set;
 
 public abstract class BaseLombokHandler implements CodeInsightActionHandler {
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (file.isWritable()) {
       PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, file, false);

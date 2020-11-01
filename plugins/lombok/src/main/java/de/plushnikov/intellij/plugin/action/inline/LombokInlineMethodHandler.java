@@ -18,10 +18,12 @@ public class LombokInlineMethodHandler extends JavaInlineActionHandler {
   private LombokInlineMethodHandler() {
   }
 
+  @Override
   public boolean canInlineElement(PsiElement element) {
     return element instanceof LombokLightMethodBuilder && element.getLanguage() == JavaLanguage.INSTANCE;
   }
 
+  @Override
   public void inlineElement(final Project project, Editor editor, PsiElement element) {
     performInline(project, editor, (PsiMethod) element, true);
   }

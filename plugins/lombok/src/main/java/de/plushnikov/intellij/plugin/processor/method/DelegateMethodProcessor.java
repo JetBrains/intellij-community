@@ -16,7 +16,6 @@ import java.util.List;
 
 public class DelegateMethodProcessor extends AbstractMethodProcessor {
 
-  @SuppressWarnings({"deprecation"})
   public DelegateMethodProcessor() {
     super(PsiMethod.class, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE);
   }

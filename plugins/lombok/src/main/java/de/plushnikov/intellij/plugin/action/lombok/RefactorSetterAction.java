@@ -6,6 +6,7 @@ import de.plushnikov.intellij.plugin.action.BaseRefactorAction;
 
 public class RefactorSetterAction extends BaseRefactorAction {
 
+  @Override
   protected RefactorSetterHandler initHandler(Project project, DataContext dataContext) {
     return new RefactorSetterHandler(project, dataContext);
   }

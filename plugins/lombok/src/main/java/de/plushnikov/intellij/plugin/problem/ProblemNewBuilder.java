@@ -10,7 +10,7 @@ import java.util.Set;
  * @author Plushnikov Michail
  */
 public class ProblemNewBuilder implements ProblemBuilder {
-  private Set<LombokProblem> problems;
+  private final Set<LombokProblem> problems;
 
   public ProblemNewBuilder() {
     this(1);
@@ -24,30 +24,37 @@ public class ProblemNewBuilder implements ProblemBuilder {
     return problems;
   }
 
+  @Override
   public void addWarning(String message) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
+  @Override
   public void addWarning(String message, Object... params) {
     addProblem(String.format(message, params), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
+  @Override
   public void addError(String message) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR);
   }
 
+  @Override
   public void addError(String message, Object... params) {
     addProblem(String.format(message, params), ProblemHighlightType.GENERIC_ERROR);
   }
 
+  @Override
   public void addWarning(String message, LocalQuickFix... quickFixes) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes);
   }
 
+  @Override
   public void addError(String message, LocalQuickFix... quickFixes) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR, quickFixes);
   }
 
+  @Override
   public void addProblem(String message, ProblemHighlightType highlightType, LocalQuickFix... quickFixes) {
     problems.add(new LombokProblem(message, highlightType, quickFixes));
   }

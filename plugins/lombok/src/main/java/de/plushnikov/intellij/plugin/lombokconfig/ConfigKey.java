@@ -102,7 +102,7 @@ public enum ConfigKey {
   }
 
   public static ConfigKey fromConfigStringKey(String configStringKey) {
-    for (ConfigKey keys : ConfigKey.values()) {
+    for (ConfigKey keys : values()) {
       if (keys.getConfigKey().equalsIgnoreCase(configStringKey)) {
         return keys;
       }

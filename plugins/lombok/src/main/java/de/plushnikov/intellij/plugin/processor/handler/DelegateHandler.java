@@ -260,7 +260,6 @@ public class DelegateHandler {
       checkModifierListOwner(psiMethod);
     }
 
-    @SuppressWarnings("deprecation")
     private void checkModifierListOwner(PsiModifierListOwner modifierListOwner) {
       if (PsiAnnotationSearchUtil.isAnnotatedWith(modifierListOwner, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE)) {
         builder.addError("@Delegate does not support recursion (delegating to a type that itself has @Delegate members). " +

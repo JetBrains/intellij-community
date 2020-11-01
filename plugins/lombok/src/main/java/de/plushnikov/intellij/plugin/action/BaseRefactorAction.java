@@ -39,9 +39,10 @@ public abstract class BaseRefactorAction extends AnAction {
   }
 
   private VirtualFile getVirtualFiles(AnActionEvent e) {
-    return PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    return CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     final BaseRefactorHandler handler = initHandler(project, e.getDataContext());
@@ -61,6 +62,6 @@ public abstract class BaseRefactorAction extends AnAction {
   }
 
   private Editor getEditor(AnActionEvent e) {
-    return PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    return CommonDataKeys.EDITOR.getData(e.getDataContext());
   }
 }

@@ -15,6 +15,7 @@ import java.util.Collection;
 
 public class LombokLoggerHandler extends BaseLombokHandler {
 
+  @Override
   protected void processClass(@NotNull PsiClass psiClass) {
     final Collection<AbstractLogProcessor> logProcessors = Arrays.asList(
       ApplicationManager.getApplication().getService(CommonsLogProcessor.class),

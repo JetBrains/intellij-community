@@ -7,6 +7,7 @@ import java.io.IOException;
  */
 public class ToStringTest extends AbstractLombokConfigSystemTestCase {
 
+  @Override
   protected boolean shouldCompareAnnotations() {
     return true;
   }
