@@ -34,14 +34,13 @@ final class BrokenPluginsBuildFileService {
     myBuildContext.messages.progress("Start to build $BROKEN_PLUGINS_FILE_NAME")
 
     List<MarketplaceBrokenPlugin> allBrokenPlugins
-    if (myBuildContext.proprietaryBuildTools.featureUsageStatisticsProperties == null) {
-      final String url =
-        myBuildContext.proprietaryBuildTools.featureUsageStatisticsProperties.marketplaceHost + MARKETPLACE_BROKEN_PLUGINS_URL
+    if (myBuildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
+      final String url = myBuildContext.proprietaryBuildTools.featureUsageStatisticsProperties.marketplaceHost + MARKETPLACE_BROKEN_PLUGINS_URL
       myBuildContext.messages.info("Get request for broken plugins, url: $url")
       allBrokenPlugins = downloadFileFromMarketplace(url)
     }
     else {
-      myBuildContext.messages.info(".proprietaryBuildTools.featureUsageStatisticsProperties are not available. " +
+      myBuildContext.messages.info("proprietaryBuildTools.featureUsageStatisticsProperties are not available. " +
                                    "Assuming empty broken plugins list from marketplace")
       allBrokenPlugins = []
     }
