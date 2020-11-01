@@ -9,11 +9,11 @@ import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRunti
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import io.grpc.ManagedChannel
@@ -21,8 +21,8 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.MetadataUtils
 import java.io.Closeable
 import java.io.File
+import java.io.IOException
 import java.net.InetAddress
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 
@@ -35,30 +35,36 @@ object ProcessMediatorDaemonLauncher {
   fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon {
     val appExecutorService = AppExecutorUtil.getAppExecutorService()
 
-    val helloIpc = appExecutorService.submitAndAwaitCloseable { tryCreateHelloIpc() }
-                   ?: throw ExecutionException(ElevationBundle.message("dialog.message.daemon.hello.failed"))
-    // sudo on Linux and macOS may take different forms, and not all of them are reliable in terms of process lifecycle management,
+    // Unix sudo may take different forms, and not all of them are reliable in terms of process lifecycle management,
     // input/output redirection, and so on. To overcome the limitations we use an RSA-secured channel for initial communication
-    // instead of process stdio, and run it in a trampoline mode. In this mode the sudo'ed process forks the real daemon process,
+    // instead of process stdio, and launch it in a trampoline mode. In this mode the sudo'ed process forks the real daemon process,
     // relays the initial hello from it, and exits, so that the sudo process is done as soon as the initial hello is exchanged.
     // In particular, this is a workaround for high CPU consumption of the osascript (used on macOS instead of sudo) process;
     // we want it to finish as soon as possible.
+    val helloIpc = if (SystemInfo.isWindows) {
+      DaemonHelloStdoutIpc()
+    }
+    else try {
+      appExecutorService.submitAndAwaitCloseable { openUnixHelloIpc() }
+    }
+    catch (e: IOException) {
+      throw ExecutionException(ElevationBundle.message("dialog.message.daemon.hello.failed"), e)
+    }
     val daemonLaunchOptions = helloIpc.getDaemonLaunchOptions()
       .copy(trampoline = sudo && SystemInfo.isUnix,
             leaderPid = ProcessHandle.current().pid())
 
+    val trampolineCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
+      .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
+      .withParameters(daemonLaunchOptions.asCmdlineArgs())
+
     return helloIpc.use {
       appExecutorService.submitAndAwait {
-        val trampolineCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
-          .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
-          .withParameters(daemonLaunchOptions.asCmdlineArgs())
-          .let {
-            if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
-          }
+        val maybeSudoTrampolineCommandLine =
+          if (!sudo) trampolineCommandLine
+          else ExecUtil.sudoCommand(trampolineCommandLine, "Elevation daemon")
 
-        val trampolineProcessHandler = helloIpc.createDaemonProcessHandler(trampolineCommandLine).also {
-          it.startNotify()
-        }
+        helloIpc.createDaemonProcessHandler(maybeSudoTrampolineCommandLine).startNotify()
 
         val daemonHello = helloIpc.readHello() ?: throw ProcessCanceledException()
         val daemonProcessHandle = ProcessHandle.of(daemonHello.pid).orElseThrow(::ProcessCanceledException)
@@ -70,19 +76,23 @@ object ProcessMediatorDaemonLauncher {
     }
   }
 
-  private fun tryCreateHelloIpc(): DaemonHelloIpc? =
-    kotlin.runCatching {
-      if (SystemInfo.isWindows) {
-        DaemonHelloStdoutIpc()
+  private fun openUnixHelloIpc(): DaemonHelloIpc {
+    return try {
+      DaemonHelloUnixFifoIpc()
+    }
+    catch (e0: IOException) {
+      ElevationLogger.LOG.warn("Unable to create file-based hello channel; falling back to socket streams", e0)
+      try {
+        DaemonHelloSocketIpc()
       }
-      else {
-        DaemonHelloUnixFifoIpc().encrypted()
+      catch (e1: IOException) {
+        e1.addSuppressed(e0)
+        throw e1
       }
-    }.onFailure { e ->
-      ElevationLogger.LOG.warn("Unable to create file-based hello channel; falling back to socket streams", e)
-    }.recoverCatching {
-      DaemonHelloSocketIpc().encrypted()
-    }.getOrLogException(ElevationLogger.LOG)
+    }
+      // neither a named pipe nor an open port is safe from prying eyes
+      .encrypted()
+  }
 }
 
 private fun <R> ExecutorService.submitAndAwait(block: () -> R): R {
@@ -102,8 +112,13 @@ private fun <R : Closeable?> ExecutorService.submitAndAwaitCloseable(block: () -
 }
 
 private fun <R> awaitWithCheckCanceled(future: CompletableFuture<R>): R {
-  if (ApplicationManager.getApplication() == null) return future.join()
-  return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
+  try {
+    if (ApplicationManager.getApplication() == null) return future.join()
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
+  }
+  catch (e: Throwable) {
+    throw ExceptionUtil.findCause(e, java.util.concurrent.ExecutionException::class.java)?.cause ?: e
+  }
 }
 
 private class ProcessMediatorDaemonImpl(private val processHandle: ProcessHandle,
