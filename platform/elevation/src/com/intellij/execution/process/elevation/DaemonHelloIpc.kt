@@ -61,7 +61,9 @@ internal class EncryptedDaemonHelloIpc(private val delegate: DaemonHelloIpc) : D
 internal fun DaemonHelloIpc.encrypted(): DaemonHelloIpc = EncryptedDaemonHelloIpc(this)
 
 
-internal abstract class AbstractDaemonHelloIpc<R : DaemonHelloReader>(protected val helloReader: R) : DaemonHelloIpc, ProcessAdapter() {
+internal abstract class AbstractDaemonHelloIpcBase<R : DaemonHelloReader> : DaemonHelloIpc, ProcessAdapter() {
+  protected abstract val helloReader: R
+
   override fun getDaemonLaunchOptions() = DaemonLaunchOptions(helloOption = getHelloOption())
   abstract fun getHelloOption(): DaemonLaunchOptions.HelloOption
 
@@ -95,13 +97,17 @@ internal abstract class AbstractDaemonHelloIpc<R : DaemonHelloReader>(protected 
   override fun close() = helloReader.close()
 }
 
+internal abstract class AbstractDaemonHelloIpc<R : DaemonHelloReader>(override val helloReader: R) : AbstractDaemonHelloIpcBase<R>()
+
 internal class DaemonHelloSocketIpc(
   port: Int = 0
 ) : AbstractDaemonHelloIpc<DaemonHelloSocketReader>(DaemonHelloSocketReader(port)) {
   override fun getHelloOption() = DaemonLaunchOptions.HelloOption.Port(helloReader.port)
 }
 
-internal class DaemonHelloStdoutIpc : AbstractDaemonHelloIpc<DaemonHelloStdoutReader>(DaemonHelloStdoutReader()) {
+internal class DaemonHelloStdoutIpc : AbstractDaemonHelloIpcBase<DaemonHelloStreamReader>() {
+  override lateinit var helloReader: DaemonHelloStreamReader
+
   override fun getHelloOption() = DaemonLaunchOptions.HelloOption.Stdout
 
   override fun createProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
@@ -110,7 +116,7 @@ internal class DaemonHelloStdoutIpc : AbstractDaemonHelloIpc<DaemonHelloStdoutRe
         return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
       }
     }.also {
-      helloReader.inputStream = it.process.inputStream
+      helloReader = DaemonHelloStreamReader(it.process.inputStream)
     }
   }
 }

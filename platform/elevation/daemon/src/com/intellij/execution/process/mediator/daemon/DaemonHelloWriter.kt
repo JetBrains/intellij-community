@@ -21,7 +21,6 @@ internal open class DaemonHelloStreamWriter(private val outputStream: OutputStre
   override fun close() = outputStream.close()
 }
 
-internal object DaemonHelloStdoutWriter : DaemonHelloStreamWriter(System.out)
 internal class DaemonHelloFileWriter(path: Path) : DaemonHelloStreamWriter(Files.newOutputStream(path, StandardOpenOption.WRITE))
 
 internal class DaemonHelloSocketWriter(port: UShort) : DaemonHelloStreamWriter(createSocket(port).getOutputStream()) {

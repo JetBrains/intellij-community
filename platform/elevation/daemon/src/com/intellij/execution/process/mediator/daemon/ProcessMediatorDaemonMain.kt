@@ -97,7 +97,7 @@ private fun trampoline(launchOptions: DaemonLaunchOptions): Nothing {
 private fun openHelloWriter(helloOption: DaemonLaunchOptions.HelloOption?): DaemonHelloWriter? =
   when (helloOption) {
     null -> null
-    DaemonLaunchOptions.HelloOption.Stdout -> DaemonHelloStdoutWriter
+    DaemonLaunchOptions.HelloOption.Stdout -> DaemonHelloStreamWriter(System.out)
     is DaemonLaunchOptions.HelloOption.File -> DaemonHelloFileWriter(helloOption.path)
     is DaemonLaunchOptions.HelloOption.Port -> DaemonHelloSocketWriter(helloOption.port)
   }
