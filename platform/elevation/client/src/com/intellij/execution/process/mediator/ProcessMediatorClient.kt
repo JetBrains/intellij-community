@@ -3,6 +3,7 @@ package com.intellij.execution.process.mediator
 
 import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
+import com.intellij.execution.process.mediator.daemon.TimeQuota
 import com.intellij.execution.process.mediator.rpc.*
 import com.intellij.execution.process.mediator.util.ExceptionAsStatus
 import com.intellij.execution.process.mediator.util.LoggingClientInterceptor
@@ -22,13 +23,21 @@ import java.util.concurrent.TimeUnit
 
 class ProcessMediatorClient(
   coroutineScope: CoroutineScope,
-  private val channel: ManagedChannel // TODO
+  private val channel: ManagedChannel,
+  initialQuota: TimeQuota = TimeQuota.UNLIMITED,
 ) : CoroutineScope by coroutineScope.childSupervisorScope(),
     Closeable {
   private val loggingChannel = ClientInterceptors.intercept(channel, LoggingClientInterceptor)
 
   private val processManagerStub = ProcessManagerGrpcKt.ProcessManagerCoroutineStub(loggingChannel)
   private val daemonStub = DaemonGrpcKt.DaemonCoroutineStub(loggingChannel)
+
+  init {
+    // send this request even if doesn't really change the quota, just so we know the server is up and running
+    runBlocking(coroutineContext) {
+      adjustQuota(initialQuota)
+    }
+  }
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Long {
@@ -121,13 +130,21 @@ class ProcessMediatorClient(
     ExceptionAsStatus.unwrap { processManagerStub.release(request) }
   }
 
+  suspend fun adjustQuota(quota: TimeQuota) {
+    val request = AdjustQuotaRequest.newBuilder()
+      .setTimeLimitMs(quota.timeLimitMs)
+      .setIsRefreshable(quota.isRefreshable)
+      .build()
+    daemonStub.adjustQuota(request)
+  }
+
   private suspend fun shutdown() {
     daemonStub.shutdown(Empty.getDefaultInstance())
   }
 
   override fun close() {
     try {
-      runBlocking {
+      runBlocking(coroutineContext) {
         shutdown()
       }
     }

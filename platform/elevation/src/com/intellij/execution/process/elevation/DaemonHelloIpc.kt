@@ -4,7 +4,7 @@ package com.intellij.execution.process.elevation
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.*
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
-import com.intellij.execution.process.mediator.daemon.rsaDecrypt
+import com.intellij.execution.process.mediator.util.rsaDecrypt
 import com.intellij.execution.process.mediator.rpc.DaemonHello
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil

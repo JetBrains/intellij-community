@@ -39,7 +39,7 @@ open class ProcessMediatorTest {
   protected open fun createProcessMediatorDaemon(testInfo: TestInfo): ProcessMediatorDaemon {
     val bindName = testInfo.testMethod.orElse(null)?.name ?: testInfo.displayName
     val credentials = DaemonClientCredentials.generate()
-    return object : ProcessMediatorServerDaemon(InProcessServerBuilder.forName(bindName).directExecutor(), credentials) {
+    return object : ProcessMediatorServerDaemon(coroutineScope, InProcessServerBuilder.forName(bindName).directExecutor(), credentials) {
       override fun createChannel(): ManagedChannel {
         return InProcessChannelBuilder.forName(bindName)
           .intercept(MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata()))
