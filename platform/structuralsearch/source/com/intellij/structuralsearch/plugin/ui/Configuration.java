@@ -262,7 +262,9 @@ public abstract class Configuration implements JDOMExternalizable {
     return (type == null || type.getIcon() == null) ? AllIcons.FileTypes.Any_type : type.getIcon();
   }
 
-  public abstract LanguageFileType getFileType();
+  public LanguageFileType getFileType() {
+    return null;
+  }
 
   @NotNull @NonNls
   public String getRefName() {
