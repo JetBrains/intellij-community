@@ -44,11 +44,6 @@ import java.util.List;
 public class LombokProjectValidatorActivity implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
-    // If plugin is not enabled - no point to continue
-    if (!ProjectSettings.isLombokEnabledInProject(project)) {
-      return;
-    }
-
     LombokProcessorProvider lombokProcessorProvider = LombokProcessorProvider.getInstance(project);
     ReadAction.nonBlocking(() -> {
       if (project.isDisposed()) return null;
@@ -148,7 +143,7 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
   }
 
   public static boolean isVersionLessThan1_18_16(Project project) {
-    if (ProjectSettings.isLombokEnabledInProject(project) && hasLombokLibrary(project)) {
+    if (hasLombokLibrary(project)) {
       return CachedValuesManager.getManager(project)
         .getCachedValue(project, () -> {
           Boolean isVersionLessThan = ReadAction.compute(() -> isVersionLessThan1_18_16_Internal(project));
