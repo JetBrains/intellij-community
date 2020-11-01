@@ -16,7 +16,7 @@ internal class ExceptionAsStatusTest {
   @Test
   fun `wraps known exceptions`() {
     assertThrows<StatusException> { ExceptionAsStatus.wrap { throw IOException("IOE") } }
-      .also { assertEquals(Status.Code.RESOURCE_EXHAUSTED, it.status.code, it.toString()) }
+      .also { assertEquals(Status.Code.NOT_FOUND, it.status.code, it.toString()) }
     assertThrows<StatusException> { ExceptionAsStatus.wrap { throw FileNotFoundException("FNFE") } }
       .also { assertEquals(Status.Code.NOT_FOUND, it.status.code, it.toString()) }
     assertThrows<StatusException> { ExceptionAsStatus.wrap { throw object : FileNotFoundException("my FNFE") {} } }
