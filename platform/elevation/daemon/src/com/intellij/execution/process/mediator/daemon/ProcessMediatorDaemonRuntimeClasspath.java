@@ -4,6 +4,7 @@ package com.intellij.execution.process.mediator.daemon;
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.Message;
 import com.intellij.execution.process.mediator.rpc.ProcessMediatorProto;
+import com.sun.jna.Native;
 import io.grpc.Context;
 import io.grpc.Grpc;
 import io.grpc.internal.ServerImpl;
@@ -53,6 +54,8 @@ public class ProcessMediatorDaemonRuntimeClasspath {
     ByteBufAllocator.class, // netty buffer
     ProtobufDecoder.class, // netty codec
     PerfMark.class, // perfmark-api
+
+    Native.class, // JNA
   });
 
   private static final List<String> PROPERTY_NAMES = List.of(new String[]{

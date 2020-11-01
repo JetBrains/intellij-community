@@ -39,6 +39,7 @@ object ProcessMediatorDaemonLauncher {
     // input/output redirection, and so on. To overcome the limitations we use an RSA-secured channel for initial communication
     // instead of process stdio, and launch it in a trampoline mode. In this mode the sudo'ed process forks the real daemon process,
     // relays the initial hello from it, and exits, so that the sudo process is done as soon as the initial hello is exchanged.
+    // Using a trampoline also ensures that the launched process is certainly not a session leader, and allows it to become one.
     // In particular, this is a workaround for high CPU consumption of the osascript (used on macOS instead of sudo) process;
     // we want it to finish as soon as possible.
     val helloIpc = if (SystemInfo.isWindows) {
@@ -52,6 +53,7 @@ object ProcessMediatorDaemonLauncher {
     }
     val daemonLaunchOptions = helloIpc.getDaemonLaunchOptions()
       .copy(trampoline = sudo && SystemInfo.isUnix,
+            daemonize = sudo && SystemInfo.isUnix,
             leaderPid = ProcessHandle.current().pid())
 
     val trampolineCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())

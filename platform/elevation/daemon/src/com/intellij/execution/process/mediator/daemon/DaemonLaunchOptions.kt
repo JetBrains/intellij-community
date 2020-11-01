@@ -13,6 +13,7 @@ import kotlin.system.exitProcess
 
 data class DaemonLaunchOptions(
   val trampoline: Boolean = false,
+  val daemonize: Boolean = false,
   val leaderPid: Long? = null,
   val helloOption: HelloOption? = null,
   val tokenEncryptionOption: TokenEncryptionOption? = null,
@@ -49,6 +50,7 @@ data class DaemonLaunchOptions(
   fun asCmdlineArgs(): List<String> {
     return listOf(
       "--trampoline".takeIf { trampoline },
+      "--daemonize".takeIf { daemonize },
       leaderPid?.let { "--leader-pid=$it" },
       helloOption,
       tokenEncryptionOption,
@@ -64,6 +66,7 @@ data class DaemonLaunchOptions(
       System.err.println(
         "Usage: $programName" +
         " [ --trampoline ]" +
+        " [ --daemonize ]" +
         " [ --leader-pid=pid ]" +
         " [ --hello-file=file|- | --hello-port=port ]" +
         " [ --token-encrypt-rsa=public-key ]"
@@ -83,6 +86,7 @@ data class DaemonLaunchOptions(
 
     private fun parseFromArgs(args: Array<String>): DaemonLaunchOptions {
       var trampoline = false
+      var daemonize = false
       var leaderPid: Long? = null
       var helloOption: HelloOption? = null
       var tokenEncryptionOption: TokenEncryptionOption? = null
@@ -91,6 +95,8 @@ data class DaemonLaunchOptions(
         when (option) {
           "--trampoline" -> trampoline = true
           "--no-trampoline" -> trampoline = false
+          "--daemonize" -> daemonize = true
+          "--no-daemonize" -> daemonize = false
           else -> requireNotNull(value) { "Missing '$option' value" }
         }
         value ?: continue
@@ -128,6 +134,7 @@ data class DaemonLaunchOptions(
 
       return DaemonLaunchOptions(
         trampoline = trampoline,
+        daemonize = daemonize,
         leaderPid = leaderPid,
         helloOption = helloOption,
         tokenEncryptionOption = tokenEncryptionOption,
