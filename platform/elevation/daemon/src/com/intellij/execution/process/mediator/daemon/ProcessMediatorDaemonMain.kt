@@ -1,20 +1,33 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.Empty
+import com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.rpc.DaemonHello
+import com.intellij.execution.process.mediator.util.ExceptionAsStatus
+import com.intellij.execution.process.mediator.util.rsaEncrypt
 import io.grpc.Server
 import io.grpc.ServerBuilder
+import kotlinx.coroutines.*
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.system.exitProcess
 
 
-open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
-                                       credentials: DaemonClientCredentials) : ProcessMediatorDaemon {
+@Suppress("LeakingThis")
+open class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
+                                       builder: ServerBuilder<*>,
+                                       credentials: DaemonClientCredentials) : ProcessMediatorDaemon,
+                                                                               CoroutineScope by coroutineScope {
+
   private val processManager = ProcessManager()
+  private val quotaManager = TimeQuotaManager(this)
+
   private val server: Server
 
   val port get() = server.port
@@ -22,7 +35,7 @@ open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
   init {
     this.server = builder
       .intercept(CredentialsAuthServerInterceptor(credentials))
-      .addService(ProcessManagerServerService.createServiceDefinition(processManager))
+      .addService(ProcessManagerServerService.createServiceDefinition(processManager, quotaManager))
       .addService(DaemonService())
       .build()
       .start()
@@ -32,7 +45,13 @@ open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
   }
 
   override fun stop() {
-    server.shutdown()
+    requestShutdown()
+  }
+
+  fun requestShutdown() {
+    processManager.use {  // to close it
+      server.shutdown()
+    }
     System.err.println("server shut down")
   }
 
@@ -41,10 +60,17 @@ open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
   }
 
   inner class DaemonService : DaemonGrpcKt.DaemonCoroutineImplBase() {
-    override suspend fun shutdown(request: Empty): Empty {
-      processManager.use {  // to close it
-        stop()
+    override suspend fun adjustQuota(request: AdjustQuotaRequest): Empty {
+      ExceptionAsStatus.wrap {
+        val timeQuota = TimeQuota(timeLimitMs = request.timeLimitMs,
+                                  isRefreshable = request.isRefreshable)
+        quotaManager.adjustQuota(timeQuota)
       }
+      return Empty.getDefaultInstance()
+    }
+
+    override suspend fun shutdown(request: Empty): Empty {
+      requestShutdown()
       return Empty.getDefaultInstance()
     }
   }
@@ -134,8 +160,9 @@ fun main(args: Array<String>) {
   val daemon: ProcessMediatorServerDaemon
 
   openHelloWriter(launchOptions.helloOption).use { helloWriter ->
+    val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     val credentials = DaemonClientCredentials.generate()
-    daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0), credentials)
+    daemon = ProcessMediatorServerDaemon(coroutineScope, ServerBuilder.forPort(0), credentials)
     try {
       val token = credentials.token.let {
         when (val publicKey = launchOptions.tokenEncryptionOption?.publicKey) {

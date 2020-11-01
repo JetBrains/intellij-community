@@ -12,10 +12,15 @@ import kotlinx.coroutines.flow.*
 import java.io.File
 
 internal class ProcessManagerServerService(
-  private val processManager: ProcessManager
+  private val processManager: ProcessManager,
+  private val quotaManager: QuotaManager,
 ) : ProcessManagerGrpcKt.ProcessManagerCoroutineImplBase() {
 
   override suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply {
+    if (!quotaManager.check()) {
+      throw Status.RESOURCE_EXHAUSTED.withDescription("Quota exceeded").asRuntimeException()
+    }
+
     val commandLine = request.commandLine
 
     val pid = ExceptionAsStatus.wrap {
@@ -95,8 +100,8 @@ internal class ProcessManagerServerService(
   }
 
   companion object {
-    fun createServiceDefinition(processManager: ProcessManager): ServerServiceDefinition {
-      val service = ProcessManagerServerService(processManager)
+    fun createServiceDefinition(processManager: ProcessManager, quotaManager: QuotaManager): ServerServiceDefinition {
+      val service = ProcessManagerServerService(processManager, quotaManager)
       return ServerInterceptors
         .intercept(service, ExceptionStatusDescriptionAugmenterServerInterceptor)
     }
