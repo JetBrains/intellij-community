@@ -211,19 +211,6 @@ class CommunityRepositoryModules {
       withModule("intellij.java.coverage.rt")
       withProjectLibrary("JaCoCo") //todo[nik] convert to module library
     },
-    plugin("intellij.errorProne") {
-      withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
-    },
-    plugin("intellij.cucumber.java") {
-      withModule("intellij.cucumber.jvmFormatter")
-      withModule("intellij.cucumber.jvmFormatter3")
-      withModule("intellij.cucumber.jvmFormatter4")
-      withModule("intellij.cucumber.jvmFormatter5")
-      doNotCreateSeparateJarForLocalizableResources()
-    },
-    plugin("intellij.cucumber.groovy") {
-      doNotCreateSeparateJarForLocalizableResources()
-    },
     plugin("intellij.java.decompiler") {
       directoryName = "java-decompiler"
       mainJarName = "java-decompiler.jar"
@@ -269,10 +256,26 @@ class CommunityRepositoryModules {
         }
       }, "lib")
     },
-    plugin("intellij.gauge"),
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
     }
+  ]
+
+  static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = [
+    plugin("intellij.errorProne") {
+      withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
+    },
+    plugin("intellij.cucumber.java") {
+      withModule("intellij.cucumber.jvmFormatter")
+      withModule("intellij.cucumber.jvmFormatter3")
+      withModule("intellij.cucumber.jvmFormatter4")
+      withModule("intellij.cucumber.jvmFormatter5")
+      doNotCreateSeparateJarForLocalizableResources()
+    },
+    plugin("intellij.cucumber.groovy") {
+      doNotCreateSeparateJarForLocalizableResources()
+    },
+    plugin("intellij.gauge"),
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
