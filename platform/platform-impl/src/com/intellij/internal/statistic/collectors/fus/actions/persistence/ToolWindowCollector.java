@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -52,7 +51,11 @@ public final class ToolWindowCollector {
   private static final ToolWindowInfo UNKNOWN = new ToolWindowInfo("unknown", getUnknownPlugin());
 
   public static ToolWindowCollector getInstance() {
-    return ApplicationManager.getApplication().getService(ToolWindowCollector.class);
+    return Holder.INSTANCE;
+  }
+
+  private static class Holder {
+    private static final ToolWindowCollector INSTANCE = new ToolWindowCollector();
   }
 
   /**
