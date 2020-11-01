@@ -32,10 +32,20 @@ final class BrokenPluginsBuildFileService {
 
   def buildFile() {
     myBuildContext.messages.progress("Start to build $BROKEN_PLUGINS_FILE_NAME")
-    final String url =
-      myBuildContext.proprietaryBuildTools.featureUsageStatisticsProperties.marketplaceHost + MARKETPLACE_BROKEN_PLUGINS_URL
-    myBuildContext.messages.info("Get request for broken plugins, url: $url")
-    List<MarketplaceBrokenPlugin> allBrokenPlugins = downloadFileFromMarketplace(url)
+
+    List<MarketplaceBrokenPlugin> allBrokenPlugins
+    if (myBuildContext.proprietaryBuildTools.featureUsageStatisticsProperties == null) {
+      final String url =
+        myBuildContext.proprietaryBuildTools.featureUsageStatisticsProperties.marketplaceHost + MARKETPLACE_BROKEN_PLUGINS_URL
+      myBuildContext.messages.info("Get request for broken plugins, url: $url")
+      allBrokenPlugins = downloadFileFromMarketplace(url)
+    }
+    else {
+      myBuildContext.messages.info(".proprietaryBuildTools.featureUsageStatisticsProperties are not available. " +
+                                   "Assuming empty broken plugins list from marketplace")
+      allBrokenPlugins = []
+    }
+
     Map<String, Set<String>> currentBrokenPlugins = filterBrokenPluginForCurrentIDE(allBrokenPlugins)
     storeBrokenPlugin(currentBrokenPlugins)
     myBuildContext.messages.info("$BROKEN_PLUGINS_FILE_NAME was updated.")
