@@ -51,11 +51,6 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     super(PsiField.class, supportedAnnotationClass);
   }
 
-  @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_LOG_ENABLED);
-  }
-
   @NotNull
   public static String getLoggerName(@NotNull PsiClass psiClass) {
     return ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.LOG_FIELDNAME, psiClass);

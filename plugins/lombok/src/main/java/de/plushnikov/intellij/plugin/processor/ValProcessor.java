@@ -122,11 +122,6 @@ public class ValProcessor extends AbstractProcessor {
     return reference.getQualifiedName();
   }
 
-  @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_VAL_ENABLED);
-  }
-
   @NotNull
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {

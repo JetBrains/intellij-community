@@ -26,11 +26,6 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   }
 
   @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_DELEGATE_ENABLED);
-  }
-
-  @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiMethod.getParameterList().getParametersCount() > 0) {

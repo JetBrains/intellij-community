@@ -60,18 +60,12 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
    */
   @Override
   public boolean canInferType(@NotNull PsiTypeElement typeElement) {
-    if (!valProcessor.isEnabled(typeElement.getProject())) {
-      return false;
-    }
     return valProcessor.canInferType(typeElement);
   }
 
   @Nullable
   @Override
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
-    if (!valProcessor.isEnabled(typeElement.getProject())) {
-      return null;
-    }
     return valProcessor.inferType(typeElement);
   }
 
