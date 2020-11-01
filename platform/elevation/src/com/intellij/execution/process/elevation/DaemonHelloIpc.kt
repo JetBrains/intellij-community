@@ -2,10 +2,7 @@
 package com.intellij.execution.process.elevation
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.BaseOSProcessHandler
-import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessAdapter
-import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.*
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.daemon.rsaDecrypt
 import com.intellij.execution.process.mediator.rpc.DaemonHello
@@ -90,7 +87,8 @@ internal abstract class AbstractDaemonHelloIpcBase<R : DaemonHelloReader> : Daem
   }
 
   override fun processTerminated(event: ProcessEvent) {
-    ElevationLogger.LOG.info("Daemon process terminated with exit code ${event.exitCode}")
+    val exitCodeString = ProcessTerminatedListener.stringifyExitCode(event.exitCode)
+    ElevationLogger.LOG.info("Daemon process terminated with exit code ${exitCodeString}")
     close()
   }
 
