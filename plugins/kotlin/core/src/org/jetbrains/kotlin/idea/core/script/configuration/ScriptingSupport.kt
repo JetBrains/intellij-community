@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration
 
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsCache
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener
@@ -38,7 +38,7 @@ interface ScriptingSupport {
     fun afterUpdate()
 
     companion object {
-        val EPN: ExtensionPointName<ScriptingSupport> =
-            ExtensionPointName.create("org.jetbrains.kotlin.scripting.idea.scriptingSupport")
+        val EPN: ProjectExtensionPointName<ScriptingSupport> =
+            ProjectExtensionPointName("org.jetbrains.kotlin.scripting.idea.scriptingSupport")
     }
 }
