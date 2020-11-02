@@ -18,6 +18,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.ui.jcef.JBCefApp;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.UIUtil;
@@ -76,7 +77,10 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     else if (url != null) {
       boolean darkTheme = UIUtil.isUnderDarcula();
 
-      Url embeddedUrl = Urls.newFromEncoded(url).addParameters(Map.of("var", "embed"));
+      Url embeddedUrl = Urls.newFromEncoded(url)
+        .addParameters(Map.of("var", "embed"))
+        .addParameters(Map.of("utm_content", ApplicationInfo.getInstance().getMajorVersion()))
+        .addParameters(Map.of("utm_campaign", PlatformUtils.getPlatformPrefix()));
       if (darkTheme) {
         embeddedUrl = embeddedUrl.addParameters(Map.of("theme", "dark"));
       }
