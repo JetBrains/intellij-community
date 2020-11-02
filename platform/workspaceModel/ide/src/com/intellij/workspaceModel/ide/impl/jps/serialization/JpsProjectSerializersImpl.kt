@@ -186,8 +186,9 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     val builder = WorkspaceEntityStorageBuilder.create()
+    val entitiesTrack = HashMap<Any, Any>()
     affectedFileLoaders.forEach {
-      it.loadEntities(builder, reader, errorReporter, virtualFileManager)
+      it.loadEntities(builder, reader, errorReporter, virtualFileManager, entitiesTrack)
     }
     return Pair(changedSources, builder)
   }
@@ -198,7 +199,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       val tasks = fileSerializersByUrl.values.map { serializer ->
         Callable {
           val myBuilder = WorkspaceEntityStorageBuilder.create()
-          serializer.loadEntities(myBuilder, reader, errorReporter, virtualFileManager)
+          serializer.loadEntities(myBuilder, reader, errorReporter, virtualFileManager, HashMap())
           myBuilder
         }
       }

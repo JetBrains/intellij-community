@@ -4,10 +4,13 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.module.impl.ModulePath
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -34,8 +37,13 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   val internalEntitySource: JpsFileEntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
+
+  /**
+   * TODO: 02.11.2020 [entitiesTrack] is a temporal solution to find the root cause of IDEA-246753. It should be removed after the fix.
+   */
   fun loadEntities(builder: WorkspaceEntityStorageBuilder, reader: JpsFileContentReader, errorReporter: ErrorReporter,
-                   virtualFileManager: VirtualFileUrlManager)
+                   virtualFileManager: VirtualFileUrlManager,
+                   entitiesTrack: MutableMap<Any, Any>)
   fun saveEntities(mainEntities: Collection<E>,
                    entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                    storage: WorkspaceEntityStorage,

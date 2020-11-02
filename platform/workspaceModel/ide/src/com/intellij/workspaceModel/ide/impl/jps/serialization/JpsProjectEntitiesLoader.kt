@@ -59,7 +59,7 @@ object JpsProjectEntitiesLoader {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
     val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source,
                                                                              virtualFileManager)
-    serializer.loadEntities(builder, reader, errorReporter, virtualFileManager)
+    serializer.loadEntities(builder, reader, errorReporter, virtualFileManager, HashMap())
   }
 
   private fun createProjectEntitiesSerializers(configLocation: JpsProjectConfigLocation,

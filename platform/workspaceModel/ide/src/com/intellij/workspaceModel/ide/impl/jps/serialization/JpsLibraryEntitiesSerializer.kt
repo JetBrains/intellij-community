@@ -77,7 +77,10 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
     get() = LibraryEntity::class.java
 
   override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
-                            reader: JpsFileContentReader, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
+                            reader: JpsFileContentReader,
+                            errorReporter: ErrorReporter,
+                            virtualFileManager: VirtualFileUrlManager,
+                            entitiesTrack: MutableMap<Any, Any>) {
     val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return
     for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
       val source = createEntitySource(libraryTag) ?: continue
@@ -90,10 +93,13 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
           |Entity with this library id already exists.
           |Library id: $libraryId
           |fileUrl: ${fileUrl.presentableUrl}
+          |Previous file url: ${entitiesTrack[libraryId]}
           |library table id: $libraryTableId
           |internal entity source: $internalEntitySource
         """.trimMargin())
       }
+
+      entitiesTrack[libraryId] = fileUrl.presentableUrl
 
       loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager)
     }
