@@ -999,7 +999,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     FindModel findModel = FindManagerTestUtils.configureFindModel("System.currentTimeMillis();\n   System.currentTimeMillis();");
     findModel.setMultiline(true);
     String fileContent = "System.currentTimeMillis();\n   System.currentTimeMillis();\n\n" +
-                  "        System.currentTimeMillis();\n       System.currentTimeMillis();";
+                  "        System.currentTimeMillis();\n   System.currentTimeMillis();";
     FindResult findResult = myFindManager.findString(fileContent, 0, findModel, null);
     assertTrue(findResult.isStringFound());
     findResult = myFindManager.findString(fileContent, findResult.getEndOffset(), findModel, null);
@@ -1010,7 +1010,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     String text = "final override val\n" +
                   "      d1PrimitiveType by lazyThreadSafeIdempotentGenerator { D1PrimitiveType( typeManager = this ) }";
     String pattern = "final override val\n" +
-                     "d(\\w+)PrimitiveType by lazyThreadSafeIdempotentGenerator \\{ D(\\w+)PrimitiveType\\( typeManager = this \\) \\}";
+                     "\\s+d(\\w+)PrimitiveType by lazyThreadSafeIdempotentGenerator \\{ D(\\w+)PrimitiveType\\( typeManager = this \\) \\}";
     String replacement = "";
 
     FindModel findModel = FindManagerTestUtils.configureFindModel(pattern);
