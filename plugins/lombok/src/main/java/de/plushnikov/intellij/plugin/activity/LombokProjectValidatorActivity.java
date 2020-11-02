@@ -50,13 +50,6 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
 
       final boolean hasLombokLibrary = hasLombokLibrary(project);
 
-      // If dependency is missing and missing dependency notification setting is enabled (defaults to disabled)
-      if (!hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false)) {
-        return getNotificationGroup().createNotification(LombokBundle.message("config.warn.dependency.missing.title"),
-                                                         LombokBundle.message("config.warn.dependency.missing.message", project.getName()),
-                                                         NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
-      }
-
       // If dependency is present and out of date notification setting is enabled (defaults to disabled)
       if (hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false)) {
         final ModuleManager moduleManager = ModuleManager.getInstance(project);
