@@ -1810,7 +1810,7 @@ class Dispatcher(object):
         self.port = port
         self.client = start_client(self.host, self.port)
         self.reader = DispatchReader(self)
-        self.reader.pydev_do_not_trace = False #we run reader in the same thread so we don't want to loose tracing
+        self.reader.pydev_do_not_trace = False  # We run reader in the same thread so we don't want to loose tracing.
         self.reader.run()
 
     def close(self):
