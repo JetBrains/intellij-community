@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,6 +72,7 @@ final class ClassLoaderConfigurator {
         PluginId.getId("com.intellij.micronaut"),
         PluginId.getId("com.jetbrains.php.phpspec"),
         PluginId.getId("Docker"),
+        PluginId.getId("org.jetbrains.plugins.node-remote-interpreter"),
         PluginId.getId("AWSCloudFormation"),
         PluginId.getId("com.intellij.diagram"),
         PluginId.getId("org.jetbrains.plugins.github")
@@ -451,46 +451,6 @@ final class ClassLoaderConfigurator {
     }
     catch (MalformedURLException e) {
       throw new PluginException("Corrupted path element: `" + file + '`', e, descriptor.getPluginId());
-    }
-  }
-
-  @ApiStatus.Internal
-  public static final class SubPluginClassLoader extends PluginClassLoader implements PluginAwareClassLoader.SubClassLoader {
-    private final String[] packagePrefixes;
-
-    SubPluginClassLoader(@NotNull IdeaPluginDescriptorImpl pluginDescriptor,
-                         @NotNull Builder urlClassLoaderBuilder,
-                         @NotNull ClassLoader @NotNull [] parents,
-                         @NotNull String @NotNull[] packagePrefixes,
-                         @NotNull ClassLoader coreLoader) {
-      super(urlClassLoaderBuilder, parents, pluginDescriptor, pluginDescriptor.getPluginPath(), coreLoader);
-
-      this.packagePrefixes = packagePrefixes;
-    }
-
-    @Override
-    protected @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean force) {
-      if (force) {
-        return super.loadClassInsideSelf(name, true);
-      }
-
-      for (String packagePrefix : packagePrefixes) {
-        if (name.startsWith(packagePrefix)) {
-          return super.loadClassInsideSelf(name, true);
-        }
-      }
-
-      int subIndex = name.indexOf('$');
-      if (subIndex > 0) {
-        // load inner classes
-        // we check findLoadedClass because classNames doesn't have full set of suitable names - PluginAwareClassLoader.SubClassLoader is used to force loading classes from sub classloader
-        Class<?> loadedClass = findLoadedClass(name.substring(0, subIndex));
-        if (loadedClass != null && loadedClass.getClassLoader() == this) {
-          return super.loadClassInsideSelf(name, true);
-        }
-      }
-
-      return null;
     }
   }
 }

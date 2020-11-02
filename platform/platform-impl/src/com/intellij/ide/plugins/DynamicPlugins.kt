@@ -467,7 +467,7 @@ object DynamicPlugins {
 
             if (pluginDescriptor.pluginClassLoader is PluginClassLoader && classLoader is PluginClassLoader) {
               LOG.info("Detach classloader ${pluginDescriptor.pluginClassLoader} from ${classLoader}")
-              if (subDescriptor != null && mainDescriptor != subDescriptor && classLoader is ClassLoaderConfigurator.SubPluginClassLoader) {
+              if (subDescriptor != null && mainDescriptor != subDescriptor && classLoader is SubPluginClassLoader) {
                 classLoaders.add(classLoader)
                 classLoader.state = PluginClassLoader.UNLOAD_IN_PROGRESS
               }
@@ -597,7 +597,7 @@ object DynamicPlugins {
         continue
       }
 
-      (subDescriptor.classLoader as? ClassLoaderConfigurator.SubPluginClassLoader)?.let {
+      (subDescriptor.classLoader as? SubPluginClassLoader)?.let {
         classLoaders.add(it)
       }
 
