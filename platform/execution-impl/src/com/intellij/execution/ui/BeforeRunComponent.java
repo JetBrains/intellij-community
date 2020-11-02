@@ -172,7 +172,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   @NotNull
   private List<BeforeRunTask<?>> getEnabledTasks() {
     return myTags.stream()
-      .filter(button -> button.myTask != null)
+      .filter(button -> button.myTask != null && button.isVisible())
       .map(button -> button.myTask)
       .collect(Collectors.toList());
   }
