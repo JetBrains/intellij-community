@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
@@ -36,7 +37,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     if (whatsNewUrl == null) throw new IllegalStateException();
 
     Project project = e.getProject();
-    if (project == null || !JBCefApp.isSupported()) {
+    if (project == null || !JBCefApp.isSupported() || !Experiments.getInstance().isFeatureEnabled("whats.new.notification")) {
       BrowserUtil.browse(whatsNewUrl);
     }
     else {
