@@ -42,8 +42,11 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
   private final JUnitConfigurationModel myModel;
   private final ConfigurationModuleSelector myModuleSelector;
   private final ComboBox<Integer> myTypeChooser;
-  private final JComponent[] myFields = new JComponent[6];
+  private final JComponent[] myFields = new JComponent[BY_SOURCE_CHANGES + 1];
   private final Map<JComponent, String> myHints = new HashMap<>();
+  private final RawCommandLineEditor myUniqueIdField;
+  private final RawCommandLineEditor myTagsField;
+  private final ComboBox<String> myChangeLists;
 
   public JUnitTestKindFragment(Project project, ConfigurationModuleSelector moduleSelector) {
     super("junit.test.kind", null, null, new JPanel(new GridBagLayout()), 90, null, null, configuration -> true);
@@ -94,6 +97,17 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     setupField(PATTERN, pattern, pattern.getTextField().getDocument(), browsers[PATTERN], JUnitBundle.message("test.pattern.hint"));
     setupField(DIR, directoryField, directoryField.getTextField().getDocument(), browsers[DIR], null);
     setupField(CATEGORY, category, category.getChildComponent().getDocument(), browsers[CATEGORY], null);
+
+    myUniqueIdField = new RawCommandLineEditor();
+    setupField(UNIQUE_ID, myUniqueIdField, null, null, null);
+
+    myTagsField = new RawCommandLineEditor();
+    setupField(TAGS, myTagsField, null, null, null);
+
+    myChangeLists = new ComboBox<>();
+    JUnitConfigurable.setupChangeLists(project, myChangeLists);
+    setupField(BY_SOURCE_CHANGES, myChangeLists, null, null, null);
+    setupField(BY_SOURCE_POSITION, new JLabel(), null, null, null); // empty stub
   }
 
   @Override
@@ -105,11 +119,11 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     return myTypeChooser.getItem();
   }
 
-  private void setupField(int kind,
-                          JComponent field,
-                          Object document,
-                          @Nullable BrowseModuleValueActionListener<?> browser,
-                          @Nls String hint) {
+  private <T extends JComponent> void setupField(int kind,
+                                                 JComponent field,
+                                                 @Nullable Object document,
+                                                 @Nullable BrowseModuleValueActionListener<T> browser,
+                                                 @Nls String hint) {
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.fill = GridBagConstraints.BOTH;
     constraints.weightx = 1;
@@ -118,9 +132,11 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     myHints.put(field, hint);
     if (browser != null) {
       //noinspection unchecked
-      browser.setField((ComponentWithBrowseButton)field);
+      browser.setField((ComponentWithBrowseButton<T>)field);
     }
-    myModel.setJUnitDocument(kind, document);
+    if (document != null) {
+      myModel.setJUnitDocument(kind, document);
+    }
   }
 
   @Override
@@ -144,11 +160,18 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
 
   @Override
   protected void resetEditorFrom(@NotNull JUnitConfiguration s) {
+    String[] ids = s.getPersistentData().getUniqueIds();
+    myUniqueIdField.setText(ids != null ? StringUtil.join(ids, " ") : null);
+    myTagsField.setText(s.getPersistentData().getTags());
+    myChangeLists.setSelectedItem(s.getPersistentData().getChangeList());
     myModel.reset(s);
   }
 
   @Override
   protected void applyEditorTo(@NotNull JUnitConfiguration s) {
+    s.getPersistentData().setUniqueIds(JUnitConfigurable.setArrayFromText(myUniqueIdField.getText()));
+    s.getPersistentData().setTags(myTagsField.getText());
+    s.getPersistentData().setChangeList(myChangeLists.getItem());
     myModel.apply(myModuleSelector.getModule(), s);
   }
 }
