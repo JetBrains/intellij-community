@@ -878,7 +878,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
                                   @Nullable Project project) {
       return super.isInvisible(oldState, project) ||
              myNewState.isPerProject() && myRequiresRestart ||
-             !myNewState.isEnabled() && myPluginIsRequired;
+             myNewState == PluginEnabledState.DISABLED_FOR_PROJECT && myPluginIsRequired;
     }
   }
 
