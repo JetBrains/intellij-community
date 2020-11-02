@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.CutProvider;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.PasteProvider;
+import com.intellij.ide.*;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -990,9 +987,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
       VirtualFile file = myEditor.getVirtualFile();
       if (file != null) {
-        return "Editor for " + file.getName();
+        return EditorBundle.message("editor.for.file.accessible.name", file.getName());
       }
-      return "Editor";
+      return EditorBundle.message("editor.accessible.name");
     }
 
     @Override
