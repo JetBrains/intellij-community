@@ -36,7 +36,7 @@ public abstract class GradleModelProvider {
 
   @NotNull
   public static GradleModelProvider getInstance() {
-    return ApplicationManager.getApplication().getService(GradleModelProvider.class);
+    return ApplicationManager.getApplication().getService(GradleModelProviderFactory.class).get();
   }
 
   @NotNull
