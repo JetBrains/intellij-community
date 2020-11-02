@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.integrations.javaee;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -49,19 +49,15 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
   @Override
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull final DataNode<ModuleData> ideModule) {
     DataNode<ProjectData> projectDataNode = ideModule.getParent(ProjectData.class);
-    NotNullLazyValue<DataNode<? extends ModuleData>> findTargetModuleNode = new NotNullLazyValue<DataNode<? extends ModuleData>>() {
-      @NotNull
-      @Override
-      protected DataNode<? extends ModuleData> compute() {
-        final String mainSourceSetModuleId = ideModule.getData().getId() + ":main";
-        DataNode<? extends ModuleData> targetModuleNode =
-          ExternalSystemApiUtil.find(ideModule, GradleSourceSetData.KEY, node -> mainSourceSetModuleId.equals(node.getData().getId()));
-        if (targetModuleNode == null) {
-          targetModuleNode = ideModule;
-        }
-        return targetModuleNode;
+    NotNullLazyValue<DataNode<? extends ModuleData>> findTargetModuleNode = NotNullLazyValue.createValue(() -> {
+      final String mainSourceSetModuleId = ideModule.getData().getId() + ":main";
+      DataNode<? extends ModuleData> targetModuleNode =
+        ExternalSystemApiUtil.find(ideModule, GradleSourceSetData.KEY, node -> mainSourceSetModuleId.equals(node.getData().getId()));
+      if (targetModuleNode == null) {
+        targetModuleNode = ideModule;
       }
-    };
+      return targetModuleNode;
+    });
 
     Map<String/* artifact path */, String /* module id*/> archivesMap;
     if (projectDataNode != null) {
@@ -139,9 +135,9 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
         return ear;
       });
 
-      final Collection<DependencyData> deployDependencies = getDependencies(
+      final Collection<DependencyData<?>> deployDependencies = getDependencies(
         resolverCtx, projectDataNode, moduleNode, earConfiguration.getDeployDependencies());
-      final Collection<DependencyData> earlibDependencies = getDependencies(
+      final Collection<DependencyData<?>> earlibDependencies = getDependencies(
         resolverCtx, projectDataNode, moduleNode, earConfiguration.getEarlibDependencies());
       moduleNode.createChild(EarConfigurationModelData.KEY,
                              new EarConfigurationModelData(GradleConstants.SYSTEM_ID, warModels, deployDependencies, earlibDependencies));
@@ -167,7 +163,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
 
 
   @SuppressWarnings("unchecked")
-  private static Collection<DependencyData> getDependencies(@NotNull ProjectResolverContext resolverCtx,
+  private static Collection<DependencyData<?>> getDependencies(@NotNull ProjectResolverContext resolverCtx,
                                                             @NotNull DataNode<ProjectData> ideProject,
                                                             @NotNull DataNode<? extends ModuleData> moduleDataNode,
                                                             @NotNull Collection<ExternalDependency> dependencies)
@@ -206,6 +202,6 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
     }
 
     final Collection<DataNode<?>> dataNodes = findAllRecursively(fakeNode, node -> node.getData() instanceof DependencyData);
-    return ContainerUtil.map(dataNodes, node -> (DependencyData)node.getData());
+    return ContainerUtil.map(dataNodes, node -> (DependencyData<?>)node.getData());
   }
 }
