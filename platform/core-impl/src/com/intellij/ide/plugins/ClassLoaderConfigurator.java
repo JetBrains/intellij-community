@@ -69,7 +69,6 @@ final class ClassLoaderConfigurator {
         PluginId.getId("com.intellij.kubernetes"),
         PluginId.getId("JavaScript"),
         PluginId.getId("com.jetbrains.space"),
-        PluginId.getId("com.intellij.micronaut"),
         PluginId.getId("com.jetbrains.php.phpspec"),
         PluginId.getId("Docker"),
         PluginId.getId("org.jetbrains.plugins.node-remote-interpreter"),
