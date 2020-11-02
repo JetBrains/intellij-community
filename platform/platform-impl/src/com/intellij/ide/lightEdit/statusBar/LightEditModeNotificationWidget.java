@@ -10,15 +10,15 @@ import com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -95,7 +96,12 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
   }
 
   private @NotNull IdeTooltip createTooltip(@NotNull JComponent component) {
-    IdeTooltip tooltip = new TooltipWithClickableLinks.ForBrowser(component, getTooltipHtml()) {
+    IdeTooltip tooltip = new TooltipWithClickableLinks(component, getTooltipHtml(), new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        HelpManager.getInstance().invokeHelp("LightEdit_Mode");
+      }
+    }) {
       @Override
       public boolean canBeDismissedOnTimeout() {
         return false;
@@ -108,25 +114,20 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
     };
     tooltip.setToCenter(false);
     tooltip.setToCenterIfSmall(false);
-    // Unable to get rid of the tooltip pointer. Let's position it between the label and the link.
+    // Unable to get rid of the tooltip pointer (https://youtrack.jetbrains.com/issue/IDEA-251569).
+    // Let's position it between the label and the link.
     tooltip.setPoint(new JBPoint(-3, 11));
     return tooltip;
   }
 
   @NotNull
   private static @Nls String getTooltipHtml() {
-    HtmlChunk.Element link = HtmlChunk.link(getHelpPageUrl(), ApplicationBundle.message("light.edit.status.bar.notification.tooltip.link.text"));
+    HtmlChunk.Element link = HtmlChunk.link("", ApplicationBundle.message("light.edit.status.bar.notification.tooltip.link.text"));
     link = link.child(HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow"));
     @NlsSafe String pTag = "<p>";
     String tooltipText = ApplicationBundle.message("light.edit.status.bar.notification.tooltip") + pTag + link.toString();
     tooltipText = tooltipText.replace(pTag, HtmlChunk.tag("p").style("padding: " + JBUI.scale(3) + "px 0 0 0").toString());
     return tooltipText;
-  }
-
-  private static @NotNull String getHelpPageUrl() {
-    ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-    String productVersion = info.getMajorVersion() + "." + info.getMinorVersionMainPart();
-    return StringUtil.trimEnd(info.getWebHelpUrl(), "/") + "/" + productVersion + "/lightedit-mode.html";
   }
 
   private void showPopupMenu(@NotNull JComponent actionLink) {
