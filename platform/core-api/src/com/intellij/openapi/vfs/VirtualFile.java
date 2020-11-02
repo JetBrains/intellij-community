@@ -604,7 +604,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Returns file content as an array of bytes.
-   * Has the same effect as {@link #contentsToByteArray(boolean)}.
+   * Has the same effect as {@link #contentsToByteArray(boolean) contentsToByteArray(true)}.
    *
    * @return file content
    * @throws IOException if an I/O error occurs

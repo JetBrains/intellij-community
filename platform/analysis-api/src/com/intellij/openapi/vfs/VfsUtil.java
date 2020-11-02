@@ -42,7 +42,7 @@ public final class VfsUtil extends VfsUtilCore {
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
     try (OutputStream stream = file.getOutputStream(file)) {
-      stream.write(text.getBytes(charset.name()));
+      stream.write(text.getBytes(charset));
     }
   }
 
@@ -52,7 +52,7 @@ public final class VfsUtil extends VfsUtilCore {
     }
 
     Charset charset = file.getCharset();
-    return text.getBytes(charset.name());
+    return text.getBytes(charset);
   }
 
   /**
