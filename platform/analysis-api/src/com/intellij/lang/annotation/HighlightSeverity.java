@@ -22,8 +22,9 @@ import java.util.Objects;
 public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   @NotNull
   public final @NonNls String myName;
+
   @Nullable
-  private final String myBundleKey;
+  private final MessageSupplier myMessageSupplier;
 
   public final int myVal;
 
@@ -63,24 +64,28 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   /**
    * Creates a new highlighting severity level with the specified name and value.
    *
-   * @param name the name of the highlighting level.
-   * @param val  the value of the highlighting level. Used for comparing the annotations -
-   *             if two annotations with different severity levels cover the same text range, only
-   *             the annotation with a higher severity level is displayed.
-   * @param bundleKey the key for the localized name of the highlighting level.
+   * @param name            the name of the highlighting level.
+   * @param val             the value of the highlighting level. Used for comparing the annotations -
+   *                        if two annotations with different severity levels cover the same text range, only
+   *                        the annotation with a higher severity level is displayed.
+   * @param messageSupplier the supplier of localized messages for the highlighting level.
    */
-  public HighlightSeverity(@NotNull String name, int val, @Nullable String bundleKey) {
+  public HighlightSeverity(@NotNull String name, int val, @Nullable MessageSupplier messageSupplier) {
     myName = name;
     myVal = val;
-    myBundleKey = bundleKey;
+    myMessageSupplier = messageSupplier;
+  }
+
+  public HighlightSeverity(@NotNull String name, int val, @NotNull String bundleKey) {
+    this(name, val, new InspectionsBundleMessageSupplier(bundleKey));
   }
 
   public HighlightSeverity(@NotNull String name, int val) {
-    this(name, val, null);
+    this(name, val, (MessageSupplier)null);
   }
 
   public HighlightSeverity(@NotNull Element element) {
-    this(readField(element, "myName"), Integer.parseInt(readField(element, "myVal")), null);
+    this(readField(element, "myName"), Integer.parseInt(readField(element, "myVal")), (MessageSupplier)null);
   }
 
   private static String readField(Element element, String name) {
@@ -102,12 +107,12 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   }
 
   public @Nls @NotNull String getCountMessage(int count) {
-    if (myBundleKey != null) return InspectionsBundle.message(myBundleKey + ".count.message", count);
+    if (myMessageSupplier != null) return myMessageSupplier.message(".count.message", count);
     return InspectionsBundle.message("custom.severity.count.message", count, myName);
   }
 
   private @NotNull @Nls String getBundleText(@NotNull String suffix) {
-    if (myBundleKey != null) return InspectionsBundle.message(myBundleKey + suffix);
+    if (myMessageSupplier != null) return myMessageSupplier.message(suffix);
     @NlsSafe String name = myName;
     return name;
   }
@@ -139,5 +144,24 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   @Override
   public String toString() {
     return myName;
+  }
+
+  public interface MessageSupplier {
+    @NotNull
+    @Nls String message(@NotNull String suffix, Object @NotNull ... params);
+  }
+
+  private static class InspectionsBundleMessageSupplier implements MessageSupplier {
+    @NotNull
+    private String myMyBundleKey;
+
+    private InspectionsBundleMessageSupplier(@NotNull String bundleKey) {
+      myMyBundleKey = bundleKey;
+    }
+
+    @Override
+    public @NotNull @Nls String message(@NotNull String suffix, Object @NotNull ... params) {
+      return InspectionsBundle.message(myMyBundleKey + suffix, params);
+    }
   }
 }
