@@ -79,11 +79,11 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   public void testNameCollisionFile() {
-    doFail("hello", "Method name clashes with already existing name");
+    doFail("hello", "The method name clashes with an already existing name");
   }
 
   public void testNameCollisionSuperClass() {
-    doFail("hello", "Method name clashes with already existing name");
+    doFail("hello", "The method name clashes with an already existing name");
   }
 
   public void testOutNotEmptyStatements() {
@@ -111,11 +111,11 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   public void testWrongSelectionIfPart() {
-    doFail("bar", "Cannot perform extract method using selected element(s)");
+    doFail("bar", "Cannot perform extract method using the selected element(s)");
   }
 
   public void testWrongSelectionFromImportStar() {
-    doFail("bar", "Cannot perform refactoring with star import statement inside code block");
+    doFail("bar", "Cannot perform refactoring with a star import statement inside a code block");
   }
 
   public void testPy479() {
@@ -213,7 +213,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   // PY-7381
   public void testYield() {
-    doFail("bar", "Cannot perform refactoring with 'yield' statement inside code block");
+    doFail("bar", "Cannot perform refactoring with a 'yield' statement inside a code block");
   }
 
   // PY-7382
@@ -253,7 +253,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   // PY-6620
   public void testProhibitedAtClassLevel() {
-    doFail("foo", "Cannot perform refactoring at class level");
+    doFail("foo", "Cannot perform refactoring at a class level");
   }
 
   public void testAsyncDef() {

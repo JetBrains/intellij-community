@@ -51,7 +51,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("from typing import TypedDict\n" +
                          "class Movie(TypedDict):\n" +
                          "    name: str\n" +
-                         "    year: int = <warning descr=\"Right hand side values are not supported in TypedDict\">42</warning>"));
+                         "    year: int = <warning descr=\"Right-hand side values are not supported in TypedDict\">42</warning>"));
   }
 
   public void testPass() {

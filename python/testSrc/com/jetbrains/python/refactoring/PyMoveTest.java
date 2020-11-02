@@ -268,7 +268,7 @@ public class PyMoveTest extends PyTestCase {
       fail();
     }
     catch (IncorrectOperationException e) {
-      assertEquals("Cannot use module name 'dst-unimportable.py' in imports", e.getMessage());
+      assertEquals("Cannot use a module name 'dst-unimportable.py' in imports", e.getMessage());
     }
   }
 

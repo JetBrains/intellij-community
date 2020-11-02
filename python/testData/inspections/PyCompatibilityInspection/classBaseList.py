@@ -1,4 +1,4 @@
-class Foo(base1, base2, <error descr="This syntax available only since py3">metaclass=mymeta</error>):
+class Foo(base1, base2, <error descr="This syntax available only since Python 3">metaclass=mymeta</error>):
   pass
 
 class Foo(base1, base2):
