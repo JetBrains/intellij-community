@@ -52,6 +52,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
 
   public BeforeRunComponent(@NotNull Disposable parentDisposable) {
     super(new WrapLayout(FlowLayout.LEADING, 0, FragmentedSettingsBuilder.TAG_VGAP));
+    Disposer.register(parentDisposable, this);
     add(Box.createVerticalStrut(30));
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
@@ -67,7 +68,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     myAddPanel.add(myAddButton);
     myAddLabel = new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
     myAddLabel.setBorder(border);
-    DnDManager.getInstance().registerTarget(this, this, parentDisposable);
+    DnDManager.getInstance().registerTarget(this, this, this);
   }
 
   private List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
