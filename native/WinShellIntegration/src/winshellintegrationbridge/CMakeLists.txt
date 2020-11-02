@@ -8,8 +8,11 @@ add_library(winshellintegrationbridge SHARED
     "COM_guard.h"
     "COM_guard.cpp"
 
-    "com_intellij_ui_win_RecentTasks.h"
-    "com_intellij_ui_win_RecentTasks.cpp"
+    "win_shell_integration_bridge.h"
+    "win_shell_integration_bridge.cpp"
+
+    "com_intellij_ui_win_WinShellIntegration.h"
+    "com_intellij_ui_win_WinShellIntegration.cpp"
 
     "dllmain.cpp"
 )

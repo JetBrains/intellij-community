@@ -15,8 +15,9 @@
 #include <Windows.h>    // DWORD
 #include <memory>       // std::shared_ptr
 
+// TODO: make implementation is light-weight
 
-namespace intellij::ui::win
+namespace intellij::ui::win::jni
 {
 
     /// RAII wrapper around CoInitializeEx, CoUninitialize
@@ -49,7 +50,7 @@ namespace intellij::ui::win
         std::shared_ptr<Impl> impl_;
     };
 
-} // namespace intellij::ui::win
+} // namespace intellij::ui::win::jni
 
 
 #endif // ndef WINSHELLINTEGRATIONBRIDGE_COM_GUARD_H

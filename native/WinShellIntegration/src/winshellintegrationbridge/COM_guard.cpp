@@ -4,7 +4,7 @@
 #include "winshellintegration/COM_errors.h" // errors::throwCOMException
 #include <Objbase.h>                        // CoInitializeEx, CoUninitialize
 
-namespace intellij::ui::win
+namespace intellij::ui::win::jni
 {
     // ================================================================================================================
     //  COMGuard::Impl
@@ -61,4 +61,4 @@ namespace intellij::ui::win
 
     COMGuard::~COMGuard() noexcept = default;
 
-} // namespace intellij::ui::win
+} // namespace intellij::ui::win::jni

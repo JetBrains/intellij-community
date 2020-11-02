@@ -13,12 +13,12 @@ import com.intellij.openapi.wm.impl.SystemDock;
 import java.io.File;
 import java.util.List;
 
+
 /**
  * @author Denis Fokin
+ * @author Nikita Provotorov
  */
 public final class WinDockDelegate implements SystemDock.Delegate {
-  private static SystemDock.Delegate instance;
-
   public static synchronized SystemDock.Delegate getInstance() {
     if (instance == null) {
       instance = new WinDockDelegate();
@@ -26,19 +26,26 @@ public final class WinDockDelegate implements SystemDock.Delegate {
     return instance;
   }
 
-  private WinDockDelegate() {}
-
   @Override
   public void updateRecentProjectsMenu () {
-    List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false);
-    RecentTasks.clear();
-    String name = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
-    String launcher = RecentTasks.getShortenPath(PathManager.getBinPath() + File.separator + name + (SystemInfo.is64Bit ? "64" : "") + ".exe");
-    Task[] tasks = new Task[recentProjectActions.size()];
-    for (int i = 0; i < recentProjectActions.size(); i ++) {
-      ReopenProjectAction rpa = (ReopenProjectAction)recentProjectActions.get(i);
-      tasks[i] = new Task(launcher, RecentTasks.getShortenPath(rpa.getProjectPath()), rpa.getTemplatePresentation().getText());
+    final List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false);
+
+    final String name = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
+    final String launcherPath = PathManager.getBinPath() + File.separator + name + (SystemInfo.is64Bit ? "64" : "") + ".exe";
+
+    final Task[] tasks = new Task[recentProjectActions.size()];
+    for (int i = 0; i < recentProjectActions.size(); i++) {
+      final ReopenProjectAction reopenProjectAction = (ReopenProjectAction)recentProjectActions.get(i);
+      final String reopenProjectActionPath = reopenProjectAction.getProjectPath();
+      tasks[i] = new Task(launcherPath, reopenProjectActionPath, reopenProjectAction.getTemplatePresentation().getText());
     }
-    RecentTasks.addTasks(tasks);
+
+    WinShellIntegration.clearRecentTasksList();
+    WinShellIntegration.setRecentTasksList(tasks);
   }
+
+
+  private WinDockDelegate() {}
+
+  private static WinDockDelegate instance;
 }
