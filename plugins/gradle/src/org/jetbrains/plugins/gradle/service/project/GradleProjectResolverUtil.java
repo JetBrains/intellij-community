@@ -44,6 +44,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -835,7 +836,9 @@ public final class GradleProjectResolverUtil {
   public static Stream<GradleProjectResolverExtension> createProjectResolvers(@Nullable ProjectResolverContext projectResolverContext) {
     return GradleProjectResolverExtension.EP_NAME.extensions().map(extension -> {
       try {
-        GradleProjectResolverExtension resolverExtension = extension.getClass().newInstance();
+        Constructor<? extends GradleProjectResolverExtension> constructor = extension.getClass().getDeclaredConstructor();
+        constructor.setAccessible(true);
+        GradleProjectResolverExtension resolverExtension = constructor.newInstance();
         if (projectResolverContext != null) {
           resolverExtension.setProjectResolverContext(projectResolverContext);
         }

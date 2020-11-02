@@ -53,7 +53,9 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
         checkLightServices(taskExecutor)
       }
 
-      Notification("Error Report", null, "", if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged", NotificationType.INFORMATION, null)
+      // some errors are not thrown but logged
+      val message = (if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged") + ". Check also that no logged errors."
+      Notification("Error Report", null, "", message, NotificationType.INFORMATION, null)
         .notify(null)
     }
   }
