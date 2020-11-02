@@ -71,7 +71,11 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
             ?: run {
                 // roll back to specified in GRADLE_JVM if for some reason sync.javaHome points to corrupted SDK
                 val gradleJvm = GradleSettings.getInstance(project).getLinkedProjectSettings(sync.workingDir)?.gradleJvm
-                ExternalSystemJdkUtil.getJdk(project, gradleJvm)?.homePath
+                try {
+                  ExternalSystemJdkUtil.getJdk(project, gradleJvm)?.homePath
+                } catch (e: Exception) {
+                    null
+                }
             }
 
         GradleSettings.getInstance(project).getLinkedProjectSettings(sync.workingDir)?.validateGradleSdk(project, sync.javaHome)

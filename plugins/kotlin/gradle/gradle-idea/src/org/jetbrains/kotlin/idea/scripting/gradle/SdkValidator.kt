@@ -26,10 +26,9 @@ class SdkValidator : StartupActivity {
 fun GradleProjectSettings.validateGradleSdk(project: Project, jdkHomePath: String? = null) {
     val gradleJvm = gradleJvm ?: return
 
-    val jdkName: String
+    var jdkName: String? = null
 
     val homePath = if (jdkHomePath != null) {
-        jdkName = KotlinIdeaGradleBundle.message("notification.jdk.not.available")
         jdkHomePath
     } else {
         // gradleJvm could be #USE_PROJECT_JDK etc, see ExternalSystemJdkUtil
@@ -39,15 +38,27 @@ fun GradleProjectSettings.validateGradleSdk(project: Project, jdkHomePath: Strin
             null
         }
 
-        jdkName = jdk?.name ?: return
-        jdk.homePath ?: return
+        jdkName = jdk?.name
+        jdk?.homePath
     }
 
-    if (!JdkUtil.checkForJdk(homePath)) {
-        GradleNotification.getInstance(project).showBalloon(
-            KotlinIdeaGradleBundle.message("notification.invalid.gradle.jvm.configuration.title"),
-            KotlinIdeaGradleBundle.message("notification.jdk.0.points.to.invalid.jdk", jdkName),
-            NotificationType.ERROR, null
-        )
+    var message: String? = null
+    var title: String? = null
+
+    if (homePath == null) {
+        title = KotlinIdeaGradleBundle.message("notification.invalid.gradle.jvm.configuration.title")
+        message = KotlinIdeaGradleBundle.message("notification.gradle.jvm.undefined")
+    } else if (!JdkUtil.checkForJdk(homePath)) {
+        title = KotlinIdeaGradleBundle.message("notification.invalid.gradle.jvm.configuration.title")
+
+        message = if (jdkName != null) {
+            KotlinIdeaGradleBundle.message("notification.jdk.0.points.to.invalid.jdk", jdkName)
+        } else {
+            KotlinIdeaGradleBundle.message("notification.gradle.jvm.0.incorrect", homePath)
+        }
+    }
+
+    if (message != null && title != null) {
+        GradleNotification.getInstance(project).showBalloon(title, message, NotificationType.ERROR, null)
     }
 }
