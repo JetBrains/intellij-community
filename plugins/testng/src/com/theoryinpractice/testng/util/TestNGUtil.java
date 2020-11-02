@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
 /**
  * @author Hani Suleiman
  */
-public class TestNGUtil {
+public final class TestNGUtil {
   public static final String TESTNG_GROUP_NAME = "TestNG";
 
   @SuppressWarnings("StaticNonFinalField") public static boolean hasDocTagsSupport = hasDocTagsSupport();

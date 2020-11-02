@@ -4,7 +4,7 @@ import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
-public class LombokIcons {
+public final class LombokIcons {
   private static Icon load(String path) {
     return IconLoader.getIcon(path, LombokIcons.class);
   }

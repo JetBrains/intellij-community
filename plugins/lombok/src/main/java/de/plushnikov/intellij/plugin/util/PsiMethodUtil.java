@@ -8,7 +8,7 @@ import java.util.Collection;
 /**
  * @author Plushnikov Michail
  */
-public class PsiMethodUtil {
+public final class PsiMethodUtil {
   @NotNull
   public static PsiCodeBlock createCodeBlockFromText(@NotNull String blockText, @NotNull PsiElement psiElement) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiElement.getProject());

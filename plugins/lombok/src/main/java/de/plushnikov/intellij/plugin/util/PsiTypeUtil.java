@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiTypeUtil {
+public final class PsiTypeUtil {
 
   @NotNull
   public static PsiType extractOneElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager) {

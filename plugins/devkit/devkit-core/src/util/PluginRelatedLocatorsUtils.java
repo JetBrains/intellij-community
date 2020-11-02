@@ -12,7 +12,7 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.Collection;
 
-public class PluginRelatedLocatorsUtils {
+public final class PluginRelatedLocatorsUtils {
   @NotNull
   public static GlobalSearchScope getCandidatesScope(@NotNull Project project) {
     GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project)

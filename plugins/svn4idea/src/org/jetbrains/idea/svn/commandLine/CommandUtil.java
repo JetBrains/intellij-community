@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static java.util.Arrays.asList;
 
-public class CommandUtil {
+public final class CommandUtil {
 
   private static final Logger LOG = Logger.getInstance(CommandUtil.class);
 

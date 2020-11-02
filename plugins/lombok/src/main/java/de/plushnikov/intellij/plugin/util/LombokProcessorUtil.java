@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * @author Plushnikov Michail
  */
-public class LombokProcessorUtil {
+public final class LombokProcessorUtil {
 
   @NonNls private static final String ACCESS_LEVEL_PRIVATE = "PRIVATE";
   @NonNls private static final String ACCESS_LEVEL_PROTECTED = "PROTECTED";

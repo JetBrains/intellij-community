@@ -9,7 +9,7 @@ import com.intellij.psi.tree.IElementType;
 /**
  * @author Bas Leijdekkers
  */
-public class JavaCommentUtil {
+public final class JavaCommentUtil {
 
   public static boolean isEndOfLineComment(PsiElement element) {
     if (!(element instanceof PsiComment)) {

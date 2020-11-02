@@ -34,14 +34,14 @@ import java.util.*;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 @ApiStatus.Internal
-public class GitLogUtil {
+public final class GitLogUtil {
   private static final Logger LOG = Logger.getInstance(GitLogUtil.class);
   public static final String GRAFTED = "grafted";
   public static final String REPLACED = "replaced";
   /**
    * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
    */
-  public static final List<String> LOG_ALL = ContainerUtil.immutableList(GitUtil.HEAD, "--branches", "--remotes", "--tags");
+  public static final List<String> LOG_ALL = List.of(GitUtil.HEAD, "--branches", "--remotes", "--tags");
   public static final String STDIN = "--stdin";
   static final GitLogParser.GitLogOption[] COMMIT_METADATA_OPTIONS = {
     HASH, PARENTS,

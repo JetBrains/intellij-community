@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  *
  * @author Adam Juraszek
  */
-class CustomLogParser {
+final class CustomLogParser {
   static class LoggerInitializerDeclaration {
     private final List<LoggerInitializerParameter> withTopic;
     private final List<LoggerInitializerParameter> withoutTopic;

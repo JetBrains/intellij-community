@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 /**
  * @author Plushnikov Michail
  */
-public class PsiClassUtil {
+public final class PsiClassUtil {
 
   /**
    * Workaround to get all of original Methods of the psiClass, without calling PsiAugmentProvider infinitely

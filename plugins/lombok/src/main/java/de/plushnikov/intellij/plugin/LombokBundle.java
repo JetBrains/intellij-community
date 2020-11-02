@@ -10,7 +10,7 @@ import java.util.ResourceBundle;
 /**
  * {@link ResourceBundle}/localization utils for the lombok plugin.
  */
-public class LombokBundle {
+public final class LombokBundle {
   /**
    * The {@link ResourceBundle} path.
    */

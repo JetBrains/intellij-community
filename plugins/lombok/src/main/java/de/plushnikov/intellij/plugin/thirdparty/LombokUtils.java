@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * @author ProjectLombok Team
  * @author Plushnikov Michail
  */
-public class LombokUtils {
+public final class LombokUtils {
   public static final String LOMBOK_INTERN_FIELD_MARKER = "$";
 
   /* NB: 'notnull' is not part of the pattern because there are lots of @NotNull annotations out there that are crappily named and actually mean

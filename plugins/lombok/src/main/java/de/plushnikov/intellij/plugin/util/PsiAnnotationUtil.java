@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * @author peichhorn
  * @author Plushnikov Michail
  */
-public class PsiAnnotationUtil {
+public final class PsiAnnotationUtil {
 
   @NotNull
   public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String annotationClassName) {

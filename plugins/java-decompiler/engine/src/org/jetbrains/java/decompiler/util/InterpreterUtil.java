@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import java.io.*;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class InterpreterUtil {
+public final class InterpreterUtil {
   public static final boolean IS_WINDOWS = System.getProperty("os.name", "").startsWith("Windows");
 
   public static final int[] EMPTY_INT_ARRAY = new int[0];

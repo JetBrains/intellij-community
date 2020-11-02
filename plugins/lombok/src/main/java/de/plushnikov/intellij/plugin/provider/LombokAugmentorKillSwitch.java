@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.provider;
 
-public class LombokAugmentorKillSwitch {
+public final class LombokAugmentorKillSwitch {
   private static boolean lombokAugmentorActive = true;
 
   public static boolean isLombokAugmentorActive() {

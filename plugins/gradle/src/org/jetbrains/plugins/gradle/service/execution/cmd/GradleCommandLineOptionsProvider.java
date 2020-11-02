@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gradle.util.GradleDocumentationBundle;
  * @author Vladislav.Soroka
  */
 @SuppressWarnings("AccessStaticViaInstance")
-public class GradleCommandLineOptionsProvider {
+public final class GradleCommandLineOptionsProvider {
 
   private static final Options ourOptions;
 

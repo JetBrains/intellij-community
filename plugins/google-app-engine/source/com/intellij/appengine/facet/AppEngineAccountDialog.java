@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.facet;
 
 import com.intellij.appengine.cloud.AppEngineAuthData;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
-public class AppEngineAccountDialog {
+public final class AppEngineAccountDialog {
   private static final String PASSWORD_KEY = "GOOGLE_APP_ENGINE_PASSWORD";
 
   @Nullable

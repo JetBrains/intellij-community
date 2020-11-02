@@ -15,7 +15,7 @@ import java.net.URISyntaxException;
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubUrlUtil {
+public final class GithubUrlUtil {
 
   public static @NlsSafe @NotNull String removeProtocolPrefix(String url) {
     int index = url.indexOf('@');

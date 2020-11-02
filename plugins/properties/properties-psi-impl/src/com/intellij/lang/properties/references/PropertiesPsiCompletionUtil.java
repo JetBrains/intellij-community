@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.references;
 
 import com.intellij.lang.properties.IProperty;
@@ -15,7 +13,7 @@ import gnu.trove.TObjectHashingStrategy;
 import java.util.List;
 import java.util.Set;
 
-public class PropertiesPsiCompletionUtil {
+public final class PropertiesPsiCompletionUtil {
   public static void addVariantsFromFile(PropertyReferenceBase propertyReference,
                                          final PropertiesFile propertiesFile,
                                          final Set<Object> variants) {

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 
-public class ComboBoxUtil {
+public final class ComboBoxUtil {
 
   private static final class Item {
     private final Object value;

@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class SecondaryFunctionsHelper {
+public final class SecondaryFunctionsHelper {
 
   private static final int[] funcsnot = new int[]{
     FunctionExprent.FUNCTION_NE,

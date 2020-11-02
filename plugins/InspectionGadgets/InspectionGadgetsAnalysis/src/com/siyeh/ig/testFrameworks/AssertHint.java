@@ -76,7 +76,7 @@ public final class AssertHint {
    * @return other argument (either actual or expected); null if the supplied expression is neither expected, nor actual value
    */
   public @Nullable PsiExpression getOtherExpression(PsiExpression expression) {
-    return getFirstArgument() == expression ? getSecondArgument() : 
+    return getFirstArgument() == expression ? getSecondArgument() :
            getSecondArgument() == expression ? getFirstArgument() :
            null;
   }
@@ -246,7 +246,7 @@ public final class AssertHint {
     return "assertTrue".equals(getMethod().getName());
   }
 
-  public static class JUnitCommonAssertNames {
+  public static final class JUnitCommonAssertNames {
     @NonNls public static final Map<String, Integer> ASSERT_METHOD_2_PARAMETER_COUNT;
 
     static {

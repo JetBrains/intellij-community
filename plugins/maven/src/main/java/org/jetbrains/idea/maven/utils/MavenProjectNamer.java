@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * @author Sergey Evdokimov
  */
-public class MavenProjectNamer {
+public final class MavenProjectNamer {
 
   public static Map<MavenProject, String> generateNameMap(Collection<MavenProject> mavenProjects) {
     MultiMap<String, MavenProject> artifactIdMap = new MultiMap<>();

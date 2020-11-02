@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.testng;
 
 import org.testng.xml.*;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class TestNGXmlSuiteHelper {
+public final class TestNGXmlSuiteHelper {
   public interface Logger {
     Logger DEAF = new Logger() {
       @Override
@@ -20,12 +20,12 @@ public class TestNGXmlSuiteHelper {
 
     void log(Throwable e);
   }
-  
+
   public static File writeSuite(Map<String, Map<String, List<String>>> map,
                                 Map<String, String> testParams,
                                 String name,
                                 String rootPath,
-                                Logger logger, 
+                                Logger logger,
                                 boolean requireHttp) {
     File xmlFile;
     final XmlSuite xmlSuite = new XmlSuite();
@@ -69,7 +69,7 @@ public class TestNGXmlSuiteHelper {
     writeToFile(logger, xmlFile, toXml);
     return xmlFile;
   }
-  
+
   public static void writeToFile(Logger logger, File xmlFile, String content) {
     try {
       OutputStream stream = new FileOutputStream(xmlFile, false);

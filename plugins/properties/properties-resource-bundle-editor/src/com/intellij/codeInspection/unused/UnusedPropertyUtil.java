@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class UnusedPropertyUtil {
+public final class UnusedPropertyUtil {
   private static final Logger LOG = Logger.getInstance(UnusedPropertyUtil.class);
   @NotNull
   public static Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {

@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
-public class ResourceBundleRenameUtil {
+public final class ResourceBundleRenameUtil {
   private final static Logger LOG = Logger.getInstance(ResourceBundleRenameUtil.class);
 
   public static void renameResourceBundleKey(final @NotNull PsiElement psiElement, final @NotNull Project project) {
