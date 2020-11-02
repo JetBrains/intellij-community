@@ -860,11 +860,11 @@
     <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
 
     <!--Got It Tooltips-->
-    <gotItTooltipAllowlist prefix="extract.method.gotit.navigate"/>
-    <gotItTooltipAllowlist prefix="extract.method.signature.change"/>
-    <gotItTooltipAllowlist prefix="changes.view.toolwindow"/>
-    <gotItTooltipAllowlist prefix="reader.mode.got.it"/>
-    <gotItTooltipAllowlist prefix="fragment.hidden"/>
+    <statistics.gotItTooltipAllowlist prefix="extract.method.gotit.navigate"/>
+    <statistics.gotItTooltipAllowlist prefix="extract.method.signature.change"/>
+    <statistics.gotItTooltipAllowlist prefix="changes.view.toolwindow"/>
+    <statistics.gotItTooltipAllowlist prefix="reader.mode.got.it"/>
+    <statistics.gotItTooltipAllowlist prefix="fragment.hidden"/>
 
     <!-- Browsers -->
     <applicationService serviceInterface="com.intellij.ide.browsers.BrowserLauncher" serviceImplementation="com.intellij.ide.browsers.BrowserLauncherImpl"/>

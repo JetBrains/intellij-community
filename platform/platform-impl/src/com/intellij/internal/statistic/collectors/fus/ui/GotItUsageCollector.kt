@@ -27,7 +27,7 @@ class GotItUsageCollector private constructor() {
     val instance: GotItUsageCollector
       get() = ApplicationManager.getApplication().getService(GotItUsageCollector::class.java)
 
-    val EP_NAME : ExtensionPointName<GotItTooltipAllowlistEP> = ExtensionPointName.create("com.intellij.gotItTooltipAllowlist")
+    val EP_NAME : ExtensionPointName<GotItTooltipAllowlistEP> = ExtensionPointName.create("com.intellij.statistics.gotItTooltipAllowlist")
   }
 
 
