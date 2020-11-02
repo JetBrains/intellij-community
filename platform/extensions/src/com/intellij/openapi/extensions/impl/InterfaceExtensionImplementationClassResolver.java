@@ -18,6 +18,7 @@ final class InterfaceExtensionImplementationClassResolver implements Implementat
     "com.intellij.javascript.debugger.execution.DebuggableProgramRunner",
     "com.intellij.spring.model.cacheable.EnableCachingModelProvider",
     "com.intellij.diff.actions.DiffCustomCommandHandler",
+    "com.intellij.execution.testDiscovery.IntellijTestDiscoveryProducer",
     "com.intellij.ide.actions.runAnything.RunAnythingCommandFolding"
   ));
 

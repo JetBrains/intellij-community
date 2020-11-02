@@ -34,7 +34,7 @@ import java.util.Set;
 
 import static com.intellij.openapi.vfs.LocalFileSystem.PROTOCOL_PREFIX;
 
-public class FindUnusedTestDataAction extends DumbAwareAction {
+public final class FindUnusedTestDataAction extends DumbAwareAction {
   private final static Logger LOG = Logger.getInstance(FindUnusedTestDataAction.class);
 
   @Override
