@@ -18,8 +18,7 @@ import java.util.*
  * @see newCounterMetric
  */
 @ApiStatus.Internal
-class MetricEvent @JvmOverloads @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 1) constructor(@NonNls val eventId: String,
-                                                                                                      data: FeatureUsageData? = null) {
+class MetricEvent @JvmOverloads constructor(@NonNls val eventId: String, data: FeatureUsageData? = null) {
   val data: FeatureUsageData = data ?: FeatureUsageData()
 
   override fun equals(other: Any?): Boolean {

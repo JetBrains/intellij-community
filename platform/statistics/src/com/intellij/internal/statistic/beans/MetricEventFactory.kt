@@ -14,7 +14,6 @@ import java.util.*
  * * merging this metric with another one, e.g. eventId="has.config.file", eventData={"type":"dockerfile"} or eventData={"type":"docker-compose.yml"};
  * * adding more information about this metric, e.g. eventId="has.dockerfile", eventData={"version":"2.3", "location":"project.root"};
  */
-@StatisticsEventProvider(eventIdIndex = 0)
 fun newMetric(@NonNls eventId: String): MetricEvent {
   return MetricEvent(eventId, null)
 }
@@ -25,7 +24,6 @@ fun newMetric(@NonNls eventId: String): MetricEvent {
  * eventId="breakpoint", eventData={"type":"line", "lang":"Java", "count":5}
  * eventId="gradle", eventData={"version":"2.3.1"}
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 1)
 fun newMetric(@NonNls eventId: String, data: FeatureUsageData?): MetricEvent {
   return MetricEvent(eventId, data)
 }
@@ -35,7 +33,6 @@ fun newMetric(@NonNls eventId: String, data: FeatureUsageData?): MetricEvent {
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value::1"])
 fun newMetric(@NonNls eventId: String, value: String): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -45,7 +42,6 @@ fun newMetric(@NonNls eventId: String, value: String): MetricEvent {
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value::1"])
 fun newMetric(@NonNls eventId: String, value: String, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -56,7 +52,6 @@ fun newMetric(@NonNls eventId: String, value: String, data: FeatureUsageData?): 
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value::1"])
 fun newMetric(@NonNls eventId: String, value: Enum<*>?): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -66,7 +61,6 @@ fun newMetric(@NonNls eventId: String, value: Enum<*>?): MetricEvent {
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value::1"])
 fun newMetric(@NonNls eventId: String, value: Enum<*>?, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   val newValue = value?.name?.toLowerCase(Locale.ENGLISH) ?: "unknown"
@@ -78,7 +72,6 @@ fun newMetric(@NonNls eventId: String, value: Enum<*>?, data: FeatureUsageData?)
  *
  * eventId="allowed.connections", eventData={"value":3}
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:regexp#integer"])
 fun newMetric(@NonNls eventId: String, value: Int): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -88,7 +81,6 @@ fun newMetric(@NonNls eventId: String, value: Int): MetricEvent {
  *
  * eventId="allowed.connections", eventData={"value":3}
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:regexp#integer"])
 fun newMetric(@NonNls eventId: String, value: Int, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -99,7 +91,6 @@ fun newMetric(@NonNls eventId: String, value: Int, data: FeatureUsageData?): Met
  *
  * eventId="line.spacing", eventData={"value":1.2}
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:regexp#float"])
 fun newMetric(@NonNls eventId: String, value: Float): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -109,7 +100,6 @@ fun newMetric(@NonNls eventId: String, value: Float): MetricEvent {
  *
  * eventId="line.spacing", eventData={"value":1.2}
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:regexp#float"])
 fun newMetric(@NonNls eventId: String, value: Float, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -120,7 +110,6 @@ fun newMetric(@NonNls eventId: String, value: Float, data: FeatureUsageData?): M
  *
  * eventId="font.ligatures", eventData={"enabled":true}
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["enabled:enum#boolean"])
 fun newBooleanMetric(@NonNls eventId: String, enabled: Boolean): MetricEvent {
   return newBooleanMetric(eventId, enabled, null)
 }
@@ -130,7 +119,6 @@ fun newBooleanMetric(@NonNls eventId: String, enabled: Boolean): MetricEvent {
  *
  * eventId="font.ligatures", eventData={"enabled":true}
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["enabled:enum#boolean"])
 fun newBooleanMetric(@NonNls eventId: String, enabled: Boolean, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addEnabled(enabled))
@@ -141,7 +129,6 @@ fun newBooleanMetric(@NonNls eventId: String, enabled: Boolean, data: FeatureUsa
  *
  * eventId="tool.is.under.project.root", eventData={"value":true}
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:enum#boolean"])
 fun newMetric(@NonNls eventId: String, value: Boolean): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -151,7 +138,6 @@ fun newMetric(@NonNls eventId: String, value: Boolean): MetricEvent {
  *
  * eventId="tool.is.under.project.root", eventData={"value":true}
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:enum#boolean"])
 fun newMetric(@NonNls eventId: String, value: Boolean, data: FeatureUsageData? = null): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -162,7 +148,6 @@ fun newMetric(@NonNls eventId: String, value: Boolean, data: FeatureUsageData? =
  *
  * eventId="source_roots", eventData={"count":3}
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["count:regexp#integer"])
 fun newCounterMetric(@NonNls eventId: String, count: Int): MetricEvent {
   return newCounterMetric(eventId, count, null)
 }
@@ -172,7 +157,6 @@ fun newCounterMetric(@NonNls eventId: String, count: Int): MetricEvent {
  *
  * eventId="source_roots", eventData={"count":3}
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["count:regexp#integer"])
 fun newCounterMetric(@NonNls eventId: String, count: Int, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addCount(count))
@@ -186,7 +170,6 @@ fun newCounterMetric(@NonNls eventId: String, count: Int, data: FeatureUsageData
  * @see newCounterMetric(java.lang.String, int)
  */
 @Deprecated("Only for existing counter metrics, new metrics should report absolute counter value")
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["count:regexp#integer", "count_group"])
 fun newCounterRangeMetric(@NonNls eventId: String, count: Int, data: FeatureUsageData? = null): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   newData.addCount(count).addData("count_group", getCountingUsage(count))
@@ -201,7 +184,6 @@ fun newCounterRangeMetric(@NonNls eventId: String, count: Int, data: FeatureUsag
  * @see newCounterMetric(java.lang.String, int)
  */
 @Deprecated("Only for existing counter metrics, new metrics should report absolute counter value")
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 3, additionalDataFields = ["count:regexp#integer", "count_group"])
 fun newCounterRangeMetric(@NonNls eventId: String, count: Int, steps: List<Int>, data: FeatureUsageData? = null): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   newData.addCount(count).addData("count_group", getCountingUsage(count, steps))
