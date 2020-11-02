@@ -98,7 +98,7 @@ object TemplateInlayUtil {
           .createPopup()
         DumbAwareAction.create {
           popup.cancel()
-          templateState.gotoEnd(false)
+          templateState.nextTab()
           logStatisticsOnHide.invoke()
         }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ENTER), panel)
         popup.showInBestPositionFor(editor)
