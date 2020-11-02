@@ -56,7 +56,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   public JComponent createComponent() {
     if (myComponent != null) {
       if (myTree != null) {
-        myTree.updateUI();
+        SwingUtilities.updateComponentTreeUI(myComponent);
       }
       return myComponent;
     }
