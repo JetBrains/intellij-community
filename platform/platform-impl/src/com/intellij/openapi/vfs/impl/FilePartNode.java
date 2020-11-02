@@ -219,7 +219,7 @@ class FilePartNode {
       }
       child.doCheckConsistency(myFile, childName, childUrlFromRoot);
       if (i != 0) {
-        assert StringUtil.compare(prevChildName, childName, !child.isCaseSensitive()) < 0: "child[" + i + "] = " + child + "; [-1] = " + children[i - 1];
+        assert StringUtil.compare(prevChildName, childName, !child.isCaseSensitive()) < 0: "children[" + i + "] = " + child + "; [-1] = " + children[i - 1];
       }
       // fs is allowed to change in one direction only: local->jar
       assert myFS instanceof LocalFileSystem && (child.myFS instanceof ArchiveFileSystem || child.myFS instanceof LocalFileSystem)
