@@ -3380,6 +3380,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                                                            "  @FindBy(name='_value)\n" +
                                                                            "  '_FieldType2 'field2 = '_init2?;\n" +
                                                                            "}"));
+
+    in = "class X {{" +
+         "  int[] newQueue = new int[queue.length * 2 - fwd];\n" +
+         "  System.arraycopy(queue, fwd, newQueue, 0, queue.length - fwd);" +
+         "}}";
+    assertEquals("should not match because the p var differs", 0,
+                 findMatchesCount(in, "int[] '_params = new int['_p - '_i];\n" +
+                                      "System.arraycopy('_a, '_i, '_params, 0, '_p - '_i);"));
+    assertEquals(1, findMatchesCount(in, "int[] '_params = new int['_p * 2 - '_i];\n" +
+                                         "System.arraycopy('_a, '_i, '_params, 0, '_p - '_i);"));
   }
 
   public void testForStatement() {

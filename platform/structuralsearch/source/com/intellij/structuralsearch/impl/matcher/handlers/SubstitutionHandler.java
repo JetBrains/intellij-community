@@ -143,7 +143,7 @@ public class SubstitutionHandler extends MatchingHandler {
     if (result == null) {
       final MatchResultImpl previous = context.getPreviousResult();
       if (previous != null) {
-        result = MatchResultImpl.findChildDeep(previous, name);
+        result = previous.findChild(name);
       }
     }
 
@@ -187,7 +187,7 @@ public class SubstitutionHandler extends MatchingHandler {
   public void addResult(@NotNull PsiElement match, int start, int end, @NotNull MatchContext context) {
     if (totalMatchedOccurs == -1) {
       final MatchResultImpl matchResult = context.getResult();
-      final MatchResultImpl substitution = matchResult.findChild(name);
+      final MatchResultImpl substitution = matchResult.getChild(name);
 
       if (substitution == null) {
         matchResult.addChild(createMatch(match, start, end) );
@@ -294,7 +294,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
   private void removeLastResults(int numberOfResults, @NotNull MatchContext context) {
     if (numberOfResults == 0) return;
-    final MatchResultImpl substitution = context.getResult().findChild(name);
+    final MatchResultImpl substitution = context.getResult().getChild(name);
 
     if (substitution != null) {
       if (substitution.hasChildren()) {
@@ -469,9 +469,9 @@ public class SubstitutionHandler extends MatchingHandler {
       totalMatchedOccurs = matchedOccurs;
       return true;
     }
-    MatchResult result = context.hasResult() ? context.getResult().findChild(name) : null;
+    MatchResult result = context.hasResult() ? context.getResult().getChild(name) : null;
     if (result == null && context.getPreviousResult() != null) {
-      result = context.getPreviousResult().findChild(name);
+      result = context.getPreviousResult().getChild(name);
     }
     return result == null || result.size() == matchedOccurs;
   }
