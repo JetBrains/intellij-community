@@ -205,11 +205,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     copyCustomSettingsFrom(from);
   }
 
-
-  public boolean USE_SAME_INDENTS;
-
-  public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES;
-
   public boolean AUTODETECT_INDENTS = true;
 
   public final IndentOptions OTHER_INDENT_OPTIONS = new IndentOptions();
@@ -640,10 +635,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
     myUnknownElementWriter = unknownElementCollector.createWriter(element);
 
-    if (USE_SAME_INDENTS) {
-      IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
-    }
-
     mySoftMargins.deserializeFrom(element);
     myExcludedFiles.deserializeFrom(element);
 
@@ -716,7 +707,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     IndentOptions indentOptions = getLanguageIndentOptions(fileType);
     if (indentOptions != null) return indentOptions;
 
-    if (USE_SAME_INDENTS || fileType == null) return OTHER_INDENT_OPTIONS;
+    if (fileType == null) return OTHER_INDENT_OPTIONS;
 
     if (!myLoadedAdditionalIndentOptions) {
       loadAdditionalIndentOptions();
