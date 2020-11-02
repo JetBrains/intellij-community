@@ -11,16 +11,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Test;
 import org.picocontainer.PicoContainer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -397,6 +395,23 @@ public class ExtensionPointImplTest {
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    }
+
+    @Override
+    public @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId) {
+      return new RuntimeException(message);
+    }
+
+    @Override
+    public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                                 @NotNull PluginId pluginId,
+                                                 @Nullable Map<String, String> attachments) {
+      return new RuntimeException(message);
+    }
+
+    @Override
+    public @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+      return new RuntimeException(error);
     }
   }
 }

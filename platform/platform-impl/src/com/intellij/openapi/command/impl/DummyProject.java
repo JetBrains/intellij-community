@@ -3,15 +3,20 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
+
+import java.util.Map;
 
 public final class DummyProject extends UserDataHolderBase implements Project {
   private static class DummyProjectHolder {
@@ -127,5 +132,23 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
     //noinspection unchecked
     return (Class<T>)Class.forName(className);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId) {
+    return new RuntimeException(message);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                               @NotNull PluginId pluginId,
+                                               @Nullable Map<String, String> attachments) {
+    return new RuntimeException(message);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+    ExceptionUtilRt.rethrowUnchecked(error);
+    return new RuntimeException(error);
   }
 }

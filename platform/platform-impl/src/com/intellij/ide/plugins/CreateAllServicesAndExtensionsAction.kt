@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.notification.Notification
@@ -69,16 +70,28 @@ private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressI
   indicator.text2 = "Checking ${container.activityNamePrefix()}extensions..."
   container.extensionArea.processExtensionPoints { extensionPoint ->
     // requires read action
-    if (extensionPoint.name != "com.intellij.favoritesListProvider" && extensionPoint.name != "com.intellij.favoritesListProvider") {
-      extensionPoint.processImplementations(false, BiConsumer { supplier, _ ->
-        taskExecutor {
-          try {
-            supplier.get()
-          }
-          catch (ignore: ExtensionNotApplicableException) {
+    if (extensionPoint.name == "com.intellij.favoritesListProvider" || extensionPoint.name == "com.intellij.favoritesListProvider") {
+      return@processExtensionPoints
+    }
+
+    extensionPoint.processImplementations(false, BiConsumer { supplier, pluginDescriptor ->
+      val extensionClass = extensionPoint.extensionClass
+
+      taskExecutor {
+        try {
+          val extension = supplier.get()
+          if (!extensionClass.isInstance(extension)) {
+            throw PluginException("Extension ${extension.javaClass.name} does not implement $extensionClass",
+                                  pluginDescriptor.pluginId)
           }
         }
-      })
+        catch (ignore: ExtensionNotApplicableException) {
+        }
+      }
+    })
+
+    taskExecutor {
+      extensionPoint.extensionList
     }
   }
 }

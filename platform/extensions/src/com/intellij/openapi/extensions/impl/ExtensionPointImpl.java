@@ -234,8 +234,9 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
         throw new RuntimeException(message);
       }
       else {
-        message += " (adapter=" + adapter + ")\n" + ThreadDumper.dumpThreadsToString();
-        throw componentManager.createError(message, adapter.getPluginDescriptor().getPluginId());
+        message += " (adapter=" + adapter + ")";
+        throw componentManager.createError(message, adapter.getPluginDescriptor().getPluginId(),
+                                           Collections.singletonMap("threadDump", ThreadDumper.dumpThreadsToString()));
       }
     }
   }

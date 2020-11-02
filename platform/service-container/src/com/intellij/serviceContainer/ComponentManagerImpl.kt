@@ -15,6 +15,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
@@ -828,6 +829,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   final override fun createError(message: String, pluginId: PluginId) = PluginException(message, pluginId)
+
+  final override fun createError(message: String, pluginId: PluginId, attachments: MutableMap<String, String>?): RuntimeException {
+    return PluginException(message, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: emptyList())
+  }
 
   @Internal
   fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
