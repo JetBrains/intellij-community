@@ -17,12 +17,6 @@ import com.intellij.util.xmlb.annotations.Attribute
 
 
 class GotItTooltipAllowlistEP {
-  companion object {
-    @JvmField
-    val EP_NAME : ExtensionPointName<GotItTooltipAllowlistEP> = ExtensionPointName.create("com.intellij.gotItTooltipAllowlist")
-
-  }
-
   @Attribute("prefix")
   var prefix: String = ""
 }
@@ -32,14 +26,16 @@ class GotItUsageCollector private constructor() {
     @JvmStatic
     val instance: GotItUsageCollector
       get() = ApplicationManager.getApplication().getService(GotItUsageCollector::class.java)
+
+    val EP_NAME : ExtensionPointName<GotItTooltipAllowlistEP> = ExtensionPointName.create("com.intellij.gotItTooltipAllowlist")
   }
 
 
   private val allowedPrefixes : MutableSet<String> = HashSet()
 
   init {
-    GotItTooltipAllowlistEP.EP_NAME.processWithPluginDescriptor(this::addToWhileList)
-    GotItTooltipAllowlistEP.EP_NAME.addExtensionPointListener(object: ExtensionPointListener<GotItTooltipAllowlistEP> {
+    EP_NAME.processWithPluginDescriptor(this::addToWhileList)
+    EP_NAME.addExtensionPointListener(object: ExtensionPointListener<GotItTooltipAllowlistEP> {
       override fun extensionAdded(extension: GotItTooltipAllowlistEP, pluginDescriptor: PluginDescriptor) {
         addToWhileList(extension, pluginDescriptor)
       }
@@ -58,14 +54,14 @@ class GotItUsageCollector private constructor() {
   }
 
   fun logOpen(id: String, count: Int) {
-    toPrefix(id)?.let { GotItUsageCollectorGroup.showEvent.log(it, count) }
+    GotItUsageCollectorGroup.showEvent.log(id, count)
   }
 
   fun logClose(id: String, closeType: GotItUsageCollectorGroup.CloseType) {
-    toPrefix(id)?.let { GotItUsageCollectorGroup.closeEvent.log(id, closeType) }
+    GotItUsageCollectorGroup.closeEvent.log(id, closeType)
   }
 
-  private fun toPrefix(id: String): String? {
+  fun toPrefix(id: String): String? {
     if (allowedPrefixes.contains(id)) {
       return id
     }
@@ -96,7 +92,7 @@ class GotItUsageCollectorGroup : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("gotit.usage.collector", 1)
+    private val GROUP = EventLogGroup("got.it.tooltip", 1)
 
     internal val showEvent = GROUP.registerEvent("show",
                                                  EventFields.StringValidatedByCustomRule("id_prefix", GotItTooltip.PROPERTY_PREFIX),
@@ -110,8 +106,9 @@ class GotItUsageCollectorGroup : CounterUsagesCollector() {
 
 class GotItIDValidator : CustomValidationRule() {
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return acceptWhenReportedByJetBrainsPlugin(context)
+    return if (GotItUsageCollector.instance.toPrefix(data) != null) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
   }
+
 
   override fun acceptRuleId(ruleId: String?): Boolean {
     return GotItTooltip.PROPERTY_PREFIX == ruleId
