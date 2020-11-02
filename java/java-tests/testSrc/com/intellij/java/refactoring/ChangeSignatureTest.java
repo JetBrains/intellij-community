@@ -80,6 +80,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
   }
 
+  public void testNoConflictForSuperCallDelegation() {
+    doTest(null, new ParameterInfoImpl[0], false);
+  }
+
   public void testGenericTypes() {
     doTest(null, null, "T", method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.createNew().withName("x").withType(myFactory.createTypeFromText("T", method.getParameterList())).withDefaultValue("null"),
