@@ -2461,7 +2461,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @TestMetadata("assignmentAndError.kt")
             public void testAssignmentAndError() throws Exception {
-                runTest("idea/testData/intentions/branched/elvisToIfThen/assignmentAndError.kt");
+                runTest("testData/intentions/branched/elvisToIfThen/assignmentAndError.kt");
             }
 
             @TestMetadata("assignmentAndReturn.kt")
@@ -5911,22 +5911,22 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @TestMetadata("caretOnClassBody.kt")
         public void testCaretOnClassBody() throws Exception {
-            runTest("idea/testData/intentions/convertPrimaryConstructorToSecondary/caretOnClassBody.kt");
+            runTest("testData/intentions/convertPrimaryConstructorToSecondary/caretOnClassBody.kt");
         }
 
         @TestMetadata("caretOnClassName.kt")
         public void testCaretOnClassName() throws Exception {
-            runTest("idea/testData/intentions/convertPrimaryConstructorToSecondary/caretOnClassName.kt");
+            runTest("testData/intentions/convertPrimaryConstructorToSecondary/caretOnClassName.kt");
         }
 
         @TestMetadata("caretOnClassNameWithConstructorKeyword.kt")
         public void testCaretOnClassNameWithConstructorKeyword() throws Exception {
-            runTest("idea/testData/intentions/convertPrimaryConstructorToSecondary/caretOnClassNameWithConstructorKeyword.kt");
+            runTest("testData/intentions/convertPrimaryConstructorToSecondary/caretOnClassNameWithConstructorKeyword.kt");
         }
 
         @TestMetadata("caretOnClassNameWithoutPrimaryConstructor.kt")
         public void testCaretOnClassNameWithoutPrimaryConstructor() throws Exception {
-            runTest("idea/testData/intentions/convertPrimaryConstructorToSecondary/caretOnClassNameWithoutPrimaryConstructor.kt");
+            runTest("testData/intentions/convertPrimaryConstructorToSecondary/caretOnClassNameWithoutPrimaryConstructor.kt");
         }
 
         @TestMetadata("dataClass.kt")
@@ -6436,7 +6436,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @TestMetadata("usedWithTypeArgumentAndLambdaArgument.kt")
         public void testUsedWithTypeArgumentAndLambdaArgument() throws Exception {
-            runTest("idea/testData/intentions/convertReceiverToParameter/usedWithTypeArgumentAndLambdaArgument.kt");
+            runTest("testData/intentions/convertReceiverToParameter/usedWithTypeArgumentAndLambdaArgument.kt");
         }
 
         @TestMetadata("validOverload.kt")
@@ -14307,7 +14307,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @TestMetadata("hasAnnotation.kt")
         public void testHasAnnotation() throws Exception {
-            runTest("idea/testData/intentions/removeExplicitTypeArguments/hasAnnotation.kt");
+            runTest("testData/intentions/removeExplicitTypeArguments/hasAnnotation.kt");
         }
 
         @TestMetadata("inapplicableTypeThatIsAFunItCannotBeInferred.kt")

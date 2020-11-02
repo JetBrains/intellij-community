@@ -7690,32 +7690,32 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @TestMetadata("extendJavaNestedClass.kt")
         public void testExtendJavaNestedClass() throws Exception {
-            runTest("idea/testData/inspectionsLocal/redundantInnerClassModifier/extendJavaNestedClass.kt");
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/extendJavaNestedClass.kt");
         }
 
         @TestMetadata("extendJavaNestedInterface.kt")
         public void testExtendJavaNestedInterface() throws Exception {
-            runTest("idea/testData/inspectionsLocal/redundantInnerClassModifier/extendJavaNestedInterface.kt");
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/extendJavaNestedInterface.kt");
         }
 
         @TestMetadata("extendJavaNestedStaticClass.kt")
         public void testExtendJavaNestedStaticClass() throws Exception {
-            runTest("idea/testData/inspectionsLocal/redundantInnerClassModifier/extendJavaNestedStaticClass.kt");
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/extendJavaNestedStaticClass.kt");
         }
 
         @TestMetadata("hasConstructorCallOfOuterClassMember.kt")
         public void testHasConstructorCallOfOuterClassMember() throws Exception {
-            runTest("idea/testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember.kt");
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember.kt");
         }
 
         @TestMetadata("hasConstructorCallOfOuterClassMember2.kt")
         public void testHasConstructorCallOfOuterClassMember2() throws Exception {
-            runTest("idea/testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember2.kt");
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember2.kt");
         }
 
         @TestMetadata("hasConstructorCallOfOuterClassMember3.kt")
         public void testHasConstructorCallOfOuterClassMember3() throws Exception {
-            runTest("idea/testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember3.kt");
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember3.kt");
         }
 
         @TestMetadata("hasOuterClassMemberReference.kt")
@@ -7745,12 +7745,12 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @TestMetadata("hasOuterClassMemberReferenceInSuperTypeConstructorCall.kt")
         public void testHasOuterClassMemberReferenceInSuperTypeConstructorCall() throws Exception {
-            runTest("idea/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceInSuperTypeConstructorCall.kt");
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceInSuperTypeConstructorCall.kt");
         }
 
         @TestMetadata("hasOuterClassMemberReferenceInSuperTypeConstructorCall2.kt")
         public void testHasOuterClassMemberReferenceInSuperTypeConstructorCall2() throws Exception {
-            runTest("idea/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceInSuperTypeConstructorCall2.kt");
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceInSuperTypeConstructorCall2.kt");
         }
 
         @TestMetadata("hasOuterClassTypeReference.kt")
