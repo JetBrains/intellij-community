@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.g
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.util.ui.UIUtil
+import git4idea.index.GitStageContentProvider
 import javax.swing.JComponent
 
 class GitStageEditorDiffPreview(diffProcessor: GitStageDiffPreview, private val tree: ChangesTree, targetComponent: JComponent) :
@@ -17,7 +18,7 @@ class GitStageEditorDiffPreview(diffProcessor: GitStageDiffPreview, private val 
   init {
     escapeHandler = Runnable {
       closePreview()
-      getToolWindowFor(project, "Staging Area")?.activate(null)
+      getToolWindowFor(project, GitStageContentProvider.STAGING_AREA_TAB_NAME)?.activate(null)
     }
     openWithDoubleClick(tree)
     installNextDiffActionOn(targetComponent)
