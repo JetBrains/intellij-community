@@ -23,7 +23,7 @@ class EventLogGroup(val id: String, val version: Int) {
    * New style API to record IDE events (e.g. invoked action, opened dialog) or state.
    *
    * To implement a new collector:
-   * - Record events according to a "fus-collector.md" dev guide and register it in plugin.xml
+   * - Record events according to a "fus-collectors.md" dev guide and register it in plugin.xml
    * - Implement custom validation rules if necessary (see SensitiveDataValidator)
    * - If new group is implemented in a platform or a plugin bundled with IntelliJ Ultimate, YT issue will be created automatically
    * - Otherwise, create a YT issue in FUS project with group data scheme and descriptions to register it on the statistics metadata server

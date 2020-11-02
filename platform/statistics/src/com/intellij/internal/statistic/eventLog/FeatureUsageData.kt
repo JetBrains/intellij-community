@@ -78,8 +78,7 @@ class FeatureUsageData {
    * Project data is added automatically for project state collectors and project-wide counter events.
    *
    * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-   * @see com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger.logEvent(Project, String, String)
-   * @see com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger.logEvent(Project, String, String, FeatureUsageData)
+   * @see com.intellij.internal.statistic.eventLog.events.EventId.log(Project)
    */
   fun addProject(project: Project?): FeatureUsageData {
     if (project != null) {

@@ -23,11 +23,11 @@ import java.util.Set;
  *
  * To implement a new collector:
  * <ol>
- *   <li>Inherit the class, implement {@link ProjectUsagesCollector#getMetrics(Project)} and register collector in plugin.xml;</li>
- *   <li>Specify collectors data scheme and implement custom validation rules if necessary.<br/>
- *   For more information see {@link SensitiveDataValidator};</li>
- *   <li>Create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a> with group data scheme and descriptions
- *   to register it on the server in statistic metadata repository</li>
+ *   <li>Inherit the class, implement {@link ProjectUsagesCollector#getMetrics(Project)} and register collector in plugin.xml.
+ *   See "fus-collectors.md" for more details.</li>
+ *   <li>Implement custom validation rules if necessary. For more information see {@link SensitiveDataValidator}.</li>
+ *   <li>If new group is implemented in a platform or a plugin bundled with IntelliJ Ultimate, YT issue will be created automatically</li>
+ *   <li>Otherwise, create a YT issue in FUS project with group data scheme and descriptions to register it on the statistics metadata server</li>
  * </ol>
  *
  * To test collector:
