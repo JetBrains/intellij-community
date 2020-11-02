@@ -321,7 +321,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   public void installSpeedSearch(IPopupChooserBuilder builder) {
-    installSpeedSearch(builder, false);
+    installSpeedSearch(builder, true);
   }
 
   public void installSpeedSearch(IPopupChooserBuilder builder, final boolean includeContainerText) {
