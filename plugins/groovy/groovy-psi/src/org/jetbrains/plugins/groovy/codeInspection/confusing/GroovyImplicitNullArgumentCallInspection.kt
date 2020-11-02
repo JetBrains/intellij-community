@@ -23,7 +23,7 @@ class GroovyImplicitNullArgumentCallInspection : BaseInspection() {
       }
       val call = list.parentOfType<GrCall>()?.takeIf { it.argumentList === list } ?: return
       if (PsiUtil.isEligibleForInvocationWithNull(call)) {
-        registerError(list, ProblemHighlightType.WEAK_WARNING)
+        registerError(list, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
       super.visitArgumentList(list)
     }

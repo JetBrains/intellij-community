@@ -1076,6 +1076,7 @@
                      enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyGStringKeyInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.implicit.null.argument"
+                     level="WEAK WARNING"
                      groupKey="inspection.confusing"
                      enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyImplicitNullArgumentCallInspection"/>
