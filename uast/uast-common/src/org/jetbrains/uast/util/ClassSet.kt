@@ -38,6 +38,10 @@ private class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : Cla
     else
       internalMapping[element]
       ?: initialClasses.any { it.isAssignableFrom(element) }.also { internalMapping[element] = it }
+
+  override fun toString(): String {
+    return "ClassSetImpl(${initialClasses.contentToString()})"
+  }
 }
 
 fun <T> classSetOf(vararg classes: Class<out T>): ClassSet<T> =
