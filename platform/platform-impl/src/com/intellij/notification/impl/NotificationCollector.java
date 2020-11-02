@@ -134,7 +134,10 @@ public final class NotificationCollector {
     data.add(ID.with(id));
     data.add(ADDITIONAL.with(new ObjectEventData(NOTIFICATION_ID.with(Strings.isNotEmpty(displayId) ? displayId : UNKNOWN))));
     data.add(NOTIFICATION_GROUP_ID.with(Strings.isNotEmpty(groupId) ? groupId : UNKNOWN));
-    data.add(EventFields.PluginInfo.with(getPluginInfo(groupId)));
+    PluginInfo pluginInfo = getPluginInfo(groupId);
+    if (pluginInfo != null) {
+      data.add(EventFields.PluginInfo.with(pluginInfo));
+    }
     return data;
   }
 
@@ -154,7 +157,7 @@ public final class NotificationCollector {
     }
   }
 
-  private static PluginInfo getPluginInfo(@Nullable String groupId) {
+  private static @Nullable PluginInfo getPluginInfo(@Nullable String groupId) {
     if (groupId == null) return null;
     PluginInfo pluginInfo = ourNotificationGroupsWhitelist.get(groupId);
     if (pluginInfo != null) {
