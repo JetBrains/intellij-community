@@ -22,10 +22,7 @@ public final class UIBundle extends DynamicBundle {
     if (INSTANCE.containsKey(key)) {
       return INSTANCE.getMessage(key, params);
     }
-    if (IdeDeprecatedMessagesBundle.INSTANCE.containsKey(key)) {
-      return IdeDeprecatedMessagesBundle.message(key, params);
-    }
-    return UtilUiBundle.message(key, params);
+    return IdeDeprecatedMessagesBundle.message(key, params);
   }
 
   @NotNull
@@ -34,9 +31,6 @@ public final class UIBundle extends DynamicBundle {
     if (INSTANCE.containsKey(key)) {
       return INSTANCE.getLazyMessage(key, params);
     }
-    if (IdeDeprecatedMessagesBundle.INSTANCE.containsKey(key)) {
-      return IdeDeprecatedMessagesBundle.INSTANCE.getLazyMessage(key);
-    }
-    return () -> UtilUiBundle.message(key, params);
+    return IdeDeprecatedMessagesBundle.messagePointer(key, params);
   }
 }

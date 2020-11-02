@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 @ApiStatus.Internal
 public class IdeDeprecatedMessagesBundle extends AbstractBundle {
   @NonNls private static final String BUNDLE = "messages.IdeDeprecatedMessagesBundle";
-  public static final IdeDeprecatedMessagesBundle INSTANCE = new IdeDeprecatedMessagesBundle();
+  private static final IdeDeprecatedMessagesBundle INSTANCE = new IdeDeprecatedMessagesBundle();
 
   private IdeDeprecatedMessagesBundle() {
     super(BUNDLE);
