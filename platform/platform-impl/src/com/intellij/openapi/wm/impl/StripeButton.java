@@ -91,17 +91,17 @@ public class StripeButton extends AnchoredButton implements DataProvider {
   private void updateHelpTooltip() {
     HelpTooltip.dispose(this);
 
+    HelpTooltip tooltip = new HelpTooltip();
+    tooltip.setTitle(toolWindow.getStripeTitle());
     String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.getId());
     AnAction action = ActionManager.getInstance().getAction(activateActionId);
     if (action != null) {
       KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
       if (shortcut != null) {
-        HelpTooltip tooltip = new HelpTooltip();
-        tooltip.setTitle(toolWindow.getStripeTitle());
         tooltip.setShortcut(KeymapUtil.getShortcutText(shortcut));
-        tooltip.installOn(this);
       }
     }
+    tooltip.installOn(this);
   }
 
   public @NotNull WindowInfo getWindowInfo() {
