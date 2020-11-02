@@ -19,6 +19,9 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.file.Files
+import java.nio.file.attribute.BasicFileAttributes
 
 internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<LibraryEntity> {
   override val componentName: String
@@ -89,17 +92,34 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
       val libraryId = LibraryId(name, libraryTableId)
       val existingLibraryEntity = builder.resolve(libraryId)
       if (existingLibraryEntity != null) {
+        val attr = try {
+          Files.readAttributes(JpsPathUtil.urlToFile(fileUrl.url).toPath(), BasicFileAttributes::class.java)
+        }
+        catch (e: Exception) {
+          null
+        }
+        val previousUrl = entitiesTrack[libraryId] as? String
+        val prevAttr = try {
+          previousUrl?.let { Files.readAttributes(JpsPathUtil.urlToFile(it).toPath(), BasicFileAttributes::class.java) }
+        }
+        catch (e: Exception) {
+          null
+        }
         logger<JpsLibraryEntitiesSerializer>().error("""Error during entities loading
           |Entity with this library id already exists.
           |Library id: $libraryId
           |fileUrl: ${fileUrl.presentableUrl}
-          |Previous file url: ${entitiesTrack[libraryId]}
+          |File url creation time: ${attr?.creationTime()}
+          |File url modification time: ${attr?.lastModifiedTime()}
+          |Previous file url: $previousUrl
+          |Prev file url creation time: ${prevAttr?.creationTime()}
+          |Prev file url modification time: ${prevAttr?.lastModifiedTime()}
           |library table id: $libraryTableId
           |internal entity source: $internalEntitySource
         """.trimMargin())
       }
 
-      entitiesTrack[libraryId] = fileUrl.presentableUrl
+      entitiesTrack[libraryId] = fileUrl.url
 
       loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager)
     }
