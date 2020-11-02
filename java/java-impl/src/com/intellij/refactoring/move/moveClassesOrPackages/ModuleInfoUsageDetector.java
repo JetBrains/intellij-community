@@ -58,23 +58,23 @@ class ModuleInfoUsageDetector {
     for (var entry : sourceDirsByModuleDescriptor.entrySet()) {
       PsiJavaModule sourceModuleDescriptor = entry.getKey();
       Collection<PsiDirectory> sourceDirs = entry.getValue();
-      MultiMap<PsiPackage, PsiPackageAccessibilityStatement> exports = collectModuleStatements(sourceModuleDescriptor.getExports());
-      MultiMap<PsiPackage, PsiPackageAccessibilityStatement> opens = collectModuleStatements(sourceModuleDescriptor.getOpens());
+      MultiMap<PsiPackage, PsiPackageAccessibilityStatement> sourceExports = collectModuleStatements(sourceModuleDescriptor.getExports());
+      MultiMap<PsiPackage, PsiPackageAccessibilityStatement> sourceOpens = collectModuleStatements(sourceModuleDescriptor.getOpens());
       for (PsiDirectory sourceDir : sourceDirs) {
-        String packageName = fileIndex.getPackageNameByDirectory(sourceDir.getVirtualFile());
-        if (packageName == null) continue;
-        PsiPackage psiPackage = psiFacade.findPackage(packageName);
-        if (psiPackage == null) continue;
-        List<PsiPackageAccessibilityStatement> moduleStatements = findModuleStatementsForPkg(psiPackage, exports, opens);
-        if (moduleStatements.isEmpty()) continue;
+        String sourcePkgName = fileIndex.getPackageNameByDirectory(sourceDir.getVirtualFile());
+        if (sourcePkgName == null) continue;
+        PsiPackage sourcePkg = psiFacade.findPackage(sourcePkgName);
+        if (sourcePkg == null) continue;
+        List<PsiPackageAccessibilityStatement> sourceStatements = findModuleStatementsForPkg(sourcePkg, sourceExports, sourceOpens);
+        if (sourceStatements.isEmpty()) continue;
         // if a package doesn't contain any other classes except moved ones then we need to delete a corresponding export statement
         Collection<PsiClass> sourceClasses = sourceClassesByDir.get(sourceDir);
         if (dirContainsOnlyClasses(sourceDir, sourceClasses)) {
-          moduleStatements.forEach(statement -> usageInfos.add(ModifyModuleStatementUsageInfo.createDeletionInfo(statement, sourceModuleDescriptor)));
+          sourceStatements.forEach(statement -> usageInfos.add(ModifyModuleStatementUsageInfo.createDeletionInfo(statement, sourceModuleDescriptor)));
         }
         // so far we don't take into account a motion between separate JPMS-modules
         if (sourceModuleDescriptor == targetModuleDescriptor) {
-          sourcePkgModuleStatements.addAll(moduleStatements);
+          sourcePkgModuleStatements.addAll(sourceStatements);
         }
         else if (targetModuleDescriptor != null) {
           sourceClasses.forEach(c -> conflicts.put(c, List.of(
@@ -190,10 +190,10 @@ class ModuleInfoUsageDetector {
    * The same is true for opens one.
    *
    * @param sourceStatements corresponds to the statements in all source directories
-   * @param targetStatements corresponds to the statements in target directory
-   * @param targetPackage corresponds the target package
-   * @param statementsToDelete statements to be deleted in target module descriptor
-   * @param statementsToCreate statements to be created in target module descriptor
+   * @param targetStatements corresponds to the statements in the target directory
+   * @param targetPackage corresponds to the target package
+   * @param statementsToDelete statements to be deleted in the target module descriptor
+   * @param statementsToCreate statements to be created in the target module descriptor
    */
   private void mergeModuleStatements(@NotNull List<PsiPackageAccessibilityStatement> sourceStatements,
                                      @NotNull List<PsiPackageAccessibilityStatement> targetStatements,
