@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.SmartFMap;
@@ -30,6 +31,7 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  */
 public final class Presentation implements Cloneable {
   public static final Supplier<String> NULL_STRING = () -> null;
+  private static final Logger LOG = Logger.getInstance(Presentation.class);
 
   private SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
@@ -395,6 +397,9 @@ public final class Presentation implements Cloneable {
   public void putClientProperty(@NonNls @NotNull String key, @Nullable Object value) {
     Object oldValue = myUserMap.get(key);
     if (Comparing.equal(oldValue, value)) return;
+    if (key.equals("customComponent") && oldValue != null) {
+      LOG.error("Trying to reset custom component in a presentation", new Throwable());
+    }
     myUserMap = value == null ? myUserMap.minus(key) : myUserMap.plus(key, value);
     fireObjectPropertyChange(key, oldValue, value);
   }

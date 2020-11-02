@@ -47,6 +47,8 @@ class DumpRunDebugActionStateAction : AnAction() {
       val comboBoxInToolbar = toolbar.components.mapNotNull { toComboBoxButton(it as JComponent) }.firstOrNull()
       if (comboBoxInToolbar != null) {
         appendLine("Combobox in toolbar ${System.identityHashCode(comboBoxInToolbar)} text ${comboBoxInToolbar.text}")
+        val comboBoxPresentation = comboBoxInToolbar.presentation
+        appendLine("Combobox in toolbar presentation ID ${System.identityHashCode(comboBoxPresentation)} text ${comboBoxPresentation.text}")
       }
     }
     LOG.info(result)
