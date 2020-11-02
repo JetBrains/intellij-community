@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-public interface TargetConfigurationExtension {
+public interface TargetConfigurationMavenExtension {
   @Nullable
   TargetEnvironment.UploadRoot createUploadRoot(@Nullable MavenRuntimeTargetConfiguration mavenRuntimeConfiguration,
                                                 @NotNull TargetEnvironmentRequest targetEnvironmentRequest,

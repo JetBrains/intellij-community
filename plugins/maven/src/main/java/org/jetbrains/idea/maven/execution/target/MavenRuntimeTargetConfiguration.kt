@@ -39,6 +39,6 @@ class MavenRuntimeTargetConfiguration : LanguageRuntimeConfiguration(MavenRuntim
              ?: TargetEnvironment.UploadRoot(localRootPath, TargetEnvironment.TargetPath.Temporary())
     }
 
-    private val EP_NAME = ExtensionPointName.create<TargetConfigurationExtension>("org.jetbrains.idea.maven.targetConfigurationExtension")
+    private val EP_NAME = ExtensionPointName.create<TargetConfigurationMavenExtension>("org.jetbrains.idea.maven.targetConfigurationExtension")
   }
 }
