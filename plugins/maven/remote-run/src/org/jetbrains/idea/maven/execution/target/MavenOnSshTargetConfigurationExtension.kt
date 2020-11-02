@@ -12,7 +12,7 @@ import com.intellij.util.text.nullize
 import com.jetbrains.plugins.remotesdk.target.ssh.target.SshTargetEnvironmentConfiguration
 import java.nio.file.Path
 
-class MavenOnSshTargetConfigurationExtension : TargetConfigurationExtension {
+class MavenOnSshTargetConfigurationExtension : TargetConfigurationMavenExtension {
   override fun createUploadRoot(mavenRuntimeConfiguration: MavenRuntimeTargetConfiguration?,
                                 targetEnvironmentRequest: TargetEnvironmentRequest,
                                 targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
