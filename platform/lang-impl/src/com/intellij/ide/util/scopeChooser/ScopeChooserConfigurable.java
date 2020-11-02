@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -125,6 +126,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     checkForPredefinedNames();
     super.apply();
     processScopes();
+    InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile().scopesChanged();
 
     loadStateOrder();
   }
