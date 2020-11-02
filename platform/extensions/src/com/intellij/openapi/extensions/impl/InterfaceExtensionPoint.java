@@ -22,46 +22,6 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     super(name, className, pluginDescriptor, clazz, dynamic);
   }
 
-  static final class InterfaceExtensionImplementationClassResolver implements ImplementationClassResolver {
-    static final ImplementationClassResolver INSTANCE = new InterfaceExtensionImplementationClassResolver();
-
-    private InterfaceExtensionImplementationClassResolver() {
-    }
-
-    @Override
-    public @NotNull Class<?> resolveImplementationClass(@NotNull ComponentManager componentManager,
-                                                        @NotNull ExtensionComponentAdapter adapter) throws ClassNotFoundException {
-      Object implementationClassOrName = adapter.implementationClassOrName;
-      if (!(implementationClassOrName instanceof String)) {
-        return (Class<?>)implementationClassOrName;
-      }
-
-      PluginDescriptor pluginDescriptor = adapter.getPluginDescriptor();
-      String className = (String)implementationClassOrName;
-      Class<?> result = componentManager.loadClass(className, pluginDescriptor);
-      //noinspection SpellCheckingInspection
-      if (result.getClassLoader() != pluginDescriptor.getPluginClassLoader() && pluginDescriptor.getPluginClassLoader() != null &&
-          !className.equals("com.intellij.internal.statistic.updater.StatisticsJobsScheduler") &&
-          !className.equals("com.intellij.spring.model.cacheable.EnableCachingModelProvider") &&
-          !className.equals("com.intellij.diff.actions.DiffCustomCommandHandler") &&
-          !className.startsWith("com.intellij.webcore.resourceRoots.") &&
-          !className.startsWith("com.intellij.tasks.impl.") &&
-          !className.equals("com.intellij.javascript.debugger.execution.DebuggableProgramRunner")) {
-        String idString = pluginDescriptor.getPluginId().getIdString();
-        if (!idString.equals("com.intellij.java") && !idString.equals("com.intellij.java.ide")) {
-          ExtensionPointImpl.LOG.error(componentManager.createError("Created extension classloader is not equal to plugin's one (" +
-                                                                    "className=" + className + ", " +
-                                                                    "extensionInstanceClassloader=" + result.getClassLoader() + ", " +
-                                                                    "pluginClassloader=" + pluginDescriptor.getPluginClassLoader() +
-                                                                    ")", pluginDescriptor.getPluginId()));
-        }
-      }
-      implementationClassOrName = result;
-      adapter.implementationClassOrName = implementationClassOrName;
-      return result;
-    }
-  }
-
   @Override
   public @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
     InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), null, isDynamic());

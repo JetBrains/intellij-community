@@ -31,11 +31,11 @@ public class ExtensionComponentAdapterTest {
     String name = TestExtensionClassOne.class.getName();
     Element element = JDOMUtil.load("<bean implementation=\"123\"/>");
     DefaultPluginDescriptor descriptor = new DefaultPluginDescriptor("test");
-    new XmlExtensionAdapter(name, descriptor, null, LoadingOrder.ANY, element, InterfaceExtensionPoint.InterfaceExtensionImplementationClassResolver.INSTANCE).createInstance(new ExtensionPointImplTest.MyComponentManager());
+    new XmlExtensionAdapter(name, descriptor, null, LoadingOrder.ANY, element, InterfaceExtensionImplementationClassResolver.INSTANCE).createInstance(new ExtensionPointImplTest.MyComponentManager());
   }
 
   @NotNull
   private static ExtensionComponentAdapter createAdapter(@NotNull LoadingOrder order) {
-    return new XmlExtensionAdapter(Object.class.getName(), new DefaultPluginDescriptor("test"), null, order, null, InterfaceExtensionPoint.InterfaceExtensionImplementationClassResolver.INSTANCE);
+    return new XmlExtensionAdapter(Object.class.getName(), new DefaultPluginDescriptor("test"), null, order, null, InterfaceExtensionImplementationClassResolver.INSTANCE);
   }
 }

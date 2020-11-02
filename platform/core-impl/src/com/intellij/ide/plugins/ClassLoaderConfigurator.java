@@ -264,8 +264,11 @@ final class ClassLoaderConfigurator {
     packagePrefixes.clear();
     collectPackagePrefixes(dependent, packagePrefixes);
     // no package prefixes if only bean extension points are configured
-    if (packagePrefixes.isEmpty() && !dependent.getUnsortedEpNameToExtensionElements().containsKey("org.intellij.intelliLang.injectionConfig")) {
-      getLogger().error("Optional descriptor " + dependencyInfo + " doesn't define extra classes");
+    if (packagePrefixes.isEmpty()) {
+      Map<String, List<Element>> map = dependent.getUnsortedEpNameToExtensionElements();
+      if (!map.containsKey("org.intellij.intelliLang.injectionConfig") && !map.containsKey("com.intellij.sharedIndexBundled")) {
+        getLogger().error("Optional descriptor " + dependencyInfo + " doesn't define extra classes");
+      }
     }
 
     loaders.clear();
