@@ -5,7 +5,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -3328,40 +3327,35 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   public void testFindSwitchExpressions() {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-    final String in = "void dummy() {" +
-                      "  int j = switch (i) {\n" +
-                      "    case 10 -> {\n" +
-                      "      System.out.println(10);\n" +
-                      "    }\n" +
-                      "    default -> {}\n" +
-                      "  }\n" +
-                      "  int k = switch (i) {\n" +
-                      "    case 10 -> {\n" +
-                      "      yield 1;\n" +
-                      "    }\n" +
-                      "    default -> 0;\n" +
-                      "  };" +
-                      "  int l = switch (i) {" +
-                      "    case 1,2,3: " +
-                      "      break;" +
-                      "    case 5:" +
-                      "      break;" +
-                      "  }\n" +
+    final String in = "class X {" +
+                      "  void dummy(int i) {" +
+                      "    int j = switch (i) {\n" +
+                      "      case 10 -> {\n" +
+                      "        System.out.println(10);\n" +
+                      "      }\n" +
+                      "      default -> {}\n" +
+                      "    };\n" +
+                      "    int k = switch (i) {\n" +
+                      "      case 10 -> {\n" +
+                      "        yield 1;\n" +
+                      "      }\n" +
+                      "      default -> 0;\n" +
+                      "    };" +
+                      "    int l = switch (i) {" +
+                      "      case 1,2,3: " +
+                      "        break;" +
+                      "      case 5:" +
+                      "        break;" +
+                      "    };\n" +
+                      "  }" +
                       "}";
-    // hack to generate code of the right language level
-    // will no longer be necessary when long LanguageLevel.HIGHEST == JDK_14
-    // (probably after JDK14 release in March 2020)
-    final PsiMethod method = factory.createMethodFromText(in, null, LanguageLevel.JDK_14);
-
-    options.setScope(new LocalSearchScope(method));
-    assertEquals("find expressions & statements", 2, findMatchesCount(null, "switch (i) {" +
+    assertEquals("find expressions & statements", 2, findMatchesCount(in, "switch (i) {" +
                                                                           "  case 10 -> {" +
                                                                           "    '_st;" +
                                                                           "  }" +
-                                                                          "  default -> $X$;" +
+                                                                          "  default -> '_X;" +
                                                                           "}"));
-    //options.setScope(new LocalSearchScope(method));
-    //assertEquals("find yield statement", 1, findMatchesCount(null, "yield '_x;"));
+    assertEquals("find yield statement", 1, findMatchesCount(in, "yield '_x;"));
   }
 
   public void testRepeatedVars() {
