@@ -16,7 +16,6 @@
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.Sets;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.NlsSafe;
@@ -64,9 +63,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
     for (PyTypeCheckerInspection.AnalyzeArgumentResult argumentResult : calleeResults.getResults()) {
       if (argumentResult.isMatched()) continue;
 
-      visitor.registerProblem(argumentResult.getArgument(),
-                              getSingleCalleeProblemMessage(argumentResult, context),
-                              getSingleCalleeHighlightType(argumentResult.getExpectedTypeAfterSubstitution()));
+      visitor.registerProblem(argumentResult.getArgument(), getSingleCalleeProblemMessage(argumentResult, context));
     }
   }
 
@@ -80,8 +77,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
     }
     else {
       visitor.registerProblem(getMultiCalleeElementToHighlight(callSite),
-                              getMultiCalleeProblemMessage(argumentTypes, calleesResults, context, isOnTheFly(visitor)),
-                              getMultiCalleeHighlightType(calleesResults));
+                              getMultiCalleeProblemMessage(argumentTypes, calleesResults, context, isOnTheFly(visitor)));
     }
   }
 
@@ -132,11 +128,6 @@ class PyTypeCheckerInspectionProblemRegistrar {
     }
   }
 
-  @NotNull
-  private static ProblemHighlightType getSingleCalleeHighlightType(@Nullable PyType expectedTypeAfterSubstitution) {
-    return expectedTypeAfterSubstitution == null ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.WEAK_WARNING;
-  }
-
   private static void registerMultiCalleeProblemForBinaryExpression(@NotNull PyInspectionVisitor visitor,
                                                                     @NotNull PyBinaryExpression binaryExpression,
                                                                     @NotNull List<PyType> argumentTypes,
@@ -158,8 +149,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
     else {
       visitor.registerProblem(
         allCalleesAreRightOperators ? binaryExpression.getLeftExpression() : binaryExpression.getRightExpression(),
-        getMultiCalleeProblemMessage(argumentTypes, preferredOperatorsResults, context, isOnTheFly(visitor)),
-        getMultiCalleeHighlightType(preferredOperatorsResults)
+        getMultiCalleeProblemMessage(argumentTypes, preferredOperatorsResults, context, isOnTheFly(visitor))
       );
     }
   }
@@ -206,21 +196,6 @@ class PyTypeCheckerInspectionProblemRegistrar {
              PyPsiBundle.message("INSP.type.checker.expected.types.prefix") + " " +
              expectedTypesRepresentation;
     }
-  }
-
-  /**
-   * @param calleesResults results of analyzing arguments passed to callees
-   * @return {@link ProblemHighlightType#WEAK_WARNING} if all expected types were substituted for all callees,
-   * {@link ProblemHighlightType#GENERIC_ERROR_OR_WARNING} otherwise.
-   */
-  @NotNull
-  private static ProblemHighlightType getMultiCalleeHighlightType(@NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults) {
-    final boolean allExpectedTypesWereSubstituted = calleesResults
-      .stream()
-      .flatMap(calleeResults -> calleeResults.getResults().stream())
-      .allMatch(argumentResult -> argumentResult.getExpectedTypeAfterSubstitution() != null);
-
-    return allExpectedTypesWereSubstituted ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
   }
 
   private static boolean isOnTheFly(@NotNull PyInspectionVisitor visitor) {

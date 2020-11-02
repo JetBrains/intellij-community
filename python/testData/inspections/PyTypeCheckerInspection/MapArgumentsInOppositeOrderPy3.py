@@ -1,1 +1,1 @@
-map(<weak_warning descr="Expected type '(Any) -> Any' (matched generic type '(_T1) -> _S'), got 'str' instead">'foo'</weak_warning>, <weak_warning descr="Expected type 'Iterable' (matched generic type 'Iterable[_T1]'), got '(c: Any) -> int' instead">lambda c: 42</weak_warning>)
+map(<warning descr="Expected type '(Any) -> Any' (matched generic type '(_T1) -> _S'), got 'str' instead">'foo'</warning>, <warning descr="Expected type 'Iterable' (matched generic type 'Iterable[_T1]'), got '(c: Any) -> int' instead">lambda c: 42</warning>)

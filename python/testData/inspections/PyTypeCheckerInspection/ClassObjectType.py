@@ -31,6 +31,6 @@ def expects_myclass_descendant_or_none(x: Optional[Type[T2]]):
     pass
     
 expects_myclass_descendant_or_none(MyClass)
-expects_myclass_descendant_or_none(<weak_warning descr="Expected type 'Optional[Any]' (matched generic type 'Optional[Type[T2]]'), got 'MyClass' instead">MyClass()</weak_warning>)
-expects_myclass_descendant_or_none(<weak_warning descr="Expected type 'Optional[Any]' (matched generic type 'Optional[Type[T2]]'), got 'Type[object]' instead">object</weak_warning>)
-expects_myclass_descendant_or_none(<weak_warning descr="Expected type 'Optional[Any]' (matched generic type 'Optional[Type[T2]]'), got 'object' instead">object()</weak_warning>)
+expects_myclass_descendant_or_none(<warning descr="Expected type 'Optional[Any]' (matched generic type 'Optional[Type[T2]]'), got 'MyClass' instead">MyClass()</warning>)
+expects_myclass_descendant_or_none(<warning descr="Expected type 'Optional[Any]' (matched generic type 'Optional[Type[T2]]'), got 'Type[object]' instead">object</warning>)
+expects_myclass_descendant_or_none(<warning descr="Expected type 'Optional[Any]' (matched generic type 'Optional[Type[T2]]'), got 'object' instead">object()</warning>)
