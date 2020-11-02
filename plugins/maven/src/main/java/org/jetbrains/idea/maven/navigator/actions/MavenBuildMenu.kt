@@ -2,14 +2,13 @@
 package org.jetbrains.idea.maven.navigator.actions
 
 import com.intellij.execution.Executor
-import com.intellij.execution.actions.RunContextAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import org.jetbrains.idea.maven.project.actions.RunBuildAction
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
 
 class MavenBuildMenu : DefaultActionGroup(), DumbAware {
-
+  private val actionManager = ActionManager.getInstance()
   override fun update(e: AnActionEvent) {
     val project = AnAction.getEventProject(e) ?: return
 
@@ -20,7 +19,12 @@ class MavenBuildMenu : DefaultActionGroup(), DumbAware {
     Executor.EXECUTOR_EXTENSION_NAME.extensionList
       .filter { it.isApplicable(project) }
       .reversed()
-      .forEach { add(wrap(RunContextAction(it), it), Constraints.FIRST) }
+      .forEach {
+        val contextAction = actionManager.getAction(it.contextActionId)
+        if (contextAction != null) {
+          add(wrap(contextAction, it), Constraints.FIRST)
+        }
+      }
 
     ActionManager.getInstance().getAction("Maven.RunBuild")?.let {
       add(it, Constraints.FIRST)
