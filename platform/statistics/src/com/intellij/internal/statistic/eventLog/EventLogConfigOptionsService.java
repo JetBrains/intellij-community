@@ -65,9 +65,6 @@ public class EventLogConfigOptionsService {
   }
 
   public interface EventLogConfigOptionsListener {
-    Topic<EventLogConfigOptionsListener> TOPIC =
-      Topic.create("EventLogExternalConfigOptionsListener", EventLogConfigOptionsListener.class);
-
     void optionChanged(@NotNull String recorderId, @NotNull String name, @NotNull String value);
   }
 
