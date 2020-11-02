@@ -270,7 +270,7 @@ public abstract class Configuration implements JDOMExternalizable {
   }
 
   public LanguageFileType getFileType() {
-    return null;
+    return getMatchOptions().getFileType();
   }
 
   @NotNull @NonNls
