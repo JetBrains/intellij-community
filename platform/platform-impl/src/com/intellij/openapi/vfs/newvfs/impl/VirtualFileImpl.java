@@ -158,12 +158,6 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
     }
   }
 
-  @Override
-  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) throws IOException {
-    checkNotTooLarge(null);
-    super.setBinaryContent(content, newModificationStamp, newTimeStamp);
-  }
-
   @Nullable
   @Override
   public String getDetectedLineSeparator() {
