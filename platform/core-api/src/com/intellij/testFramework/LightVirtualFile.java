@@ -107,7 +107,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
   public byte @NotNull [] contentsToByteArray() throws IOException {
     final Charset charset = getCharset();
     final String s = getContent().toString();
-    return s.getBytes(charset.name());
+    return s.getBytes(charset);
   }
 
   public void setContent(Object requestor, @NotNull CharSequence content, boolean fireEvent) {

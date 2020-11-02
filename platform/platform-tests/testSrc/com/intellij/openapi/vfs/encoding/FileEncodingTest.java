@@ -368,7 +368,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     FileDocumentManager.getInstance().saveAllDocuments();
     byte[] bytes = FileUtil.loadFileBytes(ioFile);
     //file on disk is still windows
-    assertArrayEquals(text.toString().getBytes(WINDOWS_1251.name()), bytes);
+    assertArrayEquals(text.toString().getBytes(WINDOWS_1251), bytes);
 
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
       document.insertString(0, "x");
@@ -384,7 +384,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
 
     //after 'save as us' file on disk changed
     bytes = FileUtil.loadFileBytes(ioFile);
-    assertArrayEquals(text.toString().getBytes(US_ASCII.name()), bytes);
+    assertArrayEquals(text.toString().getBytes(US_ASCII), bytes);
   }
 
   public void testCopyMove() throws IOException {

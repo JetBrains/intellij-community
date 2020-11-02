@@ -25,7 +25,7 @@ final class InputRequestHandler {
   }
 
   private static void sendInput(String input, Charset charset, OutputStream outputStream) throws IOException {
-    byte[] bytes = input.getBytes(charset.name());
+    byte[] bytes = input.getBytes(charset);
     int length = bytes.length;
     byte[] packet = new byte[length + 4];
     System.arraycopy(bytes, 0, packet, 4, length);

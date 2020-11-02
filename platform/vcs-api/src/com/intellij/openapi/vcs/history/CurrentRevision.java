@@ -46,7 +46,7 @@ public class CurrentRevision implements VcsFileRevision {
     try {
       Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(myFile));
       if (document != null) {
-        return document.getText().getBytes(myFile.getCharset().name());
+        return document.getText().getBytes(myFile.getCharset());
       }
       else {
         return myFile.contentsToByteArray();
