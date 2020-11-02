@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.tokenizer;
+package com.intellij.spellchecker.xml;
 
 import com.intellij.codeInsight.completion.HtmlCompletionContributor;
 import com.intellij.psi.ElementManipulators;
@@ -21,6 +21,8 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.io.URLUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
