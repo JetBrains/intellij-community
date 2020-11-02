@@ -27,7 +27,7 @@ public class WebPreviewEditorProvider implements FileEditorProvider, DumbAware {
   @NotNull
   @Override
   public String getEditorTypeId() {
-    return "terminal-session-editor";
+    return "web-preview-editor";
   }
 
   @NotNull

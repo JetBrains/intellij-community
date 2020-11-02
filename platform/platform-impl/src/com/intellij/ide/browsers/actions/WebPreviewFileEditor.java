@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -58,8 +59,7 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
     try {
       myPanel.setHtml(FileUtil.loadTextAndClose(myFile.getInputStream()));
     }
-    catch (IOException e) {
-      e.printStackTrace();
+    catch (IOException ignore) {
     }
   }
 
@@ -75,7 +75,7 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
 
   @Override
   public @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getName() {
-    return "Preview for " + myFile.getName();
+    return IdeBundle.message("web.preview.file.editor.name", myFile.getName());
   }
 
   @Override

@@ -47,7 +47,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
       AnAction[] actions = new AnAction[browsers.size() + offset];
 
       if (hasLocalBrowser) {
-        actions[0] = new DumbAwareAction("Open in editor", "Open in editor", AppUIUtil.loadSmallApplicationIcon(ScaleContext.create())) {
+        actions[0] = new DumbAwareAction(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtil.loadSmallApplicationIcon(ScaleContext.create())) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             Project project = e.getRequiredData(CommonDataKeys.PROJECT);

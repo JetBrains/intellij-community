@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,12 +25,12 @@ public class WebPreviewFileType extends FakeFileType {
 
   @Override
   public @NotNull @Nls String getDisplayName() {
-    return getName();
+    return IdeBundle.message("web.preview.filetype.display.name");
   }
 
   @Override
   public @NlsContexts.Label @NotNull String getDescription() {
-    return "Used for file preview in embedded browser";
+    return IdeBundle.message("web.preview.filetype.description");
   }
 
   @Override
