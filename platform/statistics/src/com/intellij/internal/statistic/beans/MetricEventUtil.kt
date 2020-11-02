@@ -70,26 +70,6 @@ fun <T> addCounterIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, de
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newCounterMetric(eventId, it, data) }
 }
 
-fun <T> addCounterRangeIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
-                                 valueFunction: Function1<T, Int>, eventId: String, data: FeatureUsageData?) {
-  addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newCounterRangeMetric(eventId, it, data) }
-}
-
-fun <T> addCounterRangeIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
-                                 valueFunction: Function1<T, Int>, eventId: String) {
-  addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newCounterRangeMetric(eventId, it) }
-}
-
-fun <T> addCounterRangeIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
-                                 valueFunction: Function1<T, Int>, featureId: String, steps: List<Int>, data: FeatureUsageData?) {
-  addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newCounterRangeMetric(featureId, it, steps, data) }
-}
-
-fun <T> addCounterRangeIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
-                                 valueFunction: Function1<T, Int>, eventId: String, steps: List<Int>) {
-  addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newCounterRangeMetric(eventId, it, steps) }
-}
-
 fun <T, V : Enum<*>> addEnumIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                                       valueFunction: Function1<T, V>, eventId: String) {
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newMetric(eventId, it, null) }
