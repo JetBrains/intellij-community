@@ -1662,7 +1662,10 @@ public final class ExpressionUtils {
           return (PsiAssignmentExpression)((PsiExpressionStatement)block.addAfter(statement, declaration)).getExpression();
         }
         finally {
-          initializer.delete();
+          initializer = var.getInitializer();
+          if (initializer != null) {
+            initializer.delete();
+          }
         }
       }
     }
