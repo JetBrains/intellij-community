@@ -307,7 +307,9 @@ public final class WelcomeScreenComponentFactory {
     Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
       if (!types.isEmpty()) {
         NotificationType type = Collections.max(types);
-        actionLink.setIcon(IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
+        actionLink.setIcon(type == NotificationType.IDE_UPDATE
+                           ? AllIcons.Ide.Notification.IdeUpdate
+                           : IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
       }
       panel.setVisible(!types.isEmpty());
     });

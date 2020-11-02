@@ -501,8 +501,8 @@
       <separator/>
       <reference id="NavBarToolBarOthers"/>
       <separator/>
-      <reference ref="RunAnything"/>
       <reference ref="SearchEverywhere"/>
+      <reference ref="SettingsEntryPoint"/>
     </group>
 
 

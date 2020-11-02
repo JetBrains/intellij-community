@@ -132,6 +132,8 @@ public class PluginManagerConfigurable
 
   private Collection<IdeaPluginDescriptor> myInitUpdates;
 
+  private String myLaterSearchQuery;
+
   public PluginManagerConfigurable(@Nullable Project project) {
     myPluginModel = new MyPluginModel(project);
   }
@@ -203,7 +205,7 @@ public class PluginManagerConfigurable
     if (myInitUpdates != null) {
       callback.accept(myInitUpdates.size());
     }
-    myPluginUpdatesService = PluginUpdatesService.connectConfigurable(callback);
+    myPluginUpdatesService = PluginUpdatesService.connectWithCounter(callback);
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
 
     boolean selectInstalledTab = !ContainerUtil.isEmpty(myInitUpdates);
@@ -234,6 +236,14 @@ public class PluginManagerConfigurable
 
     if (selectInstalledTab) {
       myInstalledTab.setSearchQuery("/outdated");
+    }
+
+    if (myLaterSearchQuery != null) {
+      Runnable search = enableSearch(myLaterSearchQuery);
+      if (search != null) {
+        ApplicationManager.getApplication().invokeLater(search, ModalityState.any());
+      }
+      myLaterSearchQuery = null;
     }
 
     return myCardPanel;
@@ -893,7 +903,7 @@ public class PluginManagerConfigurable
             myPluginModel.addEnabledGroup(group);
           }
 
-          myPluginUpdatesService.connectInstalled(updates -> {
+          myPluginUpdatesService.calculateUpdates(updates -> {
             if (ContainerUtil.isEmpty(updates)) {
               clearUpdates(myInstalledPanel);
               clearUpdates(myInstalledSearchPanel.getPanel());
@@ -1157,6 +1167,10 @@ public class PluginManagerConfigurable
     };
 
     myPluginModel.setCancelInstallCallback(descriptor -> {
+      if (myInstalledSearchPanel == null) {
+        return;
+      }
+
       PluginsGroup group = myInstalledSearchPanel.getGroup();
 
       if (group.ui != null && group.ui.findComponent(descriptor) != null) {
@@ -1721,6 +1735,10 @@ public class PluginManagerConfigurable
   @Nullable
   @Override
   public Runnable enableSearch(String option) {
+    if (myTabHeaderComponent == null) {
+      myLaterSearchQuery = option;
+      return null;
+    }
     if (StringUtil.isEmpty(option) && (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledSearchPanel.isEmpty())) {
       return null;
     }

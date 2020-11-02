@@ -59,7 +59,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   public PluginUpdateDialog(@Nullable Project project,
                             @NotNull Collection<PluginDownloader> updatedPlugins,
-                            @NotNull Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
+                            @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
     super(true);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
 
@@ -82,7 +82,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       @Override
       @NotNull
       protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
-        return customRepositoryPlugins;
+        return customRepositoryPlugins == null ? super.getCustomRepoPlugins() : customRepositoryPlugins;
       }
     };
 

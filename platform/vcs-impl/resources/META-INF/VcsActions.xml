@@ -341,7 +341,7 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference ref="ChangesView.Revert"/>
       <separator/>
-      <add-to-group group-id="MainToolBarSettings" relative-to-action="ShowSettings" anchor="before"/>
+      <add-to-group group-id="MainToolBarSettings"/>
     </group>
 
     <group id="VcsNavBarToolbarActions">

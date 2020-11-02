@@ -165,6 +165,7 @@
     </action>
     <action id="OpenElementInNewWindow" class="com.intellij.ide.actions.OpenElementInNewWindowAction" />
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
+    <action id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
 
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
 
@@ -808,12 +809,10 @@
       <reference ref="Back"/>
       <reference ref="Forward"/>
       <separator/>
-      <group id="MainToolBarSettings">
-        <reference ref="ShowSettings"/>
-      </group>
+      <group id="MainToolBarSettings"/>
       <separator/>
-      <reference ref="RunAnything"/>
       <reference ref="SearchEverywhere"/>
+      <reference ref="SettingsEntryPoint"/>
     </group>
 
     <group id="NavBarVcsGroup"/>
@@ -1353,5 +1352,16 @@
     </group>
 
     <action class="com.intellij.diagnostic.ResetWindowsDefenderNotification" id="ResetWindowsDefenderNotification"/>
+
+    <group id="SettingsEntryPointGroup">
+      <reference id="RunAnything"/>
+      <separator/>
+      <reference id="ShowSettings"/>
+      <reference id="WelcomeScreen.Plugins"/>
+      <separator/>
+      <reference id="ChangeLaf"/>
+      <reference id="ChangeKeymap"/>
+      <reference id="ChangeView"/>
+    </group>
   </actions>
 </idea-plugin>

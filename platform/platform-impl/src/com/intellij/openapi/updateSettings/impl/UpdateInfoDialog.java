@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -48,7 +49,7 @@ import static com.intellij.openapi.util.Pair.pair;
 /**
  * @author pti
  */
-final class UpdateInfoDialog extends AbstractUpdateDialog {
+public final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
   private final Collection<PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
@@ -58,7 +59,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final File myTestPatch;
   private final AbstractAction myWhatsNewAction;
 
-  UpdateInfoDialog(@NotNull UpdateChannel channel,
+  public UpdateInfoDialog(@NotNull UpdateChannel channel,
                    @NotNull BuildInfo newBuild,
                    @Nullable UpdateChain patches,
                    boolean enableLink,
@@ -213,30 +214,46 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart() {
-    boolean updatePlugins = !ContainerUtil.isEmpty(myUpdatedPlugins);
-    if (updatePlugins && !new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet()) {
+    if (!ContainerUtil.isEmpty(myUpdatedPlugins) && !new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet()) {
       return;  // update cancelled
     }
+    downloadPatchAndRestart(myNewBuild, myUpdatedChannel, myPatches, myTestPatch, myUpdatedPlugins, null);
+  }
 
+  public static void downloadPatchAndRestart(@NotNull BuildInfo newBuild,
+                                             @NotNull UpdateChannel updatedChannel,
+                                             @NotNull UpdateChain patches,
+                                             @Nullable File testPatch,
+                                             @Nullable Collection<PluginDownloader> updatedPlugins,
+                                             @Nullable ActionCallback callback) {
     new Task.Backgroundable(null, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
         try {
-          if (myTestPatch != null) {
-            command = UpdateInstaller.preparePatchCommand(myTestPatch, indicator);
+          if (testPatch != null) {
+            command = UpdateInstaller.preparePatchCommand(testPatch, indicator);
           }
           else {
-            List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), indicator);
+            List<File> files = UpdateInstaller.downloadPatchChain(patches.getChain(), indicator);
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
         }
-        catch (ProcessCanceledException e) { throw e; }
+        catch (ProcessCanceledException e) {
+          if (callback != null) {
+            callback.setRejected();
+          }
+          throw e;
+        }
         catch (Exception e) {
           Logger.getInstance(UpdateInstaller.class).warn(e);
 
+          if (callback != null) {
+            callback.setRejected();
+          }
+
           String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-          String downloadUrl = UpdateInfoPanel.downloadUrl(myNewBuild, myUpdatedChannel);
+          String downloadUrl = UpdateInfoPanel.downloadUrl(newBuild, updatedChannel);
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl);
           UpdateChecker.getNotificationGroup().createNotification(
             title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER, "ide.patch.download.failed").notify(null);
@@ -244,8 +261,12 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
           return;
         }
 
-        if (updatePlugins) {
-          UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
+        if (!ContainerUtil.isEmpty(updatedPlugins)) {
+          UpdateInstaller.installPluginUpdates(updatedPlugins, indicator);
+        }
+
+        if (callback != null) {
+          callback.setDone();
         }
 
         if (ApplicationManager.getApplication().isRestartCapable()) {

@@ -260,7 +260,7 @@ final class EventLogConsole {
     final NotificationType type = notification.getType();
     TextAttributesKey key = type == NotificationType.ERROR
                             ? ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY
-                            : type == NotificationType.INFORMATION
+                            : type == NotificationType.INFORMATION || type == NotificationType.IDE_UPDATE
                               ? ConsoleViewContentType.NORMAL_OUTPUT_KEY
                               : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
 

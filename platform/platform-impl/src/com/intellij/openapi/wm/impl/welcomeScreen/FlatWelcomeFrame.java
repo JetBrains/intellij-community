@@ -37,7 +37,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.scale.JBUIScale;
@@ -70,7 +69,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor, WelcomeFrameUpdater {
+public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor {
   @SuppressWarnings("StaticNonFinalField")
   public static boolean USE_TABBED_WELCOME_SCREEN = Boolean.parseBoolean(SystemProperty.get("use.tabbed.welcome.screen", "true"));
 
@@ -232,9 +231,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return pair.second;
   }
 
-  private final class FlatWelcomeScreen extends AbstractWelcomeScreen implements WelcomeFrameUpdater {
+  private final class FlatWelcomeScreen extends AbstractWelcomeScreen {
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
-    private LinkLabel<Object> myUpdatePluginsLink;
     private boolean inDnd;
 
     FlatWelcomeScreen() {
@@ -352,14 +350,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       ActionPanel actionPanel = createQuickStartActionPanel();
       panel.add(actionPanel, BorderLayout.CENTER);
       myTouchbarActions.addAll(actionPanel.getActions());
-      panel.add(createUpdatesSettingsAndDocs(), BorderLayout.SOUTH);
-      return panel;
-    }
-
-    private JComponent createUpdatesSettingsAndDocs() {
-      JPanel panel = new NonOpaquePanel(new BorderLayout());
-      panel.add(createUpdatePluginsLink(), BorderLayout.WEST);
-      panel.add(createSettingsAndDocsPanel(FlatWelcomeFrame.this), BorderLayout.EAST);
+      panel.add(createSettingsAndDocsPanel(FlatWelcomeFrame.this), BorderLayout.SOUTH);
       return panel;
     }
 
@@ -469,47 +460,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
       return null;
     }
-
-    private JComponent createUpdatePluginsLink() {
-      myUpdatePluginsLink = new LinkLabel<>(IdeBundle.message("updates.plugins.welcome.screen.link.message"), null);
-      myUpdatePluginsLink.setVisible(false);
-
-      NonOpaquePanel wrap = new NonOpaquePanel(myUpdatePluginsLink);
-      wrap.setBorder(JBUI.Borders.empty(0, 10, 8, 11));
-      return wrap;
-    }
-
-    @Override
-    public void showPluginUpdates(@NotNull Runnable callback) {
-      myUpdatePluginsLink.setListener((__, ___) -> callback.run(), null);
-      myUpdatePluginsLink.setVisible(true);
-    }
-
-    @Override
-    public void hidePluginUpdates() {
-      myUpdatePluginsLink.setListener(null, null);
-      myUpdatePluginsLink.setVisible(false);
-    }
   }
 
   protected void extendActionsGroup(JPanel panel) {
   }
 
   protected void onFirstActionShown(@NotNull Component action) {
-  }
-
-  @Override
-  public void showPluginUpdates(@NotNull Runnable callback) {
-    if (myScreen instanceof WelcomeFrameUpdater) {
-      ((WelcomeFrameUpdater)myScreen).showPluginUpdates(callback);
-    }
-  }
-
-  @Override
-  public void hidePluginUpdates() {
-    if (myScreen instanceof WelcomeFrameUpdater) {
-      ((WelcomeFrameUpdater)myScreen).hidePluginUpdates();
-    }
   }
 
   @Nullable

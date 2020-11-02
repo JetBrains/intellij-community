@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
@@ -27,6 +28,7 @@ import javax.swing.*;
 public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   private UIManager.LookAndFeelInfo initialLaf;
   private final Alarm switchAlarm = new Alarm();
+  private boolean myLafActionSelection;
 
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
@@ -37,6 +39,9 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     for (UIManager.LookAndFeelInfo lf : lfs) {
       group.add(new LafChangeAction(lf, initialLaf == lf));
     }
+
+    group.addSeparator();
+    group.add(new ShowPluginsWithSearchOptionAction(IdeBundle.message("laf.action.install.theme"), "/tag:Theme"));
   }
 
   @Override
@@ -44,14 +49,17 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     switchAlarm.cancelAllRequests();
     if (Registry.is("ide.instant.theme.switch")) {
       popup.addListSelectionListener(event -> {
-        JList list = (JList)event.getSource();
-        Object item = list.getSelectedValue();
+        Object item = ((JList)event.getSource()).getSelectedValue();
         if (item instanceof AnActionHolder) {
-          switchAlarm.cancelAllRequests();
-          switchAlarm.addRequest(() -> {
-            LafChangeAction action = (LafChangeAction)((AnActionHolder)item).getAction();
-            switchLafAndUpdateUI(LafManager.getInstance(), action.myLookAndFeelInfo, false);
-          }, Registry.get("ide.instant.theme.switch.delay").asInteger());
+          AnAction anAction = ((AnActionHolder)item).getAction();
+          myLafActionSelection = anAction instanceof LafChangeAction;
+          if (myLafActionSelection) {
+            switchAlarm.cancelAllRequests();
+            switchAlarm.addRequest(() -> {
+              LafChangeAction action = (LafChangeAction)anAction;
+              switchLafAndUpdateUI(LafManager.getInstance(), action.myLookAndFeelInfo, false);
+            }, Registry.get("ide.instant.theme.switch.delay").asInteger());
+          }
         }
       });
     }
@@ -59,7 +67,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
-        if (Registry.is("ide.instant.theme.switch") && !event.isOk()) {
+        if (Registry.is("ide.instant.theme.switch") && !event.isOk() && myLafActionSelection) {
           switchLafAndUpdateUI(LafManager.getInstance(), initialLaf, false);
         }
       }

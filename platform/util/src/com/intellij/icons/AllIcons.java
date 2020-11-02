@@ -584,8 +584,10 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon ExpandHover = load("ide/notification/expandHover.svg", -6923529455314709892L, 0);
       /** 16x16 */ public static final @NotNull Icon Gear = load("ide/notification/gear.svg", -6517441912232259723L, 0);
       /** 16x16 */ public static final @NotNull Icon GearHover = load("ide/notification/gearHover.svg", 8529034088585467841L, 0);
+      /** 16x16 */ public static final @NotNull Icon IdeUpdate = load("ide/notification/ideUpdate.svg", -5687507774382455241L, 2);
       /** 16x16 */ public static final @NotNull Icon InfoEvents = load("ide/notification/infoEvents.svg", 8320605274562923160L, 2);
       /** 16x16 */ public static final @NotNull Icon NoEvents = load("ide/notification/noEvents.svg", -5934625381114731420L, 2);
+      /** 16x16 */ public static final @NotNull Icon PluginUpdate = load("ide/notification/pluginUpdate.svg", 7670193732028920558L, 2);
       /** 16x16 */ public static final @NotNull Icon WarningEvents = load("ide/notification/warningEvents.svg", -7338122458505861009L, 2);
     }
 

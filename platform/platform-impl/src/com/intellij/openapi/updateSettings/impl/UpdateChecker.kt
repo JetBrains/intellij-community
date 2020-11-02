@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.BrokenPluginsService
@@ -29,7 +30,6 @@ import com.intellij.openapi.util.Pair.pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrameUpdater
 import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -120,9 +120,7 @@ object UpdateChecker {
     val fromSettings = customSettings != null
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
-      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !fromSettings,
-                                                                             fromSettings || WelcomeFrame.getInstance() != null, true,
-                                                                             settings, indicator, null)
+      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !fromSettings, fromSettings, true, settings, indicator, null)
 
       override fun isConditionalModal(): Boolean = fromSettings
       override fun shouldStartInBackground(): Boolean = !fromSettings
@@ -557,6 +555,8 @@ object UpdateChecker {
         runnable.invoke()
       }
       else {
+        SettingsEntryPointAction.newPlatformUpdate(checkForUpdateResult, checkPluginsUpdateResult.incompatiblePlugins)
+
         IdeUpdateUsageTriggerCollector.trigger("notification.shown")
         val title = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName,
                                       newBuild.version)
@@ -583,33 +583,32 @@ object UpdateChecker {
       }
       // don't show notification if all updated plugins is disabled
       else if (updatedPlugins.size != updatedPlugins.count { downloader -> PluginManagerCore.isDisabled(downloader.id) }) {
+        SettingsEntryPointAction.newPluginsUpdate(updatedPlugins, checkPluginsUpdateResult.customRepositoryPlugins)
+
         val runnable = { PluginManagerConfigurable.showPluginConfigurable(project, updatedPlugins.map { it.descriptor }) }
 
-        val ideFrame = WelcomeFrame.getInstance()
-        if (ideFrame is WelcomeFrameUpdater) {
-          ideFrame.showPluginUpdates(runnable)
-        }
-        else {
-          val names = updatedPlugins.joinToString { downloader -> StringUtil.wrapWithDoubleQuote(downloader.pluginName) }
-          val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names) else IdeBundle.message("updates.plugins.ready.short.title.available")
-          val message = if (updatedPlugins.size == 1) "" else names
-          showNotification(project, title, message, runnable, { notification ->
-            notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.link.title")
-            val text = if (updatedPlugins.size == 1) IdeBundle.message("plugins.configurable.update.button") else IdeBundle.message("plugin.manager.update.all")
-            notification.actions.add(0, object : NotificationAction(text) {
-              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                notification.expire()
-                PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?)
-              }
-            })
-            notification.addAction(object : NotificationAction(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
-              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                notification.expire()
-                PluginUpdateDialog.ignorePlugins(updatedPlugins.map { downloader -> downloader.descriptor })
-              }
-            })
-          }, NotificationUniqueType.PLUGINS, "plugins.update.available")
-        }
+        val names = updatedPlugins.joinToString { downloader -> StringUtil.wrapWithDoubleQuote(downloader.pluginName) }
+        val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names)
+        else IdeBundle.message("updates.plugins.ready.short.title.available")
+        val message = if (updatedPlugins.size == 1) "" else names
+
+        showNotification(project, title, message, runnable, { notification ->
+          notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.link.title")
+          val text = if (updatedPlugins.size == 1) IdeBundle.message("plugins.configurable.update.button")
+          else IdeBundle.message("plugin.manager.update.all")
+          notification.actions.add(0, object : NotificationAction(text) {
+            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+              notification.expire()
+              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?)
+            }
+          })
+          notification.addAction(object : NotificationAction(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
+            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+              notification.expire()
+              PluginUpdateDialog.ignorePlugins(updatedPlugins.map { downloader -> downloader.descriptor })
+            }
+          })
+        }, NotificationUniqueType.PLUGINS, "plugins.update.available")
       }
     }
 
@@ -647,9 +646,6 @@ object UpdateChecker {
   }
 
   private fun canEnableNotifications(): Boolean {
-    if (WelcomeFrame.getInstance() is WelcomeFrameUpdater) {
-      return true
-    }
     return NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS && NotificationsConfigurationImpl.getSettings(
       getNotificationGroup().displayId).displayType != NotificationDisplayType.NONE
   }
@@ -662,7 +658,8 @@ object UpdateChecker {
                                notificationType: NotificationUniqueType,
                                notificationDisplayId: String) {
     val content = if (message.isEmpty()) "" else XmlStringUtil.wrapInHtml(message)
-    val notification = getNotificationGroup().createNotification(title, content, NotificationType.INFORMATION, null, notificationDisplayId)
+    val type = if (notificationType == NotificationUniqueType.PLATFORM) NotificationType.IDE_UPDATE else NotificationType.INFORMATION
+    val notification = getNotificationGroup().createNotification(title, content, type, null, notificationDisplayId)
     notification.collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
     notification.addAction(object : NotificationAction(IdeBundle.message("updates.notification.update.action")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
