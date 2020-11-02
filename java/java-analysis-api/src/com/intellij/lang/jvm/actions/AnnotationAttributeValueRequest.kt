@@ -55,7 +55,7 @@ fun attributeValueRequest(attribValue: JvmAnnotationAttributeValue,
     val referenceText = (attribute as? PsiNameValuePair)?.value?.text ?: (attribValue.field as? PsiElement)?.text
     referenceText?.let { AnnotationAttributeValueRequest.ConstantValue(attribValue.field, it) }
   }
-  is JvmNestedAnnotationValue -> AnnotationAttributeValueRequest.NestedAnnotation(annotationRequest(attribValue.value))
+  is JvmNestedAnnotationValue -> annotationRequest(attribValue.value)?.let(AnnotationAttributeValueRequest::NestedAnnotation)
   else -> null
 }
 
