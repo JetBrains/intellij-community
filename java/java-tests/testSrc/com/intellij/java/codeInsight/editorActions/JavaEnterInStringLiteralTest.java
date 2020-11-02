@@ -15,8 +15,8 @@
  */
 package com.intellij.java.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -52,7 +52,7 @@ public class JavaEnterInStringLiteralTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testEnterOpSignOnNextLine() {
-    CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     boolean opSignOnNextLine = settings.BINARY_OPERATION_SIGN_ON_NEXT_LINE;
     try {
       settings.BINARY_OPERATION_SIGN_ON_NEXT_LINE =  true;

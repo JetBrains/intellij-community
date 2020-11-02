@@ -2,6 +2,7 @@
 package com.intellij.java.psi.codeStyle.autodetect;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
@@ -10,7 +11,6 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.autodetect.AbstractIndentAutoDetectionTest;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.autodetect.FormatterBasedLineIndentInfoBuilder;
 import com.intellij.psi.codeStyle.autodetect.LineIndentInfo;
@@ -141,7 +141,7 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
     Assert.assertNotNull(builder);
 
     FormattingModel model =
-      builder.createModel(FormattingContext.create(getFile(), CodeStyleSettingsManager.getSettings(getProject())));
+      builder.createModel(FormattingContext.create(getFile(), CodeStyle.getSettings(getProject())));
     Block block = model.getRootBlock();
     List<LineIndentInfo> list = new FormatterBasedLineIndentInfoBuilder(document, block, null).build();
 

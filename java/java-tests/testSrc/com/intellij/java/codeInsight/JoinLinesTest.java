@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -310,6 +311,6 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
 
   @NotNull
   private CommonCodeStyleSettings getJavaSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    return CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 }

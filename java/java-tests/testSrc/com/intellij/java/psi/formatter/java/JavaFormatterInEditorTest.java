@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -22,7 +23,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
@@ -144,7 +144,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
 
   public void testKeepIndentsOnBlankLinesCaretPosition() {
     CommonCodeStyleSettings.IndentOptions indentOptions =
-      CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
+      CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
     assertNotNull(indentOptions);
     indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = true;
     final String initial =
@@ -177,7 +177,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
   
   public void testKeepWhitespacesOnEmptyLines() {
     CommonCodeStyleSettings.IndentOptions indentOptions =
-      CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
+      CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
     assertNotNull(indentOptions);
     boolean keepIndents = indentOptions.KEEP_INDENTS_ON_EMPTY_LINES;
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();

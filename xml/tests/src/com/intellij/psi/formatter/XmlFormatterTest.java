@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
@@ -175,7 +175,7 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void test21() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).setRightMargin(XMLLanguage.INSTANCE, 20);
+    CodeStyle.getSettings(getProject()).setRightMargin(XMLLanguage.INSTANCE, 20);
     doTest();
   }
 

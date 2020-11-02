@@ -15,9 +15,9 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterTestCase;
 
@@ -32,7 +32,7 @@ public class PropertiesFormatterTest extends FormatterTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     mySettings = settings.getCommonSettings(PropertiesLanguage.INSTANCE);
     myCustomSettings = settings.getCustomSettings(PropertiesCodeStyleSettings.class);
     mySettings.ALIGN_GROUP_FIELD_DECLARATIONS = false;

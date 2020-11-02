@@ -15,13 +15,13 @@
  */
 package com.intellij.java.codeInsight.completion
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.ClassConditionKey
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
@@ -292,7 +292,7 @@ class Foo {
 
   @NeedsIndex.Full
   void "test no global reformatting"() {
-    CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true
+    CodeStyle.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true
 
     myFixture.addClass("package foo; public interface Foo { int XCONST = 42; }")
     def file = myFixture.addFileToProject "a.java", '''

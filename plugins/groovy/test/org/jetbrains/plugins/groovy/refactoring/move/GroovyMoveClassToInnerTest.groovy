@@ -15,11 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.move
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -48,7 +48,7 @@ class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
   }
 
   void testInsertInnerClassImport() throws Exception {
-    final settings = CodeStyleSettingsManager.getSettings(myFixture.project).getCustomSettings(GroovyCodeStyleSettings.class)
+    final settings = CodeStyle.getSettings(myFixture.project).getCustomSettings(GroovyCodeStyleSettings.class)
     def oldValue = settings.INSERT_INNER_CLASS_IMPORTS
     settings.INSERT_INNER_CLASS_IMPORTS = true
     try {
@@ -60,7 +60,7 @@ class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
   }
 
   void testSimultaneousMove() throws Exception {
-    final settings = CodeStyleSettingsManager.instance.currentSettings.getCustomSettings(GroovyCodeStyleSettings.class)
+    final settings = CodeStyle.getSettings(getProject()).getCustomSettings(GroovyCodeStyleSettings.class)
     final oldValue = settings.INSERT_INNER_CLASS_IMPORTS
     settings.INSERT_INNER_CLASS_IMPORTS = false
     try {

@@ -15,12 +15,12 @@
  */
 package org.intellij.lang.xpath.xslt;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.intellij.lang.xpath.TestBase;
@@ -34,7 +34,7 @@ public class Xslt2RefactoringTest extends TestBase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
+    final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = true;
     settings.getIndentOptions(XmlFileType.INSTANCE).INDENT_SIZE = 2;
