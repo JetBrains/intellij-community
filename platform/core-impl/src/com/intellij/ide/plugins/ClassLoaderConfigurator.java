@@ -372,8 +372,7 @@ final class ClassLoaderConfigurator {
       else if (existingPackagePrefix.startsWith(packagePrefix) && existingPackagePrefix.indexOf('$') == -1) {
         packagePrefixes.set(i, packagePrefix);
         for (int j = packagePrefixes.size() - 1; j > i; j--) {
-          existingPackagePrefix = packagePrefixes.get(i);
-          if (existingPackagePrefix.startsWith(packagePrefix)) {
+          if (packagePrefixes.get(j).startsWith(packagePrefix)) {
             packagePrefixes.remove(j);
           }
         }
