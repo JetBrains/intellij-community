@@ -54,11 +54,11 @@ class GotItUsageCollector private constructor() {
   }
 
   fun logOpen(id: String, count: Int) {
-    GotItUsageCollectorGroup.showEvent.log(id, count)
+    toPrefix(id)?.let{ GotItUsageCollectorGroup.showEvent.log(it, count) }
   }
 
   fun logClose(id: String, closeType: GotItUsageCollectorGroup.CloseType) {
-    GotItUsageCollectorGroup.closeEvent.log(id, closeType)
+    toPrefix(id)?.let{ GotItUsageCollectorGroup.closeEvent.log(it, closeType) }
   }
 
   fun toPrefix(id: String): String? {
@@ -105,9 +105,8 @@ class GotItUsageCollectorGroup : CounterUsagesCollector() {
 }
 
 class GotItIDValidator : CustomValidationRule() {
-  override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return if (GotItUsageCollector.instance.toPrefix(data) != null) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
-  }
+  override fun doValidate(data: String, context: EventContext): ValidationResultType =
+    if (GotItUsageCollector.instance.toPrefix(data) == data) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
 
 
   override fun acceptRuleId(ruleId: String?): Boolean {
