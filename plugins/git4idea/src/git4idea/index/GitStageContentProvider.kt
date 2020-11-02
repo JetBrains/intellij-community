@@ -28,7 +28,9 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
   override fun initContent(): JComponent {
     val tracker = GitStageTracker.getInstance(project)
     disposable = Disposer.newDisposable("Git Stage Content Provider")
-    val gitStagePanel = GitStagePanel(tracker, isCommitToolWindow(project), disposable!!)
+    val gitStagePanel = GitStagePanel(tracker, isCommitToolWindow(project), disposable!!) {
+      ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.activate(null)
+    }
     setupTabTitleUpdater(tracker, gitStagePanel)
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {

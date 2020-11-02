@@ -48,7 +48,10 @@ import git4idea.status.GitChangeProvider
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffPreview: Boolean, disposableParent: Disposable) :
+internal class GitStagePanel(private val tracker: GitStageTracker,
+                             isEditorDiffPreview: Boolean,
+                             disposableParent: Disposable,
+                             private val activate: () -> Unit) :
   JPanel(BorderLayout()), DataProvider, Disposable {
   private val project = tracker.project
 
@@ -149,7 +152,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     diffPreviewProcessor!!.getToolbarWrapper().setVerticalSizeReferent(toolbar.component)
 
     if (isInEditor) {
-      editorTabPreview = GitStageEditorDiffPreview(diffPreviewProcessor!!, tree, this)
+      editorTabPreview = GitStageEditorDiffPreview(diffPreviewProcessor!!, tree, this, activate)
       commitDiffSplitter.secondComponent = null
     }
     else {
