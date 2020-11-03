@@ -153,7 +153,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
 
   private static class InspectionsBundleMessageSupplier implements MessageSupplier {
     @NotNull
-    private String myMyBundleKey;
+    private final String myMyBundleKey;
 
     private InspectionsBundleMessageSupplier(@NotNull String bundleKey) {
       myMyBundleKey = bundleKey;
