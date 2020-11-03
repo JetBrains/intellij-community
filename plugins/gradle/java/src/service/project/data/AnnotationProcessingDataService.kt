@@ -239,7 +239,7 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
 
   private fun CompilerConfigurationImpl.findOrCreateProcessorConfigProfile(data: AnnotationProcessingData): ProcessorConfigProfile {
     val newProfile = createProcessorConfigProfile(data)
-    return this.moduleProcessorProfiles
+    return ArrayList(this.moduleProcessorProfiles)
              .find { existing -> existing.matches(newProfile) }
            ?: newProfile.also { addModuleProcessorProfile(it) }
   }
