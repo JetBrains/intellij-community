@@ -638,7 +638,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       // configure project icon
       Project project = null;
       if (node != null) {
-        project = findConfigurableProject(node, false);
+        project = findConfigurableProject(node, true);
       }
       Configurable configurable = null;
       if (node != null) {
