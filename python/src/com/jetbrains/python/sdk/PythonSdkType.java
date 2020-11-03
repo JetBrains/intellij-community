@@ -143,7 +143,8 @@ public final class PythonSdkType extends SdkType {
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
     final boolean isWindows = SystemInfo.isWindows;
-    return new FileChooserDescriptor(true, false, false, false, false, false) {
+
+    final var descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
@@ -172,6 +173,13 @@ public final class PythonSdkType extends SdkType {
         return super.isFileVisible(file, showHiddenFiles);
       }
     }.withTitle(PyBundle.message("sdk.select.path")).withShowHiddenFiles(SystemInfo.isUnix);
+
+    // XXX: Workaround for PY-21787 and PY-43507 since the native macOS dialog always follows symlinks
+    if (SystemInfo.isMac) {
+      descriptor.setForcedToUseIdeaFileChooser(true);
+    }
+
+    return descriptor;
   }
 
   @Override
