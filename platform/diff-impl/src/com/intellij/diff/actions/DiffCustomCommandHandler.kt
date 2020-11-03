@@ -5,6 +5,7 @@ import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManager
 import com.intellij.execution.Executor
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.SharedExtensionImplementation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.terminal.TerminalShellCommandHandler
@@ -13,6 +14,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
+@SharedExtensionImplementation
 private class DiffCustomCommandHandler : TerminalShellCommandHandler {
   override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor): Boolean {
     val parameters = parse(workingDirectory, localSession, command)

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.SharedExtensionImplementation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -30,6 +31,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@SharedExtensionImplementation
 public final class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   private static final String INTELLIJ_TEST_DISCOVERY_HOST = "https://intellij-test-discovery.labs.intellij.net";
 
