@@ -23,7 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
@@ -144,20 +147,13 @@ public class WslFileWatcher extends PluggableFileWatcher {
         return;
       }
 
-      String wslDir;
       try {
-        File toolDir = myExecutable.getParent().toFile();
-        Process pwd = new ProcessBuilder("wsl", "-d", vm.name, "-e", "pwd").directory(toolDir).redirectErrorStream(true).start();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(pwd.getInputStream(), StandardCharsets.UTF_8))) {
-          wslDir = reader.readLine();
-        }
-        vm.logger.debug("pwd: " + wslDir + ", " + pwd.waitFor());
-
-        Process process = new ProcessBuilder("wsl", "-d", vm.name, "-e", wslDir + '/' + FSNOTIFIER_WSL).start();
+        Path toolName = myExecutable.getFileName(), toolDir = myExecutable.getParent();
+        Process process = new ProcessBuilder("wsl", "-d", vm.name, "-e", "./" + toolName).directory(toolDir.toFile()).start();
         vm.handler = handler = new MyProcessHandler(process, vm);
         handler.startNotify();
       }
-      catch (IOException | InterruptedException e) {
+      catch (IOException e) {
         vm.logger.error(e);
         vm.startAttemptCount.set(MAX_PROCESS_LAUNCH_ATTEMPT_COUNT);
         notifyOnFailure(vm.name, ApplicationBundle.message("watcher.failed.to.start", vm.name), null);
