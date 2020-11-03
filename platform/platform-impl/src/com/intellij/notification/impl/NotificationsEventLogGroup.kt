@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationType
 import com.intellij.notification.impl.NotificationCollector.NotificationPlace
+import com.intellij.notification.impl.NotificationCollector.NotificationSeverity
 import java.util.stream.Collectors
 
 class NotificationsEventLogGroup : CounterUsagesCollector() {
@@ -18,13 +19,13 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
 
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("notifications", 59)
+    val GROUP = EventLogGroup("notifications", 60)
 
     @JvmField
     val DISPLAY_TYPE: EnumEventField<NotificationDisplayType> = Enum("display_type", NotificationDisplayType::class.java)
 
     @JvmField
-    val SEVERITY: EnumEventField<NotificationType> = Enum("severity", NotificationType::class.java)
+    val SEVERITY: EnumEventField<NotificationSeverity> = Enum("severity", NotificationSeverity::class.java)
 
     @JvmField
     val IS_EXPANDABLE = Boolean("is_expandable")

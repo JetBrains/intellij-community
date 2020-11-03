@@ -62,7 +62,10 @@ public final class NotificationCollector {
                               boolean isExpandable) {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
     data.add(DISPLAY_TYPE.with(displayType));
-    data.add(SEVERITY.with(getType(notification)));
+    NotificationSeverity severity = getType(notification);
+    if (severity != null) {
+      data.add(SEVERITY.with(severity));
+    }
     data.add(IS_EXPANDABLE.with(isExpandable));
     SHOWN.log(project, data);
   }
@@ -71,19 +74,34 @@ public final class NotificationCollector {
                                              @NotNull Notification notification) {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
     data.add(DISPLAY_TYPE.with(NotificationDisplayType.TOOL_WINDOW));
-    data.add(SEVERITY.with(getType(notification)));
+    NotificationSeverity severity = getType(notification);
+    if (severity != null) {
+      data.add(SEVERITY.with(severity));
+    }
     SHOWN.log(project, data);
   }
 
   public void logNotificationLoggedInEventLog(@NotNull Project project, @NotNull Notification notification) {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
-    data.add(SEVERITY.with(getType(notification)));
+    NotificationSeverity severity = getType(notification);
+    if (severity != null) {
+      data.add(SEVERITY.with(severity));
+    }
     LOGGED.log(project, data);
   }
 
-  @NotNull
-  private static NotificationType getType(@NotNull Notification notification) {
-    return notification.getType() == NotificationType.IDE_UPDATE ? NotificationType.INFORMATION : notification.getType();
+  private static @Nullable NotificationSeverity getType(@NotNull Notification notification) {
+    NotificationType type = notification.getType();
+    switch (type) {
+      case ERROR:
+        return NotificationSeverity.ERROR;
+      case WARNING:
+        return NotificationSeverity.WARNING;
+      case INFORMATION:
+      case IDE_UPDATE:
+        return NotificationSeverity.INFORMATION;
+    }
+    return null;
   }
 
   public void logNotificationBalloonClosedByUser(@Nullable String notificationId,
@@ -244,5 +262,11 @@ public final class NotificationCollector {
 
   public enum NotificationPlace {
     BALLOON, EVENT_LOG, TOOL_WINDOW,
+  }
+
+  public enum NotificationSeverity {
+    INFORMATION,
+    WARNING,
+    ERROR
   }
 }
