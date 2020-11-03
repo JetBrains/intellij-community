@@ -298,16 +298,16 @@ public final class GradleUtil {
     return Registry.is("gradle.tooling.custom.serializer", true) && gradleVersion.compareTo(GradleVersion.version("3.0")) >= 0;
   }
 
-  public static @Nullable GradleVersion getGradleVersion(Project project, PsiFile file) {
+  public static @NotNull GradleVersion getGradleVersion(Project project, PsiFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
       String filePath = virtualFile.getPath();
       return getGradleVersion(project, filePath);
     }
-    return null;
+    return GradleVersion.current();
   }
 
-  public static @Nullable GradleVersion getGradleVersion(Project project, String filePath) {
+  public static @NotNull GradleVersion getGradleVersion(Project project, String filePath) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
     if (manager instanceof GradleManager) {
       GradleManager gradleManager = (GradleManager)manager;
@@ -320,10 +320,10 @@ public final class GradleUtil {
         }
       }
     }
-    return null;
+    return GradleVersion.current();
   }
 
-  public static boolean isSupportedImplementationScope(@Nullable GradleVersion gradleVersion) {
-    return gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("3.4")) >= 0;
+  public static boolean isSupportedImplementationScope(@NotNull GradleVersion gradleVersion) {
+    return gradleVersion.getBaseVersion().compareTo(GradleVersion.version("3.4")) >= 0;
   }
 }
