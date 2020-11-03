@@ -294,5 +294,8 @@ public abstract class PluginsTab {
 
   public void dispose() {
     Disposer.dispose(mySearchUpdateAlarm);
+    if (mySearchTextField != null) {
+      mySearchTextField.disposeUIResources();
+    }
   }
 }
