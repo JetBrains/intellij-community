@@ -173,15 +173,17 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     final int oldStartIndex = Math.max(0, segmentIndex);
     int startIndex = oldStartIndex;
 
-    int data;
-    do {
-      data = mySegments.getSegmentData(startIndex);
-      if (isInitialState(data) || startIndex == 0) break;
-      startIndex--;
+    int data = 0;
+    if (mySegments.getSegmentCount() > 0) {
+      do {
+        data = mySegments.getSegmentData(startIndex);
+        if (isInitialState(data) || startIndex == 0) break;
+        startIndex--;
+      }
+      while (true);
     }
-    while (true);
 
-    int startOffset = mySegments.getSegmentStart(startIndex);
+    int startOffset = mySegments.getSegmentCount() > 0 ? mySegments.getSegmentStart(startIndex) : 0;
 
     int initialState;
     int textLength = text.length();
@@ -256,7 +258,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       }
     }
 
-    startOffset = mySegments.getSegmentStart(startIndex);
+    startOffset = mySegments.getSegmentCount() > 0 ? mySegments.getSegmentStart(startIndex) : 0;
     SegmentArrayWithData insertSegments = new SegmentArrayWithData(mySegments.createStorage());
 
     int repaintEnd = -1;
