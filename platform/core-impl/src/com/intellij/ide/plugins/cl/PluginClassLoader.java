@@ -35,8 +35,36 @@ import java.util.concurrent.atomic.AtomicLong;
 @ApiStatus.NonExtendable
 public class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   private static final @Nullable BufferedWriter logStream;
+  private static final AtomicInteger instanceIdProducer = new AtomicInteger();
+
+  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES;
 
   static {
+    @SuppressWarnings("SSBasedInspection")
+    Set<String> kotlinStdlibClassesUsedInSignatures = new HashSet<>(Arrays.asList(
+      "kotlin.Function",
+      "kotlin.sequences.Sequence",
+      "kotlin.Lazy", "kotlin.Unit",
+      "kotlin.Pair", "kotlin.Triple",
+      "kotlin.jvm.internal.DefaultConstructorMarker",
+      "kotlin.jvm.internal.ClassBasedDeclarationContainer",
+      "kotlin.properties.ReadWriteProperty",
+      "kotlin.properties.ReadOnlyProperty",
+      "kotlin.coroutines.ContinuationInterceptor",
+      "kotlinx.coroutines.CoroutineDispatcher",
+      "kotlin.coroutines.Continuation",
+      "kotlin.coroutines.CoroutineContext",
+      "kotlin.coroutines.CoroutineContext$Element",
+      "kotlin.coroutines.CoroutineContext$Key"
+    ));
+    String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");
+    if (classes != null) {
+      for (StringTokenizer t = new StringTokenizer(classes, ","); t.hasMoreTokens(); ) {
+        kotlinStdlibClassesUsedInSignatures.add(t.nextToken());
+      }
+    }
+    KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = kotlinStdlibClassesUsedInSignatures;
+
     if (registerAsParallelCapable()) {
       markParallelCapable(PluginClassLoader.class);
     }
@@ -67,8 +95,6 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
     logStream = logStreamCandidate;
   }
-
-  private static final AtomicInteger instanceIdProducer = new AtomicInteger();
 
   private ClassLoader[] parents;
   private final PluginDescriptor pluginDescriptor;
@@ -302,33 +328,6 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       // JDK impl is not so fast as ours, use it only if no application
       boolean isEdt = app == null ? EventQueue.isDispatchThread() : app.isDispatchThread();
       (isEdt ? edtTime : backgroundTime).addAndGet(StartUpMeasurer.getCurrentTime() - startTime);
-    }
-  }
-
-  @SuppressWarnings("SSBasedInspection")
-  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = new HashSet<>(Arrays.asList(
-    "kotlin.Function",
-    "kotlin.sequences.Sequence",
-    "kotlin.Lazy", "kotlin.Unit",
-    "kotlin.Pair", "kotlin.Triple",
-    "kotlin.jvm.internal.DefaultConstructorMarker",
-    "kotlin.jvm.internal.ClassBasedDeclarationContainer",
-    "kotlin.properties.ReadWriteProperty",
-    "kotlin.properties.ReadOnlyProperty",
-    "kotlin.coroutines.ContinuationInterceptor",
-    "kotlinx.coroutines.CoroutineDispatcher",
-    "kotlin.coroutines.Continuation",
-    "kotlin.coroutines.CoroutineContext",
-    "kotlin.coroutines.CoroutineContext$Element",
-    "kotlin.coroutines.CoroutineContext$Key"
-  ));
-
-  static {
-    String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");
-    if (classes != null) {
-      for (StringTokenizer t = new StringTokenizer(classes, ","); t.hasMoreTokens(); ) {
-        KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.add(t.nextToken());
-      }
     }
   }
 
