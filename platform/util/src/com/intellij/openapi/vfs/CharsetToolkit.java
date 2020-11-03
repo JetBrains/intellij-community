@@ -20,7 +20,7 @@ import java.util.Map;
  * It's not possible to know for sure, which 8-bit charset is used.
  * We will then infer that the charset encountered is the same as the default standard charset.</p>
  *
- * <p>On the other hand, unicode files encoded in UTF-16 (low or big endian) or UTF-8 files
+ * <p>On the other hand, Unicode files encoded in UTF-16 (low or big endian) or UTF-8 files
  * with a Byte Order Marker are easy to find. For UTF-8 files with no BOM, if the buffer
  * is wide enough, it's easy to guess.</p>
  *
@@ -46,26 +46,18 @@ import java.util.Map;
  */
 public final class CharsetToolkit {
   public static final String UTF8 = "UTF-8";
-  /**
-   * @deprecated use {@link StandardCharsets#UTF_8} instead
-   */
+  /** @deprecated use {@link StandardCharsets#UTF_8} instead */
   @Deprecated
   public static final Charset UTF8_CHARSET = StandardCharsets.UTF_8;
-  /**
-   * @deprecated use {@link StandardCharsets#UTF_16LE} instead
-   */
+  /** @deprecated use {@link StandardCharsets#UTF_16LE} instead */
   @Deprecated
   public static final Charset UTF_16LE_CHARSET = StandardCharsets.UTF_16LE;
-  /**
-   * @deprecated use {@link StandardCharsets#UTF_16BE} instead
-   */
+  /** @deprecated use {@link StandardCharsets#UTF_16BE} instead */
   @Deprecated
   public static final Charset UTF_16BE_CHARSET = StandardCharsets.UTF_16BE;
   public static final Charset UTF_32BE_CHARSET = Charset.forName("UTF-32BE");
   public static final Charset UTF_32LE_CHARSET = Charset.forName("UTF-32LE");
-  /**
-   * @deprecated use {@link StandardCharsets#US_ASCII} instead
-   */
+  /** @deprecated use {@link StandardCharsets#US_ASCII} instead */
   @Deprecated
   public static final Charset US_ASCII_CHARSET = StandardCharsets.US_ASCII;
   public static final Charset WIN_1251_CHARSET = Charset.forName("windows-1251");
@@ -119,6 +111,7 @@ public final class CharsetToolkit {
 
   public static @NotNull InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
     if (!stream.markSupported()) {
+      //noinspection IOResourceOpenedButNotSafelyClosed
       stream = new BufferedInputStream(stream);
     }
 
@@ -571,14 +564,12 @@ public final class CharsetToolkit {
    *         Currently, these are UTF-16xx, UTF-32xx and UTF-8.
    */
   public static byte @Nullable [] getPossibleBom(@NotNull Charset charset) {
-    if (charset.equals(StandardCharsets.UTF_8)) return UTF8_BOM;
-    return CHARSET_TO_MANDATORY_BOM.get(charset);
+    return charset.equals(StandardCharsets.UTF_8) ? UTF8_BOM : CHARSET_TO_MANDATORY_BOM.get(charset);
   }
 
   // byte sequence for this encoding is allowed to be prepended with this BOM
   public static boolean canHaveBom(@NotNull Charset charset, byte @NotNull [] bom) {
-    return charset.equals(StandardCharsets.UTF_8) && Arrays.equals(bom, UTF8_BOM)
-           || Arrays.equals(getMandatoryBom(charset), bom);
+    return charset.equals(StandardCharsets.UTF_8) && Arrays.equals(bom, UTF8_BOM) || Arrays.equals(getMandatoryBom(charset), bom);
   }
 
   public static @Nullable Charset forName(@Nullable String name) {
