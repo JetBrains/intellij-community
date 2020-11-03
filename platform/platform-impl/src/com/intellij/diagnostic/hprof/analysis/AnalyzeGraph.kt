@@ -68,24 +68,24 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
     // Histogram section
     val histogramOptions = analysisContext.config.histogramOptions
     if (histogramOptions.includeByCount || histogramOptions.includeBySize) {
-      sb.appendln(sectionHeader("Histogram"))
+      sb.appendLine(sectionHeader("Histogram"))
       sb.append(prepareHistogramSection())
     }
 
     // Per-class section
     if (includePerClassSection) {
       val perClassProgress = PartialProgressIndicator(progress, 0.5, 0.5)
-      sb.appendln(sectionHeader("Instances of each nominated class"))
+      sb.appendLine(sectionHeader("Instances of each nominated class"))
       sb.append(preparePerClassSection(perClassProgress))
     }
 
     // Disposer sections
     if (config.disposerOptions.includeDisposerTree) {
-      sb.appendln(sectionHeader("Disposer tree"))
+      sb.appendLine(sectionHeader("Disposer tree"))
       sb.append(analyzeDisposer.prepareDisposerTreeSection())
     }
     if (config.disposerOptions.includeDisposedObjectsSummary || config.disposerOptions.includeDisposedObjectsDetails) {
-      sb.appendln(sectionHeader("Disposed objects"))
+      sb.appendLine(sectionHeader("Disposed objects"))
       sb.append(analyzeDisposer.prepareDisposedObjectsSection())
     }
 
@@ -98,14 +98,14 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
     val perClassOptions = analysisContext.config.perClassOptions
 
     if (perClassOptions.includeClassList) {
-      sb.appendln("Nominated classes:")
+      sb.appendLine("Nominated classes:")
       perClassOptions.classNames.forEach { name ->
         val (classDefinition, totalInstances, totalBytes) =
           histogram.entries.find { entry -> entry.classDefinition.name == name } ?: return@forEach
         val prettyName = classDefinition.prettyName
-        sb.appendln(" --> [${toShortStringAsCount(totalInstances)}/${toShortStringAsSize(totalBytes)}] " + prettyName)
+        sb.appendLine(" --> [${toShortStringAsCount(totalInstances)}/${toShortStringAsSize(totalBytes)}] " + prettyName)
       }
-      sb.appendln()
+      sb.appendLine()
     }
 
     val nav = analysisContext.navigator
@@ -116,9 +116,9 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
       val classDefinition = nav.classStore[className]
       val set = nominatedInstances[classDefinition]!!
       progress.fraction = counter.toDouble() / nominatedInstances.size
-      progress.text2 = "Processing: ${set.size} ${classDefinition.prettyName}"
+      progress.text2 = DiagnosticBundle.message("hprof.analysis.progress", set.size, classDefinition.prettyName)
       stopwatch.reset().start()
-      sb.appendln("CLASS: ${classDefinition.prettyName} (${set.size} objects)")
+      sb.appendLine("CLASS: ${classDefinition.prettyName} (${set.size} objects)")
       val referenceRegistry = GCRootPathsTree(analysisContext, perClassOptions.treeDisplayOptions, classDefinition)
       set.forEach { objectId ->
         referenceRegistry.registerObject(objectId)
@@ -126,9 +126,9 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
       set.clear()
       sb.append(referenceRegistry.printTree())
       if (config.metaInfoOptions.include) {
-        sb.appendln("Report for ${classDefinition.prettyName} created in $stopwatch")
+        sb.appendLine("Report for ${classDefinition.prettyName} created in $stopwatch")
       }
-      sb.appendln()
+      sb.appendLine()
       counter++
     }
     progress.fraction = 1.0
@@ -150,8 +150,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
 
     val unreachableObjectsCount = histogram.instanceCount - strongRefHistogram.instanceCount - softWeakRefHistogram.instanceCount
     val unreachableObjectsSize = histogram.bytesCount - strongRefHistogram.bytesCount - softWeakRefHistogram.bytesCount
-    result.appendln("Unreachable objects: ${toPaddedShortStringAsCount(
-      unreachableObjectsCount)}  ${toPaddedShortStringAsSize(unreachableObjectsSize)}")
+    result.appendLine("Unreachable objects: ${toPaddedShortStringAsCount(unreachableObjectsCount)}  ${toPaddedShortStringAsSize(unreachableObjectsSize)}")
 
     return result.toString()
   }
@@ -222,8 +221,8 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
     rootsSet.trim()
 
     var leafCounter = 0
-    result.appendln("Roots count: ${toVisit.size}")
-    result.appendln("Classes count: ${classStore.size()}")
+    result.appendLine("Roots count: ${toVisit.size}")
+    result.appendLine("Classes count: ${classStore.size()}")
 
     progress.text2 = DiagnosticBundle.message("analyze.graph.progress.details.traversing.instance.graph")
 
@@ -378,9 +377,9 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
     assert(softReferenceIdToParentMap.isEmpty())
     assert(weakReferenceIdToParentMap.isEmpty())
 
-    result.appendln("Finalizable size: ${toShortStringAsSize(finalizableBytes)}")
-    result.appendln("Soft-reachable size: ${toShortStringAsSize(softBytes)}")
-    result.appendln("Weak-reachable size: ${toShortStringAsSize(weakBytes)}")
+    result.appendLine("Finalizable size: ${toShortStringAsSize(finalizableBytes)}")
+    result.appendLine("Soft-reachable size: ${toShortStringAsSize(softBytes)}")
+    result.appendLine("Weak-reachable size: ${toShortStringAsSize(weakBytes)}")
 
     strongRefHistogram = Histogram(
       strongRefHistogramEntries
@@ -410,9 +409,9 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
     stopwatchUpdateSizes.stop()
 
     if (config.metaInfoOptions.include) {
-      result.appendln("Analysis completed! Visited instances: $visitedInstancesCount, time: $stopwatch")
-      result.appendln("Update sizes time: $stopwatchUpdateSizes")
-      result.appendln("Leaves found: $leafCounter")
+      result.appendLine("Analysis completed! Visited instances: $visitedInstancesCount, time: $stopwatch")
+      result.appendLine("Update sizes time: $stopwatchUpdateSizes")
+      result.appendLine("Leaves found: $leafCounter")
     }
     return result.toString()
   }
