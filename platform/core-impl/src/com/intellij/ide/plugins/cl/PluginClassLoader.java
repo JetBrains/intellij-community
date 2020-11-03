@@ -44,6 +44,9 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     Set<String> kotlinStdlibClassesUsedInSignatures = new HashSet<>(Arrays.asList(
       "kotlin.Function",
       "kotlin.sequences.Sequence",
+      "kotlin.ranges.IntRange",
+      "kotlin.ranges.IntProgression",
+      "kotlin.ranges.ClosedRange",
       "kotlin.Lazy", "kotlin.Unit",
       "kotlin.Pair", "kotlin.Triple",
       "kotlin.jvm.internal.DefaultConstructorMarker",
