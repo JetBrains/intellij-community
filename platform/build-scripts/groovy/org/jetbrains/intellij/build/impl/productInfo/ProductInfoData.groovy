@@ -18,4 +18,5 @@ class ProductInfoData {
   String dataDirectoryName
   String svgIconPath
   List<ProductInfoLaunchData> launch = []
+  List<CustomProperty> customProperties = []
 }
