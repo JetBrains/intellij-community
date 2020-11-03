@@ -42,7 +42,7 @@ internal suspend fun showAuthenticationForm(credentials: Credentials?,
 
   return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
     val userField = JTextField(username)
-    val passwordField = JPasswordField(credentials?.password?.toString())
+    val passwordField = JPasswordField(credentials?.getPasswordAsString())
 
     val centerPanel = panel {
       noteRow(message)
