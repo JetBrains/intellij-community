@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing
 /**
  * Reports numerical or string value of the setting if it's not default.
  */
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T> addIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                      valueFunction: Function1<T, Any>, eventId: String) {
   addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, eventId, null)
@@ -15,6 +16,7 @@ fun <T> addIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSe
 /**
  * Reports numerical or string value of the setting if it's not default.
  */
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T> addIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                      valueFunction: Function1<T, Any>, eventId: String, data: FeatureUsageData?) {
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) {
@@ -29,6 +31,7 @@ fun <T> addIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSe
 /**
  * Reports the value of boolean setting (i.e. enabled or disabled) if it's not default.
  */
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T> addBoolIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                          valueFunction: Function1<T, Boolean>, eventId: String) {
   addBoolIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, eventId, null)
@@ -37,6 +40,7 @@ fun <T> addBoolIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defau
 /**
  * Reports the value of boolean setting (i.e. enabled or disabled) if it's not default.
  */
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T> addBoolIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                          valueFunction: Function1<T, Boolean>, eventId: String, data: FeatureUsageData?) {
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newBooleanMetric(eventId, it, data) }
@@ -45,6 +49,7 @@ fun <T> addBoolIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defau
 /**
  * Adds counter value if count is greater than 0
  */
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T> addCounterIfNotZero(set: MutableSet<in MetricEvent>, eventId: String, count: Int) {
   if (count > 0) {
     set.add(newCounterMetric(eventId, count))
@@ -54,27 +59,32 @@ fun <T> addCounterIfNotZero(set: MutableSet<in MetricEvent>, eventId: String, co
 /**
  * Adds counter value if count is greater than 0
  */
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T> addCounterIfNotZero(set: MutableSet<in MetricEvent>, eventId: String, count: Int, data: FeatureUsageData?) {
   if (count > 0) {
     set.add(newCounterMetric(eventId, count, data))
   }
 }
 
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T> addCounterIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                             valueFunction: Function1<T, Int>, eventId: String) {
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newCounterMetric(eventId, it) }
 }
 
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T> addCounterIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                             valueFunction: Function1<T, Int>, eventId: String, data: FeatureUsageData?) {
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newCounterMetric(eventId, it, data) }
 }
 
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T, V : Enum<*>> addEnumIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                                       valueFunction: Function1<T, V>, eventId: String) {
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newMetric(eventId, it, null) }
 }
 
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T, V> addMetricIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                               valueFunction: (T) -> V, eventIdFunc: (V) -> MetricEvent) {
   val value = valueFunction(settingsBean)
@@ -89,6 +99,7 @@ interface MetricDifferenceBuilder<T> {
   fun addBool(eventId: String, valueFunction: (T) -> Boolean)
 }
 
+@Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun <T> addMetricsIfDiffers(set: MutableSet<in MetricEvent>,
                             settingsBean: T,
                             defaultSettingsBean: T,
