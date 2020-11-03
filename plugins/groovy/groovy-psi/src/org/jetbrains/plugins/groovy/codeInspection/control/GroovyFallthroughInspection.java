@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
@@ -36,7 +37,6 @@ public class GroovyFallthroughInspection extends BaseInspection {
   @Nullable
   protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.fallthrough.in.switch.statement");
-
   }
 
   @NotNull
@@ -72,12 +72,16 @@ public class GroovyFallthroughInspection extends BaseInspection {
     }
 
     private static boolean isCommented(GrCaseSection caseClause) {
-      final PsiElement element = PsiTreeUtil.skipWhitespacesBackward(caseClause);
+      final PsiElement element = PsiTreeUtil.skipMatching(caseClause, PsiTreeUtil::prevLeaf, Visitor::isWhiteSpace);
       if (!(element instanceof PsiComment)) {
         return false;
       }
       final String commentText = element.getText();
       return commentPattern.matcher(commentText).find();
+    }
+
+    private static boolean isWhiteSpace(@NotNull PsiElement element) {
+      return TokenSets.WHITE_SPACES_SET.contains(element.getNode().getElementType());
     }
   }
 }

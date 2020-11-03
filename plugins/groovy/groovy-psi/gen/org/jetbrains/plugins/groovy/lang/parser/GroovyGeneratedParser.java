@@ -1,5 +1,3 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.parser;
 
@@ -4618,10 +4616,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // nl?
+  // nl*
   static boolean mb_nl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mb_nl")) return false;
-    nl(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!nl(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "mb_nl", c)) break;
+    }
     return true;
   }
 

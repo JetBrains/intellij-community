@@ -54,8 +54,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 %xstate IN_GSTRING_DOT
 %xstate IN_GSTRING_DOT_IDENT
 
-// Not to separate NewLine sequence by comments
-%xstate NLS_AFTER_COMMENT
 // Special hacks for IDEA formatter
 %xstate NLS_AFTER_LBRACE
 %xstate NLS_AFTER_NLS
@@ -194,19 +192,6 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "final"         { return storeToken(KW_FINAL); }
 }
 
-<NLS_AFTER_COMMENT> {
-  {mSL_COMMENT}                             { return SL_COMMENT; }
-  {mML_COMMENT}                             { return ML_COMMENT; }
-  {mDOC_COMMENT}                            { return GROOVY_DOC_COMMENT; }
-
-  ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
-
-  [^] {
-    yypushback(1);
-    yyendstate(NLS_AFTER_COMMENT);
-  }
-}
-
 <NLS_AFTER_LBRACE> {
   ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
   [^] {
@@ -221,7 +206,6 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   [^] {
     yypushback(1);
     yyendstate(NLS_AFTER_NLS);
-    yybeginstate(NLS_AFTER_COMMENT);
   }
 }
 

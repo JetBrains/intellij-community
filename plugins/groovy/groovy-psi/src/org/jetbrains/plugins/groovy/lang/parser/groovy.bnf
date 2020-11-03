@@ -1307,7 +1307,7 @@ private mb_initializer ::= [mb_nl ('=') mb_nl expression_or_application]
 
 
 // region Other
-private mb_nl ::= nl?
+private mb_nl ::= nl*
 private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
 // FIXME this rule allows error reporting in position before the new line
 private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <<something>>)>>
