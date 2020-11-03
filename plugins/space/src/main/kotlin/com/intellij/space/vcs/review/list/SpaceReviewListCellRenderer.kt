@@ -7,6 +7,7 @@ import circlet.code.api.CodeReviewParticipantRole
 import circlet.code.api.CodeReviewWithCount
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.utils.formatAbsolute
 import com.intellij.space.utils.toLocalDateTime
@@ -144,7 +145,7 @@ internal class SpaceReviewListCellRenderer(
     val author = review.createdBy!!.resolve()
     val key = review.key ?: ""
     val localDateTime = review.createdAt.toLocalDateTime()
-    val info = "$key by ${author.englishFullName()} ${localDateTime.formatAbsolute()}"
+    val info = SpaceBundle.message("review.by.author.at.time", key, author.englishFullName(), localDateTime.formatAbsolute())
 
     val fullToolTipText = StringBuilder().apply {
       append(title).append(BR)
@@ -152,19 +153,19 @@ internal class SpaceReviewListCellRenderer(
 
       authors?.let {
         append(BR)
-        append("Authors: ").append(BR)
+        append(SpaceBundle.message("review.details.authors.label")).append(BR)
         authors.forEach {
           append(it.user.resolve().englishFullName()).append(BR)
         }
       }
       reviewers?.let {
         append(BR)
-        append("Reviewers: ").append(BR)
+        append(SpaceBundle.message("review.details.reviewers.label")).append(BR)
         reviewers.forEach {
           append(it.user.resolve().englishFullName()).append(BR)
         }
       }
-    }.toString().let { XmlStringUtil.wrapInHtml(it) }
+    }.toString().let { XmlStringUtil.wrapInHtml(it) } // NON-NLS
 
     titleLabel.apply {
       text = title
@@ -207,7 +208,7 @@ internal class SpaceReviewListCellRenderer(
     label.icon = emptyAvatar
     profile?.let {
       label.icon = avatarProvider.getIcon(it)
-      label.toolTipText = it.englishFullName()
+      label.toolTipText = it.englishFullName() // NON-NLS
     }
   }
 }

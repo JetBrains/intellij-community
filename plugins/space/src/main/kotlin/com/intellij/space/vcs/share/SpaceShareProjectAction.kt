@@ -142,7 +142,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
         VcsNotifier.getInstance(project).notifySuccess(
           "space.project.shared.successfully",
           SpaceBundle.message("share.project.success.notification.title"),
-          formatLink(url, repoInfo.name),
+          formatLink(url, repoInfo.name), // NON-NLS
           NotificationListener.URL_OPENING_LISTENER
         )
       }
@@ -187,7 +187,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
     val result = Git.getInstance().init(project, root)
     if (!result.success()) {
       VcsNotifier.getInstance(project).notifyError("space.git.repo.init.error",
-                                                   GitBundle.getString("initializing.title"),
+                                                   GitBundle.message("initializing.title"),
                                                    result.errorOutputAsHtmlString)
       log.info { "Failed to create empty git repo: " + result.errorOutputAsJoinedString }
       return false
@@ -264,8 +264,8 @@ class SpaceShareProjectAction : DumbAwareAction() {
     }
     catch (e: VcsException) {
       log.warn(e)
-      val repositoryLink = formatLink(url, "'$name'")
-      notifyError(project, wrapInHtmlLines(
+      val repositoryLink = formatLink(url, "'$name'") // NON-NLS
+      notifyError(project, wrapInHtmlLines( // NON-NLS
         SpaceBundle.message("share.project.error.notification.initial.commit.failed.message", repositoryLink),
         *e.messages
       ))
@@ -307,14 +307,14 @@ class SpaceShareProjectAction : DumbAwareAction() {
     indicator.text = SpaceBundle.message("share.project.action.progress.title.pushing.title")
 
     val currentBranch = repository.currentBranch
-    val repositoryLink = formatLink(url, "'$name'")
+    val repositoryLink = formatLink(url, "'$name'") // NON-NLS
     if (currentBranch == null) {
       notifyError(project, SpaceBundle.message("share.project.error.notification.no.current.branch.message", repositoryLink))
       return false
     }
     val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
     if (!result.success()) {
-      notifyError(project, wrapInHtmlLines(
+      notifyError(project, wrapInHtmlLines( // NON-NLS
         SpaceBundle.message("share.project.error.notification.push.failed.message", repositoryLink),
         result.errorOutputAsHtmlString
       ))

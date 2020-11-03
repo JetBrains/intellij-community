@@ -148,8 +148,8 @@ private class CloneView(
     val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
     fcd.isShowFileSystemRoots = true
     fcd.isHideIgnored = false
-    addBrowseFolderListener(DvcsBundle.getString("clone.destination.directory.browser.title"),
-                            DvcsBundle.getString("clone.destination.directory.browser.description"),
+    addBrowseFolderListener(DvcsBundle.message("clone.destination.directory.browser.title"),
+                            DvcsBundle.message("clone.destination.directory.browser.description"),
                             project,
                             fcd)
   }
@@ -195,7 +195,7 @@ private class CloneView(
     }
 
     cloneViewModel.me.forEach(lifetime) { profile ->
-      accountLabel.toolTipText = profile.englishFullName()
+      accountLabel.toolTipText = profile.englishFullName() // NON-NLS
     }
 
     cloneViewModel.repos.batches.forEach(lifetime) { batchResult ->
@@ -250,7 +250,7 @@ private class CloneView(
         val host = st.server
         val serverUrl = cleanupUrl(st.server)
         val menuItems: MutableList<AccountMenuItem> = mutableListOf()
-        menuItems += AccountMenuItem.Account(st.workspace.me.value.englishFullName(),
+        menuItems += AccountMenuItem.Account(st.workspace.me.value.englishFullName(), // NON-NLS
                                              serverUrl,
                                              resizeIcon(SpaceUserAvatarProvider.getInstance().avatars.value.circle,
                                                         VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),

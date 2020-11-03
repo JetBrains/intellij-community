@@ -214,7 +214,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
           val validationResult = scriptConfig.validate()
 
           if (validationResult is ProjectConfigValidationResult.Failed) {
-            val message = validationResult.errorMessage()
+            val message = validationResult.errorMessage() // NON-NLS
             logData.error(message)
             _config.value = null
             _error.value = message

@@ -78,7 +78,7 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
     val lifeTime = LifetimeSource()
     val factory = ContentFactory.SERVICE.getInstance()
 
-    return factory.createContent(null, spaceProjectInfo.project.name, false).apply {
+    return factory.createContent(null, spaceProjectInfo.project.name, false).apply { // NON-NLS
       val disposable = Disposable {
         lifeTime.terminate()
       }
@@ -87,7 +87,7 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
       icon = SpaceIcons.Main
 
       component = ReviewLoginComponent(lifetime, project, spaceProjectInfo, projectRepos).view
-      description = spaceProjectInfo.key.key
+      description = spaceProjectInfo.key.key // NON-NLS
     }
   }
 }

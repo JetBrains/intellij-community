@@ -121,7 +121,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
           throw e
         }
         catch (e: RpcException) {
-          setErrorText(e.failure.message())
+          setErrorText(e.failure.message()) // NON-NLS
         }
         catch (e: Exception) {
           setErrorText(SpaceBundle.message("share.project.dialog.error.unable.to.create.repository", e.message ?: e.javaClass.simpleName))
@@ -164,7 +164,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
     if (projectComboBoxModel.selectedItem == null) {
       list.add(ValidationInfo(SpaceBundle.message("share.project.dialog.validation.text.project.should.be.specified"), projectComboBox))
     }
-    val nameError = repositoryNameValid(repoNameField.text).second
+    val nameError = repositoryNameValid(repoNameField.text).second // NON-NLS
     if (nameError != null) {
       list.addIfNotNull(ValidationInfo(nameError, repoNameField))
     }

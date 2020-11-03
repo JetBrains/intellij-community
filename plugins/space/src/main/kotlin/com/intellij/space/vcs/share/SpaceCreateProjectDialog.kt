@@ -82,7 +82,7 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
           throw e
         }
         catch (e: RpcException) {
-          setErrorText(e.failure.message())
+          setErrorText(e.failure.message()) // NON-NLS
         }
         catch (e: Exception) {
           setErrorText(SpaceBundle.message("create.project.dialog.error.unable.to.create.text", e.message ?: e.javaClass.simpleName))

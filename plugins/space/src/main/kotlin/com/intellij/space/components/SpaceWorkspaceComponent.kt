@@ -167,7 +167,8 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
           }
           when (val response = signIn(connectLt, serverName)) {
             is OAuthTokenResponse.Error -> {
-              loginState.value = SpaceLoginState.Disconnected(serverName, response.description)
+              val error = response.description // NON-NLS
+              loginState.value = SpaceLoginState.Disconnected(serverName, error)
             }
           }
         }

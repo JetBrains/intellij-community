@@ -108,7 +108,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
     val serverUrl = cleanupUrl(host)
     val menuItems: MutableList<AccountMenuItem> = mutableListOf()
     menuItems += AccountMenuItem.Account(
-      workspace.me.value.englishFullName(),
+      workspace.me.value.englishFullName(), // NON-NLS
       serverUrl,
       resizeIcon(icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
       listOf(browseAction(SpaceBundle.message("main.toolbar.open.server", serverUrl), host, true)))

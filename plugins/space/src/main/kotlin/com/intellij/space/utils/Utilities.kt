@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.xml.util.XmlStringUtil
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.LifetimeSource
@@ -45,7 +46,7 @@ inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.
 fun notify(@NlsContexts.NotificationContent text: String, actions: List<AnAction> = listOf()) {
   val notification = Notification(
     ProductName,
-    ProductName,
+    SpaceBundle.message("product.name"),
     XmlStringUtil.wrapInHtml(text),
     NotificationType.INFORMATION
   )

@@ -51,7 +51,7 @@ class SpaceReviewAuthorActionGroup : ActionGroup() {
 
     // TODO: fix review created by Space service
     val profile = review.createdBy!!.resolve()
-    e.presentation.text = profile.englishFullName()
+    e.presentation.text = profile.englishFullName() // NON-NLS
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -74,7 +74,7 @@ class SpaceReviewAuthorActionGroup : ActionGroup() {
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.text = profile.englishFullName()
+      e.presentation.text = profile.englishFullName() // NON-NLS
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {

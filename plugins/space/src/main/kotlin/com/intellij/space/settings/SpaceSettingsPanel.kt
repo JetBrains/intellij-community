@@ -25,7 +25,6 @@ import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.UIUtil
 import libraries.coroutines.extra.LifetimeSource
 import libraries.klogging.logger
-import platform.common.ProductName
 import java.awt.BorderLayout
 import java.awt.GridBagLayout
 import javax.swing.*
@@ -33,7 +32,7 @@ import javax.swing.*
 val log = logger<SpaceSettingsPanel>()
 
 class SpaceSettingsPanel :
-  BoundConfigurable(ProductName, null),
+  BoundConfigurable(SpaceBundle.message("configurable.name"), null),
   SearchableConfigurable,
   Disposable {
 
@@ -104,7 +103,7 @@ class SpaceSettingsPanel :
         }
 
         val namePanel = JPanel(VerticalLayout(UIUtil.DEFAULT_VGAP)).apply {
-          add(JLabel(st.workspace.me.value.englishFullName()))
+          add(JLabel(st.workspace.me.value.englishFullName())) // NON-NLS
           add(serverComponent)
         }
 

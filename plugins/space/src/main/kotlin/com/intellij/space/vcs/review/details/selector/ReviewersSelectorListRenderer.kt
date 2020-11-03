@@ -37,7 +37,7 @@ internal class ReviewersSelectorListRenderer(private val avatarProvider: SpaceAv
 
     label.apply {
       clear()
-      append(value.reviewer.englishFullName())
+      append(value.reviewer.englishFullName()) // NON-NLS
       icon = avatarProvider.getIcon(value.reviewer)
       foreground = primaryTextColor
     }
