@@ -683,6 +683,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(@NotNull VirtualFile file) {
+    if (forbidSplitFor(file)) {
+      closeFile(file);
+    }
     return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
   }
 
