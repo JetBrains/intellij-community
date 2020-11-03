@@ -253,7 +253,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
       for (final Map.Entry<Mapper, Integer> entry : maxs.entrySet()) {
         Mapper mapper = entry.getKey();
-        mapper.doc.deleteString(mins.get(mapper).intValue(), entry.getValue().intValue());
+        mapper.doc.deleteString(mins.get(mapper).intValue() - mapper.mySeparator.length(), entry.getValue().intValue());
       }
 
       removeRange(myRanges, startIndex, endIndex);
