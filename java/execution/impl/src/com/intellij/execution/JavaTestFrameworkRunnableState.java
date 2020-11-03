@@ -272,6 +272,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
     configureClasspath(javaParameters);
     javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
+    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
     for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
       patcher.patchJavaParameters(project, module, javaParameters);
@@ -288,8 +289,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     if (ConsoleBuffer.useCycleBuffer()) {
       javaParameters.getVMParametersList().addProperty("idea.test.cyclic.buffer.size", String.valueOf(ConsoleBuffer.getCycleBufferSize()));
     }
-
-    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
     return javaParameters;
   }

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.JUnitPatcher;
+import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.PathManager;
@@ -50,6 +51,9 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
     ParametersList vm = javaParameters.getVMParametersList();
 
     if (PsiUtil.isIdeaProject(project)) {
+      if (JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9)) {
+        javaParameters.setShortenCommandLine(ShortenCommandLine.ARGS_FILE, project);
+      }
       if (!vm.hasProperty(SYSTEM_CL_PROPERTY)) {
         String qualifiedName = UrlClassLoader.class.getName();
         if (loaderValid(project, module, qualifiedName, jdk)) {
