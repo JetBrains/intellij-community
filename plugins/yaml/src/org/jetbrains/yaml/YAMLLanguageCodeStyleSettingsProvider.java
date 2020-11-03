@@ -16,7 +16,7 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.ge
 
 public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
 
-  private static final YAMLCodeStyleSettingsProvider CODE_STYLE_SETTINGS_PROVIDER = new YAMLCodeStyleSettingsProvider();
+  private static final YAMLCodeStyleSettingsProvider YAML_CODE_STYLE_SETTINGS_PROVIDER = new YAMLCodeStyleSettingsProvider();
 
   private static class Holder {
     private static final int[] ALIGN_VALUES = new int[]{
@@ -35,18 +35,13 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @Override
   public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
                                                            @NotNull CodeStyleSettings modelSettings) {
-    return CODE_STYLE_SETTINGS_PROVIDER.createConfigurable(baseSettings, modelSettings);
-  }
-
-  @Override
-  public String getConfigurableDisplayName() {
-    return CODE_STYLE_SETTINGS_PROVIDER.getConfigurableDisplayName();
+    return YAML_CODE_STYLE_SETTINGS_PROVIDER.createConfigurable(baseSettings, modelSettings);
   }
 
   @Nullable
   @Override
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
-    return CODE_STYLE_SETTINGS_PROVIDER.createCustomSettings(settings);
+    return YAML_CODE_STYLE_SETTINGS_PROVIDER.createCustomSettings(settings);
   }
 
   @Override
