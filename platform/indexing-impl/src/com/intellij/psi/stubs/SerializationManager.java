@@ -18,7 +18,7 @@ public abstract class SerializationManager {
    * Use {@link StubElementTypeHolderEP} to register stub serializer instead of manual registration.
    */
   @ApiStatus.Internal
-  public void registerSerializer(ObjectStubSerializer<?, Stub> serializer) {
+  public void registerSerializer(ObjectStubSerializer<?, ? extends Stub> serializer) {
     registerSerializer(serializer.getExternalId(), () -> serializer);
   }
 
@@ -26,7 +26,7 @@ public abstract class SerializationManager {
    * Use {@link StubElementTypeHolderEP} to register stub serializer instead of manual registration.
    */
   @ApiStatus.Internal
-  protected abstract void registerSerializer(@NotNull String externalId, Supplier<ObjectStubSerializer<?, Stub>> lazySerializer);
+  protected abstract void registerSerializer(@NotNull String externalId, Supplier<ObjectStubSerializer<?, ? extends Stub>> lazySerializer);
 
   @Contract("null -> null")
   public abstract @Nullable String internString(@Nullable String string);

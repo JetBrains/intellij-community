@@ -163,7 +163,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   @Override
-  protected void registerSerializer(@NotNull String externalId, Supplier<ObjectStubSerializer<?, Stub>> lazySerializer) {
+  protected void registerSerializer(@NotNull String externalId, Supplier<ObjectStubSerializer<?, ? extends Stub>> lazySerializer) {
     try {
       myStubSerializationHelper.assignId(lazySerializer, externalId);
     }
@@ -221,11 +221,11 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       final IElementType[] stubElementTypes = IElementType.enumerate(type -> type instanceof StubSerializer);
       for (IElementType type : stubElementTypes) {
         if (type instanceof StubFileElementType &&
-            StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType)type).getExternalId())) {
+            StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType<?>)type).getExternalId())) {
           continue;
         }
 
-        registerSerializer((StubSerializer)type);
+        registerSerializer((StubSerializer<?>)type);
       }
       for (StubFieldAccessor lazySerializer : lazySerializers) {
         registerSerializer(lazySerializer.externalId, lazySerializer);

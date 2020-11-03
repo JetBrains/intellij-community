@@ -13,5 +13,5 @@ public interface Stub {
 
   @NotNull List<? extends Stub> getChildrenStubs();
 
-  ObjectStubSerializer<?, Stub> getStubType();
+  ObjectStubSerializer<?, ? extends Stub> getStubType();
 }
