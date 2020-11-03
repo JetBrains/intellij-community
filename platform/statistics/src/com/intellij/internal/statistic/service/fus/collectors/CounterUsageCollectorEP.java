@@ -8,7 +8,8 @@ import org.jetbrains.annotations.Nullable;
  * EP to register counter collector in plugin.xml
  * <br/><br/>
  *
- * To use new style API define "implementationClass" field (see fus-collectors.md for more information)<br/>
+ * To use new style API define "implementationClass" field using {@code com.intellij.statistics.counterUsagesCollector} extension point.
+ * See fus-collectors.md for more information.<br/>
  * To use old API define "groupId" and "version" and log events with {@link com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger}
  */
 public final class CounterUsageCollectorEP {
