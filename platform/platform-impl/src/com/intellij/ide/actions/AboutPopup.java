@@ -42,6 +42,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -423,9 +424,10 @@ public final class AboutPopup {
       }
     }
 
-    private static @NotNull String getCopyrightText() {
+    private static @NotNull @Nls String getCopyrightText() {
       ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-      return "Copyright © " + appInfo.getCopyrightStart() + '–' + Calendar.getInstance(Locale.US).get(Calendar.YEAR) + ' ' + appInfo.getCompanyName();
+      return IdeBundle.message("about.popup.copyright", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR),
+                               appInfo.getCompanyName());
     }
 
     private @NotNull TextRenderer createTextRenderer(Graphics2D g) {
@@ -642,8 +644,9 @@ public final class AboutPopup {
     protected class AccessibleInfoSurface extends AccessibleJPanel {
       @Override
       public String getAccessibleName() {
-        String text = "System Information\n" + getText() + "\n" + getCopyrightText();
-        return AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(text);
+        String text = IdeBundle.message("about.popup.system.info", getText(), getCopyrightText());
+        @NlsSafe String result = AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(text);
+        return result;
       }
     }
   }
@@ -708,12 +711,12 @@ public final class AboutPopup {
       @Override
       public String getAccessibleName() {
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-        return "About " + appInfo.getFullApplicationName();
+        return IdeBundle.message("about.popup.about.app", appInfo.getFullApplicationName());
       }
 
       @Override
       public String getAccessibleDescription() {
-        return myInfoSurface != null ? "Press Copy key to copy system information to clipboard" : null;
+        return myInfoSurface != null ? IdeBundle.message("press.copy.key.to.copy.system.information.to.clipboard") : null;
       }
 
       @Override
@@ -728,7 +731,7 @@ public final class AboutPopup {
 
       @Override
       public String getAccessibleActionDescription(int i) {
-        return i == 0 && myInfoSurface != null ? "Copy system information to clipboard" : null;
+        return i == 0 && myInfoSurface != null ? IdeBundle.message("copy.system.information.to.clipboard") : null;
       }
 
       @Override
