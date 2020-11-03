@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -48,7 +49,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
   public void update(@NotNull final AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
     final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    boolean isForbidden = window != null && isProhibitionAllowed() && window.getSelectedFile().getUserData(FORBID_TAB_SPLIT) != null;
+    boolean isForbidden = window != null && isProhibitionAllowed() && FileEditorManagerImpl.forbidSplitFor(window.getSelectedFile());
 
     if (isForbidden) {
       event.getPresentation().setEnabledAndVisible(false);

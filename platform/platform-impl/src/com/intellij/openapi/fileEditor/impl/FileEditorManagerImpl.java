@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.SplitAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -767,6 +768,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     }
+  }
+
+  public static boolean forbidSplitFor(@NotNull VirtualFile file) {
+    return Boolean.TRUE.equals(file.getUserData(SplitAction.FORBID_TAB_SPLIT));
   }
 
   @Override
