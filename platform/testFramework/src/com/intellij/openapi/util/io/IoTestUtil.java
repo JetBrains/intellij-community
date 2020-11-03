@@ -395,10 +395,10 @@ public final class IoTestUtil {
   public static @NotNull List<@NotNull String> enumerateWslDistributions() {
     assertTrue(SystemInfo.isWin10OrNewer);
     try {
-      GeneralCommandLine cmd = new GeneralCommandLine("wsl", "-l", "-v").withRedirectErrorStream(true).withCharset(StandardCharsets.UTF_16LE);
+      GeneralCommandLine cmd = new GeneralCommandLine("wsl", "-l", "-q").withRedirectErrorStream(true).withCharset(StandardCharsets.UTF_16LE);
       ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 30_000);
       if (output.getExitCode() == 0) {
-        return output.getStdoutLines().stream().skip(1).map(line -> line.split("\\s+")[1]).collect(Collectors.toList());
+        return output.getStdoutLines();
       }
       else {
         Logger.getInstance(IoTestUtil.class).debug(output.getExitCode() + " " + output.getStdout().trim());
