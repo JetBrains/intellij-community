@@ -983,18 +983,28 @@ public final class PluginManagerCore {
   }
 
   @Nullable
-  public static PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor, @NotNull BuildNumber ideBuildNumber) {
+  public static PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor,
+                                                                 @NotNull BuildNumber ideBuildNumber) {
+    return checkBuildNumberCompatibility(descriptor, ideBuildNumber, null);
+  }
+
+  @Nullable
+  public static PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor,
+                                                                 @NotNull BuildNumber ideBuildNumber,
+                                                                 @Nullable Runnable beforeCreateErrorCallback) {
     String sinceBuild = descriptor.getSinceBuild();
     String untilBuild = descriptor.getUntilBuild();
     try {
       BuildNumber sinceBuildNumber = sinceBuild == null ? null : BuildNumber.fromString(sinceBuild, null, null);
       if (sinceBuildNumber != null && sinceBuildNumber.compareTo(ideBuildNumber) > 0) {
+        if (beforeCreateErrorCallback != null) beforeCreateErrorCallback.run();
         return PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.incompatible.since.build", descriptor.getName(), descriptor.getVersion(), sinceBuild, ideBuildNumber),
                                          CoreBundle.messagePointer("plugin.loading.error.short.incompatible.since.build", sinceBuild));
       }
 
       BuildNumber untilBuildNumber = untilBuild == null ? null : BuildNumber.fromString(untilBuild, null, null);
       if (untilBuildNumber != null && untilBuildNumber.compareTo(ideBuildNumber) < 0) {
+        if (beforeCreateErrorCallback != null) beforeCreateErrorCallback.run();
         return PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.incompatible.until.build", descriptor.getName(), descriptor.getVersion(), untilBuild, ideBuildNumber),
                                          CoreBundle.messagePointer("plugin.loading.error.short.incompatible.until.build", untilBuild));
       }

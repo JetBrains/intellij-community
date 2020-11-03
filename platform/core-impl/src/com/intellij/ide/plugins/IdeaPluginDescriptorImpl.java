@@ -325,8 +325,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         case "idea-version":
           mySinceBuild = Strings.nullize(child.getAttributeValue("since-build"));
           myUntilBuild = Strings.nullize(child.getAttributeValue("until-build"));
-          if (!checkCompatibility(context)) {
-            readEssentialPluginInformation(element, context);
+          if (!checkCompatibility(context, () -> readEssentialPluginInformation(element, context))) {
             return true;
           }
           break;
@@ -435,14 +434,15 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return true;
   }
 
-  private boolean checkCompatibility(@NotNull DescriptorListLoadingContext context) {
+  private boolean checkCompatibility(@NotNull DescriptorListLoadingContext context, Runnable beforeCreateErrorCallback) {
     String since = mySinceBuild;
     String until = myUntilBuild;
     if (isBundled() || (since == null && until == null)) {
       return true;
     }
 
-    @Nullable PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get());
+    @Nullable PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get(),
+                                                                                         beforeCreateErrorCallback);
     if (error == null) {
       return true;
     }
