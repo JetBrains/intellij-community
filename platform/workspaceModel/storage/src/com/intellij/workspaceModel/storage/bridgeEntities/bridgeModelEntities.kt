@@ -358,25 +358,26 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAsse
 
   override fun assertConsistency(storage: WorkspaceEntityStorage) {
     // Module can have a different entity source in case of OC
-    if (this.entitySource.toString() == "OCEntitySource") return
-
-    val thisEntity = this.createEntity(storage)
-    val attachedModule = thisEntity.module
 
     // The assertion is currently disabled because it fails
     // com.android.tools.idea.gradle.project.sync.GradleSyncProjectComparisonTest.GradleSyncProjectComparisonTestCase.testPsdSampleRenamingModule
 
-/*
-    assert(thisEntity.entitySource == attachedModule.entitySource) {
-      """
-      |Entity source of content root entity and it's module entity differs. 
-      |   Module entity source: ${attachedModule.entitySource}
-      |   Content root source: ${thisEntity.entitySource}
-      |   Module entity: $attachedModule
-      |   Content root entity: $thisEntity
-      """.trimMargin()
-    }
-*/
+    /*
+        if (this.entitySource.toString() == "OCEntitySource") return
+
+        val thisEntity = this.createEntity(storage)
+        val attachedModule = thisEntity.module
+
+        assert(thisEntity.entitySource == attachedModule.entitySource) {
+          """
+          |Entity source of content root entity and it's module entity differs.
+          |   Module entity source: ${attachedModule.entitySource}
+          |   Content root source: ${thisEntity.entitySource}
+          |   Module entity: $attachedModule
+          |   Content root entity: $thisEntity
+          """.trimMargin()
+        }
+    */
   }
 }
 
