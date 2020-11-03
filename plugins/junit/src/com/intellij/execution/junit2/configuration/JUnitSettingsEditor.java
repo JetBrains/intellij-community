@@ -96,6 +96,13 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     fragments.add(forkMode);
 
     testKind.addSettingsEditorListener(
-      editor -> forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(testKind.getTestKind(), forkMode.getSelectedVariant())));
+      editor -> {
+        int selectedType = testKind.getTestKind();
+        forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(selectedType, forkMode.getSelectedVariant()));
+        scopeFragment.setRemovable(selectedType == JUnitConfigurationModel.PATTERN ||
+                                   selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE ||
+                                   selectedType == JUnitConfigurationModel.TAGS ||
+                                   selectedType == JUnitConfigurationModel.CATEGORY);
+      });
   }
 }
