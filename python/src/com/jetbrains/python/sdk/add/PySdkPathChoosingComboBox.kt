@@ -55,13 +55,10 @@ class PySdkPathChoosingComboBox(sdks: List<Sdk> = emptyList(), suggestedFile: Vi
     }
     addActionListener {
       val pythonSdkType = PythonSdkType.getInstance()
-      val descriptor = pythonSdkType.homeChooserDescriptor.apply {
-        isForcedToUseIdeaFileChooser = true
-      }
+      val descriptor = pythonSdkType.homeChooserDescriptor
       FileChooser.chooseFiles(descriptor, null, suggestedFile) {
         val virtualFile = it.firstOrNull() ?: return@chooseFiles
         val path = PathUtil.toSystemDependentName(virtualFile.path)
-        if (!pythonSdkType.isValidSdkHome(path)) return@chooseFiles
         childComponent.selectedItem =
           items.find { it.homePath == path } ?: PyDetectedSdk(path).apply {
             childComponent.insertItemAt(this, 0)
