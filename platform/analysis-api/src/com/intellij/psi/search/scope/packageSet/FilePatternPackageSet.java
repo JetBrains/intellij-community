@@ -37,11 +37,6 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   @Override
-  public boolean contains(@NotNull VirtualFile file, @NotNull NamedScopesHolder holder) {
-    return contains(file, holder.getProject(), holder);
-  }
-
-  @Override
   public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return fileMatcher(file, fileIndex, holder != null ? holder.getProjectBaseDir() : project.getBaseDir()) &&

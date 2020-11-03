@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,9 +14,12 @@ public abstract class PackageSetBase implements PackageSet {
    * @deprecated use {@link PackageSetBase#contains(VirtualFile, Project, NamedScopesHolder)} instead
    */
   @Deprecated
-  public abstract boolean contains(@NotNull VirtualFile file, NamedScopesHolder holder);
+  public boolean contains(@NotNull VirtualFile file, NamedScopesHolder holder) {
+    return false;
+  }
 
   public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
+    DeprecatedMethodException.reportDefaultImplementation(getClass(), "contains(file, project, holder)", "Need proper implementation");
     return contains(file, holder);
   }
 

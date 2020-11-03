@@ -16,10 +16,8 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.isAncestor
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 
 private const val QODANA_GLOBAL_SCOPE = "qodana.global"
 private const val QODANA_CONFIG_FILENAME = "qodana.json"
@@ -101,7 +99,7 @@ data class ExclusionFilter(
     if (paths.isNotEmpty()) {
       val pathsSet = object : AbstractPackageSet(paths.joinToString()) {
         val absolutePaths = paths.map { Paths.get(project.basePath ?: "", it).normalize().toAbsolutePath() }
-        override fun contains(file: VirtualFile, holder: NamedScopesHolder?): Boolean {
+        override fun contains(file: VirtualFile, project: Project, holder: NamedScopesHolder?): Boolean {
           val path = Paths.get(file.path)
           return absolutePaths.firstOrNull { it.isAncestor(path) } != null
         }
