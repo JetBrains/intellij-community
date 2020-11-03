@@ -35,6 +35,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import com.intellij.ui.AnActionButton;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -251,7 +252,26 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
 
     ActionGroup templateGroup = (ActionGroup)ActionManager.getInstance().getAction("SettingsEntryPointGroup");
     for (AnAction child : templateGroup.getChildren(null)) {
-      group.add(child);
+      if (child instanceof Separator) {
+        group.add(child);
+      }
+      else {
+        String text = child.getTemplateText();
+        if (text != null && !text.endsWith("...")) {
+          AnActionButton button = new AnActionButton.AnActionButtonWrapper(child.getTemplatePresentation(), child) {
+            @Override
+            public void updateButton(@NotNull AnActionEvent e) {
+              getDelegate().update(e);
+              e.getPresentation().setText(e.getPresentation().getText() + "...");
+            }
+          };
+          button.setShortcut(child.getShortcutSet());
+          group.add(button);
+        }
+        else {
+          group.add(child);
+        }
+      }
     }
 
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);

@@ -67,8 +67,10 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
-        if (Registry.is("ide.instant.theme.switch") && !event.isOk() && myLafActionSelection) {
-          switchLafAndUpdateUI(LafManager.getInstance(), initialLaf, false);
+        if (Registry.is("ide.instant.theme.switch")) {
+          if (!event.isOk() || !myLafActionSelection) {
+            switchLafAndUpdateUI(LafManager.getInstance(), initialLaf, false);
+          }
         }
       }
     });

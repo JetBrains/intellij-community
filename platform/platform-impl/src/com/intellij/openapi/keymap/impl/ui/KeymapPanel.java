@@ -317,9 +317,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     if (TouchBarsManager.isTouchBarAvailable()) {
       myShowFN = new ShowFNKeysSettingWrapper();
-      if (myShowFN.getCheckbox() != null)
+      if (myShowFN.getCheckbox() != null) {
         panel.add(myShowFN.getCheckbox(), BorderLayout.SOUTH);
-      Disposer.register(this, myShowFN);
+      }
     }
 
     return panel;
@@ -555,6 +555,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public JComponent createComponent() {
+    if (myShowFN != null) {
+      Disposer.register(this, myShowFN);
+    }
     KeymapExtension.EXTENSION_POINT_NAME.addChangeListener(this::currentKeymapChanged, this);
     myKeymapSelector.attachKeymapListener(this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(CHANGE_TOPIC, this);
