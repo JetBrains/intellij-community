@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -51,6 +52,7 @@ public final class LightEditUtil {
   private final static Logger LOG = Logger.getInstance(LightEditUtil.class);
 
   private static boolean ourForceOpenInLightEditMode;
+  private static final ThreadLocal<LightEditCommandLineOptions> ourCommandLineOptions = new ThreadLocal<>();
 
   private LightEditUtil() {
   }
@@ -228,5 +230,31 @@ public final class LightEditUtil {
   @NotNull
   static Project requireProject() {
     return requireLightEditProject(LightEditService.getInstance().getProject());
+  }
+
+  public static <T> @NotNull T computeWithCommandLineOptions(boolean shouldWait, @NotNull Computable<T> computable) {
+    ourCommandLineOptions.set(new LightEditCommandLineOptions(shouldWait));
+    try {
+      return computable.compute();
+    }
+    finally {
+      ourCommandLineOptions.set(null);
+    }
+  }
+
+  static @Nullable LightEditCommandLineOptions getCommandLineOptions() {
+    return ourCommandLineOptions.get();
+  }
+
+  static final class LightEditCommandLineOptions {
+    private final boolean myShouldWait;
+
+    LightEditCommandLineOptions(boolean shouldWait) {
+      myShouldWait = shouldWait;
+    }
+
+    public boolean shouldWait() {
+      return myShouldWait;
+    }
   }
 }

@@ -255,12 +255,7 @@ public final class CommandLineProcessor {
         return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.invalid.path", arg));
       }
 
-      if (line != -1 || tempProject) {
-        projectAndCallback = doOpenFile(file, line, column, tempProject, shouldWait);
-      }
-      else {
-        projectAndCallback = doOpenFileOrProject(file, shouldWait);
-      }
+      projectAndCallback = openFileOrProject(file, line, column, tempProject, shouldWait);
 
       if (shouldWait) {
         break;
@@ -304,5 +299,17 @@ public final class CommandLineProcessor {
       LOG.warn(e);
       return null;
     }
+  }
+
+  private static @NotNull CommandLineProcessorResult openFileOrProject(@NotNull Path file,
+                                                                       int line, int column,
+                                                                       boolean tempProject,
+                                                                       boolean shouldWait) {
+    return LightEditUtil.computeWithCommandLineOptions(shouldWait, () -> {
+      if (line != -1 || tempProject) {
+        return doOpenFile(file, line, column, tempProject, shouldWait);
+      }
+      return doOpenFileOrProject(file, shouldWait);
+    });
   }
 }

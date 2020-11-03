@@ -57,6 +57,7 @@ public final class LightEditServiceImpl implements LightEditService,
   private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
   private final LightEditProjectManager myLightEditProjectManager = new LightEditProjectManager();
   private boolean myEditorWindowClosing = false;
+  private boolean mySaveSession;
 
   @Override
   public @NotNull LightEditConfiguration getState() {
@@ -76,14 +77,17 @@ public final class LightEditServiceImpl implements LightEditService,
     Disposer.register(this, myEditorManager);
   }
 
-  private void init() {
+  private void init(boolean restoreSession) {
     Project project = getOrCreateProject();
     invokeOnEdt(() -> {
       boolean notify = false;
       if (myFrameWrapper == null) {
+        mySaveSession = restoreSession;
         myFrameWrapper = LightEditFrameWrapper.allocate(project, () -> closeEditorWindow());
         LOG.info("Frame created");
-        restoreSession();
+        if (restoreSession) {
+          restoreSession();
+        }
         notify = true;
       }
       if (!myFrameWrapper.getFrame().isVisible()) {
@@ -100,8 +104,12 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public void showEditorWindow() {
+    doShowEditorWindow(true);
+  }
+
+  private void doShowEditorWindow(boolean restoreSession) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      init();
+      init(restoreSession);
     }
   }
 
@@ -123,8 +131,9 @@ public final class LightEditServiceImpl implements LightEditService,
   @NotNull
   public Project openFile(@NotNull VirtualFile file) {
     Project project = myLightEditProjectManager.getOrCreateProject();
+    LightEditUtil.LightEditCommandLineOptions commandLineOptions = LightEditUtil.getCommandLineOptions();
     doWhenActionManagerInitialized(() -> {
-      doOpenFile(file);
+      doOpenFile(file, commandLineOptions == null || !commandLineOptions.shouldWait());
     });
     return project;
   }
@@ -151,8 +160,8 @@ public final class LightEditServiceImpl implements LightEditService,
     }
   }
 
-  private void doOpenFile(@NotNull VirtualFile file) {
-    showEditorWindow();
+  private void doOpenFile(@NotNull VirtualFile file, boolean restoreSession) {
+    doShowEditorWindow(restoreSession);
     LightEditorInfo openEditorInfo = myEditorManager.findOpen(file);
     if (openEditorInfo == null) {
       LightEditorInfo newEditorInfo = myEditorManager.createEditor(file);
@@ -445,12 +454,14 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   private void saveSession() {
-    LightEditTabs tabs = myFrameWrapper.getLightEditPanel().getTabs();
-    List<VirtualFile> openFiles = tabs.getOpenFiles();
-    myConfiguration.sessionFiles.clear();
-    myConfiguration.sessionFiles.addAll(
-      ContainerUtil.map(openFiles,
-                        openFile -> VfsUtilCore.pathToUrl(openFile.getPath())));
+    if (mySaveSession) {
+      LightEditTabs tabs = myFrameWrapper.getLightEditPanel().getTabs();
+      List<VirtualFile> openFiles = tabs.getOpenFiles();
+      myConfiguration.sessionFiles.clear();
+      myConfiguration.sessionFiles.addAll(
+        ContainerUtil.map(openFiles,
+                          openFile -> VfsUtilCore.pathToUrl(openFile.getPath())));
+    }
   }
 
   private void restoreSession() {
@@ -460,7 +471,7 @@ public final class LightEditServiceImpl implements LightEditService,
         path -> {
           VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
           if (file != null) {
-            doOpenFile(file);
+            doOpenFile(file, false);
           }
         }
       );
