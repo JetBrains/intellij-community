@@ -109,4 +109,9 @@ public class LightRecordMethod extends LightMethod implements LightRecordMember 
   private static boolean hasTargetApplicableForMethod(PsiAnnotation annotation) {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.METHOD) != null;
   }
+
+  @Override
+  public PsiElement copy() {
+    return myMethod.copy();
+  }
 }
