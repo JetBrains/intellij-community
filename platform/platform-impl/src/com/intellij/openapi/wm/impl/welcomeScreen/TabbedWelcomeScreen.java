@@ -161,7 +161,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     @Override
     @NotNull
-    public JComponent getKeyComponent(@NotNull JList<? extends WelcomeScreenTab> list) {
+    public JComponent getKeyComponent(@NotNull JComponent parent) {
       return myKeyComponent;
     }
 

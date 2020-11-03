@@ -33,7 +33,7 @@ public class PluginsTabFactory implements WelcomeTabFactory {
     return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.plugins.title"), WelcomeScreenEventCollector.TabType.TabNavPlugins) {
       private PluginUpdatesService myService;
       private final CountComponent myCountLabel = new CountComponent();
-      private JList<? extends WelcomeScreenTab> myList;
+      private JComponent myParent;
 
       {
         myKeyComponent.setBorder(JBUI.Borders.empty(8, 0, 8, 8));
@@ -45,17 +45,17 @@ public class PluginsTabFactory implements WelcomeTabFactory {
             @NlsSafe String text = countValue == null || countValue <= 0 ? null : countValue.toString();
             myCountLabel.setText(text);
             myCountLabel.setVisible(text != null);
-            if (myList != null) {
-              myList.repaint();
+            if (myParent != null) {
+              myParent.repaint();
             }
           });
         });
       }
 
       @Override
-      public @NotNull JComponent getKeyComponent(@NotNull JList<? extends WelcomeScreenTab> list) {
-        if (myList == null) {
-          list.addAncestorListener(new AncestorListenerAdapter() {
+      public @NotNull JComponent getKeyComponent(@NotNull JComponent parent) {
+        if (myParent == null) {
+          parent.addAncestorListener(new AncestorListenerAdapter() {
             @Override
             public void ancestorRemoved(AncestorEvent event) {
               if (myService != null) {
@@ -64,8 +64,8 @@ public class PluginsTabFactory implements WelcomeTabFactory {
             }
           });
         }
-        myList = list;
-        return super.getKeyComponent(list);
+        myParent = parent;
+        return super.getKeyComponent(parent);
       }
 
       @Override
