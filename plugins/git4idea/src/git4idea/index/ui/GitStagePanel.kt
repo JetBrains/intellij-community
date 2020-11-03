@@ -191,7 +191,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     }
 
     fun editedCommitChanged() {
-      update()
+      rebuildTree()
 
       commitPanel.editedCommit?.let {
         val node = TreeUtil.findNodeWithObject(root, it)
