@@ -102,12 +102,6 @@ fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement
     return descriptorsToHighlight.mapNotNull { it.source.getPsi() }.filter { it != target }
 }
 
-val KtDeclaration.descriptor: DeclarationDescriptor?
-    get() = if (this is KtParameter) this.descriptor else this.resolveToDescriptorIfAny(BodyResolveMode.FULL)
-
-val KtParameter.descriptor: ValueParameterDescriptor?
-    get() = this.resolveToParameterDescriptorIfAny(BodyResolveMode.FULL)
-
 fun isCallReceiverRefersToCompanionObject(element: KtElement, companionObject: KtObjectDeclaration): Boolean {
     val companionObjectDescriptor = companionObject.descriptor
     val bindingContext = element.analyze()
