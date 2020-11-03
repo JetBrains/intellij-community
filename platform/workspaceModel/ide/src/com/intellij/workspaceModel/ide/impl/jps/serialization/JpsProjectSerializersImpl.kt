@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -70,8 +71,21 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val allFileSerializers = entityTypeSerializers.filter { enableExternalStorage || !it.isExternalStorage } +
                              serializerToDirectoryFactory.keys + moduleSerializers.keys
     allFileSerializers.forEach {
-      fileSerializersByUrl.put(it.fileUrl.url, it)
+      val shouldAdd = checkLibrarySerializerExistence(it.fileUrl.url, it)
+      if (shouldAdd) fileSerializersByUrl.put(it.fileUrl.url, it)
     }
+  }
+
+  // TODO: 03.11.2020 temporally created to find the root cause of IDEA-252915
+  private fun checkLibrarySerializerExistence(url: String, serializer: JpsFileEntitiesSerializer<*>): Boolean {
+    if (serializer !is JpsLibraryEntitiesSerializer) return true
+
+    val existingSerializers = fileSerializersByUrl.getValues(url)
+    if (serializer in existingSerializers) {
+      logger<JpsProjectSerializersImpl>().error("Serializer already exists. url: $url. new serializer: $serializer")
+      return false
+    }
+    return true
   }
 
   internal val directorySerializerFactoriesByUrl = directorySerializersFactories.associateBy { it.directoryUrl }
@@ -148,7 +162,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     for (newSerializer in newFileSerializers) {
-      fileSerializersByUrl.put(newSerializer.fileUrl.url, newSerializer)
+      val shouldAdd = checkLibrarySerializerExistence(newSerializer.fileUrl.url, newSerializer)
+      if (shouldAdd) fileSerializersByUrl.put(newSerializer.fileUrl.url, newSerializer)
     }
     for (obsoleteSerializer in obsoleteSerializers) {
       fileSerializersByUrl.remove(obsoleteSerializer.fileUrl.url, obsoleteSerializer)
@@ -322,7 +337,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val newSerializers = createSerializersForDirectoryEntities(factory, added)
           newSerializers.forEach {
             serializerToDirectoryFactory[it.first] = factory
-            fileSerializersByUrl.put(it.first.fileUrl.url, it.first)
+            val shouldAdd = checkLibrarySerializerExistence(it.first.fileUrl.url, it.first)
+            if (shouldAdd) fileSerializersByUrl.put(it.first.fileUrl.url, it.first)
           }
           serializersToRun.addAll(newSerializers)
         }
@@ -351,7 +367,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         moduleListSerializersByUrl.values.forEach { moduleListSerializer ->
           if (moduleListSerializer.entitySourceFilter(source)) {
             val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.fromUrl(url), null)
-            fileSerializersByUrl.put(url, newSerializer)
+            val shouldAdd = checkLibrarySerializerExistence(url, newSerializer)
+            if (shouldAdd) fileSerializersByUrl.put(url, newSerializer)
             moduleSerializers[newSerializer] = moduleListSerializer
             affectedFileFactories.add(moduleListSerializer)
           }

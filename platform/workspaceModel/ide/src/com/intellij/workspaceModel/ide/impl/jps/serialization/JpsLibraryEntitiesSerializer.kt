@@ -141,6 +141,24 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   }
 
   protected open fun getExternalSystemId(libraryEntity: LibraryEntity): String? = null
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is JpsLibraryEntitiesSerializer) return false
+
+    if (fileUrl != other.fileUrl) return false
+    if (internalEntitySource != other.internalEntitySource) return false
+    if (libraryTableId != other.libraryTableId) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = fileUrl.hashCode()
+    result = 31 * result + internalEntitySource.hashCode()
+    result = 31 * result + libraryTableId.hashCode()
+    return result
+  }
 }
 
 private const val DEFAULT_JAR_DIRECTORY_TYPE = "CLASSES"
