@@ -120,7 +120,9 @@
     <xi:fallback/>
   </xi:include>
 
-  <xi:include href="xdebugger.xml"/>
+  <xi:include href="/META-INF/xdebugger.xml">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/GraphPlugin.xml">
     <xi:fallback/>
   </xi:include>
