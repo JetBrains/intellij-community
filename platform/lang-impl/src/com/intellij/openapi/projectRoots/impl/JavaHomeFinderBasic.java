@@ -28,7 +28,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
 import static java.util.Collections.emptySet;
 
@@ -243,18 +242,25 @@ public class JavaHomeFinderBasic {
       for (Path innerDir: innerDirectories) {
         var home = innerDir;
         var releaseFile = home.resolve("release");
-        if (!exists(releaseFile)) continue;
+        if (!safeExists(releaseFile)) continue;
 
-        // Zulu JDK on MacOS has a rogue layout, with which Gradle failed to operate (see the bugreport IDEA-253051),
-        // and in order to get Gradle working with Zulu JDK we should use it's second home (when symbolic links are resolved),
-        boolean zuluOnMac = mac && Files.isSymbolicLink(releaseFile) && home.getFileName().toString().contains("zulu");
-        if (zuluOnMac) {
+        if (mac) {
+          // Zulu JDK on MacOS has a rogue layout, with which Gradle failed to operate (see the bugreport IDEA-253051),
+          // and in order to get Gradle working with Zulu JDK we should use it's second home (when symbolic links are resolved).
           try {
-            var realReleaseFile = releaseFile.toRealPath();
-            if (!exists(realReleaseFile)) { log.warn("Failed to resolve the target file (it doesn't exist) for: " + releaseFile.toString()); continue; }
-            var realHome = realReleaseFile.getParent();
-            if (realHome == null) { log.warn("Failed to resolve the target file (it has no parent dir) for: " + releaseFile.toString()); continue; }
-            home = realHome;
+            if (Files.isSymbolicLink(releaseFile)) {
+              var realReleaseFile = releaseFile.toRealPath();
+              if (!safeExists(realReleaseFile)) {
+                log.warn("Failed to resolve the target file (it doesn't exist) for: " + releaseFile.toString());
+                continue;
+              }
+              var realHome = realReleaseFile.getParent();
+              if (realHome == null) {
+                log.warn("Failed to resolve the target file (it has no parent dir) for: " + releaseFile.toString());
+                continue;
+              }
+              home = realHome;
+            }
           }
           catch (IOException ioe) {
             log.warn("Failed to resolve the target file for: " + releaseFile.toString() + ": " + ioe.getMessage());
@@ -279,6 +285,16 @@ public class JavaHomeFinderBasic {
     }
 
     return result;
+  }
+
+  private boolean safeExists(@NotNull Path path) {
+    try {
+      return Files.exists(path);
+    }
+    catch (Exception e) {
+      log.debug("Failed to check file existence: unexpected exception " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+      return false;
+    }
   }
 
 }
