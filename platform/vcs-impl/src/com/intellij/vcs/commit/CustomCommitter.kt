@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import org.jetbrains.annotations.Nls
 
 private val LOG = logger<CustomCommitter>()
 
@@ -29,7 +30,7 @@ class CustomCommitter(
     resultHandlers += resultHandler
   }
 
-  fun runCommit(taskName: String) = object : Task.Modal(project, removeMnemonic(taskName), true) {
+  fun runCommit(taskName: @Nls String) = object : Task.Modal(project, removeMnemonic(taskName), true) {
     override fun run(indicator: ProgressIndicator) = session.execute(changes, commitMessage)
 
     override fun onSuccess() {

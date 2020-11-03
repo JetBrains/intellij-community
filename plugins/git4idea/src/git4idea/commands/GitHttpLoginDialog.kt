@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
@@ -27,9 +28,9 @@ import javax.swing.JComponent
 
 
 class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
-                                                   url: String,
+                                                   url: @NlsSafe String,
                                                    rememberPassword: Boolean = true,
-                                                   username: String? = null,
+                                                   username: @NlsSafe String? = null,
                                                    editableUsername: Boolean = true,
                                                    private val showActionForCredHelper: Boolean = false) : DialogWrapper(project, true) {
   private val usernameField = JBTextField(username, 20).apply { isEditable = editableUsername }

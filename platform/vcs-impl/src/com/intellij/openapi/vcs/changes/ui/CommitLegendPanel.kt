@@ -38,7 +38,7 @@ open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
   }
 
   @JvmOverloads
-  protected fun append(included: Int, fileStatus: FileStatus, label: String, compactLabel: String? = null) {
+  protected fun append(included: Int, fileStatus: FileStatus, label: String, compactLabel: @Nls String? = null) {
     if (included > 0) {
       if (!isPanelEmpty) {
         appendSpace()
@@ -62,7 +62,7 @@ open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
   }
 
   @Nls
-  private fun format(value: Any, label: String, compactLabel: String?): String =
+  private fun format(value: Any, label: String, compactLabel: @Nls String?): String =
     if (isCompact && compactLabel != null) "$compactLabel$value" else "$value $label"
 
   interface InfoCalculator {

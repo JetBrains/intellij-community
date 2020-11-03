@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.util.ThreeState
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 
@@ -39,7 +40,7 @@ internal enum class NodeType {
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
 
-  fun getTextRepresentation(): String {
+  fun getTextRepresentation(): @Nls String {
     val nodeDescriptor = userObject as? BranchNodeDescriptor ?: return super.toString()
     return when (nodeDescriptor.type) {
       NodeType.LOCAL_ROOT -> message("group.Git.Local.Branch.title")

@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.isEmpty
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.Nls
 
 class MoveChangesToAnotherListAction : AbstractChangeListAction() {
   override fun update(e: AnActionEvent) {
@@ -122,7 +123,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
     private fun askTargetChangelist(project: Project,
                                     affectedLists: Set<LocalChangeList>,
                                     sameFileChangeLists: Set<LocalChangeList>,
-                                    title: String): LocalChangeList? {
+                                    title: @Nls String): LocalChangeList? {
       val changeListManager = ChangeListManager.getInstance(project)
       val allChangelists = changeListManager.changeListsCopy
 

@@ -21,13 +21,15 @@ import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 private val LOG = logger<AbstractCommitWorkflowHandler<*, *>>()
 
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
+@Nls
 private fun String.fixUnderscoreMnemonic() = replace('_', '&')
 
-internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyList()): String =
+internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyList()): @Nls String =
   replaceMnemonicAmpersand(
     (vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
      ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")

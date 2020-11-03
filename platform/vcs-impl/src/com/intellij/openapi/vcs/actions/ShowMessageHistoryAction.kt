@@ -31,6 +31,7 @@ import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.vcs.commit.NonModalCommitPanel
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getSubjectRightMargin
+import org.jetbrains.annotations.Nls
 import java.awt.Point
 import javax.swing.JList
 import javax.swing.ListSelectionModel.SINGLE_SELECTION
@@ -82,7 +83,7 @@ class ShowMessageHistoryAction : DumbAwareAction() {
       }
       .setItemChosenCallback { chosenMessage = it }
       .setRenderer(object : ColoredListCellRenderer<String>() {
-        override fun customizeCellRenderer(list: JList<out String>, value: String, index: Int, selected: Boolean, hasFocus: Boolean) {
+        override fun customizeCellRenderer(list: JList<out String>, value: @Nls String, index: Int, selected: Boolean, hasFocus: Boolean) {
           append(first(convertLineSeparators(value, RETURN_SYMBOL), rightMargin, false))
 
           applySpeedSearchHighlighting(list, this, true, selected)

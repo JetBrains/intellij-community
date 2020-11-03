@@ -13,6 +13,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.GridBagLayout
 import javax.swing.*
@@ -20,14 +21,14 @@ import javax.swing.*
 
 sealed class AccountMenuItem(val showSeparatorAbove: Boolean) {
 
-  class Account(val title: String,
-                val info: String,
+  class Account(val title: @Nls String,
+                val info: @Nls String,
                 val icon: Icon,
                 val actions: List<AccountMenuItem> = emptyList(),
                 showSeparatorAbove: Boolean = false
   ) : AccountMenuItem(showSeparatorAbove)
 
-  class Action(val text: String,
+  class Action(val text: @Nls String,
                val runnable: () -> Unit,
                val rightIcon: Icon = EmptyIcon.create(AllIcons.Ide.External_link_arrow),
                showSeparatorAbove: Boolean = false

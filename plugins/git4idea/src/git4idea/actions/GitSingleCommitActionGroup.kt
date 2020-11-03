@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLog
 import com.intellij.vcs.log.VcsLogDataKeys
@@ -13,7 +14,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
 internal abstract class GitSingleCommitActionGroup() : ActionGroup(), DumbAware {
-  constructor(actionText: String, isPopup: Boolean) : this() {
+  constructor(actionText: @NlsActions.ActionText String, isPopup: Boolean) : this() {
     templatePresentation.text = actionText
     setPopup(isPopup)
   }

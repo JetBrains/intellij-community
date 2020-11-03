@@ -10,6 +10,7 @@ import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.Nls
 import javax.swing.Box
 import javax.swing.JPanel
 import kotlin.collections.set
@@ -98,7 +99,7 @@ class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderL
   companion object {
     private fun verticalPanel() = JPanel(VerticalFlowLayout(0, 0))
 
-    fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 5)).apply {
+    fun verticalPanel(title: @Nls String) = JPanel(VerticalFlowLayout(0, 5)).apply {
       border = createTitledBorder(title)
     }
   }
