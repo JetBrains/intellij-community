@@ -830,17 +830,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> compositeRef.set(window.findFileComposite(file)));
     }
 
-    FileEditorProvider[] newProviders;
-    AsyncFileEditorProvider.Builder[] builders;
     if (compositeRef.isNull()) {
       // File is not opened yet. In this case we have to create editors
       // and select the created EditorComposite.
-      newProviders = FileEditorProviderManager.getInstance().getProviders(myProject, file);
+      FileEditorProvider[] newProviders = FileEditorProviderManager.getInstance().getProviders(myProject, file);
       if (newProviders.length == 0) {
         return Pair.createNonNull(FileEditor.EMPTY_ARRAY, EMPTY_PROVIDER_ARRAY);
       }
 
-      builders = new AsyncFileEditorProvider.Builder[newProviders.length];
+      AsyncFileEditorProvider.Builder[] builders = new AsyncFileEditorProvider.Builder[newProviders.length];
       for (int i = 0; i < newProviders.length; i++) {
         try {
           FileEditorProvider provider = newProviders[i];
@@ -860,17 +858,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           LOG.error(e);
         }
       }
-    }
-    else {
-      newProviders = null;
-      builders = null;
-    }
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      runBulkTabChange(window.getOwner(), splitters -> {
-        openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        runBulkTabChange(window.getOwner(), splitters -> {
+          openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders);
+        });
       });
-    });
+    }
 
     EditorWithProviderComposite composite = compositeRef.get();
     return new Pair<>(composite == null ? FileEditor.EMPTY_ARRAY : composite.getEditors(),
@@ -882,8 +876,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                 @Nullable HistoryEntry entry,
                                 @NotNull FileEditorOpenOptions options,
                                 @NotNull Ref<EditorWithProviderComposite> compositeRef,
-                                FileEditorProvider [] newProviders,
-                                AsyncFileEditorProvider.Builder [] builders) {
+                                FileEditorProvider @NotNull [] newProviders,
+                                AsyncFileEditorProvider.Builder @NotNull [] builders) {
     if (myProject.isDisposed() || !file.isValid()) {
       return;
     }
