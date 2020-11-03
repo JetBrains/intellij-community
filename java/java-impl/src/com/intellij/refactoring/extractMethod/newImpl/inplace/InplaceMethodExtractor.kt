@@ -131,7 +131,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val gotoDeclarationShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
     val message = JavaRefactoringBundle.message("extract.method.gotit.navigation", gotoDeclarationShortcut)
     gotItBalloon = GotItTooltip("extract.method.gotit.navigate", message, templateState)
-      .andShowCloseShortcut()
       .withMaxWidth(250)
       .showInEditor(templateState.editor, offset)
   }
@@ -146,7 +145,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val contextActionShortcut = KeymapUtil.getFirstKeyboardShortcutText("ShowIntentionActions")
     val message = JavaRefactoringBundle.message("extract.method.gotit.signature", contextActionShortcut, moveLeftShortcut, moveRightShortcut)
     GotItTooltip("extract.method.signature.change", message, disposable)
-      .andShowCloseShortcut()
       .withMaxWidth(250)
       .showInEditor(editor, offset)
   }
