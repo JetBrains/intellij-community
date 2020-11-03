@@ -47,6 +47,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       "kotlin.ranges.IntRange",
       "kotlin.ranges.IntProgression",
       "kotlin.ranges.ClosedRange",
+      "kotlin.collections.IntIterator",
       "kotlin.Lazy", "kotlin.Unit",
       "kotlin.Pair", "kotlin.Triple",
       "kotlin.jvm.internal.DefaultConstructorMarker",
