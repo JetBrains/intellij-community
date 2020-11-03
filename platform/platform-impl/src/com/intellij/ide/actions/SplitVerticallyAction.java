@@ -24,9 +24,4 @@ public final class SplitVerticallyAction extends SplitAction{
   public SplitVerticallyAction() {
     super(SwingConstants.VERTICAL);
   }
-
-  @Override
-  protected boolean isProhibitionAllowed() {
-    return true;
-  }
 }

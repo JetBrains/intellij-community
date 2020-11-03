@@ -49,7 +49,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
   public void update(@NotNull final AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
     final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    boolean isForbidden = window != null && isProhibitionAllowed() && FileEditorManagerImpl.forbidSplitFor(window.getSelectedFile());
+    boolean isForbidden = window != null && !myCloseSource && FileEditorManagerImpl.forbidSplitFor(window.getSelectedFile());
 
     if (isForbidden) {
       event.getPresentation().setEnabledAndVisible(false);
@@ -61,9 +61,5 @@ public abstract class SplitAction extends AnAction implements DumbAware {
                               && window.getTabCount() >= minimum;
       event.getPresentation().setEnabledAndVisible(enabled);
     }
-  }
-
-  protected boolean isProhibitionAllowed() {
-    return false;
   }
 }
