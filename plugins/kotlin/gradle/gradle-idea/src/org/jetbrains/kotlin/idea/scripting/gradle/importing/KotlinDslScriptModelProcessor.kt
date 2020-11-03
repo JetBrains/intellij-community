@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.scripting.gradle.importing
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.vfs.VfsUtil
@@ -73,10 +74,10 @@ fun processScriptModel(
                     it.failed = true
                 }
             }
-            throw IllegalStateException(
-                KotlinIdeaGradleBundle.message("title.kotlin.build.script")
-                        + ":\n"
-                        + errors.joinToString("\n") { it.text + "\n" + it.details }
+            resolverCtx.cancellationTokenSource?.cancel() ?: throw ProcessCanceledException(
+                IllegalStateException(KotlinIdeaGradleBundle.message("title.kotlin.build.script")
+                                              + ":\n"
+                                              + errors.joinToString("\n") { it.text + "\n" + it.details })
             )
         }
         errors.isEmpty()
