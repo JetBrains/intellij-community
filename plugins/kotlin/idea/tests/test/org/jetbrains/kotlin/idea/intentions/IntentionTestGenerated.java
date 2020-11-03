@@ -7580,6 +7580,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToStringTemplate/kt11295.kt");
         }
 
+        @TestMetadata("lambdaInParentheses.kt")
+        public void testLambdaInParentheses() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/lambdaInParentheses.kt");
+        }
+
+        @TestMetadata("lambdaWithLabel.kt")
+        public void testLambdaWithLabel() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/lambdaWithLabel.kt");
+        }
+
+        @TestMetadata("lambdaWithLabelInParentheses.kt")
+        public void testLambdaWithLabelInParentheses() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/lambdaWithLabelInParentheses.kt");
+        }
+
         @TestMetadata("longTemplatePlusStringLiteral.kt")
         public void testLongTemplatePlusStringLiteral() throws Exception {
             runTest("testData/intentions/convertToStringTemplate/longTemplatePlusStringLiteral.kt");
