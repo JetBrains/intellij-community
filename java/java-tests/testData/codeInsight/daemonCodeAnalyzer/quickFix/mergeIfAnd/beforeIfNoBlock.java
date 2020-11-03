@@ -1,4 +1,4 @@
-// "Merge with nested 'if'" "true"
+// "Merge nested 'if' statements" "true"
 
 class Test {
   public static void main(String[] args) {
