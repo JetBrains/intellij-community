@@ -12,6 +12,9 @@ import java.util.List;
 
 /**
  * Represents a toolbar with a visual presentation.
+ * <p>
+ * If toolbar belongs to specific component (e.g., tool window panel), set it via {@link #setTargetComponent(JComponent)}.
+ * </p>
  *
  * @see ActionManager#createActionToolbar(String, ActionGroup, boolean)
  */
