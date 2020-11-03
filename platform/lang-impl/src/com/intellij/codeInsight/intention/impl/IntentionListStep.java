@@ -122,9 +122,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       Runnable runnable = () -> {
         ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
       };
-      Component focusable = myEditor != null
-                            ? UIUtil.uiTraverser(myEditor.getComponent()).traverse().filter(Component::isFocusable).first()
-                            : null;
+      Component focusable = myEditor == null ? null : myEditor.getContentComponent();
       if (focusable != null) {
         IdeFocusManager manager = IdeFocusManager.getInstance(myProject);
         manager.requestFocus(focusable, true).doWhenDone(() -> manager.doWhenFocusSettlesDown(runnable));
