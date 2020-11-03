@@ -46,7 +46,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test shorter actions first despite ellipsis"() {
     def pattern = 'Rebas'
-    def fork = 'Rebase my GitHub fork'
+    def fork = 'Sync Fork'
     def rebase = 'Rebase...'
     def items = [matchedAction(fork, pattern),
                  matchedAction(rebase, pattern)].toSorted(MATCH_COMPARATOR)
