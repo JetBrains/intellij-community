@@ -268,12 +268,27 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         for (int i = startOffset; i < startOffset + len; i++) {
           updateMappingForToken(i, freezedHighlighters);
         }
-      } finally {
-        freezedHighlighters.forEach(LazyLexerEditorHighlighter::finishUpdate);
+      }
+      finally {
+        freezedHighlighters.forEach(highlighter -> {
+          try {
+            highlighter.finishUpdate();
+          }
+          catch (IllegalStateException e) {
+            LOG.error(e.getMessage() +
+                      "\nLayer highlighter: " + highlighter.getSyntaxHighlighter().toString() +
+                      "\nTop level highlighter: " + LayeredLexerEditorHighlighter.this.getSyntaxHighlighter().toString(), e,
+                      new Attachment("layerTextAfterChange.txt", highlighter.myText.toString()),
+                      new Attachment("editorTextAfterChange.txt", myText.toString()));
+          }
+        });
       }
     }
 
-    private MappedRange @NotNull [] insert(MappedRange @NotNull [] array, MappedRange @NotNull [] insertArray, int startIndex, int insertLength) {
+    private MappedRange @NotNull [] insert(MappedRange @NotNull [] array,
+                                           MappedRange @NotNull [] insertArray,
+                                           int startIndex,
+                                           int insertLength) {
       MappedRange[] newArray = LayeredLexerEditorHighlighter.reallocateArray(array, mySegmentCount + insertLength);
       if (startIndex < mySegmentCount) {
         System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
@@ -318,9 +333,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       final Mapper mapper = getMappingDocument(token);
       final MappedRange oldMapping = myRanges[i];
       if (mapper != null) {
-        if (freezedHighlighters != null && freezedHighlighters.add(mapper.highlighter)) {
-          mapper.highlighter.beginUpdate();
-        }
+        freezeHighlighter(mapper, freezedHighlighters);
         if (oldMapping != null) {
           if (oldMapping.mapper == mapper && oldMapping.outerToken == token) {
             mapper.updateMapping(i, oldMapping);
@@ -336,9 +349,16 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
       else {
         if (oldMapping != null) {
+          freezeHighlighter(oldMapping.mapper, freezedHighlighters);
           oldMapping.mapper.removeMapping(oldMapping);
           myRanges[i] = null;
         }
+      }
+    }
+
+    private void freezeHighlighter(@NotNull Mapper mapper, @Nullable Set<LazyLexerEditorHighlighter> freezedHighlighters) {
+      if (freezedHighlighters != null && freezedHighlighters.add(mapper.highlighter)) {
+        mapper.highlighter.beginUpdate();
       }
     }
   }
@@ -354,7 +374,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
 
     private Mapper(@NotNull LayerDescriptor descriptor) {
-      doc = new DocumentImpl("",true);
+      doc = new DocumentImpl("", true);
 
       mySyntaxHighlighter = descriptor.getLayerHighlighter();
       myBackground = descriptor.getBackgroundKey();
@@ -632,7 +652,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
       int lastOffset = -1;
       final Document document = updates.get(0).getDocument();
-      for (DocumentEvent update: updates) {
+      for (DocumentEvent update : updates) {
         int offset = update.getOffset();
         if (offset < lastOffset) {
           throw new IllegalStateException("Updates are not sorted: " + updates);
@@ -644,7 +664,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
       int processedOffset = -1;
       CharSequence text = document.getImmutableCharSequence();
-      for (DocumentEvent event: updates) {
+      for (DocumentEvent event : updates) {
         if (event.getOffset() + event.getNewLength() < processedOffset) {
           continue;
         }
