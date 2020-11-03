@@ -53,8 +53,8 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     scopeFragment.setVariantNameProvider(scope -> scope == TestSearchScope.WHOLE_PROJECT
                                                   ? JUnitBundle.message("search.scope.project")
                                                   : scope == TestSearchScope.SINGLE_MODULE
-                                                    ? JUnitBundle.message("search.scope.module.deps")
-                                                    : JUnitBundle.message("search.scope.module"));
+                                                    ? JUnitBundle.message("search.scope.module")
+                                                    : JUnitBundle.message("search.scope.module.deps"));
     fragments.add(scopeFragment);
 
     VariantTagFragment<JUnitConfiguration, String> repeat =
