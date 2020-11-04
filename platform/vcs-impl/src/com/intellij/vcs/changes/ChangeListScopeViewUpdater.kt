@@ -26,9 +26,11 @@ class ChangeListScopeViewUpdater(private val project: Project) : ChangeListAdapt
   }
 
   override fun changeListsChanged() {
-    val pane = ProjectView.getInstance(project).getProjectViewPaneById(ScopeViewPane.ID) as? ScopeViewPane ?: return
-    if (pane.selectedScope is ChangeListScope) {
-      pane.updateSelectedScope()
+    UIUtil.invokeLaterIfNeeded {
+      val pane = ProjectView.getInstance(project).getProjectViewPaneById(ScopeViewPane.ID) as? ScopeViewPane ?: return@invokeLaterIfNeeded
+      if (pane.selectedScope is ChangeListScope) {
+        pane.updateSelectedScope()
+      }
     }
   }
 
