@@ -216,7 +216,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       mySplitter = new OnePixelSplitter(false, initialProportion);
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
       mySplitter.setOpaque(false);
       mySplitter.getDivider().setOpaque(false);
       add(mySplitter, BorderLayout.CENTER);
@@ -250,6 +249,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         mySplitter.setHonorComponentsMinimumSize(true);
         mySplitter.setHonorComponentsPreferredSize(true);
       }
+
+      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
+
     }
 
     update("", "", false, false);
