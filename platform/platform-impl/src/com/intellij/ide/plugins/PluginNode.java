@@ -309,6 +309,11 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return myDependencies;
   }
 
+  @Override
+  public @Nullable String getDescriptorPath() {
+    return null;
+  }
+
   public List<String> getTags() {
     return myTags;
   }

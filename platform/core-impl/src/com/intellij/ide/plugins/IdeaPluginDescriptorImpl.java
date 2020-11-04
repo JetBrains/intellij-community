@@ -44,6 +44,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   String name;
   PluginId id;
+
   // only for sub descriptors
   String descriptorPath;
 
@@ -93,6 +94,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     this.path = path;
     this.basePath = basePath;
     this.isBundled = isBundled;
+  }
+
+  @Override
+  public @Nullable String getDescriptorPath() {
+    return descriptorPath;
   }
 
   @ApiStatus.Internal

@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -12,6 +13,7 @@ import java.util.List;
  * to get a descriptor by a plugin ID and {@link com.intellij.ide.plugins.PluginManagerCore#getPlugins()} to get all plugins.
  */
 public interface IdeaPluginDescriptor extends PluginDescriptor {
-  @NotNull
-  List<IdeaPluginDependency> getDependencies();
+  @NotNull List<IdeaPluginDependency> getDependencies();
+
+  @Nullable String getDescriptorPath();
 }

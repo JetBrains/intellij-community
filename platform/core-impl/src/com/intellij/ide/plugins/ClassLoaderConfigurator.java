@@ -26,7 +26,6 @@ import java.util.*;
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
 @ApiStatus.Internal
 final class ClassLoaderConfigurator {
-  private static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
   static final boolean SEPARATE_CLASSLOADER_FOR_SUB = Boolean.parseBoolean(System.getProperty("idea.classloader.per.descriptor", "true"));
   private static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_ONLY;
   private static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE;
@@ -68,6 +67,7 @@ final class ClassLoaderConfigurator {
         PluginId.getId("org.jetbrains.plugins.go-template"),
         PluginId.getId("com.intellij.kubernetes"),
         PluginId.getId("JavaScript"),
+        PluginId.getId("com.jetbrains.plugins.jade"),
         PluginId.getId("com.jetbrains.space"),
         PluginId.getId("com.jetbrains.php.phpspec"),
         PluginId.getId("Docker"),
@@ -198,7 +198,7 @@ final class ClassLoaderConfigurator {
     List<PluginDependency> pluginDependencies = mainDependent.pluginDependencies;
     if (pluginDependencies == null) {
       assert !mainDependent.isUseIdeaClassLoader();
-      mainDependent.setClassLoader(new PluginClassLoader(urlClassLoaderBuilder, loaders.toArray(EMPTY_CLASS_LOADER_ARRAY), mainDependent, mainDependent.getPluginPath(), coreLoader));
+      mainDependent.setClassLoader(new PluginClassLoader(urlClassLoaderBuilder, loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY), mainDependent, mainDependent.getPluginPath(), coreLoader));
       return;
     }
 
@@ -217,12 +217,12 @@ final class ClassLoaderConfigurator {
     else {
       ClassLoader[] parentLoaders;
       if (loaders.isEmpty()) {
-        parentLoaders = usePluginClassLoader ? EMPTY_CLASS_LOADER_ARRAY : new ClassLoader[]{coreLoader};
+        parentLoaders = usePluginClassLoader ? PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY : new ClassLoader[]{coreLoader};
       }
       else {
-        parentLoaders = loaders.toArray(EMPTY_CLASS_LOADER_ARRAY);
+        parentLoaders = loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY);
       }
-      mainDependentClassLoader = new PluginClassLoader(urlClassLoaderBuilder, parentLoaders, mainDependent, mainDependent.getPluginPath(), usePluginClassLoader ? coreLoader : null);
+      mainDependentClassLoader = new PluginClassLoader(urlClassLoaderBuilder, parentLoaders, mainDependent, mainDependent.getPluginPath(), coreLoader);
     }
 
     // second, set class loaders for sub descriptors
@@ -264,10 +264,7 @@ final class ClassLoaderConfigurator {
     collectPackagePrefixes(dependent, packagePrefixes);
     // no package prefixes if only bean extension points are configured
     if (packagePrefixes.isEmpty()) {
-      Map<String, List<Element>> map = dependent.getUnsortedEpNameToExtensionElements();
-      if (!map.containsKey("org.intellij.intelliLang.injectionConfig") && !map.containsKey("com.intellij.sharedIndexBundled")) {
-        getLogger().error("Optional descriptor " + dependencyInfo + " doesn't define extra classes");
-      }
+      getLogger().debug("Optional descriptor " + dependencyInfo + " contains only bean extension points or light services");
     }
 
     loaders.clear();
@@ -288,7 +285,7 @@ final class ClassLoaderConfigurator {
 
     SubPluginClassLoader subClassloader = new SubPluginClassLoader(dependent,
                                                                    urlClassLoaderBuilder,
-                                                                   loaders.toArray(EMPTY_CLASS_LOADER_ARRAY),
+                                                                   loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY),
                                                                    packagePrefixes.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY),
                                                                    coreLoader);
     dependent.setClassLoader(subClassloader);

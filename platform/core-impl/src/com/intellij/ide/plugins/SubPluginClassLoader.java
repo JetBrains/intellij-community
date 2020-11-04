@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public final class SubPluginClassLoader extends PluginClassLoader implements PluginAwareClassLoader.SubClassLoader {
+public final class SubPluginClassLoader extends PluginClassLoader {
   private final String[] packagePrefixes;
 
   SubPluginClassLoader(@NotNull IdeaPluginDescriptorImpl pluginDescriptor,
@@ -22,8 +21,8 @@ public final class SubPluginClassLoader extends PluginClassLoader implements Plu
   }
 
   @Override
-  protected @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean force) {
-    if (force) {
+  protected @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) {
+    if (forceLoadFromSubPluginClassloader) {
       return super.loadClassInsideSelf(name, true);
     }
 

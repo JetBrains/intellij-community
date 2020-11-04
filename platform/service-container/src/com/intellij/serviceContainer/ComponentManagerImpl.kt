@@ -714,7 +714,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   final override fun <T : Any> loadClass(className: String, pluginDescriptor: PluginDescriptor): Class<T> {
     @Suppress("UNCHECKED_CAST")
-    return resolveClass(className, pluginDescriptor) as Class<T>
+    return doLoadClass(className, pluginDescriptor) as Class<T>
   }
 
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId?): T {
@@ -783,7 +783,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val pluginId = pluginDescriptor.pluginId!!
     try {
       @Suppress("UNCHECKED_CAST")
-      return instantiateClass(resolveClass(className, pluginDescriptor) as Class<T>, pluginId)
+      return instantiateClass(doLoadClass(className, pluginDescriptor) as Class<T>, pluginId)
     }
     catch (e: Throwable) {
       when {
@@ -799,7 +799,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   final override fun createListener(descriptor: ListenerDescriptor): Any {
     val pluginDescriptor = descriptor.pluginDescriptor
     val aClass = try {
-      resolveClass(descriptor.listenerClassName, pluginDescriptor)
+      doLoadClass(descriptor.listenerClassName, pluginDescriptor)
     }
     catch (e: Throwable) {
       throw PluginException("Cannot create listener ${descriptor.listenerClassName}", e, pluginDescriptor.pluginId)
@@ -1097,13 +1097,13 @@ internal fun isGettingServiceAllowedDuringPluginUnloading(descriptor: PluginDesc
   return descriptor.isRequireRestart || descriptor.pluginId == PluginManagerCore.CORE_ID || descriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID
 }
 
-private fun resolveClass(name: String, pluginDescriptor: PluginDescriptor): Class<*> {
+private fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor): Class<*> {
   // maybe null in unit tests
   val classLoader = pluginDescriptor.pluginClassLoader ?: ComponentManagerImpl::class.java.classLoader
-  if (classLoader is PluginAwareClassLoader.SubClassLoader) {
-    return classLoader.loadOrDelegate(name)
+  if (classLoader is PluginAwareClassLoader) {
+    return classLoader.tryLoadingClass(name, true) ?: throw ClassNotFoundException("$name $classLoader")
   }
   else {
-    return Class.forName(name, true, classLoader)
+    return classLoader.loadClass(name)
   }
 }

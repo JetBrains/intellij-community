@@ -12,16 +12,19 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
 import io.github.classgraph.AnnotationEnumValue
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ClassInfo
 import java.util.function.BiConsumer
+import kotlin.properties.Delegates.notNull
 
 @Suppress("HardCodedStringLiteral")
 private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
@@ -43,6 +46,9 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
             errors.add(e)
           }
         }
+
+        // check first
+        checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
 
         checkContainer(ApplicationManager.getApplication() as ComponentManagerImpl, indicator, taskExecutor)
         ProjectUtil.getOpenProjects().firstOrNull()?.let {
@@ -85,25 +91,32 @@ private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressI
       return@processExtensionPoints
     }
 
-    extensionPoint.processImplementations(false, BiConsumer { supplier, pluginDescriptor ->
-      val extensionClass = extensionPoint.extensionClass
+    checkExtensionPoint(extensionPoint, taskExecutor)
+  }
+}
 
-      taskExecutor {
-        try {
-          val extension = supplier.get()
-          if (!extensionClass.isInstance(extension)) {
-            throw PluginException("Extension ${extension.javaClass.name} does not implement $extensionClass",
-                                  pluginDescriptor.pluginId)
-          }
-        }
-        catch (ignore: ExtensionNotApplicableException) {
-        }
-      }
-    })
+private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecutor: (task: () -> Unit) -> Unit) {
+  extensionPoint.processImplementations(false, BiConsumer { supplier, pluginDescriptor ->
+    var extensionClass: Class<out Any> by notNull()
+    taskExecutor {
+      extensionClass = extensionPoint.extensionClass
+    }
 
     taskExecutor {
-      extensionPoint.extensionList
+      try {
+        val extension = supplier.get()
+        if (!extensionClass.isInstance(extension)) {
+          throw PluginException("Extension ${extension.javaClass.name} does not implement $extensionClass",
+                                pluginDescriptor.pluginId)
+        }
+      }
+      catch (ignore: ExtensionNotApplicableException) {
+      }
     }
+  })
+
+  taskExecutor {
+    extensionPoint.extensionList
   }
 }
 

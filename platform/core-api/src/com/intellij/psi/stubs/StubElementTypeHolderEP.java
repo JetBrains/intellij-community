@@ -12,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -57,27 +55,37 @@ public final class StubElementTypeHolderEP {
   @Nullable
   public String externalIdPrefix;
 
-  @NotNull List<StubFieldAccessor> initializeOptimized(@NotNull PluginDescriptor pluginDescriptor) {
+  void initializeOptimized(@NotNull PluginDescriptor pluginDescriptor,
+                           @NotNull List<StubFieldAccessor> result) {
+    int resultSizeBefore = result.size();
     try {
       Class<?> aClass = ApplicationManager.getApplication().loadClass(holderClass, pluginDescriptor);
-      if (externalIdPrefix != null) {
-        List<StubFieldAccessor> result = new ArrayList<>();
+      if (externalIdPrefix == null) {
+        // force init
+        Class<?> initializedClass = Class.forName(aClass.getName(), true, aClass.getClassLoader());
+        assert initializedClass == aClass;
+      }
+      else {
         assert aClass.isInterface();
         for (Field field : aClass.getDeclaredFields()) {
           if (!field.isSynthetic()) {
             result.add(new StubFieldAccessor(externalIdPrefix + field.getName(), field));
           }
         }
-        return result;
       }
     }
     catch (ClassNotFoundException e) {
+      if (result.size() > resultSizeBefore) {
+        result.subList(resultSizeBefore, result.size()).clear();
+      }
       LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
     }
     catch (PluginException e) {
+      if (result.size() > resultSizeBefore) {
+        result.subList(resultSizeBefore, result.size()).clear();
+      }
       LOG.error(e);
     }
-    return Collections.emptyList();
   }
 
   @Override
