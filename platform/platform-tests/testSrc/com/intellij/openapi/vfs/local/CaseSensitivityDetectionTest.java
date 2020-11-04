@@ -11,6 +11,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
@@ -89,4 +90,21 @@ public class CaseSensitivityDetectionTest {
     File child = new File("/home");
     assertEquals(rootCs, FileSystemUtil.readParentCaseSensitivity(child));
   }
+
+  @Test
+  public void caseSensitivityIsReadSanely() throws IOException {
+    File file = myTempDir.newFile("dir/child.txt");
+    File dir = file.getParentFile();
+    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
+    assertTrue(sensitivity.toString(), sensitivity == FileAttributes.CaseSensitivity.INSENSITIVE || sensitivity == FileAttributes.CaseSensitivity.SENSITIVE);
+    if (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE) {
+      assertTrue(new File(dir, "x.txt").createNewFile());
+      assertTrue(new File(dir, "X.txt").createNewFile());
+    }
+    else {
+      assertTrue(new File(dir, "x.txt").createNewFile());
+      assertFalse(new File(dir, "X.txt").createNewFile());
+    }
+  }
+
 }
