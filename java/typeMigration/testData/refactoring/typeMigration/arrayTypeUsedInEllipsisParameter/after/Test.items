@@ -1,0 +1,16 @@
+Types:
+PsiLocalVariable:migrationVariable : long[]
+PsiNewExpression:new int[]{0,0} : long[]
+PsiParameter:values : long...
+PsiReferenceExpression:migrationVariable : long[]
+
+Conversions:
+0 -> $
+0 -> $
+0 -> $
+0 -> $
+migrationVariable -> $
+
+New expression type changes:
+new int[]{0,0} -> long[]
+Fails:

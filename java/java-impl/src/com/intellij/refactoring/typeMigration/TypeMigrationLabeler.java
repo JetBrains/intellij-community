@@ -1003,7 +1003,10 @@ public class TypeMigrationLabeler {
               final PsiExpression actual = expressions[idx];
               final PsiType type = getTypeEvaluator().evaluateType(actual);
               if (type != null) {
-                migrateExpressionType(actual, strippedType, parent, TypeConversionUtil.isAssignable(strippedType, type), true);
+                PsiType argumentMigrationType =
+                  type instanceof PsiArrayType && migrationType instanceof PsiEllipsisType ? strippedType.createArrayType() : strippedType;
+                migrateExpressionType(actual, argumentMigrationType, parent,
+                                      TypeConversionUtil.isAssignable(argumentMigrationType, type), true);
               }
             }
           }
