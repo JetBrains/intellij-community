@@ -1,0 +1,11 @@
+Types:
+PsiField:migrationField : java.lang.Long
+PsiLocalVariable:number : java.lang.Long
+PsiReferenceExpression:migrationField : java.lang.Long
+PsiTypeCastExpression:(Integer) migrationField : java.lang.Long
+
+Conversions:
+(Integer) migrationField -> $
+
+New expression type changes:
+Fails:
