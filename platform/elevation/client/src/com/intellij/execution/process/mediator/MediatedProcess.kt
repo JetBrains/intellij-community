@@ -3,7 +3,6 @@ package com.intellij.execution.process.mediator
 
 import com.google.protobuf.ByteString
 import com.intellij.execution.process.mediator.util.blockingGet
-import com.intellij.execution.process.mediator.util.childSupervisorJob
 import com.intellij.execution.process.mediator.util.childSupervisorScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -154,7 +153,8 @@ class MediatedProcess private constructor(private val handle: MediatedProcessHan
 
 /**
  * All remote calls are performed using the provided [ProcessMediatorClient],
- * and the whole process lifecycle is contained within its coroutine scope.
+ * and the whole process lifecycle is contained within the coroutine scope of the client.
+ * Normal remote calls (those besides process creation and release) are performed within the scope of the handle object.
  */
 private class MediatedProcessHandle(
   private val client: ProcessMediatorClient,
@@ -167,9 +167,9 @@ private class MediatedProcessHandle(
 ) : CoroutineScope by client.childSupervisorScope() {
 
   /** Controls all operations except CreateProcess() and Release(). */
-  private val rpcJob = childSupervisorJob()
+  private val rpcJob get() = coroutineContext[Job] as CompletableJob
 
-  private val releaseJob = launch(start = CoroutineStart.LAZY) {
+  private val releaseJob = client.launch(start = CoroutineStart.LAZY) {
     try {
       rpcJob.cancelAndJoin()
     }
@@ -178,15 +178,17 @@ private class MediatedProcessHandle(
       // once invoked, the pid is no more valid, and the process must be assumed reaped
       client.release(pid.await())
     }
+  }.apply {
+    rpcJob.invokeOnCompletion { start() }
   }
 
-  val pid: Deferred<Long> = async {
+  val pid: Deferred<Long> = client.async {
     try {
       client.createProcess(command, workingDir, environVars, inFile, outFile, errFile)
     }
     catch (e: Throwable) {
-      rpcJob.cancel("Failed to create process")
       releaseJob.cancel("Failed to create process")
+      rpcJob.cancel("Failed to create process")
       throw e
     }
   }
@@ -195,9 +197,9 @@ private class MediatedProcessHandle(
     (this as CoroutineScope).ensureActive()
     currentCoroutineContext().ensureActive()
     // Perform the call in the scope of this handle, so that it is dispatched in the same way
-    // as CreateProcess() and Release(). The parent is overridden so that we can await for
-    // the call to complete before Release, but the caller is still able to cancel it.
-    val deferred = (this as CoroutineScope).async(rpcJob) {
+    // as CreateProcess() and Release(). This overrides the parent so that we can await for
+    // the call to complete before Release, but we ensure the caller is still able to cancel it.
+    val deferred = (this as CoroutineScope).async {
       client.block()
     }
     return try {
@@ -209,10 +211,9 @@ private class MediatedProcessHandle(
     }
   }
 
-  /** Once this is invoked, attempting to make any RPC will throw [CancellationException]. */
   fun releaseAsync() {
-    // let ongoing operations finish gracefully, but don't accept new calls
+    // let ongoing operations finish gracefully,
+    // and once all of them finish don't accept new calls
     rpcJob.complete()
-    releaseJob.start()
   }
 }
