@@ -16,6 +16,7 @@
 package com.intellij.lexer;
 
 import com.intellij.html.embedding.HtmlEmbeddedContentProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
@@ -35,7 +36,7 @@ public class XHtmlLexer extends HtmlLexer {
   }
 
   @Override
-  protected boolean acceptEmbeddedContentProvider(HtmlEmbeddedContentProvider provider) {
+  protected boolean acceptEmbeddedContentProvider(@NotNull HtmlEmbeddedContentProvider provider) {
     return !(provider instanceof HtmlRawTextTagContentProvider);
   }
 }
