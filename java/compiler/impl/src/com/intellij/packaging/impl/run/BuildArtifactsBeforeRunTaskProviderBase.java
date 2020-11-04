@@ -149,7 +149,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
 
   protected abstract ProjectTask createProjectTask(Project project, List<Artifact> artifacts);
 
-  private static class MyArtifactListener<T extends BuildArtifactsBeforeRunTaskBase<?>> extends ArtifactAdapter {
+  private static class MyArtifactListener<T extends BuildArtifactsBeforeRunTaskBase<?>> implements ArtifactListener {
     private final Project myProject;
     private final Key<T> myProviderId;
 

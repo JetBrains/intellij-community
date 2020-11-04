@@ -120,7 +120,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     return listener;
   }
 
-  private static class MyArtifactListener extends ArtifactAdapter {
+  private static class MyArtifactListener implements ArtifactListener {
     private final StringBuilder myMessages = new StringBuilder();
 
     @Override
