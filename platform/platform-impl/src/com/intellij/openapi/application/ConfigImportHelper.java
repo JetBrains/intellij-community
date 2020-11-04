@@ -380,6 +380,13 @@ public final class ConfigImportHelper {
     return Boolean.getBoolean(FIRST_SESSION_KEY);
   }
 
+  /**
+   * Checks that current user is "new", i. e. this is the first launch of the IDE on this machine.
+   */
+  public static boolean isNewUser() {
+    return isFirstSession() && !isConfigImported();
+  }
+
   /** Simple check by file type, content is not checked. */
   public static boolean isSettingsFile(@NotNull VirtualFile file) {
     return FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
