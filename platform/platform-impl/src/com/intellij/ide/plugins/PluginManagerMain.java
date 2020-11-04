@@ -41,6 +41,7 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
@@ -82,6 +83,19 @@ public abstract class PluginManagerMain {
                                         Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
+    Function<Boolean, Void> function = cleanup == null ? null : aBoolean -> {
+      cleanup.run();
+      return null;
+    };
+    return downloadPlugins(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function)  ;
+  }
+
+  public static boolean downloadPlugins(List<PluginNode> plugins,
+                                        List<? extends IdeaPluginDescriptor> customPlugins,
+                                        boolean allowInstallWithoutRestart,
+                                        Runnable onSuccess,
+                                        PluginEnabler pluginEnabler,
+                                        @Nullable Function<Boolean, Void> function) throws IOException {
     boolean[] result = new boolean[1];
     try {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
@@ -93,8 +107,8 @@ public abstract class PluginManagerMain {
             }
           }
           finally {
-            if (cleanup != null) {
-              ApplicationManager.getApplication().invokeLater(cleanup);
+            if (function != null) {
+              ApplicationManager.getApplication().invokeLater(() -> function.apply(result[0]));
             }
           }
         }
