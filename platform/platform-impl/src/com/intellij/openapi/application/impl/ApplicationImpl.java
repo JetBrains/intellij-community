@@ -246,7 +246,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myCommandLineMode;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
+  @Override
   public final boolean isLightEditMode() {
     return Main.isLightEdit();
   }

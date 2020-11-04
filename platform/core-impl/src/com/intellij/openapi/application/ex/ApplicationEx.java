@@ -224,4 +224,8 @@ public interface ApplicationEx extends Application {
   default boolean isExitInProgress() {
     return false;
   }
+
+  default boolean isLightEditMode() {
+    return false;
+  }
 }
