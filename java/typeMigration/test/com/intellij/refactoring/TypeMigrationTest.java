@@ -879,6 +879,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   public void testTypeParameterMigrationInInvalidCode() {
     doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
   }
+  
+  public void testCompatibleBinaryExpressions() {
+    doTestFieldType("migrationField", PsiType.LONG);
+  }
 
   private void doTestReturnType(final String methodName, final String migrationType) {
     start(new RulesProvider() {

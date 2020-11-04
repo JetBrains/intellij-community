@@ -52,7 +52,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     final PsiType ltype = left.getType();
     final PsiType rtype = right.getType();
     if (ltype == null || rtype == null) return;
-
+    
     if (sign != JavaTokenType.EQ) {
       final IElementType binaryOperator = TypeConversionUtil.convertEQtoOperation(sign);
       if (!TypeConversionUtil.isBinaryOperatorApplicable(binaryOperator, ltype, rtype, false)) {
@@ -64,8 +64,12 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         }
         return;
       }
+      PsiClassType stringType = JavaPsiFacade.getElementFactory(expression.getProject()).createTypeByFQClassName("java.lang.String");
+      if (stringType.equals(ltype) && binaryOperator == JavaTokenType.PLUS && !left.isChanged() && right.isChanged()) {
+        return;
+      }
     }
-
+    
     switch (TypeInfection.getInfection(left, right)) {
       case TypeInfection.NONE_INFECTED:
         break;
