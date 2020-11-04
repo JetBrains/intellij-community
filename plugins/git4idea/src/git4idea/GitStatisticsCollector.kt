@@ -22,7 +22,7 @@ import java.util.*
 
 class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroupId(): String = "git.configuration"
-  override fun getVersion(): Int = 2
+  override fun getVersion(): Int = 3
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val set = HashSet<MetricEvent>()
