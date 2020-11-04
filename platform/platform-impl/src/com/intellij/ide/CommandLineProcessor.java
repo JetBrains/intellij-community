@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
 
@@ -165,13 +166,24 @@ public final class CommandLineProcessor {
         return null;
       }
 
-      if (starter.canProcessExternalCommandLine()) {
-        LOG.info("Processing command with " + starter);
+      if (!starter.canProcessExternalCommandLine()) {
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
+                                                                        ApplicationNamesInfo.getInstance().getProductName()));
+      }
+
+      LOG.info("Processing command with " + starter);
+      int requiredModality = starter.getRequiredModality();
+      if (requiredModality == ApplicationStarter.NOT_IN_EDT) {
         return new CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory));
       }
       else {
-        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
-                                                                        ApplicationNamesInfo.getInstance().getProductName()));
+        ModalityState modalityState = requiredModality == ApplicationStarter.ANY_MODALITY
+                                      ? ModalityState.any() : ModalityState.defaultModalityState();
+        AtomicReference<CommandLineProcessorResult> ref = new AtomicReference<>();
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          ref.set(new CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory)));
+        }, modalityState);
+        return ref.get();
       }
     });
   }

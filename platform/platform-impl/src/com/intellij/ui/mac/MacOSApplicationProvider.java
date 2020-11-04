@@ -229,10 +229,9 @@ public final class MacOSApplicationProvider {
             args.add(column);
           }
           args.add(file);
-          ApplicationManager.getApplication().invokeLater(() -> {
-            CommandLineProcessorResult result = CommandLineProcessor.processExternalCommandLine(args, null);
-            result.showErrorIfFailed();
-          }, ModalityState.NON_MODAL);
+
+          CommandLineProcessorResult result = CommandLineProcessor.processExternalCommandLine(args, null);
+          result.showErrorIfFailedLater();
         }
       });
     }

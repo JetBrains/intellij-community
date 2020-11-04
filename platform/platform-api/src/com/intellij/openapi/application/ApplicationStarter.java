@@ -67,9 +67,13 @@ public interface ApplicationStarter {
   }
 
   /**
-   * If true, the command of this launcher can be processed when there is a modal dialog open.
+   * Return {@link #ANY_MODALITY} if the command of this launcher can be processed when there is a modal dialog open.
    * Such a starter may not directly change the PSI/VFS/project model of the opened projects or open new projects.
-   * Such activities should be performed inside write-safe contexts (see {@link TransactionGuard}).
+   * Such a starter may not perform activities that should be performed inside write-safe contexts (see {@link TransactionGuard}).
+   * <p>
+   * Return {@link #NOT_IN_EDT} if the command of this launcher can be processed on pooled thread.
+   * <p>
+   * Note, that platform may ignore this flag and process command as {@link #NON_MODAL}.
    */
   @MagicConstant(intValues = {NON_MODAL, ANY_MODALITY, NOT_IN_EDT})
   default int getRequiredModality() {
