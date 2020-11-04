@@ -1115,6 +1115,9 @@
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
+    <startupActivity implementation="com.intellij.ide.LanguageDetector"/>
+    <experimentalFeature id="language.detect.notification" percentOfUsers="0"/>
+    <notificationGroup id="Language Plugins Notifications" displayType="NONE"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
