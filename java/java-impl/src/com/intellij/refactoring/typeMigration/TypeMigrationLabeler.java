@@ -410,8 +410,12 @@ public class TypeMigrationLabeler {
   }
 
   public TypeMigrationUsageInfo[] getMigratedUsages(boolean autoMigrate, final PsiElement... roots) {
+    return getMigratedUsages(autoMigrate, autoMigrate, roots);
+  }
+
+  public TypeMigrationUsageInfo[] getMigratedUsages(boolean autoMigrate, boolean showWarning, final PsiElement... roots) {
     if (myMigratedUsages == null) {
-      myShowWarning = autoMigrate;
+      myShowWarning = showWarning;
       migrate(autoMigrate, roots);
       myMigratedUsages = getMigratedUsages();
     }
