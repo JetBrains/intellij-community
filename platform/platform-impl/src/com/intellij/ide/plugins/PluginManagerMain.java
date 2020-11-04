@@ -87,7 +87,7 @@ public abstract class PluginManagerMain {
       cleanup.run();
       return null;
     };
-    return downloadPlugins(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function)  ;
+    return downloadPlugins(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function);
   }
 
   public static boolean downloadPlugins(List<PluginNode> plugins,
