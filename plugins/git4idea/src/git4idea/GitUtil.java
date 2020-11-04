@@ -62,6 +62,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -123,15 +124,15 @@ public final class GitUtil {
     String content = readContent(dotGit);
     if (content == null) return null;
     String pathToDir = parsePathToRepository(content);
-    File file = findRealRepositoryDir(rootDir.getPath(), pathToDir);
+    File file = findRealRepositoryDir(rootDir.toNioPath(), pathToDir);
     if (file == null) return null;
     return VcsUtil.getVirtualFileWithRefresh(file);
   }
 
   @Nullable
-  private static File findRealRepositoryDir(@NotNull @NonNls String rootPath, @NotNull @NonNls String path) {
+  private static File findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
     if (!FileUtil.isAbsolute(path)) {
-      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath, path), true);
+      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath.toString(), path), true);
       if (canonicalPath == null) {
         return null;
       }
@@ -377,18 +378,23 @@ public final class GitUtil {
   @Deprecated
   @Nullable
   public static VirtualFile getGitRootOrNull(@NotNull final FilePath filePath) {
-    File root = filePath.getIOFile();
-    while (root != null) {
-      if (isGitRoot(root)) {
-        return LocalFileSystem.getInstance().findFileByIoFile(root);
+    try {
+      Path root = Paths.get(filePath.getPath());
+      while (root != null) {
+        if (isGitRoot(root)) {
+          return LocalFileSystem.getInstance().findFileByNioFile(root);
+        }
+        root = root.getParent();
       }
-      root = root.getParentFile();
+      return null;
     }
-    return null;
+    catch (InvalidPathException e) {
+      return null;
+    }
   }
 
   public static boolean isGitRoot(@NotNull File folder) {
-    return isGitRoot(folder.getPath());
+    return isGitRoot(folder.toPath());
   }
 
   /**
@@ -1016,7 +1022,16 @@ public final class GitUtil {
   }
 
   public static boolean isGitRoot(@NotNull @NonNls String rootDir) {
-    Path dotGit = Paths.get(rootDir, DOT_GIT);
+    try {
+      return isGitRoot(Paths.get(rootDir));
+    }
+    catch (InvalidPathException e) {
+      return false;
+    }
+  }
+
+  public static boolean isGitRoot(@NotNull @NonNls Path rootDir) {
+    Path dotGit = rootDir.resolve(DOT_GIT);
     BasicFileAttributes attributes;
     try {
       attributes = Files.readAttributes(dotGit, BasicFileAttributes.class);
