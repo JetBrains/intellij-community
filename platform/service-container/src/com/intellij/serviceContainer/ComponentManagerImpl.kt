@@ -109,13 +109,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     // not as file level function to avoid scope cluttering
     @ApiStatus.Internal
-    fun createAllServices(componentManager: ComponentManagerImpl) {
-      @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-      val badServices = java.util.Set.of(
-        "com.intellij.usageView.impl.UsageViewContentManagerImpl",
-        "com.jetbrains.python.scientific.figures.PyPlotToolWindow",
-        "org.jetbrains.plugins.grails.runner.GrailsConsole"
-      )
+    fun createAllServices(componentManager: ComponentManagerImpl, exclude: Set<String>) {
       for (o in componentManager.picoContainer.unsafeGetAdapters()) {
         if (o !is ServiceComponentAdapter) {
           continue
@@ -132,7 +126,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
             continue
           }
 
-          if (badServices.contains(implementation)) {
+          if (exclude.contains(implementation)) {
             invokeAndWaitIfNeeded {
               o.getInstance<Any>(componentManager, null)
             }
