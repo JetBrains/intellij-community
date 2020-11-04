@@ -11,34 +11,42 @@ import kotlinx.coroutines.flow.*
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 
 typealias Pid = Long
 
-internal class ProcessManager : Closeable {
+internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable, CoroutineScope by coroutineScope {
   private val handleMap = ConcurrentHashMap<Pid, Handle>()
-  private val isClosed = AtomicBoolean()
+  private val job = Job(coroutineContext[Job])
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Pid {
-    val processBuilder = ProcessBuilder().apply {
-      command(command)
-      directory(workingDir)
-      environment().run {
-        clear()
-        putAll(environVars)
+    val completion = CompletableDeferred<Int>(job)
+    completion.ensureActive()
+    try {
+      val processBuilder = ProcessBuilder().apply {
+        command(command)
+        directory(workingDir)
+        environment().run {
+          clear()
+          putAll(environVars)
+        }
+        inFile?.let { redirectInput(it) }
+        outFile?.let { redirectOutput(it) }
+        errFile?.let { redirectError(it) }
       }
-      inFile?.let { redirectInput(it) }
-      outFile?.let { redirectOutput(it) }
-      errFile?.let { redirectError(it) }
-    }
 
-    val process = withContext(Dispatchers.IO) {
-      @Suppress("BlockingMethodInNonBlockingContext")
-      processBuilder.start()
-    }
+      val process = withContext(Dispatchers.IO) {
+        @Suppress("BlockingMethodInNonBlockingContext")
+        processBuilder.start()
+      }
 
-    return registerProcess(process)
+      val handle = Handle(process, completion)
+      return registerHandle(handle)
+    }
+    catch (e: Throwable) {
+      completion.cancel("Failed to create process", e)
+      throw e
+    }
   }
 
   fun destroyProcess(pid: Pid, force: Boolean) {
@@ -111,24 +119,10 @@ internal class ProcessManager : Closeable {
     unregisterHandle(pid).release()
   }
 
-  private fun registerProcess(process: Process): Pid {
-    val handle = Handle(process, CompletableDeferred())
-    return try {
-      registerHandle(handle)
-    }
-    catch (e: Throwable) {
-      handle.release()
-      throw e
-    }
-  }
-
   private fun registerHandle(handle: Handle): Pid {
     val pid = handle.pid
     handleMap.putIfAbsent(pid, handle).also { previous ->
       check(previous == null) { "Duplicate PID $pid" }
-    }
-    if (isClosed.get()) {
-      handleMap.remove(pid)?.release()
     }
     return pid
   }
@@ -144,11 +138,10 @@ internal class ProcessManager : Closeable {
   }
 
   override fun close() {
-    if (!isClosed.getAndSet(true)) {
-      while (true) {
-        val pid = handleMap.keys.firstOrNull() ?: break
-        handleMap.remove(pid)?.release()
-      }
+    job.cancel("closed")
+    while (true) {
+      val pid = handleMap.keys.firstOrNull() ?: break
+      handleMap.remove(pid)?.release()
     }
   }
 
