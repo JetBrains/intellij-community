@@ -81,7 +81,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new HashMap<>();
   private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
-  private final ConflictingMappingTracker myConflictingMappingTracker = new ConflictingMappingTracker(myRemovedMappingTracker);
+  private final ConflictingFileTypeMappingTracker
+    myConflictingMappingTracker = new ConflictingFileTypeMappingTracker(myRemovedMappingTracker);
 
   private final Map<String, FileTypeBean> myPendingFileTypes = new LinkedHashMap<>();
   private final FileTypeAssocTable<FileTypeBean> myPendingAssociations = new FileTypeAssocTable<>();
@@ -1140,7 +1141,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         continue;
       }
       FileType oldFileType = myPatternsTable.findAssociatedFileType(matcher);
-      ConflictingMappingTracker.ResolveConflictResult result = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFileType, fileType);
+      ConflictingFileTypeMappingTracker.ResolveConflictResult result = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFileType, fileType);
       FileType newFileType = result.resolved;
       if (!newFileType.equals(oldFileType)) {
         myPatternsTable.addAssociation(matcher, newFileType);
