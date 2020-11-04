@@ -45,6 +45,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       "kotlin.Function",
       "kotlin.sequences.Sequence",
       "kotlin.ranges.IntRange",
+      "kotlin.ranges.IntRange$Companion",
       "kotlin.ranges.IntProgression",
       "kotlin.ranges.ClosedRange",
       "kotlin.ranges.IntProgressionIterator",
