@@ -2,30 +2,105 @@
  -Core Types Cheat Sheet
   -The Trifecta
    -[file][]
-    Important Attributes
-    For Normal Files
-    For Directories
-    For Symlinks
+    -Important Attributes
+     -Unordered list
+      -*
+       *
+       *
+       *
+       *
+       *
+      *
+      *
+      *
+      *
+    -For Normal Files
+     -Unordered list
+      *
+      *
+    -For Directories
+     -Unordered list
+      *
+      *
+      *
+    -For Symlinks
+     -Unordered list
+      *
     Other Notable Attributes
    -[package][]
-    Important Attributes
+    -Important Attributes
+     -Unordered list
+      *
+      -*
+       *
+       *
+       *
+       *
+       *
+      *
+      *
    -[service][]
-    Important Attributes
+    -Important Attributes
+     -Unordered list
+      *
+      -*
+       *
+       *
+      *
+      *
+      *
     Other Notable Attributes
   -Hello World
    -[[notify][]]
-    Important Attributes
+    -Important Attributes
+     -Unordered list
+      *
   -Grab Bag
    -[exec][]
-    Important Attributes
-    Attributes to Limit When a Command Should Run
+    -Important Attributes
+     -Unordered list
+      *
+      *
+      *
+      *
+    -Attributes to Limit When a Command Should Run
+     -Unordered list
+      *
+      *
+      *
+      *
     Other Notable Attributes:
    -[cron][]
-    Important Attributes
+    -Important Attributes
+     -Unordered list
+      *
+      -*
+       *
+       *
+      *
     Other Notable Attributes
    -[user][]
-    Important Attributes
+    -Important Attributes
+     -Unordered list
+      *
+      -*
+       *
+       *
+       *
+      *
+      *
+      *
+      *
+      *
+      *
     Other Notable Attributes
    -[group][]
-    Important Attributes
+    -Important Attributes
+     -Unordered list
+      *
+      -*
+       *
+       *
+      *
+      *
   Everything Else

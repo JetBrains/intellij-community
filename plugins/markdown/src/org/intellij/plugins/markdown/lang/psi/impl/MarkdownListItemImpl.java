@@ -68,7 +68,7 @@ public class MarkdownListItemImpl extends MarkdownCompositePsiElementBase {
       if (markerElement == null) {
         return null;
       }
-      return markerElement.getText();
+      return markerElement.getText().trim();
     }
 
     @Nullable

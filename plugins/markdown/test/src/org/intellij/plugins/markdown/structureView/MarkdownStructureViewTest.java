@@ -56,4 +56,15 @@ public class MarkdownStructureViewTest extends BasePlatformTestCase {
     doTest();
   }
 
+  public void testOnlyTrivialChildrenInListItems() {
+    doTest();
+  }
+
+  public void testSimpleNestedList() {
+    doTest();
+  }
+
+  public void testMultipleCompositeChildrenInLists() {
+    doTest();
+  }
 }
