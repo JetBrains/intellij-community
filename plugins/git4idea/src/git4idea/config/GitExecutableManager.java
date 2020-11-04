@@ -3,6 +3,7 @@ package git4idea.config;
 
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
@@ -114,7 +115,7 @@ public class GitExecutableManager {
 
   @NotNull
   public GitExecutable getExecutable(@NotNull String pathToGit) {
-    Pair<String, WSLDistribution> pair = parseWslPath(pathToGit);
+    Pair<String, WSLDistribution> pair = WslDistributionManager.getInstance().parseWslPath(pathToGit);
     if (pair != null) {
       if (pair.second != null) {
         return new GitExecutable.Wsl(pair.first, pair.second);
@@ -138,28 +139,8 @@ public class GitExecutableManager {
     String basePath = project.getBasePath();
     if (basePath == null) return null;
 
-    Pair<String, WSLDistribution> pair = parseWslPath(FileUtil.toSystemDependentName(basePath));
+    Pair<String, WSLDistribution> pair = WslDistributionManager.getInstance().parseWslPath(FileUtil.toSystemDependentName(basePath));
     return pair != null ? pair.second : null;
-  }
-
-  @Nullable
-  private static Pair<String, @Nullable WSLDistribution> parseWslPath(@NotNull String path) {
-    if (!supportWslExecutable()) return null;
-    if (!path.startsWith(WSLDistribution.UNC_PREFIX)) return null;
-
-    path = StringUtil.trimStart(path, WSLDistribution.UNC_PREFIX);
-    int index = path.indexOf('\\');
-    if (index == -1) return null;
-
-    String distName = path.substring(0, index);
-    String wslPath = FileUtil.toSystemIndependentName(path.substring(index));
-
-    WSLDistribution distribution = WSLUtil.getDistributionByMsId(distName);
-    if (distribution == null) {
-      LOG.debug(String.format("Unknown WSL distribution: %s, known distributions: %s", distName,
-                              StringUtil.join(WSLUtil.getAvailableDistributions(), WSLDistribution::getMsId, ", ")));
-    }
-    return Pair.create(wslPath, distribution);
   }
 
   @NotNull

@@ -124,8 +124,10 @@ public final class WSLUtil {
 
   /**
    * @return instance of WSL distribution or null if it's unavailable
+   * @deprecated Use {@link WslDistributionManager#getDistributionByMsId(String)}
    */
   @Nullable
+  @Deprecated
   public static WSLDistribution getDistributionByMsId(@Nullable String name) {
     if (name == null) {
       return null;
