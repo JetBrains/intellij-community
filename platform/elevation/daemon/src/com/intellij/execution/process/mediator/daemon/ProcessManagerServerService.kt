@@ -17,20 +17,17 @@ internal class ProcessManagerServerService(
 ) : ProcessManagerGrpcKt.ProcessManagerCoroutineImplBase() {
 
   override suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply {
-    if (!quotaManager.check()) {
-      throw Status.RESOURCE_EXHAUSTED.withDescription("Quota exceeded").asRuntimeException()
-    }
-
     val commandLine = request.commandLine
 
     val pid = ExceptionAsStatus.wrap {
-      processManager.createProcess(commandLine.commandList,
-                                   File(commandLine.workingDir),
-                                   commandLine.environMap,
-                                   commandLine.inFile.takeUnless { it.isEmpty() }?.let { File(it) },
-                                   commandLine.outFile.takeUnless { it.isEmpty() }?.let { File(it) },
-                                   commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
-
+      quotaManager.runIfPermitted {
+        processManager.createProcess(commandLine.commandList,
+                                     File(commandLine.workingDir),
+                                     commandLine.environMap,
+                                     commandLine.inFile.takeUnless { it.isEmpty() }?.let { File(it) },
+                                     commandLine.outFile.takeUnless { it.isEmpty() }?.let { File(it) },
+                                     commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
+      } ?: throw Status.RESOURCE_EXHAUSTED.withDescription("Quota exceeded").asRuntimeException()
     }
 
     return CreateProcessReply.newBuilder()

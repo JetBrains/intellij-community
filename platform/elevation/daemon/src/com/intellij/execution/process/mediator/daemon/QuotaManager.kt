@@ -19,7 +19,27 @@ import kotlin.coroutines.CoroutineContext
 
 interface QuotaManager : Closeable {
   fun check(): Boolean
+
+  /** The returned job completes as soon as the quota is exceeded, but never before [check] starts returning false. */
+  fun asJob(): Job
 }
+
+
+internal suspend fun <R : Any> QuotaManager.runIfPermitted(block: suspend () -> R): R? {
+  val childJob = Job(this.asJob())  // prevents the QuotaManager Job from finishing in case quota exceeds while running the block
+  try {
+    if (!this.check()) {
+      return null
+    }
+    check(childJob.isActive) { "check() returned true after asJob() has completed" }
+
+    return block()
+  }
+  finally {
+    childJob.complete()
+  }
+}
+
 
 class TimeQuotaManager(
   coroutineScope: CoroutineScope,
@@ -40,6 +60,8 @@ class TimeQuotaManager(
     }
     timeoutActor.offer(quota)
   }
+
+  override fun asJob(): Job = job
 
   override fun check(): Boolean {
     val quota = updateQuota { it.refresh() }

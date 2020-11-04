@@ -25,8 +25,8 @@ open class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
                                        credentials: DaemonClientCredentials) : ProcessMediatorDaemon,
                                                                                CoroutineScope by coroutineScope {
 
-  private val processManager = ProcessManager(this)
   private val quotaManager = TimeQuotaManager(this)
+  private val processManager = ProcessManager(this + quotaManager.asJob())
 
   private val server: Server
 
