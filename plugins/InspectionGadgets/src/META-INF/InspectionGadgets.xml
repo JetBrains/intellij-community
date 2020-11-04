@@ -410,6 +410,10 @@
                      key="variable.not.used.inside.if.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.VariableNotUsedInsideIfInspection"/>
+    <localInspection groupPath="Java" language="JAVA" suppressId="ArrayNegativeSize" shortName="ArrayNegativeSize"
+                     bundle="messages.InspectionGadgetsBundle" key="array.allocation.negative.length.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.ArrayNegativeSizeInspection"/>
 
     <!--group.names.class.structure-->
     <localInspection groupPath="Java" language="JAVA" shortName="AnonymousInnerClass" bundle="messages.InspectionGadgetsBundle" key="anonymous.inner.class.display.name"
