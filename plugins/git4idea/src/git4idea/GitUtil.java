@@ -448,8 +448,7 @@ public final class GitUtil {
   @NlsSafe
   public static String adjustAuthorName(@NlsSafe String authorName, @NlsSafe String committerName) {
     if (!authorName.equals(committerName)) {
-      //noinspection HardCodedStringLiteral
-      committerName = authorName + ", via " + committerName;
+      committerName = GitBundle.message("commit.author.with.committer", authorName, committerName);
     }
     return committerName;
   }
