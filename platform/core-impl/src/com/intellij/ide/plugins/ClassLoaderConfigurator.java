@@ -215,13 +215,8 @@ final class ClassLoaderConfigurator {
       mainDependentClassLoader = configureUsingIdeaClassloader(classPath, mainDependent);
     }
     else {
-      ClassLoader[] parentLoaders;
-      if (loaders.isEmpty()) {
-        parentLoaders = usePluginClassLoader ? PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY : new ClassLoader[]{coreLoader};
-      }
-      else {
-        parentLoaders = loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY);
-      }
+      ClassLoader[] parentLoaders =
+        loaders.isEmpty() ? PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY : loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY);
       mainDependentClassLoader = new PluginClassLoader(urlClassLoaderBuilder, parentLoaders, mainDependent, mainDependent.getPluginPath(), coreLoader);
     }
 
