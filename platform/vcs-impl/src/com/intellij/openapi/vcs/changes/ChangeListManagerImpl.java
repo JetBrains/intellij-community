@@ -24,10 +24,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1428,6 +1425,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
     myScheduler.submit(() -> {
       ReadAction.run(() -> {
+        if (Disposer.isDisposed(this)) return;
+        
         boolean enabled = shouldEnableChangeLists();
         synchronized (myDataLock) {
           if (enabled == myWorker.areChangeListsEnabled()) return;
