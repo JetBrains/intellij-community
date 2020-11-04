@@ -174,7 +174,7 @@ enum class JdkPackageType(@NonNls val type: String) {
       val decompressor = Decompressor.Zip(archiveFile)
       return when {
         SystemInfo.isWindows -> decompressor
-        else -> decompressor.withUnixPermissionsAndSymlinks()
+        else -> decompressor.withZipExtensions()
       }
     }
   },
