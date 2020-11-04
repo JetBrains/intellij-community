@@ -9,6 +9,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -35,11 +36,11 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
   private volatile boolean mySerializersLoaded;
 
-  @SuppressWarnings("unused") // used from componentSets/Lang.xml:14
   public SerializationManagerImpl() {
-    this(FileBasedIndex.USE_IN_MEMORY_INDEX ? null : new File(PathManager.getIndexRoot(), "rep.names").toPath(), false);
+    this(FileBasedIndex.USE_IN_MEMORY_INDEX ? null : PathManager.getIndexRoot().toPath().resolve("rep.names"), false);
   }
 
+  @NonInjectable
   public SerializationManagerImpl(@Nullable Path nameStorageFile, boolean unmodifiable) {
     myFile = nameStorageFile;
     myUnmodifiable = unmodifiable;

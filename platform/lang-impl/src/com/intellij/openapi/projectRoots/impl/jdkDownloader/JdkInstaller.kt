@@ -71,13 +71,14 @@ interface JdkInstallerListener {
   fun onJdkDownloadFinished(request: JdkInstallRequest, project: Project?) { }
 }
 
+@Service
 class JdkInstaller {
   companion object {
     @JvmStatic
     fun getInstance() = service<JdkInstaller>()
-  }
 
-  private val LOG = logger<JdkInstaller>()
+    private val LOG = logger<JdkInstaller>()
+  }
 
   private operator fun File.div(path: String) = File(this, path).absoluteFile
 
@@ -475,6 +476,7 @@ class JdkInstallerState : BaseState() {
 }
 
 @State(name = "JdkInstallerHistory", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)], allowLoadInTests = true)
+@Service
 class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkInstallerState()) {
   private val lock = ReentrantLock()
 

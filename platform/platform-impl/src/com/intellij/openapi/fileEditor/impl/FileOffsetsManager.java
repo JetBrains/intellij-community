@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
@@ -17,6 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+@Service
 public final class FileOffsetsManager {
   @NotNull
   public static FileOffsetsManager getInstance() {

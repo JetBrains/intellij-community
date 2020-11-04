@@ -188,12 +188,10 @@
     <search.optionContributor implementation="com.intellij.ide.ui.search.PluginSearchableOptionContributor"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
-    <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.FileOffsetsManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.ex.QuickListsManager"/>
     <actionConfigurationCustomizer implementation="com.intellij.openapi.actionSystem.ex.QuickListsManager$QuickListActionCustomizer"/>
 
     <applicationService serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
@@ -416,7 +414,7 @@
     <projectService serviceInterface="com.intellij.openapi.project.DumbUtil" serviceImplementation="com.intellij.openapi.project.DumbUtilImpl"/>
 
     <projectService serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
-    <registryKey key="scroll.to.first.trace" defaultValue="true" 
+    <registryKey key="scroll.to.first.trace" defaultValue="true"
                  description="In tests view: if 'scrollToStackTrace' is enabled and node with multiple children is selected, scroll to the trace of the first child"/>
 
     <projectService serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
@@ -707,8 +705,6 @@
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.featureStatistics.fusCollectors.SystemStateMonitor"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
 
-    <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsLocalSummary" />
-
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.wsl.WslFileWatcher" />
 
@@ -782,7 +778,6 @@
     <search.projectOptionsTopHitProvider implementation="com.intellij.ide.ui.InspectionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.RegistryOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.PluginOptionsTopHitProvider"/>
-    <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.marketplace.PluginModulesHelper"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivity"/>
@@ -837,9 +832,6 @@
     <registryKey key="java.detector.include.embedded" defaultValue="false" description="Include embedded JetBrains Runtime" />
 
     <sdkDownload implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader" />
-    <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader"/>
-    <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller"/>
-    <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore"/>
     <unknownSdkResolver implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAuto"/>
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAutoHintService"
                     configurationSchemaKey="java"
@@ -849,7 +841,6 @@
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" />
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterStartup" />
-    <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterState"/>
 
     <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
     <registryKey key="jdk.updater" defaultValue="true" description="Check for JDK updates and suggest actions in notifications"/>
