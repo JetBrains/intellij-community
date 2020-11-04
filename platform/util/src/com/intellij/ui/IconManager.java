@@ -85,8 +85,6 @@ public interface IconManager {
 
   void registerIconLayer(int flagMask, @NotNull Icon icon);
 
-  @NotNull Icon createOverlayIcon(Icon @NotNull ... icons);
-
   @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon);
 }
 
@@ -137,11 +135,6 @@ final class DummyIconManager implements IconManager {
 
   @Override
   public void registerIconLayer(int flagMask, @NotNull Icon icon) {
-  }
-
-  @Override
-  public @NotNull Icon createOverlayIcon(Icon @NotNull ... icons) {
-    return new DummyIcon();
   }
 
   @Override

@@ -96,16 +96,6 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   }
 
   @Override
-  public @NotNull Icon createOverlayIcon(Icon @NotNull ... icons) {
-    LayeredIcon icon = new LayeredIcon(icons.length);
-    int i = 0;
-    for (Icon ic : icons) {
-      icon.setIcon(ic, i++);
-    }
-    return icon;
-  }
-
-  @Override
   public @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon) {
     return new IconWrapperWithToolTipComposite(icon);
   }
