@@ -230,8 +230,6 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     model.setSearchContext(searchContext);
     model.setWithSubdirectories(isWithSubdirectories());
     model.setFileFilter(FILE_MASK);
-
-    model.setCustomScopeName(FIND_SCOPE);
   }
 
   @Override

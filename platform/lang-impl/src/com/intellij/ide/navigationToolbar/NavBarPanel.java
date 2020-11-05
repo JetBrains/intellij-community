@@ -3,10 +3,7 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.CopyPasteSupport;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeView;
+import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.TransferableWrapper;
@@ -121,7 +118,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
 
     Disposer.register(project, this);
-    AccessibleContextUtil.setName(this, "Navigation Bar");
+    AccessibleContextUtil.setName(this, IdeBundle.message("navigation.bar"));
   }
 
   /**

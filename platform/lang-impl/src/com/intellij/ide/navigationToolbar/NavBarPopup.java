@@ -108,6 +108,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       int offset = NavBarUIManager.getUI().getPopupOffset(item);
       show(myPanel, p.x - offset, p.y, myPanel, new HintHint(myPanel, p));
       final JBList list = getList();
+      //noinspection HardCodedStringLiteral
       AccessibleContextUtil.setName(list, item.getText());
       if (0 <= myIndex && myIndex < list.getItemsCount()) {
         ScrollingUtil.selectItem(list, myIndex);
