@@ -7,11 +7,16 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.models.ParsedCodeMetaInfo
 import org.junit.Assert
 
 object CodeMetaInfoParser {
-    private val openingRegex = "(<!([^>]+?)!>)".toRegex()
-    private val closingRegex = "(<!>)".toRegex()
+    private val openingRegex = """(<!([^>]+?)!>)""".toRegex()
+    private val closingRegex = """(<!>)""".toRegex()
 
-    private val descriptionRegex = "\\(\".*?\"\\)".toRegex()
-    private val platformRegex = "\\{(.+)}".toRegex()
+    /*
+     * ([\S&&[^,(){}]]+) -- tag, allowing all non-space characters except bracers and curly bracers
+     * ([{](.*?)[}])? -- list of platforms
+     * (\("(.*?)"\))? -- arguments of meta info
+     * (, )? -- possible separator between different infos
+     */
+    private val tagRegex = """([\S&&[^,(){}]]+)([{](.*?)[}])?(\("(.*?)"\))?(, )?""".toRegex()
 
     fun getCodeMetaInfoFromText(renderedText: String): List<ParsedCodeMetaInfo> {
         var text = renderedText
@@ -53,11 +58,7 @@ object CodeMetaInfoParser {
                     if (platformRegex.containsMatchIn(it)) platformRegex.find(it)!!.destructured.component1().split(";") else listOf()
                 result.add(
                     ParsedCodeMetaInfo(
-                        openingMatchResult.range.first,
-                        closingMatchResult.range.first,
-                        platforms.toMutableList(),
-                        tag,
-                        descriptionRegex.find(metaInfoWithParams)?.value
+                        openingMatchResult.range.first, closingMatchResult.range.first, platforms.toMutableList(), tag,
                     )
                 )
             }
