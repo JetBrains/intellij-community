@@ -32,7 +32,7 @@
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" />
     <orderEntry type="module" module-name="kotlinc-delegator.compiler-components-for-jps" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-build-common-tests" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.incremental-compilation-impl-tests" level="project" />
+    <orderEntry type="module" module-name="kotlinc-delegator.incremental-compilation-impl-tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jps-common" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
