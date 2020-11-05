@@ -40,22 +40,35 @@ final class BrokenPluginsBuildFileService {
   }
 
   private List<MarketplaceBrokenPlugin> downloadFileFromMarketplace() {
-    new Retry(myBuildContext.messages).call {
-      HttpClientBuilder.create().build().withCloseable {
-        myBuildContext.messages.info("Downloading $MARKETPLACE_BROKEN_PLUGINS_URL")
-        def response = it.execute(new HttpGet(MARKETPLACE_BROKEN_PLUGINS_URL))
-        def content = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
-        def responseCode = response.statusLine.statusCode
-        if (responseCode != HttpStatus.SC_OK) {
-          def error = new RuntimeException("$responseCode: $content")
-          // server error, will retry
-          if (responseCode >= HttpStatus.SC_INTERNAL_SERVER_ERROR) throw error
-          throw new StopTrying(error)
+    try {
+      new Retry(myBuildContext.messages).call {
+        HttpClientBuilder.create().build().withCloseable {
+          myBuildContext.messages.info("Downloading $MARKETPLACE_BROKEN_PLUGINS_URL")
+          def response = it.execute(new HttpGet(MARKETPLACE_BROKEN_PLUGINS_URL))
+          def content = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
+          def responseCode = response.statusLine.statusCode
+          if (responseCode != HttpStatus.SC_OK) {
+            def error = new RuntimeException("$responseCode: $content")
+            // server error, will retry
+            if (responseCode >= HttpStatus.SC_INTERNAL_SERVER_ERROR) throw error
+            throw new StopTrying(error)
+          }
+          myBuildContext.messages.debug("Got the marketplace plugins. Data:\n $content")
+          List<MarketplaceBrokenPlugin> plugins = gson
+            .fromJson(content, new TypeToken<List<MarketplaceBrokenPlugin>>() {}.getType()) as List<MarketplaceBrokenPlugin>
+          return plugins
         }
-        myBuildContext.messages.debug("Got the marketplace plugins. Data:\n $content")
-        List<MarketplaceBrokenPlugin> plugins = gson.fromJson(content, new TypeToken<List<MarketplaceBrokenPlugin>>() {}.
-          getType()) as List<MarketplaceBrokenPlugin>
-        return plugins
+      }
+    }
+    catch (Exception e) {
+      if (myBuildContext.options.isInDevelopmentMode) {
+        myBuildContext.messages.warning(
+          "Not able to get broken plugins info from JetBrains Marketplace: $e\n Assuming empty broken plugins list"
+        )
+        return []
+      }
+      else {
+        throw e
       }
     }
   }
