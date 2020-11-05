@@ -336,7 +336,6 @@ class KotlinChangeSignatureDialog(
                     KotlinBundle.message("text.parameter.0", item.parameter.name)
                 else
                     KotlinBundle.message("text.receiver")
-
                 if (Messages.showOkCancelDialog(
                         myProject,
                         KotlinBundle.message(
