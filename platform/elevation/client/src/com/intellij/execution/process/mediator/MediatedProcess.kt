@@ -2,6 +2,7 @@
 package com.intellij.execution.process.mediator
 
 import com.google.protobuf.ByteString
+import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.execution.process.mediator.util.blockingGet
 import com.intellij.execution.process.mediator.util.childSupervisorScope
 import kotlinx.coroutines.*
@@ -11,6 +12,7 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
 import java.io.*
 import java.lang.ref.Cleaner
+import kotlin.jvm.Throws
 
 private val CLEANER = Cleaner.create()
 
@@ -19,6 +21,9 @@ class MediatedProcess private constructor(private val handle: MediatedProcessHan
                                           pipeStdout: Boolean,
                                           pipeStderr: Boolean) : Process(), CoroutineScope by handle {
   companion object {
+    @Throws(IOException::class,
+            QuotaExceededException::class,
+            CancellationException::class)
     fun create(processMediatorClient: ProcessMediatorClient,
                processBuilder: ProcessBuilder): MediatedProcess {
       return create(processMediatorClient,

@@ -5,14 +5,12 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.mediator.MediatedProcess
 import com.intellij.execution.process.mediator.ProcessMediatorClient
+import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.BaseOutputReader
-import kotlinx.coroutines.CoroutineScope
-import kotlin.coroutines.EmptyCoroutineContext
 
 @Service
 class ElevationService : Disposable {
@@ -21,25 +19,16 @@ class ElevationService : Disposable {
     fun getInstance() = service<ElevationService>()
   }
 
-  //private val elevatorClient: ProcessMediatorClient by elevatorClientLazy
-
-  override fun dispose() {
-    //elevatorClientLazy.drop()?.close()
+  private val clientManager = ProcessMediatorClientManager().also {
+    Disposer.register(this, it)
   }
 
   fun createProcess(commandLine: GeneralCommandLine): OSProcessHandler {
-    val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    val daemon = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-      ProcessMediatorDaemonLauncher.launchDaemon(sudo = true)
-    }, ElevationBundle.message("progress.title.starting.elevation.daemon"), true, null)
-    val channel = daemon.createChannel()
-    val elevatorClient = ProcessMediatorClient(coroutineScope, channel)
-
-    val process = MediatedProcess.create(elevatorClient, commandLine.toProcessBuilder()).apply {
-      onExit().whenComplete { _, _ ->
-        elevatorClient.close()
+    val processBuilder = commandLine.toProcessBuilder()
+    val process = tryRelaunchingDaemonUntilHaveQuotaPermit { client ->
+      MediatedProcess.create(client, processBuilder).apply {
+        ElevationLogger.LOG.info("Created process PID ${pid()}")
       }
-      ElevationLogger.LOG.debug("Created process PID ${pid()}")
     }
     return object : OSProcessHandler(process, commandLine.commandLineString, commandLine.charset) {
       override fun readerOptions(): BaseOutputReader.Options {
@@ -47,4 +36,18 @@ class ElevationService : Disposable {
       }
     }
   }
+
+  private fun <R> tryRelaunchingDaemonUntilHaveQuotaPermit(block: (ProcessMediatorClient) -> R): R {
+    while (true) {
+      val client = clientManager.launchDaemonAndConnectClientIfNeeded()
+      try {
+        return block(client)
+      }
+      catch (e: QuotaExceededException) {
+        clientManager.parkClient(client)
+      }
+    }
+  }
+
+  override fun dispose() = Unit
 }
