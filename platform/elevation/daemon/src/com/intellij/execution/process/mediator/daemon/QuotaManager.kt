@@ -40,7 +40,7 @@ internal suspend fun <R : Any> QuotaManager.runIfPermitted(block: suspend () -> 
 
 class TimeQuotaManager(
   coroutineScope: CoroutineScope,
-  quota: TimeQuota = TimeQuota(TimeQuotaOptions.UNLIMITED),
+  quota: TimeQuota = TimeQuota(QuotaOptions.UNLIMITED),
 ) : QuotaManager, CoroutineScope by coroutineScope {
   private val quotaRef = AtomicReference(quota)
 
@@ -65,7 +65,7 @@ class TimeQuotaManager(
     return !quota.isExceeded()
   }
 
-  fun adjustQuota(newOptions: TimeQuotaOptions): TimeQuota {
+  fun adjustQuota(newOptions: QuotaOptions): TimeQuota {
     return updateQuota { it.adjust(newOptions) }
   }
 
