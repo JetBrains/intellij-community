@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
-    <orderEntry type="library" name="kotlin-plugin-android-compile-deps" level="project" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.android.kotlin-dependencies" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
   </component>
 </module>
