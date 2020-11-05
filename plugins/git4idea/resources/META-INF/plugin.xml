@@ -266,6 +266,8 @@
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
+    <action id="Git.Stage.Add.All" class="git4idea.index.actions.GitStageAllAction"/>
+    <action id="Git.Stage.Add.Tracked" class="git4idea.index.actions.GitStageTrackedAction"/>
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
 
