@@ -71,7 +71,8 @@ class ParsedCodeMetaInfo(
     override val end: Int,
     override val platforms: MutableList<String>,
     private val tag: String,
-    val params: String? = null
+    val params: String? = null,
+    val description: String?
 ) : CodeMetaInfo {
     override val renderConfiguration = object : AbstractCodeMetaInfoRenderConfiguration(false) {}
 
