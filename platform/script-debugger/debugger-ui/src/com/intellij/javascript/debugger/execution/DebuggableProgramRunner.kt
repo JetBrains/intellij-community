@@ -10,7 +10,7 @@ import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.DebuggableRunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.extensions.SharedExtensionImplementation
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
@@ -20,7 +20,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.DebuggableRunConfiguration
 
-@SharedExtensionImplementation
+@InternalIgnoreDependencyViolation
 open class DebuggableProgramRunner : AsyncProgramRunner<RunnerSettings>() {
   override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
     FileDocumentManager.getInstance().saveAllDocuments()

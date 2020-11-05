@@ -2,8 +2,8 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.SharedExtensionImplementation;
 import org.jetbrains.annotations.NotNull;
 
 final class InterfaceExtensionImplementationClassResolver implements ImplementationClassResolver {
@@ -27,7 +27,7 @@ final class InterfaceExtensionImplementationClassResolver implements Implementat
     if (result.getClassLoader() != pluginDescriptor.getPluginClassLoader() && pluginDescriptor.getPluginClassLoader() != null &&
         !className.startsWith("com.intellij.webcore.resourceRoots.") &&
         !className.startsWith("com.intellij.tasks.impl.") &&
-        !result.isAnnotationPresent(SharedExtensionImplementation.class)) {
+        !result.isAnnotationPresent(InternalIgnoreDependencyViolation.class)) {
       String idString = pluginDescriptor.getPluginId().getIdString();
       if (!idString.equals("com.intellij.java") && !idString.equals("com.intellij.java.ide")) {
         ExtensionPointImpl.LOG.error(componentManager.createError("Created extension classloader is not equal to plugin's one (" +

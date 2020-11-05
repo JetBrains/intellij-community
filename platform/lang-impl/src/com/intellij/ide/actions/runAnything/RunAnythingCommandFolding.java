@@ -2,7 +2,7 @@
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.ConsoleFolding;
-import com.intellij.openapi.extensions.SharedExtensionImplementation;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-@SharedExtensionImplementation
+@InternalIgnoreDependencyViolation
 final class RunAnythingCommandFolding extends ConsoleFolding {
   @Override
   public synchronized boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
