@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
 
+import com.intellij.application.subscribe
 import com.intellij.execution.process.elevation.settings.ElevationSettings
 import com.intellij.execution.process.mediator.ProcessMediatorClient
+import com.intellij.execution.process.mediator.daemon.TimeQuotaOptions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ThrowableComputable
@@ -20,13 +22,36 @@ class ProcessMediatorClientManager : Disposable {
   @get:JvmName("getOrCreateClient")
   private val activeClient: ProcessMediatorClient by activeClientLazy
 
+  init {
+    ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
+      override fun onDaemonQuotaOptionsChanged(oldValue: TimeQuotaOptions, newValue: TimeQuotaOptions) {
+        adjustQuota(newValue)
+      }
+    })
+  }
+
   fun launchDaemonAndConnectClientIfNeeded() = activeClient
+  private fun getActiveClientOrNull() = activeClientLazy.valueIfInitialized
 
   fun parkClient(expectedClient: ProcessMediatorClient) {
     synchronized(this) {
       if (activeClientLazy.compareAndDrop(expectedClient)) {
         parkedClients.add(expectedClient)
       }
+    }
+  }
+
+  private fun adjustQuota(quotaOptions: TimeQuotaOptions) {
+    synchronized(this) {
+      for (client in parkedClients) {
+        try {
+          client.adjustQuotaBlocking(quotaOptions)
+        }
+        catch (e: Exception) {
+          ElevationLogger.LOG.warn("Unable to adjust quota for client $client")
+        }
+      }
+      getActiveClientOrNull()?.adjustQuotaBlocking(quotaOptions)
     }
   }
 

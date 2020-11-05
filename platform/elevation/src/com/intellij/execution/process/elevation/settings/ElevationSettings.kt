@@ -2,7 +2,9 @@
 package com.intellij.execution.process.elevation.settings
 
 import com.intellij.execution.process.mediator.daemon.TimeQuotaOptions
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.util.messages.Topic
 import kotlin.time.ExperimentalTime
 import kotlin.time.minutes
 
@@ -17,10 +19,28 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
   private val options = ElevationOptions()
 
   var quotaOptions: TimeQuotaOptions = TimeQuotaOptions(options.quotaTimeLimitMs)
+    set(newValue) {
+      val oldValue = field
+      field = newValue
+      if (oldValue != newValue) {
+        options.quotaTimeLimitMs = newValue.timeLimitMs
+        ApplicationManager.getApplication().messageBus.syncPublisher(Listener.TOPIC).onDaemonQuotaOptionsChanged(oldValue, newValue)
+      }
+    }
 
   override fun getState() = options
   override fun loadState(state: ElevationOptions) = options.copyFrom(state)
   override fun getStateModificationCount() = options.modificationCount
+
+  interface Listener {
+    companion object {
+      @JvmField
+      val TOPIC = Topic.create("ElevationSettings.Listener", Listener::class.java)
+    }
+
+    @JvmDefault
+    fun onDaemonQuotaOptionsChanged(oldValue: TimeQuotaOptions, newValue: TimeQuotaOptions) = Unit
+  }
 
   @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
   @OptIn(ExperimentalTime::class)
