@@ -8,6 +8,9 @@ interface Quota {
   fun isExceeded(): Boolean
 }
 
+class QuotaExceededException(message: String? = null) : IllegalStateException(message)
+
+
 data class TimeQuota(
   val timeLimitMs: Long = UNLIMITED_MS,
   val isRefreshable: Boolean = true,

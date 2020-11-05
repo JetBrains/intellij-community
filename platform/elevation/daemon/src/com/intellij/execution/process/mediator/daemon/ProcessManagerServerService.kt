@@ -27,7 +27,7 @@ internal class ProcessManagerServerService(
                                      commandLine.inFile.takeUnless { it.isEmpty() }?.let { File(it) },
                                      commandLine.outFile.takeUnless { it.isEmpty() }?.let { File(it) },
                                      commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
-      } ?: throw Status.RESOURCE_EXHAUSTED.withDescription("Quota exceeded").asRuntimeException()
+      } ?: throw QuotaExceededException()
     }
 
     return CreateProcessReply.newBuilder()

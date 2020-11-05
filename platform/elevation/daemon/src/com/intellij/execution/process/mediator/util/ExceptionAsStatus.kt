@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator.util
 
+import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import io.grpc.Status
 import io.grpc.Status.Code.*
 import io.grpc.StatusException
@@ -65,6 +66,7 @@ data class ExceptionAsStatus private constructor(val status: Status,
 
       ExceptionDescriptor.withThrowable(::IllegalStateException)           asStatus FAILED_PRECONDITION,
       ExceptionDescriptor.withInitCause(::CancellationException)           asStatus CANCELLED,
+      ExceptionDescriptor.withInitCause(::QuotaExceededException)          asStatus RESOURCE_EXHAUSTED,
 
       ExceptionDescriptor.withThrowable(::IllegalArgumentException)        asStatus INVALID_ARGUMENT,
       ExceptionDescriptor.withInitCause(::IllegalThreadStateException)     asStatus INVALID_ARGUMENT,
