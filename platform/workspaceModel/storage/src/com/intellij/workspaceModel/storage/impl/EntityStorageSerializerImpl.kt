@@ -15,9 +15,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.*
-import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
-import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
-import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
+import com.intellij.workspaceModel.storage.impl.indices.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
@@ -427,8 +425,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Read indexes
       val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex
 
-      val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<EntityId, MutableMap<String, MutableSet<VirtualFileUrl>>>
-      val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<VirtualFileUrl, MutableMap<String, EntityId>>
+      val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as EntityId2Vfu
+      val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as Vfu2EntityId
       val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo)
 
       val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>

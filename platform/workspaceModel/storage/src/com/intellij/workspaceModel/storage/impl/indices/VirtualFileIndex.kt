@@ -1,26 +1,29 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.indices
 
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import org.jetbrains.annotations.TestOnly
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
+internal typealias EntityId2Vfu = HashMap<EntityId, MutableMap<String, MutableSet<VirtualFileUrl>>>
+internal typealias Vfu2EntityId = HashMap<VirtualFileUrl, MutableMap<String, EntityId>>
+
 open class VirtualFileIndex internal constructor(
-  internal open val entityId2VirtualFileUrl: HashMap<EntityId, MutableMap<String, MutableSet<VirtualFileUrl>>>,
-  internal open val vfu2EntityId: HashMap<VirtualFileUrl, MutableMap<String, EntityId>>
+  internal open val entityId2VirtualFileUrl: EntityId2Vfu,
+  internal open val vfu2EntityId: Vfu2EntityId
 ): VirtualFileUrlIndex {
   private lateinit var entityStorage: AbstractEntityStorage
-  constructor() : this(HashMap<EntityId, MutableMap<String, MutableSet<VirtualFileUrl>>>(), HashMap<VirtualFileUrl, MutableMap<String, EntityId>>())
+  constructor() : this(EntityId2Vfu(), Vfu2EntityId())
 
   internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> =
     entityId2VirtualFileUrl[id]?.values?.flatten()?.toSet() ?: emptySet()
@@ -41,8 +44,8 @@ open class VirtualFileIndex internal constructor(
   class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
     // and call [startWrite] before write.
-    override var entityId2VirtualFileUrl: HashMap<EntityId, MutableMap<String, MutableSet<VirtualFileUrl>>>,
-    override var vfu2EntityId: HashMap<VirtualFileUrl, MutableMap<String, EntityId>>
+    override var entityId2VirtualFileUrl: EntityId2Vfu,
+    override var vfu2EntityId: Vfu2EntityId
   ) : VirtualFileIndex(entityId2VirtualFileUrl, vfu2EntityId) {
 
     private var freezed = true
@@ -127,8 +130,8 @@ open class VirtualFileIndex internal constructor(
       if (property2EntityId.isEmpty()) vfu2EntityId.remove(vfu)
     }
 
-    private fun copyEntityMap(originMap: HashMap<EntityId, MutableMap<String, MutableSet<VirtualFileUrl>>>): HashMap<EntityId, MutableMap<String, MutableSet<VirtualFileUrl>>>{
-      val copiedMap = HashMap<EntityId, MutableMap<String, MutableSet<VirtualFileUrl>>>()
+    private fun copyEntityMap(originMap: EntityId2Vfu): EntityId2Vfu{
+      val copiedMap = EntityId2Vfu()
       originMap.forEach{ (entityId, vfuMap) ->
         val copiedVfuMap = HashMap<String, MutableSet<VirtualFileUrl>>()
         vfuMap.forEach { copiedVfuMap[it.key] = HashSet(it.value) }
@@ -137,8 +140,8 @@ open class VirtualFileIndex internal constructor(
       return copiedMap
     }
 
-    private fun copyVfuMap(originMap: HashMap<VirtualFileUrl, MutableMap<String, EntityId>>): HashMap<VirtualFileUrl, MutableMap<String, EntityId>>{
-      val copiedMap = HashMap<VirtualFileUrl, MutableMap<String, EntityId>>()
+    private fun copyVfuMap(originMap: Vfu2EntityId): Vfu2EntityId{
+      val copiedMap = Vfu2EntityId()
       originMap.forEach{ (key, value) -> copiedMap[key] = HashMap(value) }
       return copiedMap
     }
