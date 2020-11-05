@@ -1,0 +1,20 @@
+LineBreakpoint created at noReceiverOnStack.kt:19
+LineBreakpoint created at noReceiverOnStack.kt:24
+LineBreakpoint created at noReceiverOnStack.kt:29
+Run Java
+Connected to the target VM
+noReceiverOnStack.kt:19
+Compile bytecode for buildString { append("Hello!") }
+noReceiverOnStack.kt:19
+Compile bytecode for buildSum { repeat(3) { addOne() } }
+noReceiverOnStack.kt:24
+Compile bytecode for with("Hello!") { one() }
+noReceiverOnStack.kt:24
+resuming noReceiverOnStack.kt:24
+resuming noReceiverOnStack.kt:24
+resuming noReceiverOnStack.kt:24
+resuming noReceiverOnStack.kt:29
+resuming noReceiverOnStack.kt:29
+Disconnected from the target VM
+
+Process finished with exit code 0

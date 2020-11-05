@@ -1178,6 +1178,11 @@ public class KotlinEvaluateExpressionTestGenerated extends AbstractKotlinEvaluat
             runTest("testData/evaluation/multipleBreakpoints/mutations.kt");
         }
 
+        @TestMetadata("noReceiverOnStack.kt")
+        public void testNoReceiverOnStack() throws Exception {
+            runTest("testData/evaluation/multipleBreakpoints/noReceiverOnStack.kt");
+        }
+
         @TestMetadata("nonCapturedVariables.kt")
         public void testNonCapturedVariables() throws Exception {
             runTest("testData/evaluation/multipleBreakpoints/nonCapturedVariables.kt");

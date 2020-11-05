@@ -176,7 +176,7 @@ class VariableFinder(val context: ExecutionContext) {
         return findCapturedVariable(kind, containingThis)
     }
 
-    private fun findExtensionThis(kind: VariableKind.ExtensionThis): Result? {
+    private fun findExtensionThis(kind: VariableKind.ExtensionThis): Result {
         val variables = frameProxy.safeVisibleVariables()
 
         // Local variables – direct search
@@ -198,7 +198,8 @@ class VariableFinder(val context: ExecutionContext) {
             findUnlabeledThis(VariableKind.UnlabeledThis(kind.asmType))?.let { return it }
         }
 
-        return null
+        // Try to evaluate without the receiver
+        return Result(null)
     }
 
     private fun findDispatchThis(kind: VariableKind.OuterClassThis): Result? {
