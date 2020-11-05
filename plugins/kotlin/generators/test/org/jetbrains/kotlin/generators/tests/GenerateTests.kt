@@ -955,6 +955,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractSymbolFromLibraryPointerRestoreTest> {
             model("resoreSymbolFromLibrary", extension = "txt")
         }
+
+        testClass<AbstractMemoryLeakInSymbolsTest> {
+            model("symbolMemoryLeak")
+        }
     }
 
     testGroup("idea/idea-fir/tests", "compiler/testData") {
