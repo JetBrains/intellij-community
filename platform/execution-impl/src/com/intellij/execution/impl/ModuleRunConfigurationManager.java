@@ -14,33 +14,28 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @State(name = "ModuleRunConfigurationManager")
-public final class ModuleRunConfigurationManager implements PersistentStateComponent<Element> {
-  @NonNls
-  @NotNull
-  private static final String STORE_LOCAL_REGISTRY_OPTION = "ruby.store.local.run.conf.in.modules";
+final class ModuleRunConfigurationManager implements PersistentStateComponent<Element> {
   private static final String SHARED = "shared";
   private static final String LOCAL = "local";
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
-  @NotNull
-  private final Module myModule;
-  @NotNull
-  private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition =
-    settings -> settings != null && usesMyModule(settings);
+  private final @NotNull Module myModule;
+  private final @NotNull Predicate<RunnerAndConfigurationSettings> myModuleConfigCondition = settings -> {
+    return settings != null && usesMyModule(settings);
+  };
 
-  public ModuleRunConfigurationManager(@NotNull Module module) {
+  ModuleRunConfigurationManager(@NotNull Module module) {
     myModule = module;
     myModule.getProject().getMessageBus().connect(myModule).subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
@@ -49,7 +44,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
           if (LOG.isDebugEnabled()) {
             LOG.debug("time to remove something from project (" + project + ")");
           }
-          getRunManager().removeConfigurations(getModuleRunConfigurationSettings());
+          getRunManager().removeConfigurations(getModuleRunConfigurationSettings().collect(Collectors.toList()));
         }
       }
     });
@@ -75,7 +70,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
       Element element = new Element("state")
         .addContent(writeExternal(new Element(SHARED), true));
 
-      if (Registry.is(STORE_LOCAL_REGISTRY_OPTION)) {
+      if (Registry.is("ruby.store.local.run.conf.in.modules", false)) {
         element.addContent(writeExternal(new Element(LOCAL), false));
       }
 
@@ -97,9 +92,8 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
     }
   }
 
-  @NotNull
-  private Collection<? extends RunnerAndConfigurationSettings> getModuleRunConfigurationSettings() {
-    return ContainerUtil.filter(getRunManager().getAllSettings(), myModuleConfigCondition);
+  private @NotNull Stream<RunnerAndConfigurationSettings> getModuleRunConfigurationSettings() {
+    return getRunManager().getAllSettings().stream().filter(myModuleConfigCondition);
   }
 
   @NotNull
@@ -116,11 +110,13 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
            && myModule.equals(((ModuleBasedConfiguration<?, ?>)config).getConfigurationModule().getModule());
   }
 
-  public Element writeExternal(@NotNull final Element element, boolean isShared) throws WriteExternalException {
+  public Element writeExternal(@NotNull Element element, boolean isShared) throws WriteExternalException {
     LOG.debug("writeExternal(" + myModule + "); shared: " + isShared);
     getRunManager().writeConfigurations(
       element,
-      ContainerUtil.filter(getModuleRunConfigurationSettings(), settings -> settings.isStoredInDotIdeaFolder() == isShared)
+      getModuleRunConfigurationSettings()
+        .filter(settings -> settings.isStoredInDotIdeaFolder() == isShared)
+        .collect(Collectors.toList())
     );
     return element;
   }
