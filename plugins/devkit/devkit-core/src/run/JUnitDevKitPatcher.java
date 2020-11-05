@@ -51,7 +51,7 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
     ParametersList vm = javaParameters.getVMParametersList();
 
     if (PsiUtil.isIdeaProject(project)) {
-      if (JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9)) {
+      if (!javaParameters.isDynamicClasspath() && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9)) {
         javaParameters.setShortenCommandLine(ShortenCommandLine.ARGS_FILE, project);
       }
       if (!vm.hasProperty(SYSTEM_CL_PROPERTY)) {
