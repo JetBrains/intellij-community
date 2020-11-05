@@ -38,7 +38,11 @@ class JetGradlePlugin implements Plugin<Gradle> {
  * Thread safe.
  */
 class RegistryProcessor implements ProjectEvaluationListener {
-  def extraModelBuilderInstance = new ExtraModelBuilder()
+  def extraModelBuilderInstance =
+    GradleVersion.current() >= GradleVersion.version("4.4")
+      ? ExtraModelBuilder.class.classLoader.loadClass(ExtraModelBuilder.class.typeName + "\$ForGradle44").newInstance()
+      : new ExtraModelBuilder();
+
   CopyOnWriteArrayList<ToolingModelBuilderRegistry> processedRegistries = new CopyOnWriteArrayList<ToolingModelBuilderRegistry>()
 
   @Override
