@@ -20,6 +20,7 @@ class PythonCommunityPluginModules {
     "intellij.python.grazie",
     "intellij.python.reStructuredText",
     "intellij.python.sdk",
+    "intellij.python.featuresTrainer",
   ]
   static String pythonCommunityName = "python-ce"
 
