@@ -4,7 +4,7 @@ package com.intellij.execution.process.mediator.daemon
 import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.rpc.*
 import com.intellij.execution.process.mediator.util.ExceptionAsStatus
-import com.intellij.execution.process.mediator.util.ExceptionStatusDescriptionAugmenterServerInterceptor
+import com.intellij.execution.process.mediator.grpc.ExceptionStatusDescriptionAugmenterServerInterceptor
 import io.grpc.ServerInterceptors
 import io.grpc.ServerServiceDefinition
 import kotlinx.coroutines.coroutineScope

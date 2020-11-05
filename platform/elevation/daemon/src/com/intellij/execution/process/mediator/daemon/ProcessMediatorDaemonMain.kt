@@ -4,6 +4,7 @@
 package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.Empty
+import com.intellij.execution.process.mediator.grpc.CredentialsAuthServerInterceptor
 import com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.rpc.DaemonHello
