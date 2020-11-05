@@ -34,9 +34,7 @@ class ProcessMediatorClient(
 
   init {
     // send this request even if doesn't really change the quota, just so we know the server is up and running
-    runBlocking(coroutineContext) {
-      adjustQuota(initialQuotaOptions)
-    }
+    adjustQuotaBlocking(initialQuotaOptions)
   }
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
@@ -140,6 +138,12 @@ class ProcessMediatorClient(
 
   private suspend fun shutdown() {
     daemonStub.shutdown(Empty.getDefaultInstance())
+  }
+
+  fun adjustQuotaBlocking(newOptions: TimeQuotaOptions) {
+    runBlocking(coroutineContext) {
+      adjustQuota(newOptions)
+    }
   }
 
   override fun close() {
