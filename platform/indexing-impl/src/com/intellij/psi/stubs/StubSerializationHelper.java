@@ -381,20 +381,22 @@ final class StubSerializationHelper {
     Supplier<ObjectStubSerializer<?, ? extends Stub>> lazy = name == null ? null : myNameToLazySerializer.get(name);
     ObjectStubSerializer<?, ? extends Stub> serializer = lazy == null ? null : lazy.get();
     if (serializer == null) {
-      throw reportMissingSerializer(id, parentStub);
+      throw reportMissingSerializer(id, name, parentStub);
     }
     return serializer;
   }
 
-  private SerializerNotFoundException reportMissingSerializer(int id, @Nullable Stub parentStub) {
+  private SerializerNotFoundException reportMissingSerializer(int id, @Nullable String name, @Nullable Stub parentStub) {
     String externalId = null;
     try {
       externalId = myNameStorage.valueOf(id);
     } catch (Throwable ignore) {}
+    var root = ourRootStubSerializer.get();
     return new SerializerNotFoundException(
-      StubSerializationUtil.brokenStubFormat(ourRootStubSerializer.get()) +
-      "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
-      "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
+      (root != null ? StubSerializationUtil.brokenStubFormat(root) : "") +
+      "No serializer is registered for stub ID: " + id + ", externalId: " + externalId + ", name: " + name +
+      "; parent stub class: " + (parentStub != null ? parentStub.getClass().getName() + ", parent stub type: " + parentStub.getStubType() : "null")
+    );
   }
 
   private void deserializeChildren(StubInputStream stream,
