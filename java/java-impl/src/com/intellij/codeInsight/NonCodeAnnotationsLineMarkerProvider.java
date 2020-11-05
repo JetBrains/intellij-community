@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -90,7 +91,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     }
 
     String tooltip = XmlStringUtil.wrapInHtml(
-      NonCodeAnnotationGenerator.getNonCodeHeader(nonCodeAnnotations) + " available. Full signature:<p>\n" +
+      NonCodeAnnotationGenerator.getNonCodeHeaderAvalable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "<p>\n" +
       JavaDocInfoGenerator.generateSignature(owner));
     return new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Gutter.ExtAnnotation, __ -> tooltip, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
