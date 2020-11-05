@@ -32,6 +32,7 @@ public class ProcessMediatorDaemonRuntimeClasspath {
 
   private static final List<Class<?>> CLASSPATH_CLASSES = List.of(new Class<?>[]{
     ProcessMediatorDaemonMainKt.class,
+    DaemonLaunchOptions.class,
     ProcessMediatorProto.class,
 
     KotlinVersion.class, // kotlin-stdlib
