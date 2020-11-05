@@ -534,6 +534,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/engine/intellij.java.decompiler.engine.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/engine/intellij.java.decompiler.engine.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/openapi/intellij.java.execution.iml" filepath="$PROJECT_DIR$/java/execution/openapi/intellij.java.execution.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/impl/intellij.java.execution.impl.iml" filepath="$PROJECT_DIR$/java/execution/impl/intellij.java.execution.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/java-features-trainer/intellij.java.featuresTrainer.iml" filepath="$PROJECT_DIR$/java/java-features-trainer/intellij.java.featuresTrainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/google-app-engine/intellij.java.googleAppEngine.iml" filepath="$PROJECT_DIR$/plugins/google-app-engine/intellij.java.googleAppEngine.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/google-app-engine/jps-plugin/intellij.java.googleAppEngine.jps.iml" filepath="$PROJECT_DIR$/plugins/google-app-engine/jps-plugin/intellij.java.googleAppEngine.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/google-app-engine/runtime/intellij.java.googleAppEngine.runtime.iml" filepath="$PROJECT_DIR$/plugins/google-app-engine/runtime/intellij.java.googleAppEngine.runtime.iml" />

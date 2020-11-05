@@ -78,6 +78,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.webp",
     "intellij.grazie",
     "intellij.codeWithMe.plugin",
+    "intellij.featuresTrainer",
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     ""                                                          : "11",

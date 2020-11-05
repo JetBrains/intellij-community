@@ -66,7 +66,8 @@ class JavaPluginLayout {
         "intellij.jsp.spi",
         "intellij.java.uast",
         "intellij.java.structuralSearch",
-        "intellij.java.typeMigration"
+        "intellij.java.typeMigration",
+        "intellij.java.featuresTrainer",
       ].each {
         withModule(it, "java-impl.jar", "java_resources_en.jar")
       }
