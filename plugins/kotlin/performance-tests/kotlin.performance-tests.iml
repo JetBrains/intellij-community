@@ -26,7 +26,7 @@
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" scope="TEST" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-compiler" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
+    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-compiler-impl" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
