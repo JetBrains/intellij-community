@@ -16,6 +16,8 @@ public interface MavenRemoteProcessSupportFactory {
                                    Project project,
                                    Integer debugPort);
 
+  boolean isApplicable(Project project);
+
   abstract class MavenRemoteProcessSupport extends RemoteProcessSupport<Object, MavenServer, Object>{
     public MavenRemoteProcessSupport(@NotNull Class<MavenServer> valueClass) {
       super(valueClass);

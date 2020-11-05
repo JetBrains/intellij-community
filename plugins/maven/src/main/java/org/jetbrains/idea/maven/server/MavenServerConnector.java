@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,11 +24,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public class MavenServerConnector implements @NotNull Disposable {
+  public static final Logger LOG = Logger.getInstance(MavenServerConnector.class);
+
   private final RemoteMavenServerLogger myLogger = new RemoteMavenServerLogger();
   private final RemoteMavenServerDownloadListener
     myDownloadListener = new RemoteMavenServerDownloadListener();
@@ -148,12 +150,14 @@ public class MavenServerConnector implements @NotNull Disposable {
       }
 
       MavenRemoteProcessSupportFactory[] factories = MavenRemoteProcessSupportFactory.MAVEN_SERVER_SUPPORT_EP_NAME.getExtensions();
-      if (factories.length > 1) {
-        throw new RuntimeException("More than one MavenRemoteProcessSupportFactory is registered: " + Arrays.toString(factories));
+      List<MavenRemoteProcessSupportFactory> aFactories = ContainerUtil.filter(factories, factory -> factory.isApplicable(myProject));
+      if (aFactories.size() > 1) {
+        LOG.warn("More than one MavenRemoteProcessSupportFactory is applicable: " + aFactories);
       }
-      if (factories.length == 1) {
-        mySupport = factories[0].create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
-      } else{
+      else if (aFactories.size() == 1) {
+        mySupport = aFactories.get(0).create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+      }
+      else {
         mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
       }
       myMavenServer = mySupport.acquire(this, "");
