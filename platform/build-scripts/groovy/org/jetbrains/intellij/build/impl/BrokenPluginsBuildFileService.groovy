@@ -26,35 +26,24 @@ final class BrokenPluginsBuildFileService {
   private BuildContext myBuildContext
   private LayoutBuilder myLayout
   private static final String BROKEN_PLUGINS_FILE_NAME = "brokenPlugins.txt"
-  private static final String MARKETPLACE_BROKEN_PLUGINS_URL = "/files/brokenPlugins.json"
+  private static final String MARKETPLACE_BROKEN_PLUGINS_URL = "https://plugins.jetbrains.com/files/brokenPlugins.json"
   private Gson gson = new Gson()
 
 
   def buildFile() {
     myBuildContext.messages.progress("Start to build $BROKEN_PLUGINS_FILE_NAME")
-
-    List<MarketplaceBrokenPlugin> allBrokenPlugins
-    if (myBuildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
-      final String url = myBuildContext.proprietaryBuildTools.featureUsageStatisticsProperties.marketplaceHost + MARKETPLACE_BROKEN_PLUGINS_URL
-      myBuildContext.messages.info("Get request for broken plugins, url: $url")
-      allBrokenPlugins = downloadFileFromMarketplace(url)
-    }
-    else {
-      myBuildContext.messages.info("proprietaryBuildTools.featureUsageStatisticsProperties are not available. " +
-                                   "Assuming empty broken plugins list from marketplace")
-      allBrokenPlugins = []
-    }
-
+    myBuildContext.messages.info("Get request for broken plugins, url: $MARKETPLACE_BROKEN_PLUGINS_URL")
+    List<MarketplaceBrokenPlugin> allBrokenPlugins = downloadFileFromMarketplace()
     Map<String, Set<String>> currentBrokenPlugins = filterBrokenPluginForCurrentIDE(allBrokenPlugins)
     storeBrokenPlugin(currentBrokenPlugins)
     myBuildContext.messages.info("$BROKEN_PLUGINS_FILE_NAME was updated.")
   }
 
-  private List<MarketplaceBrokenPlugin> downloadFileFromMarketplace(String uri) {
+  private List<MarketplaceBrokenPlugin> downloadFileFromMarketplace() {
     new Retry(myBuildContext.messages).call {
       HttpClientBuilder.create().build().withCloseable {
-        myBuildContext.messages.info("Downloading $uri")
-        def response = it.execute(new HttpGet(uri))
+        myBuildContext.messages.info("Downloading $MARKETPLACE_BROKEN_PLUGINS_URL")
+        def response = it.execute(new HttpGet(MARKETPLACE_BROKEN_PLUGINS_URL))
         def content = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
         def responseCode = response.statusLine.statusCode
         if (responseCode != HttpStatus.SC_OK) {

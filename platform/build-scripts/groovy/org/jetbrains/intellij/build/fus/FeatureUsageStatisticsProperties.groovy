@@ -9,5 +9,4 @@ import groovy.transform.Immutable
 class FeatureUsageStatisticsProperties {
   final String recorderId
   final String metadataProviderUri
-  final String marketplaceHost
 }
