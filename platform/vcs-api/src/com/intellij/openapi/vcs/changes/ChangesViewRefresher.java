@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Implement to perform some activity when user presses "Refresh" button in the Changes View.
@@ -27,5 +28,5 @@ public interface ChangesViewRefresher {
 
   ExtensionPointName<ChangesViewRefresher> EP_NAME = ExtensionPointName.create("com.intellij.vcsChangesViewRefresher");
 
-  void refresh(Project project);
+  void refresh(@NotNull Project project);
 }

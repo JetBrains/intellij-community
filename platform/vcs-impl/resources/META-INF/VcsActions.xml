@@ -60,6 +60,9 @@
       <add-to-group group-id="TouchBarDefaultOptionalGroup" anchor="first" />
     </group>
 
+    <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
+            icon="AllIcons.Actions.Refresh"/>
+
     <!-- Main menu | Version Control -->
     <group id="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsGroupsActionGroup" popup="true">
       <group id="Vcs.MainMenu" class="com.intellij.openapi.vcs.actions.VcsMainMenuActionGroup">
@@ -73,7 +76,7 @@
           <reference ref="ChangesView.ToggleCommitUi"/>
           <reference ref="Vcs.UpdateProject"/>
           <action id="Vcs.IntegrateProject" class="com.intellij.openapi.vcs.update.CommonIntegrateProjectAction"/>
-          <action id="Vcs.RefreshStatuses" class="com.intellij.openapi.vcs.actions.RefreshStatuses"/>
+          <reference ref="ChangesView.Refresh"/>
           <separator/>
           <group id="Vcs.Specific" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
           <separator/>
@@ -122,8 +125,7 @@
     </group>
 
     <group id="ChangesViewToolbar">
-      <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
-              icon="AllIcons.Actions.Refresh"/>
+      <reference ref="ChangesView.Refresh"/>
       <reference ref="CheckinProject"/>
       <reference ref="ChangesView.ToggleCommitUi"/>
       <reference ref="ChangesView.Revert"/>
@@ -438,7 +440,6 @@
       <reference ref="Vcs.QuickListPopupAction"/>
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="Vcs.IntegrateProject"/>
-      <reference ref="Vcs.RefreshStatuses"/>
       <separator/>
       <reference ref="ChangesView.Browse"/>
       <reference ref="ChangesView.CreatePatch"/>

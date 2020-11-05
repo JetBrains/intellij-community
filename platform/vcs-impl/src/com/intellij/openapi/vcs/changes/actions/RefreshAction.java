@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -22,6 +23,13 @@ import static com.intellij.openapi.vcs.changes.actions.VcsActionUsagesCollectorK
  * @author yole
  */
 public class RefreshAction extends AnAction implements DumbAware {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    boolean isEnabled = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
+    e.getPresentation().setEnabledAndVisible(isEnabled);
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);

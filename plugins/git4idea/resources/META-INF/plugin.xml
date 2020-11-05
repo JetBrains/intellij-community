@@ -258,8 +258,6 @@
     </action>
 
     <action id="Git.Show.Stage" class="git4idea.index.actions.GitShowStagingAreaAction" use-shortcut-of="CheckinProject"/>
-    <action id="Git.Stage.Refresh" class="git4idea.index.actions.GitRefreshStageAction" icon="AllIcons.Actions.Refresh"
-            use-shortcut-of="Refresh"/>
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
     <action id="Git.Stage.Revert" class="git4idea.index.actions.GitRevertAction" use-shortcut-of="ChangesView.Revert"/>
@@ -273,7 +271,7 @@
 
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
-      <reference id="Git.Stage.Refresh"/>
+      <reference id="ChangesView.Refresh"/>
       <reference id="Git.Stash.Silently"/>
       <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.Show" popup="true">
         <reference id="Git.Stage.ToggleIgnored"/>
@@ -553,6 +551,7 @@
 
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
     <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>
+    <vcsChangesViewRefresher implementation="git4idea.index.actions.GitStageChangesViewRefresher"/>
 
     <backgroundPostStartupActivity implementation="git4idea.index.GitStageManager$GitStageStartupActivity"/>
 
