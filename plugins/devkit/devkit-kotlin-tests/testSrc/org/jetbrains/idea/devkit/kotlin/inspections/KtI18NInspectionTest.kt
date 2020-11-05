@@ -496,5 +496,30 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  fun testReturnWithWhen() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+        import org.jetbrains.annotations.*
+        
+        private const val LEFT = "Left"
+        private const val RIGHT = "Right"
+        private const val NONE = "NONE"
+        
+        @Nls
+        fun message(str: String): String = message(str)
+        
+        @Nls
+        fun optionName(@NonNls option: String): String = when (option) {
+          LEFT -> message("combobox.tab.placement.left")
+          RIGHT -> message("combobox.tab.placement.right")
+          else -> message("combobox.tab.placement.none")
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
 }
 
