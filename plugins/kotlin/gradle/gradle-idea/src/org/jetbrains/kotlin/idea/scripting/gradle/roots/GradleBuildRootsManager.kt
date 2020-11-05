@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.scripting.gradle.importing.KotlinDslGradleBuild
 import org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRoot.ImportingStatus.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.*
@@ -464,6 +464,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
 
     companion object {
         fun getInstance(project: Project): GradleBuildRootsManager =
-            EPN.getPoint(project).extensionList.firstIsInstance()
+            EPN.getPoint(project).extensionList.firstIsInstanceOrNull()
+                ?: error("Unable to locate GradleBuildRootsManager for project '${project.name}'")
     }
 }
