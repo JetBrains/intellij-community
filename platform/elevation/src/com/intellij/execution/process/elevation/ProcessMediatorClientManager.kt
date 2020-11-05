@@ -4,11 +4,18 @@ package com.intellij.execution.process.elevation
 import com.intellij.application.subscribe
 import com.intellij.execution.process.elevation.settings.ElevationSettings
 import com.intellij.execution.process.mediator.ProcessMediatorClient
+import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
+import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
+import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
 import com.intellij.execution.process.mediator.daemon.TimeQuotaOptions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import io.grpc.ManagedChannel
+import io.grpc.inprocess.InProcessChannelBuilder
+import io.grpc.inprocess.InProcessServerBuilder
+import io.grpc.stub.MetadataUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -59,11 +66,28 @@ class ProcessMediatorClientManager : Disposable {
     check(!isDisposed) { "Already disposed" }
 
     val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    val daemon = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-      ProcessMediatorDaemonLauncher.launchDaemon(sudo = true)
-    }, ElevationBundle.message("progress.title.starting.elevation.daemon"), true, null)
+    val debug = false
+    val daemon = if (debug) createInProcessDaemonForDebugging(coroutineScope) else launchDaemon()
     val channel = daemon.createChannel()
     return ProcessMediatorClient(coroutineScope, channel, ElevationSettings.getInstance().quotaOptions)
+  }
+
+  private fun launchDaemon(): ProcessMediatorDaemon {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+      ProcessMediatorDaemonLauncher.launchDaemon(sudo = true)
+    }, ElevationBundle.message("progress.title.starting.elevation.daemon"), true, null)
+  }
+
+  private fun createInProcessDaemonForDebugging(coroutineScope: CoroutineScope): ProcessMediatorDaemon {
+    val bindName = "testing${parkedClients.size}"
+    val credentials = DaemonClientCredentials.generate()
+    return object : ProcessMediatorServerDaemon(coroutineScope, InProcessServerBuilder.forName(bindName).directExecutor(), credentials) {
+      override fun createChannel(): ManagedChannel {
+        return InProcessChannelBuilder.forName(bindName)
+          .intercept(MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata()))
+          .directExecutor().build()
+      }
+    }
   }
 
   override fun dispose() {
