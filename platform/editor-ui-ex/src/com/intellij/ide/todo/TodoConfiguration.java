@@ -104,8 +104,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     }
   }
 
-  @NotNull
-  private static PropertyChangeListener getPublisher(@NotNull Topic<PropertyChangeListener> topic) {
+  private static @NotNull PropertyChangeListener getPublisher(@NotNull Topic<PropertyChangeListener> topic) {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(topic);
   }
 
