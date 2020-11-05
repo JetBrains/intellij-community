@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,12 +20,14 @@ public final class JarMemoryLoader {
   /** Special entry to keep the number of reordered classes in jar. */
   public static final String SIZE_ENTRY = "META-INF/jb/$$size$$";
 
-  private final Map<String, Resource> myResources = Collections.synchronizedMap(new HashMap<String, Resource>()); // todo do we need it ?
+  private final Map<String, Resource> resources;
 
-  private JarMemoryLoader() { }
+  private JarMemoryLoader(@NotNull Map<String, Resource> resources) {
+    this.resources = resources;
+  }
 
-  public Resource getResource(@NotNull String entryName) {
-    return myResources.remove(entryName);
+  public synchronized Resource getResource(@NotNull String entryName) {
+    return resources.remove(entryName);
   }
 
   @Nullable static JarMemoryLoader load(@NotNull ZipFile zipFile, @NotNull URL baseUrl, @Nullable JarLoader attributesProvider) throws IOException {
@@ -43,12 +44,12 @@ public final class JarMemoryLoader {
     byte[] bytes = FileUtilRt.loadBytes(zipFile.getInputStream(sizeEntry), 2);
     int size = ((bytes[1] & 0xFF) << 8) + (bytes[0] & 0xFF);
 
-    JarMemoryLoader loader = new JarMemoryLoader();
+    Map<String, Resource> map = new HashMap<String, Resource>();
     for (int i = 0; i < size && entries.hasMoreElements(); i++) {
       ZipEntry entry = entries.nextElement();
       MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry, attributesProvider != null ? attributesProvider.getAttributes() : null);
-      loader.myResources.put(entry.getName(), resource);
+      map.put(entry.getName(), resource);
     }
-    return loader;
+    return new JarMemoryLoader(map);
   }
 }
