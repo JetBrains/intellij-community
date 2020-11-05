@@ -118,6 +118,15 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
     Presentation presentation = e.getPresentation();
     presentation.setDescription(SettingsEntryPointAction::getActionTooltip);
     presentation.setIcon(myIcon == null ? getActionIcon() : myIcon);
+
+    for (AnAction child : getTemplateActions()) {
+      child.update(e);
+    }
+  }
+
+  private static AnAction @NotNull [] getTemplateActions() {
+    ActionGroup templateGroup = (ActionGroup)ActionManager.getInstance().getAction("SettingsEntryPointGroup");
+    return templateGroup == null ? EMPTY_ARRAY : templateGroup.getChildren(null);
   }
 
   @NotNull
@@ -199,8 +208,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
 
     group.addSeparator();
 
-    ActionGroup templateGroup = (ActionGroup)ActionManager.getInstance().getAction("SettingsEntryPointGroup");
-    for (AnAction child : templateGroup.getChildren(null)) {
+    for (AnAction child : getTemplateActions()) {
       if (child instanceof Separator) {
         group.add(child);
       }
