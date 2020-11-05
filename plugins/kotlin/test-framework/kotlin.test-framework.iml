@@ -24,7 +24,7 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Trove4j" level="project" />
     <orderEntry type="library" scope="TEST" name="TestNG" level="project" />
     <orderEntry type="module" module-name="kotlin.jps-common" scope="TEST" />
