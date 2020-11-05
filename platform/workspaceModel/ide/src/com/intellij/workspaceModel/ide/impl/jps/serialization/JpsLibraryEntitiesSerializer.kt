@@ -159,6 +159,10 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
     result = 31 * result + libraryTableId.hashCode()
     return result
   }
+
+  override fun toString(): String {
+    return "JpsLibraryEntitiesSerializer(fileUrl=$fileUrl, internalEntitySource=$internalEntitySource, libraryTableId=$libraryTableId)"
+  }
 }
 
 private const val DEFAULT_JAR_DIRECTORY_TYPE = "CLASSES"

@@ -169,11 +169,43 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       fileSerializersByUrl.remove(obsoleteSerializer.fileUrl.url, obsoleteSerializer)
     }
 
-    val affectedFileLoaders = LinkedHashSet<JpsFileEntitiesSerializer<*>>(newFileSerializers)
+    val affectedFileLoaders = LinkedHashMap<String, MutableSet<JpsFileEntitiesSerializer<*>>>()
+    newFileSerializers.forEach {
+      val set = affectedFileLoaders.getOrPut(it.fileUrl.url) { LinkedHashSet() }
+      if (it is JpsLibraryEntitiesSerializer && set.isNotEmpty()) {
+        val existingLibSerializers = set.filterIsInstance<JpsLibraryEntitiesSerializer>()
+        if (existingLibSerializers.isNotEmpty() && existingLibSerializers.any { ser -> ser !== it }) {
+          logger<JpsProjectSerializersImpl>().error(
+            "This library serializer already exists. ${it.fileUrl.url}. Existing: $existingLibSerializers, new: $it")
+        }
+      }
+      set.add(it)
+    }
     val urlsSet: Set<String> = addedFileUrls + change.changedFileUrls
-    urlsSet.flatMapTo(affectedFileLoaders) { fileSerializersByUrl.getValues(it) }
+    val backup = HashMap(affectedFileLoaders)
+    urlsSet.forEach { url ->
+      val serializers = fileSerializersByUrl.getValues(url)
+      serializers.forEach {
+        val set = affectedFileLoaders.getOrPut(it.fileUrl.url) { LinkedHashSet() }
+        if (it is JpsLibraryEntitiesSerializer && set.isNotEmpty()) {
+          val existingLibSerializers = set.filterIsInstance<JpsLibraryEntitiesSerializer>()
+          if (existingLibSerializers.isNotEmpty() && existingLibSerializers.any { ser -> ser !== it }) {
+            logger<JpsProjectSerializersImpl>().error(
+              """This library serializer already exists. ${it.fileUrl.url}.
+                |Url: $url.
+                |Serializers amount: ${serializers.size},
+                |Existing: $existingLibSerializers,
+                |New: $it
+                |Exists in backup: ${backup[it.fileUrl.url]?.isNotEmpty()}
+                """.trimMargin()
+            )
+          }
+        }
+        set.add(it)
+      }
+    }
 
-    val changedSources = affectedFileLoaders.mapTo(HashSet()) { it.internalEntitySource }
+    val changedSources = affectedFileLoaders.values.flatten().mapTo(HashSet()) { it.internalEntitySource }
     for (fileUrl in change.removedFileUrls) {
 
       val directorySerializer = directorySerializerFactoriesByUrl[fileUrl]
@@ -202,7 +234,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
     val builder = WorkspaceEntityStorageBuilder.create()
     val entitiesTrack = HashMap<Any, Any>()
-    affectedFileLoaders.forEach {
+    affectedFileLoaders.values.flatten().forEach {
       it.loadEntities(builder, reader, errorReporter, virtualFileManager, entitiesTrack)
     }
     return Pair(changedSources, builder)
