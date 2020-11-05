@@ -11,7 +11,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 
-@State(name = "KotlinRefactoringSettings", storages = arrayOf(Storage("kotlinRefactoring.xml")))
+@State(name = "KotlinRefactoringSettings", storages = [Storage("kotlinRefactoring.xml")])
 class KotlinRefactoringSettings : PersistentStateComponent<KotlinRefactoringSettings> {
     @JvmField
     var MOVE_TO_UPPER_LEVEL_SEARCH_IN_COMMENTS = false
@@ -76,14 +76,12 @@ class KotlinRefactoringSettings : PersistentStateComponent<KotlinRefactoringSett
     @JvmField
     var PUSH_DOWN_PREVIEW_USAGES: Boolean = false
 
-    @JvmField
     var INLINE_METHOD_THIS: Boolean = false
-
-    @JvmField
     var INLINE_LOCAL_THIS: Boolean = false
-
-    @JvmField
     var INLINE_TYPE_ALIAS_THIS: Boolean = false
+    var INLINE_METHOD_KEEP: Boolean = false
+    var INLINE_PROPERTY_KEEP: Boolean = false
+    var INLINE_TYPE_ALIAS_KEEP: Boolean = false
 
     var renameInheritors = true
     var renameParameterInHierarchy = true

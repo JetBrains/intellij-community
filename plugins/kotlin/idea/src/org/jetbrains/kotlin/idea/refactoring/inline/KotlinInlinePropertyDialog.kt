@@ -20,12 +20,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.help.HelpManager
 import com.intellij.psi.PsiReference
+import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.HelpID
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtWhenExpression
+import kotlin.reflect.KMutableProperty1
 
 class KotlinInlinePropertyDialog(
     property: KtProperty,
@@ -57,28 +59,17 @@ class KotlinInlinePropertyDialog(
     }
 
     fun shouldBeShown() = !simpleLocal || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
-
     override fun doHelpAction() = HelpManager.getInstance().invokeHelp(HelpID.INLINE_VARIABLE)
-
-    override fun isInlineThis() = KotlinRefactoringSettings.instance.INLINE_LOCAL_THIS
-
-    public override fun doAction() {
-        invokeRefactoring(
-            KotlinInlinePropertyProcessor(
-                declaration = declaration,
-                reference = reference,
-                inlineThisOnly = isInlineThisOnly,
-                deleteAfter = !isInlineThisOnly && !isKeepTheDeclaration,
-                isWhenSubjectVariable = (declaration.parent as? KtWhenExpression)?.subjectVariable == declaration,
-                editor = editor,
-                statementToDelete = assignmentToDelete,
-                project = project,
-            )
-        )
-
-        val settings = KotlinRefactoringSettings.instance
-        if (myRbInlineThisOnly.isEnabled && myRbInlineAll.isEnabled) {
-            settings.INLINE_LOCAL_THIS = isInlineThisOnly
-        }
-    }
+    override val inlineThisOption: KMutableProperty1<KotlinRefactoringSettings, Boolean> get() = KotlinRefactoringSettings::INLINE_LOCAL_THIS
+    override val inlineKeepOption: KMutableProperty1<KotlinRefactoringSettings, Boolean> get() = KotlinRefactoringSettings::INLINE_PROPERTY_KEEP
+    override fun createProcessor(): BaseRefactoringProcessor = KotlinInlinePropertyProcessor(
+        declaration = declaration,
+        reference = reference,
+        inlineThisOnly = isInlineThisOnly,
+        deleteAfter = !isInlineThisOnly && !isKeepTheDeclaration,
+        isWhenSubjectVariable = (declaration.parent as? KtWhenExpression)?.subjectVariable == declaration,
+        editor = editor,
+        statementToDelete = assignmentToDelete,
+        project = project,
+    )
 }

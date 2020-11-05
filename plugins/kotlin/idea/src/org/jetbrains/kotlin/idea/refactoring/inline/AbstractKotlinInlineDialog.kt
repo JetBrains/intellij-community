@@ -9,17 +9,41 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiReference
+import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.inline.InlineOptionsDialog
 import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import kotlin.reflect.KMutableProperty1
 
 abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
     protected val declaration: TDeclaration,
     protected val reference: PsiReference?,
     protected val editor: Editor?,
 ) : InlineOptionsDialog(declaration.project, true, declaration) {
+    final override fun isKeepTheDeclarationByDefault(): Boolean = inlineKeepOption.get(KotlinRefactoringSettings.instance)
+    final override fun isInlineThis(): Boolean = inlineThisOption.get(KotlinRefactoringSettings.instance)
+    public final override fun doAction() {
+        invokeRefactoring(createProcessor())
+        saveSettings()
+    }
+
+    private fun saveSettings() {
+        val settings = KotlinRefactoringSettings.instance
+        if (myRbInlineThisOnly.isEnabled && myRbInlineAll.isEnabled) {
+            inlineThisOption.set(settings, isInlineThisOnly)
+        }
+
+        if (myKeepTheDeclaration?.isEnabled == true) {
+            inlineKeepOption.set(settings, isKeepTheDeclaration)
+        }
+    }
+
+    abstract val inlineThisOption: KMutableProperty1<KotlinRefactoringSettings, Boolean>
+    abstract val inlineKeepOption: KMutableProperty1<KotlinRefactoringSettings, Boolean>
+    abstract fun createProcessor(): BaseRefactoringProcessor
 
     // NB: can be -1 in case of too expensive search!
     protected val occurrencesNumber = initOccurrencesNumber(declaration)
@@ -29,7 +53,7 @@ abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
             "" + occurrencesNumber + " " + StringUtil.pluralize("occurrence", occurrencesNumber)
         } else null
 
-    private val kind: String = ElementDescriptionUtil.getElementDescription(declaration, UsageViewTypeLocation.INSTANCE)
+    private val kind: String get() = ElementDescriptionUtil.getElementDescription(declaration, UsageViewTypeLocation.INSTANCE)
 
     private val refactoringName get() = KotlinBundle.message("text.inline.0", StringUtil.capitalizeWords(kind, true))
 
