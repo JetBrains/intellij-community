@@ -12,8 +12,6 @@ import com.intellij.ide.plugins.PluginStateManager;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
@@ -27,7 +25,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.PluginUpdateDialog;
@@ -35,13 +36,10 @@ import com.intellij.openapi.updateSettings.impl.UpdateInfoDialog;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.GotItTooltip;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +47,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -70,7 +69,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
 
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    ActionButton button = new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+    return new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       @Override
       protected void updateToolTipText() {
         String tooltip = getActionTooltip();
@@ -83,70 +82,6 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
         }
       }
     };
-
-    UiNotifyConnector.doWhenFirstShown(button, () -> {
-      Disposable disposable = Disposer.newDisposable();
-
-      Balloon balloon = createGotItTooltip(disposable).showAt(Balloon.Position.below, button, component -> {
-        PropertiesComponent.getInstance().setValue(GotItTooltip.PROPERTY_PREFIX + ".settings.entry.point", "0");
-        return new Point(component.getWidth() / 2, component.getHeight());
-      });
-
-      if (balloon == null) {
-        Disposer.dispose(disposable);
-      }
-      else {
-        new MyListener(button.getParent(), balloon, disposable);
-      }
-    });
-
-    return button;
-  }
-
-  private static class MyListener extends ComponentAdapter implements HierarchyListener {
-    private final Component myComponent;
-    private final Balloon myBalloon;
-    private final Disposable myDisposable;
-
-    private MyListener(@NotNull Component component, @NotNull Balloon balloon, @NotNull Disposable disposable) {
-      myComponent = component;
-      myBalloon = balloon;
-      myDisposable = disposable;
-
-      myComponent.addComponentListener(this);
-      myComponent.addHierarchyListener(this);
-    }
-
-    @Override
-    public void componentResized(ComponentEvent e) {
-      handle();
-    }
-
-    @Override
-    public void componentMoved(ComponentEvent e) {
-      handle();
-    }
-
-    @Override
-    public void componentHidden(ComponentEvent e) {
-      handle();
-    }
-
-    @Override
-    public void hierarchyChanged(HierarchyEvent e) {
-      handle();
-    }
-
-    private void handle() {
-      if (myComponent.isShowing() && !myBalloon.isDisposed()) {
-        myBalloon.revalidate();
-      }
-      else {
-        myComponent.removeComponentListener(this);
-        myComponent.removeHierarchyListener(this);
-        Disposer.dispose(myDisposable);
-      }
-    }
   }
 
   @Override
@@ -295,11 +230,6 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
     }
 
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
-  }
-
-  @NotNull
-  private static GotItTooltip createGotItTooltip(@NotNull Disposable disposable) {
-    return new GotItTooltip("settings.entry.point", IdeBundle.message("settings.entry.point.got.it.popup"), disposable);
   }
 
   private static PluginUpdatesService myUpdatesService;
@@ -468,11 +398,6 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
     @Override
     public void install(@NotNull StatusBar statusBar) {
       myStatusBar = statusBar;
-
-      JComponent component = ((IdeStatusBarImpl)statusBar).getWidgetComponent(WIDGET_ID);
-      if (component != null) {
-        createGotItTooltip(this).showAt(Balloon.Position.above, component, c -> new Point(c.getWidth() / 2, 0));
-      }
     }
 
     @Override
