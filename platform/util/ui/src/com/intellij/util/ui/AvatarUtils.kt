@@ -66,7 +66,7 @@ object Avatars {
     val words = text
       .filter { !it.isHighSurrogate() && !it.isLowSurrogate() }
       .trim()
-      .split(' ', ',', '`', '\'', '\"').filter { !it.isBlank() }
+      .split(' ', ',', '`', '\'', '\"').filter { it.isNotBlank() }
       .let {
         if (it.size > 2) listOf(it.first(), it.last()) else it
       }

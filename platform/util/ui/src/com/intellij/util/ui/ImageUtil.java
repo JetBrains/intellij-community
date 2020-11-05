@@ -270,6 +270,7 @@ public final class ImageUtil {
     return createImageByMask(image, avatarOvalArea);
   }
 
+  @SuppressWarnings("unused")
   @NotNull
   public static BufferedImage createRoundedImage(@NotNull BufferedImage image, double arc) {
     int size = min(image.getWidth(), image.getHeight());
