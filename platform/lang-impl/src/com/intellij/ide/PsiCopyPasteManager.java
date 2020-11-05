@@ -49,7 +49,7 @@ public final class PsiCopyPasteManager {
 
   public PsiCopyPasteManager() {
     myCopyPasteManager = CopyPasteManagerEx.getInstanceEx();
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (myRecentData != null && (!myRecentData.isValid() || myRecentData.getProject() == project)) {

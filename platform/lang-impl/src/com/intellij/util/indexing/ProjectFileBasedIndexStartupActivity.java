@@ -18,7 +18,7 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
   private static final Logger LOG = Logger.getInstance(ProjectFileBasedIndexStartupActivity.class);
 
   ProjectFileBasedIndexStartupActivity() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         removeProjectIndexableSet(project);
