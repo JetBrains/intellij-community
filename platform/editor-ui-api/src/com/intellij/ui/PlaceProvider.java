@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
  * @see com.intellij.openapi.actionSystem.ActionPlaces
  * @author Konstantin Bulenkov
  */
-public interface PlaceProvider {
+public interface PlaceProvider extends PlaceProviderCompatibilityLayer {
+  @Override
   @NonNls String getPlace();
 }
