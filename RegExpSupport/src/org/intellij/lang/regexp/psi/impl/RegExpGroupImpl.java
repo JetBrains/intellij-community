@@ -128,4 +128,9 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
+
+  @Override
+  public int getTextOffset() {
+    return getFirstChild().getNextSibling().getTextOffset();
+  }
 }

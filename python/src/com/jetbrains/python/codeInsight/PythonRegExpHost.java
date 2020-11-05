@@ -6,6 +6,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.UnicodeCharacterNames;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,14 @@ public class PythonRegExpHost implements RegExpLanguageHost {
   @Override
   public boolean supportsPythonConditionalRefs() {
     return true;
+  }
+
+  @Override
+  public boolean supportConditionalCondition(RegExpAtom condition) {
+    if (condition instanceof RegExpGroup) {
+      return false;
+    }
+    return condition.getNode().getFirstChildNode().getElementType() == RegExpTT.GROUP_BEGIN;
   }
 
   @Override

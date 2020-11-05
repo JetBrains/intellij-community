@@ -109,21 +109,23 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
 %xstate QUANTIFIER
 %xstate NON_QUANTIFIER
 %xstate NEGATED_CLASS
-%xstate QUOTED_CLASS1
+%xstate QUOTED_CLASS
 %xstate CLASS1
-%state CLASS2
-%state PROP
-%state NAMED
 %xstate OPTIONS
 %xstate COMMENT
 %xstate NAMED_GROUP
 %xstate QUOTED_NAMED_GROUP
 %xstate PY_NAMED_GROUP_REF
-%xstate PY_COND_REF
 %xstate BRACKET_EXPRESSION
 %xstate MYSQL_CHAR_EXPRESSION
 %xstate MYSQL_CHAR_EQ_EXPRESSION
 %xstate EMBRACED_HEX
+
+%state CONDITIONAL1
+%state CONDITIONAL2
+%state CLASS2
+%state PROP
+%state NAMED
 
 DOT="."
 LPAREN="("
@@ -142,7 +144,7 @@ MYSQL_CHAR_NAME=[:letter:](-|[:letter:])*[:digit:]?
 ANY=[^]
 
 META1 = {ESCAPE} | {LBRACKET}
-META2= {DOT} | "$" | "?" | "*" | "+" | "|" | "^" | {LBRACE} | {LPAREN} | {RPAREN}
+META2 = {DOT} | "$" | "?" | "*" | "+" | "|" | "^" | {LBRACE} | {LPAREN} | {RPAREN}
 
 CONTROL="t" | "n" | "r" | "f" | "a" | "e"
 BOUNDARY="b" | "b{g}"| "B" | "A" | "z" | "Z" | "G" | "K"
@@ -335,14 +337,14 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
   "^"  { yybegin(CLASS1); return RegExpTT.CARET; }
 }
 
-<QUOTED_CLASS1> {
+<QUOTED_CLASS> {
   "\\E"              { yypopstate(); return RegExpTT.QUOTE_END; }
   {ANY}              { states.set(states.size() - 1, CLASS2); return RegExpTT.CHARACTER; }
 }
 
 <CLASS1> {
   {ESCAPE} "^"               { yybegin(CLASS2); return RegExpTT.ESC_CHARACTER; }
-  {ESCAPE} "Q"               { yypushstate(QUOTED_CLASS1); return RegExpTT.QUOTE_BEGIN; }
+  {ESCAPE} "Q"               { yypushstate(QUOTED_CLASS); return RegExpTT.QUOTE_BEGIN; }
   {ESCAPE} {RBRACKET}        { yybegin(CLASS2); return allowEmptyCharacterClass ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {RBRACKET}                 { if (allowEmptyCharacterClass) { yypopstate(); return RegExpTT.CLASS_END; } yybegin(CLASS2); return RegExpTT.CHARACTER; }
   {LBRACKET} / ":"           { yybegin(CLASS2); if (allowPosixBracketExpressions) { yypushback(1); } else if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } else { return RegExpTT.CHARACTER; } }
@@ -434,8 +436,8 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
   "(?#" [^)]+ ")" { return RegExpTT.COMMENT;    }
   "(?P<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.PYTHON_NAMED_GROUP; }
   "(?P=" { yybegin(PY_NAMED_GROUP_REF); return RegExpTT.PYTHON_NAMED_GROUP_REF; }
-  "(?("  { yybegin(PY_COND_REF); return RegExpTT.PYTHON_COND_REF; }
-  "(?&" { yybegin(NAMED_GROUP); return RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF; }
+  "(?" / "("  { yybegin(CONDITIONAL1); return RegExpTT.CONDITIONAL; }
+  "(?&"  { yybegin(NAMED_GROUP); return RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF; }
   "(?P>" { yybegin(NAMED_GROUP); return RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF; }
   "(?|"  {  return RegExpTT.PCRE_BRANCH_RESET; }
 
@@ -473,9 +475,21 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
   {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
-<PY_COND_REF> {
+<CONDITIONAL1> {
+  "(?="             { yybegin(YYINITIAL); return RegExpTT.POS_LOOKAHEAD; }
+  "(?!"             { yybegin(YYINITIAL); return RegExpTT.NEG_LOOKAHEAD; }
+  "(?<="            { yybegin(YYINITIAL); return RegExpTT.POS_LOOKBEHIND; }
+  "(?<!"            { yybegin(YYINITIAL); return RegExpTT.NEG_LOOKBEHIND; }
+  "('"              { yybegin(CONDITIONAL2); return RegExpTT.QUOTED_CONDITION_BEGIN; }
+  "(<"              { yybegin(CONDITIONAL2); return RegExpTT.ANGLE_BRACKET_CONDITION_BEGIN; }
+  "("               { yybegin(CONDITIONAL2); return RegExpTT.GROUP_BEGIN; }
+}
+
+<CONDITIONAL2> {
   {GROUP_NAME}      { return RegExpTT.NAME; }
   [:digit:]+        { return RegExpTT.NUMBER; }
+  "')"              { yybegin(YYINITIAL); return RegExpTT.QUOTED_CONDITION_END; }
+  ">)"              { yybegin(YYINITIAL); return RegExpTT.ANGLE_BRACKET_CONDITION_END; }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
   {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpBackref;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpGroup;
@@ -46,6 +47,10 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
 
     @NotNull
     private String getIndexNumberText() {
+        final ASTNode node = getNode().findChildByType(RegExpTT.NUMBER);
+        if (node != null) {
+            return node.getText();
+        }
         final String s = getUnescapedText();
         assert s.charAt(0) == '\\';
         boolean pcreBackReference = s.charAt(1) == 'g';

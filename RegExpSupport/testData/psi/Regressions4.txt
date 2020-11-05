@@ -35,72 +35,77 @@ REGEXP_FILE
           PsiElement(CHAR_CLASS)('\s')
         RegExpQuantifierImpl: <*>
           PsiElement(STAR)('*')
-      RegExpClosureImpl: <(?:(?:\{|:)?\s*(?([^\s\}]+)\s*\}?\s*)?>
-        RegExpGroupImpl: <(?:(?:\{|:)?\s*(?([^\s\}]+)\s*\}?\s*)>
-          PsiElement(NON_CAPT_GROUP)('(?:')
-          RegExpPatternImpl: <(?:\{|:)?\s*(?([^\s\}]+)\s*\}?\s*>
-            RegExpBranchImpl: <(?:\{|:)?\s*(?([^\s\}]+)\s*\}?\s*>
-              RegExpClosureImpl: <(?:\{|:)?>
-                RegExpGroupImpl: <(?:\{|:)>
-                  PsiElement(NON_CAPT_GROUP)('(?:')
-                  RegExpPatternImpl: <\{|:>
-                    RegExpBranchImpl: <\{>
-                      RegExpCharImpl: <\{>
-                        PsiElement(ESC_CHARACTER)('\{')
-                    PsiElement(UNION)('|')
-                    RegExpBranchImpl: <:>
-                      RegExpCharImpl: <:>
-                        PsiElement(CHARACTER)(':')
-                  PsiElement(GROUP_END)(')')
-                RegExpQuantifierImpl: <?>
-                  PsiElement(QUEST)('?')
-              RegExpClosureImpl: <\s*>
-                RegExpSimpleClassImpl: <\s>
-                  PsiElement(CHAR_CLASS)('\s')
-                RegExpQuantifierImpl: <*>
-                  PsiElement(STAR)('*')
-              RegExpConditionalImpl: <(?([^\s\}]+)>
-                PsiElement(PYTHON_COND_REF)('(?(')
-                PsiErrorElement:Group name or number expected
-                  <empty list>
-                RegExpBranchImpl: <[^\s\}]+>
-                  RegExpClosureImpl: <[^\s\}]+>
-                    RegExpClassImpl: <[^\s\}]>
-                      PsiElement(CLASS_BEGIN)('[')
-                      PsiElement(CARET)('^')
-                      RegExpSimpleClassImpl: <\s>
-                        PsiElement(CHAR_CLASS)('\s')
-                      RegExpCharImpl: <\}>
-                        PsiElement(REDUNDANT_ESCAPE)('\}')
-                      PsiElement(CLASS_END)(']')
-                    RegExpQuantifierImpl: <+>
-                      PsiElement(PLUS)('+')
+      RegExpGroupImpl: <(?:(?:\{|:)?\s*(?([^\s\}]+)\s*\}?\s*)?(.*)>
+        PsiElement(NON_CAPT_GROUP)('(?:')
+        RegExpPatternImpl: <(?:\{|:)?\s*(?([^\s\}]+)\s*\}?\s*)?(.*)>
+          RegExpBranchImpl: <(?:\{|:)?\s*(?([^\s\}]+)\s*\}?\s*)?(.*)>
+            RegExpClosureImpl: <(?:\{|:)?>
+              RegExpGroupImpl: <(?:\{|:)>
+                PsiElement(NON_CAPT_GROUP)('(?:')
+                RegExpPatternImpl: <\{|:>
+                  RegExpBranchImpl: <\{>
+                    RegExpCharImpl: <\{>
+                      PsiElement(ESC_CHARACTER)('\{')
+                  PsiElement(UNION)('|')
+                  RegExpBranchImpl: <:>
+                    RegExpCharImpl: <:>
+                      PsiElement(CHARACTER)(':')
                 PsiElement(GROUP_END)(')')
-              RegExpClosureImpl: <\s*>
-                RegExpSimpleClassImpl: <\s>
-                  PsiElement(CHAR_CLASS)('\s')
-                RegExpQuantifierImpl: <*>
-                  PsiElement(STAR)('*')
-              RegExpClosureImpl: <\}?>
-                RegExpCharImpl: <\}>
-                  PsiElement(REDUNDANT_ESCAPE)('\}')
-                RegExpQuantifierImpl: <?>
-                  PsiElement(QUEST)('?')
-              RegExpClosureImpl: <\s*>
-                RegExpSimpleClassImpl: <\s>
-                  PsiElement(CHAR_CLASS)('\s')
-                RegExpQuantifierImpl: <*>
-                  PsiElement(STAR)('*')
-          PsiElement(GROUP_END)(')')
-        RegExpQuantifierImpl: <?>
-          PsiElement(QUEST)('?')
-      RegExpGroupImpl: <(.*)>
-        PsiElement(GROUP_BEGIN)('(')
-        RegExpPatternImpl: <.*>
-          RegExpBranchImpl: <.*>
-            RegExpClosureImpl: <.*>
-              RegExpSimpleClassImpl: <.>
-                PsiElement(DOT)('.')
+              RegExpQuantifierImpl: <?>
+                PsiElement(QUEST)('?')
+            RegExpClosureImpl: <\s*>
+              RegExpSimpleClassImpl: <\s>
+                PsiElement(CHAR_CLASS)('\s')
               RegExpQuantifierImpl: <*>
                 PsiElement(STAR)('*')
-        PsiElement(GROUP_END)(')')
+            RegExpClosureImpl: <(?([^\s\}]+)\s*\}?\s*)?>
+              RegExpConditionalImpl: <(?([^\s\}]+)\s*\}?\s*)>
+                PsiElement(CONDITIONAL)('(?')
+                PsiElement(GROUP_BEGIN)('(')
+                PsiErrorElement:Group name or number expected
+                  <empty list>
+                RegExpPatternImpl: <[^\s\}]+>
+                  RegExpBranchImpl: <[^\s\}]+>
+                    RegExpClosureImpl: <[^\s\}]+>
+                      RegExpClassImpl: <[^\s\}]>
+                        PsiElement(CLASS_BEGIN)('[')
+                        PsiElement(CARET)('^')
+                        RegExpSimpleClassImpl: <\s>
+                          PsiElement(CHAR_CLASS)('\s')
+                        RegExpCharImpl: <\}>
+                          PsiElement(REDUNDANT_ESCAPE)('\}')
+                        PsiElement(CLASS_END)(']')
+                      RegExpQuantifierImpl: <+>
+                        PsiElement(PLUS)('+')
+                PsiElement(GROUP_END)(')')
+                RegExpBranchImpl: <\s*\}?\s*>
+                  RegExpClosureImpl: <\s*>
+                    RegExpSimpleClassImpl: <\s>
+                      PsiElement(CHAR_CLASS)('\s')
+                    RegExpQuantifierImpl: <*>
+                      PsiElement(STAR)('*')
+                  RegExpClosureImpl: <\}?>
+                    RegExpCharImpl: <\}>
+                      PsiElement(REDUNDANT_ESCAPE)('\}')
+                    RegExpQuantifierImpl: <?>
+                      PsiElement(QUEST)('?')
+                  RegExpClosureImpl: <\s*>
+                    RegExpSimpleClassImpl: <\s>
+                      PsiElement(CHAR_CLASS)('\s')
+                    RegExpQuantifierImpl: <*>
+                      PsiElement(STAR)('*')
+                PsiElement(GROUP_END)(')')
+              RegExpQuantifierImpl: <?>
+                PsiElement(QUEST)('?')
+            RegExpGroupImpl: <(.*)>
+              PsiElement(GROUP_BEGIN)('(')
+              RegExpPatternImpl: <.*>
+                RegExpBranchImpl: <.*>
+                  RegExpClosureImpl: <.*>
+                    RegExpSimpleClassImpl: <.>
+                      PsiElement(DOT)('.')
+                    RegExpQuantifierImpl: <*>
+                      PsiElement(STAR)('*')
+              PsiElement(GROUP_END)(')')
+        PsiErrorElement:')' expected
+          <empty list>

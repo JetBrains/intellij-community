@@ -145,10 +145,13 @@ public interface RegExpTT {
     IElementType PCRE_RECURSIVE_NAMED_GROUP_REF = new RegExpElementType("PCRE_RECURSIVE_NAMED_GROUP");
     /** (?P=name) */
     IElementType PYTHON_NAMED_GROUP_REF = new RegExpElementType("PYTHON_NAMED_GROUP_REF");
-    /** (?(id/name)yes-pattern|no-pattern) */
-    IElementType PYTHON_COND_REF = new RegExpElementType("PYTHON_COND_REF");
-    /** (?(condition pattern)yes-pattern|no-pattern) */
-    IElementType PCRE_COND_REF = new RegExpElementType("PCRE_COND_REF");
+    /** (?(id/name/lookaround)yes-pattern|no-pattern) */
+    IElementType CONDITIONAL = new RegExpElementType("CONDITIONAL");
+    /** (' */
+    IElementType QUOTED_CONDITION_BEGIN = new RegExpElementType("QUOTED_CONDITION_BEGIN");
+    IElementType QUOTED_CONDITION_END = new RegExpElementType("QUOTED_CONDITION_END");
+    IElementType ANGLE_BRACKET_CONDITION_BEGIN = new RegExpElementType("ANGLE_BRACKET_CONDITION_BEGIN");
+    IElementType ANGLE_BRACKET_CONDITION_END = new RegExpElementType("ANGLE_BRACKET_CONDITION_END");
     /** (?|regex) */
     IElementType PCRE_BRANCH_RESET = new RegExpElementType("PCRE_BRANCH_RESET");
     /** (?<name>... */
@@ -181,6 +184,7 @@ public interface RegExpTT {
     TokenSet QUANTIFIERS = TokenSet.create(QUEST, PLUS, STAR, LBRACE);
 
     TokenSet GROUPS = TokenSet.create(GROUP_BEGIN, NON_CAPT_GROUP, ATOMIC_GROUP, POS_LOOKAHEAD, NEG_LOOKAHEAD, POS_LOOKBEHIND, NEG_LOOKBEHIND, PCRE_BRANCH_RESET);
+    TokenSet LOOKAROUND_GROUPS = TokenSet.create(POS_LOOKAHEAD, NEG_LOOKAHEAD, POS_LOOKBEHIND, NEG_LOOKBEHIND);
 
     TokenSet BOUNDARIES = TokenSet.create(BOUNDARY, CARET, DOLLAR);
 }
