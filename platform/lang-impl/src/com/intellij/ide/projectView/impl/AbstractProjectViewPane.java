@@ -898,7 +898,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
       BufferedImage image = ImageUtil.createImage(panel.getWidth(), panel.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g2 = (Graphics2D)image.getGraphics();
-      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
       panel.paint(g2);
       g2.dispose();
 
