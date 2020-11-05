@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +81,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
 
   private static class UnresolvedPropertyVisitor extends JavaRecursiveElementWalkingVisitor {
     private final InspectionManager myManager;
-    private final Map<PsiElement, ProblemDescriptor> myProblems = new THashMap<>();
+    private final Map<PsiElement, ProblemDescriptor> myProblems = new HashMap<>();
     private final boolean onTheFly;
 
 

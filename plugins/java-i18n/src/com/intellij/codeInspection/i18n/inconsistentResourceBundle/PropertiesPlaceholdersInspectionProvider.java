@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -27,18 +13,14 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Dmitry Batkovich
  */
-public class PropertiesPlaceholdersInspectionProvider implements InconsistentResourceBundleInspectionProvider {
+public final class PropertiesPlaceholdersInspectionProvider implements InconsistentResourceBundleInspectionProvider {
   @NotNull
   @Override
   public String getName() {
@@ -60,7 +42,7 @@ public class PropertiesPlaceholdersInspectionProvider implements InconsistentRes
                     RefManager refManager,
                     ProblemDescriptionsProcessor processor) {
     for (PropertiesFile file : files) {
-      final Set<String> filePropertyKeys = new THashSet<>(propertiesFilesNamesMaps.get(file).keySet());
+      final Set<String> filePropertyKeys = new HashSet<>(propertiesFilesNamesMaps.get(file).keySet());
       PropertiesFile parent = parents.get(file);
       while (parent != null) {
         final Collection<String> commonKeys = ContainerUtil.intersection(propertiesFilesNamesMaps.get(parent).keySet(), filePropertyKeys);

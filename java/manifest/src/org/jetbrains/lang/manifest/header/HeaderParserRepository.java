@@ -28,8 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.lang.manifest.psi.Header;
@@ -50,7 +49,7 @@ public final class HeaderParserRepository {
     @NotNull
     @Override
     protected Map<String, HeaderParser> compute() {
-      Map<String, HeaderParser> map = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      Map<String, HeaderParser> map = CollectionFactory.createCaseInsensitiveStringMap();
       for (HeaderParserProvider provider : HeaderParserProvider.EP_NAME.getExtensionList()) {
         map.putAll(provider.getHeaderParsers());
       }
