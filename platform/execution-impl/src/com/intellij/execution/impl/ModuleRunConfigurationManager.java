@@ -55,7 +55,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
     });
   }
 
-  static class ModuleRunConfigurationManagerStartupActivity implements StartupActivity {
+  static final class ModuleRunConfigurationManagerStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
       if (!project.isDefault()) {
