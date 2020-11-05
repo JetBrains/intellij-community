@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation.settings
 
-import com.intellij.execution.process.mediator.daemon.TimeQuotaOptions
+import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.util.messages.Topic
@@ -18,7 +18,7 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
 
   private val options = ElevationOptions()
 
-  var quotaOptions: TimeQuotaOptions = TimeQuotaOptions(options.quotaTimeLimitMs)
+  var quotaOptions = QuotaOptions(options.quotaTimeLimitMs)
     set(newValue) {
       val oldValue = field
       field = newValue
@@ -39,7 +39,7 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
     }
 
     @JvmDefault
-    fun onDaemonQuotaOptionsChanged(oldValue: TimeQuotaOptions, newValue: TimeQuotaOptions) = Unit
+    fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) = Unit
   }
 
   @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")

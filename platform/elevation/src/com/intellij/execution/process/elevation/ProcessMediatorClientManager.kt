@@ -7,7 +7,7 @@ import com.intellij.execution.process.mediator.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
-import com.intellij.execution.process.mediator.daemon.TimeQuotaOptions
+import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ThrowableComputable
@@ -31,7 +31,7 @@ class ProcessMediatorClientManager : Disposable {
 
   init {
     ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
-      override fun onDaemonQuotaOptionsChanged(oldValue: TimeQuotaOptions, newValue: TimeQuotaOptions) {
+      override fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) {
         adjustQuota(newValue)
       }
     })
@@ -48,7 +48,7 @@ class ProcessMediatorClientManager : Disposable {
     }
   }
 
-  private fun adjustQuota(quotaOptions: TimeQuotaOptions) {
+  private fun adjustQuota(quotaOptions: QuotaOptions) {
     synchronized(this) {
       for (client in parkedClients) {
         try {
