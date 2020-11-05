@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.elevation.settings.ElevationSettings
 import com.intellij.execution.process.mediator.MediatedProcess
 import com.intellij.execution.process.mediator.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
@@ -17,6 +19,8 @@ class ElevationService : Disposable {
   companion object {
     @JvmStatic
     fun getInstance() = service<ElevationService>()
+
+    private const val MAX_RELAUNCHING_DAEMON_UNTIL_HAVE_QUOTA_PERMIT_ATTEMPTS = 3
   }
 
   private val clientManager = ProcessMediatorClientManager().also {
@@ -38,15 +42,20 @@ class ElevationService : Disposable {
   }
 
   private fun <R> tryRelaunchingDaemonUntilHaveQuotaPermit(block: (ProcessMediatorClient) -> R): R {
-    while (true) {
+    val maxAttempts = MAX_RELAUNCHING_DAEMON_UNTIL_HAVE_QUOTA_PERMIT_ATTEMPTS
+    for (attempt in 1..maxAttempts) {
       val client = clientManager.launchDaemonAndConnectClientIfNeeded()
       try {
         return block(client)
       }
       catch (e: QuotaExceededException) {
+        if (attempt > 1) ElevationLogger.LOG.warn("Repeated quota exceeded error after $attempt attempts; " +
+                                                  "quota options: ${ElevationSettings.getInstance().quotaOptions}", e)
         clientManager.parkClient(client)
       }
     }
+    throw ExecutionException(ElevationBundle.message("dialog.message.unable.to.configure.elevation.daemon.after.attempts",
+                                                     maxAttempts))
   }
 
   override fun dispose() = Unit
