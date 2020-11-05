@@ -25,7 +25,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlinc.kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" />
-    <orderEntry type="library" name="kotlinc.allopen-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="kotlinc-delegator.allopen-compiler-plugin" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.maven" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" />
