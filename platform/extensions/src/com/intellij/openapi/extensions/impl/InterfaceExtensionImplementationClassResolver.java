@@ -29,7 +29,7 @@ final class InterfaceExtensionImplementationClassResolver implements Implementat
         !className.startsWith("com.intellij.tasks.impl.") &&
         !result.isAnnotationPresent(InternalIgnoreDependencyViolation.class)) {
       String idString = pluginDescriptor.getPluginId().getIdString();
-      if (!idString.equals("com.intellij.java") && !idString.equals("com.intellij.java.ide")) {
+      if (!idString.equals("com.intellij.java") && !idString.equals("com.intellij.java.ide") && !idString.equals("org.jetbrains.android")) {
         ExtensionPointImpl.LOG.error(componentManager.createError("Created extension classloader is not equal to plugin's one (" +
                                                                   "className=" + className + ", " +
                                                                   "extensionInstanceClassloader=" + result.getClassLoader() + ", " +
