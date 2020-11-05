@@ -23,6 +23,8 @@ internal class ExceptionAsStatusTest {
       .also { assertEquals(Status.Code.NOT_FOUND, it.status.code, it.toString()) }
     assertThrows<StatusException> { ExceptionAsStatus.wrap { assert(false) } }
       .also { assertEquals(Status.Code.DATA_LOSS, it.status.code, it.toString()) }
+    assertThrows<StatusException> { ExceptionAsStatus.wrap { throw QuotaExceededException() } }
+      .also { assertEquals(Status.Code.RESOURCE_EXHAUSTED, it.status.code, it.toString()) }
   }
 
   @Test
@@ -41,6 +43,31 @@ internal class ExceptionAsStatusTest {
     checkWrapAndUnwrap(IOException("IOE: ioe..."))
     checkWrapAndUnwrap(FileNotFoundException("FNFE: not found..."))
     checkWrapAndUnwrap(CancellationException("CE: cancel"))
+  }
+
+  @Test
+  fun `unwraps known wrapped exceptions constructed with no message`() {
+    for (constructor in getAllKnownConstructors()) {
+      checkWrapAndUnwrap(constructor(null, null))
+    }
+  }
+
+  @Test
+  fun `unwraps known wrapped exceptions constructed with message`() {
+    for (constructor in getAllKnownConstructors()) {
+      checkWrapAndUnwrap(constructor("error message", null))
+    }
+  }
+
+  @Test
+  fun `unwraps known wrapped exceptions constructed with message and cause`() {
+    for (constructor in getAllKnownConstructors()) {
+      checkWrapAndUnwrap(constructor("error message", Exception("cause")))
+    }
+  }
+
+  private fun getAllKnownConstructors(): List<(String?, Throwable?) -> Throwable> {
+    return ExceptionAsStatus.KNOWN_EXCEPTIONS.values.map { it.exceptionDescriptor.constructor }
   }
 
   private inline fun <reified T : Throwable> checkWrapAndUnwrap(throwable: T) {

@@ -5,6 +5,7 @@ import io.grpc.Status
 import io.grpc.Status.Code.*
 import io.grpc.StatusException
 import io.grpc.StatusRuntimeException
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.EOFException
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -17,15 +18,15 @@ data class ExceptionAsStatus private constructor(val status: Status,
 
   data class ExceptionDescriptor<T : Throwable> internal constructor(
     val type: KClass<out T>,
-    val constructor: (String, Throwable?) -> T
+    val constructor: (String?, Throwable?) -> T
   ) {
     companion object {
       internal inline fun <reified T : Throwable> withThrowable(
-        noinline constructor: (String, Throwable?) -> T
+        noinline constructor: (String?, Throwable?) -> T
       ) = ExceptionDescriptor(T::class, constructor)
 
       internal inline fun <reified T : Throwable> withInitCause(
-        noinline constructor: (String) -> T
+        noinline constructor: (String?) -> T
       ) = ExceptionDescriptor(T::class) { s, cause -> constructor(s).initCause(cause) }
     }
 
@@ -34,11 +35,12 @@ data class ExceptionAsStatus private constructor(val status: Status,
   companion object {
     private inline operator fun <reified T : Throwable> invoke(
       status: Status,
-      noinline exceptionConstructor: (String, Throwable?) -> T
+      noinline exceptionConstructor: (String?, Throwable?) -> T
     ) = ExceptionAsStatus(status, ExceptionDescriptor.withThrowable(exceptionConstructor))
 
     // @formatter:off
-    private val KNOWN_EXCEPTIONS: LinkedHashMap<Class<out Throwable>, ExceptionAsStatus> = listOf(
+    @VisibleForTesting
+    internal val KNOWN_EXCEPTIONS: LinkedHashMap<Class<out Throwable>, ExceptionAsStatus> = listOf(
       // the order matters! should be from the most generic down to more specific
       ExceptionDescriptor(Throwable::class, ::RuntimeException)            asStatus DATA_LOSS,
 
@@ -101,7 +103,7 @@ data class ExceptionAsStatus private constructor(val status: Status,
         }
         val exceptionAsStatus = forThrowableClass(t.javaClass) ?: throw t
         throw exceptionAsStatus.status
-          .withDescription(CLASS_NAME_START + t.javaClass.name + CLASS_NAME_DELIMITER + t.message)
+          .withDescription(CLASS_NAME_START + t.javaClass.name + (t.message?.let { CLASS_NAME_DELIMITER + it } ?: ""))
           .withCause(t)
           .asException()
       }
@@ -125,7 +127,7 @@ data class ExceptionAsStatus private constructor(val status: Status,
         val description = status.description
 
         val throwableClass =
-          if (description != null && description.startsWith(CLASS_NAME_START) && description.contains(CLASS_NAME_DELIMITER)) {
+          if (description != null && description.startsWith(CLASS_NAME_START)) {
             val className = description.substringAfter(CLASS_NAME_START).substringBefore(CLASS_NAME_DELIMITER)
 
             kotlin.runCatching {
@@ -134,9 +136,12 @@ data class ExceptionAsStatus private constructor(val status: Status,
           }
           else null
 
-        val message = description?.let {
-          if (throwableClass != null) it.substringAfter(CLASS_NAME_DELIMITER) else it
-        } ?: code.toString()
+        val message = when {
+          description == null -> code.toString()
+          throwableClass == null -> description
+          description.contains(CLASS_NAME_DELIMITER) -> description.substringAfter(CLASS_NAME_DELIMITER)
+          else -> null
+        }
 
         val exceptionAsStatus = throwableClass?.let { forThrowableClass(it) } ?: forStatusCode(code) ?: throw e
         throw exceptionAsStatus.exceptionDescriptor.constructor(message, e)
