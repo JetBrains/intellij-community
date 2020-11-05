@@ -44,9 +44,7 @@ public final class CpuUsageData {
     myMemEnd = memEnd;
     myCompilationTime = compilationTime;
     myProcessTime = processTime;
-    Object2LongMaps.fastForEach(gcTimes, entry -> {
-      myGcTimes.add(Pair.create(entry.getLongValue(), entry.getKey().getName()));
-    });
+    Object2LongMaps.fastForEach(gcTimes, entry -> myGcTimes.add(Pair.create(entry.getLongValue(), entry.getKey().getName())));
     Long2LongMaps.fastForEach(threadTimes, entry -> {
       ThreadInfo info = ourThreadMXBean.getThreadInfo(entry.getLongKey());
       myThreadTimes.add(Pair.create(toMillis(entry.getLongValue()), info == null ? "<unknown>" : info.getThreadName()));
@@ -59,9 +57,9 @@ public final class CpuUsageData {
 
   String getProcessCpuStats() {
     long gcTotal = myGcTimes.stream().mapToLong(p -> p.first).sum();
-    return myCompilationTime + "ms JITc " +
-           (gcTotal > 0 ? "and " + gcTotal + "ms GC " : "") +
-           "of " + myProcessTime + "ms total";
+    return myCompilationTime + "ms (" +(myCompilationTime*100/(myProcessTime==0?1000000:myProcessTime))+"%) JITc"+
+           (gcTotal > 0 ? " and " + gcTotal + "ms ("+ (gcTotal*100/(myProcessTime==0?1000000:myProcessTime))+"%) GC": "") +
+           " of " + myProcessTime + "ms total";
   }
 
   public String getThreadStats() {
