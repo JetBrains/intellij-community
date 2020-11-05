@@ -60,6 +60,7 @@ final class ClassLoaderConfigurator {
        SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new ReferenceOpenHashSet<>(new PluginId[]{
         PluginId.getId("com.intellij.thymeleaf"),
         PluginId.getId("org.jetbrains.plugins.ruby"),
+        PluginId.getId("com.jetbrains.rubymine.customization"),
         PluginId.getId("org.jetbrains.plugins.slim"),
         PluginId.getId("com.intellij.lang.puppet"),
         PluginId.getId("org.jetbrains.plugins.yaml"),
