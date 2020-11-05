@@ -205,11 +205,11 @@ class MavenSyncConsole(private val myProject: Project) {
       val cause = ExceptionUtil.findCause(e, ExecutionException::class.java)
       if (cause != null) {
         return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
-                                cause.localizedMessage, ExceptionUtil.getThrowableText(cause))
+                                cause.localizedMessage.orEmpty(), ExceptionUtil.getThrowableText(cause))
       }
     }
     return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.error"),
-                            e.localizedMessage, ExceptionUtil.getThrowableText(e))
+                            e.localizedMessage.orEmpty(), ExceptionUtil.getThrowableText(e))
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
