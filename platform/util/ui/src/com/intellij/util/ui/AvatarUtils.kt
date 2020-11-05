@@ -3,6 +3,7 @@ package com.intellij.util.ui
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.JBColor
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.Avatars.gradientInt
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
 import java.awt.Color
@@ -10,9 +11,21 @@ import java.awt.Font
 import java.awt.GradientPaint
 import java.awt.Rectangle
 import java.awt.image.BufferedImage
+import javax.swing.ImageIcon
 import kotlin.math.abs
+import kotlin.math.min
 
 object AvatarUtils {
+
+  fun createRoundRectIcon(image: BufferedImage, targetSize: Int): ImageIcon {
+    val size: Int = min(image.width, image.height)
+    val baseArcSize = 6.0 * size / targetSize
+
+    val rounded = ImageUtil.createRoundedImage(image, baseArcSize)
+    val hiDpi = ImageUtil.ensureHiDPI(rounded, ScaleContext.create())
+    return JBImageIcon(ImageUtil.scaleImage(hiDpi, targetSize, targetSize))
+  }
+
   fun generateColoredAvatar(gradientSeed: String, name: String): BufferedImage {
     val (colorInt1, colorInt2) = gradientInt(gradientSeed)
     val (color1, color2) = Color(colorInt1) to Color(colorInt2)
@@ -71,9 +84,9 @@ object Avatars {
         if (it.size > 2) listOf(it.first(), it.last()) else it
       }
       .take(2)
-     if(words.size ==1 ){
-       return generateFromCamelCase(words.first())
-     }
+    if (words.size == 1) {
+      return generateFromCamelCase(words.first())
+    }
     return words.map { it.first() }
       .joinToString("").toUpperCase()
   }

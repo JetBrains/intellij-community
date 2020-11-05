@@ -179,19 +179,23 @@ public class RecentProjectPanel extends JPanel {
   public static Function<? super AnAction, String> createProjectNameFunction() {
     return o -> {
       if (o instanceof ReopenProjectAction) {
-        ReopenProjectAction item = (ReopenProjectAction)o;
-        String home = SystemProperties.getUserHome();
-        String path = item.getProjectPath();
-        if (FileUtil.startsWith(path, home)) {
-          path = path.substring(home.length());
-        }
-        return item.getProjectName() + " " + path;
+        return getProjectName((ReopenProjectAction)o);
       }
       else if (o instanceof ProjectGroupActionGroup) {
         return ((ProjectGroupActionGroup)o).getGroup().getName();
       }
       return o.toString();
     };
+  }
+
+  @NotNull
+  static String getProjectName(@NotNull ReopenProjectAction projectItem) {
+    String home = SystemProperties.getUserHome();
+    String path = projectItem.getProjectPath();
+    if (FileUtil.startsWith(path, home)) {
+      path = path.substring(home.length());
+    }
+    return projectItem.getProjectName() + " " + path;
   }
 
   @NotNull
