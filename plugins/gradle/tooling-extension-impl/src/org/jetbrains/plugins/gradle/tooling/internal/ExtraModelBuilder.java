@@ -10,6 +10,7 @@ import org.gradle.internal.impldep.com.google.common.collect.Lists;
 import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
 import org.gradle.internal.logging.progress.ProgressLogger;
 import org.gradle.internal.logging.progress.ProgressLoggerFactory;
+import org.gradle.tooling.provider.model.ParameterizedToolingModelBuilder;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,6 +34,15 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public class ExtraModelBuilder implements ToolingModelBuilder {
+
+  public static class ForGradle44 extends ExtraModelBuilder implements ParameterizedToolingModelBuilder<ModelBuilderService.Parameter> {
+    @NotNull
+    @Override
+    public Class<ModelBuilderService.Parameter> getParameterType() {
+      return ModelBuilderService.Parameter.class;
+    }
+  }
+
   private static final Logger LOG = LoggerFactory.getLogger(ExtraModelBuilder.class);
   @ApiStatus.Internal
   public static final String MODEL_BUILDER_SERVICE_MESSAGE_PREFIX = "ModelBuilderService message: ";
@@ -67,6 +77,10 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
   @Override
   public Object buildAll(String modelName, Project project) {
+    return buildAll(modelName, null, project);
+  }
+
+  public Object buildAll(String modelName, ModelBuilderService.Parameter parameter, Project project) {
     if (DummyModel.class.getName().equals(modelName)) {
       return new DummyModel() {
       };
@@ -97,6 +111,8 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
             if (service instanceof AbstractModelBuilderService) {
               return ((AbstractModelBuilderService)service).buildAll(modelName, project, myModelBuilderContext);
             }
+            else if (service instanceof ModelBuilderService.Parametrized)
+              return ((ModelBuilderService.Parametrized)service).buildAll(modelName, project, parameter);
             else {
               return service.buildAll(modelName, project);
             }

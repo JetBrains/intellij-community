@@ -24,6 +24,16 @@ import java.io.Serializable;
  * @author Vladislav.Soroka
  */
 public interface ModelBuilderService extends Serializable {
+
+  interface Parametrized extends ModelBuilderService {
+    Object buildAll(String modelName, Project project, Parameter parameter);
+  }
+
+  interface Parameter {
+    String getValue();
+    void setValue(String value);
+  }
+
   boolean canBuild(String modelName);
 
   Object buildAll(String modelName, Project project);
