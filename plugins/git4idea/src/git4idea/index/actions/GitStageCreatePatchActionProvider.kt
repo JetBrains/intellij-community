@@ -16,7 +16,7 @@ open class GitStageCreatePatchActionProvider private constructor(private val sil
   class Dialog : GitStageCreatePatchActionProvider(false)
   class Clipboard : GitStageCreatePatchActionProvider(true)
 
-  override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TRACKER) != null
+  override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null &&

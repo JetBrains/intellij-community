@@ -11,7 +11,5 @@ object GitStageDataKeys {
   @JvmField
   val GIT_STAGE_TREE = DataKey.create<GitStageTree>("GitStageTree")
   @JvmField
-  val GIT_STAGE_TRACKER = DataKey.create<GitStageTracker>("GitStageTracker")
-  @JvmField
   val GIT_STAGE_UI_SETTINGS = DataKey.create<GitStageUiSettings>("GitStageUiSettings")
 }
