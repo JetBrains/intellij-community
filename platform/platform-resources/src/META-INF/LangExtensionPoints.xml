@@ -582,6 +582,7 @@
     <extensionPoint name="lang.directNavigationProvider" dynamic="true" interface="com.intellij.navigation.DirectNavigationProvider"/>
     <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
+    <extensionPoint name="build.buildEventFilter" dynamic="true" interface="com.intellij.build.progress.BuildEventFilter"/>
   </extensionPoints>
 </idea-plugin>
 

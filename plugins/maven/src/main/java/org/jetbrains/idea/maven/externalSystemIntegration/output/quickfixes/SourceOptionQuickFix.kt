@@ -6,12 +6,12 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.BuildIssueEventImpl
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.build.progress.BuildEventFilter
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.pom.Navigatable
 import com.intellij.pom.java.LanguageLevel
@@ -48,7 +48,8 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
         logEntryReader.pushBack()
       }
       val failedProject = parsingContext.projectsInReactor.last()
-      messageConsumer.accept(BuildIssueEventImpl(parentId, Source5BuildIssue(parsingContext.ideaProject, failedProject), MessageEvent.Kind.ERROR));
+      messageConsumer.accept(
+        BuildIssueEventImpl(parentId, Source5BuildIssue(parsingContext.ideaProject, failedProject), MessageEvent.Kind.ERROR));
       return true
     }
 
@@ -57,7 +58,7 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
 
 }
 
-class Source5BuildIssue(private val project: Project, private val failedProjectId: String) : BuildIssue {
+class Source5BuildIssue(project: Project, private val failedProjectId: String) : BuildIssue {
 
   override val quickFixes: List<UpdateSourceLevelQuickFix> = prepareQuickFixes(project, failedProjectId)
   override val title = MavenProjectBundle.message("maven.source.5.not.supported.title")
@@ -69,10 +70,9 @@ class Source5BuildIssue(private val project: Project, private val failedProjectI
   }.joinToString("\n")
 
 
-
   override fun getNavigatable(project: Project): Navigatable? {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId(failedProjectId))
-    return mavenProject?.file?.let{ OpenFileDescriptor(project, it) }
+    return mavenProject?.file?.let { OpenFileDescriptor(project, it) }
   }
 
   companion object {
@@ -89,19 +89,38 @@ class Source5BuildIssue(private val project: Project, private val failedProjectI
   }
 }
 
+class JpsReleaseVersion5QuickFix : BuildEventFilter {
+  override fun filterMessage(project: Project,
+                             parentId: Any,
+                             title: String,
+                             message: String,
+                             kind: MessageEvent.Kind,
+                             navigatable: Navigatable?): BuildEvent? {
+    if (message != "java: error: release version 5 not supported") return null
+    val manager = MavenProjectsManager.getInstance(project);
+    if (!manager.isMavenizedProject) return null
+    val rootProjects = manager.rootProjects
+    if (rootProjects.size == 1) {
+      return BuildIssueEventImpl(parentId, Source5BuildIssue(project, rootProjects[0].mavenId.displayString), kind)
+    }
+    return null
+  }
+
+}
+
 class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuickFix {
   override val id = ID + mavenProject.mavenId.displayString
   override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> {
 
     val languageLevel = MavenModuleImporter.getLanguageLevel(mavenProject)
-    if(languageLevel.isAtLeast(LanguageLevel.JDK_1_6)){
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_6)) {
       Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
                    MavenProjectBundle.message("maven.quickfix.cannot.update.source.level.already.1.6", mavenProject.displayName),
                    NotificationType.INFORMATION).notify(project)
       return CompletableFuture.completedFuture(null)
     }
     val module = MavenProjectsManager.getInstance(project).findModule(mavenProject)
-    if(module == null){
+    if (module == null) {
       Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
                    MavenProjectBundle.message("maven.quickfix.cannot.update.source.level.module.not.found", mavenProject.displayName),
                    NotificationType.INFORMATION).notify(project)
@@ -109,7 +128,7 @@ class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuic
     }
 
     val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(project), mavenProject)
-    if(moduleJdk == null){
+    if (moduleJdk == null) {
       Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
                    MavenProjectBundle.message("maven.quickfix.cannot.update.source.level.module.not.found", mavenProject.displayName),
                    NotificationType.INFORMATION).notify(project)
@@ -117,7 +136,7 @@ class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuic
     }
 
     val promise = MavenProjectModelModifier(project).changeLanguageLevel(module, LanguageLevel.parse(moduleJdk.versionString)!!)
-    if(promise == null) {
+    if (promise == null) {
       return CompletableFuture.completedFuture(null)
     }
     OpenFileDescriptor(project, mavenProject.file).navigate(true)

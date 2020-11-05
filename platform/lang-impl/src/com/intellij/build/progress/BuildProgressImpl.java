@@ -4,10 +4,7 @@ package com.intellij.build.progress;
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.FilePosition;
-import com.intellij.build.events.EventResult;
-import com.intellij.build.events.FinishEvent;
-import com.intellij.build.events.MessageEvent;
-import com.intellij.build.events.StartEvent;
+import com.intellij.build.events.*;
 import com.intellij.build.events.impl.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -19,12 +16,16 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
   private final Object myId = new Object();
+  private final Project myProject;
   private final BuildProgressListener myListener;
   @Nullable
   private final BuildProgress<BuildProgressDescriptor> myParentProgress;
   private BuildProgressDescriptor myDescriptor;
 
-  BuildProgressImpl(BuildProgressListener listener, @Nullable BuildProgress<BuildProgressDescriptor> parentProgress) {
+  BuildProgressImpl(@NotNull Project project,
+                    BuildProgressListener listener,
+                    @Nullable BuildProgress<BuildProgressDescriptor> parentProgress) {
+    myProject = project;
     myListener = listener;
     myParentProgress = parentProgress;
   }
@@ -58,7 +59,7 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
   @Override
   public BuildProgress<BuildProgressDescriptor> startChildProgress(@NotNull String title) {
     BuildDescriptor buildDescriptor = myDescriptor.getBuildDescriptor();
-    return new BuildProgressImpl(myListener, this).start(new BuildProgressDescriptor() {
+    return new BuildProgressImpl(myProject, myListener, this).start(new BuildProgressDescriptor() {
 
       @NotNull
       @Override
@@ -76,14 +77,15 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
   @NotNull
   @Override
   public BuildProgress<BuildProgressDescriptor> progress(@NotNull String title) {
-    return progress(title, -1, -1 , "");
+    return progress(title, -1, -1, "");
   }
 
   @NotNull
   @Override
   public BuildProgress<BuildProgressDescriptor> progress(@NotNull String title, long total, long progress, String unit) {
     Object parentId = myParentProgress != null ? myParentProgress.getId() : null;
-    myListener.onEvent(getBuildId(), new ProgressBuildEventImpl(getId(), parentId, System.currentTimeMillis(), title, total, progress, unit));
+    myListener
+      .onEvent(getBuildId(), new ProgressBuildEventImpl(getId(), parentId, System.currentTimeMillis(), title, total, progress, unit));
     return this;
   }
 
@@ -119,15 +121,34 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
                                                         @NotNull String message,
                                                         @NotNull MessageEvent.Kind kind,
                                                         @Nullable Navigatable navigatable) {
-    MessageEventImpl event = new MessageEventImpl(getId(), kind, null, title, message) {
-      @Override
-      public @Nullable Navigatable getNavigatable(@NotNull Project project) {
-        return navigatable;
-      }
-    };
+    BuildEvent event = filterEvent(title, message, kind, navigatable);
+
+    if (event == null) {
+      event = new MessageEventImpl(getId(), kind, null, title, message) {
+        @Override
+        public @Nullable Navigatable getNavigatable(@NotNull Project project) {
+          return navigatable;
+        }
+      };
+    }
+
     myListener.onEvent(getBuildId(), event);
     return this;
   }
+
+  @Nullable
+  private BuildEvent filterEvent(@NotNull String title,
+                                 @NotNull String message,
+                                 @NotNull MessageEvent.Kind kind,
+                                 @Nullable Navigatable navigatable) {
+
+    for (BuildEventFilter ex : BuildEventFilter.MESSAGE_PROGRESS_EP.getExtensionList()) {
+      BuildEvent event = ex.filterMessage(myProject, getId(), title, message, kind, navigatable);
+      if (event != null) return event;
+    }
+    return null;
+  }
+
 
   @NotNull
   @Override

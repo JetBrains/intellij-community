@@ -33,6 +33,6 @@ public class BuildViewManager extends AbstractViewManager {
 
   @ApiStatus.Experimental
   public static BuildProgress<BuildProgressDescriptor> createBuildProgress(@NotNull Project project) {
-    return new BuildRootProgressImpl(ServiceManager.getService(project, BuildViewManager.class));
+    return new BuildRootProgressImpl(project, ServiceManager.getService(project, BuildViewManager.class));
   }
 }

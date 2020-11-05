@@ -282,6 +282,7 @@
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
     <notificationGroup id="Maven" displayType="BALLOON"/>
     <toolWindowAllowlist id="Maven"/>
+    <build.buildEventFilter implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsReleaseVersion5QuickFix" />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
