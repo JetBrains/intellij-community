@@ -125,8 +125,11 @@ class WizardStatsService : CounterUsagesCollector() {
                 *uiEditorUsageStats.toPairs().toTypedArray(),
                 pluginInfoField
             )
-            projectCreationStats.moduleTemplates.forEach { moduleTemplateId ->
-                logModuleTemplateCreation(projectCreationStats.projectTemplateId, moduleTemplateId)
+        }
+
+        fun logUsedModuleTemplatesOnNewWizardProjectCreated(projectTemplateId: String, moduleTemplates: List<String>) {
+            moduleTemplates.forEach { moduleTemplateId ->
+                logModuleTemplateCreation(projectTemplateId, moduleTemplateId)
             }
         }
 
@@ -150,7 +153,6 @@ class WizardStatsService : CounterUsagesCollector() {
         val group: String,
         val projectTemplateId: String,
         val buildSystemType: String,
-        val moduleTemplates: List<String>,
     ) : WizardStats {
         override fun toPairs(): ArrayList<EventPair<*>> = arrayListOf(
             groupField.with(group),
