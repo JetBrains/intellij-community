@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.spellchecker.dictionary.Loader
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
-import gnu.trove.THashSet
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class WordListLoader(private val project: Project) {
@@ -22,7 +22,7 @@ internal class WordListLoader(private val project: Project) {
 
   fun loadWordList(loader: Loader, consumer: (String, TraversableWordList) -> Unit) {
     if (AsyncUtils.isNonAsyncMode()) {
-      consumer(loader.name, TraversableWordList.create(loader.readAll()))
+      consumer(loader.name, TraversableWordList.create(readAll(loader)))
     }
     else {
       loadWordListAsync(loader, consumer)
@@ -50,14 +50,14 @@ internal class WordListLoader(private val project: Project) {
         if (app.isDisposed) return@executeOnPooledThread
 
         logger.debug("${loader.name} loaded!")
-        consumer(loader.name, TraversableWordList.create(loader.readAll()))
+        consumer(loader.name, TraversableWordList.create(readAll(loader)))
 
         while (myListsToLoad.isNotEmpty()) {
           if (app.isDisposed) return@executeOnPooledThread
           val (curLoader, curConsumer) = myListsToLoad.removeAt(0)
 
           logger.debug("${curLoader.name} loaded!")
-          curConsumer(curLoader.name, TraversableWordList.create(curLoader.readAll()))
+          curConsumer(curLoader.name, TraversableWordList.create(readAll(curLoader)))
         }
 
         logger.debug("Loading finished, restarting daemon...")
@@ -70,9 +70,9 @@ internal class WordListLoader(private val project: Project) {
     }
   }
 
-  private fun Loader.readAll(): Set<String> {
-    val set = THashSet<String>()
-    load {
+  private fun readAll(loader: Loader): Set<String> {
+    val set = CollectionFactory.createSmallMemoryFootprintSet<String>()
+    loader.load {
       set.add(it)
     }
     return set

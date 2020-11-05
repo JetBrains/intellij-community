@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.dictionary;
 
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
-public class ProjectDictionary implements EditableDictionary {
+public final class ProjectDictionary implements EditableDictionary {
   @NonNls private static final String DEFAULT_CURRENT_USER_NAME = "default.user";
   private static final String DEFAULT_PROJECT_DICTIONARY_NAME = "project";
   private String activeName;
@@ -91,7 +78,7 @@ public class ProjectDictionary implements EditableDictionary {
     if (result == null) {
       result = new UserDictionary(activeName);
       if (dictionaries == null) {
-        dictionaries = new THashSet<>();
+        dictionaries = CollectionFactory.createSmallMemoryFootprintSet();
       }
       dictionaries.add(result);
     }
@@ -130,10 +117,9 @@ public class ProjectDictionary implements EditableDictionary {
     if (dictionaries == null) {
       return Collections.emptySet();
     }
-    Set<String> words = new THashSet<>();
+    Set<String> words = CollectionFactory.createSmallMemoryFootprintSet();
     for (Dictionary dictionary : dictionaries) {
-      Set<String> otherWords = dictionary.getWords();
-      words.addAll(otherWords);
+      words.addAll(dictionary.getWords());
     }
     return words;
   }
@@ -162,8 +148,8 @@ public class ProjectDictionary implements EditableDictionary {
 
     ProjectDictionary that = (ProjectDictionary)o;
 
-    if (activeName != null ? !activeName.equals(that.activeName) : that.activeName != null) return false;
-    if (dictionaries != null ? !dictionaries.equals(that.dictionaries) : that.dictionaries != null) return false;
+    if (!Objects.equals(activeName, that.activeName)) return false;
+    if (!Objects.equals(dictionaries, that.dictionaries)) return false;
 
     return true;
   }

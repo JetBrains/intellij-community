@@ -22,7 +22,6 @@
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module-library">
       <library name="com.intellij.grazie:grazie-spellchecker:0.1.9" type="repository">
         <properties include-transitive-deps="false" maven-id="com.intellij.grazie:grazie-spellchecker:0.1.9" />
