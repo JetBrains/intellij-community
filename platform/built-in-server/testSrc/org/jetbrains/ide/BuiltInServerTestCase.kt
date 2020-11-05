@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.intellij.testFramework.DisposeModulesRule
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.testFramework.*
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
@@ -73,8 +71,17 @@ internal abstract class BuiltInServerTestCase {
     val expectedStatus = HttpResponseStatus.valueOf(manager.annotation?.status ?: responseStatus)
     val response = testUrl(url, expectedStatus, asSignedRequest = asSignedRequest, origin = origin)
     response.body().use {
-      check(serviceUrl, expectedStatus)
-      additionalCheck?.invoke(response)
+      try {
+        check(serviceUrl, expectedStatus)
+        additionalCheck?.invoke(response)
+      }
+      finally {
+        projectRule.projectIfOpened?.let {
+          runInEdtAndWait {
+            FileEditorManagerEx.getInstanceEx(it).closeAllFiles()
+          }
+        }
+      }
     }
   }
 
