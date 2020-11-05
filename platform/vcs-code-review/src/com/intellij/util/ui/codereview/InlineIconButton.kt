@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.BaseButtonBehavior
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.update.Activatable
@@ -21,7 +22,7 @@ import javax.swing.plaf.ComponentUI
 class InlineIconButton(val icon: Icon,
                        val hoveredIcon: Icon = icon,
                        val disabledIcon: Icon = IconLoader.getDisabledIcon(icon),
-                       val tooltip: String? = null,
+                       @NlsContexts.Tooltip val tooltip: String? = null,
                        val shortcut: ShortcutSet? = null)
   : JComponent() {
 

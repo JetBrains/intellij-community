@@ -134,7 +134,7 @@ class SubmittableTextField(
     }
   }
 
-  private fun createSubmitButton(actionName: String) =
+  private fun createSubmitButton(@NlsActions.ActionText actionName: String) =
     InlineIconButton(
       VcsCodeReviewIcons.Send, VcsCodeReviewIcons.SendHovered,
       tooltip = actionName,

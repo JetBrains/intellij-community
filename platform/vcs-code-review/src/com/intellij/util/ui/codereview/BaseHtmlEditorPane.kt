@@ -20,6 +20,8 @@ import javax.swing.text.html.InlineView
 import javax.swing.text.html.ParagraphView
 import kotlin.math.max
 
+private const val ICON_INLINE_ELEMENT_NAME = "icon-inline" // NON-NLS
+
 open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
   init {
     editorKit = object : JBHtmlEditorKit(true) {
@@ -50,7 +52,7 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
 
   protected open class HtmlEditorViewFactory(private val iconsClass: Class<*>) : JBHtmlEditorKit.JBHtmlFactory() {
     override fun create(elem: Element): View {
-      if ("icon-inline" == elem.name) {
+      if (ICON_INLINE_ELEMENT_NAME == elem.name) {
         val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)
           ?.let { IconLoader.getIcon(it as String, iconsClass) }
 

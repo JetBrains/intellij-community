@@ -52,7 +52,7 @@ internal class SpaceReviewListCellRenderer(
   private val firstReviewLabel: JLabel = JLabel(emptyAvatar)
   private val secondReviewLabel: JLabel = JLabel(emptyAvatar)
 
-  private val openCodeReviewButton = OpenReviewButton.createOpenReviewButton("")
+  private val openCodeReviewButton = OpenReviewButton.createOpenReviewButton()
 
 
   init {
