@@ -247,10 +247,8 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   private @NotNull ClassLoader @NotNull[] getAllParents() {
     ClassLoader[] result = allParents;
-    if (result != null) {
-      if (allParentsLastCacheId == parentListCacheIdCounter.get()) {
-        return result;
-      }
+    if (result != null && allParentsLastCacheId == parentListCacheIdCounter.get()) {
+      return result;
     }
 
     if (parents.length == 0) {
@@ -277,6 +275,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     allParents = result;
     allParentsLastCacheId = parentListCacheIdCounter.get();
     return result;
+  }
+
+  public final void clearParentListCache() {
+    allParents = null;
   }
 
   private static boolean mustBeLoadedByPlatform(@NonNls String className) {

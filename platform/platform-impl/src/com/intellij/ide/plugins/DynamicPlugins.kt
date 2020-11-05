@@ -481,6 +481,8 @@ object DynamicPlugins {
           pluginDescriptor.pluginDependencies?.let { unloadDependencyDescriptors(it, PluginStateChecker(), classLoaders) }
           unloadPluginDescriptorNotRecursively(pluginDescriptor)
 
+          clearPluginClassLoaderParentListCache()
+
           app.extensionArea.clearUserCache()
           for (project in ProjectUtil.getOpenProjects()) {
             (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
@@ -767,6 +769,7 @@ object DynamicPlugins {
         val listenerCallbacks = mutableListOf<Runnable>()
         loadPluginDescriptor(pluginDescriptor, app, pluginStateChecker, listenerCallbacks)
         loadOptionalDependenciesOnPlugin(pluginDescriptor, loader, pluginStateChecker, classLoaderConfigurator, listenerCallbacks)
+        clearPluginClassLoaderParentListCache()
 
         for (openProject in ProjectUtil.getOpenProjects()) {
           (CachedValuesManager.getManager(openProject) as CachedValuesManagerImpl).clearCachedValues()
@@ -963,6 +966,21 @@ private fun loadOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDescrip
   for (entry in mainToSub.entries) {
     for (subDescriptor in entry.value) {
       loadPluginDescriptor(subDescriptor, app, pluginStateChecker, listenerCallbacks)
+    }
+  }
+}
+
+private fun clearPluginClassLoaderParentListCache() {
+  for (descriptor in PluginManagerCore.getLoadedPlugins(null)) {
+    clearPluginClassLoaderParentListCache(descriptor)
+  }
+}
+
+private fun clearPluginClassLoaderParentListCache(descriptor: IdeaPluginDescriptorImpl) {
+  (descriptor.classLoader as? PluginClassLoader ?: return).clearParentListCache()
+  for (dependency in (descriptor.pluginDependencies ?: return)) {
+    dependency.subDescriptor?.let {
+      clearPluginClassLoaderParentListCache(it)
     }
   }
 }
