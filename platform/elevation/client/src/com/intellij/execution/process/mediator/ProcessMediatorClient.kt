@@ -6,7 +6,7 @@ import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.execution.process.mediator.rpc.*
 import com.intellij.execution.process.mediator.util.ExceptionAsStatus
-import com.intellij.execution.process.mediator.util.LoggingClientInterceptor
+import com.intellij.execution.process.mediator.grpc.LoggingClientInterceptor
 import com.intellij.execution.process.mediator.util.childSupervisorScope
 import io.grpc.ClientInterceptors
 import io.grpc.ManagedChannel
