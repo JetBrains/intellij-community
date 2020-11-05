@@ -10,6 +10,10 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangesViewManager.createTextStatusFactory
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
@@ -20,10 +24,12 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SideBorder
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -35,7 +41,10 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import git4idea.GitVcs
 import git4idea.conflicts.GitMergeHandler
 import git4idea.i18n.GitBundle.message
-import git4idea.index.*
+import git4idea.index.GitStageCommitWorkflow
+import git4idea.index.GitStageCommitWorkflowHandler
+import git4idea.index.GitStageTracker
+import git4idea.index.GitStageTrackerListener
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
 import git4idea.index.actions.StagingAreaOperation
@@ -61,6 +70,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   private val progressStripe: ProgressStripe
   private val commitDiffSplitter: OnePixelSplitter
   private val toolbar: ActionToolbar
+  private val changesStatusPanel: Wrapper
 
   private var diffPreviewProcessor: GitStageDiffPreview? = null
   private var editorTabPreview: EditorTabPreview? = null
@@ -110,21 +120,37 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     leftPanel.add(toolbar.component, BorderLayout.NORTH)
     leftPanel.add(treeMessageSplitter, BorderLayout.CENTER)
 
+    changesStatusPanel = Wrapper()
+    changesStatusPanel.minimumSize = JBUI.emptySize()
+
     commitDiffSplitter = OnePixelSplitter("git.stage.commit.diff.splitter", 0.5f)
     commitDiffSplitter.firstComponent = leftPanel
     add(commitDiffSplitter, BorderLayout.CENTER)
+    add(changesStatusPanel, BorderLayout.SOUTH)
+
     setDiffPreviewInEditor(isEditorDiffPreview, force = true)
 
     tracker.addListener(MyGitStageTrackerListener(), this)
-    project.messageBus.connect(this).subscribe(GitChangeProvider.TOPIC, MyGitChangeProviderListener())
+    val busConnection = project.messageBus.connect(this)
+    busConnection.subscribe(GitChangeProvider.TOPIC, MyGitChangeProviderListener())
+    busConnection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
+
     if (GitVcs.getInstance(project).changeProvider?.isRefreshInProgress == true) {
       tree.setEmptyText(message("stage.loading.status"))
       progressStripe.startLoadingImmediately()
     }
+    updateChangesStatusPanel()
 
     Disposer.register(disposableParent, this)
 
     runInEdtAsync(this, { tree.rebuildTree() })
+  }
+
+  private fun updateChangesStatusPanel() {
+    val manager = ChangeListManagerImpl.getInstanceImpl(project)
+    val factory = manager.updateException?.let { createTextStatusFactory(VcsBundle.message("error.updating.changes", it.message), true) }
+                  ?: manager.additionalUpdateInfo
+    changesStatusPanel.setContent(factory?.create())
   }
 
   @RequiresEdt
@@ -251,6 +277,14 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
 
     override fun repositoryUpdated(repository: GitRepository) = Unit
+  }
+
+  private inner class MyChangeListListener : ChangeListListener {
+    override fun changeListUpdateDone() {
+      runInEdt(this@GitStagePanel) {
+        updateChangesStatusPanel()
+      }
+    }
   }
 }
 
