@@ -2,13 +2,15 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Function
 
-class MavenParsingContext(private val myTaskId: ExternalSystemTaskId,
+class MavenParsingContext(val ideaProject: Project,
+                          private val myTaskId: ExternalSystemTaskId,
                           val targetFileMapper: Function<String, String>) {
 
   lateinit var projectsInReactor: List<String>
