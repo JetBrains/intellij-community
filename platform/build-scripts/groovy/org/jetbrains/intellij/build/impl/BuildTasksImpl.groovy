@@ -677,7 +677,7 @@ idea.fatal.error.notification=disabled
       pluginLayoutList.find { it.mainModule == mainModuleName } == null
     }
     if (!unspecifiedLayoutPluginModules.empty) {
-      buildContext.messages.warning("No plugin layout specified in productProperties.productLayout.allNonTrivialPlugins for following plugin main modules. " +
+      buildContext.messages.info("No plugin layout specified in productProperties.productLayout.allNonTrivialPlugins for following plugin main modules. " +
                                     "Assuming simple layout. Modules list: $unspecifiedLayoutPluginModules")
     }
 
