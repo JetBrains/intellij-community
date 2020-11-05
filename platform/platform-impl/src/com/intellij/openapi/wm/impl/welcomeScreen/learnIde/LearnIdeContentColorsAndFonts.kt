@@ -12,7 +12,8 @@ import javax.swing.text.StyleConstants
 
 object LearnIdeContentColorsAndFonts {
 
-  val InteractiveCoursesBorder = JBColor.namedColor("Button.startBorderColor", JBColor(0x87AFDA, 0x5E6060))
+  val ActiveInteractiveCoursesBorder = JBColor.namedColor("Component.focusedBorderColor", JBColor(0x87AFDA, 0x466d94))
+  val InactiveInteractiveCoursesBorder = JBColor.namedColor("Component.borderColor", JBColor(0xC4C4C4, 0x5E6060))
 
   private val settings: UISettings by lazy { UISettings.instance }
   private val fontSize: Int by lazy { if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size }
