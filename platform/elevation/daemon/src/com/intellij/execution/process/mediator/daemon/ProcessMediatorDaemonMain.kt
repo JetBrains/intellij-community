@@ -62,9 +62,9 @@ open class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
   inner class DaemonService : DaemonGrpcKt.DaemonCoroutineImplBase() {
     override suspend fun adjustQuota(request: AdjustQuotaRequest): Empty {
       ExceptionAsStatus.wrap {
-        val timeQuota = TimeQuota(timeLimitMs = request.timeLimitMs,
-                                  isRefreshable = request.isRefreshable)
-        quotaManager.adjustQuota(timeQuota)
+        val quotaOptions = TimeQuotaOptions(timeLimitMs = request.timeLimitMs,
+                                            isRefreshable = request.isRefreshable)
+        quotaManager.adjustQuota(quotaOptions)
       }
       return Empty.getDefaultInstance()
     }
