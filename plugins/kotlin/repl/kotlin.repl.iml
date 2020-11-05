@@ -25,7 +25,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" />
     <orderEntry type="library" name="kotlinc.kotlin-script-util" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-script-runtime" level="project" />
+    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-script-runtime" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
