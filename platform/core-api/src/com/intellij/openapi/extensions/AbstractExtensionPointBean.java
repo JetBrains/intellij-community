@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -32,7 +33,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   }
 
   /**
-   * @deprecated use {@link #findExtensionClass(String)} instead. It'll throw {@link ExtensionInstantiationException} instead of
+   * @deprecated use {@link #findExtensionClass(String)} instead. It'll throw {@link PluginException} instead of
    * {@link ClassNotFoundException}, which contains information about the plugin which registers the problematic extension so error reporters
    * will be able to report such exception as a plugin problem, not core problem. Also it isn't a checked exception so you won't need to wrap
    * it to unchecked exception in your code.
@@ -47,7 +48,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
       return findClass(className, myPluginDescriptor);
     }
     catch (Throwable t) {
-      throw new ExtensionInstantiationException(t, myPluginDescriptor);
+      throw new PluginException(t, getPluginId());
     }
   }
 
@@ -62,7 +63,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
       return findClass(className, myPluginDescriptor);
     }
     catch (Throwable t) {
-      LOG.error(new ExtensionInstantiationException(t, myPluginDescriptor));
+      LOG.error(new PluginException(t, getPluginId()));
       return null;
     }
   }
@@ -72,7 +73,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   }
 
   /**
-   * @deprecated use {@link #instantiateClass(String, PicoContainer)} instead. It'll throw {@link ExtensionInstantiationException} instead of
+   * @deprecated use {@link #instantiateClass(String, PicoContainer)} instead. It'll throw {@link PluginException} instead of
    * {@link ClassNotFoundException}, which contains information about the plugin which registers the problematic extension so error reporters
    * will be able to report such exception as a plugin problem, not core problem. Also it isn't a checked exception so you won't need to wrap
    * it to unchecked exception in your code.

@@ -416,13 +416,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       }
 
       var effectivePluginId = pluginId
-      if (effectivePluginId == PluginManagerCore.CORE_ID) {
-        if (error is ExtensionInstantiationException) {
-          effectivePluginId = error.extensionOwnerId ?: PluginManagerCore.CORE_ID
-        }
-        if (effectivePluginId == PluginManagerCore.CORE_ID) {
-          effectivePluginId = PluginManagerCore.getPluginOrPlatformByClassName(componentClassName) ?: PluginManagerCore.CORE_ID
-        }
+      if (effectivePluginId == PluginManagerCore.CORE_ID && effectivePluginId == PluginManagerCore.CORE_ID) {
+        effectivePluginId = PluginManagerCore.getPluginOrPlatformByClassName(componentClassName) ?: PluginManagerCore.CORE_ID
       }
 
       throw PluginException("Fatal error initializing '$componentClassName'", error, effectivePluginId)
@@ -816,9 +811,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   final override fun createError(error: Throwable, pluginId: PluginId): RuntimeException {
-    return when (error) {
-      is ProcessCanceledException, is ExtensionNotApplicableException -> error as RuntimeException
-      else -> createPluginExceptionIfNeeded(error, pluginId)
+    return when (val effectiveError: Throwable = if (error is InvocationTargetException) error.targetException else error) {
+      is ProcessCanceledException, is ExtensionNotApplicableException -> effectiveError as RuntimeException
+      else -> createPluginExceptionIfNeeded(effectiveError, pluginId)
     }
   }
 
@@ -1056,10 +1051,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 }
 
 private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId): RuntimeException {
-  return when (error) {
-    is PluginException, is ExtensionInstantiationException -> error as RuntimeException
-    else -> PluginException(error, pluginId)
-  }
+  return if (error is PluginException) error else PluginException(error, pluginId)
 }
 
 fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: PluginId?) {
@@ -1076,12 +1068,6 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   if (effectivePluginId == null || PluginManagerCore.CORE_ID == effectivePluginId) {
     if (componentClassName != null) {
       effectivePluginId = PluginManagerCore.getPluginByClassName(componentClassName)
-    }
-  }
-
-  if (effectivePluginId == null || PluginManagerCore.CORE_ID == effectivePluginId) {
-    if (t is ExtensionInstantiationException) {
-      effectivePluginId = t.extensionOwnerId
     }
   }
 

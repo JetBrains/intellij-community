@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -1378,9 +1377,6 @@ public final class PluginManagerCore {
       activity.end();
       activity.setDescription("plugin count: " + ourLoadedPlugins.size());
       logPlugins(initResult.sortedPlugins, result.incompletePlugins.values());
-    }
-    catch (ExtensionInstantiationException e) {
-      throw new PluginException(e, e.getExtensionOwnerId());
     }
     catch (RuntimeException e) {
       getLogger().error(e);

@@ -4,7 +4,6 @@ package com.intellij.ide.plugins;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,9 +34,6 @@ public final class PluginUtilImpl implements PluginUtil {
   public static @Nullable PluginId doFindPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
-    }
-    if (t instanceof ExtensionInstantiationException) {
-      return ((ExtensionInstantiationException)t).getExtensionOwnerId();
     }
 
     PluginId bundledId = null;
