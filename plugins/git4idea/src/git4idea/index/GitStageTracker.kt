@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -101,9 +102,8 @@ class GitStageTracker(val project: Project) : Disposable {
   }
 
   fun scheduleUpdateAll() {
-    val gitRoots = gitRoots()
-    LOG.debug("Mark dirty ${gitRoots}")
-    dirtyScopeManager.filesDirty(emptyList(), gitRoots)
+    LOG.debug("Mark everything dirty")
+    dirtyScopeManager.markEverythingDirty()
   }
 
   /**
