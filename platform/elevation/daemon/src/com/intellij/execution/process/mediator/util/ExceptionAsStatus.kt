@@ -73,17 +73,26 @@ data class ExceptionAsStatus private constructor(val status: Status,
       ExceptionDescriptor.withThrowable(::IOException)                     asStatus NOT_FOUND,
       ExceptionDescriptor.withInitCause(::EOFException)                    asStatus NOT_FOUND,
       ExceptionDescriptor.withInitCause(::FileNotFoundException)           asStatus NOT_FOUND,
-    ).associateByTo(LinkedHashMap()) { it.exceptionDescriptor.type.java }
+
+    ).associateByTo(LinkedHashMap()) { it.exceptionDescriptor.type.java }.also { map ->
+      val definedSupertypes = mutableSetOf<Class<*>>()
+      for (throwableClass in map.keys) {
+        check(throwableClass !in definedSupertypes) { "KNOWN_EXCEPTIONS should be from the most generic down to more specific" }
+        definedSupertypes.addAll(throwableClass.superclassChain())
+      }
+    }
     // @formatter:on
 
     private infix fun <T : Throwable> ExceptionDescriptor<T>.asStatus(statusCode: Status.Code) =
       ExceptionAsStatus(statusCode.toStatus(), this)
 
     fun forThrowableClass(throwableClass: Class<*>): ExceptionAsStatus? {
-      return generateSequence(throwableClass) { it.superclass }
+      return throwableClass.superclassChain()
         .mapNotNull { KNOWN_EXCEPTIONS[it] }
         .firstOrNull()
     }
+
+    private fun Class<*>.superclassChain() = generateSequence(this) { it.superclass }
 
     fun forStatusCode(statusCode: Status.Code): ExceptionAsStatus? {
       return KNOWN_EXCEPTIONS.values.firstOrNull { it.status.code == statusCode }
