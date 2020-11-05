@@ -1,5 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="IDEA" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="BUNDLED" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
     <module name="intellij.idea.community.main" />
     <shortenClasspath name="ARGS_FILE" />
