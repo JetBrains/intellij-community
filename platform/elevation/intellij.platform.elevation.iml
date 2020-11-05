@@ -19,7 +19,7 @@
     <orderEntry type="library" name="grpc-kotlin-stub" level="project" />
     <orderEntry type="module" module-name="intellij.platform.elevation.client" />
     <orderEntry type="module" module-name="intellij.platform.elevation.daemon" />
-    <orderEntry type="module" module-name="intellij.platform.elevation.rpc" />
+    <orderEntry type="module" module-name="intellij.platform.elevation.common" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />

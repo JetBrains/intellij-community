@@ -19,7 +19,7 @@
     <orderEntry type="library" name="grpc-netty-shaded" level="project" />
     <orderEntry type="library" name="grpc-kotlin-stub" level="project" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.elevation.rpc" />
+    <orderEntry type="module" module-name="intellij.platform.elevation.common" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module-library" scope="TEST">
       <library name="com.willowtreeapps.assertk:assertk-jvm" type="repository">
