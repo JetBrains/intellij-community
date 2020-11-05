@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator.util
 
+import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import io.grpc.Status
 import io.grpc.StatusException
 import io.grpc.StatusRuntimeException
@@ -43,6 +44,7 @@ internal class ExceptionAsStatusTest {
     checkWrapAndUnwrap(IOException("IOE: ioe..."))
     checkWrapAndUnwrap(FileNotFoundException("FNFE: not found..."))
     checkWrapAndUnwrap(CancellationException("CE: cancel"))
+    checkWrapAndUnwrap(QuotaExceededException())
   }
 
   @Test
