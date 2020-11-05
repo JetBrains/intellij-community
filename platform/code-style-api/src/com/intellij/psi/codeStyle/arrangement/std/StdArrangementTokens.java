@@ -30,7 +30,7 @@ public final class StdArrangementTokens {
    * Forces nested classes initialization - otherwise it's possible that, say, {@link #byId(String)} returns null for valid
    * id just because corresponding nested class hasn't been initialized yet.
    */
-  private static final NotNullLazyValue<Integer> NESTED_CLASSES_INITIALIZER = new NotNullLazyValue<Integer>() {
+  private static final NotNullLazyValue<Integer> NESTED_CLASSES_INITIALIZER = new NotNullLazyValue<>() {
     @NotNull
     @Override
     protected Integer compute() {
@@ -57,7 +57,7 @@ public final class StdArrangementTokens {
   }
 
   private static NotNullLazyValue<Set<ArrangementSettingsToken>> collectFields(@NotNull final Class<?> clazz) {
-    return new NotNullLazyValue<Set<ArrangementSettingsToken>>() {
+    return new NotNullLazyValue<>() {
       @NotNull
       @Override
       protected Set<ArrangementSettingsToken> compute() {
@@ -90,9 +90,9 @@ public final class StdArrangementTokens {
 
   private static StdArrangementSettingsToken compositeToken(@NonNls @NotNull String id,
                                                             @PropertyKey(resourceBundle = CodeStyleBundle.BUNDLE) @NotNull String key,
-                                                            @NotNull StdArrangementTokenType type,
                                                             ArrangementSettingsToken @NotNull ... alternativeTokens) {
-    StdArrangementSettingsToken result = CompositeArrangementToken.create(id, CodeStyleBundle.message(key), type, alternativeTokens);
+    StdArrangementSettingsToken result = CompositeArrangementToken.create(id, CodeStyleBundle.message(key),
+                                                                          StdArrangementTokenType.MODIFIER, alternativeTokens);
     TOKENS_BY_ID.put(id, result);
     return result;
   }
@@ -184,9 +184,12 @@ public final class StdArrangementTokens {
     @NotNull public static final ArrangementSettingsToken SYNCHRONIZED    = invertible("SYNCHRONIZED", "arrangement.settings.text.modifier.synchronized", "arrangement.settings.text.modifier.synchronized.inverted", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken ABSTRACT        = invertible("ABSTRACT", "arrangement.settings.text.modifier.abstract", "arrangement.settings.text.modifier.abstract.inverted", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken OVERRIDE        = invertible("OVERRIDE", "arrangement.settings.text.modifier.override", "arrangement.settings.text.modifier.override.inverted", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken GETTER          = compositeToken("GETTER", "arrangement.settings.text.modifier.getter", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC);
-    @NotNull public static final ArrangementSettingsToken SETTER          = compositeToken("SETTER", "arrangement.settings.text.modifier.setter", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC);
-    @NotNull public static final ArrangementSettingsToken OVERRIDDEN      = compositeToken("OVERRIDDEN", "arrangement.settings.text.modifier.overridden", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC, PROTECTED);
+    @NotNull public static final ArrangementSettingsToken GETTER          = compositeToken("GETTER", "arrangement.settings.text.modifier.getter",
+                                                                                           METHOD, PUBLIC);
+    @NotNull public static final ArrangementSettingsToken SETTER          = compositeToken("SETTER", "arrangement.settings.text.modifier.setter",
+                                                                                           METHOD, PUBLIC);
+    @NotNull public static final ArrangementSettingsToken OVERRIDDEN      = compositeToken("OVERRIDDEN", "arrangement.settings.text.modifier.overridden",
+                                                                                           METHOD, PUBLIC, PROTECTED);
     private static final NotNullLazyValue<Set<ArrangementSettingsToken>> TOKENS = collectFields(Modifier.class);
 
     public static final Set<ArrangementSettingsToken> MODIFIER_AS_TYPE = ContainerUtil.newHashSet(GETTER, SETTER, OVERRIDDEN);

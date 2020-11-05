@@ -102,7 +102,7 @@ public class XmlRearranger
   @Override
   public Pair<XmlElementArrangementEntry, List<XmlElementArrangementEntry>> parseWithNew(@NotNull PsiElement root,
                                                                                          @Nullable Document document,
-                                                                                         @NotNull Collection<TextRange> ranges,
+                                                                                         @NotNull Collection<? extends TextRange> ranges,
                                                                                          @NotNull PsiElement element,
                                                                                          @NotNull ArrangementSettings settings)
   {
@@ -122,7 +122,7 @@ public class XmlRearranger
   @Override
   public List<XmlElementArrangementEntry> parse(@NotNull PsiElement root,
                                                 @Nullable Document document,
-                                                @NotNull Collection<TextRange> ranges,
+                                                @NotNull Collection<? extends TextRange> ranges,
                                                 @NotNull ArrangementSettings settings) {
     final XmlArrangementParseInfo parseInfo = new XmlArrangementParseInfo();
     root.accept(new XmlArrangementVisitor(parseInfo, ranges));
