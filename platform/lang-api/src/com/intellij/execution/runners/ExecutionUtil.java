@@ -84,7 +84,7 @@ public final class ExecutionUtil {
   public static boolean isProcessNotCreated(@NotNull Throwable e) {
     if (e instanceof ProcessNotCreatedException) {
       String description = e.getMessage();
-      return (description.contains("87") || description.contains("111") || description.contains("206")) &&
+      return (description.contains("87") || description.contains("111") || description.contains("206") || description.contains("error=7,")) &&
              ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString().length() > 1024 * 32;
     }
     return false;
