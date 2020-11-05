@@ -27,7 +27,8 @@ interface WorkspaceModelChangeListener : EventListener {
 class WorkspaceModelTopics : Disposable {
   companion object {
     /** Please use [subscribeImmediately] and [subscribeAfterModuleLoading] to subscribe to changes */
-    private val CHANGED = Topic("Workspace Model Changed", WorkspaceModelChangeListener::class.java)
+    @Topic.ProjectLevel
+    private val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE)
 
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }
@@ -37,7 +38,9 @@ class WorkspaceModelTopics : Disposable {
   var modulesAreLoaded = false
 
   /**
-   * Subscribe to topic and start to receive changes immediately
+   * Subscribe to topic and start to receive changes immediately.
+   *
+   * Topic is project-level only without broadcasting - connection expected to be to project message bus only.
    */
   fun subscribeImmediately(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
     connection.subscribe(CHANGED, listener)
@@ -48,15 +51,17 @@ class WorkspaceModelTopics : Disposable {
    * All the events that will be fired before the modules loading, will be collected to the queue. After the modules are loaded, all events
    *   from the queue will be dispatched to listener under the write action and the further events will be dispatched to listener
    *   without passing to event queue.
+   *
+   * Topic is project-level only without broadcasting - connection expected to be to project message bus only.
    */
   fun subscribeAfterModuleLoading(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
     if (!sendToQueue) {
-      connection.subscribe(CHANGED, listener)
+      subscribeImmediately(connection, listener)
     }
     else {
       val queue = EventsDispatcher(listener)
       allEvents += queue
-      connection.subscribe(CHANGED, queue)
+      subscribeImmediately(connection, queue)
     }
   }
 
