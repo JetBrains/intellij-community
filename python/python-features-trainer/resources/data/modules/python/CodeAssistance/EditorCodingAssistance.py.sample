@@ -1,0 +1,12 @@
+from math import cos, exp
+
+<caret>print("This is program for calculating elementary mathematical functions.")
+print("Enter function argument: ")
+value = float(input())
+sin_x = sin(value)
+cos_x = math.cos(value)
+e_pow_x = math.exp(value)
+
+print("sin({:f}) = {:6f}".format(value, sin_x))
+print("cos({:f}) = {:6f}".format(value, cos_x))
+print("e^({:f}) = {:6f}".format(value, e_pow_x))
