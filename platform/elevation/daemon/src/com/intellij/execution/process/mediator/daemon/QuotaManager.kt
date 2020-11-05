@@ -3,14 +3,11 @@
 
 package com.intellij.execution.process.mediator.daemon
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.selects.select
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicReference
@@ -73,20 +70,27 @@ class TimeQuotaManager(
   }
 
   private fun updateQuota(function: (t: TimeQuota) -> TimeQuota): TimeQuota {
-    val quota = quotaRef.updateAndGet(function)
-    try {
-      timeoutActor.offer(quota)
+    return quotaRef.updateAndGet(function).takeIf { quota ->
+      timeoutActor.tryOffer(quota)
+    } ?: TimeQuota.EXCEEDED.also {
+      quotaRef.set(it)
     }
-    catch (e: ClosedSendChannelException) {
-      return TimeQuota.EXCEEDED.also {
-        quotaRef.set(it)
-      }
-    }
-    return quota
   }
 
   override fun close() {
     cancel("Closed")
+  }
+
+  private fun <T> SendChannel<T>.tryOffer(quota: T): Boolean {
+    return try {
+      offer(quota)
+    }
+    catch (e: CancellationException) {
+      false
+    }
+    catch (e: ClosedSendChannelException) {
+      false
+    }
   }
 
   companion object {
@@ -102,6 +106,7 @@ class TimeQuotaManager(
             }
           } ?: break
         }
+        channel.close()  // otherwise the channel becomes cancelled once the actor returns
       }
     }
   }
