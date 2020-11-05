@@ -23,6 +23,7 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -417,6 +418,9 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     if (value == null) return null;
     Presentation presentation = value.getTemplatePresentation().clone();
     value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
-    return presentation.getTextWithPossibleMnemonic().get().getText();
+    TextWithMnemonic mnemonic = presentation.getTextWithPossibleMnemonic().get();
+    if (mnemonic == null) return null;
+
+    return mnemonic.getText();
   }
 }
