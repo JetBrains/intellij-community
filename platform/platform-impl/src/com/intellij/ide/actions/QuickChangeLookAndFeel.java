@@ -28,7 +28,6 @@ import javax.swing.*;
 public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   private UIManager.LookAndFeelInfo initialLaf;
   private final Alarm switchAlarm = new Alarm();
-  private boolean myLafActionSelection;
 
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
@@ -41,7 +40,13 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     }
 
     group.addSeparator();
-    group.add(new ShowPluginsWithSearchOptionAction(IdeBundle.message("laf.action.install.theme"), "/tag:Theme"));
+    group.add(new ShowPluginsWithSearchOptionAction(IdeBundle.message("laf.action.install.theme"), "/tag:Theme") {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        switchLafAndUpdateUI(LafManager.getInstance(), initialLaf, false);
+        super.actionPerformed(e);
+      }
+    });
   }
 
   @Override
@@ -52,8 +57,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
         Object item = ((JList)event.getSource()).getSelectedValue();
         if (item instanceof AnActionHolder) {
           AnAction anAction = ((AnActionHolder)item).getAction();
-          myLafActionSelection = anAction instanceof LafChangeAction;
-          if (myLafActionSelection) {
+          if (anAction instanceof LafChangeAction) {
             switchAlarm.cancelAllRequests();
             switchAlarm.addRequest(() -> {
               LafChangeAction action = (LafChangeAction)anAction;
@@ -67,10 +71,8 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
-        if (Registry.is("ide.instant.theme.switch")) {
-          if (!event.isOk() || !myLafActionSelection) {
-            switchLafAndUpdateUI(LafManager.getInstance(), initialLaf, false);
-          }
+        if (Registry.is("ide.instant.theme.switch") && !event.isOk()) {
+          switchLafAndUpdateUI(LafManager.getInstance(), initialLaf, false);
         }
       }
     });

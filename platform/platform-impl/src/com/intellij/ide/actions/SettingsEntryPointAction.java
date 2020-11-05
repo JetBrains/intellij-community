@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -32,6 +33,7 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.PluginUpdateDialog;
 import com.intellij.openapi.updateSettings.impl.UpdateInfoDialog;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
@@ -68,7 +70,19 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
 
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    ActionButton button = new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    ActionButton button = new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      @Override
+      protected void updateToolTipText() {
+        String tooltip = getActionTooltip();
+        if (Registry.is("ide.helptooltip.enabled")) {
+          HelpTooltip.dispose(this);
+          new HelpTooltip().setDescription(tooltip).installOn(this);
+        }
+        else {
+          setToolTipText(tooltip);
+        }
+      }
+    };
 
     UiNotifyConnector.doWhenFirstShown(button, () -> {
       Disposable disposable = Disposer.newDisposable();
@@ -263,6 +277,12 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
             public void updateButton(@NotNull AnActionEvent e) {
               getDelegate().update(e);
               e.getPresentation().setText(e.getPresentation().getText() + "...");
+            }
+
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+              super.actionPerformed(new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
+                                                      getDelegate().getTemplatePresentation(), e.getActionManager(), e.getModifiers()));
             }
           };
           button.setShortcut(child.getShortcutSet());
