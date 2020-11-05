@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenConsole;
+import org.jetbrains.idea.maven.server.RemotePathTransformerFactory.Transformer;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -97,13 +98,14 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                                    @NotNull final Collection<String> activeProfiles,
                                                    @NotNull final Collection<String> inactiveProfiles)
     throws MavenProcessCanceledException {
-    String projectPath = files.isEmpty() ? null : files.iterator().next().getPath();
-    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(projectPath);
     return performCancelable(() -> {
+      Transformer transformer = files.isEmpty() ?
+                                Transformer.ID :
+                                RemotePathTransformerFactory.createForProject(files.iterator().next().getPath());
       final List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
       Collection<MavenServerExecutionResult> results =
         getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles, ourToken);
-      if (transformer != RemotePathTransformerFactory.Transformer.ID) {
+      if (transformer != Transformer.ID) {
         for (MavenServerExecutionResult result : results) {
           MavenServerExecutionResult.ProjectData data = result.projectData;
           if (data == null) continue;
