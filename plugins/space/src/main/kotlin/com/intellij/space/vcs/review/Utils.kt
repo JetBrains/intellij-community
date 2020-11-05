@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.space.chat.editor.SpaceChatFile
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
@@ -19,7 +20,7 @@ import icons.SpaceIcons
 
 internal class HtmlEditorPane : BaseHtmlEditorPane(SpaceIcons::class.java)
 
-internal fun editIconButton(tooltip: String? = null,
+internal fun editIconButton(@NlsContexts.Tooltip tooltip: String? = null,
                             shortcut: ShortcutSet? = null): InlineIconButton = InlineIconButton(
   AllIcons.General.Inline_edit,
   AllIcons.General.Inline_edit_hovered,
