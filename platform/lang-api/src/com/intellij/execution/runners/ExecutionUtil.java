@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColorUtil;
@@ -73,9 +74,14 @@ public final class ExecutionUtil {
 
     String description = e.getMessage();
     HyperlinkListener listener = null;
-    if (isProcessNotCreated(e) && !PropertiesComponent.getInstance(project).isTrueValue(PROPERTY_DYNAMIC_CLASSPATH)) {
-      description = ExecutionBundle.message("dialog.message.command.line.too.long.notification");
-      listener = event -> PropertiesComponent.getInstance(project).setValue(PROPERTY_DYNAMIC_CLASSPATH, "true");
+    if (isProcessNotCreated(e)) {
+      String exePath = ((ProcessNotCreatedException)e).getCommandLine().getExePath();
+      if ((SystemInfoRt.isWindows ? exePath.endsWith("java.exe") : exePath.endsWith("java")) &&
+          !PropertiesComponent.getInstance(project).isTrueValue(PROPERTY_DYNAMIC_CLASSPATH)) {
+        LOG.warn("Java configuration should implement `ConfigurationWithCommandLineShortener` and provide UI to configure shortening method", e);
+        description = ExecutionBundle.message("dialog.message.command.line.too.long.notification");
+        listener = event -> PropertiesComponent.getInstance(project).setValue(PROPERTY_DYNAMIC_CLASSPATH, "true");
+      }
     }
 
     handleExecutionError(project, toolWindowId, taskName, e, description, listener);
