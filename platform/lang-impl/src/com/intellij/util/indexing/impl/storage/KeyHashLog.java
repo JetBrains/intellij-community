@@ -126,6 +126,7 @@ class KeyHashLog<Key> implements Closeable {
   }
 
   private void appendKeyHashToVirtualFileMappingToLog(Key key, int inputId) throws StorageException {
+    if (inputId == 0) return;
     try {
       withLock(() -> myKeyHashToVirtualFileMapping.append(new int[]{myKeyDescriptor.getHashCode(key), inputId}), false);
     }
