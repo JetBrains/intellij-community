@@ -16,11 +16,9 @@ import org.jetbrains.concurrency.Promise;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class PackageServiceConfig {
+public class DefaultPackageServiceConfig implements PackageSearchEndpointConfig {
   private static final Object MUTEX = new Object();
-  public final static double BACKOFF_MULTIPLIER = Registry.doubleValue("packagesearch.timeout.multiplier");
-  public final static long INITIAL_TIMEOUT = Registry.intValue("packagesearch.timeout.initial");
-  public final static long MAX_TIMEOUT = Registry.intValue("packagesearch.timeout.max");
+  public final static long TIMEOUT = Registry.intValue("packagesearch.timeout");
 
 
   private final static long INFO_TTL = TimeUnit.DAYS.toMillis(7);
@@ -31,7 +29,7 @@ public class PackageServiceConfig {
   private static final Gson GSON = new Gson();
   private volatile PackageSearchEndpointUrls myPackageSearchEndpointUrls;
 
-  public PackageServiceConfig() {
+  public DefaultPackageServiceConfig() {
     if (ApplicationManager.getApplication().isUnitTestMode() || !Registry.is("maven.packagesearch.enabled")) {
       myPackageSearchEndpointUrls = null;
       return;
@@ -68,6 +66,7 @@ public class PackageServiceConfig {
     return asyncPromise;
   }
 
+  @Override
   public String getFullTextUrl() {
     if (myPackageSearchEndpointUrls == null){
       return null;
@@ -75,11 +74,22 @@ public class PackageServiceConfig {
     return myPackageSearchEndpointUrls.fulltextUrl;
   }
 
+  @Override
   public String getSuggestUrl() {
     if (myPackageSearchEndpointUrls == null){
       return null;
     }
     return myPackageSearchEndpointUrls.suggestUrl;
+  }
+
+  @Override
+  public int getReadTimeout() {
+    return (int)TIMEOUT;
+  }
+
+  @Override
+  public int getConnectTimeout() {
+    return (int)TIMEOUT;
   }
 
   private static String extract(String fulltext, Map<Object, Object> idea) {
@@ -122,11 +132,6 @@ public class PackageServiceConfig {
       PropertiesComponent.getInstance().getValue(CONFIG_URL_KEY_PREFIX + "suggest"));
   }
 
-
-  @NotNull
-  public String getUserAgent() {
-    return ApplicationNamesInfo.getInstance().getProductName() + "/" + ApplicationInfo.getInstance().getFullVersion();
-  }
 
   static class PackageSearchEndpointUrls {
     final String fulltextUrl;
