@@ -20,6 +20,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -255,7 +256,7 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
   }
 
   static private class AccessibleSdkListPresenter extends AccessibleContextDelegate {
-    private String myAccessibleString = null;
+    private @Nls String myAccessibleString = null;
 
     AccessibleSdkListPresenter(AccessibleContext context) {
       super(context);
