@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
@@ -40,9 +37,11 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     val project = getEventProject(e)
     val editor = e.getData(CommonDataKeys.EDITOR)
+    val fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR)
 
     val place = e.place
     if (project == null ||
+        fileEditor != null ||
         editor != null ||
         place == ActionPlaces.EDITOR_TAB_POPUP ||
         place == ActionPlaces.EDITOR_POPUP) {
