@@ -24,7 +24,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-stdlib-jdk8" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" />
-    <orderEntry type="library" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="kotlinc-delegator.kotlinx-serialization-compiler-plugin" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.jps-common" />
     <orderEntry type="module" module-name="kotlin.idea" />
