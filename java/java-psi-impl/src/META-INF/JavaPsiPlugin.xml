@@ -140,6 +140,7 @@
   
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="30" description="UAST usages graph building depth limit" key="uast.usage.graph.default.recursion.depth.limit"/>
+    <registryKey defaultValue="true" description="UAST check adapters not used as Data Holders" key="uast.adapter.check.dataHolder"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
