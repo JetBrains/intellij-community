@@ -21,7 +21,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-stdlib-jdk8" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-reflect" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" scope="TEST" />
