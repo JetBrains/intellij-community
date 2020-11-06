@@ -33,9 +33,9 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public final class JavaI18nUtil extends I18nUtil {
+public final class JavaI18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER =
-    (project, propertiesFiles, key, value, parameters) -> createProperty(project, propertiesFiles, key, value, true);
+    (project, propertiesFiles, key, value, parameters) -> I18nUtil.createProperty(project, propertiesFiles, key, value, true);
 
   public static final PropertyCreationHandler EMPTY_CREATION_HANDLER =
     (project, propertiesFiles, key, value, parameters) -> {};
@@ -182,12 +182,16 @@ public final class JavaI18nUtil extends I18nUtil {
     if (resourceBundleName == null) {
       return !PropertiesImplUtil.findPropertiesByKey(expression.getProject(), key).isEmpty();
     }
-    List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(resourceBundleName, expression);
+    List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(resourceBundleName, expression);
     boolean containedInPropertiesFile = false;
     for (PropertiesFile propertiesFile : propertiesFiles) {
       containedInPropertiesFile |= propertiesFile.findPropertyByKey(key) != null;
     }
     return containedInPropertiesFile;
+  }
+
+  public static @NotNull List<PropertiesFile> propertiesFilesByBundleName(@Nullable String resourceBundleName, @NotNull PsiElement context) {
+    return I18nUtil.propertiesFilesByBundleName(resourceBundleName, context);
   }
 
   public static @NotNull Set<String> suggestExpressionOfType(final PsiClassType type, final PsiElement context) {
@@ -381,7 +385,7 @@ public final class JavaI18nUtil extends I18nUtil {
 
     UExpression thenExpression = ((UIfExpression)expression).getThenExpression();
     UExpression elseExpression = ((UIfExpression)expression).getElseExpression();
-    if (!(thenExpression instanceof ULiteralExpression) && 
+    if (!(thenExpression instanceof ULiteralExpression) &&
         !(elseExpression instanceof ULiteralExpression)) return false;
 
     boolean nested = !(thenExpression instanceof ULiteralExpression && elseExpression instanceof ULiteralExpression);
@@ -399,12 +403,12 @@ public final class JavaI18nUtil extends I18nUtil {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     UIfExpression exCopy = UastContextKt.toUElement(sourcePsi.copy(), UIfExpression.class);
     assert exCopy != null;
-    generationPlugin.replace(Objects.requireNonNull(exCopy.getThenExpression()), 
-                             Objects.requireNonNull(UastContextKt.toUElement(elementFactory.createExpressionFromText("0", null), ULiteralExpression.class)), 
+    generationPlugin.replace(Objects.requireNonNull(exCopy.getThenExpression()),
+                             Objects.requireNonNull(UastContextKt.toUElement(elementFactory.createExpressionFromText("0", null), ULiteralExpression.class)),
                              ULiteralExpression.class);
 
-    generationPlugin.replace(Objects.requireNonNull(exCopy.getElseExpression()), 
-                             Objects.requireNonNull(UastContextKt.toUElement(elementFactory.createExpressionFromText("1", null), ULiteralExpression.class)), 
+    generationPlugin.replace(Objects.requireNonNull(exCopy.getElseExpression()),
+                             Objects.requireNonNull(UastContextKt.toUElement(elementFactory.createExpressionFromText("1", null), ULiteralExpression.class)),
                              ULiteralExpression.class);
     formatParameters.add(exCopy);
     return true;
@@ -452,7 +456,7 @@ public final class JavaI18nUtil extends I18nUtil {
     PsiElement psi = expression.getSourcePsi();
     if (psi == null) return null;
     if (expression.equals(UastContextKt.toUElement(psi.getParent()))) {
-      // In Kotlin, we should go one level up (from KtLiteralStringTemplateEntry to KtStringTemplateExpression) 
+      // In Kotlin, we should go one level up (from KtLiteralStringTemplateEntry to KtStringTemplateExpression)
       // to find the property reference
       psi = psi.getParent();
     }

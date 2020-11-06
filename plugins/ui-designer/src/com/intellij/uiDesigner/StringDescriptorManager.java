@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
@@ -23,7 +22,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class StringDescriptorManager {
+public final class StringDescriptorManager {
   private Module myModule;
   private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = ContainerUtil.createSoftValueMap();
 

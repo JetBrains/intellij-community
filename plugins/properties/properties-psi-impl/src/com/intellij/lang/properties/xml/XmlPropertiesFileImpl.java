@@ -21,7 +21,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,7 +200,7 @@ public final class XmlPropertiesFileImpl extends XmlPropertiesFile {
   @NotNull
   @Override
   public Map<String, String> getNamesMap() {
-    Map<String, String> result = new THashMap<>();
+    Map<String, String> result = new HashMap<>();
     for (IProperty property : getProperties()) {
       result.put(property.getUnescapedKey(), property.getValue());
     }

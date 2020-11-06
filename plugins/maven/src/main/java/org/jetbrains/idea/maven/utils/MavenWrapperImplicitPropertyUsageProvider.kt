@@ -4,13 +4,10 @@ package org.jetbrains.idea.maven.utils
 import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 
-class MavenWrapperImplicitPropertyUsageProvider : ImplicitPropertyUsageProvider() {
-
+private class MavenWrapperImplicitPropertyUsageProvider : ImplicitPropertyUsageProvider() {
   override fun isUsed(property: Property): Boolean {
-
     val file = property.containingFile.virtualFile
     return nameEqual(file, "maven-wrapper.properties") && nameEqual(file?.parent, "wrapper")
            && nameEqual(file?.parent?.parent, ".mvn");
@@ -20,5 +17,4 @@ class MavenWrapperImplicitPropertyUsageProvider : ImplicitPropertyUsageProvider(
     if (file == null) return false;
     return Comparing.equal(file.name, name, file.isCaseSensitive)
   }
-
 }

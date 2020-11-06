@@ -26,7 +26,6 @@ import org.jetbrains.idea.devkit.util.PsiUtil
  * Highlights key in `registry.properties` without matching `key.description` entry + corresponding quickfix.
  */
 class RegistryPropertiesAnnotator : Annotator {
-
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (element !is PropertyKeyImpl) return
 

@@ -8,7 +8,6 @@ import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.lang.properties.xml.XmlPropertiesIndex;
 import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +32,7 @@ import java.util.stream.Stream;
 /**
  * @author Konstantin Bulenkov
  */
-public class PropertiesImplUtil extends PropertiesUtil {
+public final class PropertiesImplUtil extends PropertiesUtil {
   @NotNull
   public static ResourceBundleWithCachedFiles getResourceBundleWithCachedFiles(@NotNull final PropertiesFile representative) {
     return ReadAction.compute(() -> {
