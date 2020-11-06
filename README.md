@@ -43,7 +43,8 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
 3. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)
    to enable the "Compile independent modules in parallel" option. Also, set "User-local build process heap size" to 2048.
-   These changes will greatly reduce compilation time.
+   These changes will greatly reduce compilation time.  
+   _**note:**_ If you set "User-local build process VM options" in File | Settings | Build, Execution, Deployment | Compiler. Please also include -Dgroovyc.in.process=true -Dgroovyc.asm.resolving.only=false to it.
 
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.
