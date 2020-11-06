@@ -412,6 +412,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myInlayModel.addListener(myCaretModel, myCaretModel);
 
     myIndentsModel = new IndentsModelImpl(this);
+    myCaretModel.addCaretListener(new IndentsModelCaretListener(this));
     myCaretModel.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
