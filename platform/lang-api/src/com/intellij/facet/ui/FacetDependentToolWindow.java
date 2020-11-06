@@ -10,8 +10,9 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 /**
  * Provides tool window if any of the specified facets are present.
@@ -28,14 +29,17 @@ public final class FacetDependentToolWindow extends ToolWindowEP {
   @Attribute("facetIdList")
   public String facetIdList;
 
-  public @NotNull String[] getFacetIds() {
+  @Attribute("showOnStripeByDefault")
+  public boolean showOnStripeByDefault = true;
+
+  public String @NotNull [] getFacetIds() {
     return facetIdList.split(",");
   }
 
   public @NotNull List<FacetType<?, ?>> getFacetTypes() {
     String @NotNull [] facetIds = getFacetIds();
     if (facetIds.length == 0) {
-      return Collections.emptyList();
+      return emptyList();
     }
 
     List<FacetType<?, ?>> result = new ArrayList<>(facetIds.length);
@@ -46,6 +50,6 @@ public final class FacetDependentToolWindow extends ToolWindowEP {
         result.add(o);
       }
     }
-    return result.isEmpty() ? Collections.emptyList() : result;
+    return result.isEmpty() ? emptyList() : result;
   }
 }
