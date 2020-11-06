@@ -186,7 +186,7 @@ abstract class ProductProperties {
    */
   List<String> additionalModulesRequiredForScrambling = []
 
-  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.JCEF
+  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.DCEVM
 
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
