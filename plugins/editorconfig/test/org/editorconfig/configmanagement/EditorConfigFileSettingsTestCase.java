@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 
 public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTestCase {
   private CodeStyleSettings myOriginalSettings;
+  private Path contentDir;
 
   @Override
   protected void setUp() throws Exception {
@@ -25,6 +26,12 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
     CodeStyle.dropTemporarySettings(getProject());
     myOriginalSettings = CodeStyle.createTestSettings(CodeStyle.getSettings(getProject()));
     EditorConfigCodeStyleSettingsModifier.setEnabledInTests(true);
+
+    // move test data to temp dir to ensure that IJ Project .editorConfig files don't affect tests
+    Path testDataDir = Paths.get(PathManagerEx.getHomePath(EditorConfigFileSettingsTestCase.class), getRelativePath(), getTestName(true));
+    // no need to delete temp dir - global temp dir is created for each test and deleted after test execution
+    contentDir = Paths.get(FileUtil.getTempDirectory(), FileUtil.sanitizeFileName(getTestName(true), false));
+    FileUtil.copyDir(testDataDir.toFile(), contentDir.toFile());
   }
 
   @Override
@@ -44,7 +51,7 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
   protected abstract String getRelativePath();
 
   protected final @NotNull Path getTestDataPath() {
-    return Paths.get(PathManagerEx.getHomePath(EditorConfigFileSettingsTestCase.class), getRelativePath(), getTestName(true));
+    return contentDir;
   }
 
   @NotNull
@@ -54,7 +61,7 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
 
   protected final @NotNull VirtualFile getVirtualFile(@NotNull String name) {
     Path file = getTestDataPath().resolve(name);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
     assertNotNull("Can not find the file" + file, virtualFile);
     return virtualFile;
   }
