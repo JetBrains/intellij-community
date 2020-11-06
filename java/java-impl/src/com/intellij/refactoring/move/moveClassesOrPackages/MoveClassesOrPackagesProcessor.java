@@ -44,6 +44,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -67,6 +68,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private final MoveCallback myMoveCallback;
   @NotNull
   protected final MoveDestination myMoveDestination;
+  private final ModuleInfoUsageDetector myModuleInfoUsageDetector;
   protected NonCodeUsageInfo[] myNonCodeUsages;
   private boolean myOpenInEditor;
   private MultiMap<PsiElement, String> myConflicts;
@@ -113,6 +115,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       return 0;
     });
     myMoveDestination = moveDestination;
+    myModuleInfoUsageDetector = new ModuleInfoUsageDetector(myProject, myElementsToMove, myMoveDestination);
     myTargetPackage = myMoveDestination.getTargetPackage();
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
@@ -186,7 +189,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     final UsageInfo[] usageInfos = allUsages.toArray(UsageInfo.EMPTY_ARRAY);
     detectPackageLocalsMoved(usageInfos, myConflicts);
     detectPackageLocalsUsed(myConflicts, myElementsToMove, myTargetPackage);
-    new ModuleInfoUsageDetector(myProject, myElementsToMove, myMoveDestination).detectModuleStatementsUsed(allUsages, myConflicts);
+    myModuleInfoUsageDetector.detectModuleStatementsUsed(allUsages, myConflicts);
     allUsages.removeAll(usagesToSkip);
     return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(UsageInfo.EMPTY_ARRAY));
   }
@@ -229,12 +232,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
-    if (!myConflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
-        throw new BaseRefactoringProcessor.ConflictsInTestsException(myConflicts.values());
-      }
-      return true;
-    }
     return showConflicts(myConflicts, usages);
   }
 
@@ -621,8 +618,10 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static void modifyModuleStatementsInDescriptor(UsageInfo @NotNull [] usages, @Nullable ModelBranch branch) {
-    Map<PsiJavaModule, List<ModifyModuleStatementUsageInfo>> moduleStatementsByDescriptor = StreamEx.of(usages)
+  private void modifyModuleStatementsInDescriptor(UsageInfo @NotNull [] usages, @Nullable ModelBranch branch) {
+    List<UsageInfo> allUsages = new SmartList<>(usages);
+    allUsages.addAll(myModuleInfoUsageDetector.createUsageInfosForNewlyCreatedDirs());
+    Map<PsiJavaModule, List<ModifyModuleStatementUsageInfo>> moduleStatementsByDescriptor = StreamEx.of(allUsages)
       .select(ModifyModuleStatementUsageInfo.class).groupingBy(usage -> branch == null ? usage.getModuleDescriptor() :
                                                                         branch.obtainPsiCopy(usage.getModuleDescriptor()));
     for (var entry : moduleStatementsByDescriptor.entrySet()) {

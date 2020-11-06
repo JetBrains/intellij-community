@@ -16,6 +16,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
@@ -68,6 +69,7 @@ public class PackageWrapper {
   }
 
   @NotNull
+  @NlsSafe
   public String getQualifiedName() {
     return myQualifiedName;
   }
