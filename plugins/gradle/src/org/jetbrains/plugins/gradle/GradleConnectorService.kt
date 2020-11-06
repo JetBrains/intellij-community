@@ -65,8 +65,13 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
 
   private fun getConnection(connectorParams: ConnectorParams): ProjectConnection {
     return connectorsMap.compute(connectorParams.projectPath) { _, conn ->
-      if (connectorParams == conn?.params) {
-        return@compute conn
+      if (conn != null) {
+        if (canBeReused(conn, connectorParams)) return@compute conn
+        else {
+          // close obsolete connection, can not disconnect the connector here - it may cause build cancel for the new connection operations
+          val unwrappedConnection = conn.connection as WrappedConnection
+          unwrappedConnection.delegate.close()
+        }
       }
       val newConnector = createConnector(connectorParams)
       val newConnection = newConnector.connect()
@@ -74,14 +79,15 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         "Can't create connection to the target project via gradle tooling api. Project path: '${connectorParams.projectPath}'"
       }
 
-      if (conn != null && connectorParams != conn.params) {
-        // close obsolete connection, can not disconnect the connector here - it may cause build cancel for the new connection operations
-        val unwrappedConnection = conn.connection as WrappedConnection
-        unwrappedConnection.delegate.close()
-      }
       val wrappedConnection = WrappedConnection(newConnection)
       return@compute GradleProjectConnection(connectorParams, newConnector, wrappedConnection)
     }!!.connection
+  }
+
+  private fun canBeReused(projectConnection: GradleProjectConnection, connectorParams: ConnectorParams): Boolean {
+    // don't cache connections for not-yet-installed gradle versions
+    if (connectorParams.gradleHome == null) return false
+    return connectorParams == projectConnection.params
   }
 
   private class GradleProjectConnection(val params: ConnectorParams, val connector: GradleConnector, val connection: ProjectConnection) {
@@ -110,27 +116,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     val wrapperPropertyFile: String?,
     val verboseProcessing: Boolean?,
     val ttlMs: Int?
-  ) {
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (other == null || this.javaClass != other.javaClass) return false
-      val otherConnectorParams = other as ConnectorParams
-
-      // don't cache connections for not-yet-installed gradle versions
-      if (this.gradleHome == null || otherConnectorParams.gradleHome == null) return false
-
-      return this.projectPath == otherConnectorParams.projectPath &&
-             this.serviceDirectory == otherConnectorParams.serviceDirectory &&
-             this.distributionType == otherConnectorParams.distributionType &&
-             this.gradleHome == otherConnectorParams.gradleHome &&
-             this.javaHome == otherConnectorParams.javaHome &&
-             this.wrapperPropertyFile == otherConnectorParams.wrapperPropertyFile &&
-             this.verboseProcessing == otherConnectorParams.verboseProcessing &&
-             this.ttlMs == other.ttlMs
-    }
-    // default data class hashCode() implementation is fine: our equals() is strictly more
-    // stringent than the default equals()
-  }
+  )
 
   companion object {
     private val LOG = logger<GradleConnectorService>()
