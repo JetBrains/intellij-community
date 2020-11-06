@@ -1015,15 +1015,15 @@
         <constraint name="Instance" regexp="super" nameOfExprType="Disposable" withinHierarchy="true" exprTypeWithinHierarchy="true" minCount="0" negateName="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" description="a type can be a type alias or a single-item tuple of a desired type. And you most likely want to support them as well" suppressId="explicit.cast.to.swift.type" problemDescriptor="Please use `SwiftTypeUtil.as&lt;type&gt;` method instead" text="$ref$ instanceof $SwiftType$" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift.+Type" within="" contains="" />
-      </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" text="$ref$ is $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift.+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout).+Type" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" description="a type can be a type alias or a single-item tuple of a desired type. And you most likely want to support them as well" suppressId="explicit.cast.to.swift.type" problemDescriptor="Please use `SwiftTypeUtil.as&lt;type&gt;` method instead" text="$ref$ instanceof $SwiftType$" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout).+Type" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="File.createTempFile" text="java.io.File.createTempFile($prefix$, $suffix$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($prefix$, $suffix$)">
         <constraint name="prefix" within="" contains="" />
