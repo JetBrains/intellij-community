@@ -66,7 +66,7 @@ public final class IndentsModelImpl implements IndentsModel {
     return myEditor.logicalLineToY(descriptor.startLine) < visibleArea.y;
   }
 
-  private void repaintGuide(@Nullable IndentGuideDescriptor guide) {
+  public void repaintGuide(@Nullable IndentGuideDescriptor guide) {
     if (guide != null) {
       myEditor.repaintLines(guide.startLine, guide.endLine);
     }
