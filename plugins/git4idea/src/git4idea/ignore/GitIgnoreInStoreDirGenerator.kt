@@ -30,7 +30,7 @@ import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import git4idea.GitVcs
-import git4idea.commands.Git
+import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
@@ -77,10 +77,10 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
       needGenerate.set(false)
       return false
     }
-    val needRegister = projectConfigDirVFile == null || project.projectFile?.exists() != true
+    val needRegister = projectConfigDirVFile == null
     if (needRegister) {
       LOG.debug(
-        "Project file or project config directory doesn't exist. Register VFS listener and try generate $GITIGNORE after files become available.")
+        "Project config directory doesn't exist. Register VFS listener and try generate $GITIGNORE after config directory become available.")
       AsyncVfsEventsPostProcessor.getInstance().addListener(VfsEventsListener(project), this)
     }
     return needRegister
@@ -90,16 +90,16 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
     override fun filesChanged(events: List<VFileEvent>) {
       if (!needGenerate.get() || project.isDisposed) return
 
-      if (projectFileAffected(events)) {
+      if (affectedFilesInStoreDir(events)) {
         generateGitignoreInStoreDirIfNeeded()
       }
     }
 
-    private fun projectFileAffected(events: List<VFileEvent>): Boolean =
+    private fun affectedFilesInStoreDir(events: List<VFileEvent>): Boolean =
       events.asSequence()
         .mapNotNull(VFileEvent::getFile)
         .filter(VirtualFile::isInLocalFileSystem)
-        .any { file -> file == project.projectFile && file.exists() }
+        .any { file -> file.exists() && inStoreDir(file.path)}
 
   }
 
@@ -174,14 +174,15 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
   }
 
   private fun isProjectSharedInGit(project: Project): Boolean {
-    val projectFilePathStr: @SystemIndependent String = project.projectFilePath ?: return false
-    val projectFilePath = VcsUtil.getFilePath(projectFilePathStr)
-    val vcsRootForProjectFile = VcsUtil.getVcsRootFor(project, projectFilePath) ?: return false
+    val storeDir: @SystemIndependent String = project.stateStore.directoryStorePath?.systemIndependentPath ?: return false
+    val storeDirPath = VcsUtil.getFilePath(storeDir)
+    val vcsRoot = VcsUtil.getVcsRootFor(project, storeDirPath) ?: return false
+
     return try {
-      Git.getInstance().untrackedFilePaths(project, vcsRootForProjectFile, listOf(projectFilePath)).isEmpty()
+      GitIndexUtil.listStaged(project, vcsRoot, listOf(storeDirPath)).isNotEmpty()
     }
     catch (e: VcsException) {
-      LOG.debug("Cannot check $projectFilePathStr for being unversioned", e)
+      LOG.debug("Cannot check staged files in $storeDir", e)
       false
     }
   }
@@ -194,7 +195,17 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
   private fun createGitignore(inDir: VirtualFile) =
     invokeAndWaitIfNeeded { runWriteAction { inDir.createChildData(inDir, GITIGNORE) } }
 
-  private fun inStoreDir(projectConfigDirPath: String, ignore: IgnoredFileDescriptor): Boolean {
-    return ignore.path?.let { FileUtil.isAncestor(projectConfigDirPath, it, true) } ?: false
+  private fun inStoreDir(path: @SystemIndependent String): Boolean {
+    val storeDir = project.stateStore.directoryStorePath?.systemIndependentPath ?: return false
+    return inStoreDir(storeDir, path)
+  }
+
+  private fun inStoreDir(projectConfigDirPath: @SystemIndependent String, ignore: IgnoredFileDescriptor): Boolean {
+    val path = ignore.path ?: return false
+    return inStoreDir(projectConfigDirPath, path)
+  }
+
+  private fun inStoreDir(projectConfigDirPath: @SystemIndependent String, path: @SystemIndependent String): Boolean {
+    return FileUtil.isAncestor(projectConfigDirPath, path, true)
   }
 }
