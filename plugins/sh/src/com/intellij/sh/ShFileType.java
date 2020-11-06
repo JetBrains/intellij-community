@@ -33,6 +33,6 @@ public final class ShFileType extends LanguageFileType {
 
   @Override
   public Icon getIcon() {
-    return ShIcons.FILE_TYPE;
+    return SHIcons.ShFile;
   }
 }

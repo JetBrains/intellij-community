@@ -74,19 +74,20 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   final ContainerDescriptor projectContainerDescriptor = new ContainerDescriptor();
   final ContainerDescriptor moduleContainerDescriptor = new ContainerDescriptor();
 
-  private List<PluginId> myModules;
+  private List<PluginId> modules;
   private ClassLoader classLoader;
-  private @NlsSafe String myDescriptionChildText;
-  boolean myUseIdeaClassLoader;
-  private boolean myUseCoreClassLoader;
-  boolean myAllowBundledUpdate;
-  boolean myImplementationDetail;
-  boolean myRequireRestart;
+  private @NlsSafe String descriptionChildText;
+  boolean useIdeaClassLoader;
+  private boolean useCoreClassLoader;
+  boolean allowBundledUpdate;
+  boolean implementationDetail;
+  boolean requireRestart;
+  String packagePrefix;
   private String mySinceBuild;
   private String myUntilBuild;
 
-  private boolean myEnabled = true;
-  private boolean myDeleted;
+  private boolean isEnabled = true;
+  private boolean isDeleted;
 
   boolean incomplete;
 
@@ -184,8 +185,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   private void readEssentialPluginInformation(@NotNull Element element, @NotNull DescriptorListLoadingContext context) {
-    if (myDescriptionChildText == null) {
-      myDescriptionChildText = element.getChildTextTrim("description");
+    if (descriptionChildText == null) {
+      descriptionChildText = element.getChildTextTrim("description");
     }
     if (myCategory == null) {
       myCategory = element.getChildTextTrim("category");
@@ -206,7 +207,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (productElement != null) {
       readProduct(context, productElement);
     }
-    if (myModules == null) {
+    if (modules == null) {
       List<Element> moduleElements = element.getChildren("module");
       for (Element moduleElement : moduleElements) {
         readModule(moduleElement);
@@ -301,7 +302,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "description":
-          myDescriptionChildText = Strings.nullize(child.getTextTrim());
+          descriptionChildText = Strings.nullize(child.getTextTrim());
           break;
 
         case "resource-bundle":
@@ -350,16 +351,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return;
     }
 
-    if (myModules == null) {
-      myModules = Collections.singletonList(PluginId.getId(moduleName));
+    if (modules == null) {
+      modules = Collections.singletonList(PluginId.getId(moduleName));
     }
     else {
-      if (myModules.size() == 1) {
-        List<PluginId> singleton = myModules;
-        myModules = new ArrayList<>(4);
-        myModules.addAll(singleton);
+      if (modules.size() == 1) {
+        List<PluginId> singleton = modules;
+        modules = new ArrayList<>(4);
+        modules.addAll(singleton);
       }
-      myModules.add(PluginId.getId(moduleName));
+      modules.add(PluginId.getId(moduleName));
     }
   }
 
@@ -650,10 +651,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     if (bundle == null) {
-      result = myDescriptionChildText;
+      result = descriptionChildText;
     }
     else {
-      result = AbstractBundle.messageOrDefault(bundle, "plugin." + id + ".description", Strings.notNullize(myDescriptionChildText));
+      result = AbstractBundle.messageOrDefault(bundle, "plugin." + id + ".description", Strings.notNullize(descriptionChildText));
     }
     myDescription = result;
     return result;
@@ -851,11 +852,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public boolean isDeleted() {
-    return myDeleted;
+    return isDeleted;
   }
 
   public void setDeleted(boolean deleted) {
-    myDeleted = deleted;
+    isDeleted = deleted;
   }
 
   @Nullable ClassLoader getClassLoader() {
@@ -877,25 +878,25 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public boolean isUseIdeaClassLoader() {
-    return myUseIdeaClassLoader;
+    return useIdeaClassLoader;
   }
 
   boolean isUseCoreClassLoader() {
-    return myUseCoreClassLoader;
+    return useCoreClassLoader;
   }
 
   void setUseCoreClassLoader() {
-    myUseCoreClassLoader = true;
+    useCoreClassLoader = true;
   }
 
   @Override
   public boolean isEnabled() {
-    return myEnabled;
+    return isEnabled;
   }
 
   @Override
   public void setEnabled(final boolean enabled) {
-    myEnabled = enabled;
+    isEnabled = enabled;
   }
 
   @Override
@@ -922,21 +923,21 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public boolean allowBundledUpdate() {
-    return myAllowBundledUpdate;
+    return allowBundledUpdate;
   }
 
   @Override
   public boolean isImplementationDetail() {
-    return myImplementationDetail;
+    return implementationDetail;
   }
 
   @Override
   public boolean isRequireRestart() {
-    return myRequireRestart;
+    return requireRestart;
   }
 
   public @NotNull List<PluginId> getModules() {
-    return myModules == null ? Collections.emptyList() : myModules;
+    return modules == null ? Collections.emptyList() : modules;
   }
 
   @Override
@@ -951,6 +952,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String toString() {
-    return "PluginDescriptor(name=" + name + ", id=" + id + ", path=" + path + ", version=" + myVersion + ", descriptorPath=" + (descriptorPath == null ? "plugin.xml" : descriptorPath) + ")";
+    // don't expose user home in error messages
+    String pathString = path.toString().replace(System.getProperty("user.home") + File.separatorChar, "~" + File.separatorChar);
+    return "PluginDescriptor(name=" + name +
+           ", id=" + id +
+           ", path=" + pathString +
+           ", version=" + myVersion +
+           ", descriptorPath=" + (descriptorPath == null ? "plugin.xml" : descriptorPath) +
+           ", package=" + packagePrefix +
+           ")";
   }
 }

@@ -7,22 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Allow class to be used among various plugins.
- * By default classloader of extension class must be equal to classloader of plugin where extension is defined.
- * <p/>
- * Generally, IDEA prohibits referencing extension class belonging to {@code plugin1} from the {@code plugin.xml} in {@code plugin2}.
- * However, sometimes this kind of dependency violation is necessary, in which case the corresponding extension must be annotated with this annotation.
- * <p/>
- * For example:
- * <p/>
- * {@code plugin.xml:}
- * <pre>{@code
- * <findUsageHandler implementation="com.plugin1.MyHandler"/>}</pre>
- * <p/>
- * {@code MyHandler.java:}<pre>{@code
- * @InternalIgnoreDependencyViolation
- * class MyHandler {}
- * }</pre>
+ * See https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/ide/plugins/readme.md
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

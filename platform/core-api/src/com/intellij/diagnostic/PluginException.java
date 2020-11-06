@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +58,13 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
   @NotNull
   public @NonNls String getMessage() {
     String message = super.getMessage();
-    return myPluginId != null ? StringUtil.notNullize(message) + " [Plugin: " + myPluginId + "]" : message;
+    // do not add suffix with plugin id if plugin info is already in message
+    if (myPluginId == null || (message != null && message.contains("PluginDescriptor("))) {
+      return message;
+    }
+    else {
+      return Strings.notNullize(message) + " [Plugin: " + myPluginId + "]";
+    }
   }
 
   @Override
@@ -81,7 +87,7 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
    */
   @NotNull
   public static PluginException createByClass(@NotNull Throwable cause, @NotNull Class<?> pluginClass) {
-    return PluginProblemReporter.getInstance().createPluginExceptionByClass(StringUtil.notNullize(cause.getMessage()), cause, pluginClass);
+    return PluginProblemReporter.getInstance().createPluginExceptionByClass(Strings.notNullize(cause.getMessage()), cause, pluginClass);
   }
 
   /**

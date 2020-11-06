@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.ui.svg.SvgTranscoder
@@ -21,11 +22,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.*
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 data class ModifiedClass(val module: JpsModule, val file: Path, val result: CharSequence)
 
@@ -98,7 +96,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         )
       }
       else -> {
-        packageName = "icons"
+        packageName = getPluginPackageIfPossible(module) ?: "icons"
 
         val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).firstOrNull() ?: return emptyList()
 
@@ -120,7 +118,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         }
 
         val generatedRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).find { it.properties.isForGeneratedSources }
-        val targetRoot = (generatedRoot ?: firstRoot).file.toPath().resolve("icons")
+        val targetRoot = (generatedRoot ?: firstRoot).file.toPath().resolve(packageName.replace('.', File.separatorChar))
 
         if (generatedRoot != null && oldClassName != null && firstRoot != generatedRoot) {
           val oldFile = firstRootDir.resolve("$oldClassName.java")
@@ -669,4 +667,16 @@ internal fun loadAndNormalizeSvgFile(svgFile: Path): String {
     }
   }
   return builder.toString()
+}
+
+private fun getPluginPackageIfPossible(module: JpsModule): String? {
+  for (resourceRoot in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
+    val pluginXml = Paths.get(JpsPathUtil.urlToPath(resourceRoot.url)).resolve("META-INF").resolve("plugin.xml")
+    try {
+      return JDOMUtil.load(pluginXml).getAttributeValue("package") ?: "icons"
+    }
+    catch (ignore: NoSuchFileException) {
+    }
+  }
+  return null
 }

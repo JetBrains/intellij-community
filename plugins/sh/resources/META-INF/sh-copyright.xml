@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.sh.copyright">
   <extensions defaultExtensionNs="com.intellij">
     <copyright.updater filetype="Shell Script" implementationClass="com.intellij.sh.copyright.ShUpdateCopyrightsProvider"/>
   </extensions>

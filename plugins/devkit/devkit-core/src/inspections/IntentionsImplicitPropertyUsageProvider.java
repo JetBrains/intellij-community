@@ -24,7 +24,7 @@ public class IntentionsImplicitPropertyUsageProvider extends ImplicitPropertyUsa
   protected boolean isUsed(@NotNull Property property) {
     PsiFile containingFile = property.getContainingFile();
     Project project = containingFile.getProject();
-    if (PsiUtil.isIdeaProject(project) && 
+    if (PsiUtil.isIdeaProject(project) &&
         containingFile.getName().endsWith(MessageBundleReferenceContributor.BUNDLE_PROPERTIES)) {
       String name = property.getName();
       if (name != null) {

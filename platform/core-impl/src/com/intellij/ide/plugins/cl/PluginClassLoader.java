@@ -114,6 +114,9 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private volatile int allParentsLastCacheId;
 
   private final PluginDescriptor pluginDescriptor;
+  // to simplify analyzing of heap dump (dynamic plugin reloading)
+  private final PluginId pluginId;
+  private final String packagePrefix;
   private final List<String> libDirectories;
 
   private final AtomicLong edtTime = new AtomicLong();
@@ -122,18 +125,15 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private final AtomicInteger loadedClassCounter = new AtomicInteger();
   private final @NotNull ClassLoader coreLoader;
 
-  // to simplify analyzing of heap dump (dynamic plugin reloading)
-  private final PluginId pluginId;
-
   private final int instanceId;
-
   private volatile int state = ACTIVE;
 
   public PluginClassLoader(@NotNull Builder builder,
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot,
-                           @NotNull ClassLoader coreLoader) {
+                           @NotNull ClassLoader coreLoader,
+                           @Nullable String packagePrefix) {
     super(builder);
 
     instanceId = instanceIdProducer.incrementAndGet();
@@ -141,6 +141,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     this.parents = parents;
     this.pluginDescriptor = pluginDescriptor;
     pluginId = pluginDescriptor.getPluginId();
+    this.packagePrefix = (packagePrefix == null || packagePrefix.endsWith(".")) ? packagePrefix : (packagePrefix + '.');
     this.coreLoader = coreLoader;
     if (PluginClassLoader.class.desiredAssertionStatus()) {
       for (ClassLoader parent : this.parents) {
@@ -296,6 +297,13 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   protected @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) {
+    if (packagePrefix != null && !name.startsWith(packagePrefix)) {
+      // todo ability to customize (cannot move due to backward compatibility)
+      if (!packagePrefix.equals("com.intellij.lang.properties.") || !name.equals("com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider")) {
+        return null;
+      }
+    }
+
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null && c.getClassLoader() == this) {
@@ -319,7 +327,13 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       if (logStream != null) {
         try {
           // must be as one write call since write is performed from multiple threads
-          logStream.write(name + " [" + (getClass() == PluginClassLoader.class ? "m" : "s = " + ((IdeaPluginDescriptor)pluginDescriptor).getDescriptorPath() ) + "] " + pluginId.getIdString() + '\n');
+          if (packagePrefix == null) {
+            String specifier = getClass() == PluginClassLoader.class ? "m" : "s = " + ((IdeaPluginDescriptor)pluginDescriptor).getDescriptorPath();
+            logStream.write(name + " [" + specifier + "] " + pluginId.getIdString() + '\n');
+          }
+          else {
+            logStream.write(name + " " + pluginId.getIdString() + ':' + packagePrefix + '\n');
+          }
         }
         catch (IOException ignored) {
         }
@@ -442,7 +456,8 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   @Override
   public final String toString() {
-    return getClass().getSimpleName() + "(" + pluginDescriptor +
+    return getClass().getSimpleName() + "(plugin=" + pluginDescriptor +
+           ", packagePrefix=" + packagePrefix +
            ", instanceId=" + instanceId +
            ", state=" + (state == ACTIVE ? "active" : "unload in progress") +
            ")";

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.sh">
   <id>com.jetbrains.sh</id>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.lang</depends>

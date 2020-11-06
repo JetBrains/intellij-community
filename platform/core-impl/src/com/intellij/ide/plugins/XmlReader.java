@@ -159,19 +159,23 @@ final class XmlReader {
           break;
 
         case "use-idea-classloader":
-          descriptor.myUseIdeaClassLoader = Boolean.parseBoolean(attribute.getValue());
+          descriptor.useIdeaClassLoader = Boolean.parseBoolean(attribute.getValue());
           break;
 
         case "allow-bundled-update":
-          descriptor.myAllowBundledUpdate = Boolean.parseBoolean(attribute.getValue());
+          descriptor.allowBundledUpdate = Boolean.parseBoolean(attribute.getValue());
           break;
 
         case "implementation-detail":
-          descriptor.myImplementationDetail = Boolean.parseBoolean(attribute.getValue());
+          descriptor.implementationDetail = Boolean.parseBoolean(attribute.getValue());
           break;
 
         case "require-restart":
-          descriptor.myRequireRestart = Boolean.parseBoolean(attribute.getValue());
+          descriptor.requireRestart = Boolean.parseBoolean(attribute.getValue());
+          break;
+
+        case "package":
+          descriptor.packagePrefix = Strings.nullize(attribute.getValue());
           break;
 
         case "version":

@@ -64,6 +64,9 @@ public interface IdeaPlugin extends DomElement {
   GenericAttributeValue<Boolean> getRequireRestart();
 
   @NotNull
+  GenericAttributeValue<String> getPackage();
+
+  @NotNull
   @Stubbed
   @Required(false)
   GenericDomValue<String> getName();

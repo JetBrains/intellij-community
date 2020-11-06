@@ -1,6 +1,6 @@
 package com.intellij.lang.properties;
 
-import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
+import com.intellij.lang.properties.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.JavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;

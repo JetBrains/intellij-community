@@ -15,7 +15,7 @@ public final class SubPluginClassLoader extends PluginClassLoader {
                        @NotNull ClassLoader @NotNull [] parents,
                        @NotNull String @NotNull [] packagePrefixes,
                        @NotNull ClassLoader coreLoader) {
-    super(urlClassLoaderBuilder, parents, pluginDescriptor, pluginDescriptor.getPluginPath(), coreLoader);
+    super(urlClassLoaderBuilder, parents, pluginDescriptor, pluginDescriptor.getPluginPath(), coreLoader, pluginDescriptor.packagePrefix);
 
     this.packagePrefixes = packagePrefixes;
   }

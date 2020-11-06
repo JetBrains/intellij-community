@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.project
 import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 

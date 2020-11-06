@@ -54,26 +54,18 @@ final class ClassLoaderConfigurator {
 
   private final UrlClassLoader.Builder urlClassLoaderBuilder;
 
+  // todo for dynamic reload this guard doesn't contain all used plugin prefixes
+  private final Set<String> pluginPackagePrefixUniqueGuard = new HashSet<>();
+
   static {
     String value = System.getProperty("idea.classloader.per.descriptor.only");
     if (value == null) {
        SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new ReferenceOpenHashSet<>(new PluginId[]{
-        PluginId.getId("com.intellij.thymeleaf"),
         PluginId.getId("org.jetbrains.plugins.ruby"),
         PluginId.getId("com.jetbrains.rubymine.customization"),
-        PluginId.getId("org.jetbrains.plugins.slim"),
-        PluginId.getId("com.intellij.lang.puppet"),
-        PluginId.getId("org.jetbrains.plugins.yaml"),
-        PluginId.getId("org.jetbrains.plugins.vue"),
-        PluginId.getId("org.jetbrains.plugins.go-template"),
-        PluginId.getId("com.intellij.kubernetes"),
         PluginId.getId("JavaScript"),
-        PluginId.getId("com.jetbrains.plugins.jade"),
         PluginId.getId("com.jetbrains.space"),
-        PluginId.getId("com.jetbrains.php.phpspec"),
         PluginId.getId("Docker"),
-        PluginId.getId("org.jetbrains.plugins.node-remote-interpreter"),
-        PluginId.getId("AWSCloudFormation"),
         PluginId.getId("com.intellij.diagram"),
         PluginId.getId("org.jetbrains.plugins.github")
       });
@@ -137,7 +129,7 @@ final class ClassLoaderConfigurator {
           urlClassLoaderBuilder.urls(mainDependentClassLoader.getUrls());
           for (IdeaPluginDescriptorImpl subDescriptor : entry.getValue()) {
             if (subDescriptor == dependency.subDescriptor) {
-              configureSubPlugin(dependency, mainDependentClassLoader);
+              configureSubPlugin(dependency, mainDependentClassLoader, mainDependent);
               break;
             }
           }
@@ -156,6 +148,11 @@ final class ClassLoaderConfigurator {
   }
 
   void configure(@NotNull IdeaPluginDescriptorImpl mainDependent) {
+    String pluginPackagePrefix = mainDependent.packagePrefix;
+    if (pluginPackagePrefix != null && !pluginPackagePrefixUniqueGuard.add(pluginPackagePrefix)) {
+      throw new PluginException("Package prefix " + pluginPackagePrefix + " is already used", mainDependent.getPluginId());
+    }
+
     if (mainDependent.getPluginId() == PluginManagerCore.CORE_ID || mainDependent.isUseCoreClassLoader()) {
       setPluginClassLoaderForMainAndSubPlugins(mainDependent, coreLoader);
       return;
@@ -199,7 +196,7 @@ final class ClassLoaderConfigurator {
     List<PluginDependency> pluginDependencies = mainDependent.pluginDependencies;
     if (pluginDependencies == null) {
       assert !mainDependent.isUseIdeaClassLoader();
-      mainDependent.setClassLoader(new PluginClassLoader(urlClassLoaderBuilder, loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY), mainDependent, mainDependent.getPluginPath(), coreLoader));
+      mainDependent.setClassLoader(createPluginClassLoader(mainDependent));
       return;
     }
 
@@ -216,16 +213,14 @@ final class ClassLoaderConfigurator {
       mainDependentClassLoader = configureUsingIdeaClassloader(classPath, mainDependent);
     }
     else {
-      ClassLoader[] parentLoaders =
-        loaders.isEmpty() ? PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY : loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY);
-      mainDependentClassLoader = new PluginClassLoader(urlClassLoaderBuilder, parentLoaders, mainDependent, mainDependent.getPluginPath(), coreLoader);
+      mainDependentClassLoader = createPluginClassLoader(mainDependent);
     }
 
     // second, set class loaders for sub descriptors
     if (usePluginClassLoader && isClassloaderPerDescriptorEnabled(mainDependent)) {
       mainDependent.setClassLoader(mainDependentClassLoader);
       for (PluginDependency dependencyInfo : pluginDependencies) {
-        configureSubPlugin(dependencyInfo, mainDependentClassLoader);
+        configureSubPlugin(dependencyInfo, mainDependentClassLoader, mainDependent);
       }
     }
     else {
@@ -237,30 +232,64 @@ final class ClassLoaderConfigurator {
     urlClassLoaderBuilder.urls(Collections.emptyList());
   }
 
+  private @NotNull PluginClassLoader createPluginClassLoader(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    ClassLoader[] parentLoaders = loaders.isEmpty()
+                                  ? PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY
+                                  : loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY);
+    return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
+                                 descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix);
+  }
+
   private static boolean isClassloaderPerDescriptorEnabled(@NotNull IdeaPluginDescriptorImpl mainDependent) {
     if (!SEPARATE_CLASSLOADER_FOR_SUB || SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE.contains(mainDependent.getPluginId())) {
       return false;
     }
-    return SEPARATE_CLASSLOADER_FOR_SUB_ONLY.isEmpty() || SEPARATE_CLASSLOADER_FOR_SUB_ONLY.contains(mainDependent.getPluginId());
+    return mainDependent.packagePrefix != null ||
+           SEPARATE_CLASSLOADER_FOR_SUB_ONLY.isEmpty() ||
+           SEPARATE_CLASSLOADER_FOR_SUB_ONLY.contains(mainDependent.getPluginId());
   }
 
-  private void configureSubPlugin(@NotNull PluginDependency dependencyInfo, @NotNull ClassLoader mainDependentClassLoader) {
+  private void configureSubPlugin(@NotNull PluginDependency dependencyInfo,
+                                  @NotNull ClassLoader mainDependentClassLoader,
+                                  @NotNull IdeaPluginDescriptorImpl parentDescriptor) {
     IdeaPluginDescriptorImpl dependent = dependencyInfo.isDisabledOrBroken ? null : dependencyInfo.subDescriptor;
     if (dependent == null) {
       return;
     }
 
     assert !dependent.isUseIdeaClassLoader();
+    String pluginPackagePrefix = dependent.packagePrefix;
+    if (pluginPackagePrefix == null) {
+      if (parentDescriptor.packagePrefix != null) {
+        throw new PluginException("Sub descriptor must specify package if it is specified for main plugin descriptor",
+                                  parentDescriptor.id);
+      }
+    }
+    else {
+      if (pluginPackagePrefix.equals(parentDescriptor.packagePrefix)) {
+        throw new PluginException("Sub descriptor must not specify the same package as main plugin descriptor", parentDescriptor.id);
+      }
+      if (parentDescriptor.packagePrefix == null) {
+        throw new PluginException("Sub descriptor must not specify package if one is not specified for main plugin descriptor", parentDescriptor.id);
+      }
+
+      if (!pluginPackagePrefixUniqueGuard.add(pluginPackagePrefix)) {
+        throw new PluginException("Package prefix " + pluginPackagePrefix + " is already used", parentDescriptor.id);
+      }
+    }
+
     IdeaPluginDescriptorImpl dependency = idMap.get(dependencyInfo.id);
     if (dependency == null || !dependency.isEnabled()) {
       return;
     }
 
-    packagePrefixes.clear();
-    collectPackagePrefixes(dependent, packagePrefixes);
-    // no package prefixes if only bean extension points are configured
-    if (packagePrefixes.isEmpty()) {
-      getLogger().debug("Optional descriptor " + dependencyInfo + " contains only bean extension points or light services");
+    if (pluginPackagePrefix == null) {
+      packagePrefixes.clear();
+      collectPackagePrefixes(dependent, packagePrefixes);
+      // no package prefixes if only bean extension points are configured
+      if (packagePrefixes.isEmpty()) {
+        getLogger().debug("Optional descriptor " + dependencyInfo + " contains only bean extension points or light services");
+      }
     }
 
     loaders.clear();
@@ -279,16 +308,22 @@ final class ClassLoaderConfigurator {
       }
     }
 
-    SubPluginClassLoader subClassloader = new SubPluginClassLoader(dependent,
-                                                                   urlClassLoaderBuilder,
-                                                                   loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY),
-                                                                   packagePrefixes.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY),
-                                                                   coreLoader);
+    PluginClassLoader subClassloader;
+    if (pluginPackagePrefix == null) {
+      subClassloader = new SubPluginClassLoader(dependent,
+                                                urlClassLoaderBuilder,
+                                                loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY),
+                                                packagePrefixes.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY),
+                                                coreLoader);
+    }
+    else {
+      subClassloader = createPluginClassLoader(dependent);
+    }
     dependent.setClassLoader(subClassloader);
 
     if (pluginDependencies != null) {
       for (PluginDependency subDependency : pluginDependencies) {
-        configureSubPlugin(subDependency, subClassloader);
+        configureSubPlugin(subDependency, subClassloader, dependent);
       }
     }
   }
