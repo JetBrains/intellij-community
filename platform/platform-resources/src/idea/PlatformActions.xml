@@ -385,6 +385,7 @@
     </action>
 
     <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
+    <action id="PinActiveTabToggle" class="com.intellij.ide.actions.PinActiveTabAction$Toggle"/>
 
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
