@@ -183,10 +183,12 @@ public final class AppUIUtil {
   public static void invokeLaterIfProjectAlive(@NotNull Project project, @NotNull Runnable runnable) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      runnable.run();
+      if (project.isOpen() && !project.isDisposed()) {
+        runnable.run();
+      }
     }
     else {
-      application.invokeLater(runnable, o -> !project.isOpen() || project.isDisposed());
+      application.invokeLater(runnable, __ -> !project.isOpen() || project.isDisposed());
     }
   }
 
