@@ -27,13 +27,18 @@ public class CloseViewAction extends BaseViewAction {
   @Override
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(content));
-    e.getPresentation().setIcon(AllIcons.Actions.Close);
-    e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
+    boolean showPinIcon = isPinned(content) && !ViewContext.isPopupPlace(e.getPlace());
+    e.getPresentation().setIcon(showPinIcon ? AllIcons.Actions.PinTab : AllIcons.Actions.Close);
+    e.getPresentation().setHoveredIcon(showPinIcon ? AllIcons.Actions.PinTab : AllIcons.Actions.CloseHovered);
   }
 
   @Override
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    perform(context, content[0]);
+   if (content[0].isPinned() && !ViewContext.isPopupPlace(e.getPlace())) {
+     content[0].setPinned(false);
+     return;
+   }
+   perform(context, content[0]);
   }
 
   public static boolean perform(ViewContext context, Content content) {
@@ -44,4 +49,7 @@ public class CloseViewAction extends BaseViewAction {
     return content.length == 1 && content[0].isCloseable();
   }
 
+  private static boolean isPinned(Content[] content) {
+    return content.length == 1 && content[0].isPinnable() && content[0].isPinned();
+  }
 }
