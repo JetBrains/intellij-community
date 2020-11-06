@@ -408,7 +408,10 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
         var isResolvedToDescriptor: Boolean = false,
         var isGreyArgumentIndex: Int = -1,
         var isDeprecatedAtCallSite: Boolean = false
-    )
+    ) {
+        override fun toString(): String =
+            "CallInfo(overload=$overload, call=$call, resolvedCall=${resolvedCall?.resultingDescriptor}($resolvedCall), arguments=$arguments, dummyArgument=$dummyArgument, dummyResolvedCall=$dummyResolvedCall, isResolvedToDescriptor=$isResolvedToDescriptor, isGreyArgumentIndex=$isGreyArgumentIndex, isDeprecatedAtCallSite=$isDeprecatedAtCallSite)"
+    }
 
     private fun resolveCallInfo(
         info: CallInfo,
@@ -521,6 +524,9 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
             arguments.size >= currentArgumentIndex,
             lazyMessage = { "currentArgumentIndex: $currentArgumentIndex has to be not more than number of arguments ${arguments.size}" },
             attachments = {
+                info.call?.let { c ->
+                    it.withAttachment("file.kt", c.callElement.containingFile.text)
+                }
                 it.withAttachment("info.txt", info)
             }
         )
