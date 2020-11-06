@@ -96,14 +96,17 @@ public class CaseSensitivityDetectionTest {
     File file = myTempDir.newFile("dir/child.txt");
     File dir = file.getParentFile();
     FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
-    assertTrue(sensitivity.toString(), sensitivity == FileAttributes.CaseSensitivity.INSENSITIVE || sensitivity == FileAttributes.CaseSensitivity.SENSITIVE);
-    if (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE) {
-      assertTrue(new File(dir, "x.txt").createNewFile());
-      assertTrue(new File(dir, "X.txt").createNewFile());
-    }
-    else {
-      assertTrue(new File(dir, "x.txt").createNewFile());
-      assertFalse(new File(dir, "X.txt").createNewFile());
+    assertTrue(new File(dir, "x.txt").createNewFile());
+    switch (sensitivity) {
+      case SENSITIVE:
+        assertTrue(new File(dir, "X.txt").createNewFile());
+        break;
+      case INSENSITIVE:
+        assertFalse(new File(dir, "X.txt").createNewFile());
+        break;
+      default:
+        fail("invalid sensitivity: " + sensitivity);
+        break;
     }
   }
 

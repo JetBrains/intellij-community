@@ -21,7 +21,7 @@ public class PerformanceTestInfo {
   private int attempts = 4;             // number of retries if performance failed
   private boolean waitForJit;
   private final String what;         // to print on fail
-  private boolean adjustForIO = false;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
+  private boolean adjustForIO;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
   private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
   private boolean useLegacyScaling;
 
@@ -30,7 +30,7 @@ public class PerformanceTestInfo {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
   }
 
-  PerformanceTestInfo(@NotNull ThrowableRunnable test, int expectedMs, @NotNull String what) {
+  PerformanceTestInfo(@NotNull ThrowableRunnable<?> test, int expectedMs, @NotNull String what) {
     this.test = test;
     this.expectedMs = expectedMs;
     assert expectedMs > 0 : "Expected must be > 0. Was: " + expectedMs;
@@ -38,7 +38,7 @@ public class PerformanceTestInfo {
   }
 
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public PerformanceTestInfo setup(@NotNull ThrowableRunnable setup) {
+  public PerformanceTestInfo setup(@NotNull ThrowableRunnable<?> setup) {
     assert this.setup == null;
     this.setup = setup;
     return this;
