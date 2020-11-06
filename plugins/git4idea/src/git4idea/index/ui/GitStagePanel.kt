@@ -25,6 +25,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
@@ -61,7 +62,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
                              isEditorDiffPreview: Boolean,
                              disposableParent: Disposable,
                              private val activate: () -> Unit) :
-  JPanel(BorderLayout()), Disposable {
+  JPanel(BorderLayout()), DataProvider, Disposable {
   private val project = tracker.project
 
   val tree: GitStageTree
@@ -162,6 +163,11 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     tree.rebuildTree()
     commitPanel.state = state
     commitWorkflowHandler.state = state
+  }
+
+  override fun getData(dataId: String): Any? {
+    if (QuickActionProvider.KEY.`is`(dataId)) return toolbar
+    return null
   }
 
   fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
