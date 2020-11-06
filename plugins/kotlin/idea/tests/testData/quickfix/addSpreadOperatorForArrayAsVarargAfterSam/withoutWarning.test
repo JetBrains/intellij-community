@@ -1,6 +1,7 @@
 // FILE: test.before.kt
 // "Add a spread operator before an array passing as vararg" "false"
 // ACTION: Add explicit type arguments
+// ACTION: Add full qualifier
 // ACTION: Introduce import alias
 // ACTION: Introduce local variable
 // ACTION: Put arguments on separate lines

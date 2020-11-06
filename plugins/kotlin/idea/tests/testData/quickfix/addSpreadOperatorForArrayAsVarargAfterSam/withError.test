@@ -1,6 +1,7 @@
 // FILE: test.before.kt
 // "Add a spread operator before an array passing as vararg" "false"
 // ACTION: Add 'toString()' call
+// ACTION: Add full qualifier
 // ACTION: Create member function 'Test.foo'
 // ACTION: Introduce import alias
 // ACTION: Introduce local variable

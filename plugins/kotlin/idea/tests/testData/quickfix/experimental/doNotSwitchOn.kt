@@ -2,6 +2,7 @@
 // COMPILER_ARGUMENTS: -version -Xopt-in=Something
 // DISABLE-ERRORS
 // WITH_RUNTIME
+// ACTION: Add full qualifier
 // ACTION: Introduce import alias
 // ACTION: Make internal
 // ACTION: Make private

@@ -1,4 +1,5 @@
 // "Import" "false"
+// ACTION: Add full qualifier
 // ACTION: Convert to run
 // ACTION: Convert to with
 // ACTION: Introduce import alias

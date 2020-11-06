@@ -1,4 +1,5 @@
 // "Change type to '(String) -> [ERROR : Ay]'" "false"
+// ACTION: Add full qualifier
 // ACTION: Change type of base property 'A.x' to '(Int) -> Int'
 // ACTION: Go To Super Property
 // ACTION: Introduce import alias
