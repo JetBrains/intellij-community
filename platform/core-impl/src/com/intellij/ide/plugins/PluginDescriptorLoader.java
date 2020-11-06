@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
@@ -331,9 +332,9 @@ public final class PluginDescriptorLoader {
       return;
     }
 
-    String useCoreClassLoaderValue = System.getProperty("idea.use.core.classloader.for");
-    List<?> useCoreClassLoaderList =
-      useCoreClassLoaderValue == null ? Collections.emptyList() : Arrays.asList(useCoreClassLoaderValue.split(","));
+    // gradle-intellij-plugin heavily depends on this property in order to have core class loader plugins during tests
+    boolean useCoreClassLoaderForPluginsFromProperty =
+      SystemProperties.getBooleanProperty("idea.use.core.classloader.for.plugin.path", false);
 
     for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparatorChar + ","); t.hasMoreTokens(); ) {
       String s = t.nextToken();
@@ -341,7 +342,7 @@ public final class PluginDescriptorLoader {
       if (descriptor != null) {
         // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
         result.add(descriptor,  /* overrideUseIfCompatible = */ true);
-        if (descriptor.getPluginId() != null && useCoreClassLoaderList.contains(descriptor.getPluginId().getIdString())) {
+        if (useCoreClassLoaderForPluginsFromProperty) {
           descriptor.setUseCoreClassLoader();
         }
       }
