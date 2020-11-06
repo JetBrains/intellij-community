@@ -309,7 +309,7 @@ private class ParameterValuesPage(
     }
   }
 
-  private class MyTextField(language: Language, project: Project, document: Document, private val placeholderText: String?)
+  private class MyTextField(language: Language, project: Project, document: Document, @Nls private val placeholderText: String?)
     : LanguageTextField(language, project, "", { _, _, _ -> document }, true)
   {
     override fun createEditor(): EditorEx {
