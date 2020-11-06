@@ -5,7 +5,6 @@ import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
 import com.intellij.testGuiFramework.fixtures.extended.RowFixture
-import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
@@ -234,16 +233,6 @@ open class GuiTestCase(enableScreenshotsDuringTest: Boolean = true) {
   fun simpleProject(func: IdeFrameFixture.() -> Unit) {
     step("at simple project") {
       func(guiTestRule.importSimpleProject())
-    }
-  }
-
-  /**
-   * Context function: finds dialog "New Project Wizard" and creates NewProjectWizardFixture instance as receiver object. Code block after
-   * it call methods on the receiver object (NewProjectWizardFixture instance).
-   */
-  fun projectWizard(func: NewProjectWizardFixture.() -> Unit) {
-    step("at New Project wizard") {
-      func(guiTestRule.findNewProjectWizard())
     }
   }
 
