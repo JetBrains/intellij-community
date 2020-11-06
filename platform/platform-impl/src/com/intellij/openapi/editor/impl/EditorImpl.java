@@ -413,37 +413,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myIndentsModel = new IndentsModelImpl(this);
     myCaretModel.addCaretListener(new CaretListener() {
-      @Nullable private LightweightHint myCurrentHint;
-      @Nullable private IndentGuideDescriptor myCurrentCaretGuide;
-
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
         if (myStickySelection) {
           int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength());
           mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
-        }
-
-        final IndentGuideDescriptor newGuide = myIndentsModel.getCaretIndentGuide();
-        if (!Comparing.equal(myCurrentCaretGuide, newGuide)) {
-          repaintGuide(newGuide);
-          repaintGuide(myCurrentCaretGuide);
-          myCurrentCaretGuide = newGuide;
-
-          if (myCurrentHint != null) {
-            myCurrentHint.hide();
-            myCurrentHint = null;
-          }
-
-          if (newGuide != null) {
-            final Rectangle visibleArea = getScrollingModel().getVisibleArea();
-            final int endLine = newGuide.startLine;
-            if (logicalLineToY(endLine) < visibleArea.y) {
-              int startLine = Math.max(newGuide.codeConstructStartLine,
-                                       endLine - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(EditorImpl.this) + 1);
-              TextRange textRange = new TextRange(myDocument.getLineStartOffset(startLine), myDocument.getLineEndOffset(endLine));
-              myCurrentHint = EditorFragmentComponent.showEditorFragmentHint(EditorImpl.this, textRange, false, false);
-            }
-          }
         }
       }
 
@@ -749,12 +723,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
     return new MyColorSchemeDelegate(customGlobalScheme);
-  }
-
-  private void repaintGuide(@Nullable IndentGuideDescriptor guide) {
-    if (guide != null) {
-      repaintLines(guide.startLine, guide.endLine);
-    }
   }
 
   @Override
@@ -1508,7 +1476,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            logicalToVisualPosition(new LogicalPosition(logicalLine, 0)).line;
   }
 
-  private int logicalLineToY(int line) {
+  int logicalLineToY(int line) {
     int visualLine = logicalToVisualLine(line);
     return visualLineToY(visualLine);
   }
@@ -1617,7 +1585,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @param startLine start logical line to repaint (inclusive)
    * @param endLine   end logical line to repaint (inclusive)
    */
-  private void repaintLines(int startLine, int endLine) {
+  void repaintLines(int startLine, int endLine) {
     if (!isShowing()) return;
 
     int startVisualLine = logicalToVisualLine(startLine);
