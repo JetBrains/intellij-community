@@ -54,7 +54,7 @@
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-compiler-impl" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-common" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-jvm" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="kotlinc-delegator.sam-with-receiver-compiler-plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />

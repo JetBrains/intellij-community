@@ -24,7 +24,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-stdlib-jdk8" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" />
-    <orderEntry type="library" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="kotlinc-delegator.sam-with-receiver-compiler-plugin" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-compiler" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-compiler-impl" />
     <orderEntry type="module" module-name="kotlin.core" />
