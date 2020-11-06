@@ -11,4 +11,10 @@
   <item name='javax.accessibility.AccessibleContext java.lang.String getAccessibleName()'>
     <annotation name='org.jetbrains.annotations.Nls'/>
   </item>
+  <item name='javax.accessibility.AccessibleContext void setAccessibleDescription(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nls'/>
+  </item>
+  <item name='javax.accessibility.AccessibleContext void setAccessibleName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nls'/>
+  </item>
 </root>
