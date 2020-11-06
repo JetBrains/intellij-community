@@ -13,11 +13,8 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import it.unimi.dsi.fastutil.ints.*;
@@ -31,7 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * A data structure to store key hashes to virtual file id mappings.
@@ -211,13 +207,15 @@ class KeyHashLog<Key> implements Closeable {
         oldMapping.processAll(key -> {
           int inputId = key[1];
           int keyHash = key[0];
+          int absInputId = Math.abs(inputId);
+
           if (inputId > 0) {
-            data.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(inputId);
+            data.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(absInputId);
           }
           else {
             IntSet associatedInputIds = data.get(keyHash);
             if (associatedInputIds != null) {
-              associatedInputIds.remove(inputId);
+              associatedInputIds.remove(absInputId);
             }
           }
           return true;
@@ -374,7 +372,7 @@ class KeyHashLog<Key> implements Closeable {
     return myBaseStorageFile.resolveSibling(myBaseStorageFile.getFileName() + ".project");
   }
 
-  private static class IntPairInArrayKeyDescriptor implements KeyDescriptor<int[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  private static class IntPairInArrayKeyDescriptor implements DataExternalizer<int[]> {
     private static final IntPairInArrayKeyDescriptor INSTANCE = new IntPairInArrayKeyDescriptor();
     @Override
     public void save(@NotNull DataOutput out, int[] value) throws IOException {
@@ -385,16 +383,6 @@ class KeyHashLog<Key> implements Closeable {
     @Override
     public int[] read(@NotNull DataInput in) throws IOException {
       return new int[] {DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in)};
-    }
-
-    @Override
-    public int getHashCode(int[] value) {
-      return value[0] * 31 + value[1];
-    }
-
-    @Override
-    public boolean isEqual(int[] val1, int[] val2) {
-      return val1[0] == val2[0] && val1[1] == val2[1];
     }
   }
 }

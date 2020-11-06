@@ -20,14 +20,14 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   private volatile int myBufferPosition;
   private static final int ourAppendBufferLength = 4096;
   @NotNull
-  private final KeyDescriptor<Data> myDataDescriptor;
+  private final DataExternalizer<Data> myDataDescriptor;
 
   public AppendableStorageBackedByResizableMappedFile(final Path file,
                                                       int initialSize,
                                                       @Nullable StorageLockContext lockContext,
                                                       int pageSize,
                                                       boolean valuesAreBufferAligned,
-                                                      @NotNull KeyDescriptor<Data> dataDescriptor) {
+                                                      @NotNull DataExternalizer<Data> dataDescriptor) {
     super(file, initialSize, lockContext, pageSize, valuesAreBufferAligned);
     myDataDescriptor = dataDescriptor;
     myFileLength = (int)length();
@@ -174,7 +174,6 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     final PagedFileStorage storage = getPagedFileStorage();
 
     if (myFileLength <= addr) {
-      //noinspection IOResourceOpenedButNotSafelyClosed
       comparer = new OutputStream() {
         int address = addr - myFileLength;
         boolean same = true;
@@ -191,7 +190,6 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
       };
     }
     else {
-      //noinspection IOResourceOpenedButNotSafelyClosed
       comparer = new OutputStream() {
         int base = addr;
         int address = storage.getOffsetInPage(addr);
@@ -243,7 +241,6 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     }
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static final InputStream TOMBSTONE = new InputStream() {
     @Override
     public int read() {
