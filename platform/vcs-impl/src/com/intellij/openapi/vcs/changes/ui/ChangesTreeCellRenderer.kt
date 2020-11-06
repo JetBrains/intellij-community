@@ -14,7 +14,7 @@ import javax.accessibility.AccessibleRole
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
-class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
+open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
   private val component = ThreeStateCheckBox()
 
   init {

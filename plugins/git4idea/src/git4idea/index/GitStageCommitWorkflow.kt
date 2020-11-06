@@ -42,7 +42,7 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
   private fun doCommit() {
     LOG.debug("Do actual commit")
 
-    val fullyStaged = trackerState.rootStates.mapValues { it.value.getFullyStagedPaths() }
+    val fullyStaged = trackerState.rootStates.filter { commitState.roots.contains(it.key) }.mapValues { it.value.getFullyStagedPaths() }
 
     with(GitStageCommitter(project, commitState, fullyStaged, commitContext)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))

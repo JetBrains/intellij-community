@@ -88,7 +88,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
   override fun documentChanged(event: DocumentEvent) = clearError()
   override fun inclusionChanged() = clearError()
 
-  private fun update() {
+  protected fun update() {
     val error = buildErrorText()
 
     when {
@@ -98,7 +98,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
   }
 
-  private fun clearError() {
+  protected open fun clearError() {
     isEmptyMessage = false
     isEmptyChanges = false
   }

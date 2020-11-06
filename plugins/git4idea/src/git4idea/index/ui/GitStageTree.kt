@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
+import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.ide.dnd.DnDActionInfo
 import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
@@ -29,6 +30,7 @@ import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.ColorIcon
+import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.conflicts.getConflictType
@@ -44,12 +46,10 @@ import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import java.awt.Color
-import java.awt.Graphics
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.stream.Collectors
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -74,6 +74,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   init {
     isKeepTreeState = true
     isScrollToSelection = false
+    isShowCheckboxes = true
     setCellRenderer(GitStageTreeRenderer(myProject) { isShowFlatten })
     MyMouseListener().also {
       addMouseMotionListener(it)
@@ -98,7 +99,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     val path = getClosestPathForLocation(point.x, point.y) ?: return null
     val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return null
     val operation = getFirstMatchingOperation(node) ?: return null
-    val componentBounds = operation.icon?.let { getComponentBounds(path, it)} ?: return null
+    val componentBounds = operation.icon?.let { getComponentBounds(path, it) } ?: return null
 
     return HoverData(node, operation, componentBounds.contains(point))
   }
@@ -197,6 +198,31 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     else {
       ListSelection.create(allEntries, selected)
     }
+  }
+
+  override fun isInclusionEnabled(node: ChangesBrowserNode<*>): Boolean {
+    return state.rootStates.size > 1 && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
+  }
+
+  override fun isInclusionVisible(node: ChangesBrowserNode<*>): Boolean {
+    return state.rootStates.size > 1 && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
+  }
+
+  override fun getIncludableUserObjects(treeModelData: VcsTreeModelData): MutableList<Any> {
+    return treeModelData
+      .rawNodesStream()
+      .filter { node: ChangesBrowserNode<*>? -> isIncludable(node!!) }
+      .map { node: ChangesBrowserNode<*> -> node.userObject }
+      .collect(Collectors.toList())
+  }
+
+  override fun getNodeStatus(node: ChangesBrowserNode<*>): ThreeStateCheckBox.State {
+    return inclusionModel.getInclusionState(node.userObject)
+  }
+
+  private fun isUnderKind(node: ChangesBrowserNode<*>, nodeKind: NodeKind): Boolean {
+    val nodePath = node.path?.takeIf { it.isNotEmpty() } ?: return false
+    return (nodePath.find { it is MyKindNode } as? MyKindNode)?.kind == nodeKind
   }
 
   private inner class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory)
@@ -362,7 +388,9 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     override fun getSortWeight(): Int = sortOrder.getValue(NodeKind.UNTRACKED)
   }
 
-  private class GitStageTreeRenderer(project: Project, isShowFlatten: () -> Boolean) : ChangesBrowserNodeRenderer(project, isShowFlatten, true) {
+  private class GitStageTreeRenderer(project: Project, isShowFlatten: () -> Boolean) :
+    ChangesTreeCellRenderer(ChangesBrowserNodeRenderer(project, isShowFlatten, true)) {
+
     private var floatingIcon: FloatingIcon? = null
 
     override fun paint(g: Graphics) {
@@ -373,15 +401,16 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       }
     }
 
-    override fun customizeCellRenderer(tree: JTree,
-                                       value: Any?,
-                                       selected: Boolean,
-                                       expanded: Boolean,
-                                       leaf: Boolean,
-                                       row: Int,
-                                       hasFocus: Boolean) {
-      super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
+    override fun getTreeCellRendererComponent(tree: JTree,
+                                              value: Any,
+                                              selected: Boolean,
+                                              expanded: Boolean,
+                                              leaf: Boolean,
+                                              row: Int,
+                                              hasFocus: Boolean): Component {
+      val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
       floatingIcon = prepareIcon(tree as GitStageTree, value as ChangesBrowserNode<*>, row, selected)
+      return rendererComponent
     }
 
     fun prepareIcon(tree: GitStageTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): FloatingIcon? {

@@ -3,11 +3,13 @@ package git4idea.index
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.vcs.commit.*
+import git4idea.index.ui.GitStageCommitPanel
 
 class GitStageCommitWorkflowHandler(
   override val workflow: GitStageCommitWorkflow,
-  override val ui: NonModalCommitWorkflowUi
+  override val ui: GitStageCommitPanel
 ) : NonModalCommitWorkflowHandler<GitStageCommitWorkflow, NonModalCommitWorkflowUi>(),
     CommitAuthorTracker by ui {
 
@@ -33,11 +35,11 @@ class GitStageCommitWorkflowHandler(
     initCommitMessage()
   }
 
-  override fun isCommitEmpty(): Boolean = !state.hasStagedRoots()
+  override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()
 
   override fun updateWorkflow() {
     workflow.trackerState = state
-    workflow.commitState = GitStageCommitState(state.stagedRoots, getCommitMessage())
+    workflow.commitState = GitStageCommitState(ui.rootsToCommit, getCommitMessage())
   }
 
   override fun addUnversionedFiles(): Boolean = true
@@ -45,6 +47,12 @@ class GitStageCommitWorkflowHandler(
   override fun refreshChanges(callback: () -> Unit) = callback()
 
   private fun initCommitMessage() = setCommitMessage(commitMessagePolicy.getCommitMessage())
+
+  override fun checkCommit(executor: CommitExecutor?): Boolean {
+    ui.commitProgressUi.isEmptyRoots = ui.includedRoots.isEmpty()
+    val superCheckResult = super.checkCommit(executor)
+    return superCheckResult && !ui.commitProgressUi.isEmptyRoots
+  }
 
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
     override fun onSuccess(commitMessage: String) {

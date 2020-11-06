@@ -616,7 +616,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   @NotNull
-  State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
+  protected State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
@@ -654,12 +654,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return isIncludable((ChangesBrowserNode<?>)lastComponent);
   }
 
-  private boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
+  protected boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
     return isInclusionVisible(node) && isInclusionEnabled(node);
   }
 
   @NotNull
-  private List<Object> getIncludableUserObjects(@NotNull VcsTreeModelData treeModelData) {
+  protected List<Object> getIncludableUserObjects(@NotNull VcsTreeModelData treeModelData) {
     return treeModelData
       .nodesStream()
       .filter(node -> isIncludable(node))

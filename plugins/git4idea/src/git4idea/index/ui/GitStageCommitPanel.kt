@@ -8,10 +8,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.vcs.commit.CommitProgressPanel
-import com.intellij.vcs.commit.CommitProgressUi
 import com.intellij.vcs.commit.EditedCommitDetails
 import com.intellij.vcs.commit.NonModalCommitPanel
 import git4idea.i18n.GitBundle
@@ -19,6 +20,7 @@ import git4idea.index.ContentVersion
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
 import git4idea.index.createChange
+import git4idea.repo.GitRepository
 import kotlin.properties.Delegates.observable
 
 private fun GitStageTracker.State.getStaged(): Set<GitFileStatus> =
@@ -30,13 +32,21 @@ private fun GitStageTracker.RootState.getStaged(): Set<GitFileStatus> =
 private fun GitStageTracker.RootState.getStagedChanges(project: Project): List<Change> =
   getStaged().mapNotNull { createChange(project, root, it, ContentVersion.HEAD, ContentVersion.STAGED) }
 
-class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
+class GitStageCommitPanel(private val inclusionModel: InclusionModel, project: Project) : NonModalCommitPanel(project) {
   private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
 
   private val progressPanel = GitStageCommitProgressPanel()
 
+  private val singleRoot get() = state.rootStates.takeIf { it.size == 1 }?.keys
+  internal val includedRoots get() = singleRoot ?: inclusionModel.getInclusion().mapNotNull { (it as? GitRepository)?.root }
+  val rootsToCommit get() = state.stagedRoots.intersect(includedRoots)
+
   private var staged: Set<GitFileStatus> = emptySet()
-  private val stagedChanges = ClearableLazyValue.create { state.rootStates.values.flatMap { it.getStagedChanges(project) } }
+  private val stagedChanges = ClearableLazyValue.create {
+    state.rootStates.filterKeys {
+      includedRoots.contains(it)
+    }.values.flatMap { it.getStagedChanges(project) }
+  }
 
   var state: GitStageTracker.State by observable(GitStageTracker.State.EMPTY) { _, _, newValue ->
     val newStaged = newValue.getStaged()
@@ -50,6 +60,13 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   init {
     Disposer.register(this, commitMessage)
 
+    inclusionModel.addInclusionListener(object : InclusionListener {
+      override fun inclusionChanged() {
+        stagedChanges.drop()
+        fireInclusionChanged()
+      }
+    })
+
     progressPanel.setup(this, commitMessage.editorField)
     bottomPanel = {
       add(progressPanel.apply { border = empty(6) })
@@ -59,7 +76,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
     buildLayout()
   }
 
-  override val commitProgressUi: CommitProgressUi get() = progressPanel
+  override val commitProgressUi: GitStageCommitProgressPanel get() = progressPanel
 
   override var editedCommit: EditedCommitDetails? by observable(null) { _, _, _ ->
     editedCommitListeners.forEach { it() }
@@ -80,9 +97,20 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   override fun includeIntoCommit(items: Collection<*>) = Unit
 }
 
-private class GitStageCommitProgressPanel : CommitProgressPanel() {
+class GitStageCommitProgressPanel : CommitProgressPanel() {
+  var isEmptyRoots: Boolean by observable(false) { _, oldValue, newValue ->
+    if (oldValue == newValue) return@observable
+    update()
+  }
+
+  override fun clearError() {
+    super.clearError()
+    isEmptyRoots = false
+  }
+
   override fun buildErrorText(): String? =
     when {
+      isEmptyRoots -> GitBundle.message("error.no.selected.roots.to.commit")
       isEmptyChanges && isEmptyMessage -> GitBundle.message("error.no.staged.changes.no.commit.message")
       isEmptyChanges -> GitBundle.message("error.no.staged.changes.to.commit")
       isEmptyMessage -> VcsBundle.message("error.no.commit.message")

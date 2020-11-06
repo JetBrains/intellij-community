@@ -87,7 +87,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   init {
     tree = MyChangesTree(project)
 
-    commitPanel = GitStageCommitPanel(project)
+    commitPanel = GitStageCommitPanel(tree.inclusionModel, project)
     commitPanel.commitActionsPanel.isCommitButtonDefault = {
       !commitPanel.commitProgressUi.isDumbMode &&
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
@@ -208,7 +208,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   override fun dispose() {
   }
 
-  private inner class MyChangesTree(project: Project) : GitStageTree(project, project.service<GitStageUiSettingsImpl>(), this) {
+  private inner class MyChangesTree(project: Project) : GitStageTree(project, project.service<GitStageUiSettingsImpl>(), this@GitStagePanel) {
     override val state
       get() = this@GitStagePanel.state
     override val ignoredFilePaths
