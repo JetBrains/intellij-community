@@ -25,7 +25,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-stdlib-jdk8" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" />
-    <orderEntry type="library" name="kotlinc.noarg-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="kotlinc-delegator.noarg-compiler-plugin" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.jps-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.maven" />
