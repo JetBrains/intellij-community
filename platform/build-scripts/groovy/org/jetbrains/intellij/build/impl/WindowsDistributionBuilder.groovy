@@ -74,14 +74,19 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     String zipPath = null, exePath = null
+    String jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
+
+    File vcRtDll = new File(jreDirectoryPath, "jbr/bin/msvcp140.dll");
+    if (vcRtDll.exists()) {
+      buildContext.ant.copy(file: vcRtDll, toDir: "$winDistPath/bin")
+    }
 
     if (customizer.buildZipArchive) {
-      def jreDirectoryPaths = customizer.zipArchiveWithBundledJre ? [buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)] : []
+      def jreDirectoryPaths = customizer.zipArchiveWithBundledJre ? [jreDirectoryPath] : []
       zipPath = buildWinZip(jreDirectoryPaths, ".win", winDistPath)
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
       generateProductJson(productJsonDir, jreDirectoryPath != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath], [])
