@@ -5,6 +5,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 final class RenameHandler2Renamer implements Renamer {
@@ -26,7 +27,7 @@ final class RenameHandler2Renamer implements Renamer {
 
   @Override
   public @NotNull String getPresentableText() {
-    return RenameHandlerRegistry.getHandlerTitle(myHandler);
+    return UIUtil.removeMnemonic(RenameHandlerRegistry.getHandlerTitle(myHandler));
   }
 
   @Override
