@@ -460,17 +460,16 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                                   @Nullable ExecutionNode parentNode,
                                                   @NotNull Object eventId,
                                                   @NotNull ExecutionNode buildProgressRootNode) {
-    ExecutionNode currentNode;
-    currentNode = new ExecutionNode(myProject, parentNode, parentNode == buildProgressRootNode, this::isCorrectThread);
+    ExecutionNode executionNode = new ExecutionNode(myProject, parentNode, parentNode == buildProgressRootNode, this::isCorrectThread);
     BuildEventPresentationData presentationData = event.getPresentationData();
-    currentNode.applyFrom(presentationData);
-    nodesMap.put(eventId, currentNode);
+    executionNode.applyFrom(presentationData);
+    nodesMap.put(eventId, executionNode);
     if (parentNode != null) {
       structureChanged.add(parentNode);
-      parentNode.add(currentNode);
+      parentNode.add(executionNode);
     }
-    myConsoleViewHandler.maybeAddExecutionConsole(currentNode, presentationData);
-    return currentNode;
+    myConsoleViewHandler.maybeAddExecutionConsole(executionNode, presentationData);
+    return executionNode;
   }
 
   @ApiStatus.Internal
@@ -921,8 +920,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     }
 
     private void showTextConsoleToolbarActions() {
-      myConsoleToolbarActionGroup.copyFromGroup(createDefaultConsoleToolbar());
-      myToolbar.updateActionsImmediately();
+      myConsoleToolbarActionGroup.copyFromGroup(createDefaultTextConsoleToolbar());
+      updateToolbarActionsImmediately();
     }
 
     private void showCustomConsoleToolbarActions(@Nullable ActionGroup actionGroup) {
@@ -935,11 +934,15 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       else {
         myConsoleToolbarActionGroup.removeAll();
       }
-      myToolbar.updateActionsImmediately();
+      updateToolbarActionsImmediately();
+    }
+
+    private void updateToolbarActionsImmediately() {
+      invokeLaterIfNeeded(() -> myToolbar.updateActionsImmediately());
     }
 
     @NotNull
-    private DefaultActionGroup createDefaultConsoleToolbar() {
+    private DefaultActionGroup createDefaultTextConsoleToolbar() {
       DefaultActionGroup textConsoleToolbarActionGroup = new DefaultActionGroup();
       textConsoleToolbarActionGroup.add(new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
         @Override
