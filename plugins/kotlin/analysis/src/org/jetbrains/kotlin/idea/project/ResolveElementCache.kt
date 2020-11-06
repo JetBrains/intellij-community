@@ -164,7 +164,7 @@ class ResolveElementCache(
         if (bodyResolveMode != BodyResolveMode.FULL && bodyResolveMode != BodyResolveMode.PARTIAL_FOR_COMPLETION && (!isUnitTestMode() || forceFullAnalysisModeInTests)) {
             val virtualFile = resolveElement.containingFile.virtualFile
             // applicable for real (physical) files only
-            if (virtualFile != null && FileEditorManager.getInstance(resolveElement.project).selectedFiles.any { it == virtualFile }) {
+            if (virtualFile != null && FileEditorManager.getInstance(resolveElement.project)?.selectedFiles?.any { it == virtualFile } == true) {
                 return getElementsAdditionalResolve(resolveElement, contextElements, BodyResolveMode.FULL)
             }
         }
