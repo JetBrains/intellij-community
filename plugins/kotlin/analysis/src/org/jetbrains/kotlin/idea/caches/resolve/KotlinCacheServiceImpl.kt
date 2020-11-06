@@ -16,12 +16,14 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.idea.IdeaLogger
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValue
@@ -129,6 +131,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                 if (e is ControlFlowException) throw e
                 throw KotlinExceptionWithAttachments("Couldn't get containingKtFile for ktElement", e)
                     .withAttachment("element.kt", it.text)
+                    .withAttachment("original", IdeaLogger.getThrowableRenderer().doRender(e).joinToString(separator = "\n"))
             }
         }
     }
