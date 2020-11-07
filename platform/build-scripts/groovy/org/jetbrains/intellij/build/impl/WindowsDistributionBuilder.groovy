@@ -76,8 +76,14 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     String zipPath = null, exePath = null
     String jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
 
-    File vcRtDll = new File(jreDirectoryPath, "jbr/bin/msvcp140.dll");
-    if (vcRtDll.exists()) {
+    if (jreDirectoryPath != null) {
+      File vcRtDll = new File(jreDirectoryPath, "jbr/bin/msvcp140.dll")
+      if (!vcRtDll.exists()) {
+        buildContext.messages.error(
+          "VS C++ Runtime DLL (${vcRtDll.name}) not found in ${vcRtDll.parent}.\n" +
+          "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
+          "If DLL was relocated to another place, please correct the path in this code.")
+      }
       buildContext.ant.copy(file: vcRtDll, toDir: "$winDistPath/bin")
     }
 
