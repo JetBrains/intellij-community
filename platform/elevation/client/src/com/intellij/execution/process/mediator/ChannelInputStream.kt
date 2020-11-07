@@ -2,9 +2,11 @@
 package com.intellij.execution.process.mediator
 
 import com.google.protobuf.ByteString
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.runBlocking
+import java.io.IOException
 import java.io.InputStream
 import java.util.*
 
@@ -24,6 +26,9 @@ class ChannelInputStream(private val readChannel: ReceiveChannel<ByteString>) : 
     if (drainChannel().isEmpty) {
       carryChunk = try {
         runBlocking { readChannel.receive() }
+      }
+      catch (e: CancellationException) {
+        throw IOException(e)
       }
       catch (e: ClosedReceiveChannelException) {
         return -1 // EOF
@@ -50,6 +55,9 @@ class ChannelInputStream(private val readChannel: ReceiveChannel<ByteString>) : 
         chunk = chunk.concat(nextChunk)
       }
       while (true)
+    }
+    catch (e: CancellationException) {
+      throw IOException(e)
     }
     finally {
       carryChunk = chunk
