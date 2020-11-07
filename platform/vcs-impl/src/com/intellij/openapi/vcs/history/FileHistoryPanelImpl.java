@@ -739,7 +739,10 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
         setBackground(table.getBackground());
         setForeground(table.getForeground());
       }
-      if (value != null) append(value.toString(), getDefaultAttributes());
+      if (value != null)  {
+        //noinspection HardCodedStringLiteral
+        append(value.toString(), getDefaultAttributes());
+      }
       SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
     }
   }
