@@ -51,10 +51,9 @@ object ProcessMediatorDaemonLauncher {
     catch (e: IOException) {
       throw ExecutionException(ElevationBundle.message("dialog.message.daemon.hello.failed"), e)
     }
-    val daemonLaunchOptions = helloIpc.getDaemonLaunchOptions()
-      .copy(trampoline = sudo && SystemInfo.isUnix,
-            daemonize = sudo && SystemInfo.isUnix,
-            leaderPid = ProcessHandle.current().pid())
+    val daemonLaunchOptions = helloIpc.getDaemonLaunchOptions().let {
+      if (SystemInfo.isWindows) it else it.copy(trampoline = sudo, daemonize = sudo, leaderPid = ProcessHandle.current().pid())
+    }
 
     val trampolineCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
       .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
@@ -66,10 +65,14 @@ object ProcessMediatorDaemonLauncher {
           if (!sudo) trampolineCommandLine
           else ExecUtil.sudoCommand(trampolineCommandLine, "Elevation daemon")
 
-        helloIpc.createDaemonProcessHandler(maybeSudoTrampolineCommandLine).startNotify()
+        val trampolineProcessHandler = helloIpc.createDaemonProcessHandler(maybeSudoTrampolineCommandLine).also {
+          it.startNotify()
+        }
 
         val daemonHello = helloIpc.readHello() ?: throw ProcessCanceledException()
-        val daemonProcessHandle = ProcessHandle.of(daemonHello.pid).orElseThrow(::ProcessCanceledException)
+        val daemonProcessHandle =
+          if (SystemInfo.isWindows) trampolineProcessHandler.process.toHandle()  // can't get access a process owned by another user
+          else ProcessHandle.of(daemonHello.pid).orElseThrow(::ProcessCanceledException)
 
         ProcessMediatorDaemonImpl(daemonProcessHandle,
                                   daemonHello.port,
