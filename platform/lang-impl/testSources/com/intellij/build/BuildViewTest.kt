@@ -241,7 +241,7 @@ class BuildViewTest : LightPlatformTestCase() {
 
     buildViewTestFixture.assertBuildViewSelectedNode("cancelled", "", false)
     buildViewTestFixture.assertBuildViewSelectedNode("Root message", "Tex of the root message console\n", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Inner progress", "", false)
+    buildViewTestFixture.assertBuildViewSelectedNodeConsole("Inner progress", false, ::assertNull)
   }
 
   @Test
