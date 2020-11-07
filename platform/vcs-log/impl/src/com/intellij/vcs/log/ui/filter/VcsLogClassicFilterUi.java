@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -22,18 +23,22 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +46,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
+import java.awt.*;
+import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -166,23 +174,26 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   @Nullable
   protected FilterActionComponent createBranchComponent() {
-    return new FilterActionComponent(() -> new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi());
+    return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.branch.filter.action.text"),
+                                     () -> new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi());
   }
 
   @Nullable
   protected FilterActionComponent createUserComponent() {
-    return new FilterActionComponent(() -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi());
+    return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.user.filter.action.text"),
+                                     () -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi());
   }
 
   @Nullable
   protected FilterActionComponent createDateComponent() {
-    return new FilterActionComponent(() -> new DateFilterPopupComponent(myDateFilterModel).initUi());
+    return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.date.filter.action.text"),
+                                     () -> new DateFilterPopupComponent(myDateFilterModel).initUi());
   }
 
   @Nullable
   protected FilterActionComponent createStructureFilterComponent() {
-    return new FilterActionComponent(
-      () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myColorManager).initUi());
+    return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.path.filter.action.text"),
+                                     () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myColorManager).initUi());
   }
 
   @Override
@@ -194,7 +205,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @NotNull private final Computable<? extends JComponent> myComponentCreator;
 
-    public FilterActionComponent(@NotNull Computable<? extends JComponent> componentCreator) {
+    public FilterActionComponent(@NotNull Supplier<@Nls @NlsActions.ActionText String> dynamicText, @NotNull Computable<? extends JComponent> componentCreator) {
+      super(dynamicText);
       myComponentCreator = componentCreator;
     }
 
@@ -206,6 +218,15 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      MainVcsLogUi vcsLogUi = e.getData(VcsLogInternalDataKeys.MAIN_UI);
+      if (vcsLogUi == null) return;
+
+      Component actionComponent = UIUtil.uiTraverser(vcsLogUi.getToolbar()).traverse().find(component -> {
+        return UIUtil.getClientProperty(component, ACTION_KEY) == this;
+      });
+      if (actionComponent instanceof VcsLogPopupComponent) {
+        ((VcsLogPopupComponent)actionComponent).showPopupMenu();
+      }
     }
   }
 

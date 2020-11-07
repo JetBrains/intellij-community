@@ -7,8 +7,10 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -25,6 +27,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -323,6 +326,24 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     else if (HAS_AFFECTED_FILES.is(dataId)) {
       return myAffectedPaths != null;
     }
+    else if (QuickActionProvider.KEY.is(dataId)) {
+      return new QuickActionProvider() {
+        @Override
+        public @NotNull List<AnAction> getActions(boolean originalProvider) {
+          return SimpleToolWindowPanel.collectActions(VcsLogChangesBrowser.this);
+        }
+
+        @Override
+        public JComponent getComponent() {
+          return VcsLogChangesBrowser.this;
+        }
+
+        @Override
+        public @NlsActions.ActionText @Nullable String getName() {
+          return null;
+        }
+      };
+    }
     return super.getData(dataId);
   }
 
@@ -447,7 +468,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      RootTag tag = (RootTag) o;
+      RootTag tag = (RootTag)o;
       return Objects.equals(myCommit, tag.myCommit);
     }
 
