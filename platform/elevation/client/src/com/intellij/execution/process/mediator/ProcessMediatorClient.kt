@@ -56,10 +56,11 @@ class ProcessMediatorClient(
     return response.pid
   }
 
-  suspend fun destroyProcess(pid: Long, force: Boolean) {
+  suspend fun destroyProcess(pid: Long, force: Boolean, destroyGroup: Boolean) {
     val request = DestroyProcessRequest.newBuilder()
       .setPid(pid)
       .setForce(force)
+      .setDestroyGroup(destroyGroup)
       .build()
     ExceptionAsStatus.unwrap {
       processManagerStub.destroyProcess(request)

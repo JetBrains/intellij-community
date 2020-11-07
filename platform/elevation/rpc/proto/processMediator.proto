@@ -48,6 +48,7 @@ message CreateProcessReply {
 message DestroyProcessRequest {
   uint64 pid = 1;
   bool force = 2;
+  bool destroy_group = 3;
 }
 
 message AwaitTerminationRequest {

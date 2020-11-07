@@ -143,10 +143,10 @@ open class MediatedProcess private constructor(private val handle: MediatedProce
     return this
   }
 
-  private fun destroy(force: Boolean) {
+  fun destroy(force: Boolean, destroyGroup: Boolean = false) {
     launch {
       handle.rpc {
-        destroyProcess(pid, force)
+        destroyProcess(pid, force, destroyGroup)
       }
     }
   }

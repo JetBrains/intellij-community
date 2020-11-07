@@ -101,47 +101,47 @@ public final class ProcessMediatorProto {
       "ble\030\002 \001(\010\"X\n\024CreateProcessRequest\022@\n\014com" +
       "mand_line\030\001 \001(\0132*.intellij.process.media" +
       "tor.rpc.CommandLine\"!\n\022CreateProcessRepl" +
-      "y\022\013\n\003pid\030\001 \001(\004\"3\n\025DestroyProcessRequest\022" +
-      "\013\n\003pid\030\001 \001(\004\022\r\n\005force\030\002 \001(\010\"&\n\027AwaitTerm" +
-      "inationRequest\022\013\n\003pid\030\001 \001(\004\"*\n\025AwaitTerm" +
-      "inationReply\022\021\n\texit_code\030\001 \001(\r\"\035\n\016Relea" +
-      "seRequest\022\013\n\003pid\030\001 \001(\004\"%\n\nFileHandle\022\013\n\003" +
-      "pid\030\001 \001(\004\022\n\n\002fd\030\002 \001(\r\"\033\n\tDataChunk\022\016\n\006bu" +
-      "ffer\030\001 \001(\014\"N\n\021ReadStreamRequest\0229\n\006handl" +
-      "e\030\001 \001(\0132).intellij.process.mediator.rpc." +
-      "FileHandle\"\242\001\n\022WriteStreamRequest\022;\n\006han" +
-      "dle\030\001 \001(\0132).intellij.process.mediator.rp" +
-      "c.FileHandleH\000\0229\n\005chunk\030\002 \001(\0132(.intellij" +
-      ".process.mediator.rpc.DataChunkH\000B\024\n\022Fil" +
-      "eHandleOrBuffer\"\342\001\n\013CommandLine\022\017\n\007comma" +
-      "nd\030\001 \003(\t\022\023\n\013working_dir\030\002 \001(\t\022\017\n\007in_file" +
-      "\030\003 \001(\t\022\020\n\010out_file\030\004 \001(\t\022\020\n\010err_file\030\005 \001" +
-      "(\t\022H\n\007environ\030\006 \003(\01327.intellij.process.m" +
-      "ediator.rpc.CommandLine.EnvironEntry\032.\n\014" +
-      "EnvironEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t" +
-      ":\0028\0012\236\001\n\006Daemon\022X\n\013AdjustQuota\0221.intelli" +
-      "j.process.mediator.rpc.AdjustQuotaReques" +
-      "t\032\026.google.protobuf.Empty\022:\n\010Shutdown\022\026." +
-      "google.protobuf.Empty\032\026.google.protobuf." +
-      "Empty2\210\005\n\016ProcessManager\022w\n\rCreateProces" +
-      "s\0223.intellij.process.mediator.rpc.Create" +
-      "ProcessRequest\0321.intellij.process.mediat" +
-      "or.rpc.CreateProcessReply\022^\n\016DestroyProc" +
-      "ess\0224.intellij.process.mediator.rpc.Dest" +
-      "royProcessRequest\032\026.google.protobuf.Empt" +
-      "y\022\200\001\n\020AwaitTermination\0226.intellij.proces" +
-      "s.mediator.rpc.AwaitTerminationRequest\0324" +
-      ".intellij.process.mediator.rpc.AwaitTerm" +
-      "inationReply\022\\\n\013WriteStream\0221.intellij.p" +
-      "rocess.mediator.rpc.WriteStreamRequest\032\026" +
-      ".google.protobuf.Empty(\0010\001\022j\n\nReadStream" +
-      "\0220.intellij.process.mediator.rpc.ReadStr" +
-      "eamRequest\032(.intellij.process.mediator.r" +
-      "pc.DataChunk0\001\022P\n\007Release\022-.intellij.pro" +
-      "cess.mediator.rpc.ReleaseRequest\032\026.googl" +
-      "e.protobuf.EmptyBE\n+com.intellij.executi" +
-      "on.process.mediator.rpcB\024ProcessMediator" +
-      "ProtoP\001b\006proto3"
+      "y\022\013\n\003pid\030\001 \001(\004\"J\n\025DestroyProcessRequest\022" +
+      "\013\n\003pid\030\001 \001(\004\022\r\n\005force\030\002 \001(\010\022\025\n\rdestroy_g" +
+      "roup\030\003 \001(\010\"&\n\027AwaitTerminationRequest\022\013\n" +
+      "\003pid\030\001 \001(\004\"*\n\025AwaitTerminationReply\022\021\n\te" +
+      "xit_code\030\001 \001(\r\"\035\n\016ReleaseRequest\022\013\n\003pid\030" +
+      "\001 \001(\004\"%\n\nFileHandle\022\013\n\003pid\030\001 \001(\004\022\n\n\002fd\030\002" +
+      " \001(\r\"\033\n\tDataChunk\022\016\n\006buffer\030\001 \001(\014\"N\n\021Rea" +
+      "dStreamRequest\0229\n\006handle\030\001 \001(\0132).intelli" +
+      "j.process.mediator.rpc.FileHandle\"\242\001\n\022Wr" +
+      "iteStreamRequest\022;\n\006handle\030\001 \001(\0132).intel" +
+      "lij.process.mediator.rpc.FileHandleH\000\0229\n" +
+      "\005chunk\030\002 \001(\0132(.intellij.process.mediator" +
+      ".rpc.DataChunkH\000B\024\n\022FileHandleOrBuffer\"\342" +
+      "\001\n\013CommandLine\022\017\n\007command\030\001 \003(\t\022\023\n\013worki" +
+      "ng_dir\030\002 \001(\t\022\017\n\007in_file\030\003 \001(\t\022\020\n\010out_fil" +
+      "e\030\004 \001(\t\022\020\n\010err_file\030\005 \001(\t\022H\n\007environ\030\006 \003" +
+      "(\01327.intellij.process.mediator.rpc.Comma" +
+      "ndLine.EnvironEntry\032.\n\014EnvironEntry\022\013\n\003k" +
+      "ey\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\0012\236\001\n\006Daemon\022X" +
+      "\n\013AdjustQuota\0221.intellij.process.mediato" +
+      "r.rpc.AdjustQuotaRequest\032\026.google.protob" +
+      "uf.Empty\022:\n\010Shutdown\022\026.google.protobuf.E" +
+      "mpty\032\026.google.protobuf.Empty2\210\005\n\016Process" +
+      "Manager\022w\n\rCreateProcess\0223.intellij.proc" +
+      "ess.mediator.rpc.CreateProcessRequest\0321." +
+      "intellij.process.mediator.rpc.CreateProc" +
+      "essReply\022^\n\016DestroyProcess\0224.intellij.pr" +
+      "ocess.mediator.rpc.DestroyProcessRequest" +
+      "\032\026.google.protobuf.Empty\022\200\001\n\020AwaitTermin" +
+      "ation\0226.intellij.process.mediator.rpc.Aw" +
+      "aitTerminationRequest\0324.intellij.process" +
+      ".mediator.rpc.AwaitTerminationReply\022\\\n\013W" +
+      "riteStream\0221.intellij.process.mediator.r" +
+      "pc.WriteStreamRequest\032\026.google.protobuf." +
+      "Empty(\0010\001\022j\n\nReadStream\0220.intellij.proce" +
+      "ss.mediator.rpc.ReadStreamRequest\032(.inte" +
+      "llij.process.mediator.rpc.DataChunk0\001\022P\n" +
+      "\007Release\022-.intellij.process.mediator.rpc" +
+      ".ReleaseRequest\032\026.google.protobuf.EmptyB" +
+      "E\n+com.intellij.execution.process.mediat" +
+      "or.rpcB\024ProcessMediatorProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -177,7 +177,7 @@ public final class ProcessMediatorProto {
     internal_static_intellij_process_mediator_rpc_DestroyProcessRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_DestroyProcessRequest_descriptor,
-        new java.lang.String[] { "Pid", "Force", });
+        new java.lang.String[] { "Pid", "Force", "DestroyGroup", });
     internal_static_intellij_process_mediator_rpc_AwaitTerminationRequest_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_intellij_process_mediator_rpc_AwaitTerminationRequest_fieldAccessorTable = new

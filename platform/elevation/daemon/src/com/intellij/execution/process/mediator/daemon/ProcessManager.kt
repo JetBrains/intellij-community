@@ -49,14 +49,31 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable, Corou
     }
   }
 
-  fun destroyProcess(pid: Pid, force: Boolean) {
+  fun destroyProcess(pid: Pid, force: Boolean, destroyGroup: Boolean) {
     val handle = getHandle(pid)
     val process = handle.process
-    if (force) {
-      process.destroyForcibly()
+    val processHandle = process.toHandle()
+    if (destroyGroup) {
+      processHandle.doDestroyRecursively(force)
     }
     else {
-      process.destroy()
+      processHandle.doDestroy(force)
+    }
+  }
+
+  private fun ProcessHandle.doDestroyRecursively(force: Boolean) {
+    for (child in children()) {
+      child.doDestroyRecursively(force)
+    }
+    doDestroy(force)
+  }
+
+  private fun ProcessHandle.doDestroy(force: Boolean) {
+    if (force) {
+      destroyForcibly()
+    }
+    else {
+      destroy()
     }
   }
 
