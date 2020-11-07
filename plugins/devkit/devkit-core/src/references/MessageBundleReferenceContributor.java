@@ -4,9 +4,9 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.openapi.components.State;
@@ -47,8 +47,7 @@ import java.util.Objects;
 
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 
-public class MessageBundleReferenceContributor extends PsiReferenceContributor {
-
+public final class MessageBundleReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String ACTION = "action.";
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
@@ -344,13 +343,13 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
   }
 
 
-  public static class ImplicitUsageProvider extends ImplicitPropertyUsageProvider {
+  public static class ImplicitUsageProvider implements ImplicitPropertyUsageProvider {
 
     @NonNls private static final String ICON_TOOLTIP_PREFIX = "icon.";
     @NonNls private static final String ICON_TOOLTIP_SUFFIX = ".tooltip";
 
     @Override
-    protected boolean isUsed(@NotNull Property property) {
+    public boolean isUsed(@NotNull Property property) {
       PsiFile file = property.getContainingFile();
       String fileName = file.getName();
       if (!fileName.endsWith(BUNDLE_PROPERTIES)) return false;

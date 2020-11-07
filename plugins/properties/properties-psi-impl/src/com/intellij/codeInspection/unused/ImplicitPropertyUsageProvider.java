@@ -2,21 +2,13 @@
 package com.intellij.codeInspection.unused;
 
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Max Medvedev
+ * @deprecated Use {@link com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider}
  */
-public abstract class ImplicitPropertyUsageProvider {
-  public static final ExtensionPointName<ImplicitPropertyUsageProvider> EP_NAME = ExtensionPointName.create("com.intellij.properties.implicitPropertyUsageProvider");
-
-  public static boolean isImplicitlyUsed(@NotNull Property property) {
-    for (ImplicitPropertyUsageProvider provider : EP_NAME.getExtensions()) {
-      if (provider.isUsed(property)) return true;
-    }
-    return false;
-  }
-
-  protected abstract boolean isUsed(@NotNull Property property);
+@Deprecated
+public abstract class ImplicitPropertyUsageProvider implements com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider {
+  @Override
+  public abstract boolean isUsed(@NotNull Property property);
 }

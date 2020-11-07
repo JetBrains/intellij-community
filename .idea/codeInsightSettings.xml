@@ -2,6 +2,7 @@
 <project version="4">
   <component name="JavaProjectCodeInsightSettings">
     <excluded-names>
+      <name>com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider</name>
       <name>com.intellij.util.Consumer</name>
       <name>com.intellij.util.containers.HashMap</name>
       <name>com.intellij.util.containers.HashSet</name>

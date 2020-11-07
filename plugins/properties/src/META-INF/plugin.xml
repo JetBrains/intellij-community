@@ -10,7 +10,7 @@
 
   <extensionPoints>
     <extensionPoint name="implicitPropertyUsageProvider"
-                    interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"
+                    interface="com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider"
                     dynamic="true"/>
     <extensionPoint name="alphaUnsortedInspectionSuppressor"
                     interface="com.intellij.lang.properties.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"

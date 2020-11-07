@@ -5,10 +5,10 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -40,7 +40,10 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class UnusedPropertyInspection extends PropertiesInspectionBase {
+public final class UnusedPropertyInspection extends PropertiesInspectionBase {
+  private static final ExtensionPointName<ImplicitPropertyUsageProvider>
+    EP_NAME = new ExtensionPointName<>("com.intellij.properties.implicitPropertyUsageProvider");
+
   public static final String SHORT_NAME = "UnusedProperty";
 
   public @NotNull @RegExp String fileNameMask = ".*";
@@ -52,7 +55,7 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase {
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
+  public @NotNull JComponent createOptionsPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
@@ -114,7 +117,8 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase {
           return PsiElementVisitor.EMPTY_VISITOR;
         }
       }
-      catch (PatternSyntaxException ignored) { }
+      catch (PatternSyntaxException ignored) {
+      }
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return PsiElementVisitor.EMPTY_VISITOR;
@@ -135,10 +139,20 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase {
         PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
         LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix();
         holder.registerProblem(key, isOnTheFly ? PropertiesBundle.message("unused.property.problem.descriptor.name")
-                                               : PropertiesBundle.message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()),
+                                               : PropertiesBundle
+                                      .message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
       }
     };
+  }
+
+  private static boolean isImplicitlyUsed(@NotNull Property property) {
+    for (ImplicitPropertyUsageProvider provider : EP_NAME.getIterable()) {
+      if (provider.isUsed(property)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isPropertyUsed(@NotNull Property property, @NotNull UnusedPropertiesSearchHelper helper, boolean isOnTheFly) {
@@ -148,7 +162,9 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase {
       original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
     }
 
-    if (ImplicitPropertyUsageProvider.isImplicitlyUsed(property)) return true;
+    if (isImplicitlyUsed(property)) {
+      return true;
+    }
 
     String name = property.getName();
     if (name == null) return true;
