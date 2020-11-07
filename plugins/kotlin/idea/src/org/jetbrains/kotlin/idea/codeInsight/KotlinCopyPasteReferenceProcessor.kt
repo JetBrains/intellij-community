@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -68,6 +69,7 @@ import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.Callable
 
 class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinReferenceTransferableData>() {
 
@@ -393,31 +395,36 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
     ): List<ReferenceToRestoreData> {
         if (file !is KtFile) return emptyList()
 
+        val project = runReadAction { file.project }
         val referencesByRange: Map<TextRange, KtReference> = elementsByRange.mapNotNull { elementByTextRange ->
-            runReadAction {
-                val element = elementByTextRange.element.element ?: return@runReadAction null
-
-                val mainReference = element.mainReference
-                mainReference?.let { ref ->
-                    val textRange = ref.element.textRange
-                    val findReference = findReference(file, textRange)
-                    findReference?.let {
-                        // remap reference to the original (as it was on paste phase) text range
-                        val itTextRange = it.element.textRange
-                        val refTextRange = ref.element.textRange
-                        val originalTextRange = elementByTextRange.originalTextRange
-                        val offset = originalTextRange.start - refTextRange.start
-                        val range = TextRange(itTextRange.start + offset, itTextRange.end + offset)
-                        range to it
+            val smartPsiElementPointer = elementByTextRange.element
+            ReadAction
+                .nonBlocking(Callable<KtReference?> {
+                    smartPsiElementPointer.element?.mainReference
+                })
+                .inSmartMode(project)
+                .wrapProgress(indicator)
+                .expireWhen { smartPsiElementPointer.element == null || Disposer.isDisposed(project) }
+                .executeSynchronously()?.let { mainReference ->
+                    runReadAction {
+                        val textRange = mainReference.element.textRange
+                        val findReference = findReference(file, textRange)
+                        findReference?.let {
+                            // remap reference to the original (as it was on paste phase) text range
+                            val itTextRange = it.element.textRange
+                            val refTextRange = mainReference.element.textRange
+                            val originalTextRange = elementByTextRange.originalTextRange
+                            val offset = originalTextRange.start - refTextRange.start
+                            val range = TextRange(itTextRange.start + offset, itTextRange.end + offset)
+                            range to it
+                        }
                     }
                 }
-            }
         }.toMap()
 
         val sourcePackageName = transferableData.packageName
         val imports: List<String> = transferableData.imports
 
-        val project = runReadAction { file.project }
         // Step 0. Recreate original source file (i.e. source file as it was on copy action) and resolve references from it
         val ctxFile = sourceFile(project, transferableData) ?: file
 
@@ -485,7 +492,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
             return@nonBlocking block()
         }
             .withDocumentsCommitted(project)
-            .cancelWith(indicator)
+            .wrapProgress(indicator)
             .expireWith(project)
             .inSmartMode(project)
             .submit(AppExecutorUtil.getAppExecutorService())
