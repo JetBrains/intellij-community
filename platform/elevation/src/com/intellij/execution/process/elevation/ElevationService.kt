@@ -3,6 +3,7 @@ package com.intellij.execution.process.elevation
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.SelfKiller
 import com.intellij.execution.process.elevation.settings.ElevationSettings
@@ -37,13 +38,19 @@ class ElevationService : Disposable {
         }
       }
     }
-    return object : OSProcessHandler(process, commandLine.commandLineString, commandLine.charset) {
+    return object : KillableColoredProcessHandler(process, commandLine.commandLineString, commandLine.charset) {
       override fun readerOptions(): BaseOutputReader.Options {
         return BaseOutputReader.Options.BLOCKING  // our ChannelInputStream unblocks read() on close()
       }
 
+      override fun canKillProcess(): Boolean = true
+
       override fun doDestroyProcess() {
-        process.destroy(false, destroyGroup = true)
+        process.destroy(!shouldKillProcessSoftly(), destroyGroup = true)
+      }
+
+      override fun killProcess() {
+        process.destroy(true, destroyGroup = true)
       }
     }
   }
