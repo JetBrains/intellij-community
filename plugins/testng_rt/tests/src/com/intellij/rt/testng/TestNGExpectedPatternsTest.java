@@ -18,6 +18,15 @@ public class TestNGExpectedPatternsTest {
     assertEquals("bar", failure.getActual());
   }
 
+  @Test
+  public void testAkkaTestKit() {
+    ComparisonFailureData failure = createNotification("assertion failed: expected foo, found bar");
+
+    assertNotNull(failure);
+    assertEquals("foo", failure.getExpected());
+    assertEquals("bar", failure.getActual());
+  }
+
   private static ComparisonFailureData createNotification(String message) {
     return TestNGExpectedPatterns.createExceptionNotification(message);
   }
