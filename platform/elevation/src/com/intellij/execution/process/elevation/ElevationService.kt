@@ -4,6 +4,7 @@ package com.intellij.execution.process.elevation
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.SelfKiller
 import com.intellij.execution.process.elevation.settings.ElevationSettings
 import com.intellij.execution.process.mediator.MediatedProcess
 import com.intellij.execution.process.mediator.ProcessMediatorClient
@@ -30,8 +31,10 @@ class ElevationService : Disposable {
   fun createProcess(commandLine: GeneralCommandLine): OSProcessHandler {
     val processBuilder = commandLine.toProcessBuilder()
     val process = tryRelaunchingDaemonUntilHaveQuotaPermit { client ->
-      MediatedProcess.create(client, processBuilder).apply {
-        ElevationLogger.LOG.info("Created process PID ${pid()}")
+      object : MediatedProcess(client, processBuilder), SelfKiller {
+        init {
+          ElevationLogger.LOG.info("Created process PID ${pid()}")
+        }
       }
     }
     return object : OSProcessHandler(process, commandLine.commandLineString, commandLine.charset) {

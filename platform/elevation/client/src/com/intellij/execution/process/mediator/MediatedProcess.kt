@@ -12,49 +12,54 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
 import java.io.*
 import java.lang.ref.Cleaner
-import kotlin.jvm.Throws
 
 private val CLEANER = Cleaner.create()
 
-class MediatedProcess private constructor(private val handle: MediatedProcessHandle,
-                                          pipeStdin: Boolean,
-                                          pipeStdout: Boolean,
-                                          pipeStderr: Boolean) : Process(), CoroutineScope by handle {
+open class MediatedProcess private constructor(private val handle: MediatedProcessHandle,
+                                               pipeStdin: Boolean,
+                                               pipeStdout: Boolean,
+                                               pipeStderr: Boolean) : Process(), CoroutineScope by handle {
+  init {
+    @Suppress("LeakingThis")
+    CLEANER.register(this, handle::releaseAsync)
+  }
+
   companion object {
     @Throws(IOException::class,
             QuotaExceededException::class,
             CancellationException::class)
     fun create(processMediatorClient: ProcessMediatorClient,
-               processBuilder: ProcessBuilder): MediatedProcess {
-      return create(processMediatorClient,
-                    processBuilder.command(),
-                    processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
-                    processBuilder.environment(),
-                    processBuilder.redirectInput().file(),
-                    processBuilder.redirectOutput().file(),
-                    processBuilder.redirectError().file())
-    }
-
-    private fun create(
-      processMediatorClient: ProcessMediatorClient,
-      command: List<String>,
-      workingDir: File,
-      environVars: Map<String, String>,
-      inFile: File?,
-      outFile: File?,
-      errFile: File?,
-    ): MediatedProcess {
-      val handle = MediatedProcessHandle(processMediatorClient, command, workingDir, environVars, inFile, outFile, errFile)
-      return MediatedProcess(
-        handle,
-        pipeStdin = (inFile == null),
-        pipeStdout = (outFile == null),
-        pipeStderr = (errFile == null),
-      ).also { process ->
-        CLEANER.register(process, handle::releaseAsync)
-      }
-    }
+               processBuilder: ProcessBuilder) = MediatedProcess(processMediatorClient,
+                                                                 processBuilder)
   }
+
+  constructor(
+    processMediatorClient: ProcessMediatorClient,
+    processBuilder: ProcessBuilder
+  ) : this(
+    processMediatorClient,
+    processBuilder.command(),
+    processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
+    processBuilder.environment(),
+    processBuilder.redirectInput().file(),
+    processBuilder.redirectOutput().file(),
+    processBuilder.redirectError().file(),
+  )
+
+  private constructor(
+    processMediatorClient: ProcessMediatorClient,
+    command: List<String>,
+    workingDir: File,
+    environVars: Map<String, String>,
+    inFile: File?,
+    outFile: File?,
+    errFile: File?,
+  ) : this(
+    handle = MediatedProcessHandle(processMediatorClient, command, workingDir, environVars, inFile, outFile, errFile),
+    pipeStdin = (inFile == null),
+    pipeStdout = (outFile == null),
+    pipeStderr = (errFile == null),
+  )
 
   // if anything goes wrong during process creation, this will fail with the corresponding exception
   private val pid = handle.pid.blockingGet()
