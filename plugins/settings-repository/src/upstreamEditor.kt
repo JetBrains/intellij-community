@@ -42,14 +42,13 @@ private class SyncAction(private val syncType: SyncType,
       runBlocking {
         val url = urlTextField.text.nullize(true)
         validateUrl(url, project)
-        ?: doSync(project, syncType, url!!)
+        ?: doSync(icsManager, project, syncType, url!!)
       }?.let { listOf(ValidationInfo(it, urlTextField)) }
     }
   }
 }
 
-internal suspend fun doSync(project: Project?, syncType: SyncType, url: String): String? {
-  val icsManager = icsManager
+suspend fun doSync(icsManager: IcsManager, project: Project?, syncType: SyncType, url: String): String? {
   IcsActionsLogger.logSettingsSync(project, syncType)
   val isRepositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
   var upstreamSet = false
@@ -57,6 +56,7 @@ internal suspend fun doSync(project: Project?, syncType: SyncType, url: String):
     val repositoryManager = icsManager.repositoryManager
     repositoryManager.createRepositoryIfNeeded()
     repositoryManager.setUpstream(url, null)
+    icsManager.isRepositoryActive = repositoryManager.isRepositoryExists()
 
     upstreamSet = true
 
