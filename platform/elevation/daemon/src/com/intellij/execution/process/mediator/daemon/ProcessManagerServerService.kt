@@ -37,7 +37,7 @@ internal class ProcessManagerServerService(
 
   override suspend fun destroyProcess(request: DestroyProcessRequest): Empty {
     ExceptionAsStatus.wrap {
-      processManager.destroyProcess(request.pid, request.force)
+      processManager.destroyProcess(request.pid, request.force, request.destroyGroup)
     }
     return Empty.getDefaultInstance()
   }

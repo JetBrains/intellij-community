@@ -41,6 +41,10 @@ class ElevationService : Disposable {
       override fun readerOptions(): BaseOutputReader.Options {
         return BaseOutputReader.Options.BLOCKING  // our ChannelInputStream unblocks read() on close()
       }
+
+      override fun doDestroyProcess() {
+        process.destroy(false, destroyGroup = true)
+      }
     }
   }
 
