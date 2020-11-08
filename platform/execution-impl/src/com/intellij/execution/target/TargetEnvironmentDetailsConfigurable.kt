@@ -56,7 +56,7 @@ internal class TargetEnvironmentDetailsConfigurable(
 
     panel.add(targetConfigurable.createComponent() ?: throw IllegalStateException())
 
-    languagesPanel = TargetEnvironmentLanguagesPanel(project, config) {
+    languagesPanel = TargetEnvironmentLanguagesPanel(project, config, config.runtimes) {
       forceRefreshUI()
     }
     panel.add(languagesPanel!!.component)
