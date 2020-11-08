@@ -20,7 +20,8 @@ internal class TargetEnvironmentDetailsConfigurable(
   treeUpdate: Runnable
 ) : NamedConfigurable<TargetEnvironmentConfiguration>(true, treeUpdate) {
 
-  private val targetConfigurable: Configurable = config.getTargetType().createConfigurable(project, config, defaultLanguage)
+  private val targetConfigurable: Configurable = config.getTargetType()
+    .createConfigurable(project, config, defaultLanguage, this)
 
   private var languagesPanel: TargetEnvironmentLanguagesPanel? = null
 
@@ -36,6 +37,11 @@ internal class TargetEnvironmentDetailsConfigurable(
   override fun apply() {
     targetConfigurable.apply()
     languagesPanel?.applyAll()
+  }
+
+  override fun reset() {
+    targetConfigurable.reset()
+    languagesPanel?.reset()
   }
 
   override fun setDisplayName(name: String) {

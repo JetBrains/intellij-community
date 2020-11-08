@@ -38,6 +38,14 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
 
   fun applyAll() = languagePanels.forEach { it.configurable.apply() }
 
+  fun reset() {
+    if (isModelListChanged()) {
+      recreateRuntimePanels()
+      parentRefresh()
+    }
+    languagePanels.forEach { it.configurable.reset() }
+  }
+
   fun disposeUIResources() {
     languagePanels.forEach { it.configurable.disposeUIResources() }
     languagePanels.clear()
@@ -45,14 +53,32 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
 
   private fun createComponent(): JComponent {
     val result = BorderLayoutPanel()
-    mainPanel = JPanel(VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP))).apply {
+    mainPanel = JPanel(VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP)))
+    recreateRuntimePanels()
+
+    result.addToCenter(mainPanel)
+    result.addToBottom(createAddRuntimeHyperlink())
+    return result
+  }
+
+  private fun recreateRuntimePanels() {
+    languagePanels.clear()
+    with(mainPanel) {
+      removeAll()
       languagesList.resolvedConfigs().forEach {
         add(createRuntimePanel(it).panel)
       }
     }
-    result.addToCenter(mainPanel)
-    result.addToBottom(createAddRuntimeHyperlink())
-    return result
+  }
+
+  private fun isModelListChanged(): Boolean {
+    val modelValues = ArrayList(languagesList.resolvedConfigs())
+    val panelValues = ArrayList(languagePanels.map { it.language })
+
+    //System.err.println("Model languages: $modelValues")
+    //System.err.println("Panel languages: $panelValues")
+
+    return modelValues != panelValues
   }
 
   private fun createRuntimePanel(language: LanguageRuntimeConfiguration): LanguagePanel {
