@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider;
@@ -284,7 +285,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
         .getPanel();
     }
 
-    public String getName() {
+    public @NlsSafe String getName() {
       return myNameTextField.getText().trim();
     }
 

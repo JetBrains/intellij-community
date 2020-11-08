@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -290,8 +291,10 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
                                     });
   }
 
-  @Nullable
-  private static String showInputDialog(@NotNull String initial, @NotNull Project project) {
+  /**
+   * @return the name entered by the user, or null if the dialog was cancelled
+   */
+  private static @Nullable @NlsSafe String showInputDialog(@NotNull String initial, @NotNull Project project) {
     return Messages.showInputDialog(
       project,
       SSRBundle.message("template.name.button"),
