@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -247,24 +248,19 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       boolean shouldEnable = newState.isEnabled();
       boolean isEnabled = oldState.isEnabled();
-      if (shouldEnable != isEnabled ||
-          !shouldEnable && myErrorPluginsToDisable.contains(pluginId)) {
-        descriptorsByState.computeIfAbsent(
-          newState,
-          __ -> new ArrayList<>()
-        ).add(descriptor);
+      if (shouldEnable != isEnabled || !shouldEnable && myErrorPluginsToDisable.contains(pluginId)) {
+        descriptorsByState
+          .computeIfAbsent(newState, __ -> new ArrayList<>())
+          .add(descriptor);
       }
     }
 
-    return ContainerUtil.all(
-      descriptorsByState.entrySet(),
-      entry -> ProjectPluginTrackerManager.updatePluginsState(
-        entry.getValue(),
-        entry.getKey(),
-        getProject(),
-        parentComponent
-      )
-    );
+    for (Map.Entry<PluginEnabledState, List<IdeaPluginDescriptor>> t : descriptorsByState.entrySet()) {
+      if (!ProjectPluginTrackerManager.updatePluginsState(t.getValue(), t.getKey(), getProject(), parentComponent)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
@@ -352,8 +348,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
                              @NotNull IdeaPluginDescriptor descriptor,
                              @Nullable IdeaPluginDescriptor updateDescriptor,
                              @NotNull ModalityState modalityState) {
-    final IdeaPluginDescriptor actionDescriptor = updateDescriptor == null ? descriptor : updateDescriptor;
-
+    IdeaPluginDescriptor actionDescriptor = updateDescriptor == null ? descriptor : updateDescriptor;
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(Collections.singletonList(actionDescriptor))) {
       return;
     }
@@ -365,7 +360,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         allowUninstallWithoutRestart = false;
       }
       else if (!installedPluginDescriptor.isEnabled()) {
-        FileUtil.delete(installedPluginDescriptor.getPath());
+        try {
+          FileUtil.delete(installedPluginDescriptor.getPluginPath());
+        }
+        catch (IOException e) {
+          LOG.debug(e);
+        }
       }
       else if (DynamicPlugins.allowLoadUnloadSynchronously(installedPluginDescriptor)) {
         if (!PluginInstaller.uninstallDynamicPlugin(parentComponent, installedPluginDescriptor, true)) {
@@ -604,7 +604,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       myInstallsRequiringRestart |= restartRequired;
     }
     if (!success && showErrors) {
-      Messages.showErrorDialog(IdeBundle.message("plugins.configurable.plugin.installing.failed", descriptor.getName()),
+      Messages.showErrorDialog(getProject(), IdeBundle.message("plugins.configurable.plugin.installing.failed", descriptor.getName()),
                                IdeBundle.message("action.download.and.install.plugin"));
     }
   }
@@ -963,9 +963,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     else {
       message = IdeBundle.message("prompt.uninstall.plugin", singleName);
     }
-
-    return Messages.showYesNoDialog(uiParent, message, IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) ==
-           Messages.YES;
+    return MessageDialogBuilder.yesNo(IdeBundle.message("title.plugin.uninstall"), message).ask(uiParent);
   }
 
   void uninstallAndUpdateUi(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor descriptor) {
@@ -977,7 +975,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       String message = XmlStringUtil
         .wrapInHtml(IdeBundle.message("dialog.message.following.plugin.depend.on", deps.size(), descriptor.getName(), listOfDeps));
       String title = IdeBundle.message("title.plugin.uninstall");
-      if (Messages.showYesNoDialog(uiParent, message, title, Messages.getQuestionIcon()) != Messages.YES) {
+      if (!MessageDialogBuilder.yesNo(title, message).ask(uiParent)) {
         return;
       }
     }

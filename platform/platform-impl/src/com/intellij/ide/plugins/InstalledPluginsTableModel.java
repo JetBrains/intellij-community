@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -261,14 +262,12 @@ public class InstalledPluginsTableModel {
                                        listOfDependencies) :
                      IdeBundle.message("dialog.message.disable.dependent.plugins", deps.size(), descriptorsWithChangedEnabledStateCount,
                                        listOfDependencies);
-    int dialogMessage = Messages.showOkCancelDialog(
-      message,
-      enabled ? IdeBundle.message("dialog.title.enable.required.plugins") : IdeBundle.message("dialog.title.disable.dependent.plugins"),
-      enabled ? IdeBundle.message("button.enable") : IdeBundle.message("button.disable"),
-      Messages.getCancelButton(),
-      Messages.getQuestionIcon()
-    );
-    if (dialogMessage == Messages.OK) {
+    String title =
+      enabled ? IdeBundle.message("dialog.title.enable.required.plugins") : IdeBundle.message("dialog.title.disable.dependent.plugins");
+    if (MessageDialogBuilder.okCancel(title, message)
+      .yesText(enabled ? IdeBundle.message("button.enable") : IdeBundle.message("button.disable"))
+      .noText(Messages.getCancelButton())
+      .ask(getProject())) {
       for (PluginId pluginId : deps) {
         setEnabled(pluginId, newState);
       }
