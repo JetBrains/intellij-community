@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Base interface for run configuration that can be run on arbitrary {@link TargetEnvironmentConfiguration}.
  * <p>
- * As soon as a run configuration implements the interface, its Run configuration
- * editor gets `Run on` combobox with the list of targets to run on.
+ * As soon as a run configuration implements the interface, and returns non-null value from {@link #getDefaultLanguageRuntimeType()},
+ * its Run configuration editor gets `Run on` combobox with the list of targets to run on.
  * <p>
  * Target environment to run on can be retrieve via {@link TargetEnvironmentsManager}.
  *
@@ -31,6 +31,7 @@ public interface TargetEnvironmentAwareRunProfile extends RunProfile {
    * That language runtime type will be used while creating {@link TargetEnvironmentConfiguration} using
    * wizard from {@link com.intellij.execution.RunOnTargetComboBox}
    *
+   * @return null to dynamically disable targets functionality for given configuration instance
    * @see TargetEnvironmentType#createStepsForNewWizard
    */
   @Nullable
