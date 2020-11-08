@@ -23,8 +23,8 @@ typealias LanguagesList = ContributedConfigurationsList<LanguageRuntimeConfigura
 
 class TargetEnvironmentLanguagesPanel(private val project: Project,
                                       private val target: TargetEnvironmentConfiguration,
-                                      private val languagesList: LanguagesList = target.runtimes,
-                                      private val parentRefresh: () -> Unit = { }) {
+                                      val languagesList: LanguagesList,
+                                      private val parentRefresh: () -> Unit) {
 
   private val languagePanels = mutableListOf<LanguagePanel>()
 
@@ -68,6 +68,7 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
         languageUI(CCFlags.growX)
       }
     }
+    configurable.reset()
     return LanguagePanel(language, configurable, panel).also {
       languagePanels.add(it)
     }
