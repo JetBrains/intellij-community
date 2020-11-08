@@ -27,17 +27,17 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.PlatformUtils;
+import org.editorconfig.EditorConfigNotifier;
 import org.editorconfig.configmanagement.export.EditorConfigSettingsWriter;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
 import org.editorconfig.language.messages.EditorConfigBundle;
-import org.editorconfig.plugincomponents.EditorConfigNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
 
-public class CreateEditorConfigAction extends AnAction implements DumbAware {
+public final class CreateEditorConfigAction extends AnAction implements DumbAware {
   private final static Logger LOG = Logger.getInstance(CreateEditorConfigAction.class);
 
   @Override

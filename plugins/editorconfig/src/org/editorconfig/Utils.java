@@ -28,7 +28,6 @@ import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.language.messages.EditorConfigBundle;
-import org.editorconfig.plugincomponents.EditorConfigNotifier;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +91,7 @@ public final class Utils {
                                                   filePath) :
                            EditorConfigBundle.message("read.failure");
     configValue = configValue != null ? configValue : "ioError";
-    EditorConfigNotifier.getInstance().error(project, configValue, message);
+    EditorConfigNotifier.error(project, configValue, message);
   }
 
   public static String getFilePath(Project project, VirtualFile file) {
