@@ -57,6 +57,13 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
     resolvedInstances.add(config)
   }
 
+  fun replaceAllWith(newList: List<C>) {
+    with(resolvedInstances) {
+      clear()
+      addAll(newList)
+    }
+  }
+
   fun removeConfig(config: C) = resolvedInstances.remove(config)
 
   fun unresolvedNames(): List<String> = unresolvedInstances.mapNotNull { it.name }.toList()
