@@ -13,6 +13,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -416,13 +417,18 @@ public final class PsiClassImplUtil {
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     isRaw = isRaw || PsiUtil.isRawSubstitutor(aClass, substitutor);
 
+    boolean result;
     NameHint nameHint = processor.getHint(NameHint.KEY);
     String name = nameHint == null ? null : nameHint.getName(state);
     if (name != null) {
-      return processCachedMembersByName(aClass, processor, state, visited, last, place, isRaw, substitutor,
-                                        name, languageLevel, resolveScope);
+      result = processCachedMembersByName(aClass, processor, state, visited, last, place, isRaw, substitutor,
+                                          name, languageLevel, resolveScope);
     }
-    return processClassMembersWithAllNames(aClass, processor, state, visited, last, place, isRaw, languageLevel, resolveScope);
+    else {
+      result = processClassMembersWithAllNames(aClass, processor, state, visited, last, place, isRaw, languageLevel, resolveScope);
+    }
+    return result && PsiAugmentProvider.doProcessDeclarationsInClass(aClass, processor, state, visited, last,
+                                                                     place, languageLevel, isRaw, resolveScope);
   }
 
   private static boolean processCachedMembersByName(@NotNull PsiClass aClass,

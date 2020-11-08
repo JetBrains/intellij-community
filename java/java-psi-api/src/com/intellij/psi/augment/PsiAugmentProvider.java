@@ -10,7 +10,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -95,6 +98,23 @@ public abstract class PsiAugmentProvider {
   @NotNull
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull Set<String> modifiers) {
     return modifiers;
+  }
+
+  /**
+   * Unlike {@link PsiAugmentProvider#getAugments(PsiElement, Class, String)},
+   * this method allows you to control the behavior of the processor by judging the context.
+   */
+  @SuppressWarnings("unused")
+  protected boolean processDeclarationsInClass(@NotNull PsiClass aClass,
+                                               @NotNull PsiScopeProcessor processor,
+                                               @NotNull ResolveState state,
+                                               @Nullable Set<PsiClass> visited,
+                                               @Nullable PsiElement last,
+                                               @NotNull PsiElement place,
+                                               @NotNull LanguageLevel languageLevel,
+                                               boolean isRaw,
+                                               @NotNull GlobalSearchScope resolveScope) {
+    return true;
   }
 
   //</editor-fold>
@@ -187,6 +207,29 @@ public abstract class PsiAugmentProvider {
     forEach(project, provider -> {
       result.set(provider.transformModifiers(modifierList, Collections.unmodifiableSet(result.get())));
       return true;
+    });
+
+    return result.get();
+  }
+
+  public static boolean doProcessDeclarationsInClass(@NotNull PsiClass aClass,
+                                                     @NotNull PsiScopeProcessor processor,
+                                                     @NotNull ResolveState state,
+                                                     @Nullable Set<PsiClass> visited,
+                                                     @Nullable PsiElement last,
+                                                     @NotNull PsiElement place,
+                                                     @NotNull LanguageLevel languageLevel,
+                                                     boolean isRaw,
+                                                     @NotNull GlobalSearchScope resolveScope) {
+    AtomicBoolean result = new AtomicBoolean(true);
+
+    forEach(place.getProject(), provider -> {
+      boolean goOn =
+        provider.processDeclarationsInClass(aClass, processor, state, visited, last, place, languageLevel, isRaw, resolveScope);
+      if (!goOn) {
+        result.set(false);
+      }
+      return goOn;
     });
 
     return result.get();
