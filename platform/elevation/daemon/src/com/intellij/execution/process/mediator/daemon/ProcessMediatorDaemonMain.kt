@@ -6,9 +6,13 @@ package com.intellij.execution.process.mediator.daemon
 import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.grpc.CredentialsAuthServerInterceptor
 import com.intellij.execution.process.mediator.grpc.ExceptionAsStatus
+import com.intellij.execution.process.mediator.handshake.HandshakeFileWriter
+import com.intellij.execution.process.mediator.handshake.HandshakeSocketWriter
+import com.intellij.execution.process.mediator.handshake.HandshakeStreamWriter
+import com.intellij.execution.process.mediator.handshake.HandshakeWriter
 import com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
-import com.intellij.execution.process.mediator.rpc.DaemonHello
+import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.process.mediator.util.rsaEncrypt
 import io.grpc.Server
 import io.grpc.ServerBuilder
@@ -87,9 +91,9 @@ private fun createDaemonProcessCommandLine(vararg args: String): ProcessBuilder 
 }
 
 private fun trampoline(launchOptions: DaemonLaunchOptions): Nothing {
-  openHelloWriter(launchOptions.helloOption).use { helloWriter ->
+  openHandshakeWriter(launchOptions.handshakeOption).use { handshakeWriter ->
     val daemonOptions = launchOptions.copy(trampoline = false,
-                                           helloOption = DaemonLaunchOptions.HelloOption.Stdout)
+                                           handshakeOption = DaemonLaunchOptions.HandshakeOption.Stdout)
     val daemonProcess = createDaemonProcessCommandLine(*daemonOptions.asCmdlineArgs().toTypedArray())
       .redirectOutput(ProcessBuilder.Redirect.PIPE)
       .redirectError(ProcessBuilder.Redirect.INHERIT)
@@ -103,13 +107,13 @@ private fun trampoline(launchOptions: DaemonLaunchOptions): Nothing {
     }
 
     try {
-      val daemonHello = daemonProcess.inputStream.use(DaemonHello::parseDelimitedFrom)
-                        ?: throw IOException("Premature EOF while reading daemon hello")
+      val handshake = daemonProcess.inputStream.use(Handshake::parseDelimitedFrom)
+                      ?: throw IOException("Premature EOF while reading handshake")
 
-      helloWriter.writeHello(daemonHello)
+      handshakeWriter.writeHandshake(handshake)
     }
     catch (e: Throwable) {
-      if (e is IOException) System.err.println("[trampoline] Unable to relay daemon hello: ${e.message}")
+      if (e is IOException) System.err.println("[trampoline] Unable to relay handshake: ${e.message}")
       daemonProcess.run {
         waitFor(3, TimeUnit.SECONDS)
         destroy()
@@ -122,16 +126,16 @@ private fun trampoline(launchOptions: DaemonLaunchOptions): Nothing {
   exitProcess(0)
 }
 
-private fun openHelloWriter(helloOption: DaemonLaunchOptions.HelloOption?): DaemonHelloWriter? =
-  when (helloOption) {
+private fun openHandshakeWriter(handshakeOption: DaemonLaunchOptions.HandshakeOption?): HandshakeWriter? =
+  when (handshakeOption) {
     null -> null
-    DaemonLaunchOptions.HelloOption.Stdout -> DaemonHelloStreamWriter(System.out)
-    is DaemonLaunchOptions.HelloOption.File -> DaemonHelloFileWriter(helloOption.path)
-    is DaemonLaunchOptions.HelloOption.Port -> DaemonHelloSocketWriter(helloOption.port)
+    DaemonLaunchOptions.HandshakeOption.Stdout -> HandshakeStreamWriter(System.out)
+    is DaemonLaunchOptions.HandshakeOption.File -> HandshakeFileWriter(handshakeOption.path)
+    is DaemonLaunchOptions.HandshakeOption.Port -> HandshakeSocketWriter(handshakeOption.port)
   }
 
-private fun DaemonHelloWriter?.writeHello(daemonHello: DaemonHello) {
-  this?.write(daemonHello::writeDelimitedTo) ?: println(daemonHello)
+private fun HandshakeWriter?.writeHandshake(handshake: Handshake) {
+  this?.write(handshake::writeDelimitedTo) ?: println(handshake)
 }
 
 // the order matters
@@ -161,7 +165,7 @@ fun main(args: Array<String>) {
 
   val daemon: ProcessMediatorServerDaemon
 
-  openHelloWriter(launchOptions.helloOption).use { helloWriter ->
+  openHandshakeWriter(launchOptions.handshakeOption).use { handshakeWriter ->
     val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     val credentials = DaemonClientCredentials.generate()
     daemon = ProcessMediatorServerDaemon(coroutineScope, ServerBuilder.forPort(0), credentials)
@@ -172,16 +176,16 @@ fun main(args: Array<String>) {
           else -> publicKey.rsaEncrypt(it)
         }
       }
-      val daemonHello = DaemonHello.newBuilder()
+      val handshake = Handshake.newBuilder()
         .setPort(daemon.port)
         .setToken(token)
         .setPid(ProcessHandle.current().pid())
         .build()
 
-      helloWriter.writeHello(daemonHello)
+      handshakeWriter.writeHandshake(handshake)
     }
     catch (e: Throwable) {
-      if (e is IOException) System.err.println("Unable to write hello: ${e.message}")
+      if (e is IOException) System.err.println("Unable to write handshake: ${e.message}")
       daemon.stop()
       throw e
     }

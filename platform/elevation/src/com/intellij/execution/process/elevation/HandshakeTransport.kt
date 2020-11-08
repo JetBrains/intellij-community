@@ -4,8 +4,8 @@ package com.intellij.execution.process.elevation
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.*
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
+import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.process.mediator.util.rsaDecrypt
-import com.intellij.execution.process.mediator.rpc.DaemonHello
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.BaseInputStreamReader
@@ -17,7 +17,7 @@ import java.nio.file.Path
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 
-internal interface DaemonHelloIpc : Closeable {
+internal interface HandshakeTransport : Closeable {
   fun getDaemonLaunchOptions(): DaemonLaunchOptions
   fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler
 
@@ -25,16 +25,16 @@ internal interface DaemonHelloIpc : Closeable {
    * Blocks until the greeting message from the daemon process. Returns null if the stream has reached EOF prematurely.
    */
   @Throws(IOException::class)
-  fun readHello(): DaemonHello?
+  fun readHandshake(): Handshake?
 
   /**
    * The contract is that invoking close() interrupts any ongoing blocking operations,
-   * and makes [readHello] throw. The implementations must guarantee that.
+   * and makes [readHandshake] throw. The implementations must guarantee that.
    */
   override fun close()
 }
 
-internal class EncryptedDaemonHelloIpc(private val delegate: DaemonHelloIpc) : DaemonHelloIpc by delegate {
+internal class EncryptedHandshakeTransport(private val delegate: HandshakeTransport) : HandshakeTransport by delegate {
   private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
     initialize(1024)
   }.genKeyPair()
@@ -46,23 +46,23 @@ internal class EncryptedDaemonHelloIpc(private val delegate: DaemonHelloIpc) : D
     }
   }
 
-  override fun readHello(): DaemonHello? {
-    return delegate.readHello()?.let { daemonHello ->
-      daemonHello.toBuilder().apply {
+  override fun readHandshake(): Handshake? {
+    return delegate.readHandshake()?.let { handshake ->
+      handshake.toBuilder().apply {
         token = keyPair.private.rsaDecrypt(token)
       }.build()
     }
   }
 }
 
-internal fun DaemonHelloIpc.encrypted(): DaemonHelloIpc = EncryptedDaemonHelloIpc(this)
+internal fun HandshakeTransport.encrypted(): HandshakeTransport = EncryptedHandshakeTransport(this)
 
 
-internal abstract class AbstractDaemonHelloIpcBase<R : DaemonHelloReader> : DaemonHelloIpc, ProcessAdapter() {
-  protected abstract val helloReader: R
+internal abstract class AbstractHandshakeTransportBase<R : HandshakeReader> : HandshakeTransport, ProcessAdapter() {
+  protected abstract val handshakeReader: R
 
-  override fun getDaemonLaunchOptions() = DaemonLaunchOptions(helloOption = getHelloOption())
-  abstract fun getHelloOption(): DaemonLaunchOptions.HelloOption
+  override fun getDaemonLaunchOptions() = DaemonLaunchOptions(handshakeOption = getHandshakeOption())
+  abstract fun getHandshakeOption(): DaemonLaunchOptions.HandshakeOption
 
   final override fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
     return createProcessHandler(daemonCommandLine).also {
@@ -74,10 +74,10 @@ internal abstract class AbstractDaemonHelloIpcBase<R : DaemonHelloReader> : Daem
     return OSProcessHandler.Silent(daemonCommandLine)
   }
 
-  override fun readHello(): DaemonHello? {
-    return helloReader.read(DaemonHello::parseDelimitedFrom).also {
+  override fun readHandshake(): Handshake? {
+    return handshakeReader.read(Handshake::parseDelimitedFrom).also {
       if (it?.port == 0) {
-        throw IOException("Invalid/incomplete hello message from daemon: $it")
+        throw IOException("Invalid/incomplete handshake message from daemon: $it")
       }
     }
   }
@@ -92,21 +92,21 @@ internal abstract class AbstractDaemonHelloIpcBase<R : DaemonHelloReader> : Daem
     close()
   }
 
-  override fun close() = helloReader.close()
+  override fun close() = handshakeReader.close()
 }
 
-internal abstract class AbstractDaemonHelloIpc<R : DaemonHelloReader>(override val helloReader: R) : AbstractDaemonHelloIpcBase<R>()
+internal abstract class AbstractHandshakeTransport<R : HandshakeReader>(override val handshakeReader: R) : AbstractHandshakeTransportBase<R>()
 
-internal class DaemonHelloSocketIpc(
+internal class HandshakeSocketTransport(
   port: Int = 0
-) : AbstractDaemonHelloIpc<DaemonHelloSocketReader>(DaemonHelloSocketReader(port)) {
-  override fun getHelloOption() = DaemonLaunchOptions.HelloOption.Port(helloReader.port)
+) : AbstractHandshakeTransport<HandshakeSocketReader>(HandshakeSocketReader(port)) {
+  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Port(handshakeReader.port)
 }
 
-internal class DaemonHelloStdoutIpc : AbstractDaemonHelloIpcBase<DaemonHelloStreamReader>() {
-  override lateinit var helloReader: DaemonHelloStreamReader
+internal class HandshakeStdoutTransport : AbstractHandshakeTransportBase<HandshakeStreamReader>() {
+  override lateinit var handshakeReader: HandshakeStreamReader
 
-  override fun getHelloOption() = DaemonLaunchOptions.HelloOption.Stdout
+  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Stdout
 
   override fun createProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
     return object : OSProcessHandler.Silent(daemonCommandLine) {
@@ -114,18 +114,18 @@ internal class DaemonHelloStdoutIpc : AbstractDaemonHelloIpcBase<DaemonHelloStre
         return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
       }
     }.also {
-      helloReader = DaemonHelloStreamReader(it.process.inputStream)
+      handshakeReader = HandshakeStreamReader(it.process.inputStream)
     }
   }
 }
 
-internal open class DaemonHelloFileIpc(
-  helloReader: DaemonHelloFileReader
-) : AbstractDaemonHelloIpc<DaemonHelloFileReader>(helloReader) {
-  override fun getHelloOption() = DaemonLaunchOptions.HelloOption.File(helloReader.path.toAbsolutePath())
+internal open class HandshakeFileTransport(
+  handshakeReader: HandshakeFileReader
+) : AbstractHandshakeTransport<HandshakeFileReader>(handshakeReader) {
+  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.File(handshakeReader.path.toAbsolutePath())
 }
 
-internal class DaemonHelloUnixFifoIpc(
+internal class HandshakeUnixFifoTransport(
   path: Path = FileUtil.generateRandomTemporaryPath().toPath()
-) : DaemonHelloFileIpc(DaemonHelloUnixFifoReader(path))
+) : HandshakeFileTransport(HandshakeUnixFifoReader(path))
 

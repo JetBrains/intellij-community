@@ -14,19 +14,19 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
 
-internal interface DaemonHelloReader : Closeable {
+internal interface HandshakeReader : Closeable {
   fun <R> read(doRead: (InputStream) -> R): R
   override fun close()
 }
 
-internal abstract class AbstractDaemonHelloStreamReader : DaemonHelloReader {
+internal abstract class AbstractHandshakeStreamReader : HandshakeReader {
   abstract val inputStream: InputStream
   override fun <R> read(doRead: (InputStream) -> R): R = inputStream.let(doRead)
   override fun close() = inputStream.close()
 }
 
 
-internal class DaemonHelloSocketReader(port: Int = 0) : AbstractDaemonHelloStreamReader() {
+internal class HandshakeSocketReader(port: Int = 0) : AbstractHandshakeStreamReader() {
   private val cleanup = MultiCloseable()
 
   private val serverSocket = ServerSocket(port).also(cleanup::registerCloseable)
@@ -38,11 +38,11 @@ internal class DaemonHelloSocketReader(port: Int = 0) : AbstractDaemonHelloStrea
   override fun close() = cleanup.close()  // don't call super.close() to avoid computing inputStream Lazy.
 }
 
-internal class DaemonHelloStreamReader(override val inputStream: InputStream) : AbstractDaemonHelloStreamReader()
+internal class HandshakeStreamReader(override val inputStream: InputStream) : AbstractHandshakeStreamReader()
 
-internal abstract class DaemonHelloFileReader(val path: Path) : AbstractDaemonHelloStreamReader()
+internal abstract class HandshakeFileReader(val path: Path) : AbstractHandshakeStreamReader()
 
-internal class DaemonHelloUnixFifoReader(path: Path = FileUtil.generateRandomTemporaryPath().toPath()) : DaemonHelloFileReader(path) {
+internal class HandshakeUnixFifoReader(path: Path = FileUtil.generateRandomTemporaryPath().toPath()) : HandshakeFileReader(path) {
   private val cleanup = MultiCloseable().apply {
     registerCloseable { super.close() }
   }
