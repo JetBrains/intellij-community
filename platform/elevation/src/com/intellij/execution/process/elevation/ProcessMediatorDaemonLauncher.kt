@@ -3,6 +3,7 @@ package com.intellij.execution.process.elevation
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.*
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
@@ -11,17 +12,17 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.BaseInputStreamReader
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.MetadataUtils
-import java.io.Closeable
-import java.io.File
-import java.io.IOException
+import java.io.*
 import java.net.InetAddress
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
@@ -68,10 +69,15 @@ object ProcessMediatorDaemonLauncher {
         val trampolineProcessHandler = handshakeTransport.createDaemonProcessHandler(maybeSudoTrampolineCommandLine).also {
           it.startNotify()
         }
+        val trampolineProcessHandle = trampolineProcessHandler.process.toHandle().apply {
+          onExit().whenComplete { _, _ ->
+            handshakeTransport.close()
+          }
+        }
 
         val handshake = handshakeTransport.readHandshake() ?: throw ProcessCanceledException()
         val daemonProcessHandle =
-          if (SystemInfo.isWindows) trampolineProcessHandler.process.toHandle()  // can't get access a process owned by another user
+          if (SystemInfo.isWindows) trampolineProcessHandle  // can't get access a process owned by another user
           else ProcessHandle.of(handshake.pid).orElseThrow(::ProcessCanceledException)
 
         ProcessMediatorDaemonImpl(daemonProcessHandle,
@@ -97,6 +103,33 @@ object ProcessMediatorDaemonLauncher {
     }
       // neither a named pipe nor an open port is safe from prying eyes
       .encrypted()
+  }
+
+  private fun HandshakeTransport.createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
+    val processHandler =
+      if (this !is HandshakeStdoutTransport) {
+        OSProcessHandler.Silent(daemonCommandLine)
+      }
+      else {
+        object : OSProcessHandler.Silent(daemonCommandLine) {
+          override fun createProcessOutReader(): Reader {
+            return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
+          }
+        }.also {
+          handshakeReader = HandshakeStreamReader(it.process.inputStream)
+        }
+      }
+    processHandler.addProcessListener(object : ProcessAdapter() {
+      override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+        ElevationLogger.LOG.info("Daemon [$outputType]: ${event.text.substringBeforeLast("\n")}")
+      }
+
+      override fun processTerminated(event: ProcessEvent) {
+        val exitCodeString = ProcessTerminatedListener.stringifyExitCode(event.exitCode)
+        ElevationLogger.LOG.info("Daemon process terminated with exit code ${exitCodeString}")
+      }
+    })
+    return processHandler
   }
 }
 

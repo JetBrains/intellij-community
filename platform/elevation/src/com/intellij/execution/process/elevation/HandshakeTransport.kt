@@ -1,25 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.*
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.process.mediator.util.rsaDecrypt
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.BaseInputStreamReader
 import java.io.Closeable
 import java.io.IOException
-import java.io.InputStream
-import java.io.Reader
 import java.nio.file.Path
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 
 internal interface HandshakeTransport : Closeable {
   fun getDaemonLaunchOptions(): DaemonLaunchOptions
-  fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler
 
   /**
    * Blocks until the greeting message from the daemon process. Returns null if the stream has reached EOF prematurely.
@@ -58,21 +51,11 @@ internal class EncryptedHandshakeTransport(private val delegate: HandshakeTransp
 internal fun HandshakeTransport.encrypted(): HandshakeTransport = EncryptedHandshakeTransport(this)
 
 
-internal abstract class AbstractHandshakeTransportBase<R : HandshakeReader> : HandshakeTransport, ProcessAdapter() {
+internal abstract class AbstractHandshakeTransportBase<R : HandshakeReader> : HandshakeTransport {
   protected abstract val handshakeReader: R
 
   override fun getDaemonLaunchOptions() = DaemonLaunchOptions(handshakeOption = getHandshakeOption())
   abstract fun getHandshakeOption(): DaemonLaunchOptions.HandshakeOption
-
-  final override fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
-    return createProcessHandler(daemonCommandLine).also {
-      it.addProcessListener(this)
-    }
-  }
-
-  protected open fun createProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
-    return OSProcessHandler.Silent(daemonCommandLine)
-  }
 
   override fun readHandshake(): Handshake? {
     return handshakeReader.read(Handshake::parseDelimitedFrom).also {
@@ -80,16 +63,6 @@ internal abstract class AbstractHandshakeTransportBase<R : HandshakeReader> : Ha
         throw IOException("Invalid/incomplete handshake message from daemon: $it")
       }
     }
-  }
-
-  override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-    ElevationLogger.LOG.info("Daemon [$outputType]: ${event.text}")
-  }
-
-  override fun processTerminated(event: ProcessEvent) {
-    val exitCodeString = ProcessTerminatedListener.stringifyExitCode(event.exitCode)
-    ElevationLogger.LOG.info("Daemon process terminated with exit code ${exitCodeString}")
-    close()
   }
 
   override fun close() = handshakeReader.close()
@@ -104,19 +77,9 @@ internal class HandshakeSocketTransport(
 }
 
 internal class HandshakeStdoutTransport : AbstractHandshakeTransportBase<HandshakeStreamReader>() {
-  override lateinit var handshakeReader: HandshakeStreamReader
+  public override lateinit var handshakeReader: HandshakeStreamReader
 
   override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Stdout
-
-  override fun createProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
-    return object : OSProcessHandler.Silent(daemonCommandLine) {
-      override fun createProcessOutReader(): Reader {
-        return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
-      }
-    }.also {
-      handshakeReader = HandshakeStreamReader(it.process.inputStream)
-    }
-  }
 }
 
 internal open class HandshakeFileTransport(
