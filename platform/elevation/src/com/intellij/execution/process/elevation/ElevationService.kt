@@ -3,7 +3,6 @@ package com.intellij.execution.process.elevation
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.SelfKiller
 import com.intellij.execution.process.elevation.settings.ElevationSettings
@@ -14,7 +13,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.io.BaseOutputReader
 
 @Service
 class ElevationService : Disposable {
@@ -29,7 +27,7 @@ class ElevationService : Disposable {
     Disposer.register(this, it)
   }
 
-  fun createProcess(commandLine: GeneralCommandLine): OSProcessHandler {
+  fun createProcess(commandLine: GeneralCommandLine): MediatedProcessHandler {
     val processBuilder = commandLine.toProcessBuilder()
     val process = tryRelaunchingDaemonUntilHaveQuotaPermit { client ->
       object : MediatedProcess(client, processBuilder), SelfKiller {
@@ -38,21 +36,7 @@ class ElevationService : Disposable {
         }
       }
     }
-    return object : KillableColoredProcessHandler(process, commandLine.commandLineString, commandLine.charset) {
-      override fun readerOptions(): BaseOutputReader.Options {
-        return BaseOutputReader.Options.BLOCKING  // our ChannelInputStream unblocks read() on close()
-      }
-
-      override fun canKillProcess(): Boolean = true
-
-      override fun doDestroyProcess() {
-        process.destroy(!shouldKillProcessSoftly(), destroyGroup = true)
-      }
-
-      override fun killProcess() {
-        process.destroy(true, destroyGroup = true)
-      }
-    }
+    return MediatedProcessHandler(process, commandLine)
   }
 
   private fun <R> tryRelaunchingDaemonUntilHaveQuotaPermit(block: (ProcessMediatorClient) -> R): R {
