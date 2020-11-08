@@ -5,14 +5,15 @@ package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.grpc.CredentialsAuthServerInterceptor
+import com.intellij.execution.process.mediator.grpc.ExceptionAsStatus
 import com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.rpc.DaemonHello
-import com.intellij.execution.process.mediator.util.ExceptionAsStatus
 import com.intellij.execution.process.mediator.util.rsaEncrypt
 import io.grpc.Server
 import io.grpc.ServerBuilder
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.plus
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
