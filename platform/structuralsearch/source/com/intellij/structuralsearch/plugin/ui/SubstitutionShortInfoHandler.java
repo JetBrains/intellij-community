@@ -39,7 +39,6 @@ import java.util.function.Consumer;
 
 public final class SubstitutionShortInfoHandler implements DocumentListener, EditorMouseMotionListener, CaretListener {
   private static final Key<SubstitutionShortInfoHandler> LISTENER_KEY = Key.create("sslistener.key");
-  private static final TooltipGroup SS_INFO_TOOLTIP_GROUP = new TooltipGroup("SS_INFO_TOOLTIP_GROUP", 0);
   private long modificationTimeStamp;
   private final List<String> variables = new SmartList<>();
   private final Editor editor;
@@ -85,10 +84,6 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
     }
     final String variableName = variableRange.subSequence(patternText).toString();
     final NamedScriptableDefinition variable = configuration.findVariable(variableName);
-    String filterText = StringUtil.escapeXmlEntities(getShortParamString(variable, false));
-    if (!editor.isViewer() && !variableName.equals(configuration.getCurrentVariableName())) {
-      filterText =  appendLinkText(filterText, variableName);
-    }
     final boolean replacementVariable =
       variable instanceof ReplacementVariableDefinition ||
       myCanBeReplace && variable == null && configuration instanceof ReplaceConfiguration;
@@ -101,18 +96,6 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
       }
       configuration.setCurrentVariableName(currentVariableName);
     }
-    if (!filterText.isEmpty()) {
-      final LogicalPosition toolTipPosition =
-        new LogicalPosition(position.line, variableRange.getStartOffset() +
-                                           ((variableRange.getEndOffset() - variableRange.getStartOffset()) >> 1));
-      showTooltip(editor, toolTipPosition, filterText);
-    }
-  }
-
-  @NotNull
-  static String appendLinkText(String text, String variableName) {
-    final String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor());
-    return text + "<br><a style=\"color:" + linkColor + "\" href=\"#ssr_edit_filters/" + variableName + "\">Edit filters</a>";
   }
 
   private void checkModelValidity() {
@@ -143,9 +126,9 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
   }
 
   @NotNull
-  static String getShortParamString(NamedScriptableDefinition namedScriptableDefinition, boolean verbose) {
+  static String getShortParamString(NamedScriptableDefinition namedScriptableDefinition) {
     if (namedScriptableDefinition == null) {
-      return verbose ? SSRBundle.message("no.constraints.specified.tooltip.message") : "";
+      return "";
     }
 
     final StringBuilder buf = new StringBuilder();
@@ -155,12 +138,9 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
       if (!Configuration.CONTEXT_VAR_NAME.equals(name)) {
         final int maxCount = constraint.getMaxCount();
         final int minCount = constraint.getMinCount();
-        if (verbose || minCount != 1 || maxCount != 1) {
+        if (minCount != 1 || maxCount != 1) {
           append(buf, SSRBundle.message("min.occurs.tooltip.message", minCount, (maxCount == Integer.MAX_VALUE) ? "∞" : maxCount));
         }
-      }
-      if (constraint.isPartOfSearchResults() && verbose) {
-        append(buf, SSRBundle.message("target.tooltip.message"));
       }
       if (!constraint.getRegExp().isEmpty()) {
         append(buf, SSRBundle.message("text.tooltip.message",
@@ -202,31 +182,12 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
       append(buf, SSRBundle.message("script.tooltip.message"));
     }
 
-    if (buf.length() == 0 && verbose) {
-      buf.append(SSRBundle.message("no.constraints.specified.tooltip.message"));
-    }
     return buf.toString();
   }
 
   private static void append(final StringBuilder buf, final String str) {
     if (buf.length() > 0) buf.append(", ");
     buf.append(str);
-  }
-
-  private static void showTooltip(@NotNull Editor editor, LogicalPosition position, @NotNull String text) {
-    if (Registry.is("ssr.use.editor.inlays.instead.of.tool.tips")) {
-      return;
-    }
-    final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    final Point point = editor.logicalPositionToXY(position);
-    point.y += editor.getLineHeight();
-
-    final Point p = SwingUtilities.convertPoint(editor.getContentComponent(), point,
-                                                editor.getComponent().getRootPane().getLayeredPane());
-    final HintHint hint = new HintHint(editor, point)
-      .setAwtTooltip(true)
-      .setShowImmediately(true);
-    TooltipController.getInstance().showTooltip(editor, p, text, visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
   }
 
   static SubstitutionShortInfoHandler retrieve(Editor editor) {
@@ -253,9 +214,6 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
   }
 
   void updateEditorInlays() {
-    if (!Registry.is("ssr.use.editor.inlays.instead.of.tool.tips")) {
-      return;
-    }
     final String text = editor.getDocument().getText();
     final Template template = TemplateManager.getInstance(editor.getProject()).createTemplate("", "", text);
     final int segmentsCount = template.getSegmentsCount();
@@ -269,7 +227,7 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
       final String name = template.getSegmentName(i);
       variableNameLength += name.length() + 2;
       final NamedScriptableDefinition variable = configuration.findVariable(name);
-      final String labelText = getShortParamString(variable, false);
+      final String labelText = getShortParamString(variable);
       if (labelText.isEmpty()) {
         continue;
       }
@@ -285,7 +243,7 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
       }
     }
     final NamedScriptableDefinition contextVariable = configuration.findVariable(Configuration.CONTEXT_VAR_NAME);
-    final String labelText = getShortParamString(contextVariable, false);
+    final String labelText = getShortParamString(contextVariable);
     if (!labelText.isEmpty()) {
       variables.remove(Configuration.CONTEXT_VAR_NAME);
       final Inlay<FilterRenderer> inlay = inlays.get(Configuration.CONTEXT_VAR_NAME);
