@@ -3,7 +3,7 @@ package com.intellij.execution.process.elevation
 
 import com.intellij.application.subscribe
 import com.intellij.execution.process.elevation.settings.ElevationSettings
-import com.intellij.execution.process.mediator.ProcessMediatorClient
+import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon

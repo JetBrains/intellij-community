@@ -5,8 +5,8 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.SelfKiller
 import com.intellij.execution.process.elevation.settings.ElevationSettings
-import com.intellij.execution.process.mediator.MediatedProcess
-import com.intellij.execution.process.mediator.ProcessMediatorClient
+import com.intellij.execution.process.mediator.client.MediatedProcess
+import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service

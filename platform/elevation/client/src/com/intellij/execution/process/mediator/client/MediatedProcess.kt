@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.process.mediator
+package com.intellij.execution.process.mediator.client
 
 import com.google.protobuf.ByteString
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
+import com.intellij.execution.process.mediator.util.ChannelInputStream
+import com.intellij.execution.process.mediator.util.ChannelOutputStream
 import com.intellij.execution.process.mediator.util.blockingGet
 import com.intellij.execution.process.mediator.util.childSupervisorScope
 import kotlinx.coroutines.*

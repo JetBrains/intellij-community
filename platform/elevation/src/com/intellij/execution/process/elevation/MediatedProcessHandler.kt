@@ -3,7 +3,7 @@ package com.intellij.execution.process.elevation
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.KillableColoredProcessHandler
-import com.intellij.execution.process.mediator.MediatedProcess
+import com.intellij.execution.process.mediator.client.MediatedProcess
 import com.intellij.util.io.BaseOutputReader
 
 class MediatedProcessHandler(
