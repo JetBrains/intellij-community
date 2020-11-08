@@ -28,11 +28,8 @@ import org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.*
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import org.jetbrains.plugins.gradle.util.GradleUtil
-import org.jetbrains.plugins.gradle.util.getGradleFqnTaskName
-import org.jetbrains.plugins.gradle.util.getGradleTasksMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import javax.swing.Icon
 
@@ -42,7 +39,7 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   override fun getHelpGroupTitle() = "Gradle"
 
-  override fun getCompletionGroupTitle() = "Gradle tasks"
+  override fun getCompletionGroupTitle() = GradleBundle.message("popup.title.gradle.tasks")
 
   override fun getHelpCommandPlaceholder() = "gradle <taskName...> <--option-name...>"
 

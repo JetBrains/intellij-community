@@ -24,7 +24,7 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   override fun getIcon(value: String): Icon? = OpenapiIcons.RepositoryLibraryLogo
 
-  override fun getCompletionGroupTitle() = "Maven goals"
+  override fun getCompletionGroupTitle() = RunnerBundle.message("popup.title.maven.goals")
 
   override fun getHelpCommandPlaceholder() = "mvn <goals...> <options...>"
 
