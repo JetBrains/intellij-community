@@ -15,24 +15,24 @@ data class DaemonLaunchOptions(
   val trampoline: Boolean = false,
   val daemonize: Boolean = false,
   val leaderPid: Long? = null,
-  val helloOption: HelloOption? = null,
+  val handshakeOption: HandshakeOption? = null,
   val tokenEncryptionOption: TokenEncryptionOption? = null,
 ) {
   interface CmdlineOption {
     override fun toString(): String
   }
 
-  // handling multiple hello writers is too complicated w.r.t. resource management, and we never need it anyway
-  sealed class HelloOption(private val arg: String) : CmdlineOption {
+  // handling multiple handshake writers is too complicated w.r.t. resource management, and we never need it anyway
+  sealed class HandshakeOption(private val arg: String) : CmdlineOption {
     override fun toString(): String = arg
 
-    object Stdout : HelloOption("--hello-file=-")
+    object Stdout : HandshakeOption("--handshake-file=-")
 
-    class File(val path: Path) : HelloOption("--hello-file=$path") {
+    class File(val path: Path) : HandshakeOption("--handshake-file=$path") {
       constructor(s: String) : this(Path.of(s))
     }
 
-    class Port(val port: UShort) : HelloOption("--hello-port=$port") {
+    class Port(val port: UShort) : HandshakeOption("--handshake-port=$port") {
       constructor(s: String) : this(s.toUShort())
     }
   }
@@ -53,7 +53,7 @@ data class DaemonLaunchOptions(
       "--trampoline".takeIf { trampoline },
       "--daemonize".takeIf { daemonize },
       leaderPid?.let { "--leader-pid=$it" },
-      helloOption,
+      handshakeOption,
       tokenEncryptionOption,
     ).mapNotNull { it?.toString() }
   }
@@ -69,7 +69,7 @@ data class DaemonLaunchOptions(
         " [ --trampoline ]" +
         " [ --daemonize ]" +
         " [ --leader-pid=pid ]" +
-        " [ --hello-file=file|- | --hello-port=port ]" +
+        " [ --handshake-file=file|- | --handshake-port=port ]" +
         " [ --token-encrypt-rsa=public-key ]"
       )
     }
@@ -89,7 +89,7 @@ data class DaemonLaunchOptions(
       var trampoline = false
       var daemonize = false
       var leaderPid: Long? = null
-      var helloOption: HelloOption? = null
+      var handshakeOption: HandshakeOption? = null
       var tokenEncryptionOption: TokenEncryptionOption? = null
 
       for ((option, value) in parseArgs(args)) {
@@ -107,14 +107,14 @@ data class DaemonLaunchOptions(
             leaderPid = value.toLong()
           }
 
-          "--hello-file" -> {
-            helloOption =
-              if (value == "-") HelloOption.Stdout
-              else HelloOption.File(value)
+          "--handshake-file" -> {
+            handshakeOption =
+              if (value == "-") HandshakeOption.Stdout
+              else HandshakeOption.File(value)
           }
 
-          "--hello-port" -> {
-            helloOption = HelloOption.Port(value)
+          "--handshake-port" -> {
+            handshakeOption = HandshakeOption.Port(value)
           }
 
           "--token-encrypt-rsa" -> {
@@ -130,7 +130,7 @@ data class DaemonLaunchOptions(
         trampoline = trampoline,
         daemonize = daemonize,
         leaderPid = leaderPid,
-        helloOption = helloOption,
+        handshakeOption = handshakeOption,
         tokenEncryptionOption = tokenEncryptionOption,
       )
     }

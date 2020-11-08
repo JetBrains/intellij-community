@@ -8,18 +8,18 @@ package com.intellij.execution.process.mediator.rpc;
  * exchanged on startup before gRPC is up and running
  * </pre>
  *
- * Protobuf type {@code intellij.process.mediator.rpc.DaemonHello}
+ * Protobuf type {@code intellij.process.mediator.rpc.Handshake}
  */
-public final class DaemonHello extends
+public final class Handshake extends
     com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:intellij.process.mediator.rpc.DaemonHello)
-    DaemonHelloOrBuilder {
+    // @@protoc_insertion_point(message_implements:intellij.process.mediator.rpc.Handshake)
+    HandshakeOrBuilder {
 private static final long serialVersionUID = 0L;
-  // Use DaemonHello.newBuilder() to construct.
-  private DaemonHello(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  // Use Handshake.newBuilder() to construct.
+  private Handshake(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private DaemonHello() {
+  private Handshake() {
     token_ = com.google.protobuf.ByteString.EMPTY;
   }
 
@@ -27,7 +27,7 @@ private static final long serialVersionUID = 0L;
   @SuppressWarnings({"unused"})
   protected java.lang.Object newInstance(
       UnusedPrivateParameter unused) {
-    return new DaemonHello();
+    return new Handshake();
   }
 
   @java.lang.Override
@@ -35,7 +35,7 @@ private static final long serialVersionUID = 0L;
   getUnknownFields() {
     return this.unknownFields;
   }
-  private DaemonHello(
+  private Handshake(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -89,15 +89,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_DaemonHello_descriptor;
+    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_Handshake_descriptor;
   }
 
   @java.lang.Override
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_DaemonHello_fieldAccessorTable
+    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_Handshake_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.intellij.execution.process.mediator.rpc.DaemonHello.class, com.intellij.execution.process.mediator.rpc.DaemonHello.Builder.class);
+            com.intellij.execution.process.mediator.rpc.Handshake.class, com.intellij.execution.process.mediator.rpc.Handshake.Builder.class);
   }
 
   public static final int PORT_FIELD_NUMBER = 1;
@@ -187,10 +187,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.intellij.execution.process.mediator.rpc.DaemonHello)) {
+    if (!(obj instanceof com.intellij.execution.process.mediator.rpc.Handshake)) {
       return super.equals(obj);
     }
-    com.intellij.execution.process.mediator.rpc.DaemonHello other = (com.intellij.execution.process.mediator.rpc.DaemonHello) obj;
+    com.intellij.execution.process.mediator.rpc.Handshake other = (com.intellij.execution.process.mediator.rpc.Handshake) obj;
 
     if (getPort()
         != other.getPort()) return false;
@@ -221,69 +221,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseFrom(byte[] data)
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseFrom(java.io.InputStream input)
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseDelimitedFrom(java.io.InputStream input)
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseDelimitedFrom(
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.Handshake parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -296,7 +296,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.intellij.execution.process.mediator.rpc.DaemonHello prototype) {
+  public static Builder newBuilder(com.intellij.execution.process.mediator.rpc.Handshake prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @java.lang.Override
@@ -316,26 +316,26 @@ private static final long serialVersionUID = 0L;
    * exchanged on startup before gRPC is up and running
    * </pre>
    *
-   * Protobuf type {@code intellij.process.mediator.rpc.DaemonHello}
+   * Protobuf type {@code intellij.process.mediator.rpc.Handshake}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:intellij.process.mediator.rpc.DaemonHello)
-      com.intellij.execution.process.mediator.rpc.DaemonHelloOrBuilder {
+      // @@protoc_insertion_point(builder_implements:intellij.process.mediator.rpc.Handshake)
+      com.intellij.execution.process.mediator.rpc.HandshakeOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_DaemonHello_descriptor;
+      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_Handshake_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_DaemonHello_fieldAccessorTable
+      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_Handshake_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.intellij.execution.process.mediator.rpc.DaemonHello.class, com.intellij.execution.process.mediator.rpc.DaemonHello.Builder.class);
+              com.intellij.execution.process.mediator.rpc.Handshake.class, com.intellij.execution.process.mediator.rpc.Handshake.Builder.class);
     }
 
-    // Construct using com.intellij.execution.process.mediator.rpc.DaemonHello.newBuilder()
+    // Construct using com.intellij.execution.process.mediator.rpc.Handshake.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -365,17 +365,17 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_DaemonHello_descriptor;
+      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_Handshake_descriptor;
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.mediator.rpc.DaemonHello getDefaultInstanceForType() {
-      return com.intellij.execution.process.mediator.rpc.DaemonHello.getDefaultInstance();
+    public com.intellij.execution.process.mediator.rpc.Handshake getDefaultInstanceForType() {
+      return com.intellij.execution.process.mediator.rpc.Handshake.getDefaultInstance();
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.mediator.rpc.DaemonHello build() {
-      com.intellij.execution.process.mediator.rpc.DaemonHello result = buildPartial();
+    public com.intellij.execution.process.mediator.rpc.Handshake build() {
+      com.intellij.execution.process.mediator.rpc.Handshake result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -383,8 +383,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.mediator.rpc.DaemonHello buildPartial() {
-      com.intellij.execution.process.mediator.rpc.DaemonHello result = new com.intellij.execution.process.mediator.rpc.DaemonHello(this);
+    public com.intellij.execution.process.mediator.rpc.Handshake buildPartial() {
+      com.intellij.execution.process.mediator.rpc.Handshake result = new com.intellij.execution.process.mediator.rpc.Handshake(this);
       result.port_ = port_;
       result.token_ = token_;
       result.pid_ = pid_;
@@ -426,16 +426,16 @@ private static final long serialVersionUID = 0L;
     }
     @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.intellij.execution.process.mediator.rpc.DaemonHello) {
-        return mergeFrom((com.intellij.execution.process.mediator.rpc.DaemonHello)other);
+      if (other instanceof com.intellij.execution.process.mediator.rpc.Handshake) {
+        return mergeFrom((com.intellij.execution.process.mediator.rpc.Handshake)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.intellij.execution.process.mediator.rpc.DaemonHello other) {
-      if (other == com.intellij.execution.process.mediator.rpc.DaemonHello.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.intellij.execution.process.mediator.rpc.Handshake other) {
+      if (other == com.intellij.execution.process.mediator.rpc.Handshake.getDefaultInstance()) return this;
       if (other.getPort() != 0) {
         setPort(other.getPort());
       }
@@ -460,11 +460,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.intellij.execution.process.mediator.rpc.DaemonHello parsedMessage = null;
+      com.intellij.execution.process.mediator.rpc.Handshake parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.intellij.execution.process.mediator.rpc.DaemonHello) e.getUnfinishedMessage();
+        parsedMessage = (com.intellij.execution.process.mediator.rpc.Handshake) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -582,41 +582,41 @@ private static final long serialVersionUID = 0L;
     }
 
 
-    // @@protoc_insertion_point(builder_scope:intellij.process.mediator.rpc.DaemonHello)
+    // @@protoc_insertion_point(builder_scope:intellij.process.mediator.rpc.Handshake)
   }
 
-  // @@protoc_insertion_point(class_scope:intellij.process.mediator.rpc.DaemonHello)
-  private static final com.intellij.execution.process.mediator.rpc.DaemonHello DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:intellij.process.mediator.rpc.Handshake)
+  private static final com.intellij.execution.process.mediator.rpc.Handshake DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.intellij.execution.process.mediator.rpc.DaemonHello();
+    DEFAULT_INSTANCE = new com.intellij.execution.process.mediator.rpc.Handshake();
   }
 
-  public static com.intellij.execution.process.mediator.rpc.DaemonHello getDefaultInstance() {
+  public static com.intellij.execution.process.mediator.rpc.Handshake getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<DaemonHello>
-      PARSER = new com.google.protobuf.AbstractParser<DaemonHello>() {
+  private static final com.google.protobuf.Parser<Handshake>
+      PARSER = new com.google.protobuf.AbstractParser<Handshake>() {
     @java.lang.Override
-    public DaemonHello parsePartialFrom(
+    public Handshake parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new DaemonHello(input, extensionRegistry);
+      return new Handshake(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<DaemonHello> parser() {
+  public static com.google.protobuf.Parser<Handshake> parser() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.google.protobuf.Parser<DaemonHello> getParserForType() {
+  public com.google.protobuf.Parser<Handshake> getParserForType() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.intellij.execution.process.mediator.rpc.DaemonHello getDefaultInstanceForType() {
+  public com.intellij.execution.process.mediator.rpc.Handshake getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

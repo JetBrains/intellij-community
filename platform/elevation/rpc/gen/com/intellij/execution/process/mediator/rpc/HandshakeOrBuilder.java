@@ -3,8 +3,8 @@
 
 package com.intellij.execution.process.mediator.rpc;
 
-public interface DaemonHelloOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:intellij.process.mediator.rpc.DaemonHello)
+public interface HandshakeOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:intellij.process.mediator.rpc.Handshake)
     com.google.protobuf.MessageOrBuilder {
 
   /**

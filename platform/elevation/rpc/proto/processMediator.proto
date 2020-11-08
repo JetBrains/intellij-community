@@ -14,7 +14,7 @@ service Daemon {
 }
 
 // exchanged on startup before gRPC is up and running
-message DaemonHello {
+message Handshake {
   uint32 port = 1;
   bytes token = 2;
   uint64 pid = 3;
