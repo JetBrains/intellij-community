@@ -457,26 +457,7 @@ object DynamicPlugins {
           // mark plugin classloaders as being unloaded to ensure that new extension instances will be not created during unload
           setClassLoaderState(pluginDescriptor, PluginClassLoader.UNLOAD_IN_PROGRESS)
 
-          processLoadedOptionalDependenciesOnPlugin(pluginId) { mainDescriptor, subDescriptor ->
-            val classLoader = (subDescriptor ?: mainDescriptor).pluginClassLoader
-            subDescriptor?.let { unloadPluginDescriptorNotRecursively(it) }
-            // this additional code is required because in unit tests PluginClassLoader is not used
-            if (subDescriptor != null && mainDescriptor !== subDescriptor) {
-              subDescriptor.classLoader = null
-            }
-
-            if (pluginDescriptor.pluginClassLoader is PluginClassLoader && classLoader is PluginClassLoader) {
-              LOG.info("Detach classloader ${pluginDescriptor.pluginClassLoader} from ${classLoader}")
-              if (subDescriptor != null && mainDescriptor != subDescriptor && classLoader is SubPluginClassLoader) {
-                classLoaders.add(classLoader)
-                classLoader.state = PluginClassLoader.UNLOAD_IN_PROGRESS
-              }
-              else if (!classLoader.detachParent(pluginDescriptor.pluginClassLoader)) {
-                LOG.warn("Classloader ${pluginDescriptor.pluginClassLoader} doesn't have ${classLoader} as parent")
-              }
-            }
-            true
-          }
+          unloadLoadedOptionalDependenciesOnPlugin(pluginDescriptor, classLoaders)
 
           pluginDescriptor.pluginDependencies?.let { unloadDependencyDescriptors(it, PluginStateChecker(), classLoaders) }
           unloadPluginDescriptorNotRecursively(pluginDescriptor)
@@ -589,18 +570,51 @@ object DynamicPlugins {
     return classLoaderUnloaded
   }
 
+  private fun unloadLoadedOptionalDependenciesOnPlugin(dependencyPluginDescriptor: IdeaPluginDescriptorImpl, classLoaders: WeakList<PluginClassLoader>) {
+    val dependencyClassloader = dependencyPluginDescriptor.classLoader
+    for (descriptor in PluginManagerCore.getLoadedPlugins(null)) {
+      val ok = processLoadedOptionalDependenciesOnPlugin(dependencyPluginDescriptor.pluginId, descriptor) { mainDescriptor, subDescriptor ->
+        val classLoader = (subDescriptor ?: mainDescriptor).pluginClassLoader
+        if (subDescriptor != null) {
+          unloadPluginDescriptorNotRecursively(subDescriptor)
+        }
+
+        // this additional code is required because in unit tests PluginClassLoader is not used
+        if (subDescriptor != null && mainDescriptor !== subDescriptor) {
+          subDescriptor.classLoader = null
+        }
+
+        if (dependencyClassloader is PluginClassLoader && classLoader is PluginClassLoader) {
+          LOG.info("Detach classloader $dependencyClassloader from $classLoader")
+          if (subDescriptor != null && mainDescriptor !== subDescriptor && classLoader.pluginDescriptor === subDescriptor) {
+            classLoaders.add(classLoader)
+            classLoader.state = PluginClassLoader.UNLOAD_IN_PROGRESS
+          }
+          else if (!classLoader.detachParent(dependencyClassloader)) {
+            LOG.warn("Classloader $dependencyClassloader doesn't have $classLoader as parent")
+          }
+        }
+        true
+      }
+      if (!ok) {
+        break
+      }
+    }
+  }
+
   private fun unloadDependencyDescriptors(pluginDependencies: List<PluginDependency>,
                                           pluginStateChecker: PluginStateChecker,
                                           classLoaders: WeakList<PluginClassLoader>) {
     for (dependency in pluginDependencies) {
       val subDescriptor = dependency.subDescriptor ?: continue
+      val classLoader = subDescriptor.classLoader
       if (!pluginStateChecker.isPluginOrModuleLoaded(dependency.id)) {
-        LOG.assertTrue(subDescriptor.classLoader == null)
+        LOG.assertTrue(classLoader == null)
         continue
       }
 
-      (subDescriptor.classLoader as? SubPluginClassLoader)?.let {
-        classLoaders.add(it)
+      if (classLoader is PluginClassLoader && classLoader.pluginDescriptor === subDescriptor) {
+        classLoaders.add(classLoader)
       }
 
       subDescriptor.pluginDependencies?.let {

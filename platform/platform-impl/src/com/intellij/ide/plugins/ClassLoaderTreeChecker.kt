@@ -26,13 +26,15 @@ internal class ClassLoaderTreeChecker(private val unloadedMainDescriptor: IdeaPl
 
   private fun checkThatClassloaderNotReferenced(descriptor: IdeaPluginDescriptorImpl) {
     val classLoader = descriptor.classLoader as? PluginClassLoader ?: return
-    // unrealistic case, but who knows
-    if (descriptor !== unloadedMainDescriptor && classLoaders.contains(classLoader)) {
-      LOG.error("$classLoader must be unloaded but still referenced")
-    }
+    if (descriptor !== unloadedMainDescriptor) {
+      // unrealistic case, but who knows
+      if (classLoaders.contains(classLoader)) {
+        LOG.error("$classLoader must be unloaded but still referenced")
+      }
 
-    if (classLoader.pluginId === unloadedMainDescriptor.pluginId && classLoader is SubPluginClassLoader) {
-      LOG.error("Classloader of $descriptor must be nullified")
+      if (classLoader.pluginId === unloadedMainDescriptor.pluginId && classLoader.pluginDescriptor === descriptor) {
+        LOG.error("Classloader of $descriptor must be nullified")
+      }
     }
 
     val parents = classLoader._getParents()

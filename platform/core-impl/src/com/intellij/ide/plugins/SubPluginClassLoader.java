@@ -2,12 +2,10 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.cl.PluginClassLoader;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public final class SubPluginClassLoader extends PluginClassLoader {
+final class SubPluginClassLoader extends PluginClassLoader {
   private final String[] packagePrefixes;
 
   SubPluginClassLoader(@NotNull IdeaPluginDescriptorImpl pluginDescriptor,

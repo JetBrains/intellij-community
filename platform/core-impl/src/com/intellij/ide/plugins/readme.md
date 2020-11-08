@@ -25,5 +25,8 @@ For example:
 
 Attribute `package` specifies JVM package where all plugin classes are located. Recursively — `com.example` implies `com.example.sub` also.
 
- * If package is specified, all plugin optional descriptors must also specify package, and it must be different. For example, if `com.example` specified for main plugin descriptor, `com.example` cannot be used anymore for any optional descriptor. Classes referenced by optional descriptors, must be in a different package.
- * Icon class generator will use specified package for icon class but not `icons`. If you already have icon class, recommended moving existing icon class before running icon class generator to ensure that all references to icon class are updated by IDEA refactoring and icon class generator will use the same icon class name as before.
+If package is specified:
+
+ * All plugin optional descriptors must also specify package, and it must be different. For example, if `com.example` is set for main plugin descriptor, `com.example` cannot be used for any optional descriptor. Classes referenced by optional descriptors, must be in a different package.
+ * Icon class generator uses specified package for icon class but not `icons`. If you already have icon class, recommended moving existing icon class before running icon class generator to ensure that all references to icon class are updated by IntelliJ IDEA refactoring. Also, icon class generator uses the same icon class name as before if old one is detected in place.
+ * Plugin module cannot have module-level libraries. It is technical limitation for time being.
