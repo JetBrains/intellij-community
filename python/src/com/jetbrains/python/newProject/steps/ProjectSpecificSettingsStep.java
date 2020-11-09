@@ -129,7 +129,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     super.registerValidators();
     if (myProjectGenerator instanceof PythonProjectGenerator) {
       addLocationChangeListener(event -> {
-        final String fileName = PathUtil.getFileName(getNewProjectPath());
+        final String fileName = PathUtil.getFileName(getProjectLocation());
         ((PythonProjectGenerator)myProjectGenerator).locationChanged(fileName);
       });
     }
@@ -200,7 +200,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     }
 
     try {
-      generator.checkProjectCanBeCreatedOnSdk(sdk, new File(myLocationField.getText()));
+      generator.checkProjectCanBeCreatedOnSdk(sdk, new File(getProjectLocation()));
     }
     catch (final PythonProjectGenerator.PyNoProjectAllowedOnSdkException e) {
       setErrorText(e.getMessage());
@@ -299,7 +299,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final List<Sdk> existingSdks = getValidPythonSdks();
     final Sdk preferredSdk = getPreferredSdk(existingSdks);
 
-    final String newProjectPath = getNewProjectPath();
+    final String newProjectPath = getProjectLocation();
     final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(existingSdks, newProjectPath, preferredEnvironment);
     final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, null, existingSdks, newProjectPath, preferredSdk);
 
@@ -330,20 +330,13 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       checkValid();
     });
 
-    addLocationChangeListener(event -> myInterpreterPanel.setNewProjectPath(getNewProjectPath()));
+    addLocationChangeListener(event -> myInterpreterPanel.setNewProjectPath(getProjectLocation()));
 
     container.add(myInterpreterPanel, BorderLayout.NORTH);
 
     checkValid();
 
     return decoratorPanel;
-  }
-
-  @NotNull
-  private String getNewProjectPath() {
-    final TextFieldWithBrowseButton field = myLocationField;
-    if (field == null) return "";
-    return field.getText().trim();
   }
 
   private void addLocationChangeListener(@NotNull Consumer<DocumentEvent> listener) {
