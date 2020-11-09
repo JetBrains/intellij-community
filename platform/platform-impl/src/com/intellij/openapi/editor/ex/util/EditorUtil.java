@@ -49,6 +49,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class EditorUtil {
+  public static final Key<Boolean> SHOW_WHEN_FOLDED = Key.create("block.inlay.show.when.folded");
   private static final Logger LOG = Logger.getInstance(EditorUtil.class);
 
   private EditorUtil() {
@@ -995,6 +996,10 @@ public final class EditorUtil {
    * Tells whether given inlay element is invisible due to folding of text in editor
    */
   public static boolean isInlayFolded(@NotNull Inlay inlay) {
+    Boolean showWhenFolded = inlay.getUserData(SHOW_WHEN_FOLDED);
+    if (showWhenFolded != null && showWhenFolded) {
+      return false;
+    }
     Editor editor = inlay.getEditor();
     Inlay.Placement placement = inlay.getPlacement();
     int offset = inlay.getOffset();

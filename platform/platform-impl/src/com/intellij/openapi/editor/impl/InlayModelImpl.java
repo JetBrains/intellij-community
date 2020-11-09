@@ -150,9 +150,20 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
                                                                                    boolean showAbove,
                                                                                    int priority,
                                                                                    @NotNull T renderer) {
+    return addBlockElement(offset, relatesToPrecedingText, showAbove, false, priority, renderer);
+  }
+
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                   boolean relatesToPrecedingText,
+                                                                   boolean showAbove,
+                                                                   boolean showWhenFolded,
+                                                                   int priority,
+                                                                   @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     offset = Math.max(0, Math.min(myEditor.getDocument().getTextLength(), offset));
     BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, priority, renderer);
+    inlay.putUserData(EditorUtil.SHOW_WHEN_FOLDED, showWhenFolded);
     notifyAdded(inlay);
     return inlay;
   }
