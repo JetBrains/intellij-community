@@ -423,19 +423,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                  @NotNull String childName,
                                                  @NotNull List<? extends ChildInfo> children,
                                                  @NotNull NewVirtualFileSystem fs) {
-    if (!children.isEmpty()) {
-      // fast path, check that some child has same nameId as given name to avoid overhead on retrieving names for non-cached children
-      int nameId = FSRecords.getNameId(childName);
+    if (children.isEmpty()) {
+      return null;
+    }
+    // fast path, check that some child has same nameId as given name to avoid overhead on retrieving names for non-cached children
+    int nameId = FSRecords.getNameId(childName);
+    for (ChildInfo info : children) {
+      if (nameId == info.getNameId()) {
+        return info;
+      }
+    }
+    // for case sensitive system the above check is exhaustive in consistent state of vfs
+    if (!parent.isCaseSensitive()) {
       for (ChildInfo info : children) {
-        if (nameId == info.getNameId()) {
+        if (namesEqual(fs, parent, childName, FSRecords.getNameByNameId(info.getNameId()))) {
           return info;
         }
-      }
-      // for case sensitive system the above check is exhaustive in consistent state of vfs
-    }
-    for (ChildInfo info : children) {
-      if (namesEqual(fs, parent, childName, FSRecords.getNameByNameId(info.getNameId()))) {
-        return info;
       }
     }
     return null;
