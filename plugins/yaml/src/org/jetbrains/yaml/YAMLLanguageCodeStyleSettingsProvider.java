@@ -1,14 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
-import com.intellij.application.options.CodeStyleAbstractPanel;
-import com.intellij.application.options.IndentOptionsEditor;
-import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.application.options.*;
 import com.intellij.lang.Language;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
@@ -30,6 +25,41 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       YAMLBundle.message("YAMLLanguageCodeStyleSettingsProvider.align.options.colon"),
       YAMLBundle.message("YAMLLanguageCodeStyleSettingsProvider.align.options.value")
     };
+  }
+
+  @NotNull
+  @Override
+  public CodeStyleConfigurable createConfigurable(@NotNull final CodeStyleSettings settings, @NotNull final CodeStyleSettings originalSettings) {
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, YAMLLanguage.INSTANCE.getDisplayName()) {
+      @Override
+      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+        final CodeStyleSettings currentSettings = getCurrentSettings();
+        return new TabbedLanguageCodeStylePanel(YAMLLanguage.INSTANCE, currentSettings, settings) {
+          @Override
+          protected void initTabs(final CodeStyleSettings settings) {
+            addIndentOptionsTab(settings);
+            addSpacesTab(settings);
+            addWrappingAndBracesTab(settings);
+          }
+        };
+      }
+
+      @Override
+      public String getHelpTopic() {
+        return "reference.settingsdialog.codestyle.yaml";
+      }
+    };
+  }
+
+  @Override
+  public String getConfigurableDisplayName() {
+    return YAMLLanguage.INSTANCE.getDisplayName();
+  }
+
+  @Nullable
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new YAMLCodeStyleSettings(settings);
   }
 
   @Override
