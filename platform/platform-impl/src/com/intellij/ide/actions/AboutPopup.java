@@ -672,8 +672,10 @@ public final class AboutPopup {
       extraInfo += "Registry: " + registryKeys + "\n";
     }
 
-    String nonBundledPlugins = PluginManagerCore.getLoadedPlugins().stream().filter(p -> !p.isBundled())
-      .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
+    String nonBundledPlugins = PluginManagerCore.getLoadedPlugins().stream()
+      .filter(p -> !p.isBundled())
+      .map(p -> p.getPluginId().getIdString() + " (" + p.getVersion() + ")")
+      .collect(StringUtil.joining());
     if (!StringUtil.isEmpty(nonBundledPlugins)) {
       extraInfo += "Non-Bundled Plugins: " + nonBundledPlugins;
     }
