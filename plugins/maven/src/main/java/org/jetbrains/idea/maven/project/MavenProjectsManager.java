@@ -810,6 +810,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     doScheduleUpdateProjects(null, false, forceImportAndResolve);
   }
 
+  @ApiStatus.Internal
+  public AsyncPromise<Void> forceUpdateProjects() {
+    return doScheduleUpdateProjects(null, true, true);
+  }
+
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
     return doScheduleUpdateProjects(projects, true, true);
   }
@@ -872,28 +877,36 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
-    MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false,
-                              indicator -> {
-                                if (myReadingProcessor != null) {
-                                  myReadingProcessor.waitForCompletion();
-                                }
-                                if (myArtifactsDownloadingProcessor != null) {
-                                  myArtifactsDownloadingProcessor.waitForCompletion();
-                                }
-                                if (myFoldersResolvingProcessor != null) {
-                                  myFoldersResolvingProcessor.waitForCompletion();
-                                }
-                                if (myPluginsResolvingProcessor != null) {
-                                  myPluginsResolvingProcessor.waitForCompletion();
-                                }
-                                if (myResolvingProcessor != null) {
-                                  myResolvingProcessor.waitForCompletion();
-                                }
-                                if (myPostProcessor != null) {
-                                  myPostProcessor.waitForCompletion();
-                                }
-                                console.finishImport();
-                              });
+    waitForImportCompletion().onProcessed(o -> {
+      console.finishImport();
+    });
+  }
+
+  @ApiStatus.Internal
+  public Promise<?> waitForImportCompletion() {
+    AsyncPromise<?> promise = new AsyncPromise<>();
+    MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false, indicator -> {
+      if (myReadingProcessor != null) {
+        myReadingProcessor.waitForCompletion();
+      }
+      if (myArtifactsDownloadingProcessor != null) {
+        myArtifactsDownloadingProcessor.waitForCompletion();
+      }
+      if (myFoldersResolvingProcessor != null) {
+        myFoldersResolvingProcessor.waitForCompletion();
+      }
+      if (myPluginsResolvingProcessor != null) {
+        myPluginsResolvingProcessor.waitForCompletion();
+      }
+      if (myResolvingProcessor != null) {
+        myResolvingProcessor.waitForCompletion();
+      }
+      if (myPostProcessor != null) {
+        myPostProcessor.waitForCompletion();
+      }
+      promise.setResult(null);
+    });
+    return promise;
   }
 
   private AsyncPromise<List<Module>> scheduleResolve() {
@@ -1295,7 +1308,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return result;
   }
 
-  private List<VirtualFile> collectAllAvailablePomFiles() {
+  @ApiStatus.Internal
+  public List<VirtualFile> collectAllAvailablePomFiles() {
     List<VirtualFile> result = new ArrayList<>(getFileToModuleMapping(new MavenDefaultModelsProvider(myProject)).keySet());
     MavenUtil.streamPomFiles(myProject, myProject.getBaseDir()).forEach(result::add);
     return result;
