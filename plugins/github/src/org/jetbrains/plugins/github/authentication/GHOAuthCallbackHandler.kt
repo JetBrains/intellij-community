@@ -37,7 +37,7 @@ internal class GHOAuthCallbackHandler : RestService() {
     private const val SERVICE_NAME = "github/oauth"
     private val port: Int get() = BuiltInServerManager.getInstance().port
 
-    val authorizationCodeUrl: Url get() = newFromEncoded("http://localhost:$port/$PREFIX/$SERVICE_NAME/authorization_code")
+    val authorizationCodeUrl: Url get() = newFromEncoded("http://127.0.0.1:$port/$PREFIX/$SERVICE_NAME/authorization_code")
 
     private val QueryStringDecoder.isAuthorizationCodeUrl: Boolean get() = path() == authorizationCodeUrl.path
     private val QueryStringDecoder.authorizationCode: String? get() = parameters()["code"]?.firstOrNull()
