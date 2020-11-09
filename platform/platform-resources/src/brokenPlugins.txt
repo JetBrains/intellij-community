@@ -4,3 +4,4 @@
 // If plugin name or version contains a space you can quote it like in command line.
 //
 // This file will be automatically generated using JetBrains Marketplace during the IDE build via build scripts.
+// If you want to add your plugin here, please contact the Marketplace team: marketplace@jetbrains.com.
