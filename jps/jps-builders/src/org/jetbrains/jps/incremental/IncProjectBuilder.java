@@ -1092,12 +1092,13 @@ public final class IncProjectBuilder {
         }
       }
 
-      return runModuleLevelBuilders(context, new ModuleChunk(moduleTargets), buildProgress);
+      return runModuleLevelBuilders(wrapWithModuleInfoAppender(context, moduleTargets), new ModuleChunk(moduleTargets), buildProgress);
     }
 
     final BuildTarget<?> target = targets.iterator().next();
     if (target instanceof ModuleBuildTarget) {
-      return runModuleLevelBuilders(context, new ModuleChunk(Collections.singleton((ModuleBuildTarget)target)), buildProgress);
+      final Set<ModuleBuildTarget> mbt = Collections.singleton((ModuleBuildTarget)target);
+      return runModuleLevelBuilders(wrapWithModuleInfoAppender(context, mbt), new ModuleChunk(mbt), buildProgress);
     }
 
     completeRecompiledSourcesSet(context, (Collection<? extends BuildTarget<BuildRootDescriptor>>)targets);
@@ -1115,6 +1116,27 @@ public final class IncProjectBuilder {
       buildProgress.updateProgress(target, ((double)builderCount)/builders.size(), context);
     }
     return true;
+  }
+
+  private static CompileContext wrapWithModuleInfoAppender(CompileContext context, Collection<ModuleBuildTarget> moduleTargets) {
+    final Class<MessageHandler> messageHandlerInterface = MessageHandler.class;
+    return (CompileContext)Proxy.newProxyInstance(context.getClass().getClassLoader(), new Class[] {CompileContext.class}, new InvocationHandler() {
+      @Override
+      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if (args != null && args.length > 0 && messageHandlerInterface.equals(method.getDeclaringClass())) {
+          for (Object arg : args) {
+            if (arg instanceof CompilerMessage) {
+              final CompilerMessage compilerMessage = (CompilerMessage)arg;
+              for (ModuleBuildTarget target : moduleTargets) {
+                compilerMessage.addModuleName(target.getModule().getName());
+              }
+              break;
+            }
+          }
+        }
+        return method.invoke(context, args);
+      }
+    });
   }
 
   /**
@@ -1503,6 +1525,9 @@ public final class IncProjectBuilder {
         for (ModuleLevelBuilder builder : myBuilderRegistry.getBuilders(category)) {
           builder.chunkBuildFinished(context, chunk);
         }
+      }
+      if (Utils.errorsDetected(context)) {
+        context.processMessage(new CompilerMessage("", BuildMessage.Kind.JPS_INFO, JpsBuildBundle.message("build.message.errors.occurred.while.compiling.module.0", chunk.getPresentableShortName())));
       }
     }
 

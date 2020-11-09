@@ -27,6 +27,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
+
 public final class CompilerMessageImpl implements CompilerMessage {
 
   private final Project myProject;
@@ -36,6 +39,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
   private final VirtualFile myFile;
   private final int myRow;
   private final int myColumn;
+  private final Collection<String> myModuleNames;
   @NotNull
   private TripleFunction<? super CompilerMessage, ? super Integer, ? super Integer, Integer> myColumnAdjuster = (msg, line, col) -> col;
 
@@ -50,6 +54,12 @@ public final class CompilerMessageImpl implements CompilerMessage {
                              int row,
                              int column,
                              @Nullable final Navigatable navigatable) {
+    this(project, category, message, file, row, column, navigatable, Collections.emptyList());
+  }
+
+  public CompilerMessageImpl(Project project, 
+                             @NotNull CompilerMessageCategory category, @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                             @Nullable final VirtualFile file, int row, int column, @Nullable final Navigatable navigatable, @NotNull Collection<String> moduleNames) {
     myProject = project;
     myCategory = category;
     myNavigatable = navigatable;
@@ -57,6 +67,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     myRow = row;
     myColumn = column;
     myFile = file;
+    myModuleNames = Collections.unmodifiableCollection(moduleNames);
   }
 
   public void setColumnAdjuster(@NotNull TripleFunction<? super CompilerMessage, ? super Integer, ? super Integer, Integer> columnAdjuster) {
@@ -116,6 +127,11 @@ public final class CompilerMessageImpl implements CompilerMessage {
 
   public int getColumn() {
     return myColumn;
+  }
+
+  @Override
+  public Collection<String> getModuleNames() {
+    return myModuleNames;
   }
 
   public boolean equals(Object o) {

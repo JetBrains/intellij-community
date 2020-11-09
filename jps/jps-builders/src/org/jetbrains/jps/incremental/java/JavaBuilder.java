@@ -359,9 +359,6 @@ public final class JavaBuilder extends ModuleLevelBuilder {
           // unexpected exception occurred or compiler did not output any errors for some reason
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.compilation.failed.internal.java.compiler.error")));
         }
-        if (diagnosticSink.getErrorCount() > 0) {
-          diagnosticSink.report(new JpsInfoDiagnostic(JpsBuildBundle.message("build.message.errors.occurred.while.compiling.module.0", chunkName)));
-        }
 
         if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
           throw new StopBuildException(

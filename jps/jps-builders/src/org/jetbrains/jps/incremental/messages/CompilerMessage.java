@@ -10,6 +10,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author Eugene Zhuravlev
@@ -23,6 +26,7 @@ public class CompilerMessage extends BuildMessage {
   private final String mySourcePath;
   private final long myLine;
   private final long myColumn;
+  private final Collection<String> myModuleNames = new HashSet<>();
 
   /**
    * @deprecated use either {@link #createInternalCompilationError(String, Throwable)} or {@link #createInternalBuilderError(String, Throwable)} instead
@@ -85,6 +89,14 @@ public class CompilerMessage extends BuildMessage {
 
   public long getProblemLocationOffset() {
     return myProblemLocationOffset;
+  }
+
+  public void addModuleName(String moduleName) {
+    myModuleNames.add(moduleName);
+  }
+
+  public Collection<String> getModuleNames() {
+    return Collections.unmodifiableCollection(myModuleNames);
   }
 
   public String toString() {

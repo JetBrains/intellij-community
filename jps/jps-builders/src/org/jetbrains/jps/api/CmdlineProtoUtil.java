@@ -123,18 +123,18 @@ public final class CmdlineProtoUtil {
   }
 
   public static BuilderMessage createCompileProgressMessageResponse(@Nls(capitalization = Nls.Capitalization.Sentence) String text) {
-    return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, -1.0f);
+    return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, -1.0f, Collections.emptyList());
   }
 
   public static BuilderMessage createCompileProgressMessageResponse(@Nls(capitalization = Nls.Capitalization.Sentence) String text, float done) {
-    return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done);
+    return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done, Collections.emptyList());
   }
 
   public static BuilderMessage createCompileMessage(final BuildMessage.Kind kind,
                                                     @Nls(capitalization = Nls.Capitalization.Sentence) String text,
                                                     String path,
                                                     long beginOffset, long endOffset, long offset, long line,
-                                                    long column, float done) {
+                                                    long column, float done, Collection<String> moduleNames) {
 
     final BuilderMessage.CompileMessage.Builder builder = BuilderMessage.CompileMessage.newBuilder();
     switch (kind) {
@@ -182,6 +182,9 @@ public final class CmdlineProtoUtil {
     }
     if (done >= 0.0f) {
       builder.setDone(done);
+    }
+    if (!moduleNames.isEmpty()) {
+      builder.addAllModuleNames(moduleNames);
     }
     return BuilderMessage.newBuilder().setType(BuilderMessage.Type.COMPILE_MESSAGE).setCompileMessage(builder.build()).build();
   }

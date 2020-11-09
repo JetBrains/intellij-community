@@ -294,7 +294,7 @@ public final class CompileDriver {
           final long line = message.hasLine() ? message.getLine() : -1;
           final long column = message.hasColumn() ? message.getColumn() : -1;
           final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
-          compileContext.addMessage(category, messageText, srcUrl, (int)line, (int)column);
+          compileContext.addMessage(category, messageText, srcUrl, (int)line, (int)column, null, message.getModuleNamesList());
           if (compileContext.shouldUpdateProblemsView() && kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
             // treat JPS_INFO messages in a special way: add them as info messages to the problems view
             final Project project = compileContext.getProject();
