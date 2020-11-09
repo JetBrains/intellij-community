@@ -512,7 +512,18 @@ public final class EditorTestUtil {
                                     boolean showAbove,
                                     int widthInPixels,
                                     Integer heightInPixels) {
-    return editor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, 0,
+    return addBlockInlay(editor, offset, relatesToPrecedingText, showAbove, false, widthInPixels, heightInPixels);
+  }
+
+
+  public static Inlay addBlockInlay(@NotNull Editor editor,
+                                    int offset,
+                                    boolean relatesToPrecedingText,
+                                    boolean showAbove,
+                                    boolean showWhenFolded,
+                                    int widthInPixels,
+                                    Integer heightInPixels) {
+    return editor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, showWhenFolded, 0,
                                                   new EmptyInlayRenderer(widthInPixels, heightInPixels));
   }
 

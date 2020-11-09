@@ -72,6 +72,14 @@ public interface InlayModel {
                                                                 int priority,
                                                                 @NotNull T renderer);
 
+  default <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           boolean showAbove,
+                                                                           boolean showWhenFolded,
+                                                                           int priority,
+                                                                           @NotNull T renderer) {
+    return addBlockElement(offset, relatesToPrecedingText, showAbove, priority, renderer);
+  }
 
   /**
    * Introduces a visual element, which will be displayed after the end of corresponding logical line.

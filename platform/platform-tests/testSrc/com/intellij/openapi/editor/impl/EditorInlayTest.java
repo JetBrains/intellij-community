@@ -423,6 +423,14 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertEquals(1, geometricLineToVisualLine(2));
   }
 
+  public void testInlayAboveFolding() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    EditorTestUtil.addBlockInlay(getEditor(), 5, true, true, true, 0, null);
+    assertEquals(geometricLineY(0), getEditor().offsetToXY(0).y);
+    assertEquals(geometricLineY(2), getEditor().offsetToXY(8).y);
+  }
+
   public void testInlayIsAddedIntoCollapsedFoldRegion() {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
