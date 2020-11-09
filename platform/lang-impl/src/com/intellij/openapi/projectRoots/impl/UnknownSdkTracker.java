@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -39,18 +38,9 @@ public class UnknownSdkTracker {
   }
 
   @NotNull private final Project myProject;
-  @NotNull private final MergingUpdateQueue myUpdateQueue;
 
   public UnknownSdkTracker(@NotNull Project project) {
     myProject = project;
-    myUpdateQueue = new MergingUpdateQueue(getClass().getSimpleName(),
-                                           700,
-                                           true,
-                                           null,
-                                           myProject,
-                                           null,
-                                           false)
-      .usePassThroughInUnitTestMode();
   }
 
   private static boolean isEnabled() {
@@ -70,9 +60,9 @@ public class UnknownSdkTracker {
   }
 
   @NotNull
-  private Update newUpdateTask(@NotNull ShowStatusCallback showStatus,
-                               @NotNull Predicate<UnknownSdkSnapshot> shouldProcessSnapshot) {
-    return new Update("update") {
+  private Runnable newUpdateTask(@NotNull ShowStatusCallback showStatus,
+                                 @NotNull Predicate<UnknownSdkSnapshot> shouldProcessSnapshot) {
+    return new Runnable() {
       @Override
       public void run() {
         if (!isEnabled() || !Registry.is("unknown.sdk.auto")) {
@@ -112,7 +102,8 @@ public class UnknownSdkTracker {
   };
 
   public void updateUnknownSdks() {
-    myUpdateQueue.queue(newUpdateTask(new DefaultShowStatusCallbackAdapter(), myIsNewSnapshot));
+    UnknownSdkTrackerQueue.getInstance(myProject)
+      .queue(newUpdateTask(new DefaultShowStatusCallbackAdapter(), myIsNewSnapshot));
   }
 
   private static boolean allowFixesFor(@NotNull SdkTypeId type) {
