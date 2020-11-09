@@ -8,18 +8,28 @@ import com.intellij.execution.target.TargetEnvironmentType.TargetSpecificVolumeC
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.HideableDecorator
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.nullize
+import com.intellij.util.ui.UIUtil
+import java.awt.BorderLayout
+import javax.swing.JPanel
 
 class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration,
                             private val target: TargetEnvironmentConfiguration,
                             private val project: Project) :
   BoundConfigurable(config.displayName, config.getRuntimeType().helpTopic) {
 
+  private lateinit var mainPanel: DialogPanel
+  private lateinit var additionalPanel: DialogPanel
+
   private val targetVolumeContributions = mutableMapOf<VolumeDescriptor, TargetSpecificVolumeContributionUI>()
 
   override fun createPanel(): DialogPanel {
-    return panel {
+    val whole = DialogPanel(VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP)))
+    mainPanel = panel {
       row(ExecutionBundle.message("java.language.runtime.jdk.home.path")) {
         val cellBuilder: CellBuilder<*>
         if (target is BrowsableTargetEnvironmentConfiguration) {
@@ -35,17 +45,31 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
       row(ExecutionBundle.message("java.language.runtime.jdk.version")) {
         textField(config::javaVersionString)
       }
+    }
 
-      hideableRow(ExecutionBundle.message("java.language.runtime.separator.advanced.volume.settings")) {
-        subRowIndent = 0
+    val bottom = JPanel(BorderLayout(0, JBUIScale.scale(UIUtil.LARGE_VGAP)))
+    additionalPanel = panel {
+      row {
+        subRowIndent = 1
         addVolumeUI(JavaLanguageRuntimeType.CLASS_PATH_VOLUME)
         addVolumeUI(JavaLanguageRuntimeType.AGENTS_VOLUME)
       }
     }
+    val decorator = HideableDecorator(
+      bottom, ExecutionBundle.message("java.language.runtime.separator.advanced.volume.settings"), false)
+    decorator.setOn(false)
+    decorator.setContentComponent(additionalPanel)
+
+    whole.add(mainPanel, VerticalLayout.TOP)
+    whole.add(bottom, VerticalLayout.TOP)
+
+    return whole
   }
 
   override fun apply() {
     super.apply()
+    mainPanel.apply()
+    additionalPanel.apply()
     targetVolumeContributions.forEach { volume, contribution ->
       config.setTargetSpecificData(volume, contribution.getConfiguredValue())
     }
@@ -53,9 +77,17 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
 
   override fun reset() {
     super.reset()
+    mainPanel.reset()
+    additionalPanel.reset()
     targetVolumeContributions.forEach { volume, contribution ->
       contribution.resetFrom(volume)
     }
+  }
+
+  override fun isModified(): Boolean {
+    return super.isModified() ||
+           mainPanel.isModified() ||
+           additionalPanel.isModified()
   }
 
   private fun RowBuilder.addVolumeUI(volumeDescriptor: VolumeDescriptor) {
