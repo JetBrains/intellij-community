@@ -321,6 +321,11 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
         }
     }
 
+    override fun visitWhenConditionWithExpression(condition: KtWhenConditionWithExpression) {
+        super.visitWhenConditionWithExpression(condition)
+        getHandler(condition).filter = WhenConditionFiler
+    }
+
     override fun visitConstructorCalleeExpression(expression: KtConstructorCalleeExpression) {
         super.visitConstructorCalleeExpression(expression)
         val handler = getHandler(expression)
@@ -377,6 +382,7 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
             val newHandler = SubstitutionHandler(handler.name, handler.isTarget, 1, 1, false)
             val predicate = handler.predicate
             if (predicate != null) newHandler.predicate = predicate
+            newHandler.filter = handler.filter
             setHandler(this, newHandler)
         }
     }
@@ -440,6 +446,10 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
 
         val CommentedDeclarationFilter: NodeFilter = NodeFilter {
             it is PsiComment || DeclarationFilter.accepts(it)
+        }
+
+        val WhenConditionFiler: NodeFilter = NodeFilter {
+            it is KtWhenCondition
         }
 
         val SimpleNameSTEFilter: NodeFilter = NodeFilter {
