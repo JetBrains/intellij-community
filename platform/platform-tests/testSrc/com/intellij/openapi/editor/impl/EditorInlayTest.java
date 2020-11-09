@@ -349,16 +349,78 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertEquals(Arrays.asList(i1, i2), getEditor().getInlayModel().getInlineElementsInRange(1, 1));
   }
 
+  /**
+   * Utility function for line-height block inlays testing.
+   *
+   * Converts geometric position of editor line that accounts block inlays to visual position that is applicable to text lines only.
+   *
+   * Consider the following example:
+   *
+   * abc <- geometric line 0, visual line 0
+   * <block inlay with height being equal to line height> <- geometric line 1, visual line NA
+   * cde <- geometric line 2, visual line 1
+   *
+   */
+  private int geometricLineToVisualLine(int geometricLine) {
+    return getEditor().yToVisualLine(geometricLineY(geometricLine));
+  }
+
+  private static int geometricLineY(int geometricLine) {
+    return (int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT) * geometricLine;
+  }
+
   public void testYToVisualLineCalculationForBlockInlay() {
     initText("abc\ndef");
     addBlockInlay(1);
-    assertEquals(1, getEditor().yToVisualLine((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT * 2)));
+    assertEquals(0, geometricLineToVisualLine(0));
+    assertEquals(1, geometricLineToVisualLine(2));
+  }
+
+  public void testYToVisualLineCalculationForAboveBlockInlay() {
+    initText("abc\ndef");
+    addBlockInlay(1, true);
+    assertEquals(0, geometricLineToVisualLine(1));
+    assertEquals(1, geometricLineToVisualLine(2));
   }
 
   public void testYToVisualLineCalculationForBlockInlayAnotherCase() {
     initText("abc\ndef\nghi");
     addBlockInlay(1);
-    assertEquals(1, getEditor().yToVisualLine((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT * 2)));
+    assertEquals(0, geometricLineToVisualLine(0));
+    assertEquals(1, geometricLineToVisualLine(2));
+    assertEquals(2, geometricLineToVisualLine(3));
+  }
+
+  public void testInlayInStartOfCollapsedLine() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    addBlockInlay(4, true, false);
+    assertEquals(geometricLineY(0), getEditor().visualLineToY(0));
+    assertEquals(geometricLineY(2), getEditor().visualLineToY(1));
+  }
+
+  public void testInlayInStartOfCollapsedLineRelatesToPreceding() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    addBlockInlay(4, true, true);
+    assertEquals(geometricLineY(0), getEditor().visualLineToY(0));
+    assertEquals(geometricLineY(1), getEditor().visualLineToY(1));
+  }
+
+  public void testInlayInCollapsedLine() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    addBlockInlay(5, true, false);
+    assertEquals(geometricLineY(0), getEditor().visualLineToY(0));
+    assertEquals(geometricLineY(1), getEditor().visualLineToY(1));
+  }
+
+  public void testInlayBeforeCollapsedLine() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    addBlockInlay(4, true, false);
+    assertEquals(0, geometricLineToVisualLine(0));
+    assertEquals(1, geometricLineToVisualLine(2));
   }
 
   public void testInlayIsAddedIntoCollapsedFoldRegion() {
