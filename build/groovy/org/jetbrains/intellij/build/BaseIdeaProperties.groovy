@@ -39,6 +39,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.repository.search",
     "intellij.maven.model",
     "intellij.maven",
+    "intellij.externalSystem.dependencyUpdater",
     "intellij.gradle",
     "intellij.gradle.dependencyUpdater",
     "intellij.gradle.dsl.impl",

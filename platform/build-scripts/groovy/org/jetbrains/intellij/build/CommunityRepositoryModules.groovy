@@ -173,6 +173,7 @@ class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension.impl")
       withProjectLibrary("Gradle")
     },
+    plugin("intellij.externalSystem.dependencyUpdater"),
     plugin("intellij.gradle.dependencyUpdater"),
     plugin("intellij.gradle.dsl.impl") {
       withModule("intellij.gradle.dsl")
