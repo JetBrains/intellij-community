@@ -2,6 +2,7 @@
 
 package com.intellij.diagnostic.logging;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleBuffer;
@@ -20,10 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
@@ -32,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +51,6 @@ import java.util.function.BiConsumer;
  */
 public abstract class LogConsoleBase extends AdditionalTabComponent implements LogConsole, LogFilterListener {
   private static final Logger LOG = Logger.getInstance(LogConsoleBase.class);
-  @NonNls public static final String APPLYING_FILTER_TITLE = "Applying filter...";
 
   private JPanel mySearchComponent;
   private JComboBox myLogFilterCombo;
@@ -83,7 +79,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
     @Override
     public void filter() {
-      final Task.Backgroundable task = new Task.Backgroundable(myProject, APPLYING_FILTER_TITLE) {
+      final Task.Backgroundable task = new Task.Backgroundable(myProject, getApplyingFilterTitle()) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           myModel.updateCustomFilter(getFilter());
@@ -92,6 +88,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       ProgressManager.getInstance().run(task);
     }
   };
+
+  public static @NlsContexts.ProgressTitle @NotNull String getApplyingFilterTitle() {
+    return ExecutionBundle.message("progress.title.applying.filter");
+  }
 
   public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, @NlsContexts.TabTitle String title, final boolean buildInActions, LogFilterModel model) {
     this(project, reader, title, buildInActions, model, GlobalSearchScope.allScope(project));
@@ -549,7 +549,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       @Override
       public void actionPerformed(ActionEvent e) {
         final LogFilter filter = (LogFilter)myLogFilterCombo.getSelectedItem();
-        final Task.Backgroundable task = new Task.Backgroundable(myProject, APPLYING_FILTER_TITLE) {
+        final Task.Backgroundable task = new Task.Backgroundable(myProject, getApplyingFilterTitle()) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             myModel.selectFilter(filter);
@@ -558,7 +558,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         ProgressManager.getInstance().run(task);
       }
     });
-    AccessibleContextUtil.setName(myLogFilterCombo, "Message severity filter");
+    AccessibleContextUtil.setName(myLogFilterCombo, ExecutionBundle.message("log.filter.combo.accessible.name"));
     myTextFilterWrapper.removeAll();
     myTextFilterWrapper.add(getTextFilterComponent());
     return mySearchComponent;

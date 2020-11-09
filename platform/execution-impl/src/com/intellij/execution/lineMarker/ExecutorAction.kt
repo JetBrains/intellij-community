@@ -8,6 +8,7 @@ import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 
 
 /**
@@ -91,6 +92,7 @@ class ExecutorAction private constructor(val origin: AnAction,
 
   override fun disableIfNoVisibleChildren() = origin !is ActionGroup || origin.disableIfNoVisibleChildren()
 
+  @NlsSafe
   fun getActionName(dataContext: DataContext): String? {
     val list = getConfigurations(dataContext)
     if (list.isEmpty()) {

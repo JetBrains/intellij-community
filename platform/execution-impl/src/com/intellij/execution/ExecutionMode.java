@@ -18,6 +18,7 @@ package com.intellij.execution;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +32,8 @@ import java.util.function.BooleanSupplier;
 */
 public class ExecutionMode {
   private final boolean myCancelable;
-  private final String myTitle;
-  private final String myTitle2;
+  private final @NlsContexts.ProgressTitle String myTitle;
+  private final @NlsContexts.ProgressTitle String myTitle2;
   private final boolean myRunWithModal;
   private final boolean myRunInBG;
   private final JComponent myProgressParentComponent;
@@ -41,8 +42,8 @@ public class ExecutionMode {
   private final List<ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ExecutionMode(final boolean cancelable,
-                       @Nullable final String title,
-                       @Nullable final String title2,
+                       @Nullable final @NlsContexts.ProgressTitle String title,
+                       @Nullable final @NlsContexts.ProgressTitle String title2,
                        final boolean runInBG,
                        final boolean runWithModal,
                        JComponent progressParentComponent) {
@@ -73,12 +74,12 @@ public class ExecutionMode {
   }
 
   @Nullable
-  public String getTitle() {
+  public @NlsContexts.ProgressTitle String getTitle() {
     return myTitle;
   }
 
   @Nullable
-  public String getTitle2() {
+  public @NlsContexts.ProgressTitle String getTitle2() {
     return myTitle2;
   }
 

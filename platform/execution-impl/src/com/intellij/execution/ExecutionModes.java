@@ -18,6 +18,7 @@ package com.intellij.execution;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +35,11 @@ public class ExecutionModes {
    */
   public static class BackGroundMode extends ExecutionMode {
 
-    public BackGroundMode(final boolean cancelable, @Nullable final String title) {
+    public BackGroundMode(final boolean cancelable, @Nullable final @NlsContexts.ProgressTitle String title) {
       super(cancelable, title, null, true, false, null);
     }
 
-    public BackGroundMode(@Nullable final String title) {
+    public BackGroundMode(@Nullable final @NlsContexts.ProgressTitle String title) {
       this(true, title);
     }
   }
@@ -48,15 +49,16 @@ public class ExecutionModes {
    */
   public static class ModalProgressMode extends ExecutionMode {
 
-    public ModalProgressMode(final boolean cancelable, @Nullable final String title, JComponent progressParentComponent) {
+    public ModalProgressMode(final boolean cancelable, @Nullable final @NlsContexts.ProgressTitle String title,
+                             JComponent progressParentComponent) {
       super(cancelable, title, null, false, true, progressParentComponent);
     }
 
-    public ModalProgressMode(@Nullable final String title) {
+    public ModalProgressMode(@Nullable final @NlsContexts.ProgressTitle String title) {
       this(true, title, null);
     }
 
-    public ModalProgressMode(@Nullable final String title, JComponent progressParentComponent) {
+    public ModalProgressMode(@Nullable final @NlsContexts.ProgressTitle String title, JComponent progressParentComponent) {
       this(true, title, progressParentComponent);
     }
   }
@@ -68,13 +70,13 @@ public class ExecutionModes {
     private final int myTimeout;
 
     public SameThreadMode(final boolean cancelable,
-                          @Nullable final String title2,
+                          @Nullable final @NlsContexts.ProgressTitle String title2,
                           final int timeout) {
       super(cancelable, null, title2, false, false, null);
       myTimeout = timeout;
     }
 
-    public SameThreadMode(@Nullable final String title2) {
+    public SameThreadMode(@Nullable final @NlsContexts.ProgressTitle String title2) {
       this(true, title2, -1);
     }
 
