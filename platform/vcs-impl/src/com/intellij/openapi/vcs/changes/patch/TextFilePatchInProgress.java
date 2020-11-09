@@ -75,7 +75,7 @@ public final class TextFilePatchInProgress extends AbstractFilePatchInProgress<T
 
           ApplyPatchForBaseRevisionTexts texts =
             ApplyPatchForBaseRevisionTexts
-              .create(project, file, VcsUtil.getFilePath(file), getPatch(), patchReader.getBaseRevision(project, path));
+              .create(project, file, VcsUtil.getFilePath(file), getPatch(), patchReader.getBaseRevision(path));
 
           String afterTitle = getPatch().getAfterVersionId();
           if (afterTitle == null) afterTitle = VcsBundle.message("patch.apply.conflict.patched.version");
