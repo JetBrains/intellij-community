@@ -273,13 +273,13 @@ class FileTemplatesLoader implements Disposable {
     }
 
     descName = MessageFormat.format("{0}.{1}_{2}" + DESCRIPTION_EXTENSION_SUFFIX, templateName, templateExtension, locale.getLanguage());
-    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + descName;
+    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + "/" + descName;
     if (descriptionPaths.contains(descPath)) {
       return descPath;
     }
 
     descName = templateName + "." + templateExtension + DESCRIPTION_EXTENSION_SUFFIX;
-    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + descName;
+    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + "/" + descName;
     if (descriptionPaths.contains(descPath)) {
       return descPath;
     }
