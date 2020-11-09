@@ -79,7 +79,7 @@ public class ReferenceFilter extends FilterAction {
         }
       };
       private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("reference.filter.help.text"));
-      private final CheckBox myCheckBox = new CheckBox(SSRBundle.message("reference.filter.invert.template"), this, "inverseTemplate");
+      private final CheckBox myCheckBox = new CheckBox(SSRBundle.message("invert.filter"), this, "inverseTemplate");
       private final Component myGlue = Box.createGlue();
       public boolean inverseTemplate = myConstraint.isInvertReference();
 
