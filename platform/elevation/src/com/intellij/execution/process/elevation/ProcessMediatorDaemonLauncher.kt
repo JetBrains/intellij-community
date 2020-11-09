@@ -7,6 +7,7 @@ import com.intellij.execution.process.*
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
+import com.intellij.execution.process.mediator.handshake.*
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
