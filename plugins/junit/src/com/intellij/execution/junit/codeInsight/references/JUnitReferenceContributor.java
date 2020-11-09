@@ -19,11 +19,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 public class JUnitReferenceContributor extends PsiReferenceContributor {
-  private static PsiElementPattern.Capture<PsiLanguageInjectionHost> getElementPattern(String annotation, String paramName) {
-    return PlatformPatterns.psiElement(PsiLanguageInjectionHost.class).and(new FilterPattern(new TestAnnotationFilter(annotation, paramName)));
+  private static PsiElementPattern.Capture<PsiElement> getElementPattern(String annotation, String paramName) {
+    return PlatformPatterns.psiElement(PsiElement.class).and(new FilterPattern(new TestAnnotationFilter(annotation, paramName)));
   }
 
-  private static PsiElementPattern.Capture<PsiLanguageInjectionHost> getEnumSourceNamesPattern() {
+  private static PsiElementPattern.Capture<PsiElement> getEnumSourceNamesPattern() {
     return getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE, "names")
       .withAncestor(4, PlatformPatterns.psiElement(PsiAnnotation.class).and(new PsiJavaElementPattern<>(new InitialPatternCondition<PsiAnnotation>(PsiAnnotation.class) {
         @Override
@@ -45,7 +45,7 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, "value"), new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new MethodSourceReference[]{new MethodSourceReference((PsiLanguageInjectionHost)element)};
+        return new MethodSourceReference[]{new MethodSourceReference(UastContextKt.toUElement(element, UExpression.class), (PsiLanguageInjectionHost)element)};
       }
     });
     registrar.registerReferenceProvider(getEnumSourceNamesPattern(), new PsiReferenceProvider() {

@@ -24,7 +24,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,9 +36,11 @@ import java.util.List;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
 public class MethodSourceReference extends PsiReferenceBase<PsiLanguageInjectionHost> {
+  private final UExpression myLiteral;
 
-  public MethodSourceReference(PsiLanguageInjectionHost element) {
+  public MethodSourceReference(UExpression uLiteral, PsiLanguageInjectionHost element) {
     super(element, false);
+    myLiteral = uLiteral;
   }
 
   @Override
@@ -59,8 +64,6 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLanguageInjection
   @Override
   @Nullable
   public PsiElement resolve() {
-    UExpression myLiteral = UastContextKt.toUElement(getElement(), UExpression.class);
-    if (myLiteral == null) return null;
     UClass clazz = UastUtils.getParentOfType(myLiteral, UClass.class);
     if (clazz == null) return null;
     PsiClass psiClazz = clazz.getPsi();
@@ -84,9 +87,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLanguageInjection
 
   @Override
   public Object @NotNull [] getVariants() {
-    UExpression myLiteral = UastContextKt.toUElement(getElement(), UExpression.class);
     final List<Object> list = new ArrayList<>();
-    if (myLiteral == null) return list.toArray();
     final UClass topLevelClass = UastUtils.getParentOfType(myLiteral, UClass.class);
     if (topLevelClass != null) {
       final UMethod current = UastUtils.getParentOfType(myLiteral, UMethod.class);
