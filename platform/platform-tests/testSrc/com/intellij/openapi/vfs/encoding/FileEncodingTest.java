@@ -70,7 +70,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -565,8 +564,8 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
 
     EncodingUtil.saveIn(getProject(), document, null, file, WINDOWS_1251);
     bytes = file.contentsToByteArray();
-    assertThat(file.getCharset()).isEqualTo(WINDOWS_1251);
-    assertThat(file.getBOM()).isNull();
+    assertEquals(WINDOWS_1251, file.getCharset());
+    assertNull(file.getBOM());
 
     Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, StandardCharsets.UTF_16LE));
     Assert.assertSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII));
@@ -834,12 +833,12 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     VirtualFile file = Objects.requireNonNull(dir.findFileByRelativePath("src/xxx.txt"));
 
     Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(file));
-    assertThat(document.getText()).isNotNull();
+    assertNotNull(document.getText());
     UIUtil.dispatchAllInvocationEvents();
 
     Project newEncodingProject = Objects.requireNonNull(PlatformTestUtil.loadAndOpenProject(dir.toNioPath()));
     try {
-      assertThat(file.getCharset()).isEqualTo(US_ASCII);
+      assertEquals(US_ASCII, file.getCharset());
     }
     finally {
       ProjectManagerEx.getInstanceEx().forceCloseProject(newEncodingProject);
