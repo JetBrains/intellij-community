@@ -30,6 +30,9 @@ final class BrokenPluginsBuildFileService {
   private Gson gson = new Gson()
 
 
+  /**
+   * Generate brokenPlugins.txt file using JetBrains Marketplace.
+   */
   def buildFile() {
     myBuildContext.messages.progress("Start to build $BROKEN_PLUGINS_FILE_NAME")
     myBuildContext.messages.info("Get request for broken plugins, url: $MARKETPLACE_BROKEN_PLUGINS_URL")
