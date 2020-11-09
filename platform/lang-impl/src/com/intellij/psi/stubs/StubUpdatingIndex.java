@@ -299,6 +299,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
   }
 
+  @Override
+  public int getCacheSize() {
+    return super.getCacheSize() * Runtime.getRuntime().availableProcessors();
+  }
+
   @Nullable
   static IndexingStampInfo readSavedIndexingStampInfo(@NotNull VirtualFile file) {
     try (DataInputStream stream = INDEXED_STAMP.readAttribute(file)) {
