@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public final class ModuleLoadingErrorDescription extends ConfigurationErrorDescription {
-  private static final ConfigurationErrorType MODULE_ERROR = new ConfigurationErrorType(false) {
+  public static final ConfigurationErrorType MODULE_ERROR = new ConfigurationErrorType(false) {
     @Override
     public @Nls @NotNull String getErrorText(int errorCount, @NlsSafe String firstElementName) {
       return ProjectModelBundle.message("module.configuration.problem.text", errorCount, firstElementName);

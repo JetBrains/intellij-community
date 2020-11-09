@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.StoreReloadManager
+import com.intellij.configurationStore.isFireStorageFileChangedEvent
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -9,14 +10,20 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.impl.*
+import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
+import com.intellij.openapi.module.impl.ModuleManagerEx
+import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl
+import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
@@ -25,7 +32,10 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -34,8 +44,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashSet
 
 /**
  * Manages serialization and deserialization from JPS format (*.iml and *.ipr files, .idea directory) for workspace model in IDE.
@@ -46,7 +54,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private lateinit var fileContentReader: JpsFileContentReaderWithCache
   private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
-  private val errorReporter = IdeErrorReporter()
 
   init {
     if (!project.isDefault) {
@@ -91,7 +98,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
 
     LOG.debug { "Reload entities from changed files:\n$changes" }
-    val (changedSources, builder) = serializers.reloadFromChangedFiles(changes, fileContentReader, errorReporter)
+    val (changedSources, builder) = loadAndReportErrors { serializers.reloadFromChangedFiles(changes, fileContentReader, it) }
     fileContentReader.clearCache()
     LOG.debugValues("Changed entity sources", changedSources)
     if (changedSources.isEmpty() && builder.isEmpty()) return
@@ -104,6 +111,16 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         sourcesToSave.removeAll(changedSources)
       }
     })
+  }
+
+  private fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
+    val reporter = IdeErrorReporter(project)
+    val result = action(reporter)
+    val errors = reporter.errors
+    if (errors.isNotEmpty()) {
+      ProjectLoadingErrorsNotifier.getInstance(project).registerErrors(errors)
+    }
+    return result
   }
 
   private fun registerListener() {
@@ -169,7 +186,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity.endAndStart("(wm) Read serializers")
-      serializers.loadAll(fileContentReader, builder, errorReporter)
+      loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it) }
       childActivity = childActivity.endAndStart("(wm) Add changes to store")
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
@@ -191,7 +208,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     val tmpBuilder = WorkspaceEntityStorageBuilder.create()
     val unloaded = unloadedModulePaths.map { modulePath ->
-      serializers.findModuleSerializer(modulePath)!!.loadEntities(tmpBuilder, fileContentReader, errorReporter, virtualFileManager)
+      loadAndReportErrors {
+        serializers.findModuleSerializer(modulePath)!!.loadEntities(tmpBuilder, fileContentReader, it, virtualFileManager)
+      }
 
       val moduleEntity = tmpBuilder.resolve(ModuleId(modulePath.moduleName)) ?: return@map null
       val pointerManager = VirtualFilePointerManager.getInstance()
@@ -277,12 +296,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   companion object {
     fun getInstance(project: Project): JpsProjectModelSynchronizer? = project.getComponent(JpsProjectModelSynchronizer::class.java)
     private val LOG = logger<JpsProjectModelSynchronizer>()
-  }
-
-  private class IdeErrorReporter : ErrorReporter {
-    override fun reportError(message: String, file: VirtualFileUrl) {
-      //todo implement
-    }
   }
 }
 
