@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.scratch.ScratchImplUtil;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -876,7 +877,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private static @NlsSafe String getPresentablePath(@NotNull Project project, @Nullable VirtualFile virtualFile, int maxChars) {
     if (virtualFile == null) return null;
     String path = ScratchUtil.isScratch(virtualFile)
-               ? ScratchUtil.getRelativePath(project, virtualFile)
+               ? ScratchImplUtil.getRelativePath(project, virtualFile)
                : VfsUtilCore.isAncestor(project.getBaseDir(), virtualFile, true)
                  ? VfsUtilCore.getRelativeLocation(virtualFile, project.getBaseDir())
                  : FileUtil.getLocationRelativeToUserHome(virtualFile.getPath());

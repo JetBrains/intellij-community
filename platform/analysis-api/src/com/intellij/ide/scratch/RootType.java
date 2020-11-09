@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.lang.Language;
@@ -7,7 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -93,7 +93,7 @@ public abstract class RootType {
     FileType fileType = LanguageUtil.getLanguageFileType(language);
     if (fileType == null) {
       String extension = file.getExtension();
-      fileType = extension == null ? null : FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence());
+      fileType = extension == null ? null : FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence());
     }
     return fileType != null && fileType != UnknownFileType.INSTANCE ? fileType.getIcon() : null;
   }
