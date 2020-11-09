@@ -167,7 +167,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
         if (level > 0) {
           for (int i = startLine; i < line; i++) {
             if (level != Math.abs(lineIndents[i])) {
-              descriptors.add(createDescriptor(level, startLine, line, lineIndents));
+              final IndentGuideDescriptor descriptor = createDescriptor(level, startLine, line, lineIndents);
+              if (IndentsPassFilterUtils.shouldShowIndentGuide(myEditor, descriptor)) descriptors.add(descriptor);
               break;
             }
           }
@@ -188,7 +189,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       final int level = indents.pop();
       int startLine = lines.pop();
       if (level > 0) {
-        descriptors.add(createDescriptor(level, startLine, myDocument.getLineCount(), lineIndents));
+        final IndentGuideDescriptor descriptor = createDescriptor(level, startLine, myDocument.getLineCount(), lineIndents);
+        if (IndentsPassFilterUtils.shouldShowIndentGuide(myEditor, descriptor)) descriptors.add(descriptor);
       }
     }
     return descriptors;
