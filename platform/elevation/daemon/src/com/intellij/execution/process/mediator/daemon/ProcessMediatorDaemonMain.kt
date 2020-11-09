@@ -159,7 +159,11 @@ fun main(args: Array<String>) {
   if (launchOptions.trampoline) {
     trampoline(launchOptions)  // never returns
   }
+  if (UnixUtil.isUnix()) {
+    UnixUtil.setupSignals()
+  }
   if (launchOptions.daemonize) {
+    require(UnixUtil.isUnix()) { "--daemonize must only be used on Unix" }
     UnixUtil.daemonize()
   }
 
