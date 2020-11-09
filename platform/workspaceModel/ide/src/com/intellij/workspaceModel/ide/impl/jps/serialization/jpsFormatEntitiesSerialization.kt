@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -129,7 +130,7 @@ interface JpsProjectSerializers {
 }
 
 interface ErrorReporter {
-  fun reportError(message: String, file: VirtualFileUrl)
+  fun reportError(@Nls message: String, file: VirtualFileUrl)
 }
 
 data class JpsConfigurationFilesChange(val addedFileUrls: Collection<String>,
