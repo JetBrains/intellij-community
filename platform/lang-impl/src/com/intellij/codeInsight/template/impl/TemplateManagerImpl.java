@@ -124,6 +124,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     if (runnable != null) {
       PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
       runnable.run();
+      if (editor.getCaretModel().getCaretCount() > 1) {
+        PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
+      }
     }
     return runnable != null;
   }
