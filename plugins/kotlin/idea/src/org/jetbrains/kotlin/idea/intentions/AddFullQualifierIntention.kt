@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
+import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.core.thisOrParentIsRoot
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
@@ -56,9 +57,9 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
             return true
         }
 
-        fun applyTo(referenceExpression: KtNameReferenceExpression, fqName: FqName) {
+        fun applyTo(referenceExpression: KtNameReferenceExpression, fqName: FqName): KtElement {
             val qualifier = fqName.parent().quoteSegmentsIfNeeded()
-            referenceExpression.project.executeWriteCommand(KotlinBundle.message("add.full.qualifier")) {
+            return referenceExpression.project.executeWriteCommand(KotlinBundle.message("add.full.qualifier"), groupId = null) {
                 val psiFactory = KtPsiFactory(referenceExpression)
                 when (val parent = referenceExpression.parent) {
                     is KtCallableReferenceExpression -> addOrReplaceQualifier(psiFactory, parent, qualifier)
@@ -71,29 +72,33 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
     }
 }
 
-private fun addOrReplaceQualifier(factory: KtPsiFactory, expression: KtCallableReferenceExpression, qualifier: String) {
+private fun addOrReplaceQualifier(factory: KtPsiFactory, expression: KtCallableReferenceExpression, qualifier: String): KtElement {
     val receiver = expression.receiverExpression
-    if (receiver != null) {
+    return if (receiver != null) {
         replaceExpressionWithDotQualifier(factory, receiver, qualifier)
     } else {
         val qualifierExpression = factory.createExpression(qualifier)
-        expression.addBefore(qualifierExpression, expression.firstChild)
+        expression.addBefore(qualifierExpression, expression.firstChild) as KtElement
     }
 }
 
-private fun replaceExpressionWithDotQualifier(psiFactory: KtPsiFactory, expression: KtExpression, qualifier: String) {
+private fun replaceExpressionWithDotQualifier(psiFactory: KtPsiFactory, expression: KtExpression, qualifier: String): KtElement {
     val expressionWithQualifier = psiFactory.createExpressionByPattern("$0.$1", qualifier, expression)
-    expression.replace(expressionWithQualifier)
+    return expression.replaced(expressionWithQualifier)
 }
 
-private fun addQualifierToType(psiFactory: KtPsiFactory, userType: KtUserType, qualifier: String) {
+private fun addQualifierToType(psiFactory: KtPsiFactory, userType: KtUserType, qualifier: String): KtElement {
     val typeWithQualifier = psiFactory.createType("$qualifier.${userType.text}")
-    userType.parent.replace(typeWithQualifier)
+    return userType.parent.replaced(typeWithQualifier)
 }
 
-private fun replaceExpressionWithQualifier(psiFactory: KtPsiFactory, referenceExpression: KtNameReferenceExpression, fqName: FqName) {
+private fun replaceExpressionWithQualifier(
+    psiFactory: KtPsiFactory,
+    referenceExpression: KtNameReferenceExpression,
+    fqName: FqName
+): KtElement {
     val expressionWithQualifier = psiFactory.createExpression(fqName.asString())
-    referenceExpression.replace(expressionWithQualifier)
+    return referenceExpression.replaced(expressionWithQualifier)
 }
 
 private val DeclarationDescriptor.isInRoot: Boolean get() = importableFqName?.thisOrParentIsRoot() != false

@@ -665,5 +665,7 @@ class QuickFixRegistrar : QuickFixContributor {
         MISSING_EXCEPTION_IN_THROWS_ON_SUSPEND.registerFactory(AddExceptionToThrowsFix)
         THROWS_LIST_EMPTY.registerFactory(RemoveAnnotationFix)
         INCOMPATIBLE_THROWS_OVERRIDE.registerFactory(RemoveAnnotationFix)
+
+        COMPATIBILITY_WARNING.registerFactory(UseFullyQualifiedCallFix)
     }
 }

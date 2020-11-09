@@ -13622,6 +13622,29 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/useFullyqualifiedCall")
+    public static class UseFullyqualifiedCall extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("FunctionCallInsideObject.kt")
+        public void testFunctionCallInsideObject() throws Exception {
+            runTest("testData/quickfix/useFullyqualifiedCall/FunctionCallInsideObject.kt");
+        }
+
+        @TestMetadata("NestedObject.kt")
+        public void testNestedObject() throws Exception {
+            runTest("testData/quickfix/useFullyqualifiedCall/NestedObject.kt");
+        }
+
+        @TestMetadata("NestedObjectInRoot.kt")
+        public void testNestedObjectInRoot() throws Exception {
+            runTest("testData/quickfix/useFullyqualifiedCall/NestedObjectInRoot.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/variables")
     public static class Variables extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
