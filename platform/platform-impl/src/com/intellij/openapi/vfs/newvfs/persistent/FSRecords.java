@@ -976,9 +976,12 @@ public final class FSRecords {
       else {
         toSave = result;
       }
-
-      updateSymlinksForNewChildren(parentId, children, toSave);
-      doSaveChildren(parentId, toSave);
+      // optimization: when converter returned unchanged children (see e.g. PersistentFSImpl.findChildInfo())
+      // then do not save them back again unnecessarily
+      if (!toSave.equals(children)) {
+        updateSymlinksForNewChildren(parentId, children, toSave);
+        doSaveChildren(parentId, toSave);
+      }
       return toSave;
     }
     catch (ProcessCanceledException e) {

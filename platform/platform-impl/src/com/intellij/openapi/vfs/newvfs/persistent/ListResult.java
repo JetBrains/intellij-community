@@ -12,9 +12,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 // stores result of various FSRecords.list*() methods and the current FSRecords.localModCount for optimistic locking support
-final class ListResult {
+class ListResult {
   private final int modStamp;
   // sorted by getId()
   final List<? extends ChildInfo> children;
@@ -185,5 +186,18 @@ final class ListResult {
 
   boolean childrenWereChangedSinceLastList() {
     return modStamp != FSRecords.getLocalModCount();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ListResult result = (ListResult)o;
+    return modStamp == result.modStamp && children.equals(result.children);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(modStamp, children);
   }
 }
