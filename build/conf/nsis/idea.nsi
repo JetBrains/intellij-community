@@ -564,9 +564,7 @@ FunctionEnd
 ; languages
 ;------------------------------------------------------------------------------
 !insertmacro MUI_LANGUAGE "English"
-;!insertmacro MUI_LANGUAGE "Japanese"
 !include "idea_en.nsi"
-;!include "idea_jp.nsi"
 
 !ifdef LICENSE_FILE
 LicenseLangString myLicenseData ${LANG_ENGLISH} "${LICENSE_FILE}.txt"
