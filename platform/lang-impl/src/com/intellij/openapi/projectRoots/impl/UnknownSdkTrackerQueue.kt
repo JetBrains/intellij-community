@@ -9,7 +9,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 
 @Service // project
-class UnknownSdkTrackerQueue(private val project: Project) : Disposable {
+class UnknownSdkTrackerQueue : Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<UnknownSdkTrackerQueue>()
@@ -19,7 +19,7 @@ class UnknownSdkTrackerQueue(private val project: Project) : Disposable {
                                                  700,
                                                  true,
                                                  null,
-                                                 project,
+                                                 this,
                                                  null,
                                                  false).usePassThroughInUnitTestMode()
 
@@ -39,7 +39,7 @@ interface UnknownSdkTrackerTask {
   /**
    * Creates the collector or returns null of the task should be ignored
    */
-  fun createCollector() : UnknownSdkCollector?
+  fun createCollector(): UnknownSdkCollector?
 
   /**
    * Executed only when collector has completed and a given
