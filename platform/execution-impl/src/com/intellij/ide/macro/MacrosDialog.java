@@ -159,7 +159,7 @@ public final class MacrosDialog extends DialogWrapper {
     myMacrosList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<Item>() {
       @Override
       public String getTextFor(Item value) {
-        return value.toString();
+        return value.toString(); //NON-NLS
       }
 
       @Override

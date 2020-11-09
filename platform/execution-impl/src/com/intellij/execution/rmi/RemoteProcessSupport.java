@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -20,10 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -167,7 +161,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       throw new ExecutionException(message, o.cause);
     }
     else if (info == null || info.handler == null) {
-      throw new ExecutionException("Unable to acquire remote proxy for: " + getName(target));
+      throw new ExecutionException(ExecutionBundle.message("dialog.remote.process.unable.to.acquire.remote.proxy.for", getName(target)));
     }
     publishPort(info.port);
     if (info.servicePort != -1) {
@@ -495,7 +489,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   private static class FailedInfo extends RunningInfo {
     final Throwable cause;
-    final String stderr;
+    final @NlsSafe String stderr;
 
     FailedInfo(Throwable cause, String stderr) {
       super(null, -1, null);

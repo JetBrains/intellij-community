@@ -18,6 +18,7 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.List;
@@ -27,6 +28,7 @@ public interface FilterMixin {
   void applyHeavyFilter(@NotNull Document copiedFragment, int startOffset, int startLineNumber, @NotNull Consumer<? super AdditionalHighlight> consumer);
 
   @NotNull
+  @Nls
   String getUpdateMessage();
 
   class AdditionalHighlight extends Filter.Result {

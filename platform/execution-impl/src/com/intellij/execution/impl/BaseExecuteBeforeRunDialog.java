@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
@@ -326,6 +327,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
       return myConfiguration.getType();
     }
 
+    @NlsSafe
     public String getName() {
       return myConfiguration.getName();
     }

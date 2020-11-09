@@ -5,6 +5,7 @@ import com.intellij.execution.filters.ExceptionInfoCache;
 import com.intellij.execution.filters.ExceptionWorker;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.FilterMixin;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
@@ -20,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
@@ -151,7 +153,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   @NotNull
   @Override
   public String getUpdateMessage() {
-    return "Checking recent changes...";
+    return VcsBundle.message("checking.recent.changes");
   }
 
   private static final class LocalChangesCorrector {

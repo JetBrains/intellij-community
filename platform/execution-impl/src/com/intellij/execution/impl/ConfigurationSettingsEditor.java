@@ -13,6 +13,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.AdjustingTabSettingsEditor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -55,8 +56,8 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       Disposer.register(this, myCompound);
       if (myConfigurationEditor instanceof SettingsEditorGroup) {
         SettingsEditorGroup<RunConfiguration> group = (SettingsEditorGroup<RunConfiguration>)myConfigurationEditor;
-        List<Pair<String, SettingsEditor<RunConfiguration>>> editors = group.getEditors();
-        for (Pair<String, SettingsEditor<RunConfiguration>> pair : editors) {
+        List<Pair<@TabTitle String, SettingsEditor<RunConfiguration>>> editors = group.getEditors();
+        for (Pair<@TabTitle String, SettingsEditor<RunConfiguration>> pair : editors) {
           myCompound.addEditor(pair.getFirst(), new ConfigToSettingsWrapper(pair.getSecond()));
         }
       }
@@ -341,6 +342,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     }
   }
 
+  @TabTitle
   private static String getRunnersTabName() {
     return ExecutionBundle.message("run.configuration.startup.connection.rab.title");
   }

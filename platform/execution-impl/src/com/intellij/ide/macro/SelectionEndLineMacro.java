@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.macro;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 
@@ -23,7 +24,7 @@ import com.intellij.openapi.editor.VisualPosition;
  */
 public class SelectionEndLineMacro extends EditorMacro {
   public SelectionEndLineMacro() {
-    super("SelectionEndLine", "Selected text end line number");
+    super("SelectionEndLine", ExecutionBundle.message("ide.macro.selected.text.end.line.number"));
   }
 
   @Override
