@@ -53,7 +53,7 @@ public class CaseSensitivityDetectionTest {
   }
 
   @Test
-  public void caseSensitivityChangesUnderWindowsMustBeReReadCorrectly() {
+  public void caseSensitivityChangesUnderWindowsMustBeReReadCorrectly() throws IOException {
     assumeWindows();
     assumeWslPresence();
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
@@ -110,4 +110,11 @@ public class CaseSensitivityDetectionTest {
     }
   }
 
+  @Test
+  public void caseSensitivityOfNonExistingDirMustBeUnknown() {
+    File file = new File(myTempDir.getRoot(), "dir/child.txt");
+    assertFalse(file.exists());
+    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
+    assertEquals(FileAttributes.CaseSensitivity.UNKNOWN, sensitivity);
+  }
 }

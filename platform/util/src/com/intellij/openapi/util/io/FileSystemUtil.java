@@ -488,6 +488,9 @@ public final class FileSystemUtil {
 
     // when native queries failed, fallback to the Java File IO:
     // try to query this path by different-case strings and deduce case sensitivity from the answers
+    if (!anyChild.exists()) {
+      return FileAttributes.CaseSensitivity.UNKNOWN;
+    }
     if (parent == null) {
       String probe = findCaseToggleableChild(anyChild);
       if (probe == null) return FileAttributes.CaseSensitivity.UNKNOWN;
