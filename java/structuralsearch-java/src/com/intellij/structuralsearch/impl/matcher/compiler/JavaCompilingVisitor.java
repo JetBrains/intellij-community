@@ -458,7 +458,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     else if (parent instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)parent;
-      if (newExpression.getArrayInitializer() != null) {
+      if (newExpression.isArrayCreation()) {
         GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiJavaCodeReferenceElement || e instanceof PsiKeyword);
       }
       else {

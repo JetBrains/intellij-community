@@ -1629,13 +1629,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       else {
         // match array of primitive by new 'T();
         final PsiKeyword newKeyword = PsiTreeUtil.getChildOfType(new2, PsiKeyword.class);
-        final PsiElement element = PsiTreeUtil.getNextSiblingOfType(newKeyword, PsiWhiteSpace.class);
+        final PsiKeyword typeKeyword = PsiTreeUtil.getNextSiblingOfType(newKeyword, PsiKeyword.class);
 
-        if (element != null && element.getNextSibling() instanceof PsiKeyword) {
-          if (myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, element.getNextSibling()))) {
+        if (typeKeyword != null ) {
+          if (myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, typeKeyword))) {
             matchArrayOrArguments(expression, new2);
           }
-
           return;
         }
       }

@@ -246,9 +246,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String arrays = "class X {{" +
                     "int[] a = new int[20];\n" +
-                    "byte[] b = new byte[30];" +
+                    "byte[] b = new @Q byte[30];" +
                     "}}";
     assertEquals("Improper array search", 1, findMatchesCount(arrays, "new int['_a]"));
+    assertEquals("Find array of primitives", 2, findMatchesCount(arrays, "new '_X['_a]"));
 
     String multiDimensional = "class X {{" +
                               "  String[] s1 = {};\n" +
