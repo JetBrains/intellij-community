@@ -9,12 +9,14 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 
 @Service // project
-class UnknownSdkTrackerQueue : Disposable {
+internal class UnknownSdkTrackerQueue : UnknownSdkCollectorQueue() {
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<UnknownSdkTrackerQueue>()
   }
+}
 
+internal abstract class UnknownSdkCollectorQueue : Disposable {
   private val myUpdateQueue = MergingUpdateQueue(javaClass.simpleName,
                                                  6700,
                                                  true,

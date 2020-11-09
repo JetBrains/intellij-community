@@ -15,10 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.DependentSdkType
-import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
-import com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
-import com.intellij.openapi.projectRoots.impl.UnknownSdkTrackerQueue
+import com.intellij.openapi.projectRoots.impl.*
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootManager
@@ -63,6 +60,9 @@ internal class JdkUpdaterStartup : StartupActivity.Background {
 }
 
 private val LOG = logger<JdkUpdatesCollector>()
+
+@Service // project
+private class JdkUpdatesCollectorQueue : UnknownSdkCollectorQueue()
 
 @Service
 internal class JdkUpdatesCollector(
@@ -120,7 +120,7 @@ internal class JdkUpdatesCollector(
   fun updateNotifications() {
     if (!isEnabled()) return
 
-    UnknownSdkTrackerQueue.getInstance(project).queue { updateNotificationsDebounced() }
+    project.service<JdkUpdatesCollectorQueue>().queue { updateNotificationsDebounced() }
   }
 
   private fun updateNotificationsDebounced() {
