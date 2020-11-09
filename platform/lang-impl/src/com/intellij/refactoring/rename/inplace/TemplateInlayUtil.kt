@@ -172,7 +172,11 @@ object TemplateInlayUtil {
     else {
       toSearchForTextOccurrences = false
     }
-    tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement")
+
+    val shortcut = KeymapUtil.getPrimaryShortcut("SelectVirtualTemplateElement")
+    if (shortcut != null) {
+      tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement", KeymapUtil.getShortcutText(shortcut))
+    }
 
     fun withBackground(bgKey: ColorKey) =
       factory.container(factory.container(buttonsPresentation,
