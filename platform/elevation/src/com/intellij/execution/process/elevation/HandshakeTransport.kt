@@ -4,7 +4,6 @@ package com.intellij.execution.process.elevation
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.process.mediator.util.rsaDecrypt
-import com.intellij.openapi.util.io.FileUtil
 import java.io.Closeable
 import java.io.IOException
 import java.nio.file.Path
@@ -89,6 +88,6 @@ internal open class HandshakeFileTransport(
 }
 
 internal class HandshakeUnixFifoTransport(
-  path: Path = FileUtil.generateRandomTemporaryPath().toPath()
+  path: Path
 ) : HandshakeFileTransport(HandshakeUnixFifoReader(path))
 

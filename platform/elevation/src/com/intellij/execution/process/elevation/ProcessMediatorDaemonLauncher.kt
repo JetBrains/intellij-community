@@ -89,7 +89,7 @@ object ProcessMediatorDaemonLauncher {
 
   private fun openUnixHandshakeTransport(): HandshakeTransport {
     return try {
-      HandshakeUnixFifoTransport()
+      HandshakeUnixFifoTransport(path = FileUtil.generateRandomTemporaryPath().toPath())
     }
     catch (e0: IOException) {
       ElevationLogger.LOG.warn("Unable to create file-based handshake channel; falling back to socket streams", e0)
