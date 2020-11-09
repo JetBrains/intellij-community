@@ -448,13 +448,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     final PyResolveProcessor processor = new PyResolveProcessor(name);
     final Map<PsiElement, PyImportedNameDefiner> results;
 
-    if (!isDefinition && !cls.processInstanceLevelDeclarations(processor, location)) {
-      results = processor.getResults();
-    }
-    else {
+    if (isDefinition || cls.processInstanceLevelDeclarations(processor, location)) {
       cls.processClassLevelDeclarations(processor);
-      results = processor.getResults();
     }
+    results = processor.getResults();
 
     return EntryStream
       .of(results)
