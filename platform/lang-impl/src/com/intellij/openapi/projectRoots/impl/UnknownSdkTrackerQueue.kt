@@ -25,11 +25,27 @@ class UnknownSdkTrackerQueue(private val project: Project) : Disposable {
 
   override fun dispose() = Unit
 
-  fun queue(task: Runnable) {
+  fun queue(task: UnknownSdkTrackerTask) {
     myUpdateQueue.queue(object : Update(this) {
       override fun run() {
-        task.run()
+        val collector = task.createCollector() ?: return
+        collector.run { collectSdksPromise { task.onLookupCompleted(it) } }
       }
     })
   }
+}
+
+interface UnknownSdkTrackerTask {
+  /**
+   * Creates the collector or returns null of the task should be ignored
+   */
+  fun createCollector() : UnknownSdkCollector?
+
+  /**
+   * Executed only when collector has completed and a given
+   * task is not merged with others.
+   *
+   * NOTE: this callback happened in EDT
+   */
+  fun onLookupCompleted(snapshot: UnknownSdkSnapshot)
 }

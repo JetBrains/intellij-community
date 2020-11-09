@@ -97,7 +97,7 @@ open class UnknownSdkCollector(private val myProject: Project) : UnknownSdkBlock
    * NOTE. The callback may not happen if a given task is merged
    * with a previous or a next similar one.
    */
-  fun collectSdksPromise(onCompleted: Consumer<UnknownSdkSnapshot>) {
+  internal fun UnknownSdkTrackerQueue.collectSdksPromise(onCompleted: Consumer<UnknownSdkSnapshot>) {
     ReadAction.nonBlocking<UnknownSdkSnapshot> { collectSdksUnderReadAction() }
       .expireWith(myProject)
       .coalesceBy(myProject, UnknownSdkCollector::class)

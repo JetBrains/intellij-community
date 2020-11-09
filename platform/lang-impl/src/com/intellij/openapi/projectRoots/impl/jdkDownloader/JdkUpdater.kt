@@ -15,10 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.DependentSdkType
-import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
-import com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
-import com.intellij.openapi.projectRoots.impl.UnknownSdkTrackerQueue
+import com.intellij.openapi.projectRoots.impl.*
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
@@ -109,37 +106,40 @@ internal class JdkUpdatesCollector(
   fun updateNotifications() {
     if (!isEnabled()) return
 
-    UnknownSdkTrackerQueue.getInstance(project).queue { updateNotificationsDebounced() }
-  }
-
-  private fun updateNotificationsDebounced() {
-    if (!isEnabled()) return
-
-    object : UnknownSdkCollector(project) {
-      override fun getContributors(): List<UnknownSdkContributor> {
-        return super.getContributors() + EP_NAME.extensionList.map {
-          object : UnknownSdkContributor {
-            override fun contributeUnknownSdks(project: Project) = listOf<UnknownSdk>()
-            override fun contributeKnownSdks(project: Project): List<Sdk> = it.contributeJdks(project)
+    UnknownSdkTrackerQueue.getInstance(project).queue(object: UnknownSdkTrackerTask {
+      override fun createCollector(): UnknownSdkCollector? {
+        if (!isEnabled()) return null
+        return object : UnknownSdkCollector(project) {
+          override fun getContributors(): List<UnknownSdkContributor> {
+            return super.getContributors() + EP_NAME.extensionList.map {
+              object : UnknownSdkContributor {
+                override fun contributeUnknownSdks(project: Project) = listOf<UnknownSdk>()
+                override fun contributeKnownSdks(project: Project): List<Sdk> = it.contributeJdks(project)
+              }
+            }
           }
         }
       }
-    }.collectSdksPromise { snapshot ->
-      //this callback happens in the GUI thread!
-      val knownSdks = snapshot
-        .knownSdks
-        .filter { it.sdkType is JavaSdkType && it.sdkType !is DependentSdkType }
 
-      if (knownSdks.isEmpty()) return@collectSdksPromise
+      override fun onLookupCompleted(snapshot: UnknownSdkSnapshot) {
+        if (!isEnabled()) return
 
-      ProgressManager.getInstance().run(
-        object : Task.Backgroundable(project, ProjectBundle.message("progress.title.checking.for.jdk.updates"), true, ALWAYS_BACKGROUND) {
-          override fun run(indicator: ProgressIndicator) {
-            updateWithSnapshot(knownSdks.distinct().sortedBy { it.name }, indicator)
+        //this callback happens in the GUI thread!
+        val knownSdks = snapshot
+          .knownSdks
+          .filter { it.sdkType is JavaSdkType && it.sdkType !is DependentSdkType }
+
+        if (knownSdks.isEmpty()) return
+
+        ProgressManager.getInstance().run(
+          object : Task.Backgroundable(project, ProjectBundle.message("progress.title.checking.for.jdk.updates"), true, ALWAYS_BACKGROUND) {
+            override fun run(indicator: ProgressIndicator) {
+              updateWithSnapshot(knownSdks.distinct().sortedBy { it.name }, indicator)
+            }
           }
-        }
-      )
-    }
+        )
+      }
+    })
   }
 
   private fun updateWithSnapshot(knownSdks: List<Sdk>, indicator: ProgressIndicator) {
