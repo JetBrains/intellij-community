@@ -5,6 +5,10 @@ import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import io.grpc.*
 
 internal class CredentialsAuthServerInterceptor(private val credentials: DaemonClientCredentials) : ServerInterceptor {
+  init {
+    require(credentials != DaemonClientCredentials.EMPTY) { "Empty credentials" }
+  }
+
   override fun <ReqT, RespT> interceptCall(call: ServerCall<ReqT, RespT>,
                                            headers: Metadata,
                                            next: ServerCallHandler<ReqT, RespT>): ServerCall.Listener<ReqT> {
