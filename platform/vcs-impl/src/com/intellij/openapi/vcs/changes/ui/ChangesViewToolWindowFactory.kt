@@ -2,6 +2,8 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -87,12 +89,14 @@ internal class SwitchToCommitDialogHint(private val toolWindow: ToolWindowEx, pr
 
   private fun showHint() {
     val c : JComponent = toolbar.getGearButton() ?: toolbar.component
-    balloon = GotItTooltip("changes.view.toolwindow", message("switch.to.commit.dialog.hint.text"), toolbarVisibilityTracker).
-      showAt(Balloon.Position.below, c) { Point(it.width / 2, it.height) }
+    GotItTooltip("changes.view.toolwindow", message("switch.to.commit.dialog.hint.text"), toolbarVisibilityTracker).
+      setOnBalloonCreated { balloon = it }.
+      show(c) { Point(it.width / 2, it.height) }
   }
 
   private fun hideHint(dispose: Boolean) {
-    balloon?.hide()
+    balloon?.hide(true)
+    GotItUsageCollector.instance.logClose("changes.view.toolwindow", GotItUsageCollectorGroup.CloseType.AncestorRemoved)
     balloon = null
 
     if (dispose) Disposer.dispose(toolbarVisibilityTracker)

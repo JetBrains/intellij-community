@@ -8,6 +8,8 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
@@ -129,9 +131,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val offset = minOf(selectedRange.startOffset + 3, selectedRange.endOffset)
     val gotoDeclarationShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
     val message = JavaRefactoringBundle.message("extract.method.gotit.navigation", gotoDeclarationShortcut)
-    gotItBalloon = GotItTooltip("extract.method.gotit.navigate", message, templateState)
-      .withMaxWidth(250)
-      .showInEditor(templateState.editor, offset)
+    GotItTooltip("extract.method.gotit.navigate", message, templateState).showInEditor(templateState.editor, offset) { gotItBalloon = it }
   }
 
   private fun showChangeSignatureGotIt(){
@@ -143,31 +143,36 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val moveRightShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_RIGHT)
     val contextActionShortcut = KeymapUtil.getFirstKeyboardShortcutText("ShowIntentionActions")
     val message = JavaRefactoringBundle.message("extract.method.gotit.signature", contextActionShortcut, moveLeftShortcut, moveRightShortcut)
-    GotItTooltip("extract.method.signature.change", message, disposable)
-      .withMaxWidth(250)
-      .showInEditor(editor, offset)
+    GotItTooltip("extract.method.signature.change", message, disposable).showInEditor(editor, offset)
   }
 
-  private fun GotItTooltip.showInEditor(editor: Editor, offset: Int): Balloon? {
-    fun getPosition(): Point {
-      return editor.offsetToXY(offset)
-    }
+  private fun GotItTooltip.showInEditor(editor: Editor, offset: Int, balloonCreated: (Balloon) -> Unit = {}) {
+    fun getPosition(): Point = editor.offsetToXY(offset)
+
     fun isVisible(): Boolean {
       val position = getPosition()
       val visibleArea = EditorCodePreview.getActivePreview(editor)?.editorVisibleArea ?: editor.scrollingModel.visibleArea
       return visibleArea.contains(position)
     }
-    val balloon = if (isVisible()) showAt(Balloon.Position.above, editor.contentComponent) { getPosition() } else null
-    if (balloon != null) {
-      editor.scrollingModel.addVisibleAreaListener({
-        if (isVisible()) {
-          balloon.revalidate()
-        } else {
-          balloon.hide()
-        }
-     }, balloon)
+
+    withMaxWidth(250)
+    withPosition(Balloon.Position.above)
+
+    if (isVisible()) {
+      setOnBalloonCreated { balloon -> editor.scrollingModel.addVisibleAreaListener({
+          if (isVisible()) {
+            balloon.revalidate()
+          } else {
+            balloon.hide(true)
+            GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+          }
+        }, balloon)
+
+        balloonCreated(balloon)
+      }
+
+      show(editor.contentComponent) { getPosition() }
     }
-    return balloon
   }
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
