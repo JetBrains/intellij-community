@@ -59,6 +59,9 @@ internal class JdkUpdaterStartup : StartupActivity.Background {
 
 private val LOG = logger<JdkUpdatesCollector>()
 
+@Service // project
+private class JdkUpdatesCollectorQueue : UnknownSdkCollectorQueue()
+
 @Service
 internal class JdkUpdatesCollector(
   private val project: Project
@@ -106,7 +109,7 @@ internal class JdkUpdatesCollector(
   fun updateNotifications() {
     if (!isEnabled()) return
 
-    UnknownSdkTrackerQueue.getInstance(project).queue(object: UnknownSdkTrackerTask {
+    project.service<JdkUpdatesCollectorQueue>().queue(object: UnknownSdkTrackerTask {
       override fun createCollector(): UnknownSdkCollector? {
         if (!isEnabled()) return null
         return object : UnknownSdkCollector(project) {
