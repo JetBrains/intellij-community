@@ -145,7 +145,7 @@ class JdkUpdateNotification(val jdk: Sdk,
     val message = ProjectBundle.message("notification.text.jdk.update.found",
                                         jdk.name,
                                         newItem.fullPresentationText,
-                                        oldItem.fullPresentationText)
+                                        oldItem.versionPresentationText)
 
     NotificationGroupManager.getInstance().getNotificationGroup("JDK Update")
       .createNotification(title, message, NotificationType.INFORMATION)
