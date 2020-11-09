@@ -19,7 +19,7 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
   @NlsSafe
   override val displayName = "Maven"
 
-  override val configurableDescription = "Configure Maven"
+  override val configurableDescription = "Maven configuration"
 
   override val launchDescription = "Run Maven goal"
 
