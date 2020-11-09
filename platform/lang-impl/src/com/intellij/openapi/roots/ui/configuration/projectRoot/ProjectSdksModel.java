@@ -380,21 +380,33 @@ public class ProjectSdksModel implements SdkModel {
     return result;
   }
 
+  protected boolean forceAddActionToSelectFromDisk(@NotNull SdkType type) {
+    return false;
+  }
+
   @NotNull
   public Map<SdkType, NewSdkAction> createAddActions(@Nullable Condition<? super SdkTypeId> filter) {
     Map<SdkType, NewSdkAction> result = new LinkedHashMap<>();
     for (final SdkType type : getAddableSdkTypes(filter)) {
-      String sdkPresentableName = type.getPresentableName();
-      String text = ProjectBundle.message("sdk.configure.add.sdkType.action", sdkPresentableName);
-      String title = ProjectBundle.message("sdk.configure.add.sdkType.actionTitle", sdkPresentableName);
-      String subText = ProjectBundle.message("sdk.configure.add.sdkType.subAction", sdkPresentableName);
+      String sdkPresentableName = type.getPresentableName(), text, title, subText;
+
+      boolean isForce = forceAddActionToSelectFromDisk(type);
+      if (isForce) {
+        text = ProjectBundle.message("sdk.configure.addFromDisk.sdkType.action", sdkPresentableName);
+        title = ProjectBundle.message("sdk.configure.addFromDisk.sdkType.actionTitle", sdkPresentableName);
+        subText = ProjectBundle.message("sdk.configure.addFromDisk.sdkType.subAction", sdkPresentableName);
+      } else {
+        text = ProjectBundle.message("sdk.configure.add.sdkType.action", sdkPresentableName);
+        title = ProjectBundle.message("sdk.configure.add.sdkType.actionTitle", sdkPresentableName);
+        subText = ProjectBundle.message("sdk.configure.add.sdkType.subAction", sdkPresentableName);
+      }
 
       NewSdkAction addAction = new NewSdkAction(type, title, text, subText, type.getIconForAddAction()) {
         @Override
         public void actionPerformed(@Nullable Sdk selectedSdk,
                                     @NotNull JComponent parent,
                                     @NotNull Consumer<? super Sdk> callback) {
-          if (type.supportsCustomCreateUI()) {
+          if (!isForce && type.supportsCustomCreateUI()) {
             type.showCustomCreateUI(ProjectSdksModel.this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
           } else {
             SdkConfigurationUtil.selectSdkHome(type, home -> addSdk(type, home, callback));
