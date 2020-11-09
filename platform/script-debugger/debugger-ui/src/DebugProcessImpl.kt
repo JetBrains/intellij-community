@@ -191,13 +191,13 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
   protected fun setOverlay(context: SuspendContext<*>) {
     val vm = mainVm
     if (context.vm == vm) {
-      vm.suspendContextManager.setOverlayMessage("Paused in debugger")
+      vm.suspendContextManager.setOverlayMessage(ScriptDebuggerBundle.message("notification.content.paused.in.debugger"))
     }
   }
 
   final override fun startPausing() {
     activeOrMainVm!!.suspendContextManager.suspend()
-      .onError(RejectErrorReporter(session, "Cannot pause"))
+      .onError(RejectErrorReporter(session, ScriptDebuggerBundle.message("notification.content.cannot.pause")))
   }
 
   final override fun getCurrentStateMessage(): String = connection.state.message

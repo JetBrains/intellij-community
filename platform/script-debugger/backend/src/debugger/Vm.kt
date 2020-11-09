@@ -46,7 +46,7 @@ interface Vm : UserDataHolderEx {
   fun setBreakOnException(catchMode: ExceptionCatchMode): Promise<*> = nullPromise()
 
   val presentableName: String
-    @Nls get() = "Main Thread"
+    @Nls get() = ScriptDebuggerBundle.message("debug.vm.title.main.thread")
 
   val childVMs: MutableList<Vm>
 }
