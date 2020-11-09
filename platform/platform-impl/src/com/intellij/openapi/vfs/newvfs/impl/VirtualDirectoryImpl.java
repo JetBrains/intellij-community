@@ -73,6 +73,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                            boolean doRefresh,
                                            boolean ensureCanonicalName,
                                            @NotNull NewVirtualFileSystem delegate) {
+    if (doRefresh) {
+      refreshCaseSensitivity(name);
+    }
     boolean caseSensitive = isCaseSensitive();
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, delegate, caseSensitive);
 
@@ -88,7 +91,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return result;
   }
 
-  @Nullable // null if there can't be a child with this name, NULL_VIRTUAL_FILE
+  @Nullable // null if there can't be a child with this name, NULL_VIRTUAL_FILE it was adopted
   private VirtualFileSystemEntry doFindChildInArray(@NotNull String name) {
     if (myData.isAdoptedName(name)) return NULL_VIRTUAL_FILE;
     int[] array = myData.myChildrenIds;
@@ -299,11 +302,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     ChildInfo[] children = isEmptyDirectory ? ChildInfo.EMPTY_ARRAY : null;
     VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, symlinkTarget, true, children);
     RefreshQueue.getInstance().processSingleEvent(event);
-    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEvent(this, realName);
+    refreshCaseSensitivity(realName);
+    return findChild(realName);
+  }
+
+  private void refreshCaseSensitivity(@NotNull String childName) {
+    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEvent(this, childName);
     if (caseSensitivityEvent != null) {
       RefreshQueue.getInstance().processSingleEvent(caseSensitivityEvent);
     }
-    return findChild(realName);
   }
 
   @Override
