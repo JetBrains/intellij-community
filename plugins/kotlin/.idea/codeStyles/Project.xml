@@ -35,6 +35,9 @@
         </value>
       </option>
     </JetCodeStyleSettings>
+    <Properties>
+      <option name="KEEP_BLANK_LINES" value="true" />
+    </Properties>
     <TypeScriptCodeStyleSettings version="1">
       <option name="USE_SEMICOLON_AFTER_STATEMENT" value="false" />
     </TypeScriptCodeStyleSettings>
