@@ -2,7 +2,13 @@
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.daemon.impl.GutterTooltipHelper;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -11,6 +17,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 /**
  * @author Dmitry Avdeev
@@ -39,8 +47,15 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
 
   @NotNull
   private static Info getInfo(TestStateStorage.Record state, boolean isClass) {
-    return RunLineMarkerContributor.withExecutorActions(getTestStateIcon(state, isClass));
+    return new Info(getTestStateIcon(state, isClass), ExecutorAction.getActions(1), element -> tooltip());
   }
+
+  private static String tooltip() {
+    Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+    String actionId = executor != null ? executor.getContextActionId() : null;
+    return GutterTooltipHelper.getTooltipText(Collections.emptyList(), ExecutionBundle.message("run.text"), false, actionId, "press.to.execute");
+  }
+
 
   protected boolean isIdentifier(PsiElement e) {
     return e instanceof PsiIdentifier;
