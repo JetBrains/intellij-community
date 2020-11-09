@@ -102,6 +102,11 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
   }
 
   @Override
+  public @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    return PyCallExpressionHelper.getReceiver(this, resolvedCallee);
+  }
+
+  @Override
   @Nullable
   public PyExpression getCallee() {
     final PyExpression exprAfterAt = getExpression();

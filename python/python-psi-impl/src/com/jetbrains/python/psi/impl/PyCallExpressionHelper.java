@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -134,6 +135,37 @@ public final class PyCallExpressionHelper {
     }
 
     return PyUnionType.union(callableTypes);
+  }
+
+  @Nullable
+  public static PyExpression getReceiver(@NotNull PyCallExpression call, @Nullable PyCallable resolvedCallee) {
+    if (resolvedCallee instanceof PyFunction) {
+      final PyFunction function = (PyFunction)resolvedCallee;
+      if (!PyNames.NEW.equals(function.getName()) && function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
+        return null;
+      }
+    }
+
+    final PyExpression callee = call.getCallee();
+    if (callee instanceof PyQualifiedExpression) {
+      final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
+      final Predicate<String> isConstructorName = name -> PyNames.INIT.equals(name) || PyNames.NEW.equals(name);
+
+      if (resolvedCallee instanceof PyFunction &&
+          qualifiedCallee.isQualified() &&
+          isConstructorName.test(resolvedCallee.getName()) &&
+          !isConstructorName.test(qualifiedCallee.getName())) {
+        return null;
+      }
+
+      if (resolvedCallee != null && PyNames.CALL.equals(resolvedCallee.getName()) && !PyNames.CALL.equals(qualifiedCallee.getName())) {
+        return qualifiedCallee;
+      }
+
+      return qualifiedCallee.getQualifier();
+    }
+
+    return null;
   }
 
   /**
