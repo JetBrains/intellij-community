@@ -73,10 +73,7 @@ internal fun createSouthPanelWithOptionsDropDown(southPanel: JComponent, optionD
 
 internal fun validateBranchField(branchField: ComboBoxWithAutoCompletion<String>,
                                  @PropertyKey(resourceBundle = GitBundle.BUNDLE) emptyFieldMessage: String): ValidationInfo? {
-  val item = branchField.item ?: ""
-  val text = branchField.getText()
-  val value = if (item == text) item else text
-
+  val value = branchField.getText()
   if (value.isNullOrEmpty()) {
     return ValidationInfo(GitBundle.message(emptyFieldMessage), branchField)
   }
@@ -154,13 +151,13 @@ class GitMergeDialog(private val project: Project,
 
   fun getSelectedRoot(): VirtualFile = repositoryField.item.root
 
-  fun getSelectedBranch() = getSelectedRepository().branches.findBranchByName(branchField.item)
-                            ?: error("Unable to find branch: ${branchField.item}")
+  fun getSelectedBranch() = getSelectedRepository().branches.findBranchByName(branchField.getText().orEmpty())
+                            ?: error("Unable to find branch: ${branchField.getText().orEmpty()}")
 
   fun shouldCommitAfterMerge() = !isOptionSelected(GitMergeOption.NO_COMMIT)
 
   private fun saveSettings() {
-    mergeSettings.branch = branchField.item
+    mergeSettings.branch = branchField.getText()
     mergeSettings.options = selectedOptions
   }
 
@@ -224,7 +221,7 @@ class GitMergeDialog(private val project: Project,
   private fun validateBranchField() = validateBranchField(branchField, "merge.no.branch.selected.error")
 
   private fun updateBranchesField() {
-    var branchToSelect = branchField.item
+    var branchToSelect = branchField.getText()
 
     val branches = splitAndSortBranches(getBranches())
 
