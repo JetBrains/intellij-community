@@ -704,7 +704,6 @@ public final class IconLoader {
 
     @Nullable private final Supplier<? extends RGBImageFilter> localFilterSupplier;
     private final ScaledIconCache scaledIconCache = new ScaledIconCache(this);
-    private final ScaledIconCache selectedIconCache = new ScaledIconCache(this);
 
     private volatile CachedImageIcon darkVariant;
 
@@ -756,7 +755,7 @@ public final class IconLoader {
       if (SVGLoader.isSelectionContext()) {
         ImageIcon result = null;
         synchronized (lock) {
-          ImageIcon icon = selectedIconCache.getOrScaleIcon(1f);
+          ImageIcon icon = scaledIconCache.getOrScaleIcon(1f);
           if (icon != null) {
             result = icon;
           }
@@ -765,6 +764,7 @@ public final class IconLoader {
           result = EMPTY_ICON;
         }
         result.paintIcon(c, g, x, y);
+        scaledIconCache.clear();
       }
       else {
         getRealIcon(scaleContext).paintIcon(c, g, x, y);
@@ -824,7 +824,6 @@ public final class IconLoader {
             realIcon = null;
             this.realIcon = null;
             scaledIconCache.clear();
-            selectedIconCache.clear();
             if (originalPath != null) {
               resolver = resolver.patch(originalPath, pathTransform.get());
               if (resolver != null) {
@@ -848,6 +847,8 @@ public final class IconLoader {
         if (icon != null) {
           if (!SVGLoader.isSelectionContext()) {
             this.realIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
+          } else {
+            scaledIconCache.clear();
           }
           return icon;
         }
@@ -982,7 +983,6 @@ public final class IconLoader {
 
         this.resolver = null;
         scaledIconCache.clear();
-        selectedIconCache.clear();
 
         CachedImageIcon darkVariant = this.darkVariant;
         if (darkVariant != null) {

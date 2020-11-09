@@ -50,7 +50,7 @@ public final class SVGLoader {
   private static SvgElementColorPatcherProvider ourColorPatcher;
   private static SvgElementColorPatcherProvider ourColorPatcherForSelection;
 
-  private static boolean ourIsSelectionContext = false;
+  private static volatile boolean ourIsSelectionContext = false;
 
   private static final SvgCacheManager persistentCache;
   private static final SvgPrebuiltCacheManager prebuiltPersistentCache;
@@ -476,7 +476,10 @@ public final class SVGLoader {
   }
 
   public static boolean isSelectionContext() {
-    return ourColorPatcherForSelection != null && ourIsSelectionContext && Registry.is("ide.patch.icons.on.selection", false);
+    return ourColorPatcherForSelection != null
+           && EventQueue.isDispatchThread()
+           && ourIsSelectionContext
+           && Registry.is("ide.patch.icons.on.selection", false);
   }
 
   public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
