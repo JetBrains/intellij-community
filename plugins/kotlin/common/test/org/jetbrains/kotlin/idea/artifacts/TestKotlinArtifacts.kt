@@ -22,7 +22,7 @@ private class TestKotlinArtifacts : KotlinArtifacts(run {
     val hashFile = outDir.resolve("kotlinc-dist/kotlinc-dist.md5")
     val kotlincJar = findLibrary(
         RepoLocation.MAVEN_REPOSITORY,
-        "kotlinc_dist.xml",
+        "kotlinc_kotlin_dist.xml",
         "org.jetbrains.kotlin",
         "kotlin-dist-for-ide"
     )

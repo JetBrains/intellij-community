@@ -5,6 +5,6 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="kotlinc.dist" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-dist" level="project" />
   </component>
 </module>
