@@ -9,8 +9,10 @@ import java.io.IOException;
 import java.util.Objects;
 
 @SuppressWarnings("SpellCheckingInspection")
-public class UnixDaemonizer {
+public final class UnixUtil {
   private static final @Nullable LibC LIBC = tryLoadLibC();
+
+  private UnixUtil() {}
 
   private static @Nullable LibC tryLoadLibC() {
     try {
