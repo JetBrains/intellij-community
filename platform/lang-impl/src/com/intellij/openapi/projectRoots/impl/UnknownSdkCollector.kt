@@ -93,6 +93,10 @@ open class UnknownSdkCollector(private val myProject: Project) : UnknownSdkBlock
     private val LOG = logger<UnknownSdkCollector>()
   }
 
+  /**
+   * NOTE. The callback may not happen if a given task is merged
+   * with a previous or a next similar one.
+   */
   fun collectSdksPromise(onCompleted: Consumer<UnknownSdkSnapshot>) {
     ReadAction.nonBlocking<UnknownSdkSnapshot> { collectSdksUnderReadAction() }
       .expireWith(myProject)
