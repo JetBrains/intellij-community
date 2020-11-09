@@ -18,7 +18,6 @@ import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.SystemInfo
@@ -109,12 +108,13 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
             connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
               override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
                 fileEditors.find { fe -> if (fe is PsiAwareTextEditorImpl) editor == fe.editor else false }?.let { _ ->
-                  gotItTooltip.showAt(Balloon.Position.below, it) { component -> Point(component.width / 2, component.height) }?.
-                  also { balloon ->  balloon.addListener(object: JBPopupListener {
-                    override fun onClosed(event: LightweightWindowEvent) {
-                      connection.disconnect()
-                    }
-                  })}
+                  gotItTooltip.setOnBalloonCreated { balloon ->
+                    balloon.addListener(object: JBPopupListener {
+                      override fun onClosed(event: LightweightWindowEvent) {
+                        connection.disconnect()
+                      }
+                    })}.
+                  show(it) { component -> Point(component.width / 2, component.height) }
                 }
               }
             })

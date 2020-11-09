@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.IdeBorderFactory;
@@ -168,7 +167,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
         new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()),
                          fragment).
           withHeader(ExecutionBundle.message("gotIt.popup.title")).
-          showAt(Balloon.Position.below, component, (c) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
+          show(component, (c) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
       }
     }
   }

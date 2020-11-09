@@ -65,6 +65,9 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
 
   public SettingsEntryPointAction() {
     initPluginsListeners();
+    //createGotItTooltip(ApplicationManager.getApplication()).
+    //  withPosition(Balloon.Position.atLeft).
+    //  assignTo(getTemplatePresentation(), c -> new Point(0, c.getHeight()/2));
   }
 
   @Override
@@ -240,6 +243,11 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
   }
 
+  //@NotNull
+  //private static GotItTooltip createGotItTooltip(@NotNull Disposable disposable) {
+  //  return new GotItTooltip("settings.entry.point", IdeBundle.message("settings.entry.point.got.it.popup"), disposable);
+  //}
+
   private static PluginUpdatesService myUpdatesService;
   private static PluginStateListener myPluginStateListener;
 
@@ -406,6 +414,11 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
     @Override
     public void install(@NotNull StatusBar statusBar) {
       myStatusBar = statusBar;
+      //
+      //JComponent component = ((IdeStatusBarImpl)statusBar).getWidgetComponent(WIDGET_ID);
+      //if (component != null) {
+      //  createGotItTooltip(this).showAt(Balloon.Position.above, component, c -> new Point(c.getWidth() / 2, 0));
+      //}
     }
 
     @Override
