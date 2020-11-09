@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -11,10 +12,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 final class IndexConfiguration {
-  private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter>> myIndices = new HashMap<>();
+  private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter>> myIndices = CollectionFactory.createSmallMemoryFootprintMap();
   private final Object2IntMap<ID<?, ?>> myIndexIdToVersionMap = new Object2IntOpenHashMap<>();
   private final List<ID<?, ?>> myIndicesWithoutFileTypeInfo = new ArrayList<>();
-  private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = new HashMap<>();
+  private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = CollectionFactory.createSmallMemoryFootprintMap();
   private volatile boolean myFreezed;
 
   <K, V> UpdatableIndex<K, V, FileContent> getIndex(@NotNull ID<K, V> indexId) {
