@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -80,7 +81,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
         name += " | " + target.getDisplayName();
       } else {
         if (!ExecutionTargetManager.canRun(settings.getConfiguration(), target)) {
-          name += " | Nothing to run on";
+          name += " | " + ExecutionBundle.message("run.configurations.combo.action.nothing.to.run.on");
         }
       }
       presentation.setText(name, false);
@@ -205,7 +206,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
-        String folderName = entry.getKey();
+        @NlsSafe String folderName = entry.getKey();
         DefaultActionGroup group = folderName == null ? actionGroup : DefaultActionGroup.createPopupGroup(() -> folderName);
         group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
         for (RunnerAndConfigurationSettings settings : entry.getValue()) {
@@ -254,6 +255,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
       }
       else {
         presentation.setText(ExecutionBundle.messagePointer("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
+        //noinspection DialogTitleCapitalization
         presentation.setDescription(presentation.getText());
         presentation.setEnabledAndVisible(true);
       }

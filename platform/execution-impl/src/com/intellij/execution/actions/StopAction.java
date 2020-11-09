@@ -22,6 +22,7 @@ import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -274,11 +275,11 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   abstract static class HandlerItem {
-    final String displayName;
+    final @Nls String displayName;
     final Icon icon;
     final boolean hasSeparator;
 
-    HandlerItem(String displayName, Icon icon, boolean hasSeparator) {
+    HandlerItem(@Nls String displayName, Icon icon, boolean hasSeparator) {
       this.displayName = displayName;
       this.icon = icon;
       this.hasSeparator = hasSeparator;
