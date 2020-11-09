@@ -50,6 +50,11 @@ final class EnterInPropertiesFileHandler extends EnterHandlerDelegateAdapter {
 
       if (elementType == PropertiesTokenTypes.VALUE_CHARACTERS) {
         toInsert = "\\\n  ";
+        // if the split at a whitespace, move the caret forward to keep all the whitespaces in the same line
+        if (text.charAt(caretOffset) == ' ') {
+          final int leadingWhitespaces = getLeadingWhitespacesNumber(text.substring(caretOffset));
+          caretOffset += leadingWhitespaces;
+        }
       }
       else if (elementType == PropertiesTokenTypes.END_OF_LINE_COMMENT && "#!".indexOf(document.getText().charAt(caretOffset)) == -1) {
         toInsert = "\n#";
@@ -63,6 +68,15 @@ final class EnterInPropertiesFileHandler extends EnterHandlerDelegateAdapter {
     editor.getCaretModel().moveToOffset(caretOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
+  }
+
+  static int getLeadingWhitespacesNumber(String text) {
+    final long leadingWhitespaces = text
+      .chars()
+      .takeWhile(c -> c == ' ')
+      .count();
+
+    return (int)leadingWhitespaces;
   }
 
 }
