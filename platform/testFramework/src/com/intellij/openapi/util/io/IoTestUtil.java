@@ -205,13 +205,17 @@ public final class IoTestUtil {
     return linkFile;
   }
 
-  private static void runCommand(String... command) {
+  private static @NotNull String runCommand(String @NotNull ... command) {
     try {
       GeneralCommandLine cmd = new GeneralCommandLine(command).withRedirectErrorStream(true);
       ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 30_000);
+      String out = output.getStdout().trim();
       if (output.getExitCode() != 0) {
-        fail("failed: " + cmd + "\nexit code: " + output.getExitCode() + "; output:\n" + output.getStdout().trim());
+        fail("failed: " + cmd + "\n" +
+             "exit code: " + output.getExitCode() + "; output:\n" +
+             out);
       }
+      return out;
     }
     catch (ExecutionException e) {
       throw new RuntimeException(e);
@@ -411,8 +415,12 @@ public final class IoTestUtil {
     return Collections.emptyList();
   }
 
-  public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) {
+  public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) throws IOException {
     assertTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
-    runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
+    String changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
+    String out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.getPath());
+    if (!out.endsWith(caseSensitive ? "enabled." : "disabled.")) {
+      throw new IOException("Can't setCaseSensitivity("+dir+", "+caseSensitive+"). 'fsutil.exe setCaseSensitiveInfo' output:"+changeOut+"; 'fsutil.exe getCaseSensitiveInfo' output:"+out);
+    }
   }
 }
