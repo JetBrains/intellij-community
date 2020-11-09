@@ -2,9 +2,14 @@
 package com.intellij.space.vcs.review
 
 import circlet.code.api.CodeReviewWithCount
+import circlet.workspaces.Workspace
+import com.intellij.space.vcs.SpaceProjectInfo
 import runtime.reactive.MutableProperty
 import runtime.reactive.mutableProperty
 
-class SpaceSelectedReviewVmImpl : SpaceSelectedReviewVm {
+internal class SpaceSelectedReviewVmImpl(
+  override val workspace: Workspace,
+  override val projectInfo: SpaceProjectInfo
+) : SpaceSelectedReviewVm {
   override val selectedReview: MutableProperty<CodeReviewWithCount?> = mutableProperty(null)
 }

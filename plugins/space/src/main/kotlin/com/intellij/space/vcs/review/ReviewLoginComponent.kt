@@ -47,7 +47,7 @@ internal class ReviewLoginComponent(lifetime: Lifetime,
                                                    spaceRepos,
                                                    client,
                                                    reviewsListVm,
-                                                   SpaceSelectedReviewVmImpl())
+                                                   SpaceSelectedReviewVmImpl(workspace, spaceProjectInfo))
         view.setContent(reviewComponent)
       }
       view.validate()

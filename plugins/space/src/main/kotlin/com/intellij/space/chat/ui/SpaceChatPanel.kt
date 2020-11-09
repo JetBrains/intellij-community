@@ -14,7 +14,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.space.chat.model.api.SpaceChatHeaderDetails
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItemWithThread
+import com.intellij.space.chat.ui.header.createComponent
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScrollPaneFactory
@@ -49,8 +51,13 @@ internal class SpaceChatPanel(
   private val lifetime: Lifetime,
   parent: Disposable,
   private val channelsVm: ChannelsVm,
-  private val chatRecord: Ref<M2ChannelRecord>
+  private val chatRecord: Ref<M2ChannelRecord>,
+  private val headerDetails: SpaceChatHeaderDetails
 ) : BorderLayoutPanel() {
+  companion object {
+    fun getChatAvatarSize() = JBValue.UIInteger("space.chat.avatar.size", 30)
+  }
+
   private val server = channelsVm.client.server
   private var lastHoveredMessagePanel: HoverableJPanel? = null
 
@@ -102,16 +109,16 @@ internal class SpaceChatPanel(
   }
 
   private fun createContentPanel(model: SpaceChatItemListModel, chatVM: M2ChannelVm): JPanel {
-    val avatarSize = JBValue.UIInteger("space.chat.avatar.size", 30)
+    val avatarSize = getChatAvatarSize()
     val avatarProvider = SpaceAvatarProvider(lifetime, this, avatarSize)
     val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
     val timeline = TimelineComponent(model, itemComponentFactory, offset = 0).apply {
-      border = JBUI.Borders.empty(16, 0)
+      border = JBUI.Borders.empty(10, 0)
     }
 
     return JPanel(null).apply {
       isOpaque = false
-      border = JBUI.Borders.empty(24, 20)
+      border = JBUI.Borders.empty(5, 20)
 
       val maxWidth = JBUI.scale(600)
 
@@ -119,6 +126,7 @@ internal class SpaceChatPanel(
                            .insets("0", "0", "0", "0")
                            .flowY(),
                          AC().size(":$maxWidth:$maxWidth").gap("push"))
+      add(headerDetails.createComponent(lifetime), CC().growX().minWidth(""))
       add(timeline, CC().growX().minWidth(""))
       add(createNewMessageField(chatVM), CC().growX().minWidth(""))
     }
@@ -130,6 +138,7 @@ internal class SpaceChatPanel(
       ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
       ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     ).apply {
+      border = JBUI.Borders.empty()
       isOpaque = false
       viewport.isOpaque = false
     })

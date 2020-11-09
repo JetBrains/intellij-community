@@ -23,6 +23,7 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
+import icons.VcsCodeReviewIcons
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.GithubIssueState
@@ -49,9 +50,9 @@ object GithubUIUtil {
   fun getPullRequestStateIcon(state: GHPullRequestState, isDraft: Boolean): Icon =
     if (isDraft) GithubIcons.PullRequestDraft
     else when (state) {
-      GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
+      GHPullRequestState.CLOSED -> VcsCodeReviewIcons.PullRequestClosed
       GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
-      GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
+      GHPullRequestState.OPEN -> VcsCodeReviewIcons.PullRequestOpen
     }
 
   @NlsSafe

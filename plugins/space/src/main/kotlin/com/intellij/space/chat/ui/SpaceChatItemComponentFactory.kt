@@ -362,7 +362,7 @@ internal class SpaceChatItemComponentFactory(
     }
   }
 
-  private class Item(avatar: Icon, private val title: MessageTitleComponent, content: JComponent) : HoverableJPanel() {
+  internal class Item(avatar: Icon, private val title: MessageTitleComponent, content: JComponent) : HoverableJPanel() {
     companion object {
       val AVATAR_GAP: Int
         get() = UI.scale(8)
@@ -382,7 +382,7 @@ internal class SpaceChatItemComponentFactory(
         add(content, VerticalLayout.FILL_HORIZONTAL)
       }
       isOpaque = false
-      border = JBUI.Borders.empty(10)
+      border = JBUI.Borders.empty(10, 0)
       add(avatarPanel, BorderLayout.WEST)
       add(rightPart, BorderLayout.CENTER)
     }

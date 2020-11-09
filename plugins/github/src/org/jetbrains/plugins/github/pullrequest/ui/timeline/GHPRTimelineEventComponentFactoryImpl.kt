@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
+import icons.VcsCodeReviewIcons
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -169,9 +170,9 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
   private inner class StateEventComponentFactory : EventComponentFactory<GHPRTimelineEvent.State>() {
     override fun createComponent(event: GHPRTimelineEvent.State): Item {
       val icon = when (event.newState) {
-        GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
+        GHPullRequestState.CLOSED -> VcsCodeReviewIcons.PullRequestClosed
         GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
-        GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
+        GHPullRequestState.OPEN -> VcsCodeReviewIcons.PullRequestOpen
       }
 
       val text = when (event.newState) {
