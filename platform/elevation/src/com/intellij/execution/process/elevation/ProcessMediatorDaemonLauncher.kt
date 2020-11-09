@@ -57,7 +57,8 @@ object ProcessMediatorDaemonLauncher {
       if (SystemInfo.isWindows) it else it.copy(trampoline = sudo, daemonize = sudo, leaderPid = ProcessHandle.current().pid())
     }
 
-    val trampolineCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
+    val trampolineCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getProperties(),
+                                                        ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
       .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
       .withParameters(daemonLaunchOptions.asCmdlineArgs())
 
@@ -180,21 +181,15 @@ private class ProcessMediatorDaemonImpl(private val processHandle: ProcessHandle
 }
 
 
-private fun createJavaVmCommandLine(classpathClasses: MutableList<Class<*>>): GeneralCommandLine {
+private fun createJavaVmCommandLine(properties: Map<String, String>,
+                                    classpathClasses: MutableList<Class<*>>): GeneralCommandLine {
   val javaVmExecutablePath = SystemProperties.getJavaHome() + File.separator + "bin" + File.separator + "java"
+  val propertyArgs = properties.map { (k, v) -> "-D$k=$v" }
   val classpath = classpathClasses.mapNotNullTo(LinkedHashSet()) { it.getResourcePath() }.joinToString(File.pathSeparator)
 
   return GeneralCommandLine(javaVmExecutablePath)
-    .withPropertyInherited("java.net.preferIPv4Stack")
-    .withPropertyInherited("java.net.preferIPv6Addresses")
-    .withPropertyInherited("java.util.logging.config.file")
+    .withParameters(propertyArgs)
     .withParameters("-cp", classpath)
-}
-
-private fun GeneralCommandLine.withPropertyInherited(propertyName: String): GeneralCommandLine = apply {
-  System.getProperty(propertyName)?.let { value ->
-    addParameter("-D$propertyName=$value")
-  }
 }
 
 private fun Class<*>.getResourcePath(): String? {
