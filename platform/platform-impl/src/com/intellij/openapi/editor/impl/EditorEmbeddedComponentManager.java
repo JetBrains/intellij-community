@@ -51,7 +51,7 @@ public final class EditorEmbeddedComponentManager {
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
     return inlays.add(component, properties.resizePolicy, properties.rendererFactory,
-                      properties.relatesToPrecedingText, properties.showAbove,
+                      properties.relatesToPrecedingText, properties.showAbove, properties.showWhenFolded,
                       properties.priority, properties.offset);
   }
 
@@ -101,15 +101,22 @@ public final class EditorEmbeddedComponentManager {
     final RendererFactory rendererFactory;
     final boolean relatesToPrecedingText;
     final boolean showAbove;
+    final boolean showWhenFolded;
     final int priority;
     final int offset;
 
     public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
                       boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+      this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, priority, offset);
+    }
+
+    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, int priority, int offset) {
       this.resizePolicy = resizePolicy;
       this.rendererFactory = rendererFactory;
       this.relatesToPrecedingText = relatesToPrecedingText;
       this.showAbove = showAbove;
+      this.showWhenFolded = showWhenFolded;
       this.priority = priority;
       this.offset = offset;
     }
@@ -212,9 +219,9 @@ public final class EditorEmbeddedComponentManager {
 
     @Nullable
     Inlay<MyRenderer> add(@NotNull JComponent component, @NotNull ResizePolicy policy, @Nullable Properties.RendererFactory rendererFactory,
-                          boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+                          boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, int priority, int offset) {
       MyRenderer renderer = new MyRenderer(component, policy, rendererFactory);
-      Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, priority, renderer);
+      Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, showWhenFolded, priority, renderer);
       if (inlay == null) return null;
 
       renderer.addComponentListener(new ComponentAdapter() {
