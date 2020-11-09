@@ -1,10 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.util.ExecUtil
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream
@@ -12,6 +8,7 @@ import java.net.ServerSocket
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.concurrent.TimeUnit
 
 
 internal interface HandshakeReader : Closeable {
@@ -42,23 +39,17 @@ internal class HandshakeStreamReader(override val inputStream: InputStream) : Ab
 
 internal abstract class HandshakeFileReader(val path: Path) : AbstractHandshakeStreamReader()
 
-internal class HandshakeUnixFifoReader(path: Path = FileUtil.generateRandomTemporaryPath().toPath()) : HandshakeFileReader(path) {
+@Suppress("SpellCheckingInspection")
+internal class HandshakeUnixFifoReader(path: Path) : HandshakeFileReader(path) {
   private val cleanup = MultiCloseable().apply {
     registerCloseable { super.close() }
   }
 
   init {
-    @Suppress("SpellCheckingInspection")
     try {
-      ElevationLogger.LOG.assertTrue(SystemInfo.isUnix, "Can only use 'mkfifo' on Unix")
-      val mkfifoCommandLine = GeneralCommandLine("mkfifo", "-m", "0666", path.toString())
-      ExecUtil.execAndGetOutput(mkfifoCommandLine)
-        .checkSuccess(ElevationLogger.LOG).also { success ->
-          if (success) {
-            cleanup.registerCloseable { FileUtil.delete(path) }
-          }
-          else throw IOException("Unable to create fifo $path")
-        }
+      mkfifo(path).also {
+        cleanup.registerCloseable { Files.delete(path) }
+      }
 
       // We need to open the write end of the pipe to ensure opening the pipe for reading would not block indefinitely
       // in case the real daemon process doesn't open in for writing (for example, if it fails to start).
@@ -74,4 +65,25 @@ internal class HandshakeUnixFifoReader(path: Path = FileUtil.generateRandomTempo
   override val inputStream: InputStream = Files.newInputStream(path, StandardOpenOption.READ)
 
   override fun close() = cleanup.close()
+
+  companion object {
+    private const val MKFIFO_PROCESS_TIMEOUT_MS = 3000L
+
+    private fun mkfifo(path: Path) {
+      val process = ProcessBuilder("mkfifo", "-m", "0666", path.toString()).start()
+      val completed = try {
+        Thread.interrupted() // clear
+        process.waitFor(MKFIFO_PROCESS_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+      }
+      catch (e: InterruptedException) {
+        throw IOException("mkfifo interrupted", e)
+      }
+      if (!completed) {
+        throw IOException("mkfifo timed out ($MKFIFO_PROCESS_TIMEOUT_MS ms)")
+      }
+      if (process.exitValue() != 0) {
+        throw IOException("mkfifo failed with exit code ${process.exitValue()}: ${String(process.errorStream.readAllBytes())}")
+      }
+    }
+  }
 }
