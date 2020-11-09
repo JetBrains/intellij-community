@@ -453,8 +453,11 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testPluginWithXInclude() {
+    myFixture.copyFileToProject("pluginWithXInclude.xml", "META-INF/pluginWithXInclude.xml")
+    myFixture.copyFileToProject("pluginWithXInclude-extensionPoints.xml", "META-INF/pluginWithXInclude-extensionPoints.xml")
+    myFixture.copyFileToProject("pluginWithXInclude-extensionPointsWithModule.xml", "META-INF/pluginWithXInclude-extensionPointsWithModule.xml")
     myFixture.enableInspections(new XmlPathReferenceInspection())
-    doHighlightingTest("pluginWithXInclude.xml", "pluginWithXInclude-extensionPoints.xml", "pluginWithXInclude-extensionPointsWithModule.xml")
+    doHighlightingTest("META-INF/pluginWithXInclude.xml")
   }
 
   void testPluginXmlInIdeaProjectWithoutVendor() {
