@@ -41,6 +41,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findInPATH);
     myFinders.add(() -> findInSpecifiedPaths(paths));
     myFinders.add(this::findJavaInstalledBySdkMan);
+    myFinders.add(this::findJavaInstalledByGradle);
 
     if (forceEmbeddedJava || Registry.is("java.detector.include.embedded", false)) {
       myFinders.add(() -> scanAll(getJavaHome(), false));
@@ -197,6 +198,17 @@ public class JavaHomeFinderBasic {
       log.warn("Unexpected exception while looking for Sdkman directory: " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
       return emptySet();
     }
+  }
+
+  private @NotNull Set<String> findJavaInstalledByGradle() {
+    String homePath = System.getProperty("user.home");
+    if (homePath != null) {
+      File homeDir = new File(homePath);
+      File gradleHome = new File(homeDir, ".gradle");
+      File jdks = new File(gradleHome, "jdks");
+      return jdks.isDirectory() ? scanAll(jdks.toPath(), true) : emptySet();
+    }
+    return emptySet();
   }
 
   @Nullable
