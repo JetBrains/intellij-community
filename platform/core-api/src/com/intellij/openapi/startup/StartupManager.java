@@ -22,7 +22,7 @@ public abstract class StartupManager {
   }
 
   /**
-   * @deprecated Do not use.
+   * @deprecated Use {@link #registerStartupActivity(Runnable)} instead
    */
   @Deprecated
   public void registerPreStartupActivity(@NotNull Runnable runnable) {

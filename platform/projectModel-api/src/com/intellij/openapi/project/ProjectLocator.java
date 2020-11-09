@@ -48,6 +48,10 @@ public abstract class ProjectLocator {
   @NotNull
   public abstract Collection<Project> getProjectsForFile(@NotNull VirtualFile file);
 
+  /**
+   * Execute {@code runnable}, making sure that within this computation every call to
+   * {@link #guessProjectForFile(VirtualFile)} for the {@code file} will return {@code preferredProject}
+   */
   public static <T, E extends Throwable> T computeWithPreferredProject(@NotNull VirtualFile file,
                                                                        @NotNull Project preferredProject,
                                                                        @NotNull ThrowableComputable<T, E> runnable) throws E {
