@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.process.elevation
+package com.intellij.execution.process.mediator
 
 import com.intellij.application.subscribe
+import com.intellij.execution.process.elevation.ElevationBundle
+import com.intellij.execution.process.elevation.ElevationLogger
 import com.intellij.execution.process.elevation.settings.ElevationSettings
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
