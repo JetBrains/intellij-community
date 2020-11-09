@@ -6,11 +6,12 @@ import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.process.mediator.util.rsaDecrypt
 import java.io.Closeable
 import java.io.IOException
+import java.io.InputStream
 import java.nio.file.Path
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 
-internal interface HandshakeTransport : Closeable {
+interface HandshakeTransport : Closeable {
   fun getDaemonLaunchOptions(): DaemonLaunchOptions
 
   /**
@@ -24,9 +25,21 @@ internal interface HandshakeTransport : Closeable {
    * and makes [readHandshake] throw. The implementations must guarantee that.
    */
   override fun close()
+
+  companion object
 }
 
-internal class EncryptedHandshakeTransport(private val delegate: HandshakeTransport) : HandshakeTransport by delegate {
+interface ProcessStdoutHandshakeTransport : HandshakeTransport {
+  fun initStream(inputStream: InputStream)
+}
+
+fun HandshakeTransport.Companion.createProcessStdoutTransport(): ProcessStdoutHandshakeTransport = StdoutTransport()
+fun HandshakeTransport.Companion.createUnixFifoTransport(path: Path): HandshakeTransport = UnixFifoTransport(path)
+fun HandshakeTransport.Companion.createSocketTransport(port: Int = 0): HandshakeTransport = SocketTransport(port)
+
+fun HandshakeTransport.encrypted(): HandshakeTransport = EncryptedHandshakeTransport(this)
+
+private class EncryptedHandshakeTransport(private val delegate: HandshakeTransport) : HandshakeTransport by delegate {
   private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
     initialize(1024)
   }.genKeyPair()
@@ -47,11 +60,9 @@ internal class EncryptedHandshakeTransport(private val delegate: HandshakeTransp
   }
 }
 
-internal fun HandshakeTransport.encrypted(): HandshakeTransport = EncryptedHandshakeTransport(this)
 
-
-internal abstract class AbstractHandshakeTransportBase<R : HandshakeReader> : HandshakeTransport {
-  protected abstract val handshakeReader: R
+private abstract class AbstractHandshakeTransport : HandshakeTransport {
+  protected abstract val handshakeReader: HandshakeReader
 
   override fun getDaemonLaunchOptions() = DaemonLaunchOptions(handshakeOption = getHandshakeOption())
   abstract fun getHandshakeOption(): DaemonLaunchOptions.HandshakeOption
@@ -67,27 +78,29 @@ internal abstract class AbstractHandshakeTransportBase<R : HandshakeReader> : Ha
   override fun close() = handshakeReader.close()
 }
 
-internal abstract class AbstractHandshakeTransport<R : HandshakeReader>(override val handshakeReader: R) : AbstractHandshakeTransportBase<R>()
-
-internal class HandshakeSocketTransport(
+private class SocketTransport(
   port: Int = 0
-) : AbstractHandshakeTransport<HandshakeSocketReader>(HandshakeSocketReader(port)) {
+) : AbstractHandshakeTransport() {
+  override val handshakeReader = HandshakeSocketReader(port)
   override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Port(handshakeReader.port)
 }
 
-internal class HandshakeStdoutTransport : AbstractHandshakeTransportBase<HandshakeStreamReader>() {
-  public override lateinit var handshakeReader: HandshakeStreamReader
-
+private class StdoutTransport : AbstractHandshakeTransport(), ProcessStdoutHandshakeTransport {
+  override lateinit var handshakeReader: HandshakeStreamReader
   override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Stdout
+
+  override fun initStream(inputStream: InputStream) {
+    handshakeReader = HandshakeStreamReader(inputStream)
+  }
 }
 
-internal open class HandshakeFileTransport(
-  handshakeReader: HandshakeFileReader
-) : AbstractHandshakeTransport<HandshakeFileReader>(handshakeReader) {
+private open class FileTransport(
+  override val handshakeReader: HandshakeFileReader
+) : AbstractHandshakeTransport() {
   override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.File(handshakeReader.path.toAbsolutePath())
 }
 
-internal class HandshakeUnixFifoTransport(
+private class UnixFifoTransport(
   path: Path
-) : HandshakeFileTransport(HandshakeUnixFifoReader(path))
+) : FileTransport(HandshakeUnixFifoReader(path))
 

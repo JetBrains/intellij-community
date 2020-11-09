@@ -44,7 +44,7 @@ object ProcessMediatorDaemonLauncher {
     // In particular, this is a workaround for high CPU consumption of the osascript (used on macOS instead of sudo) process;
     // we want it to finish as soon as possible.
     val handshakeTransport = if (SystemInfo.isWindows) {
-      HandshakeStdoutTransport()
+      HandshakeTransport.createProcessStdoutTransport()
     }
     else try {
       appExecutorService.submitAndAwaitCloseable { openUnixHandshakeTransport() }
@@ -89,12 +89,12 @@ object ProcessMediatorDaemonLauncher {
 
   private fun openUnixHandshakeTransport(): HandshakeTransport {
     return try {
-      HandshakeUnixFifoTransport(path = FileUtil.generateRandomTemporaryPath().toPath())
+      HandshakeTransport.createUnixFifoTransport(path = FileUtil.generateRandomTemporaryPath().toPath())
     }
     catch (e0: IOException) {
       ElevationLogger.LOG.warn("Unable to create file-based handshake channel; falling back to socket streams", e0)
       try {
-        HandshakeSocketTransport()
+        HandshakeTransport.createSocketTransport()
       }
       catch (e1: IOException) {
         e1.addSuppressed(e0)
@@ -107,7 +107,7 @@ object ProcessMediatorDaemonLauncher {
 
   private fun HandshakeTransport.createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
     val processHandler =
-      if (this !is HandshakeStdoutTransport) {
+      if (this !is ProcessStdoutHandshakeTransport) {
         OSProcessHandler.Silent(daemonCommandLine)
       }
       else {
@@ -116,7 +116,7 @@ object ProcessMediatorDaemonLauncher {
             return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
           }
         }.also {
-          handshakeReader = HandshakeStreamReader(it.process.inputStream)
+          initStream(it.process.inputStream)
         }
       }
     processHandler.addProcessListener(object : ProcessAdapter() {
