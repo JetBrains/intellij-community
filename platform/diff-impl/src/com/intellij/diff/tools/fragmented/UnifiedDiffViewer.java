@@ -154,7 +154,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     installEditorListeners();
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
-    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
 
     new UiNotifyConnector(getComponent(), new Activatable() {
       @Override
@@ -193,7 +193,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @Nullable
   protected JComponent createTitles() {
-    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, Arrays.asList(myEditor, myEditor));
+    List<JComponent> titles = DiffUtil.createTextTitles(this, myRequest, Arrays.asList(myEditor, myEditor));
     assert titles.size() == 2;
 
     titles = ContainerUtil.skipNulls(titles);

@@ -56,7 +56,7 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.intellij.diff.tools.util.DiffNotifications.createNotification;
+import static com.intellij.diff.tools.util.DiffNotifications.createNotificationProvider;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createConflictDiffRequest;
 import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createDiffRequest;
@@ -332,7 +332,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
         TextFilePatch patch = myPreloader.getPatch(myChange, myCommitContext);
         AppliedTextPatch appliedTextPatch = createAppliedTextPatch(patch);
         PatchDiffRequest request = new PatchDiffRequest(appliedTextPatch, getName(), VcsBundle.message("patch.apply.conflict.patch"));
-        DiffUtil.addNotification(createNotification(DiffBundle.message("cannot.find.file.error", getFilePath())), request);
+        DiffUtil.addNotification(createNotificationProvider(DiffBundle.message("cannot.find.file.error", getFilePath())), request);
         return request;
       }
       catch (VcsException e) {
@@ -491,7 +491,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
                                 ? createConflictDiffRequest(myProject, myFile, patch, VcsBundle.message("shelve.shelved.version"), texts, getName())
                                 : createDiffRequest(myProject, myChange.getChange(), getName(), context, indicator);
       if (!myWithLocal) {
-        DiffUtil.addNotification(createNotification(
+        DiffUtil.addNotification(createNotificationProvider(
           VcsBundle.message("shelve.base.content.not.found.or.not.applicable.error")), diffRequest);
       }
       return diffRequest;

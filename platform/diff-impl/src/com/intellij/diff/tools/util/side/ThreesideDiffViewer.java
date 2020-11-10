@@ -75,7 +75,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   @Override
   protected void onInit() {
     super.onInit();
-    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
   }
 
   @Override
@@ -119,7 +119,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   @NotNull
   protected List<JComponent> createTitles() {
-    return DiffUtil.createSimpleTitles(myRequest);
+    return DiffUtil.createSimpleTitles(this, myRequest);
   }
 
   //

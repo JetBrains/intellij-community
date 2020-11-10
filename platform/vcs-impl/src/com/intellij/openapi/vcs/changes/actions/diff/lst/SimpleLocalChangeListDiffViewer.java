@@ -56,7 +56,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @NotNull
   @Override
   protected List<JComponent> createTitles() {
-    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, getEditors());
+    List<JComponent> titles = DiffUtil.createTextTitles(this, myRequest, getEditors());
     assert titles.size() == 2;
 
     myExcludeAllCheckboxPanel = new LocalTrackerDiffUtil.ExcludeAllCheckboxPanel(this, getEditor2());

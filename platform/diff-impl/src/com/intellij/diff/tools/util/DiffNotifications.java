@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
+import com.intellij.diff.util.DiffNotificationProvider;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.ui.EditorNotificationPanel;
@@ -60,6 +61,16 @@ public final class DiffNotifications {
   //
   // Impl
   //
+
+  @NotNull
+  public static DiffNotificationProvider createNotificationProvider(@NotNull @Nls String text) {
+    return viewer -> createNotification(text);
+  }
+
+  @NotNull
+  public static DiffNotificationProvider createNotificationProvider(@NotNull @Nls String text, @Nullable Color background) {
+    return viewer -> createNotification(text, background);
+  }
 
   @NotNull
   public static JPanel createNotification(@NotNull @Nls String text) {

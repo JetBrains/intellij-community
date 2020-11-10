@@ -62,7 +62,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   @Override
   protected void onInit() {
     super.onInit();
-    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
   }
 
   @Override
@@ -116,7 +116,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
 
   @NotNull
   protected List<JComponent> createTitles() {
-    return DiffUtil.createSimpleTitles(myRequest);
+    return DiffUtil.createSimpleTitles(this, myRequest);
   }
 
   //
