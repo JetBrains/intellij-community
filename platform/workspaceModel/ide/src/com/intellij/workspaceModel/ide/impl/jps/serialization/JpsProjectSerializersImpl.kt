@@ -35,7 +35,6 @@ import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.IOException
-import java.lang.Exception
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -140,6 +139,9 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }.toSet()
 
     for (addedFileUrl in addedFileUrls) {
+      // The file may already be processed during class initialization
+      if (fileSerializersByUrl.containsKey(addedFileUrl)) continue
+
       val factory = directorySerializerFactoriesByUrl[PathUtil.getParentPath(addedFileUrl)]
       val newFileSerializer = factory?.createSerializer(addedFileUrl, createFileInDirectorySource(
         virtualFileManager.fromUrl(factory.directoryUrl), PathUtil.getFileName(addedFileUrl)), virtualFileManager)
