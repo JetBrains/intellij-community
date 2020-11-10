@@ -1247,6 +1247,7 @@
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider"/>
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider"/>
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.ActionsEqualityProvider"/>
+    <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.OptionEqualityProvider"/>
 
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingContextRecentDirectoryCache"/>
