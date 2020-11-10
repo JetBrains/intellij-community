@@ -322,6 +322,10 @@
                              bundle="messages.CredentialStoreBundle"
                              key="password.safe.configurable"
                              id="application.passwordSafe"/>
+
+    <applicationService serviceInterface="com.intellij.execution.process.ElevationService"
+                        serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.execution.process.OSProcessManager"
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
 
@@ -330,7 +334,7 @@
     <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
                     serviceImplementation="com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ProjectSchemeManagerFactory"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.editor.EditorActivityManager" />
+    <applicationService serviceImplementation="com.intellij.openapi.editor.EditorActivityManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.TextAttributeKeyDefaultsProviderImpl"/>
