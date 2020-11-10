@@ -95,9 +95,6 @@ internal object SpaceReviewChangesTreeFactory {
   }
 }
 
-private val addedLinesTextAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.ADDED.color)
-private val removedLinesTextAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.DELETED.color)
-
 internal class RepositoryNode(@NlsSafe val repositoryName: String,
                               val inCurrentProject: Boolean)
   : ChangesBrowserStringNode(repositoryName) {
@@ -120,8 +117,10 @@ internal class ReviewChangeNode(private val changeInReview: ChangeInReview)
     super.render(renderer, selected, expanded, hasFocus)
     changeInReview.change.diffSize?.let { diffSize ->
       val (added, removed) = diffSize
-      if (added != 0) renderer.append("${FontUtil.spaceAndThinSpace()}+$added", addedLinesTextAttributes)
-      if (removed != 0) renderer.append("${FontUtil.spaceAndThinSpace()}-${removed}", removedLinesTextAttributes)
+      if (added != 0) renderer.append("${FontUtil.spaceAndThinSpace()}+$added",
+                                      SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.ADDED.color))
+      if (removed != 0) renderer.append("${FontUtil.spaceAndThinSpace()}-${removed}",
+                                        SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.DELETED.color))
     }
   }
 

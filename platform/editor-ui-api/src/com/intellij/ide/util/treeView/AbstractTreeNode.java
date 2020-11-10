@@ -209,6 +209,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return null;
   }
 
+  @Nullable
   public Color getFileStatusColor(final FileStatus status) {
     if (FileStatus.NOT_CHANGED.equals(status) && myProject != null && !myProject.isDefault()) {
       final VirtualFile vf = getVirtualFile();
