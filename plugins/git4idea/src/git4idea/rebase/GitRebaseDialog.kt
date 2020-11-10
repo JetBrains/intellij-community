@@ -301,11 +301,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateBranches() {
-    branchField.removeAllItems()
-    for (b in localBranches) {
-      branchField.addItem(b.name)
-    }
-    branchField.item = null
+    branchField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.update(localBranches.map { it.name })
 
     updateBaseFields()
   }
