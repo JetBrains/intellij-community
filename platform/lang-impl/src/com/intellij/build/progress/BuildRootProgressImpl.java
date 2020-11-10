@@ -8,7 +8,6 @@ import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.FinishEvent;
 import com.intellij.build.events.StartEvent;
 import com.intellij.build.events.impl.*;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
