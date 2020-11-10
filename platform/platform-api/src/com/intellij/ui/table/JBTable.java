@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -75,8 +76,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
 
-  private int myMouseHoveredRow = -1;
-
   public JBTable() {
     this(new DefaultTableModel());
   }
@@ -115,20 +114,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     setFillsViewportHeight(true);
 
     addMouseListener(new MyMouseListener());
-    addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        if (!isStriped()) {
-          updateHoveredRow(rowAtPoint(e.getPoint()));
-        }
-      }
-    });
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseExited(MouseEvent e) {
-        updateHoveredRow(-1);
-      }
-    });
+    TableHoverListener.DEFAULT.addTo(this);
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       addMouseMotionListener(new MouseMotionAdapter() {
@@ -191,14 +177,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   public final int getHoveredRow() {
-    return isHoverPaintingDisabled(this) ? -1 : myMouseHoveredRow;
-  }
-
-  private void updateHoveredRow(int row) {
-    if (myMouseHoveredRow != row && !isHoverPaintingDisabled(this)) {
-      myMouseHoveredRow = row;
-      repaint();
-    }
+    return isHoverPaintingDisabled(this) ? -1 : TableHoverListener.getHoveredRow(this);
   }
 
   protected void onTableChanged(@NotNull TableModelEvent e) {
