@@ -2,11 +2,16 @@
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
+import com.intellij.diff.util.DiffDrawUtil.MarkerRange;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,6 +121,20 @@ public final class DiffDividerDrawUtil {
     return -editor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
   }
 
+  /**
+   * Use EditorInlayFoldingMapper-friendly renderer for folded lines.
+   * We do not use it by default to avoid potential inconsistency with {@link DiffLineMarkerRenderer}.
+   *
+   * @see DiffDrawUtil#getGutterMarkerPaintRange
+   */
+  private static MarkerRange getDividerMarkerPaintRange(@NotNull Editor editor, int startLine, int endLine) {
+    Pair<@NotNull Interval, @Nullable Interval> pair1 = EditorUtil.logicalLineToYRange(editor, startLine);
+    Pair<@NotNull Interval, @Nullable Interval> pair2 = startLine == endLine ? pair1 : EditorUtil.logicalLineToYRange(editor, endLine - 1);
+    int startOffset = pair1.first.intervalStart();
+    int endOffset = pair2.first.intervalEnd();
+    return new MarkerRange(startOffset, endOffset);
+  }
+
   @NotNull
   private static DividerSeparator createSeparator(@NotNull Editor editor1, @NotNull Editor editor2,
                                                   int line1, int line2, int height1, int height2,
@@ -195,30 +214,41 @@ public final class DiffDividerDrawUtil {
       if (myLeftInterval.start > endLine1 && myRightInterval.start > endLine2) return true;
       if (myLeftInterval.end < startLine1 && myRightInterval.end < startLine2) return false;
 
-      // Hide folded changes from non-current changelist in Local Changes.
-      boolean isFolded = isIntervalFolded(myEditor1, startLine1, endLine1) &&
-                         isIntervalFolded(myEditor2, startLine2, endLine2);
-      if (!isFolded || painter.isAlwaysVisible()) {
-        myPolygons.add(createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2,
-                                     painter.getFillColor(myEditor2),
-                                     painter.getBorderColor(myEditor2),
-                                     painter.isDottedBorder()));
-      }
+      ContainerUtil.addIfNotNull(myPolygons, createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2,
+                                                           painter));
       return true;
     }
 
-    @NotNull
+    @Nullable
     private static DividerPolygon createPolygon(@NotNull Editor editor1, @NotNull Editor editor2,
                                                 int startLine1, int endLine1,
                                                 int startLine2, int endLine2,
-                                                @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
+                                                @NotNull Painter painter) {
       int topOffset1 = getEditorTopOffset(editor1);
       int topOffset2 = getEditorTopOffset(editor2);
-      DiffDrawUtil.MarkerRange range1 = DiffDrawUtil.getGutterMarkerPaintRange(editor1, startLine1, endLine1);
-      DiffDrawUtil.MarkerRange range2 = DiffDrawUtil.getGutterMarkerPaintRange(editor2, startLine2, endLine2);
+
+      boolean isFolded1 = isIntervalFolded(editor1, startLine1, endLine1);
+      boolean isFolded2 = isIntervalFolded(editor2, startLine2, endLine2);
+      boolean isFolded = isFolded1 && isFolded2;
+
+      // Hide folded changes from non-current changelist in Local Changes.
+      if (isFolded && !painter.isAlwaysVisible()) return null;
+
+      MarkerRange range1 = isFolded1 ? getDividerMarkerPaintRange(editor1, startLine1, endLine1)
+                                     : DiffDrawUtil.getGutterMarkerPaintRange(editor1, startLine1, endLine1);
+      MarkerRange range2 = isFolded2 ? getDividerMarkerPaintRange(editor2, startLine2, endLine2)
+                                     : DiffDrawUtil.getGutterMarkerPaintRange(editor2, startLine2, endLine2);
       return new DividerPolygon(range1.y1 + topOffset1, range2.y1 + topOffset2,
                                 range1.y2 + topOffset1, range2.y2 + topOffset2,
-                                fillColor, borderColor, dottedBorder);
+                                painter.getFillColor(editor2, isFolded),
+                                painter.getBorderColor(editor2, isFolded),
+                                painter.isDottedBorder());
+    }
+
+    @NotNull
+    private static TextDiffType correctType(@NotNull TextDiffType type, boolean isFolded) {
+      if (isFolded && (type == TextDiffType.DELETED || type == TextDiffType.INSERTED)) return TextDiffType.MODIFIED;
+      return type;
     }
 
     private static class DefaultPainter implements Painter {
@@ -229,12 +259,12 @@ public final class DiffDividerDrawUtil {
       }
 
       @Override
-      public @Nullable Color getFillColor(@NotNull Editor editor) {
-        return myType.getColor(editor);
+      public @Nullable Color getFillColor(@NotNull Editor editor, boolean isFolded) {
+        return correctType(myType, isFolded).getColor(editor);
       }
 
       @Override
-      public @Nullable Color getBorderColor(@NotNull Editor editor) {
+      public @Nullable Color getBorderColor(@NotNull Editor editor, boolean isFolded) {
         return null;
       }
 
@@ -259,13 +289,13 @@ public final class DiffDividerDrawUtil {
       }
 
       @Override
-      public @Nullable Color getFillColor(@NotNull Editor editor) {
-        return !myResolved ? myType.getColor(editor) : null;
+      public @Nullable Color getFillColor(@NotNull Editor editor, boolean isFolded) {
+        return !myResolved ? correctType(myType, isFolded).getColor(editor) : null;
       }
 
       @Override
-      public @Nullable Color getBorderColor(@NotNull Editor editor) {
-        return myResolved ? myType.getColor(editor) : null;
+      public @Nullable Color getBorderColor(@NotNull Editor editor, boolean isFolded) {
+        return myResolved ? correctType(myType, isFolded).getColor(editor) : null;
       }
 
       @Override
@@ -291,14 +321,14 @@ public final class DiffDividerDrawUtil {
       }
 
       @Override
-      public @Nullable Color getFillColor(@NotNull Editor editor) {
-        return myExcluded ? myType.getIgnoredColor(editor)
-                          : myType.getColor(editor);
+      public @Nullable Color getFillColor(@NotNull Editor editor, boolean isFolded) {
+        return myExcluded ? correctType(myType, isFolded).getIgnoredColor(editor)
+                          : correctType(myType, isFolded).getColor(editor);
       }
 
       @Override
-      public @Nullable Color getBorderColor(@NotNull Editor editor) {
-        return myExcluded ? myType.getColor(editor) : null;
+      public @Nullable Color getBorderColor(@NotNull Editor editor, boolean isFolded) {
+        return myExcluded ? correctType(myType, isFolded).getColor(editor) : null;
       }
 
       @Override
@@ -313,9 +343,9 @@ public final class DiffDividerDrawUtil {
     }
 
     private interface Painter {
-      @Nullable Color getFillColor(@NotNull Editor editor);
+      @Nullable Color getFillColor(@NotNull Editor editor, boolean isFolded);
 
-      @Nullable Color getBorderColor(@NotNull Editor editor);
+      @Nullable Color getBorderColor(@NotNull Editor editor, boolean isFolded);
 
       boolean isDottedBorder();
 
