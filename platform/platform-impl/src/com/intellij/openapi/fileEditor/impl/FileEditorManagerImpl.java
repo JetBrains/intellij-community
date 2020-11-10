@@ -729,9 +729,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       if (modifiers == InputEvent.SHIFT_DOWN_MASK && isMouseClick) {
         return OpenMode.NEW_WINDOW;
       }
-      if (modifiers == InputEvent.ALT_DOWN_MASK && isMouseClick) {
-        return OpenMode.RIGHT_SPLIT;
-      }
     }
 
     if (event instanceof KeyEvent) {

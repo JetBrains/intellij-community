@@ -2,6 +2,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
@@ -45,6 +46,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
     panel.installPopupHandler(getList(), selectedIndex);
+    
     getList().addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
@@ -174,6 +176,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
     JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o, false));
     component.putClientProperty(JBLIST_KEY, list);
+    OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(component);
     return component;
   }
 
