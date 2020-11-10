@@ -402,7 +402,7 @@ idea.fatal.error.notification=disabled
         }))
       }
 
-      List<String> paths = runInParallel(tasks).findAll { it != null }
+      List<String> paths = runInParallel(tasks, buildContext).findAll { it != null }
 
       if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
         if (buildContext.buildNumber == null) {
@@ -718,7 +718,7 @@ idea.fatal.error.notification=disabled
     CompilationTasks.create(buildContext).compileModules(moduleNames, includingTestsInModules)
   }
 
-  private <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks) {
+  static <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks, BuildContext buildContext) {
     if (!buildContext.options.runBuildStepsInParallel) {
       return tasks.collect {
         it.run(buildContext)
@@ -870,7 +870,7 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private abstract static class BuildTaskRunnable<V> {
+  abstract static class BuildTaskRunnable<V> {
     final String taskName
 
     BuildTaskRunnable(String name) {

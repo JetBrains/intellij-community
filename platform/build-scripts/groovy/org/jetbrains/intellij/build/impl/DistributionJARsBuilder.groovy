@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -32,7 +31,6 @@ import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 import java.util.stream.Collectors
 import java.util.zip.ZipEntry
@@ -270,11 +268,11 @@ class DistributionJARsBuilder {
 
   void buildJARs() {
     validateModuleStructure()
-    CompletableFuture.allOf(
-      runAsync(BuildOptions.SVGICONS_PREBUILD_STEP, { SVGPreBuilder.prebuildSVGIcons(it) }),
-      runAsync(BuildOptions.GENERATE_JAR_ORDER_STEP, { buildOrderFiles(it) }),
-      runAsync(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) })
-    ).join()
+    BuildTasksImpl.runInParallel(Arrays.asList(
+      createAsyncTask(BuildOptions.SVGICONS_PREBUILD_STEP, { SVGPreBuilder.prebuildSVGIcons(it) }),
+      createAsyncTask(BuildOptions.GENERATE_JAR_ORDER_STEP, { buildOrderFiles(it) }),
+      createAsyncTask(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) })
+    ), buildContext)
     buildLib()
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
@@ -284,9 +282,14 @@ class DistributionJARsBuilder {
     reorderJARs()
   }
 
-  private CompletableFuture<Void> runAsync(String taskName, Consumer<BuildContext> consumer) {
-    BuildContext childContext = buildContext.forkForParallelTask(taskName)
-    CompletableFuture.runAsync({ consumer.accept(childContext) }, AppExecutorUtil.appExecutorService)
+  private static BuildTasksImpl.BuildTaskRunnable<Void> createAsyncTask(String taskName, Consumer<BuildContext> consumer) {
+    return new BuildTasksImpl.BuildTaskRunnable<Void>(taskName) {
+      @Override
+      Void run(BuildContext context) {
+        consumer.accept(context)
+        return null
+      }
+    }
   }
 
   void reorderJARs() {
