@@ -8,39 +8,60 @@ package org.jetbrains.kotlin.idea.joinLines
 import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate
 import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN
 import com.intellij.openapi.editor.Document
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.nextLeaf
 import org.jetbrains.kotlin.idea.core.util.containsLineBreakInRange
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
-import org.jetbrains.kotlin.idea.formatter.trailingComma.canAddTrailingComma
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class JoinWithTrailingCommaHandler : JoinLinesHandlerDelegate {
     override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
         if (file !is KtFile) return CANNOT_JOIN
-        val commaOwner = file.findElementAt(start)
+        val startElement = file.findElementAt(start)
+        val commaOwner = startElement
             ?.parentsWithSelf
             ?.filter { !document.containsLineBreakInRange(it.textRange) }
-            ?.findLast { it.canAddTrailingComma() } as? KtElement
+            ?.find { TrailingCommaState.stateForElement(it) == TrailingCommaState.REDUNDANT } as? KtElement
             ?: return CANNOT_JOIN
 
-        return when (TrailingCommaState.stateForElement(commaOwner)) {
-            TrailingCommaState.REDUNDANT, TrailingCommaState.NOT_EXISTS -> {
-                val oldLen = commaOwner.textLength
-                val result = CodeStyleManager.getInstance(file.project).reformat(commaOwner) as KtElement
-                if (oldLen != result.textLength)
-                    TrailingCommaHelper.elementAfterLastElement(result)?.startOffset ?: end - 1
-                else
-                    CANNOT_JOIN
-            }
+        val comma = TrailingCommaHelper.trailingCommaOrLastElement(commaOwner)?.takeIf {
+            it.elementType == KtTokens.COMMA
+        } ?: return CANNOT_JOIN
 
-            else ->
-                CANNOT_JOIN
-        }
+        comma.nextWhiteSpaceOrNull()?.delete()
+        deleteOrReplaceWithWhiteSpace(comma, comma.nextLeaf()?.elementType)
+        startElement.nextWhiteSpaceOrNull()?.let { deleteOrReplaceWithWhiteSpace(it, startElement.elementType) }
+
+        return TrailingCommaHelper.elementAfterLastElement(commaOwner)?.startOffset ?: end - 1
     }
 
+    companion object {
+        private val TOKENS_WITH_SPACES = TokenSet.create(
+            KtTokens.ARROW,
+            KtTokens.RBRACE,
+            KtTokens.LBRACE,
+            KtTokens.COMMA,
+        )
+
+        private fun deleteOrReplaceWithWhiteSpace(element: PsiElement, type: IElementType?) {
+            if (type !in TOKENS_WITH_SPACES) {
+                element.delete()
+            } else {
+                element.replace(KtPsiFactory(element).createWhiteSpace())
+            }
+        }
+    }
 }
+
+private fun PsiElement.nextWhiteSpaceOrNull(): PsiElement? = nextLeaf().takeIf { it is PsiWhiteSpace }

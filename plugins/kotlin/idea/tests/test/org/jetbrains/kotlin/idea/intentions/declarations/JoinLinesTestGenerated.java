@@ -394,6 +394,16 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
             runTest("testData/joinLines/removeTrailingComma/inner.kt");
         }
 
+        @TestMetadata("keepLineBreak.kt")
+        public void testKeepLineBreak() throws Exception {
+            runTest("testData/joinLines/removeTrailingComma/keepLineBreak.kt");
+        }
+
+        @TestMetadata("keepLineBreakWithTrailingComma.kt")
+        public void testKeepLineBreakWithTrailingComma() throws Exception {
+            runTest("testData/joinLines/removeTrailingComma/keepLineBreakWithTrailingComma.kt");
+        }
+
         @TestMetadata("lambda.kt")
         public void testLambda() throws Exception {
             runTest("testData/joinLines/removeTrailingComma/lambda.kt");
