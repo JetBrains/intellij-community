@@ -29,28 +29,28 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
       if (!aClass.isRecord()) return Collections.emptyList();
       if (type == PsiMethod.class && !(element instanceof PsiCompiledElement)) {
         // We do not remove constructor and accessors in compiled records, so no need to augment
-        return getAccessorsAugments(element, aClass);
+        return getAccessorsAugments(aClass);
       }
       if (type == PsiField.class) {
-        return getFieldAugments(element, aClass);
+        return getFieldAugments(aClass);
       }
     }
     return Collections.emptyList();
   }
 
   @NotNull
-  private static <Psi extends PsiElement> List<Psi> getAccessorsAugments(@NotNull PsiElement element, PsiExtensibleClass aClass) {
+  private static <Psi extends PsiElement> List<Psi> getAccessorsAugments(PsiExtensibleClass aClass) {
     PsiRecordHeader header = aClass.getRecordHeader();
     if (header == null) return Collections.emptyList();
     PsiRecordComponent[] components = aClass.getRecordComponents();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     ArrayList<Psi> methods = new ArrayList<>(components.length);
     List<PsiMethod> ownMethods = aClass.getOwnMethods();
     for (PsiRecordComponent component : components) {
       if (!shouldGenerateMethod(component, ownMethods)) continue;
       PsiMethod recordMethod = createRecordMethod(component, factory);
       if (recordMethod == null) continue;
-      LightMethod method = new LightRecordMethod(element.getManager(), recordMethod, aClass, component);
+      LightMethod method = new LightRecordMethod(aClass.getManager(), recordMethod, aClass, component);
       //noinspection unchecked
       methods.add((Psi)method);
     }
@@ -93,14 +93,14 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   }
 
   @NotNull
-  private static <Psi extends PsiElement> List<Psi> getFieldAugments(@NotNull PsiElement element, PsiClass aClass) {
+  private static <Psi extends PsiElement> List<Psi> getFieldAugments(PsiClass aClass) {
     PsiRecordComponent[] components = aClass.getRecordComponents();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     ArrayList<Psi> fields = new ArrayList<>(components.length);
     for (PsiRecordComponent component : components) {
       PsiField recordField = createRecordField(component, factory);
       if (recordField == null) continue;
-      LightRecordField field = new LightRecordField(element.getManager(), recordField, aClass, component);
+      LightRecordField field = new LightRecordField(aClass.getManager(), recordField, aClass, component);
       //noinspection unchecked
       fields.add((Psi)field);
     }
