@@ -206,7 +206,8 @@ public abstract class GradleFileModelTestCase extends HeavyPlatformTestCase {
           GRADLE_SYSTEM_ID,
           new ModuleData(":", GRADLE_SYSTEM_ID, StdModuleTypes.JAVA.getId(), myProjectBasePath.getName(),
                          myProjectBasePath.getPath(), myProjectBasePath.getPath()),
-          new ProjectData(GRADLE_SYSTEM_ID, myProject.getName(), myProject.getBasePath(), myProject.getBasePath()));
+          new ProjectData(GRADLE_SYSTEM_ID, myProject.getName(), myProject.getBasePath(), myProject.getBasePath()),
+          null);
 
       return null;
     });

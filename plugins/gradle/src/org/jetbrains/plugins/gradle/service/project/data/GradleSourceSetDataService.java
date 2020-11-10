@@ -104,8 +104,8 @@ public class GradleSourceSetDataService extends AbstractModuleDataService<Gradle
   }
 
   @Override
-  protected void setModuleOptions(Module module, DataNode<GradleSourceSetData> moduleDataNode) {
-    super.setModuleOptions(module, moduleDataNode);
-    ExternalSystemModulePropertyManager.getInstance(module).setExternalModuleType(GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
+  protected void setModuleOptions(Module module, DataNode<GradleSourceSetData> moduleDataNode, IdeModifiableModelsProvider modelsProvider) {
+    super.setModuleOptions(module, moduleDataNode, modelsProvider);
+    ExternalSystemModulePropertyManager.getInstance(module).setExternalModuleType(GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY, modelsProvider);
   }
 }

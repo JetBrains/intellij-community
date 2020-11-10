@@ -7,6 +7,7 @@ import com.intellij.configurationStore.saveComponentManager
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.components.stateStore
@@ -608,9 +609,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
 
     @JvmStatic
-    fun changeModuleEntitySource(module: ModuleBridge, newSource: EntitySource) {
-      val storage = module.entityStorage.current
-      val oldEntitySource = storage.findModuleEntity(module)?.entitySource ?: return
+    fun changeModuleEntitySource(module: ModuleBridge, moduleEntityStore: WorkspaceEntityStorage, newSource: EntitySource,
+                                 moduleDiff: WorkspaceEntityStorageDiffBuilder?) {
+      val oldEntitySource = moduleEntityStore.findModuleEntity(module)?.entitySource ?: return
       fun changeSources(diffBuilder: WorkspaceEntityStorageDiffBuilder, storage: WorkspaceEntityStorage) {
         val entitiesMap = storage.entitiesBySource { it == oldEntitySource }
         entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
@@ -620,13 +621,14 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
       }
 
-      val diff = module.diff
-      if (diff != null) {
-        changeSources(diff, storage)
+      if (moduleDiff != null) {
+        changeSources(moduleDiff, moduleEntityStore)
       }
       else {
-        WorkspaceModel.getInstance(module.project).updateProjectModel { builder ->
-          changeSources(builder, builder)
+        WriteAction.runAndWait<RuntimeException> {
+          WorkspaceModel.getInstance(module.project).updateProjectModel { builder ->
+            changeSources(builder, builder)
+          }
         }
       }
     }
