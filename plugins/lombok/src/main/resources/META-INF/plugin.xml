@@ -3,6 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok</name>
   <vendor>JetBrains</vendor>
+  <resource-bundle>messages.LombokBundle</resource-bundle>
   <description><![CDATA[
 <h1>IntelliJ Lombok plugin</h1>
 <br/>
