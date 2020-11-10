@@ -23,6 +23,7 @@ import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -246,8 +247,15 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
     if (isHovered) {
       TextAttributes attr = new TextAttributes();
       attr.copyFrom(attributes);
-      attr.setForegroundColor(JBUI.CurrentTheme.Link.linkColor());
-      attr.setAdditionalEffects(Collections.singletonMap(EffectType.LINE_UNDERSCORE, JBUI.CurrentTheme.Link.linkColor()));
+
+      Color hoveredAndSelectedColor = UIUtil.isUnderDarcula()
+                                         ? editor.getColorsScheme().getDefaultForeground()
+                                         : DebuggerColors.EXECUTIONPOINT_ATTRIBUTES.getDefaultAttributes().getForegroundColor();
+      Color foregroundColor = myIsOnExecutionLine.produce()
+                              ? hoveredAndSelectedColor
+                              : JBUI.CurrentTheme.Link.linkColor();
+      attr.setForegroundColor(foregroundColor);
+
       return attr;
     }
     return attributes;
