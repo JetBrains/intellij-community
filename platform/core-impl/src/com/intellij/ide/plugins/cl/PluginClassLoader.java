@@ -161,6 +161,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     }
   }
 
+  @Override
   public final @Nullable String getPackagePrefix() {
     return packagePrefix;
   }
@@ -301,10 +302,13 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   protected @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) {
-    if (packagePrefix != null && !name.startsWith(packagePrefix)) {
+    if (packagePrefix != null && !name.startsWith(packagePrefix) && !packagePrefix.equals("com.intellij.kubernetes.")) {
       // todo ability to customize (cannot move due to backward compatibility)
       if (!packagePrefix.equals("com.intellij.lang.properties.") || !name.equals("com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider")) {
-        return null;
+        // packed into plugin jar
+        if (!name.startsWith("com.intellij.ultimate.PluginVerifier")) {
+          return null;
+        }
       }
     }
 

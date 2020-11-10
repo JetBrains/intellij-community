@@ -12,7 +12,10 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.*;
-import com.intellij.ui.scale.*;
+import com.intellij.ui.scale.DerivedScaleType;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.util.*;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.ui.*;
@@ -163,9 +166,15 @@ public final class IconLoader {
 
   public static @Nullable Icon getReflectiveIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
     try {
-      @NonNls String packageName = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
-      Class<?> aClass = Class.forName(packageName + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
-      Field field = aClass.getField(path.substring(path.lastIndexOf('.') + 1));
+      // if starts with lower case char - it is package name
+      int lastDotIndex = path.lastIndexOf('.');
+      String fullClassName = path.substring(0, lastDotIndex);
+      // if package is specified, $ must be used for nested subclasses instead of dot
+      if (!Character.isLowerCase(path.charAt(0))) {
+        fullClassName = (path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.") + fullClassName.replace('.', '$');
+      }
+      Class<?> aClass = Class.forName(fullClassName, true, classLoader);
+      Field field = aClass.getField(path.substring(lastDotIndex + 1));
       field.setAccessible(true);
       return (Icon)field.get(null);
     }
@@ -335,18 +344,11 @@ public final class IconLoader {
     return findIcon(path, aClass, aClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, deferUrlResolve);
   }
 
-  private static boolean isReflectivePath(@NotNull String path) {
+  public static boolean isReflectivePath(@NotNull String path) {
     if (path.isEmpty() || path.charAt(0) == '/') {
       return false;
     }
-
-    int dotIndex = path.indexOf('.');
-    if (dotIndex < 0) {
-      return false;
-    }
-
-    int suffixLength = "Icons".length();
-    return path.regionMatches(dotIndex - suffixLength, "Icons", 0, suffixLength);
+    return path.contains("Icons.");
   }
 
   public static @Nullable Icon findIcon(@Nullable URL url) {

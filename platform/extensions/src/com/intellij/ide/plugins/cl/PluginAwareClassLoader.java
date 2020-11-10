@@ -36,4 +36,6 @@ public interface PluginAwareClassLoader {
    */
   @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean forceLoadFromSubPluginClassloader)
     throws ClassNotFoundException;
+
+  @Nullable String getPackagePrefix();
 }
