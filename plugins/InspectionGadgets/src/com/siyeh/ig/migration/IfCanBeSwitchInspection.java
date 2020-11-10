@@ -426,7 +426,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       switchStatementText.append(text);
     }
     final PsiElement lastChild = element.getLastChild();
-    if (JavaCommentUtil.isEndOfLineComment(lastChild)) {
+    if (lastChild instanceof PsiComment && ((PsiComment)lastChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
       switchStatementText.append('\n');
     }
   }

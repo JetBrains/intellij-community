@@ -21,7 +21,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.JavaCommentUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +74,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
         final List<PsiElement> toDelete = new ArrayList<>();
         toDelete.add(comment);
         PsiElement sibling = PsiTreeUtil.skipWhitespacesForward(comment);
-        while (JavaCommentUtil.isEndOfLineComment(sibling)) {
+        while (sibling instanceof PsiComment && ((PsiComment)sibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
           toDelete.add(sibling);
           sibling = PsiTreeUtil.skipWhitespacesForward(sibling);
         }
@@ -108,7 +107,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
         final List<TextRange> ranges = new ArrayList<>();
         ranges.add(comment.getTextRange());
         PsiElement sibling = PsiTreeUtil.skipWhitespacesForward(comment);
-        while (JavaCommentUtil.isEndOfLineComment(sibling)) {
+        while (sibling instanceof PsiComment && ((PsiComment)sibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
           ranges.add(sibling.getTextRange());
           sibling = PsiTreeUtil.skipWhitespacesForward(sibling);
         }
@@ -148,7 +147,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
       }
       if (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
         final PsiElement before = PsiTreeUtil.skipWhitespacesBackward(comment);
-        if (JavaCommentUtil.isEndOfLineComment(before)) {
+        if (before instanceof PsiComment && ((PsiComment)before).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
           return;
         }
         while (true) {
@@ -166,7 +165,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
             return;
           }
           final PsiElement after = PsiTreeUtil.skipWhitespacesForward(comment);
-          if (!JavaCommentUtil.isEndOfLineComment(after)) {
+          if (!(after instanceof PsiComment && ((PsiComment)after).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT)) {
             break;
           }
           comment = (PsiComment)after;
@@ -346,7 +345,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
       }
       final PsiIdentifier identifier = statement.getLabelIdentifier();
       final PsiElement sibling = identifier.getNextSibling();
-      return PsiUtil.isJavaToken(sibling, JavaTokenType.COLON) && JavaCommentUtil.isEndOfLineComment(sibling.getNextSibling());
+      if (!PsiUtil.isJavaToken(sibling, JavaTokenType.COLON)) {
+        return false;
+      }
+      PsiElement element = sibling.getNextSibling();
+      return element instanceof PsiComment && ((PsiComment)element).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT;
     }
 
     @Override

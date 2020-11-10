@@ -16,12 +16,8 @@
 package com.siyeh.ipp.comment;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.JavaCommentUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +37,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     PsiComment firstComment = (PsiComment)element;
     while (true) {
       final PsiElement prevComment = PsiTreeUtil.skipWhitespacesBackward(firstComment);
-      if (!JavaCommentUtil.isEndOfLineComment(prevComment)) {
+      if (!(prevComment instanceof PsiComment) || ((PsiComment)prevComment).getTokenType() != JavaTokenType.END_OF_LINE_COMMENT) {
         break;
       }
       firstComment = (PsiComment)prevComment;
@@ -53,7 +49,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     String whiteSpace = null;
     while (true) {
       nextComment = PsiTreeUtil.skipWhitespacesForward(nextComment);
-      if (!JavaCommentUtil.isEndOfLineComment(nextComment)) {
+      if (!(nextComment instanceof PsiComment) || ((PsiComment)nextComment).getTokenType() != JavaTokenType.END_OF_LINE_COMMENT) {
         break;
       }
       if (whiteSpace == null) {
