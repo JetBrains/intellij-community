@@ -75,27 +75,9 @@ public final class DiffDividerDrawUtil {
   public static List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
                                                            @NotNull Editor editor2,
                                                            @NotNull DividerPaintable paintable) {
-    final List<DividerPolygon> polygons = new ArrayList<>();
-
-    final LineRange leftInterval = getVisibleInterval(editor1);
-    final LineRange rightInterval = getVisibleInterval(editor2);
-
-    paintable.process(new DividerPaintable.Handler() {
-      @Override
-      public boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
-                             @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
-        if (leftInterval.start > endLine1 && rightInterval.start > endLine2) return true;
-        if (leftInterval.end < startLine1 && rightInterval.end < startLine2) return false;
-
-        if (isIntervalVisible(editor1, startLine1, endLine1) ||
-            isIntervalVisible(editor2, startLine2, endLine2)) {
-          polygons.add(createPolygon(editor1, editor2, startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, dottedBorder));
-        }
-        return true;
-      }
-    });
-
-    return polygons;
+    DividerPaintableHandlerImpl handler = new DividerPaintableHandlerImpl(editor1, editor2);
+    paintable.process(handler);
+    return handler.getPolygons();
   }
 
   private static boolean isIntervalVisible(@NotNull Editor editor, int startLine, int endLine) {
@@ -171,26 +153,69 @@ public final class DiffDividerDrawUtil {
   public interface DividerPaintable {
     void process(@NotNull Handler handler);
 
-    abstract class Handler {
-      public boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color) {
-        return process(startLine1, endLine1, startLine2, endLine2, color, null, false);
-      }
+    interface Handler {
+      boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color);
 
-      public boolean processResolvable(int startLine1, int endLine1, int startLine2, int endLine2,
-                                       @NotNull Editor editor, @NotNull TextDiffType type, boolean resolved) {
-        Color color = type.getColor(editor);
-        return process(startLine1, endLine1, startLine2, endLine2, resolved ? null : color, resolved ? color : null, resolved);
-      }
+      boolean processResolvable(int startLine1, int endLine1, int startLine2, int endLine2,
+                                @NotNull Editor editor, @NotNull TextDiffType type, boolean resolved);
 
-      public boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
-                                       @NotNull Editor editor, @NotNull TextDiffType type, boolean excluded) {
-        Color borderColor = excluded ? type.getColor(editor) : null;
-        Color fillColor = excluded ? type.getIgnoredColor(editor) : type.getColor(editor);
-        return process(startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, false);
-      }
+      boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
+                                @NotNull Editor editor, @NotNull TextDiffType type, boolean excluded);
+    }
+  }
 
-      public abstract boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
-                                      @Nullable Color backgroundColor, @Nullable Color borderColor, boolean dottedBorder);
+  private static class DividerPaintableHandlerImpl implements DividerPaintable.Handler {
+    private final Editor myEditor1;
+    private final Editor myEditor2;
+
+    private final LineRange myLeftInterval;
+    private final LineRange myRightInterval;
+    private final List<DividerPolygon> myPolygons = new ArrayList<>();
+
+    private DividerPaintableHandlerImpl(@NotNull Editor editor1,
+                                        @NotNull Editor editor2) {
+      myEditor1 = editor1;
+      myEditor2 = editor2;
+      myLeftInterval = getVisibleInterval(editor1);
+      myRightInterval = getVisibleInterval(editor2);
+    }
+
+    @NotNull
+    public List<DividerPolygon> getPolygons() {
+      return myPolygons;
+    }
+
+    @Override
+    public boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color) {
+      return process(startLine1, endLine1, startLine2, endLine2, color, null, false);
+    }
+
+    @Override
+    public boolean processResolvable(int startLine1, int endLine1, int startLine2, int endLine2,
+                                     @NotNull Editor editor, @NotNull TextDiffType type, boolean resolved) {
+      Color color = type.getColor(editor);
+      return process(startLine1, endLine1, startLine2, endLine2, resolved ? null : color, resolved ? color : null, resolved);
+    }
+
+    @Override
+    public boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
+                                     @NotNull Editor editor, @NotNull TextDiffType type, boolean excluded) {
+      Color borderColor = excluded ? type.getColor(editor) : null;
+      Color fillColor = excluded ? type.getIgnoredColor(editor) : type.getColor(editor);
+      return process(startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, false);
+    }
+
+    private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+                            @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
+      if (myLeftInterval.start > endLine1 && myRightInterval.start > endLine2) return true;
+      if (myLeftInterval.end < startLine1 && myRightInterval.end < startLine2) return false;
+
+      if (isIntervalVisible(myEditor1, startLine1, endLine1) ||
+          isIntervalVisible(myEditor2, startLine2, endLine2)) {
+        myPolygons.add(createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2,
+                                     fillColor, borderColor, dottedBorder));
+      }
+      return true;
     }
   }
 
