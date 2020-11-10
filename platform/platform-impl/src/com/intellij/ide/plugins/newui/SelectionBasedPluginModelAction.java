@@ -9,8 +9,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Producer;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +39,6 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
   protected abstract @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull C component);
 
   static abstract class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
-
-    private static final boolean IS_PER_PROJECT_ENABLED = SystemProperties.is("idea.classloader.per.descriptor");
 
     protected final @NotNull PluginEnabledState myNewState;
 
@@ -78,7 +76,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
                                   @Nullable Project project) {
       return myNewState == oldState ||
              oldState == PluginEnabledState.DISABLED && myNewState == PluginEnabledState.DISABLED_FOR_PROJECT ||
-             myNewState.isPerProject() && (!IS_PER_PROJECT_ENABLED || project == null);
+             myNewState.isPerProject() && (!isPerProjectEnabled() || project == null);
     }
 
     private void update(@NotNull PluginEnabledState oldState,
@@ -112,6 +110,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
         default:
           throw new IllegalArgumentException();
       }
+    }
+
+    private static boolean isPerProjectEnabled() {
+      return Registry.is("ide.plugins.per.project", false);
     }
   }
 
