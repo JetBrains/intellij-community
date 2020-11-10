@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
+import javax.swing.JRadioButton
 import kotlin.reflect.KMutableProperty0
 
 class CheckboxDescriptor(@NlsContexts.Checkbox val name: String,
@@ -44,4 +45,8 @@ class CheckboxDescriptor(@NlsContexts.Checkbox val name: String,
 
 fun Cell.checkBox(ui: CheckboxDescriptor): CellBuilder<JBCheckBox> {
   return checkBox(ui.name, ui.binding.get, ui.binding.set, ui.comment)
+}
+
+fun Cell.radioButton(ui: CheckboxDescriptor): CellBuilder<JRadioButton> {
+  return radioButton(ui.name, ui.binding.get, ui.binding.set, ui.comment)
 }

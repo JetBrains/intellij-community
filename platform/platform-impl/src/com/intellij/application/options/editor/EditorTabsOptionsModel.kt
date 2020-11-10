@@ -22,5 +22,7 @@ internal val openTabsAtTheEnd                    get() = CheckboxDescriptor(mess
 internal val reuseNotModifiedTabs                get() = CheckboxDescriptor(message("checkbox.smart.tab.reuse"), ui::reuseNotModifiedTabs, message("checkbox.smart.tab.reuse.inline.help"))
 internal val openTabsInMainWindow                get() = CheckboxDescriptor(message("checkbox.smart.tab.open.in.main.window"), ui::openTabsInMainWindow, message("checkbox.smart.tab.open.in.main.window.inline.help"))
 internal val scrollTabLayoutInEditor             get() = CheckboxDescriptor(message("checkbox.editor.tabs.in.single.row"), ui::scrollTabLayoutInEditor)
+internal val showTabsInOneRow                    get() = CheckboxDescriptor(message("radio.editor.tabs.in.one.row"), ui::scrollTabLayoutInEditor)
+internal val showTabsInMultipleRows              get() = CheckboxDescriptor(message("radio.editor.tabs.in.multiple.rows"), PropertyBinding({ !ui.scrollTabLayoutInEditor }, { ui.scrollTabLayoutInEditor = !it }))
 internal val openInPreviewTabIfPossible          get() = CheckboxDescriptor(message("checkbox.smart.tab.preview"), ui::openInPreviewTabIfPossible, message("checkbox.smart.tab.preview.inline.help"))
 internal val useSmallFont                        get() = CheckboxDescriptor(message("checkbox.use.small.font.for.labels"), ui::useSmallLabelsOnTabs)
