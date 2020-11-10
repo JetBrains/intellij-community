@@ -191,11 +191,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   public final int getHoveredRow() {
-    return isHoverPaintingDisabled(this) ? myMouseHoveredRow : -1;
+    return isHoverPaintingDisabled(this) ? -1 : myMouseHoveredRow;
   }
 
   private void updateHoveredRow(int row) {
-    if (myMouseHoveredRow != row && isHoverPaintingDisabled(this)) {
+    if (myMouseHoveredRow != row && !isHoverPaintingDisabled(this)) {
       myMouseHoveredRow = row;
       repaint();
     }
