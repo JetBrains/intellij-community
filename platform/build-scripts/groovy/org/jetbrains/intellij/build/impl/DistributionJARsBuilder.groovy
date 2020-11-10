@@ -438,7 +438,7 @@ class DistributionJARsBuilder {
 
   void generateProjectStructureMapping(File targetFile) {
     LayoutBuilder layoutBuilder = createLayoutBuilder()
-    processLibDirectoryLayout(layoutBuilder, false)
+    processLibDirectoryLayout(layoutBuilder, projectStructureMapping, false)
     def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
     def pluginsToBundle = allPlugins.findAll { satisfiesBundlingRequirements(it, null) }
     pluginsToBundle.each {
@@ -666,7 +666,7 @@ class DistributionJARsBuilder {
 
     def libDirectoryMapping = new ProjectStructureMapping()
     buildContext.messages.block("Build platform JARs in lib directory") {
-      processLibDirectoryLayout(layoutBuilder, true)
+      processLibDirectoryLayout(layoutBuilder, projectStructureMapping, true)
     }
     projectStructureMapping.mergeFrom(libDirectoryMapping, "")
 
@@ -689,7 +689,7 @@ class DistributionJARsBuilder {
     }
   }
 
-  private processLibDirectoryLayout(LayoutBuilder layoutBuilder, boolean copyFiles) {
+  void processLibDirectoryLayout(LayoutBuilder layoutBuilder, ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
     processLayout(layoutBuilder, platform, buildContext.paths.distAll, projectStructureMapping, copyFiles, platform.moduleJars, [])
   }
 
@@ -969,7 +969,7 @@ class DistributionJARsBuilder {
     new File(buildContext.paths.temp, "searchableOptions/result")
   }
 
-  private void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
+  void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
     // Don't check modules which are not direct children of lib/ directory
     def modulesWithPluginXml = moduleJars.entrySet().stream()
       .filter { !it.key.contains("/") }
@@ -1021,7 +1021,7 @@ class DistributionJARsBuilder {
    * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
    * @param additionalResources pairs of resources files and corresponding relative output paths
    */
-  private void processLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory,
+  void processLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory,
                              ProjectStructureMapping mapping, boolean copyFiles,
                              MultiMap<String, String> moduleJars,
                              List<Pair<File, String>> additionalResources) {

@@ -14,9 +14,11 @@ class ModuleLibraryFileEntry extends DistributionFileEntry {
    * Path to the library file in the project sources, may use the standard $PROJECT_DIR$ and $MAVEN_REPOSITORY$ path macros
    */
   String filePath
+  String libraryFilePath
 
-  ModuleLibraryFileEntry(String path, String filePath) {
+  ModuleLibraryFileEntry(String path, String filePath, String libraryFilePath) {
     super(path, "module-library-file")
     this.filePath = filePath
+    this.libraryFilePath = libraryFilePath
   }
 }

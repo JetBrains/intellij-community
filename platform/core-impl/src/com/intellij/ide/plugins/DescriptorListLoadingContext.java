@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
@@ -14,8 +13,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -57,18 +54,11 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   private final Map<String, PluginId> optionalConfigNames;
 
-  private final Path bundledPluginsPath;
-  final boolean loadBundledPlugins;
-
   public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
     return new DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null));
   }
 
   DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result) {
-    this(flags, disabledPlugins, result, null);
-  }
-
-  DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result, @Nullable Path bundledPluginsPath) {
     this.result = result;
     this.disabledPlugins = disabledPlugins;
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
@@ -95,13 +85,6 @@ final class DescriptorListLoadingContext implements AutoCloseable {
       PluginXmlFactory factory = new PluginXmlFactory();
       xmlFactorySupplier = () -> factory;
     }
-
-    loadBundledPlugins = bundledPluginsPath != null || !PluginManagerCore.isUnitTestMode;
-    this.bundledPluginsPath = bundledPluginsPath;
-  }
-
-  @NotNull Path getBundledPluginsPath() {
-    return bundledPluginsPath == null ? Paths.get(PathManager.getPreInstalledPluginsPath()) : bundledPluginsPath;
   }
 
   boolean isPluginDisabled(@NotNull PluginId id) {

@@ -1,9 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
-
 
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
@@ -30,7 +26,7 @@ import java.util.regex.Pattern
  */
 class LayoutBuilder {
   public static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
-  
+
   private final AntBuilder ant
   private final boolean compressJars
   private final MultiMap<String, String> moduleOutputPatches = MultiMap.createLinked()
@@ -304,10 +300,10 @@ class LayoutBuilder {
         def projectHome = context.paths.projectHome + File.separator
         def mavenLocalRepo = new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath + File.separator
         String shortenedPath = libraryFilePath.replace(projectHome, "\$PROJECT_DIR\$/").replace(mavenLocalRepo, "\$MAVEN_REPOSITORY\$/")
-        projectStructureMapping.addEntry(new ModuleLibraryFileEntry(outputFilePath, shortenedPath))
+        projectStructureMapping.addEntry(new ModuleLibraryFileEntry(outputFilePath, shortenedPath, libraryFilePath))
       }
       else {
-        projectStructureMapping.addEntry(new ProjectLibraryEntry(outputFilePath, library.name))
+        projectStructureMapping.addEntry(new ProjectLibraryEntry(outputFilePath, library.name, libraryFilePath))
       }
     }
 

@@ -713,8 +713,16 @@ public final class PluginManagerCore {
       () -> compatibleBuildNumber == null ? getBuildNumber() : compatibleBuildNumber
     );
     int flags = DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR | DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
-    DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, Collections.emptySet(), loadingResult, bundledPluginsPath);
-    PluginDescriptorLoader.loadBundledDescriptorsAndDescriptorsFromDir(context, dir);
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, Collections.emptySet(), loadingResult);
+
+    Path effectiveBundledPluginPath;
+    if (bundledPluginsPath != null || isUnitTestMode) {
+      effectiveBundledPluginPath = bundledPluginsPath;
+    }
+    else {
+      effectiveBundledPluginPath = Paths.get(PathManager.getPreInstalledPluginsPath());
+    }
+    PluginDescriptorLoader.loadBundledDescriptorsAndDescriptorsFromDir(context, dir, effectiveBundledPluginPath);
 
     for (IdeaPluginDescriptorImpl descriptor : loadingResult.idMap.values()) {
       if (!descriptor.isBundled()) {

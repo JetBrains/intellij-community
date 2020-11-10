@@ -359,16 +359,27 @@ public final class PluginDescriptorLoader {
     }
 
     PluginLoadingResult result = PluginManagerCore.createLoadingResult(null);
+    Path bundledPluginPath;
+    if (isUnitTestMode) {
+      bundledPluginPath = null;
+    }
+    else if (Boolean.getBoolean("idea.use.dev.build.server")) {
+      bundledPluginPath = Paths.get(PathManager.getHomePath(), "out/dev-run", PlatformUtils.getPlatformPrefix(), "plugins");
+    }
+    else {
+      bundledPluginPath = Paths.get(PathManager.getPreInstalledPluginsPath());
+    }
+
     DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, DisabledPluginsState.disabledPlugins(), result);
     try {
-      loadBundledDescriptorsAndDescriptorsFromDir(context, Paths.get(PathManager.getPluginsPath()));
+      loadBundledDescriptorsAndDescriptorsFromDir(context, Paths.get(PathManager.getPluginsPath()), bundledPluginPath);
 
       loadDescriptorsFromProperty(result, context);
 
       if (isUnitTestMode && result.enabledPluginCount() <= 1) {
         // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
         context.usePluginClassLoader = true;
-        loadDescriptorsFromDir(context.getBundledPluginsPath(), /* isBundled = */ true, context);
+        loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), /* isBundled = */ true, context);
       }
     }
     catch (InterruptedException | ExecutionException e) {
@@ -382,7 +393,9 @@ public final class PluginDescriptorLoader {
     return context;
   }
 
-  static void loadBundledDescriptorsAndDescriptorsFromDir(DescriptorListLoadingContext context, Path dir)
+  static void loadBundledDescriptorsAndDescriptorsFromDir(@NotNull DescriptorListLoadingContext context,
+                                                          @NotNull Path customPluginDir,
+                                                          @Nullable Path bundledPluginDir)
     throws ExecutionException, InterruptedException {
     ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
     Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
@@ -391,10 +404,10 @@ public final class PluginDescriptorLoader {
       loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, platformPluginURL);
     }
 
-    loadDescriptorsFromDir(dir, /* isBundled = */ false, context);
+    loadDescriptorsFromDir(customPluginDir, /* isBundled = */ false, context);
 
-    if (context.loadBundledPlugins) {
-      loadDescriptorsFromDir(context.getBundledPluginsPath(), /* isBundled = */ true, context);
+    if (bundledPluginDir != null) {
+      loadDescriptorsFromDir(bundledPluginDir, /* isBundled = */ true, context);
     }
   }
 

@@ -39,7 +39,7 @@ class BuildOptions {
    * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#setPluginModulesToPublish non-bundled plugins}
    * will be built.
    */
-  static final String OS_NONE = "none"
+  public static final String OS_NONE = "none"
 
   /**
    * Pass comma-separated names of build steps (see below) to this system property to skip them.
@@ -160,6 +160,7 @@ class BuildOptions {
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
                                                                     System.getenv("TEAMCITY_VERSION") == null)
 
+  boolean skipDependencySetup = false
 
   /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be

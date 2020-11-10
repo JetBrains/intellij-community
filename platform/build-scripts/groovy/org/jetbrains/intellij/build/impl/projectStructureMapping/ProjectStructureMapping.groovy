@@ -13,6 +13,10 @@ import groovy.transform.CompileStatic
 class ProjectStructureMapping {
   private final List<DistributionFileEntry> entries = new ArrayList<>()
 
+  List<DistributionFileEntry> getEntries() {
+    return Collections.unmodifiableList(entries)
+  }
+
   void addEntry(DistributionFileEntry entry) {
     entries.add(entry)
   }

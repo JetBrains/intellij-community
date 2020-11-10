@@ -226,6 +226,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "delight-rhino-sandbox", libraryName: "delight-rhino-sandbox", license: "Apache 2.0",
                        url: "https://github.com/javadelight/delight-rhino-sandbox",
                        licenseUrl: "https://github.com/javadelight/delight-rhino-sandbox/blob/master/LICENSE.TXT"),
+    new LibraryLicense(name: "directory-watcher", libraryName: "directory-watcher", license: "Apache 2.0", url: "https://github.com/gmethvin/directory-watcher/"),
     new LibraryLicense(name: "docutils", attachedTo: "intellij.python.helpers", version: "0.8", license: "BSD",
                        url: "http://docutils.sourceforge.net/"),
     new LibraryLicense(libraryName: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/",
