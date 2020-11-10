@@ -200,7 +200,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   }
 
   @NotNull
-  protected List<? extends DocumentContent> getContents() {
+  public List<? extends DocumentContent> getContents() {
     //noinspection unchecked
     return (List)myRequest.getContents();
   }

@@ -2,6 +2,7 @@
 package com.intellij.diff.actions
 
 import com.intellij.diff.*
+import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.MutableDiffRequestChain
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
@@ -13,18 +14,17 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
-import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.diff.util.Side
-import com.intellij.diff.util.ThreeSide
+import com.intellij.diff.util.*
 import com.intellij.ide.CopyPasteManagerEx
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorDropHandler
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -32,12 +32,14 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.UIBundle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.LinkedListWithSum
@@ -45,6 +47,7 @@ import com.intellij.util.containers.map2Array
 import com.intellij.util.text.DateFormatUtil
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
+import java.awt.event.MouseEvent
 import java.io.File
 import javax.swing.JComponent
 import kotlin.math.max
@@ -181,9 +184,12 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val helper = MutableDiffRequestChain.createHelper(e.dataContext)!!
+    val editor = e.getRequiredData(CommonDataKeys.EDITOR)
+    val viewer = e.getRequiredData(DiffDataKeys.DIFF_VIEWER)
+    perform(editor, viewer, helper)
+  }
 
-    val editor = e.getData(CommonDataKeys.EDITOR)
-    val viewer = e.getData(DiffDataKeys.DIFF_VIEWER)
+  fun perform(editor: Editor, viewer: DiffViewer, helper: MutableDiffRequestChain.Helper) {
     if (viewer is TwosideTextDiffViewer) {
       val side = Side.fromValue(viewer.editors, editor) ?: return
       val newContent = createNewContent(viewer.project, viewer.component) ?: return
@@ -198,7 +204,7 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
     helper.fireRequestUpdated()
   }
 
-  protected abstract fun isEnabled(currentContent: DiffContent): Boolean
+  abstract fun isEnabled(currentContent: DiffContent): Boolean
 
   protected abstract fun createNewContent(project: Project?, contextComponent: JComponent): DiffContent?
 }
@@ -243,7 +249,7 @@ internal class BlankToggleThreeSideModeAction : DumbAwareAction() {
 
 
 class ShowBlankDiffWindowDiffExtension : DiffExtension() {
-  override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
+  override fun onViewerCreated(viewer: DiffViewer, context: DiffContext, request: DiffRequest) {
     val helper = MutableDiffRequestChain.createHelper(context, request) ?: return
     if (helper.chain.getUserData(BLANK_KEY) != true) return
 
@@ -390,6 +396,7 @@ private data class RecentBlankContent(val text: @NlsSafe String, val timestamp: 
 private fun createEditableContent(project: Project?, text: String = ""): DocumentContent {
   val content = DiffContentFactoryEx.getInstanceEx().documentContent(project, false).buildFromText(text, false)
   content.putUserData(BLANK_CONTENT_KEY, true)
+  DiffUtil.addNotification(DiffNotificationProvider { viewer -> createBlankNotificationProvider(viewer, content) }, content)
   return content
 }
 
@@ -401,3 +408,50 @@ private fun createFileContent(project: Project?, file: File): DocumentContent? {
 private fun createFileContent(project: Project?, file: VirtualFile): DocumentContent? {
   return DiffContentFactory.getInstance().createDocument(project, file)
 }
+
+private fun createBlankNotificationProvider(viewer: DiffViewer?, content: DocumentContent): JComponent? {
+  if (viewer !is DiffViewerBase) return null
+  val helper = MutableDiffRequestChain.createHelper(viewer.context, viewer.request) ?: return null
+
+  val editor = when (viewer) {
+    is TwosideTextDiffViewer -> {
+      val index = viewer.contents.indexOf(content)
+      if (index == -1) return null
+      viewer.editors[index]
+    }
+    is ThreesideTextDiffViewer -> {
+      val index = viewer.contents.indexOf(content)
+      if (index == -1) return null
+      viewer.editors[index]
+    }
+    else -> return null
+  }
+  if (editor.document.textLength != 0) return null
+
+  val panel = EditorNotificationPanel()
+  panel.createActionLabel(DiffBundle.message("notification.action.text.blank.diff.select.file")) {
+    SwitchToFileEditorAction().perform(editor, viewer, helper)
+  }
+  if (RecentContentHandler.getRecentFiles().isNotEmpty()) {
+    panel.createActionLabel(DiffBundle.message("notification.action.text.blank.diff.recent")) {
+      val menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, SwitchToRecentEditorActionGroup())
+      menu.setTargetComponent(editor.component)
+      val event = IdeEventQueue.getInstance().trueCurrentEvent
+      if (event is MouseEvent) {
+        JBPopupMenu.showByEvent(event, menu.component)
+      }
+      else {
+        JBPopupMenu.showByEditor(editor, menu.component)
+      }
+    }
+  }
+
+  editor.document.addDocumentListener(object : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      editor.document.removeDocumentListener(this)
+      panel.isVisible = false
+    }
+  }, viewer)
+  return panel
+}
+

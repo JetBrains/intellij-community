@@ -521,10 +521,6 @@ public final class DiffUtil {
     List<DiffContent> contents = request.getContents();
     List<@Nls String> titles = request.getContentTitles();
 
-    if (!ContainerUtil.exists(titles, Conditions.notNull())) {
-      return Collections.nCopies(titles.size(), null);
-    }
-
     List<JComponent> components = new ArrayList<>(titles.size());
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
@@ -549,9 +545,6 @@ public final class DiffUtil {
 
     List<JComponent> result = new ArrayList<>(contents.size());
 
-    if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Conditions.notNull())) {
-      return Collections.nCopies(titles.size(), null);
-    }
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
       JComponent title = createTitle(titles.get(i),
