@@ -45,7 +45,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.ui.TableUtil.stopEditing;
 import static com.intellij.ui.components.JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY;
-import static com.intellij.ui.render.RenderingUtil.PAINT_HOVERED_BACKGROUND;
+import static com.intellij.ui.render.RenderingUtil.isHoverPaintingDisabled;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   public static final int PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS = 7;
@@ -191,15 +191,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   public final int getHoveredRow() {
-    return isHoverEnabled() ? myMouseHoveredRow : -1;
-  }
-
-  private boolean isHoverEnabled() {
-    return !Boolean.FALSE.equals(getClientProperty(PAINT_HOVERED_BACKGROUND));
+    return isHoverPaintingDisabled(this) ? myMouseHoveredRow : -1;
   }
 
   private void updateHoveredRow(int row) {
-    if (myMouseHoveredRow != row && isHoverEnabled()) {
+    if (myMouseHoveredRow != row && isHoverPaintingDisabled(this)) {
       myMouseHoveredRow = row;
       repaint();
     }
