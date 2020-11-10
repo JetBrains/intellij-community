@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -13,9 +12,7 @@ import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -34,7 +31,6 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.PluginUpdateDialog;
 import com.intellij.openapi.updateSettings.impl.UpdateInfoDialog;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
@@ -54,50 +50,29 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class SettingsEntryPointAction extends AnAction implements DumbAware, RightAlignedToolbarAction, AnAction.TransparentUpdate,
-                                                                  TooltipDescriptionProvider, CustomComponentAction {
+public class SettingsEntryPointAction extends AnAction implements DumbAware, RightAlignedToolbarAction,
+                                                                  AnAction.TransparentUpdate, TooltipDescriptionProvider {
   private Icon myIcon;
 
   public SettingsEntryPointAction() {
     initPluginsListeners();
-    //createGotItTooltip(ApplicationManager.getApplication()).
-    //  withPosition(Balloon.Position.atLeft).
-    //  assignTo(getTemplatePresentation(), c -> new Point(0, c.getHeight()/2));
-  }
-
-  @Override
-  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
-      @Override
-      protected void updateToolTipText() {
-        String tooltip = getActionTooltip();
-        if (Registry.is("ide.helptooltip.enabled")) {
-          HelpTooltip.dispose(this);
-          new HelpTooltip().setDescription(tooltip).installOn(this);
-        }
-        else {
-          setToolTipText(tooltip);
-        }
-      }
-    };
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     myIcon = AllIcons.General.GearPlain;
-    // XXX update toolbar action
 
     ListPopup popup = createMainPopup(e.getDataContext());
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         myIcon = null;
-        // XXX update toolbar action
       }
     });
 
@@ -119,7 +94,8 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setDescription(SettingsEntryPointAction::getActionTooltip);
+    presentation.setText("");
+    presentation.setDescription(getActionTooltip());
     presentation.setIcon(myIcon == null ? getActionIcon() : myIcon);
 
     for (AnAction child : getTemplateActions()) {
@@ -172,8 +148,19 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
                     : IdeBundle.message("settings.entry.point.update.plugins.action");
       group.add(new DumbAwareAction(name, null, AllIcons.Ide.Notification.PluginUpdate) {
         @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(myEnableUpdateAction);
+        }
+
+        @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          new PluginUpdateDialog(e.getProject(), myUpdatedPlugins, myCustomRepositoryPlugins).show();
+          PluginUpdateDialog dialog = new PluginUpdateDialog(e.getProject(), myUpdatedPlugins, myCustomRepositoryPlugins);
+          dialog.setFinishCallback(() -> setEnableUpdateAction(true));
+          setEnableUpdateAction(false);
+
+          if (!dialog.showAndGet()) {
+            setEnableUpdateAction(true);
+          }
         }
       });
       if (size > 1) {
@@ -243,11 +230,6 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
   }
 
-  //@NotNull
-  //private static GotItTooltip createGotItTooltip(@NotNull Disposable disposable) {
-  //  return new GotItTooltip("settings.entry.point", IdeBundle.message("settings.entry.point.got.it.popup"), disposable);
-  //}
-
   private static PluginUpdatesService myUpdatesService;
   private static PluginStateListener myPluginStateListener;
 
@@ -257,7 +239,9 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
         List<PluginDownloader> downloaders = new ArrayList<>();
         try {
           for (IdeaPluginDescriptor descriptor : descriptors) {
-            downloaders.add(PluginDownloader.createDownloader(descriptor));
+            if (!PluginUpdateDialog.isIgnored(descriptor)) {
+              downloaders.add(PluginDownloader.createDownloader(descriptor));
+            }
           }
         }
         catch (IOException e) {
@@ -270,14 +254,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
       PluginStateManager.addStateListener(myPluginStateListener = new PluginStateListener() {
         @Override
         public void install(@NotNull IdeaPluginDescriptor descriptor) {
-          if (myUpdatedPlugins != null) {
-            PluginId pluginId = descriptor.getPluginId();
-            List<PluginDownloader> updatedPlugins =
-              ContainerUtil.filter(myUpdatedPlugins, downloader -> !pluginId.equals(downloader.getId()));
-            if (myUpdatedPlugins.size() != updatedPlugins.size()) {
-              newPluginsUpdate(updatedPlugins.isEmpty() ? null : updatedPlugins, myCustomRepositoryPlugins);
-            }
-          }
+          removePluginsUpdate(Collections.singleton(descriptor));
         }
 
         @Override
@@ -292,6 +269,11 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
 
   private static Collection<PluginDownloader> myUpdatedPlugins;
   private static Collection<IdeaPluginDescriptor> myCustomRepositoryPlugins;
+  private static boolean myEnableUpdateAction = true;
+
+  private static void setEnableUpdateAction(boolean value) {
+    myEnableUpdateAction = value;
+  }
 
   public static void newPlatformUpdate(@Nullable CheckForUpdateResult platformUpdateInfo,
                                        @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins) {
@@ -307,11 +289,23 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
     updateAction();
   }
 
+  public static void removePluginsUpdate(@NotNull Collection<IdeaPluginDescriptor> descriptors) {
+    if (myUpdatedPlugins != null) {
+      List<PluginDownloader> updatedPlugins =
+        ContainerUtil.filter(myUpdatedPlugins, downloader -> {
+          PluginId pluginId = downloader.getId();
+          return ContainerUtil.find(descriptors, descriptor -> descriptor.getPluginId().equals(pluginId)) == null;
+        });
+      if (myUpdatedPlugins.size() != updatedPlugins.size()) {
+        newPluginsUpdate(updatedPlugins.isEmpty() ? null : updatedPlugins, myCustomRepositoryPlugins);
+      }
+    }
+  }
+
   private static void updateAction() {
     if (isAvailableInStatusBar()) {
       updateWidgets();
     }
-    // XXX update toolbar action
   }
 
   private static @NotNull @Nls String getActionTooltip() {
@@ -414,11 +408,6 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
     @Override
     public void install(@NotNull StatusBar statusBar) {
       myStatusBar = statusBar;
-      //
-      //JComponent component = ((IdeStatusBarImpl)statusBar).getWidgetComponent(WIDGET_ID);
-      //if (component != null) {
-      //  createGotItTooltip(this).showAt(Balloon.Position.above, component, c -> new Point(c.getWidth() / 2, 0));
-      //}
     }
 
     @Override

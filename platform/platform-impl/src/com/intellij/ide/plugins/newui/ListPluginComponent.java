@@ -61,6 +61,7 @@ public class ListPluginComponent extends JPanel {
   protected InstallButton myInstallButton;
   protected JButton myUpdateButton;
   private JCheckBox myEnableDisableButton;
+  private JCheckBox myChooseUpdateButton;
   private JComponent myAlignButton;
   private JLabel myRating;
   private JLabel myDownloads;
@@ -321,15 +322,27 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
-  public void setOnlyUpdateMode(@Nullable IdeaPluginDescriptor descriptor) {
+  public void setOnlyUpdateMode(@NotNull IdeaPluginDescriptor descriptor) {
     myOnlyUpdateMode = true;
 
     if (myEnableDisableButton != null) {
       myLayout.removeButtonComponent(myEnableDisableButton);
       myEnableDisableButton = null;
     }
+    if (myAlignButton != null) {
+      myLayout.removeButtonComponent(myAlignButton);
+      myAlignButton = null;
+    }
 
     setUpdateDescriptor(descriptor);
+    removeButtons(false);
+
+    myLayout.setCheckBoxComponent(myChooseUpdateButton = new JCheckBox((String)null, true));
+    myChooseUpdateButton.setOpaque(false);
+  }
+
+  public JCheckBox getChooseUpdateButton() {
+    return myChooseUpdateButton;
   }
 
   public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
@@ -445,7 +458,7 @@ public class ListPluginComponent extends JPanel {
 
   public void updateErrors() {
     Ref<@Nls String> enableAction = new Ref<>();
-    String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
+    String message = myOnlyUpdateMode ? null : myPluginModel.getErrorMessage(myPlugin, enableAction);
     boolean errors = message != null;
     updateIcon(errors, myUninstalled || !isEnabledState());
 
@@ -612,6 +625,10 @@ public class ListPluginComponent extends JPanel {
 
   public void createPopupMenu(@NotNull DefaultActionGroup group,
                               @NotNull List<ListPluginComponent> selection) {
+    if (myOnlyUpdateMode) {
+      return;
+    }
+
     for (ListPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -665,10 +682,6 @@ public class ListPluginComponent extends JPanel {
       }
     }
 
-    if (myOnlyUpdateMode) {
-      return;
-    }
-
     SelectionBasedPluginModelAction.addActionsTo(
       group,
       state -> new EnableDisableAction(state, selection),
@@ -678,6 +691,15 @@ public class ListPluginComponent extends JPanel {
 
   public void handleKeyAction(@NotNull KeyEvent event,
                               @NotNull List<ListPluginComponent> selection) {
+    if (myOnlyUpdateMode) {
+      if (event.getKeyCode() == KeyEvent.VK_SPACE) {
+        for (ListPluginComponent component : selection) {
+          component.myChooseUpdateButton.doClick();
+        }
+      }
+      return;
+    }
+
     for (ListPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -876,6 +898,7 @@ public class ListPluginComponent extends JPanel {
     private JLabel myNameComponent;
     private JComponent myProgressComponent;
     private JComponent myTagComponent;
+    private JComponent myCheckBoxComponent;
     private final List<JComponent> myButtonComponents = new ArrayList<>();
     private final List<JComponent> myLineComponents = new ArrayList<>();
     private boolean[] myButtonEnableStates;
@@ -885,6 +908,12 @@ public class ListPluginComponent extends JPanel {
       Dimension result = new Dimension(myNameComponent.getPreferredSize());
 
       if (myProgressComponent == null) {
+        if (myCheckBoxComponent != null) {
+          Dimension size = myCheckBoxComponent.getPreferredSize();
+          result.width += size.width + myHOffset.get();
+          result.height = Math.max(result.height, size.height);
+        }
+
         if (myTagComponent != null) {
           Dimension size = myTagComponent.getPreferredSize();
           result.width += size.width + 2 * myHOffset.get();
@@ -937,6 +966,12 @@ public class ListPluginComponent extends JPanel {
       Insets insets = getInsets();
       int x = insets.left;
       int y = insets.top;
+
+      if (myProgressComponent == null && myCheckBoxComponent != null) {
+        Dimension size = myCheckBoxComponent.getPreferredSize();
+        myCheckBoxComponent.setBounds(x, (parent.getHeight() - size.height) / 2, size.width, size.height);
+        x += size.width + myHGap.get();
+      }
 
       Dimension iconSize = myIconComponent.getPreferredSize();
       myIconComponent.setBounds(x, y, iconSize.width, iconSize.height);
@@ -994,6 +1029,10 @@ public class ListPluginComponent extends JPanel {
 
       if (myProgressComponent != null) {
         return width - myProgressComponent.getPreferredSize().width - myHOffset.get();
+      }
+
+      if (myCheckBoxComponent != null) {
+        width -= myCheckBoxComponent.getPreferredSize().width + myHOffset.get();
       }
 
       if (myTagComponent != null) {
@@ -1064,6 +1103,13 @@ public class ListPluginComponent extends JPanel {
       myButtonComponents.remove(component);
       remove(component);
       updateVisibleOther();
+    }
+
+    public void setCheckBoxComponent(@NotNull JComponent checkBoxComponent) {
+      assert myCheckBoxComponent == null;
+      myCheckBoxComponent = checkBoxComponent;
+      add(checkBoxComponent);
+      doLayout();
     }
 
     public void setProgressComponent(@NotNull JComponent progressComponent) {

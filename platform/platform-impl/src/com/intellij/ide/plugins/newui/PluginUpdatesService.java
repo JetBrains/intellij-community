@@ -3,6 +3,8 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
+import com.intellij.ide.plugins.PluginStateListener;
+import com.intellij.ide.plugins.PluginStateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
@@ -32,6 +34,19 @@ public class PluginUpdatesService {
 
   private Consumer<? super Integer> myCountCallback;
   private Consumer<? super Collection<IdeaPluginDescriptor>> myUpdateCallback;
+
+  static {
+    PluginStateManager.addStateListener(new PluginStateListener() {
+      @Override
+      public void install(@NotNull IdeaPluginDescriptor descriptor) {
+        finishUpdate(descriptor);
+      }
+
+      @Override
+      public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
+      }
+    });
+  }
 
   @NotNull
   public static PluginUpdatesService connectWithCounter(@NotNull Consumer<? super Integer> callback) {
@@ -79,7 +94,7 @@ public class PluginUpdatesService {
     calculateUpdates();
   }
 
-  public void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
+  private static void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
     synchronized (ourLock) {
       if (!myPrepared || myCache == null) {
         return;
@@ -88,7 +103,7 @@ public class PluginUpdatesService {
       for (Iterator<IdeaPluginDescriptor> I = myCache.iterator(); I.hasNext(); ) {
         IdeaPluginDescriptor downloadedDescriptor = I.next();
 
-        if (downloadedDescriptor.equals(descriptor)) {
+        if (downloadedDescriptor.getPluginId() == descriptor.getPluginId()) {
           I.remove();
 
           Integer countValue = getCount();

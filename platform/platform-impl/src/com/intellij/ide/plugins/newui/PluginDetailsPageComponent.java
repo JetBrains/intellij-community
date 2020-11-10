@@ -247,6 +247,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   public void setOnlyUpdateMode() {
     myNameAndButtons.removeButtons();
+    myGearButton.getParent().remove(myGearButton);
+    myEnabledForProject.getParent().remove(myEnabledForProject);
     myPanel.setBorder(JBUI.Borders.empty(15, 20, 0, 0));
     myEmptyPanel.setBorder(null);
   }

@@ -130,8 +130,6 @@ public class PluginManagerConfigurable
   private Consumer<InstalledSearchOptionAction> myInstalledSearchCallback;
   private boolean myInstalledSearchSetState = true;
 
-  private Collection<IdeaPluginDescriptor> myInitUpdates;
-
   private String myLaterSearchQuery;
 
   public PluginManagerConfigurable(@Nullable Project project) {
@@ -188,7 +186,7 @@ public class PluginManagerConfigurable
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.marketplace"), null);
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.installed"), myCountIcon);
 
-    Consumer<Integer> callback = countValue -> {
+    myPluginUpdatesService = PluginUpdatesService.connectWithCounter(countValue -> {
       int count = countValue == null ? 0 : countValue;
       String text = String.valueOf(count);
       boolean visible = count > 0;
@@ -201,14 +199,8 @@ public class PluginManagerConfigurable
 
       myCountIcon.setText(text);
       myTabHeaderComponent.update();
-    };
-    if (myInitUpdates != null) {
-      callback.accept(myInitUpdates.size());
-    }
-    myPluginUpdatesService = PluginUpdatesService.connectWithCounter(callback);
+    });
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
-
-    boolean selectInstalledTab = !ContainerUtil.isEmpty(myInitUpdates);
 
     createMarketplaceTab();
     createInstalledTab();
@@ -230,13 +222,9 @@ public class PluginManagerConfigurable
 
     myTabHeaderComponent.setListener();
 
-    int selectionTab = selectInstalledTab ? INSTALLED_TAB : getStoredSelectionTab();
+    int selectionTab = getStoredSelectionTab();
     myTabHeaderComponent.setSelection(selectionTab);
     myCardPanel.select(selectionTab, true);
-
-    if (selectInstalledTab) {
-      myInstalledTab.setSearchQuery("/outdated");
-    }
 
     if (myLaterSearchQuery != null) {
       Runnable search = enableSearch(myLaterSearchQuery);
@@ -919,10 +907,6 @@ public class PluginManagerConfigurable
           PluginLogo.endBatchMode();
         }
 
-        if (myInitUpdates != null) {
-          applyUpdates(myInstalledPanel, myInitUpdates);
-        }
-
         return createScrollPane(myInstalledPanel, true);
       }
 
@@ -1150,8 +1134,7 @@ public class PluginManagerConfigurable
                 });
               }
 
-              Collection<IdeaPluginDescriptor> updates = myInitUpdates == null ? PluginUpdatesService.getUpdates() : myInitUpdates;
-              myInitUpdates = null;
+              Collection<IdeaPluginDescriptor> updates = PluginUpdatesService.getUpdates();
               if (!ContainerUtil.isEmpty(updates)) {
                 myPostFillGroupCallback = () -> {
                   applyUpdates(myPanel, updates);
@@ -1415,12 +1398,6 @@ public class PluginManagerConfigurable
   public static void showPluginConfigurable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));
-  }
-
-  public static void showPluginConfigurable(@Nullable Project project, @NotNull Collection<IdeaPluginDescriptor> updates) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
-    configurable.setInitUpdates(updates);
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
   }
 
   private enum SortBySearchOption {
@@ -1700,10 +1677,6 @@ public class PluginManagerConfigurable
   @NotNull
   public MyPluginModel getPluginModel() {
     return myPluginModel;
-  }
-
-  public void setInitUpdates(@NotNull Collection<IdeaPluginDescriptor> initUpdates) {
-    myInitUpdates = initUpdates;
   }
 
   public void select(IdeaPluginDescriptor @NotNull ... descriptors) {

@@ -56,7 +56,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private PluginsGroupComponent myInstalledPanel;
   private PluginsGroup myDownloaded;
   private PluginsGroup myInstalling;
-  private PluginsGroup myUpdates;
   private Configurable.TopComponentController myTopController;
   private List<String> myVendorsSorted;
   private List<String> myTagsSorted;
@@ -588,10 +587,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
           component.enableRestart();
         }
       }
-      if (myUpdates != null) {
-        myUpdates.titleWithCount();
-      }
-      myPluginUpdatesService.finishUpdate(info.updateDescriptor);
     }
     else {
       myPluginUpdatesService.finishUpdate();
@@ -654,10 +649,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myInstalledPanel = panel;
     myDownloaded = downloaded;
     myInstalling = installing;
-  }
-
-  public void setUpdateGroup(@NotNull PluginsGroup group) {
-    myUpdates = group;
   }
 
   private void appendDependsAfterInstall() {
