@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.marketplace.BrokenPluginsService;
 import com.intellij.ide.plugins.marketplace.MarketplaceBrokenPlugin;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.util.BuildNumber;
@@ -76,6 +77,7 @@ public class RepositoryHelperTest {
 
   @Test
   public void testBrokenNotInList() throws IOException {
+    BrokenPluginsService.INSTANCE.setupUpdateBrokenPlugins();
     List<MarketplaceBrokenPlugin> brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins();
     MarketplaceBrokenPlugin randomPlugin = brokenPlugins.get(new Random().nextInt(brokenPlugins.size()));
     String id = randomPlugin.getId();
