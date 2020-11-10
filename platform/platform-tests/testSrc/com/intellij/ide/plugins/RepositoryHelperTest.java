@@ -1,19 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.marketplace.MarketplaceBrokenPlugin;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.execution.ParametersListUtil;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -76,14 +76,10 @@ public class RepositoryHelperTest {
 
   @Test
   public void testBrokenNotInList() throws IOException {
-    String id, version;
-    try (InputStream resource = PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt");
-         BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
-      List<String> lines = reader.lines().filter(l -> !l.startsWith("//")).collect(Collectors.toList());
-      List<String> tokens = ParametersListUtil.parse(lines.get(new Random().nextInt(lines.size())));
-      id = tokens.get(0);
-      version = tokens.get(1);
-    }
+    List<MarketplaceBrokenPlugin> brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins();
+    MarketplaceBrokenPlugin randomPlugin = brokenPlugins.get(new Random().nextInt(brokenPlugins.size()));
+    String id = randomPlugin.getId();
+    String version = randomPlugin.getVersion();
 
     List<IdeaPluginDescriptor> list = loadPlugins(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
