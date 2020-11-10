@@ -70,7 +70,7 @@ class Source5BuildIssue(project: Project, private val failedProjectId: String) :
   private fun createDescription() = quickFixes.map {
     HtmlChunk.link(it.id, MavenProjectBundle.message("maven.source.5.not.supported.update", it.mavenProject.displayName))
       .toString()
-  }.joinToString("\n")
+  }.joinToString("\n", prefix = MavenProjectBundle.message("maven.source.5.not.supported.description"))
 
 
   override fun getNavigatable(project: Project): Navigatable? {
