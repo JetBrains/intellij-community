@@ -167,6 +167,15 @@ private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit) {
 }
 
 private fun loadLightServiceClass(lightService: ClassInfo, mainDescriptor: IdeaPluginDescriptorImpl): Class<*> {
+  //
+  for (pluginDependency in mainDescriptor.pluginDependencies!!) {
+    val subPluginClassLoader = pluginDependency.subDescriptor?.classLoader as? PluginClassLoader ?: continue
+    val packagePrefix = subPluginClassLoader.packagePrefix ?: continue
+    if (lightService.name.startsWith(packagePrefix)) {
+      return subPluginClassLoader.loadClass(lightService.name, true)
+    }
+  }
+
   for (pluginDependency in mainDescriptor.pluginDependencies!!) {
     val subPluginClassLoader = pluginDependency.subDescriptor?.classLoader as? PluginClassLoader ?: continue
     val clazz = subPluginClassLoader.loadClass(lightService.name, true)

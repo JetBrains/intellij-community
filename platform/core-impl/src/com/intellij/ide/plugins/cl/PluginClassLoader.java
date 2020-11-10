@@ -161,6 +161,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     }
   }
 
+  public final @Nullable String getPackagePrefix() {
+    return packagePrefix;
+  }
+
   @Override
   @ApiStatus.Internal
   public final int getState() {

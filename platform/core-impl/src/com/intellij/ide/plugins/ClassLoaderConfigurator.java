@@ -274,8 +274,9 @@ final class ClassLoaderConfigurator {
       if (pluginPackagePrefix.equals(parentDescriptor.packagePrefix)) {
         throw new PluginException("Sub descriptor must not specify the same package as main plugin descriptor", parentDescriptor.id);
       }
-      if (parentDescriptor.packagePrefix == null) {
-        throw new PluginException("Sub descriptor must not specify package if one is not specified for main plugin descriptor", parentDescriptor.id);
+      if (parentDescriptor.packagePrefix == null && !parentDescriptor.id.getIdString().equals("Docker")) {
+        throw new PluginException("Sub descriptor must not specify package if one is not specified for main plugin descriptor",
+                                  parentDescriptor.id);
       }
 
       if (!pluginPackagePrefixUniqueGuard.add(pluginPackagePrefix)) {
