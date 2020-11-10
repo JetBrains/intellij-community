@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -15,11 +16,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -180,7 +185,7 @@ final class ClassLoaderConfigurator {
 
     List<Path> classPath = mainDependent.jarFiles;
     if (classPath == null) {
-      classPath = mainDependent.collectClassPath(additionalLayoutMap);
+      classPath = collectClassPath(mainDependent);
     }
     else {
       mainDependent.jarFiles = null;
@@ -336,10 +341,8 @@ final class ClassLoaderConfigurator {
 
     ClassLoader loader = dependency.getClassLoader();
     if (loader == null) {
-      getLogger().error(PluginLoadingError.formatErrorMessage(dependent,
-                                                              "requires missing class loader for '" +
-                                                              dependency.getName() +
-                                                              "'"));
+      getLogger()
+        .error(PluginLoadingError.formatErrorMessage(dependent, "requires missing class loader for '" + dependency.getName() + "'"));
     }
     else if (loader != coreLoader) {
       loaders.add(loader);
@@ -481,5 +484,52 @@ final class ClassLoaderConfigurator {
     catch (MalformedURLException e) {
       throw new PluginException("Corrupted path element: `" + file + '`', e, descriptor.getPluginId());
     }
+  }
+
+  private @NotNull List<Path> collectClassPath(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    Path pluginPath = descriptor.path;
+    if (!Files.isDirectory(pluginPath)) {
+      return Collections.singletonList(pluginPath);
+    }
+
+    List<Path> result = new ArrayList<>();
+    Path classesDir = pluginPath.resolve("classes");
+    if (Files.exists(classesDir)) {
+      result.add(classesDir);
+    }
+
+    if (usePluginClassLoader) {
+      Path productionDirectory = pluginPath.getParent();
+      if (productionDirectory.endsWith("production")) {
+        result.add(pluginPath);
+        String moduleName = pluginPath.getFileName().toString();
+        String[] additionalPaths = additionalLayoutMap.get(moduleName);
+        if (additionalPaths != null) {
+          for (String path : additionalPaths) {
+            result.add(productionDirectory.resolve(path));
+          }
+        }
+      }
+    }
+
+    try (DirectoryStream<Path> childStream = Files.newDirectoryStream(pluginPath.resolve("lib"))) {
+      for (Path f : childStream) {
+        if (Files.isRegularFile(f)) {
+          String name = f.getFileName().toString();
+          if (StringUtilRt.endsWithIgnoreCase(name, ".jar") || StringUtilRt.endsWithIgnoreCase(name, ".zip")) {
+            result.add(f);
+          }
+        }
+        else {
+          result.add(f);
+        }
+      }
+    }
+    catch (NoSuchFileException ignore) {
+    }
+    catch (IOException e) {
+      PluginManagerCore.getLogger().debug(e);
+    }
+    return result;
   }
 }

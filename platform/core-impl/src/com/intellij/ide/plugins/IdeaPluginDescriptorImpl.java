@@ -16,10 +16,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.*;
@@ -778,52 +774,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       else {
         result.add(f);
       }
-    }
-    return result;
-  }
-
-  @NotNull List<Path> collectClassPath(@NotNull Map<String, String[]> additionalLayoutMap) {
-    if (!Files.isDirectory(path)) {
-      return Collections.singletonList(path);
-    }
-
-    List<Path> result = new ArrayList<>();
-    Path classesDir = path.resolve("classes");
-    if (Files.exists(classesDir)) {
-      result.add(classesDir);
-    }
-
-    if (PluginManagerCore.usePluginClassLoader) {
-      Path productionDirectory = path.getParent();
-      if (productionDirectory.endsWith("production")) {
-        result.add(path);
-        String moduleName = path.getFileName().toString();
-        String[] additionalPaths = additionalLayoutMap.get(moduleName);
-        if (additionalPaths != null) {
-          for (String path : additionalPaths) {
-            result.add(productionDirectory.resolve(path));
-          }
-        }
-      }
-    }
-
-    try (DirectoryStream<Path> childStream = Files.newDirectoryStream(path.resolve("lib"))) {
-      for (Path f : childStream) {
-        if (Files.isRegularFile(f)) {
-          String name = f.getFileName().toString();
-          if (Strings.endsWithIgnoreCase(name, ".jar") || Strings.endsWithIgnoreCase(name, ".zip")) {
-            result.add(f);
-          }
-        }
-        else {
-          result.add(f);
-        }
-      }
-    }
-    catch (NoSuchFileException ignore) {
-    }
-    catch (IOException e) {
-      PluginManagerCore.getLogger().debug(e);
     }
     return result;
   }
