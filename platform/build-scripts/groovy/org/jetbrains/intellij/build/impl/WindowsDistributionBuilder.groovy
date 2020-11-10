@@ -132,8 +132,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   // Android Studio: build game tools entry points (go/project-aplos)
   private void buildGameToolsScripts(String classPath, String winDistPath, String fullName, String vmOptionsFileName) {
     // We manually set the classpath to include everything the game tools need and disable all plugin loading at runtime with
-    // `-Didea.load.plugins=false`. This change on classpath is needed since AndroidStudioGameToolsPlugin.xml, the starting plugin XML, is
-    // located in plugins/android/lib/game-tools.jar, which is not in classpath by default. In addition, AndroidStudioGameToolsPlugin.xml
+    // `-Didea.load.plugins=false`. This change on classpath is needed since AndroidGameDevelopmentToolsPlugin.xml, the starting plugin XML, is
+    // located in plugins/android/lib/game-tools.jar, which is not in classpath by default. In addition, AndroidGameDevelopmentToolsPlugin.xml
     // directly references all needed Intellij platform components so that the unneeded ones (for example, shift-shift to find everything)
     // are ignored. See go/project-aplos-design for more details.
     String gameToolsClassPath = classPath + "\n" + [
@@ -153,8 +153,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
-        filter(token: "system_selector", value: "AndroidStudioGameTools")
-        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments + " -Didea.platform.prefix=AndroidStudioGameTools -Didea.load.plugins=false -Didea.initially.ask.config=force-not")
+        filter(token: "system_selector", value: "AndroidGameDevelopmentTools")
+        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments + " -Didea.platform.prefix=AndroidGameDevelopmentTools -Didea.load.plugins=false -Didea.initially.ask.config=force-not")
         filter(token: "class_path", value: gameToolsClassPath)
         filter(token: "script_name", value: "game-tools.bat")
       }
