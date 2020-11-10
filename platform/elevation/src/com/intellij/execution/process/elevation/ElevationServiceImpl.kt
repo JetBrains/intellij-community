@@ -3,6 +3,7 @@ package com.intellij.execution.process.elevation
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ElevationService
 import com.intellij.execution.process.SelfKiller
 import com.intellij.execution.process.elevation.settings.ElevationSettings
 import com.intellij.execution.process.mediator.MediatedProcessHandler
@@ -11,30 +12,20 @@ import com.intellij.execution.process.mediator.client.MediatedProcess
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 
-@Service
-class ElevationService : Disposable {
-  companion object {
-    @JvmStatic
-    fun getInstance() = service<ElevationService>()
-
-    private const val MAX_RELAUNCHING_DAEMON_UNTIL_HAVE_QUOTA_PERMIT_ATTEMPTS = 3
-  }
-
+class ElevationServiceImpl : ElevationService, Disposable {
   private val clientManager = ProcessMediatorClientManager().also {
     Disposer.register(this, it)
   }
 
-  fun createProcessHandler(commandLine: GeneralCommandLine): MediatedProcessHandler {
+  override fun createProcessHandler(commandLine: GeneralCommandLine): MediatedProcessHandler {
     val processBuilder = commandLine.toProcessBuilder()
     val process = createProcess(processBuilder)
     return MediatedProcessHandler(process, commandLine)
   }
 
-  fun createProcess(processBuilder: ProcessBuilder): MediatedProcess {
+  override fun createProcess(processBuilder: ProcessBuilder): MediatedProcess {
     return tryRelaunchingDaemonUntilHaveQuotaPermit { client ->
       object : MediatedProcess(client, processBuilder), SelfKiller {
         init {
@@ -62,4 +53,8 @@ class ElevationService : Disposable {
   }
 
   override fun dispose() = Unit
+
+  companion object {
+    private const val MAX_RELAUNCHING_DAEMON_UNTIL_HAVE_QUOTA_PERMIT_ATTEMPTS = 3
+  }
 }
