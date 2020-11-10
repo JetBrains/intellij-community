@@ -67,6 +67,8 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
 
   Key<DiffComputer> CUSTOM_DIFF_COMPUTER = Key.create("Diff.CustomDiffComputer");
 
+  Key<Boolean> DISABLE_CONTENTS_EQUALS_NOTIFICATION = Key.create("Diff.DisableContentsEqualsNotification");
+
   //
   // DiffContext
   //

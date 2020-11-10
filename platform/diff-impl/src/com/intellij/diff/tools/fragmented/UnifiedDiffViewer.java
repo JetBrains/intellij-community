@@ -424,7 +424,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       clearDiffPresentation();
 
 
-      if (isContentsEqual) {
+      if (isContentsEqual &&
+          !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
         boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
         boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
