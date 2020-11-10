@@ -1340,7 +1340,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
   }
 
-  public static String getUserDefined() {
+  public static @Nls(capitalization = Nls.Capitalization.Sentence) String getUserDefined() {
     return SSRBundle.message("new.template.defaultname");
   }
 

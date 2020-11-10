@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.util.ObjectUtils;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -62,7 +63,7 @@ public abstract class Configuration implements JDOMExternalizable {
     created = -1L;
   }
 
-  public Configuration(@NotNull @Nls String name, @NotNull String category) {
+  public Configuration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name, @NotNull String category) {
     this.name = name;
     this.category = category;
     created = -1L;
@@ -167,7 +168,8 @@ public abstract class Configuration implements JDOMExternalizable {
 
   @Override
   public void readExternal(Element element) {
-    name = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
+    //noinspection HardCodedStringLiteral
+    name = ObjectUtils.notNull(element.getAttributeValue(NAME_ATTRIBUTE_NAME), "");
     final Attribute createdAttribute = element.getAttribute(CREATED_ATTRIBUTE_NAME);
     if (createdAttribute != null) {
       try {
