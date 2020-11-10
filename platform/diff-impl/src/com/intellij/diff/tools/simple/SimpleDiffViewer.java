@@ -726,7 +726,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       for (SimpleDiffChange diffChange : getDiffChanges()) {
         if (!handler.processExcludable(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
                                        diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
-                                       getEditor1(), diffChange.getDiffType(), diffChange.isExcluded())) {
+                                       diffChange.getDiffType(), diffChange.isExcluded())) {
           return;
         }
       }

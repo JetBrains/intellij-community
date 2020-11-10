@@ -154,13 +154,14 @@ public final class DiffDividerDrawUtil {
     void process(@NotNull Handler handler);
 
     interface Handler {
-      boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color);
+      boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+                      @NotNull TextDiffType type);
 
       boolean processResolvable(int startLine1, int endLine1, int startLine2, int endLine2,
-                                @NotNull Editor editor, @NotNull TextDiffType type, boolean resolved);
+                                @NotNull TextDiffType type, boolean resolved);
 
       boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
-                                @NotNull Editor editor, @NotNull TextDiffType type, boolean excluded);
+                                @NotNull TextDiffType type, boolean excluded);
     }
   }
 
@@ -186,36 +187,118 @@ public final class DiffDividerDrawUtil {
     }
 
     @Override
-    public boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color) {
-      return process(startLine1, endLine1, startLine2, endLine2, color, null, false);
+    public boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+                           @NotNull TextDiffType type) {
+      return process(startLine1, endLine1, startLine2, endLine2, new DefaultPainter(type));
     }
 
     @Override
     public boolean processResolvable(int startLine1, int endLine1, int startLine2, int endLine2,
-                                     @NotNull Editor editor, @NotNull TextDiffType type, boolean resolved) {
-      Color color = type.getColor(editor);
-      return process(startLine1, endLine1, startLine2, endLine2, resolved ? null : color, resolved ? color : null, resolved);
+                                     @NotNull TextDiffType type, boolean resolved) {
+      return process(startLine1, endLine1, startLine2, endLine2, new ResolvablePainter(type, resolved));
     }
 
     @Override
     public boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
-                                     @NotNull Editor editor, @NotNull TextDiffType type, boolean excluded) {
-      Color borderColor = excluded ? type.getColor(editor) : null;
-      Color fillColor = excluded ? type.getIgnoredColor(editor) : type.getColor(editor);
-      return process(startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, false);
+                                     @NotNull TextDiffType type, boolean excluded) {
+      return process(startLine1, endLine1, startLine2, endLine2, new ExcludablePainter(type, excluded));
     }
 
     private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
-                            @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
+                            @NotNull Painter painter) {
       if (myLeftInterval.start > endLine1 && myRightInterval.start > endLine2) return true;
       if (myLeftInterval.end < startLine1 && myRightInterval.end < startLine2) return false;
 
       if (isIntervalVisible(myEditor1, startLine1, endLine1) ||
           isIntervalVisible(myEditor2, startLine2, endLine2)) {
         myPolygons.add(createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2,
-                                     fillColor, borderColor, dottedBorder));
+                                     painter.getFillColor(myEditor2),
+                                     painter.getBorderColor(myEditor2),
+                                     painter.isDottedBorder()));
       }
       return true;
+    }
+
+    private static class DefaultPainter implements Painter {
+      private final TextDiffType myType;
+
+      private DefaultPainter(@NotNull TextDiffType type) {
+        myType = type;
+      }
+
+      @Override
+      public @Nullable Color getFillColor(@NotNull Editor editor) {
+        return myType.getColor(editor);
+      }
+
+      @Override
+      public @Nullable Color getBorderColor(@NotNull Editor editor) {
+        return null;
+      }
+
+      @Override
+      public boolean isDottedBorder() {
+        return false;
+      }
+    }
+
+    private static class ResolvablePainter implements Painter {
+      private final TextDiffType myType;
+      private final boolean myResolved;
+
+      private ResolvablePainter(@NotNull TextDiffType type, boolean resolved) {
+        myType = type;
+        myResolved = resolved;
+      }
+
+      @Override
+      public @Nullable Color getFillColor(@NotNull Editor editor) {
+        return !myResolved ? myType.getColor(editor) : null;
+      }
+
+      @Override
+      public @Nullable Color getBorderColor(@NotNull Editor editor) {
+        return myResolved ? myType.getColor(editor) : null;
+      }
+
+      @Override
+      public boolean isDottedBorder() {
+        return myResolved;
+      }
+    }
+
+    private static class ExcludablePainter implements Painter {
+      private final TextDiffType myType;
+      private final boolean myExcluded;
+
+      private ExcludablePainter(@NotNull TextDiffType type, boolean excluded) {
+        myType = type;
+        myExcluded = excluded;
+      }
+
+      @Override
+      public @Nullable Color getFillColor(@NotNull Editor editor) {
+        return myExcluded ? myType.getIgnoredColor(editor)
+                          : myType.getColor(editor);
+      }
+
+      @Override
+      public @Nullable Color getBorderColor(@NotNull Editor editor) {
+        return myExcluded ? myType.getColor(editor) : null;
+      }
+
+      @Override
+      public boolean isDottedBorder() {
+        return false;
+      }
+    }
+
+    private interface Painter {
+      @Nullable Color getFillColor(@NotNull Editor editor);
+
+      @Nullable Color getBorderColor(@NotNull Editor editor);
+
+      boolean isDottedBorder();
     }
   }
 
