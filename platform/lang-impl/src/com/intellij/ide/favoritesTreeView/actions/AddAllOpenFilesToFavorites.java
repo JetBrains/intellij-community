@@ -33,6 +33,7 @@ public class AddAllOpenFilesToFavorites extends AnAction implements DumbAware {
   private final String myFavoritesName;
 
   public AddAllOpenFilesToFavorites(String chosenList) {
+    //noinspection HardCodedStringLiteral
     getTemplatePresentation().setText(chosenList, false);
     myFavoritesName = chosenList;
   }

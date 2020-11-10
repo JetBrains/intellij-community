@@ -161,6 +161,7 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
               node.getParent() != null &&
               node.getParent().getParent() != null &&
               node.getParent().getParent().getParent() == null) {
+            @SuppressWarnings("HardCodedBookmarksFavoriteListProviderStringLiteral")
             final String location = favoritesTreeNodeDescriptor.getLocation();
             if (location != null && location.length() > 0) {
               append(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);

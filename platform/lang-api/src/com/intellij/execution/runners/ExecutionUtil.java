@@ -29,6 +29,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -289,5 +290,9 @@ public final class ExecutionUtil {
         return base != null ? base.getIconHeight() : emptyIconHeight;
       }
     });
+  }
+
+  public static String getExecutorName(@NotNull Executor executor) {
+    return ObjectUtils.notNull(ExecutionBundle.message("executor." + executor.getId() + ".name"), executor.getId());
   }
 }

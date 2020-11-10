@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.ExecutorGroup;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.AdjustingTabSettingsEditor;
 import com.intellij.openapi.options.*;
@@ -246,7 +247,8 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       updateRunnerComponent();
       myRunnersList.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
         label.setIcon(value.getIcon());
-        label.setText(value.getId());
+        //noinspection HardCodedStringLiteral
+        label.setText(ExecutionUtil.getExecutorName(value));
       }));
       myScrollPane.setBorder(JBUI.Borders.empty());
       myScrollPane.setViewportBorder(JBUI.Borders.empty());

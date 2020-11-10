@@ -32,6 +32,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.dnd.DragSource;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
@@ -351,8 +351,9 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   @NotNull
+  @NlsContexts.Tooltip
   private String getBookmarkTooltip() {
-    StringBuilder result = new StringBuilder("Bookmark");
+    StringBuilder result = new StringBuilder(IdeBundle.message("bookmark.text"));
     if (myMnemonic != 0) {
       result.append(" ").append(myMnemonic);
     }
@@ -364,24 +365,21 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     StringBuilder shortcutDescription = new StringBuilder();
     if (myMnemonic != 0) {
-      String shortcutText = KeymapUtil.getFirstKeyboardShortcutText("ToggleBookmark" + myMnemonic);
-      if (shortcutText.length() > 0) {
-        shortcutDescription.append(shortcutText).append(" to toggle");
-      }
-
-      String navigateShortcutText = KeymapUtil.getFirstKeyboardShortcutText("GotoBookmark" + myMnemonic);
-      if (navigateShortcutText.length() > 0) {
-        if (shortcutDescription.length() > 0) {
-          shortcutDescription.append(", ");
-        }
-        shortcutDescription.append(navigateShortcutText).append(" to jump to");
+      String shortcutToToggle = KeymapUtil.getFirstKeyboardShortcutText("ToggleBookmark" + myMnemonic);
+      String shortcutToNavigate = KeymapUtil.getFirstKeyboardShortcutText("GotoBookmark" + myMnemonic);
+      if (!shortcutToToggle.isEmpty()) {
+        shortcutDescription.append(shortcutToNavigate.isEmpty()
+                                   ? IdeBundle.message("bookmark.shortcut.to.toggle", shortcutToToggle)
+                                   : IdeBundle.message("bookmark.shortcut.to.toggle.and.jump", shortcutToToggle, shortcutToNavigate));
+      } else if (!shortcutToNavigate.isEmpty()){
+        shortcutDescription.append(IdeBundle.message("bookmark.shortcut.to.jump", shortcutToNavigate));
       }
     }
 
     if (shortcutDescription.length() == 0) {
-      String shortcutText = KeymapUtil.getFirstKeyboardShortcutText("ToggleBookmark");
-      if (shortcutText.length() > 0) {
-        shortcutDescription.append(shortcutText).append(" to toggle");
+      String shortcutToToggle = KeymapUtil.getFirstKeyboardShortcutText("ToggleBookmark");
+      if (shortcutToToggle.length() > 0) {
+        shortcutDescription.append(IdeBundle.message("bookmark.shortcut.to.toggle", shortcutToToggle));
       }
     }
 
@@ -389,6 +387,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
       result.append(" (").append(shortcutDescription).append(")");
     }
 
+    //noinspection HardCodedStringLiteral
     return result.toString();
   }
 

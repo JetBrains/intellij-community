@@ -6,6 +6,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -36,7 +37,8 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
     myProject = project;
     myExecutor = executor;
 
-    setTitle(executor.getId());
+    //noinspection HardCodedStringLiteral
+    setTitle(ExecutionUtil.getExecutorName(executor));
 
     setOKButtonText(executor.getActionName());
     //setOKButtonIcon(executor.getIcon());
