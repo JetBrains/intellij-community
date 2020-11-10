@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,12 +47,13 @@ public abstract class BaseRefactorAction extends AnAction {
     if (processChooser) {
       final Editor editor = event.getData(CommonDataKeys.EDITOR);
 
+      @NlsSafe String name = getClass().getName() + "-Commandname";
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(handler);
         }
-      }, getClass().getName() + "-Commandname", DocCommandGroupId.noneGroupId(editor.getDocument()));
+      }, name, DocCommandGroupId.noneGroupId(editor.getDocument()));
     }
   }
 }

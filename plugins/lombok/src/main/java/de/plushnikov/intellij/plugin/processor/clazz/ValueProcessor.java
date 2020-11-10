@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
@@ -58,7 +59,7 @@ public class ValueProcessor extends AbstractClassProcessor {
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError("'@Value' is only supported on a class type");
+      builder.addError(LombokBundle.message("inspection.message.value.only.supported.on.class.type"));
       result = false;
     }
     return result;

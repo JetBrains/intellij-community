@@ -15,7 +15,7 @@ public final class LombokBundle {
    * The {@link ResourceBundle} path.
    */
   @NonNls
-  private static final String BUNDLE_NAME = "messages.lombokBundle";
+  private static final String BUNDLE_NAME = "messages.LombokBundle";
 
   /**
    * The {@link ResourceBundle} instance.

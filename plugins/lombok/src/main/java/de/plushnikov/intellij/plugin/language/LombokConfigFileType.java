@@ -1,6 +1,8 @@
 package de.plushnikov.intellij.plugin.language;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsContexts;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,8 +24,9 @@ public class LombokConfigFileType extends LanguageFileType {
 
   @NotNull
   @Override
+  @NlsContexts.Label
   public String getDescription() {
-    return "Lombok config file";
+    return LombokBundle.message("label.lombok.config.file");
   }
 
   @NotNull

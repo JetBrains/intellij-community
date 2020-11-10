@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -58,8 +59,8 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final Collection<String> ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class);
 
     if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
-      builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored",
-        PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
+      builder.addWarning(LombokBundle.message("inspection.message.exclude.are.mutually.exclusive.exclude.parameter.will.be.ignored"),
+                         PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
     } else {
       validateExcludeParam(psiClass, builder, psiAnnotation, excludeProperty);
     }
@@ -87,9 +88,8 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     if (null == declaredBooleanAnnotationValue) {
       final String configProperty = configDiscovery.getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
       if (!"CALL".equalsIgnoreCase(configProperty) && !"SKIP".equalsIgnoreCase(configProperty) && PsiClassUtil.hasSuperClass(psiClass) && !hasOneOfMethodsDefined(psiClass)) {
-        builder.addWarning("Generating equals/hashCode implementation but without a call to superclass, " +
-            "even though this class does not extend java.lang.Object. If this is intentional, add '(callSuper=false)' to your type.",
-          quickFixes);
+        builder.addWarning(LombokBundle.message("inspection.message.generating.equals.hashcode.implementation"),
+                           quickFixes);
       }
     }
   }
@@ -97,16 +97,16 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private void validateCallSuperParamForObject(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder) {
     boolean callSuperProperty = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
     if (callSuperProperty && !PsiClassUtil.hasSuperClass(psiClass)) {
-      builder.addError("Generating equals/hashCode with a supercall to java.lang.Object is pointless.",
-        PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"),
-        PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", null));
+      builder.addError(LombokBundle.message("inspection.message.generating.equals.hashcode.with.super.call"),
+                       PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"),
+                       PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", null));
     }
   }
 
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError("@EqualsAndHashCode is only supported on a class type");
+      builder.addError(LombokBundle.message("inspection.message.equals.and.hashcode.only.supported.on.class.type"));
       result = false;
     }
     return result;
@@ -114,7 +114,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   private void validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (hasOneOfMethodsDefined(psiClass)) {
-      builder.addWarning("Not generating equals and hashCode: A method with one of those names already exists. (Either both or none of these methods will be generated).");
+      builder.addWarning(LombokBundle.message("inspection.message.not.generating.equals.hashcode"));
     }
   }
 

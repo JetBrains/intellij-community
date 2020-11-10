@@ -1,12 +1,12 @@
 package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.util.PsiTypesUtil;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -14,7 +14,6 @@ import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +59,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError("Annotation is only supported on a class or enum type");
+      builder.addError(LombokBundle.message("inspection.message.annotation.only.supported.on.class.or.enum.type"));
       result = false;
     }
     return result;
@@ -85,7 +84,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         return true;
       }
     }
-    builder.addError("Lombok needs a default constructor in the base class");
+    builder.addError(LombokBundle.message("inspection.message.lombok.needs.default.constructor.in.base.class"));
     return false;
   }
 
@@ -103,9 +102,9 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       final PsiMethod existedStaticMethod = findExistedMethod(definedMethods, staticConstructorName, paramTypes);
       if (null != existedStaticMethod) {
         if (paramTypes.isEmpty()) {
-          builder.addError(String.format("Method '%s' matched staticConstructorName is already defined", staticConstructorName), new SafeDeleteFix(existedStaticMethod));
+          builder.addError(LombokBundle.message("inspection.message.method.s.matched.static.constructor.name.already.defined", staticConstructorName), new SafeDeleteFix(existedStaticMethod));
         } else {
-          builder.addError(String.format("Method '%s' with %d parameters matched staticConstructorName is already defined", staticConstructorName, paramTypes.size()), new SafeDeleteFix(existedStaticMethod));
+          builder.addError(LombokBundle.message("inspection.message.method.s.with.d.parameters.matched.static.constructor.name.already.defined", staticConstructorName, paramTypes.size()), new SafeDeleteFix(existedStaticMethod));
         }
         result = false;
       }
@@ -132,9 +131,9 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     final PsiMethod existedMethod = findExistedMethod(definedConstructors, constructorName, paramTypes);
     if (null != existedMethod) {
       if (paramTypes.isEmpty()) {
-        builder.addError("Constructor without parameters is already defined", new SafeDeleteFix(existedMethod));
+        builder.addError(LombokBundle.message("inspection.message.constructor.without.parameters.already.defined"), new SafeDeleteFix(existedMethod));
       } else {
-        builder.addError(String.format("Constructor with %d parameters is already defined", paramTypes.size()), new SafeDeleteFix(existedMethod));
+        builder.addError(LombokBundle.message("inspection.message.constructor.with.d.parameters.already.defined", paramTypes.size()), new SafeDeleteFix(existedMethod));
       }
       result = false;
     }

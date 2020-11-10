@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -56,8 +57,8 @@ public class ToStringProcessor extends AbstractClassProcessor {
     final Collection<String> ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class);
 
     if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
-      builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored",
-        PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
+      builder.addWarning(LombokBundle.message("inspection.message.exclude.are.mutually.exclusive.exclude.parameter.will.be.ignored"),
+                         PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
     } else {
       validateExcludeParam(psiClass, builder, psiAnnotation, excludeProperty);
     }
@@ -69,7 +70,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   private boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError("@ToString is only supported on a class or enum type");
+      builder.addError(LombokBundle.message("inspection.message.to.string.only.supported.on.class.or.enum.type"));
       result = false;
     }
     return result;
@@ -77,7 +78,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
 
   private void validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (hasToStringMethodDefined(psiClass)) {
-      builder.addWarning("Not generated '%s'(): A method with same name already exists", TO_STRING_METHOD_NAME);
+      builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.same.name.already.exists"), TO_STRING_METHOD_NAME);
     }
   }
 

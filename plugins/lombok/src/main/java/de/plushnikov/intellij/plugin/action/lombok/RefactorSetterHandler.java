@@ -6,12 +6,13 @@ import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.action.BaseRefactorHandler;
 
@@ -25,18 +26,18 @@ public class RefactorSetterHandler extends BaseRefactorHandler {
   }
 
   @Override
-  protected String getChooserTitle() {
-    return "Select Fields to replace Setter-Method With @Getter";
+  protected @NlsContexts.DialogTitle String getChooserTitle() {
+    return LombokBundle.message("dialog.title.select.fields.to.replace.setter.method.with.getter");
   }
 
   @Override
-  protected String getNothingFoundMessage() {
-    return "No field getter have been found to generate @Setter for";
+  protected @NlsContexts.HintText String getNothingFoundMessage() {
+    return LombokBundle.message("hint.text.no.field.getter.have.been.found.to.generate.setter.for");
   }
 
   @Override
-  protected String getNothingAcceptedMessage() {
-    return "No fields with setter method were found";
+  protected @NlsContexts.HintText String getNothingAcceptedMessage() {
+    return LombokBundle.message("hint.text.no.fields.with.setter.method.were.found");
   }
 
   @Override

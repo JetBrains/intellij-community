@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
@@ -44,7 +45,7 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
   public boolean checkIfFieldNameIsValidAndWarn(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     final boolean isValid = isValidFieldNameConstant(psiAnnotation, psiField);
     if (!isValid) {
-      builder.addWarning("Not generating constant for this field: The name of the constant would be equal to the name of this field.");
+      builder.addWarning(LombokBundle.message("inspection.message.not.generating.constant"));
     }
     return isValid;
   }

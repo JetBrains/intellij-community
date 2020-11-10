@@ -5,6 +5,8 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.NlsContexts;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,9 +16,9 @@ import java.util.Map;
 
 public class LombokConfigColorSettingsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[]{
-    new AttributesDescriptor("Key", LombokConfigSyntaxHighlighter.KEY),
-    new AttributesDescriptor("Separator", LombokConfigSyntaxHighlighter.SEPARATOR),
-    new AttributesDescriptor("Value", LombokConfigSyntaxHighlighter.VALUE),
+    new AttributesDescriptor(LombokBundle.message("attribute.descriptor.key"), LombokConfigSyntaxHighlighter.KEY),
+    new AttributesDescriptor(LombokBundle.message("attribute.descriptor.separator"), LombokConfigSyntaxHighlighter.SEPARATOR),
+    new AttributesDescriptor(LombokBundle.message("attribute.descriptor.value"), LombokConfigSyntaxHighlighter.VALUE),
   };
 
   @Nullable
@@ -66,7 +68,8 @@ public class LombokConfigColorSettingsPage implements ColorSettingsPage {
 
   @NotNull
   @Override
+  @NlsContexts.ConfigurableName
   public String getDisplayName() {
-    return "Lombok Config";
+    return LombokBundle.message("configurable.name.lombok.config");
   }
 }

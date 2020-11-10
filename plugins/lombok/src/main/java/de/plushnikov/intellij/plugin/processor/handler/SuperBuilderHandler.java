@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
@@ -45,7 +46,7 @@ public class SuperBuilderHandler extends BuilderHandler {
         .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.ABSTRACT));
 
       if (isStaticAndAbstract.isEmpty()) {
-        problemBuilder.addError("Existing Builder must be an abstract static inner class.");
+        problemBuilder.addError(LombokBundle.message("inspection.message.existing.builder.must.be.abstract.static.inner.class"));
         return false;
       }
     }

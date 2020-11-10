@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -187,6 +188,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     return targetClass != null && isValidForClass(targetClass);
   }
 
+  @NlsContexts.Command
   private String getCommandName() {
     String text = getTemplatePresentation().getText();
     return text == null ? "" : text;

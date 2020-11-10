@@ -4,6 +4,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
@@ -56,7 +57,7 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
     if (innerClass.isPresent()) {
       final boolean asEnum = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "asEnum", false);
       if (innerClass.get().isEnum() != asEnum) {
-        builder.addError("@FieldNameConstants inner type already exists, but asEnum=" + asEnum + " does not match existing type");
+        builder.addError(LombokBundle.message("inspection.message.field.name.constants.inner.type", asEnum));
         return false;
       }
     }

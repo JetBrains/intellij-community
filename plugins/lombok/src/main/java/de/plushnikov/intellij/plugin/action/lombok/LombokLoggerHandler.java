@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.rename.RenameProcessor;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.processor.clazz.log.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,9 +56,10 @@ public class LombokLoggerHandler extends BaseLombokHandler {
 
   private boolean checkLoggerField(@NotNull PsiField psiField, @NotNull String lombokLoggerName, boolean lombokLoggerIsStatic) {
     if (!isValidLoggerField(psiField, lombokLoggerName, lombokLoggerIsStatic)) {
-      final String messageText = String.format("Logger field: \"%s\" Is not private %sfinal field named \"%s\". Refactor anyway?",
-        psiField.getName(), lombokLoggerIsStatic ? "static " : "", lombokLoggerName);
-      int result = Messages.showOkCancelDialog(messageText, "Attention!", Messages.getOkButton(), Messages.getCancelButton(), Messages.getQuestionIcon());
+      String messageText =
+        LombokBundle.message("dialog.message.logger.field.s.not.private.sfinal.field.named.s.refactor.anyway", psiField.getName(),
+                             lombokLoggerIsStatic ? 1 : 0, lombokLoggerName);
+      int result = Messages.showOkCancelDialog(messageText, LombokBundle.message("dialog.title.attention"), Messages.getOkButton(), Messages.getCancelButton(), Messages.getQuestionIcon());
       return DialogWrapper.OK_EXIT_CODE == result;
     }
     return true;

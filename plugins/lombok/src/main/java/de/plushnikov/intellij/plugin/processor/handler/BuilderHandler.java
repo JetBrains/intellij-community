@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -97,7 +98,7 @@ public class BuilderHandler {
       .filter(BuilderInfo::hasBuilderDefaultAnnotation)
       .filter(BuilderInfo::hasSingularAnnotation).findAny();
     anyBuilderDefaultAndSingulars.ifPresent(builderInfo -> {
-        problemBuilder.addError("@Builder.Default and @Singular cannot be mixed.");
+        problemBuilder.addError(LombokBundle.message("inspection.message.builder.default.singular.cannot.be.mixed"));
       }
     );
 
@@ -105,7 +106,7 @@ public class BuilderHandler {
       .filter(BuilderInfo::hasBuilderDefaultAnnotation)
       .filter(BuilderInfo::hasNoInitializer).findAny();
     anyBuilderDefaultWithoutInitializer.ifPresent(builderInfo -> {
-        problemBuilder.addError("@Builder.Default requires an initializing expression (' = something;').");
+        problemBuilder.addError(LombokBundle.message("inspection.message.builder.default.requires.initializing.expression"));
       }
     );
 
@@ -140,13 +141,12 @@ public class BuilderHandler {
       final PsiType psiVariableType = builderInfo.getVariable().getType();
       final String qualifiedName = PsiTypeUtil.getQualifiedName(psiVariableType);
       if (SingularHandlerFactory.isInvalidSingularType(qualifiedName)) {
-        problemBuilder.addError("Lombok does not know how to create the singular-form builder methods for type '%s'; " +
-          "they won't be generated.", qualifiedName != null ? qualifiedName : psiVariableType.getCanonicalText());
+        problemBuilder.addError(LombokBundle.message("inspection.message.lombok.does.not.know"), qualifiedName != null ? qualifiedName : psiVariableType.getCanonicalText());
         result.set(false);
       }
 
       if (!AbstractSingularHandler.validateSingularName(builderInfo.getSingularAnnotation(), builderInfo.getFieldName())) {
-        problemBuilder.addError("Can't singularize this name: \"%s\"; please specify the singular explicitly (i.e. @Singular(\"sheep\"))", builderInfo.getFieldName());
+        problemBuilder.addError(LombokBundle.message("inspection.message.can.t.singularize.this.name"), builderInfo.getFieldName());
         result.set(false);
       }
     });
@@ -156,7 +156,7 @@ public class BuilderHandler {
   private boolean validateBuilderIdentifier(@NotNull String builderClassName, @NotNull Project project, @NotNull ProblemBuilder builder) {
     final PsiNameHelper psiNameHelper = PsiNameHelper.getInstance(project);
     if (!psiNameHelper.isIdentifier(builderClassName)) {
-      builder.addError("%s is not a valid identifier", builderClassName);
+      builder.addError(LombokBundle.message("inspection.message.s.not.valid.identifier"), builderClassName);
       return false;
     }
     return true;
@@ -170,7 +170,7 @@ public class BuilderHandler {
 
   boolean validateInvalidAnnotationsOnBuilderClass(@NotNull PsiClass builderClass, @NotNull ProblemBuilder problemBuilder) {
     if (PsiAnnotationSearchUtil.checkAnnotationsSimpleNameExistsIn(builderClass, INVALID_ON_BUILDERS)) {
-      problemBuilder.addError("Lombok annotations are not allowed on builder class.");
+      problemBuilder.addError(LombokBundle.message("inspection.message.lombok.annotations.are.not.allowed.on.builder.class"));
       return false;
     }
     return true;
@@ -178,7 +178,7 @@ public class BuilderHandler {
 
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError(String.format("@%s can be used on classes only", psiAnnotation.getQualifiedName()));
+      builder.addError(String.format(LombokBundle.message("inspection.message.s.can.be.used.on.classes.only"), psiAnnotation.getQualifiedName()));
       return false;
     }
     return true;
@@ -189,12 +189,12 @@ public class BuilderHandler {
     builderInfos.map(BuilderInfo::withObtainVia).filter(BuilderInfo::hasObtainViaAnnotation).forEach(builderInfo ->
     {
       if (StringUtil.isEmpty(builderInfo.getViaFieldName()) == StringUtil.isEmpty(builderInfo.getViaMethodName())) {
-        problemBuilder.addError("The syntax is either @ObtainVia(field = \"fieldName\") or @ObtainVia(method = \"methodName\").");
+        problemBuilder.addError(LombokBundle.message("inspection.message.syntax.either.obtain.via.field"));
         result.set(false);
       }
 
       if (StringUtil.isEmpty(builderInfo.getViaMethodName()) && builderInfo.isViaStaticCall()) {
-        problemBuilder.addError("@ObtainVia(isStatic = true) is not valid unless 'method' has been set.");
+        problemBuilder.addError(LombokBundle.message("inspection.message.obtain.via.is.static.true.not.valid.unless.method.has.been.set"));
         result.set(false);
       }
     });
