@@ -175,8 +175,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     @Override
     String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-      applicationInfo.isEAP ? "Android Studio ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} Preview.app"
-                            : "Android Studio.app"
+      applicationInfo.isEAP ? "Android Studio Preview.app" : "Android Studio.app"
     }
 
     @Override
