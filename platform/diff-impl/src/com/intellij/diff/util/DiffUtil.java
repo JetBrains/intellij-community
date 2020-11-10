@@ -1840,7 +1840,7 @@ public final class DiffUtil {
     @Override
     public Dimension getMinimumSize() {
       Dimension size = super.getMinimumSize();
-      size.height = getMaximumHeight(JComponent::getMinimumSize);
+      size.height = getMaximumHeight(JComponent::getPreferredSize);
       return size;
     }
 
