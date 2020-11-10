@@ -44,7 +44,7 @@ public class PlainTextIdIndexer implements IdIndexer {
 
     Map<IdIndexEntry, Integer> result = consumer.getResult();
 
-    if (TodoIndexers.needsTodoIndex(content.getFile()) &&
+    if (TodoIndexers.needsTodoIndex(content) &&
         IdIndex.isIndexable(PlainTextFileType.INSTANCE)) {
       content.putUserData(ID_INDEX_DATA_KEY, result);
     }

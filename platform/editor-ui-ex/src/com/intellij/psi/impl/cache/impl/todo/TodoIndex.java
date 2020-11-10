@@ -139,17 +139,20 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> {
-      if (!TodoIndexers.needsTodoIndex(file)) return false;
+    return new FileBasedIndex.ProjectSpecificInputFilter() {
+      @Override
+      public boolean acceptInput(@NotNull IndexedFile file) {
+        if (!TodoIndexers.needsTodoIndex(file)) return false;
 
-      final FileType fileType = file.getFileType();
+        final FileType fileType = file.getFileType();
 
-      if (fileType instanceof LanguageFileType) {
-        return LanguageParserDefinitions.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage()) != null;
+        if (fileType instanceof LanguageFileType) {
+          return LanguageParserDefinitions.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage()) != null;
+        }
+
+        return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
+               fileType instanceof CustomSyntaxTableFileType;
       }
-
-      return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
-             fileType instanceof CustomSyntaxTableFileType;
     };
   }
 

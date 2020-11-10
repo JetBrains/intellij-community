@@ -32,7 +32,7 @@ public final class BaseFilterLexerUtil {
     final boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
     IndexPattern[] todoPatterns = IndexPatternUtil.getIndexPatterns();
     if (!needIdIndex && todoPatterns.length <= 0) return EMPTY;
-    final boolean needTodo = TodoIndexers.needsTodoIndex(content.getFile()) || content.getFile() instanceof LightVirtualFile;
+    final boolean needTodo = TodoIndexers.needsTodoIndex(content) || content.getFile() instanceof LightVirtualFile;
 
     data = doScanContent(content, indexer, needIdIndex, needTodo, todoPatterns);
 

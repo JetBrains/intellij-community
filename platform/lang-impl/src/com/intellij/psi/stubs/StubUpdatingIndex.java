@@ -63,8 +63,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = StubUpdatingIndex::canHaveStub;
-
   @NotNull
   private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
@@ -89,6 +87,10 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   public static boolean canHaveStub(@NotNull VirtualFile file) {
     Project project = ProjectUtil.guessProjectForFile(file);
     FileType fileType = SubstitutedFileType.substituteFileType(file, file.getFileType(), project);
+    return canHaveStub(file, fileType);
+  }
+
+  private static boolean canHaveStub(@NotNull VirtualFile file, @NotNull FileType fileType) {
     if (fileType instanceof LanguageFileType) {
       final Language l = ((LanguageFileType)fileType).getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
@@ -345,7 +347,12 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return INPUT_FILTER;
+    return new FileBasedIndex.ProjectSpecificInputFilter() {
+      @Override
+      public boolean acceptInput(@NotNull IndexedFile file) {
+        return canHaveStub(file.getFile(), file.getFileType());
+      }
+    };
   }
 
   @Override

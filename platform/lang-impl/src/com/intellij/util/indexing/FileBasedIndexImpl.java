@@ -440,8 +440,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         state.registerIndex(name,
                             index,
-                            file -> file instanceof VirtualFileWithId && inputFilter.acceptInput(file) &&
-                                  !GlobalIndexFilter.isExcludedFromIndexViaFilters(file, name),
+                            composeInputFilter(inputFilter, file -> !GlobalIndexFilter.isExcludedFromIndexViaFilters(file, name)),
                             version + GlobalIndexFilter.getFiltersVersion(name),
                             addedTypes);
         break;
@@ -974,7 +973,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                             @NotNull final VirtualFile vFile) {
     myStorageBufferingHandler.assertTransientMode();
 
-    final PsiFile dominantContentFile = project == null ? null : findLatestKnownPsiForUncomittedDocument(document, project);
+    final PsiFile dominantContentFile = findLatestKnownPsiForUncomittedDocument(document, project);
 
     final DocumentContent content;
     // TODO seems we should choose the source with highest stamp!
@@ -993,7 +992,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     final CharSequence contentText = content.getText();
     getFileTypeManager().freezeFileTypeTemporarilyIn(vFile, () -> {
       if (getAffectedIndexCandidates(vFile).contains(requestedIndexId) &&
-          getInputFilter(requestedIndexId).acceptInput(vFile)) {
+          acceptsInput(requestedIndexId, new IndexedFileImpl(vFile, project))) {
         final int inputId = Math.abs(getFileId(vFile));
 
         if (!isTooLarge(vFile, (long)contentText.length())) {
@@ -1344,7 +1343,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
 
           final ID<?, ?> indexId = affectedIndexCandidates.get(i);
-          if (getInputFilter(indexId).acceptInput(file) && getIndexingState(fc, indexId).updateRequired()) {
+          if (acceptsInput(indexId, fc) && getIndexingState(fc, indexId).updateRequired()) {
             ProgressManager.checkCanceled();
             SingleIndexUpdateStats updateStats = updateSingleIndex(indexId, file, inputId, fc);
             if (updateStats == null) {
@@ -1655,13 +1654,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     // handle 'content-less' indices separately
     boolean fileIsDirectory = file.isDirectory();
+    IndexedFileImpl indexedFile = new IndexedFileImpl(file);
 
     if (!contentChange) {
       FileContent fileContent = null;
+
       for (ID<?, ?> indexId : getContentLessIndexes(fileIsDirectory)) {
-        if (getInputFilter(indexId).acceptInput(file)) {
+        if (acceptsInput(indexId, indexedFile)) {
           if (fileContent == null) {
-            fileContent = new IndexedFileWrapper(new IndexedFileImpl(file, null));
+            fileContent = new IndexedFileWrapper(indexedFile);
           }
           updateSingleIndex(indexId, file, fileId, fileContent);
         }
@@ -1686,7 +1687,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             //noinspection ForLoopReplaceableByForEach
             for (int i = 0, size = candidates.size(); i < size; ++i) {
               final ID<?, ?> indexId = candidates.get(i);
-              if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
+              if (needsFileContentLoading(indexId) && acceptsInput(indexId, indexedFile)) {
                 getIndex(indexId).invalidateIndexedStateForFile(fileId);
                 scheduleForUpdate = true;
               }
@@ -1751,7 +1752,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   FileIndexingState shouldIndexFile(@NotNull IndexedFile file, @NotNull ID<?, ?> indexId) {
-    if (!getInputFilter(indexId).acceptInput(file.getFile())) {
+    if (!acceptsInput(indexId, file)) {
       return getIndexingState(file, indexId) == FileIndexingState.NOT_INDEXED
              ? FileIndexingState.UP_TO_DATE
              : FileIndexingState.OUT_DATED;
@@ -1800,9 +1801,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       int fileId = ((VirtualFileWithId)virtualFile).getId();
       boolean wasIndexed = false;
       List<ID<?, ?>> candidates = getAffectedIndexCandidates(virtualFile);
+      IndexedFileImpl indexedFile = new IndexedFileImpl(virtualFile);
       for (ID<?, ?> candidate : candidates) {
         if (myRegisteredIndexes.isContentDependentIndex(candidate)) {
-          if(getInputFilter(candidate).acceptInput(virtualFile)) {
+          if(acceptsInput(candidate, indexedFile)) {
             getIndex(candidate).invalidateIndexedStateForFile(fileId);
             wasIndexed = true;
           }
@@ -1813,6 +1815,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         IndexingStamp.flushCache(fileId);
       }
     }
+  }
+
+  private boolean acceptsInput(@NotNull ID<?, ?> indexId, @NotNull IndexedFile indexedFile) {
+    InputFilter filter = getInputFilter(indexId);
+    return acceptsInput(filter, indexedFile);
   }
 
   @Override
@@ -1939,5 +1946,28 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       version += SnapshotInputMappings.getVersion();
     }
     return version;
+  }
+
+  public static boolean acceptsInput(@NotNull InputFilter filter, @NotNull IndexedFile indexedFile) {
+    if (filter instanceof ProjectSpecificInputFilter) {
+      if (indexedFile.getProject() == null) {
+        Project project = ProjectUtil.guessProjectForFile(indexedFile.getFile());
+        ((IndexedFileImpl)indexedFile).setProject(project);
+      }
+      return ((ProjectSpecificInputFilter)filter).acceptInput(indexedFile);
+    }
+    return filter.acceptInput(indexedFile.getFile());
+  }
+
+  @NotNull
+  public static InputFilter composeInputFilter(@NotNull InputFilter filter, @NotNull Predicate<VirtualFile> condition) {
+    return filter instanceof ProjectSpecificInputFilter
+    ? new ProjectSpecificInputFilter() {
+      @Override
+      public boolean acceptInput(@NotNull IndexedFile file) {
+        return ((ProjectSpecificInputFilter)filter).acceptInput(file) && condition.test(file.getFile());
+      }
+    }
+    : file -> filter.acceptInput(file) && condition.test(file);
   }
 }
