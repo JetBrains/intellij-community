@@ -253,7 +253,7 @@ public final class MavenIndicesManager implements Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           indicator.setIndeterminate(false);
-          doUpdateIndices(project, toSchedule, fullUpdate, new MavenProgressIndicator(indicator,null));
+          doUpdateIndices(project, toSchedule, fullUpdate, new MavenProgressIndicator(project, indicator, null));
         }
         catch (MavenProcessCanceledException ignore) {
         }

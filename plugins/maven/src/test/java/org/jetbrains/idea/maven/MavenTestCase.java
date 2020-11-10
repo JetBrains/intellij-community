@@ -51,9 +51,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
                                                             "        <maven.compiler.target>1.7</maven.compiler.target>\n" +
                                                             "</properties>\n";
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
-  // should not be static
-  protected static MavenProgressIndicator EMPTY_MAVEN_PROCESS =
-    new MavenProgressIndicator(new EmptyProgressIndicator(ModalityState.NON_MODAL), null);
+  private MavenProgressIndicator myProgressIndicator;
 
   private File ourTempDir;
 
@@ -79,6 +77,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     setUpFixtures();
 
     myProject = myTestFixture.getProject();
+    myProgressIndicator = new MavenProgressIndicator(myProject, new EmptyProgressIndicator(ModalityState.NON_MODAL), null);
 
     MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
 
@@ -151,6 +150,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
     File projectDir = new File(myDir, "project");
     projectDir.mkdirs();
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
+  }
+
+  protected MavenProgressIndicator getMavenProgressIndicator() {
+    return myProgressIndicator;
   }
 
   private static void printDirectoryContent(File dir) {

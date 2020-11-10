@@ -904,7 +904,13 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       if (myPostProcessor != null) {
         myPostProcessor.waitForCompletion();
       }
-      promise.setResult(null);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        MavenProgressIndicator.MavenProgressTracker mavenProgressTracker = myProject.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
+        if (mavenProgressTracker != null) {
+          mavenProgressTracker.waitForProgressCompletion();
+        }
+        promise.setResult(null);
+      });
     });
     return promise;
   }
@@ -1172,7 +1178,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public void waitForImportFinishCompletion() {
-    completeMavenSyncOnImportCompletion(mySyncConsole);
+    completeMavenSyncOnImportCompletion(getSyncConsole());
   }
 
 

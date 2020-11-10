@@ -470,7 +470,7 @@ public final class MavenUtil {
       @Override
       public void run(@NotNull ProgressIndicator i) {
         try {
-          task.run(new MavenProgressIndicator(i, null));
+          task.run(new MavenProgressIndicator(project, i, null));
         }
         catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
@@ -509,7 +509,7 @@ public final class MavenUtil {
                                                      ExecutorService executorService) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
-    final MavenProgressIndicator indicator = new MavenProgressIndicator(manager::getSyncConsole);
+    final MavenProgressIndicator indicator = new MavenProgressIndicator(project, manager::getSyncConsole);
 
     Runnable runnable = () -> {
       if (project.isDisposed()) return;
