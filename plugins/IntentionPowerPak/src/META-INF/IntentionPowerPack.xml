@@ -344,11 +344,6 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.opassign.ReplaceWithOperatorAssignmentIntention</className>
-      <bundleName>messages.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.opassign.ReplaceOperatorAssignmentWithAssignmentIntention</className>
       <bundleName>messages.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>

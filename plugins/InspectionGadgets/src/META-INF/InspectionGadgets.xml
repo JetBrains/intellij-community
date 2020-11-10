@@ -134,8 +134,8 @@
                      level="WARNING" implementationClass="com.siyeh.ig.assignment.NestedAssignmentInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="AssignmentReplaceableWithOperatorAssignment" shortName="ReplaceAssignmentWithOperatorAssignment"
                      bundle="messages.InspectionGadgetsBundle" key="assignment.replaceable.with.operator.assignment.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.assignment.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.assignment.ReplaceAssignmentWithOperatorAssignmentInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.assignment.issues" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.assignment.ReplaceAssignmentWithOperatorAssignmentInspection"/>
 
     <!--group.names.bitwise.operation.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="IncompatibleBitwiseMaskOperation" shortName="IncompatibleMask" bundle="messages.InspectionGadgetsBundle"
