@@ -10,5 +10,6 @@
     <plugin id="com.intellij.properties" />
     <plugin id="com.intellij.uiDesigner" />
     <plugin id="org.intellij.groovy" />
+    <plugin id="org.editorconfig.editorconfigjetbrains" />
   </component>
 </project>
