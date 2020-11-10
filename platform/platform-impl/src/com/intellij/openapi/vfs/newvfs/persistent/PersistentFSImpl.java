@@ -385,7 +385,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         result.set(child);
         return children;
       }
-      Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null);
+      Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null); // todo: use BatchingFileSystem
       if (childData == null) {
         return children;
       }
