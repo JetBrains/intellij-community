@@ -64,7 +64,6 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
     myFocusTrackerSupport = new FocusTrackerSupport.Threeside(myHolders);
     myContentPanel = new ThreesideContentPanel.Holders(myHolders);
-    myContentPanel.setTitles(createTitles());
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 300);
     myLoadingPanel.add(myContentPanel, BorderLayout.CENTER);
@@ -76,6 +75,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   protected void onInit() {
     super.onInit();
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
+    myContentPanel.setTitles(createTitles());
   }
 
   @Override

@@ -82,6 +82,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
   @NotNull private final UnifiedDiffPanel myPanel;
+  @NotNull private final OnesideContentPanel myContentPanel;
 
   @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
@@ -123,13 +124,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
 
-    OnesideContentPanel contentPanel = new OnesideContentPanel(myEditor.getComponent());
-    contentPanel.setTitle(createTitles());
+    myContentPanel = new OnesideContentPanel(myEditor.getComponent());
     if (getProject() != null) {
-      contentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
+      myContentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
     }
 
-    myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
+    myPanel = new UnifiedDiffPanel(myProject, myContentPanel, this, myContext);
 
     myFoldingModel = new MyFoldingModel(getProject(), myEditor, this);
     myMarkupUpdater = new MarkupUpdater(getContents());
@@ -155,6 +155,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
+    myContentPanel.setTitle(createTitles());
 
     new UiNotifyConnector(getComponent(), new Activatable() {
       @Override
