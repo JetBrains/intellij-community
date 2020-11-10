@@ -117,20 +117,6 @@ public final class DiffDividerDrawUtil {
   }
 
   @NotNull
-  private static DividerPolygon createPolygon(@NotNull Editor editor1, @NotNull Editor editor2,
-                                              int startLine1, int endLine1,
-                                              int startLine2, int endLine2,
-                                              @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
-    int topOffset1 = getEditorTopOffset(editor1);
-    int topOffset2 = getEditorTopOffset(editor2);
-    DiffDrawUtil.MarkerRange range1 = DiffDrawUtil.getGutterMarkerPaintRange(editor1, startLine1, endLine1);
-    DiffDrawUtil.MarkerRange range2 = DiffDrawUtil.getGutterMarkerPaintRange(editor2, startLine2, endLine2);
-    return new DividerPolygon(range1.y1 + topOffset1, range2.y1 + topOffset2,
-                              range1.y2 + topOffset1, range2.y2 + topOffset2,
-                              fillColor, borderColor, dottedBorder);
-  }
-
-  @NotNull
   private static DividerSeparator createSeparator(@NotNull Editor editor1, @NotNull Editor editor2,
                                                   int line1, int line2, int height1, int height2,
                                                   @Nullable EditorColorsScheme scheme) {
@@ -217,6 +203,20 @@ public final class DiffDividerDrawUtil {
                                      painter.isDottedBorder()));
       }
       return true;
+    }
+
+    @NotNull
+    private static DividerPolygon createPolygon(@NotNull Editor editor1, @NotNull Editor editor2,
+                                                int startLine1, int endLine1,
+                                                int startLine2, int endLine2,
+                                                @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
+      int topOffset1 = getEditorTopOffset(editor1);
+      int topOffset2 = getEditorTopOffset(editor2);
+      DiffDrawUtil.MarkerRange range1 = DiffDrawUtil.getGutterMarkerPaintRange(editor1, startLine1, endLine1);
+      DiffDrawUtil.MarkerRange range2 = DiffDrawUtil.getGutterMarkerPaintRange(editor2, startLine2, endLine2);
+      return new DividerPolygon(range1.y1 + topOffset1, range2.y1 + topOffset2,
+                                range1.y2 + topOffset1, range2.y2 + topOffset2,
+                                fillColor, borderColor, dottedBorder);
     }
 
     private static class DefaultPainter implements Painter {
