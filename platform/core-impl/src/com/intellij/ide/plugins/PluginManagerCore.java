@@ -242,27 +242,27 @@ public final class PluginManagerCore {
 
   private static Map<PluginId, Set<String>> readBrokenPluginFile() {
     Map<PluginId, Set<String>> result = new HashMap<>();
-    try (BufferedReader br = new BufferedReader(
-      new InputStreamReader(PluginManagerCore.class.getResourceAsStream(BROKEN_PLUGIN_FILE), StandardCharsets.UTF_8))
-    ) {
-      String s;
-      while ((s = br.readLine()) != null) {
-        s = s.trim();
-        if (s.startsWith("//")) {
-          continue;
+    try (InputStream fileStream = PluginManagerCore.class.getResourceAsStream(BROKEN_PLUGIN_FILE)) {
+      if (fileStream == null) return result;
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(fileStream, StandardCharsets.UTF_8))){
+        String s;
+        while ((s = br.readLine()) != null) {
+          s = s.trim();
+          if (s.startsWith("//")) {
+            continue;
+          }
+          List<String> tokens = ParametersListUtil.parse(s);
+          if (tokens.isEmpty()) {
+            continue;
+          }
+          if (tokens.size() == 1) {
+            throw new RuntimeException(
+              BROKEN_PLUGIN_FILE + " is broken. The line contains plugin name, but does not contains version: " + s);
+          }
+          PluginId pluginId = PluginId.getId(tokens.get(0));
+          List<String> versions = tokens.subList(1, tokens.size());
+          result.computeIfAbsent(pluginId, k -> new HashSet<>()).addAll(versions);
         }
-        List<String> tokens = ParametersListUtil.parse(s);
-        if (tokens.isEmpty()) {
-          continue;
-        }
-        if (tokens.size() == 1) {
-          throw new RuntimeException(
-            BROKEN_PLUGIN_FILE + " is broken. The line contains plugin name, but does not contains version: " + s);
-        }
-
-        PluginId pluginId = PluginId.getId(tokens.get(0));
-        List<String> versions = tokens.subList(1, tokens.size());
-        result.computeIfAbsent(pluginId, k -> new HashSet<>()).addAll(versions);
       }
     }
     catch (IOException e) {
