@@ -19,9 +19,6 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
-import org.jetbrains.jps.util.JpsPathUtil
-import java.nio.file.Files
-import java.nio.file.attribute.BasicFileAttributes
 
 internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<LibraryEntity> {
   override val componentName: String
@@ -80,10 +77,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
     get() = LibraryEntity::class.java
 
   override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
-                            reader: JpsFileContentReader,
-                            errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager,
-                            entitiesTrack: MutableMap<Any, Any>) {
+                            reader: JpsFileContentReader, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
     val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return
     for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
       val source = createEntitySource(libraryTag) ?: continue
@@ -92,34 +86,14 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
       val libraryId = LibraryId(name, libraryTableId)
       val existingLibraryEntity = builder.resolve(libraryId)
       if (existingLibraryEntity != null) {
-        val attr = try {
-          Files.readAttributes(JpsPathUtil.urlToFile(fileUrl.url).toPath(), BasicFileAttributes::class.java)
-        }
-        catch (e: Exception) {
-          null
-        }
-        val previousUrl = entitiesTrack[libraryId] as? String
-        val prevAttr = try {
-          previousUrl?.let { Files.readAttributes(JpsPathUtil.urlToFile(it).toPath(), BasicFileAttributes::class.java) }
-        }
-        catch (e: Exception) {
-          null
-        }
         logger<JpsLibraryEntitiesSerializer>().error("""Error during entities loading
           |Entity with this library id already exists.
           |Library id: $libraryId
           |fileUrl: ${fileUrl.presentableUrl}
-          |File url creation time: ${attr?.creationTime()}
-          |File url modification time: ${attr?.lastModifiedTime()}
-          |Previous file url: $previousUrl
-          |Prev file url creation time: ${prevAttr?.creationTime()}
-          |Prev file url modification time: ${prevAttr?.lastModifiedTime()}
           |library table id: $libraryTableId
           |internal entity source: $internalEntitySource
         """.trimMargin())
       }
-
-      entitiesTrack[libraryId] = fileUrl.url
 
       loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager)
     }
@@ -141,28 +115,6 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   }
 
   protected open fun getExternalSystemId(libraryEntity: LibraryEntity): String? = null
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is JpsLibraryEntitiesSerializer) return false
-
-    if (fileUrl != other.fileUrl) return false
-    if (internalEntitySource != other.internalEntitySource) return false
-    if (libraryTableId != other.libraryTableId) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = fileUrl.hashCode()
-    result = 31 * result + internalEntitySource.hashCode()
-    result = 31 * result + libraryTableId.hashCode()
-    return result
-  }
-
-  override fun toString(): String {
-    return "JpsLibraryEntitiesSerializer(fileUrl=$fileUrl, internalEntitySource=$internalEntitySource, libraryTableId=$libraryTableId)"
-  }
 }
 
 private const val DEFAULT_JAR_DIRECTORY_TYPE = "CLASSES"

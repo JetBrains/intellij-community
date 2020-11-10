@@ -209,8 +209,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val tmpBuilder = WorkspaceEntityStorageBuilder.create()
     val unloaded = unloadedModulePaths.map { modulePath ->
       loadAndReportErrors {
-        serializers.findModuleSerializer(modulePath)!!.loadEntities(tmpBuilder, fileContentReader, it, virtualFileManager,
-                                                                    HashMap())
+        serializers.findModuleSerializer(modulePath)!!.loadEntities(tmpBuilder, fileContentReader, it, virtualFileManager)
       }
 
       val moduleEntity = tmpBuilder.resolve(ModuleId(modulePath.moduleName)) ?: return@map null

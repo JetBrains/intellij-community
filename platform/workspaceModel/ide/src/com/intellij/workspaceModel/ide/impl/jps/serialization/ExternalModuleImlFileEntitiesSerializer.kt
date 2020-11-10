@@ -29,8 +29,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
                             reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager,
-                            entitiesTrack: MutableMap<Any, Any>) {
+                            virtualFileManager: VirtualFileUrlManager) {
   }
 
   override fun acceptsSource(entitySource: EntitySource): Boolean {

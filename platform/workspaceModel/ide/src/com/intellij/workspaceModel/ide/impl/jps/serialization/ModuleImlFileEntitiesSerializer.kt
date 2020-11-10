@@ -38,6 +38,7 @@ import java.nio.file.Paths
 import java.util.*
 import kotlin.Comparator
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 private const val MODULE_ROOT_MANAGER_COMPONENT_NAME = "NewModuleRootManager"
 private const val URL_ATTRIBUTE = "url"
@@ -65,10 +66,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   override fun hashCode() = modulePath.hashCode()
 
   override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
-                            reader: JpsFileContentReader,
-                            errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager,
-                            entitiesTrack: MutableMap<Any, Any>) {
+                            reader: JpsFileContentReader, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
     val externalStorageEnabled = externalStorageConfigurationManager?.isEnabled ?: false
     if (!externalStorageEnabled) {
       val moduleEntity = loadModuleEntity(reader, builder, errorReporter, virtualFileManager)

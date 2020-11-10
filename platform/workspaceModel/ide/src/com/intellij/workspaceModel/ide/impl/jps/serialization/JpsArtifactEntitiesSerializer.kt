@@ -76,8 +76,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
                             reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager,
-                            entitiesTrack: MutableMap<Any, Any>) {
+                            virtualFileManager: VirtualFileUrlManager) {
     val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
     if (artifactListElement == null) return
 
