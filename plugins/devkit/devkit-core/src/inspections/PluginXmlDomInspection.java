@@ -367,7 +367,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkTemplateTextContains(ideaPlugin.getDescription(), "most HTML tags may be used", holder);
 
     checkMaxLength(ideaPlugin.getChangeNotes(), 65535, holder);
-    checkHasRealText(ideaPlugin.getChangeNotes(), 40, holder);
     checkTemplateTextContains(ideaPlugin.getChangeNotes(), "Add change notes here", holder);
     checkTemplateTextContains(ideaPlugin.getChangeNotes(), "most HTML tags may be used", holder);
 
