@@ -19,6 +19,7 @@ public final class SendToFavoritesAction extends AnAction implements DumbAware {
   private final String toName;
 
   public SendToFavoritesAction(String name) {
+    //noinspection HardCodedStringLiteral
     super(name);
     toName = name;
   }
