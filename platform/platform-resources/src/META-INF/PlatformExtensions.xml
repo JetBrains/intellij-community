@@ -778,6 +778,7 @@
     <search.projectOptionsTopHitProvider implementation="com.intellij.ide.ui.InspectionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.RegistryOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.PluginOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsOptionProvider"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.marketplace.PluginModulesHelper"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivity"/>
