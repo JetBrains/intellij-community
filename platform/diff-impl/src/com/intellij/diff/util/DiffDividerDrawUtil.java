@@ -80,9 +80,9 @@ public final class DiffDividerDrawUtil {
     return handler.getPolygons();
   }
 
-  private static boolean isIntervalVisible(@NotNull Editor editor, int startLine, int endLine) {
+  private static boolean isIntervalFolded(@NotNull Editor editor, int startLine, int endLine) {
     TextRange range = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine);
-    return !FoldingUtil.isTextRangeFolded(editor, range);
+    return FoldingUtil.isTextRangeFolded(editor, range);
   }
 
   @NotNull
@@ -147,7 +147,7 @@ public final class DiffDividerDrawUtil {
                                 @NotNull TextDiffType type, boolean resolved);
 
       boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
-                                @NotNull TextDiffType type, boolean excluded);
+                                @NotNull TextDiffType type, boolean excluded, boolean skipped);
     }
   }
 
@@ -186,8 +186,8 @@ public final class DiffDividerDrawUtil {
 
     @Override
     public boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
-                                     @NotNull TextDiffType type, boolean excluded) {
-      return process(startLine1, endLine1, startLine2, endLine2, new ExcludablePainter(type, excluded));
+                                     @NotNull TextDiffType type, boolean excluded, boolean skipped) {
+      return process(startLine1, endLine1, startLine2, endLine2, new ExcludablePainter(type, excluded, skipped));
     }
 
     private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
@@ -195,8 +195,10 @@ public final class DiffDividerDrawUtil {
       if (myLeftInterval.start > endLine1 && myRightInterval.start > endLine2) return true;
       if (myLeftInterval.end < startLine1 && myRightInterval.end < startLine2) return false;
 
-      if (isIntervalVisible(myEditor1, startLine1, endLine1) ||
-          isIntervalVisible(myEditor2, startLine2, endLine2)) {
+      // Hide folded changes from non-current changelist in Local Changes.
+      boolean isFolded = isIntervalFolded(myEditor1, startLine1, endLine1) &&
+                         isIntervalFolded(myEditor2, startLine2, endLine2);
+      if (!isFolded || painter.isAlwaysVisible()) {
         myPolygons.add(createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2,
                                      painter.getFillColor(myEditor2),
                                      painter.getBorderColor(myEditor2),
@@ -240,6 +242,11 @@ public final class DiffDividerDrawUtil {
       public boolean isDottedBorder() {
         return false;
       }
+
+      @Override
+      public boolean isAlwaysVisible() {
+        return true;
+      }
     }
 
     private static class ResolvablePainter implements Painter {
@@ -265,15 +272,22 @@ public final class DiffDividerDrawUtil {
       public boolean isDottedBorder() {
         return myResolved;
       }
+
+      @Override
+      public boolean isAlwaysVisible() {
+        return !myResolved;
+      }
     }
 
     private static class ExcludablePainter implements Painter {
       private final TextDiffType myType;
       private final boolean myExcluded;
+      private final boolean mySkipped;
 
-      private ExcludablePainter(@NotNull TextDiffType type, boolean excluded) {
+      private ExcludablePainter(@NotNull TextDiffType type, boolean excluded, boolean skipped) {
         myType = type;
         myExcluded = excluded;
+        mySkipped = skipped;
       }
 
       @Override
@@ -291,6 +305,11 @@ public final class DiffDividerDrawUtil {
       public boolean isDottedBorder() {
         return false;
       }
+
+      @Override
+      public boolean isAlwaysVisible() {
+        return !mySkipped;
+      }
     }
 
     private interface Painter {
@@ -299,6 +318,8 @@ public final class DiffDividerDrawUtil {
       @Nullable Color getBorderColor(@NotNull Editor editor);
 
       boolean isDottedBorder();
+
+      boolean isAlwaysVisible();
     }
   }
 
