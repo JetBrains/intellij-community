@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.api.model
 
 import com.google.gson.annotations.SerializedName
+import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.packagesearch.intellij.plugin.api.RequiresWhitespaceCleanup
 
 data class StandardV2Package(
@@ -11,10 +12,12 @@ data class StandardV2Package(
     @SerializedName("artifact_id")
     val artifactId: String,
 
+    @NlsSafe
     @RequiresWhitespaceCleanup
     @SerializedName("name")
     val name: String,
 
+    @NlsSafe
     @RequiresWhitespaceCleanup
     @SerializedName("description")
     val description: String?,

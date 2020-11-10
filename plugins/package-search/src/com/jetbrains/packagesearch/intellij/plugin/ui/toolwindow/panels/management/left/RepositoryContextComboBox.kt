@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.ui.SizedIcon
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ui.ColorIcon
@@ -51,8 +52,8 @@ class RepositoryContextComboBox(viewModel: PackageSearchToolWindowModel) : Conte
                 createSelectAction(it, it.localizedName())
             }
 
-    private fun createSelectAction(repository: V2Repository?, title: String) =
-        object : ToggleAction(title, title, createIcon(repository)) {
+    private fun createSelectAction(repository: V2Repository?, @ActionText title: String) =
+        object : ToggleAction(title, null, createIcon(repository)) {
             fun isSelected() = viewModel.selectedRemoteRepository.value == repository
 
             override fun update(e: AnActionEvent) {

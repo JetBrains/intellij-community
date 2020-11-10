@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
+import com.jetbrains.packagesearch.intellij.plugin.normalizeSpace
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderColor
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDependency
@@ -32,7 +33,7 @@ class PackagesChosenTitleView {
 
     fun refreshUI(meta: PackageSearchDependency) {
         if (meta.remoteInfo?.name != null && meta.remoteInfo?.name != meta.identifier) {
-            idLabel.text = StringUtils.normalizeSpace(meta.remoteInfo?.name)
+            idLabel.text = meta.remoteInfo?.name.normalizeSpace()
             identifierLabel.text = meta.identifier
         } else {
             idLabel.text = meta.identifier

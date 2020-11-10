@@ -14,13 +14,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsContexts.Checkbox
+import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.Gray
-import com.intellij.ui.JBColor
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.RelativeFont
-import com.intellij.ui.RowIcon
+import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBDimension
@@ -29,44 +26,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.FlowLayout
-import java.awt.Font
-import java.awt.Graphics
-import java.awt.Point
-import java.awt.Rectangle
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import java.awt.event.MouseListener
+import org.jetbrains.annotations.Nls
+import java.awt.*
+import java.awt.event.*
 import java.io.File
-import javax.swing.AbstractAction
-import javax.swing.AbstractCellEditor
-import javax.swing.BorderFactory
-import javax.swing.BoxLayout
-import javax.swing.ComboBoxModel
-import javax.swing.DefaultListModel
-import javax.swing.Icon
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JMenuItem
-import javax.swing.JPanel
-import javax.swing.JPopupMenu
-import javax.swing.JScrollPane
-import javax.swing.JTable
-import javax.swing.JTextField
-import javax.swing.KeyStroke
-import javax.swing.MenuElement
-import javax.swing.MenuSelectionManager
-import javax.swing.Scrollable
+import javax.swing.*
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 import javax.swing.tree.MutableTreeNode
@@ -120,11 +84,11 @@ class RiderUI {
             override fun getBackground() = backgroundColor
         }.apply(init)
 
-        fun checkBox(title: String) = object : JCheckBox(title) {
+        fun checkBox(@Checkbox title: String) = object : JCheckBox(title) {
             override fun getBackground() = UsualBackgroundColor
         }
 
-        fun menuItem(title: String, icon: Icon?, handler: () -> Unit): JMenuItem {
+        fun menuItem(@Nls title: String, icon: Icon?, handler: () -> Unit): JMenuItem {
             if (icon != null) {
                 return JMenuItem(title, icon).apply { addActionListener { handler() } }
             }
@@ -148,10 +112,10 @@ class RiderUI {
         }
 
         fun createLabel() = JLabel().apply { font = UIUtil.getLabelFont() }
-        fun createHeaderLabel(text: String = "") = JLabel(text).apply { font = HeaderFont }
-        fun createBigLabel(text: String = "") = JLabel(text).apply { font = BigFont }
+        fun createHeaderLabel(@Label text: String = "") = JLabel(text).apply { font = HeaderFont }
+        fun createBigLabel(@Label text: String = "") = JLabel(text).apply { font = BigFont }
 
-        fun createPlatformTag(text: String = "") = object : TagComponent(text.toLowerCase()) {
+        fun createPlatformTag(@Nls text: String = "") = object : TagComponent(text.toLowerCase()) {
             override fun isInClickableArea(pt: Point?) = false
         }.apply {
             RelativeFont.TINY.install(this)
@@ -160,7 +124,7 @@ class RiderUI {
         fun toHtml(color: Color) = String.format("#%02x%02x%02x", color.red, color.green, color.blue)
 
         fun getTextColor(isSelected: Boolean) = when {
-            isSelected -> RiderColor(UIUtil.getListSelectionForeground())
+            isSelected -> RiderColor(UIUtil.getListSelectionForeground(true))
             else -> RiderColor(UIUtil.getListForeground())
         }
 

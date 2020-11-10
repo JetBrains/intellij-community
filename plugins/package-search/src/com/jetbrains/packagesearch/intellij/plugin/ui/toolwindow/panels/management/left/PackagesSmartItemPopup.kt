@@ -69,6 +69,7 @@ class PackagesSmartItemPopup(viewModel: PackageSearchToolWindowModel, private va
                 else -> PackageSearchBundle.message("packagesearch.ui.toolwindow.selectedModules").toLowerCase()
             }
 
+            @Suppress("HardCodedStringLiteral") // Formatting into a non-locale-specific format
             val message = operation.htmlDescription.replace("</html>", " - <b>$projectsMessage</b></html>")
             add(RiderUI.menuItem(message, operation.icon) {
                 packageOperationUtility.doOperation(operation, packageOperationTargets, operationTargetVersion)

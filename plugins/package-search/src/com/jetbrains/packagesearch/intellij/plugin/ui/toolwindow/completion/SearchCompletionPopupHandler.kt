@@ -1,9 +1,9 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.completion
 
 import com.intellij.ide.plugins.newui.SearchPopupCallback
-import com.intellij.openapi.ui.popup.JBPopupAdapter
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SearchTextField
 import com.jetbrains.packagesearch.intellij.plugin.api.query.SearchQueryCompletionModel
@@ -19,7 +19,7 @@ class SearchCompletionPopupHandler(
 ) {
 
     private var popup: SearchCompletionPopup? = null
-    private val popupListener: JBPopupListener = object : JBPopupAdapter() {
+    private val popupListener: JBPopupListener = object : JBPopupListener {
         override fun onClosed(event: LightweightWindowEvent) {
             popup = null
         }
@@ -116,9 +116,15 @@ class SearchCompletionPopupHandler(
         }
 
         val renderer = object : ColoredListCellRenderer<String>() {
-            override fun customizeCellRenderer(list: JList<out String>, value: String?, index: Int, selected: Boolean, hasFocus: Boolean) {
-                append(value as String)
-            }
+          override fun customizeCellRenderer(
+            list: JList<out String>,
+            @NlsSafe value: String?,
+            index: Int,
+            selected: Boolean,
+            hasFocus: Boolean
+          ) {
+            append(value as String)
+          }
         }
 
         popup = SearchCompletionPopup(

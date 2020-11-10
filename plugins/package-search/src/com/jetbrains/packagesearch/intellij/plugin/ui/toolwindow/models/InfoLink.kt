@@ -1,8 +1,9 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import org.jetbrains.annotations.Nls
 
-enum class InfoLink(val displayName: String) {
+enum class InfoLink(@Nls val displayName: String) {
     PROJECT_SITE(PackageSearchBundle.message("packagesearch.ui.toolwindow.link.projectSite")),
     DOCUMENTATION(PackageSearchBundle.message("packagesearch.ui.toolwindow.link.documentation")),
     README(PackageSearchBundle.message("packagesearch.ui.toolwindow.link.readme")),

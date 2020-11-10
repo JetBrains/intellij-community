@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.ui.JBInsets
@@ -12,13 +13,15 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.RiderUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstallationInformation.Companion.DEFAULT_SCOPE
 import icons.PackageSearchIcons
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import javax.swing.Icon
 import javax.swing.JButton
 
 class PackageOperationTargetScope(val scopesModel: CollectionComboBoxModel<String>) {
 
-    fun getSelectedValue(): String = scopesModel.selected!!
+    @NlsSafe
+    fun getSelectedScope(): String = scopesModel.selected!!
 }
 
 class PackageOperationTarget(
