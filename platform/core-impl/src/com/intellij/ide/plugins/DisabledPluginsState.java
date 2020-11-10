@@ -18,10 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-
-import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
-import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+import java.util.function.Function;
 
 public final class DisabledPluginsState {
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
@@ -177,11 +174,14 @@ public final class DisabledPluginsState {
   static void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins,
                             boolean enabled,
                             boolean updateDescriptors) {
-    enablePluginsById(
-      map2SetNotNull(plugins, PluginDescriptor::getPluginId),
-      enabled,
-      updateDescriptors
-    );
+    Set<PluginId> pluginIds = new LinkedHashSet<>(plugins.size());
+    for (PluginDescriptor descriptor : plugins) {
+      PluginId value = descriptor.getPluginId();
+      if (value != null) {
+        pluginIds.add(value);
+      }
+    }
+    enablePluginsById(pluginIds, enabled, updateDescriptors);
   }
 
   public static void enablePluginsById(@NotNull Collection<PluginId> plugins, boolean enabled) {
@@ -199,12 +199,22 @@ public final class DisabledPluginsState {
 
     String message;
     if (updateDescriptors) {
-      List<IdeaPluginDescriptor> descriptors = mapNotNull(plugins, PluginManagerCore::getPlugin);
+      List<IdeaPluginDescriptor> descriptors = new ArrayList<>(plugins.size());
+      Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+      for (PluginId pluginId : plugins) {
+        IdeaPluginDescriptor o = pluginIdMap.get(pluginId);
+        if (o != null) {
+          descriptors.add(o);
+        }
+      }
+
       message = joinedDescriptors(descriptors, enabled);
-      descriptors.forEach(descriptor -> descriptor.setEnabled(enabled));
+      for (IdeaPluginDescriptor descriptor : descriptors) {
+        descriptor.setEnabled(enabled);
+      }
     }
     else {
-      message = joinedPluginIds(plugins, enabled);
+      message = joinedPluginIds(plugins, Function.identity(), enabled);
     }
     getLogger().info(message);
 
@@ -253,28 +263,31 @@ public final class DisabledPluginsState {
     ourDisabledPlugins = null;
   }
 
-  private static @NotNull String joinedDescriptors(@NotNull Collection<? extends PluginDescriptor> descriptors,
-                                                   boolean enabled) {
-    return joinedPluginIds(
-      mapNotNull(descriptors, PluginDescriptor::getPluginId),
-      enabled
-    );
+  private static @NotNull String joinedDescriptors(@NotNull Collection<? extends PluginDescriptor> descriptors, boolean enabled) {
+    return joinedPluginIds(descriptors, PluginDescriptor::getPluginId, enabled);
   }
 
-  private static @NotNull String joinedPluginIds(@NotNull Collection<PluginId> pluginIds,
-                                                 boolean enabled) {
+  private static @NotNull <T> String joinedPluginIds(@NotNull Collection<T> pluginIds, @NotNull Function<T, PluginId> pluginIdGetter, boolean enabled) {
     StringBuilder buffer = new StringBuilder("Plugins to ")
       .append(enabled ? "enable" : "disable")
       .append(": [");
 
-    join(
-      pluginIds,
-      PluginId::getIdString,
-      ", ",
-      buffer
-    );
-    return buffer
-      .append(']')
-      .toString();
+    boolean isFirst = true;
+    for (T item : pluginIds) {
+      PluginId pluginId = pluginIdGetter.apply(item);
+      if (pluginId == null) {
+        continue;
+      }
+
+      CharSequence string = pluginId.getIdString();
+      if (isFirst) {
+        isFirst = false;
+      }
+      else {
+        buffer.append(", ");
+      }
+      buffer.append(string);
+    }
+    return buffer.append(']').toString();
   }
 }
