@@ -49,7 +49,7 @@ import javax.swing.text.View
  * with gotItTooltipAllowlist extension point. Prefix can cover a whole class of different gotit tooltips.
  * If prefix is shorter than the whole ID then all different tooltip usages will be reported in one category described by the prefix.
  */
-class GotItTooltip(@NonNls val id: String, @Nls val text: String, val parentDisposable: Disposable) : Disposable {
+class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposable: Disposable) : Disposable {
   private class ActionContext(val tooltip: GotItTooltip, val pointProvider: (Component) -> Point)
 
   @Nls
@@ -194,10 +194,19 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val parentDisp
   }
 
   /**
-   * Is this tooltip can be shown at the given properties settings.
+   * Returns <code>true</code> if this tooltip can be shown at the given properties settings.
    */
   fun canShow() : Boolean = canShow("$PROPERTY_PREFIX.$id")
 
+  /**
+   * Show tooltip for the given component and point on the component.
+   * If the component is showing (see <code>Component.isShowing</code>) and has non empty bounds then
+   * the tooltip is show right away.
+   * If the component is showing by has empty bounds (technically not visible) then tooltip is shown asynchronously
+   * when component gets resized to non empty bounds.
+   * If the component is not showing then tooltip is shown asynchronously when component is added to the hierarchy and
+   * gets non empty bounds.
+   */
   fun show(component: JComponent, pointProvider: (Component) -> Point) {
     if (canShow()) {
       if (component.isShowing) {
@@ -207,7 +216,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val parentDisp
         else {
           component.addComponentListener(object : ComponentAdapter() {
             override fun componentResized(componentEvent: ComponentEvent?) {
-              componentEvent?.let{ showImpl(it.source as JComponent, pointProvider) }
+              componentEvent?.let { if (!it.component.bounds.isEmpty) showImpl(it.component as JComponent, pointProvider) }
             }
           }.also{ Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
         }
@@ -222,7 +231,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val parentDisp
               else {
                 ae.component.addComponentListener(object : ComponentAdapter() {
                   override fun componentResized(componentEvent: ComponentEvent?) {
-                    componentEvent?.let{ ce -> showImpl(ce.source as JComponent, pointProvider) }
+                    componentEvent?.let{ ce -> if (!ce.component.bounds.isEmpty) showImpl(ce.component as JComponent, pointProvider) }
                   }
                 }.also{ Disposer.register(this@GotItTooltip, Disposable { component.removeComponentListener(it) }) })
               }
@@ -241,16 +250,27 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val parentDisp
     }
   }
 
+  /**
+   * Bind the tooltip to action's presentation. Then <code>ActionToolbar</code> starts following ActionButton with
+   * the tooltip if it can be shown. Term "follow" is used because ActionToolbar updates it's content and ActionButton's
+   * JComponent showing status / location may change in time.
+   */
   fun assignTo(presentation: Presentation, pointProvider: (Component) -> Point) {
     presentation.putClientProperty(PRESENTATION_KEY, ActionContext(this, pointProvider))
   }
 
   private fun showImpl(component: JComponent, pointProvider: (Component) -> Point) {
-    if (component.getClientProperty(PROPERTY_PREFIX) == null && canShow()) {
-      val tracker = object : PositionTracker<Balloon> (component) {
-        override fun recalculateLocation(balloon: Balloon): RelativePoint = RelativePoint(component, pointProvider(component))
+    if (canShow()) {
+      val balloonProperty = UIUtil.getClientProperty(component, BALLOON_PROPERTY)
+      if (balloonProperty == null) {
+        val tracker = object : PositionTracker<Balloon> (component) {
+          override fun recalculateLocation(balloon: Balloon): RelativePoint = RelativePoint(component, pointProvider(component))
+        }
+        balloon = createAndShow(tracker).also { UIUtil.putClientProperty(component, BALLOON_PROPERTY, it) }
       }
-      balloon = createAndShow(tracker).also { component.putClientProperty(PROPERTY_PREFIX, it) }
+      else if ((balloonProperty as BalloonImpl).isVisible) {
+        (balloon as BalloonImpl).revalidate()
+      }
     }
     else {
       hideBalloon()
@@ -258,6 +278,10 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val parentDisp
     }
   }
 
+  /**
+   * Chain this tooltip showing after another determined with the tooltip parameter.
+   * It's possible to build a chain of got it tooltips shown on the screen.
+   */
   fun showAfter(tooltip: GotItTooltip, component: JComponent, pointProvider: (Component) -> Point) {
     tooltip.chainFunction = { show(component, pointProvider) }
   }
@@ -329,7 +353,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val parentDisp
   private fun createBalloon() : Balloon {
     var button : JButton? = null
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(createContent { button = it }).
-        setDisposable(parentDisposable).
+        setDisposable(this).
         setHideOnAction(false).
         setHideOnFrameResize(false).
         setHideOnKeyOutside(false).
@@ -462,7 +486,8 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val parentDisp
     val ARROW_SHIFT = JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + BalloonImpl.ARC.get()
     const val PROPERTY_PREFIX = "got.it.tooltip"
 
-    private val PRESENTATION_KEY = Key<ActionContext>(PROPERTY_PREFIX)
+    private val PRESENTATION_KEY = Key<ActionContext>("$PROPERTY_PREFIX.presentation")
+    private val BALLOON_PROPERTY = Key<Balloon>("$PROPERTY_PREFIX.balloon")
 
     private const val DEFAULT_TIMEOUT = 5000 // milliseconds
     private const val CLOSE_ACTION_NAME = "CloseGotItTooltip"
@@ -473,6 +498,10 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val parentDisp
 
     private val PANEL_MARGINS = JBUI.Borders.empty(7, 4, 9, 9)
 
+
+    /**
+     * Use this method for following an ActionToolbar component.
+     */
     @JvmStatic
     fun followToolbarComponent(presentation: Presentation, component: JComponent, toolbar: JComponent) {
       presentation.getClientProperty(PRESENTATION_KEY)?.let {
