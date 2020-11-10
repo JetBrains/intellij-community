@@ -2,7 +2,10 @@
 package com.intellij.compiler.progress;
 
 import com.intellij.build.*;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildIssueEvent;
 import com.intellij.build.events.MessageEvent;
+import com.intellij.build.progress.BuildIssueFilter;
 import com.intellij.build.progress.BuildProgress;
 import com.intellij.build.progress.BuildProgressDescriptor;
 import com.intellij.compiler.impl.CompilerPropertiesAction;
@@ -16,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -38,6 +42,8 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 @ApiStatus.Internal
 public class BuildOutputService implements BuildViewService {
+  private static final ExtensionPointName<BuildIssueFilter> MESSAGE_PROGRESS_EP = ExtensionPointName.create("com.intellij.build.buildEventFilter");
+
   private static final @NonNls String ANSI_RESET = "\u001B[0m";
   private static final @NonNls String ANSI_RED = "\u001B[31m";
   private static final @NonNls String ANSI_YELLOW = "\u001B[33m";
@@ -144,7 +150,11 @@ public class BuildOutputService implements BuildViewService {
     MessageEvent.Kind kind = convertCategory(compilerMessage.getCategory());
     VirtualFile virtualFile = compilerMessage.getVirtualFile();
     Navigatable navigatable = compilerMessage.getNavigatable();
-    if (virtualFile != null) {
+    String title = getMessageTitle(compilerMessage);
+    BuildIssueEvent event = buildIssue(compilerMessage.getModuleNames(), title, compilerMessage.getMessage(), kind, virtualFile, navigatable);
+    if (event!=null) {
+      myBuildProgress.buildIssue(event);
+    } else if (virtualFile != null) {
       File file = virtualToIoFile(virtualFile);
       FilePosition filePosition;
       if (navigatable instanceof OpenFileDescriptor) {
@@ -156,16 +166,31 @@ public class BuildOutputService implements BuildViewService {
       else {
         filePosition = new FilePosition(file, 0, 0);
       }
-      String title = getMessageTitle(compilerMessage);
+
       myBuildProgress.fileMessage(title, compilerMessage.getMessage(), kind, filePosition);
     }
     else {
       if (kind == MessageEvent.Kind.ERROR || kind == MessageEvent.Kind.WARNING) {
-        String title = getMessageTitle(compilerMessage);
         myBuildProgress.message(title, compilerMessage.getMessage(), kind, navigatable);
       }
       myBuildProgress.output(wrapWithAnsiColor(kind, compilerMessage.getMessage()) + '\n', kind != MessageEvent.Kind.ERROR);
     }
+  }
+
+  @Nullable
+  private BuildIssueEvent buildIssue(@NotNull  Collection<String> moduleNames,
+                                 @NotNull String title,
+                                 @NotNull String message,
+                                 @NotNull MessageEvent.Kind kind,
+                                 @Nullable VirtualFile virtualFile,
+                                 @Nullable Navigatable navigatable) {
+
+    for (BuildIssueFilter ex : MESSAGE_PROGRESS_EP.getExtensionList()) {
+      BuildIssueEvent
+        event = ex.createBuildIssue(myProject, myBuildProgress.getId(), moduleNames, title, message, kind, virtualFile, navigatable);
+      if (event != null) return event;
+    }
+    return null;
   }
 
   @Nls

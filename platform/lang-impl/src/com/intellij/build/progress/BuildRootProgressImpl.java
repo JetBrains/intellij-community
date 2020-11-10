@@ -16,9 +16,8 @@ import org.jetbrains.annotations.NotNull;
 public class BuildRootProgressImpl extends BuildProgressImpl {
   private final BuildProgressListener myListener;
 
-  public BuildRootProgressImpl(@NotNull Project project,
-                               BuildProgressListener buildProgressListener) {
-    super(project, buildProgressListener, null);
+  public BuildRootProgressImpl(BuildProgressListener buildProgressListener) {
+    super(buildProgressListener, null);
     myListener = buildProgressListener;
   }
 

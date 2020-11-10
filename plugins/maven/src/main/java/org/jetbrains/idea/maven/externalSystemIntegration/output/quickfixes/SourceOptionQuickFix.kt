@@ -2,17 +2,20 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.BuildIssueEventImpl
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.build.progress.BuildEventFilter
+import com.intellij.build.progress.BuildIssueFilter
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.concurrency.asCompletableFuture
@@ -89,21 +92,26 @@ class Source5BuildIssue(project: Project, private val failedProjectId: String) :
   }
 }
 
-class JpsReleaseVersion5QuickFix : BuildEventFilter {
-  override fun filterMessage(project: Project,
+class JpsReleaseVersion5QuickFix : BuildIssueFilter {
+  override fun createBuildIssue(project: Project,
                              parentId: Any,
+                             moduleNames: Collection<String>,
                              title: String,
                              message: String,
                              kind: MessageEvent.Kind,
-                             navigatable: Navigatable?): BuildEvent? {
+                             virtualFile: VirtualFile?,
+                             navigatable: Navigatable?): BuildIssueEvent? {
     if (message != "java: error: release version 5 not supported") return null
     val manager = MavenProjectsManager.getInstance(project);
     if (!manager.isMavenizedProject) return null
-    val rootProjects = manager.rootProjects
-    if (rootProjects.size == 1) {
-      return BuildIssueEventImpl(parentId, Source5BuildIssue(project, rootProjects[0].mavenId.displayString), kind)
+    if (moduleNames.size != 1) {
+      return null
     }
-    return null
+    val moduleName = moduleNames.firstOrNull() ?: return null
+    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
+    val failedId = MavenProjectsManager.getInstance(project).findProject(module)?.mavenId ?: return null
+
+    return BuildIssueEventImpl(parentId, Source5BuildIssue(project, failedId.displayString), kind)
   }
 
 }

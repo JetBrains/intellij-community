@@ -16,16 +16,12 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
   private final Object myId = new Object();
-  private final Project myProject;
   private final BuildProgressListener myListener;
   @Nullable
   private final BuildProgress<BuildProgressDescriptor> myParentProgress;
   private BuildProgressDescriptor myDescriptor;
 
-  BuildProgressImpl(@NotNull Project project,
-                    BuildProgressListener listener,
-                    @Nullable BuildProgress<BuildProgressDescriptor> parentProgress) {
-    myProject = project;
+  BuildProgressImpl(BuildProgressListener listener, @Nullable BuildProgress<BuildProgressDescriptor> parentProgress) {
     myListener = listener;
     myParentProgress = parentProgress;
   }
@@ -59,7 +55,7 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
   @Override
   public BuildProgress<BuildProgressDescriptor> startChildProgress(@NotNull String title) {
     BuildDescriptor buildDescriptor = myDescriptor.getBuildDescriptor();
-    return new BuildProgressImpl(myProject, myListener, this).start(new BuildProgressDescriptor() {
+    return new BuildProgressImpl(myListener, this).start(new BuildProgressDescriptor() {
 
       @NotNull
       @Override
@@ -77,15 +73,14 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
   @NotNull
   @Override
   public BuildProgress<BuildProgressDescriptor> progress(@NotNull String title) {
-    return progress(title, -1, -1, "");
+    return progress(title, -1, -1 , "");
   }
 
   @NotNull
   @Override
   public BuildProgress<BuildProgressDescriptor> progress(@NotNull String title, long total, long progress, String unit) {
     Object parentId = myParentProgress != null ? myParentProgress.getId() : null;
-    myListener
-      .onEvent(getBuildId(), new ProgressBuildEventImpl(getId(), parentId, System.currentTimeMillis(), title, total, progress, unit));
+    myListener.onEvent(getBuildId(), new ProgressBuildEventImpl(getId(), parentId, System.currentTimeMillis(), title, total, progress, unit));
     return this;
   }
 
@@ -121,34 +116,15 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
                                                         @NotNull String message,
                                                         @NotNull MessageEvent.Kind kind,
                                                         @Nullable Navigatable navigatable) {
-    BuildEvent event = filterEvent(title, message, kind, navigatable);
-
-    if (event == null) {
-      event = new MessageEventImpl(getId(), kind, null, title, message) {
-        @Override
-        public @Nullable Navigatable getNavigatable(@NotNull Project project) {
-          return navigatable;
-        }
-      };
-    }
-
+    MessageEventImpl event = new MessageEventImpl(getId(), kind, null, title, message) {
+      @Override
+      public @Nullable Navigatable getNavigatable(@NotNull Project project) {
+        return navigatable;
+      }
+    };
     myListener.onEvent(getBuildId(), event);
     return this;
   }
-
-  @Nullable
-  private BuildEvent filterEvent(@NotNull String title,
-                                 @NotNull String message,
-                                 @NotNull MessageEvent.Kind kind,
-                                 @Nullable Navigatable navigatable) {
-
-    for (BuildEventFilter ex : BuildEventFilter.MESSAGE_PROGRESS_EP.getExtensionList()) {
-      BuildEvent event = ex.filterMessage(myProject, getId(), title, message, kind, navigatable);
-      if (event != null) return event;
-    }
-    return null;
-  }
-
 
   @NotNull
   @Override
@@ -207,6 +183,15 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
     assertStarted();
     assert myParentProgress != null;
     FinishEventImpl event = new FinishEventImpl(getId(), myParentProgress.getId(), timeStamp, message, new SkippedResultImpl());
+    myListener.onEvent(getBuildId(), event);
+    return myParentProgress;
+  }
+
+  @Override
+  @NotNull
+  public  BuildProgress<BuildProgressDescriptor> buildIssue(@NotNull BuildIssueEvent event) {
+    assertStarted();
+    assert myParentProgress != null;
     myListener.onEvent(getBuildId(), event);
     return myParentProgress;
   }
