@@ -278,9 +278,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       patcher.patchJavaParameters(project, module, javaParameters);
     }
 
-    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
-      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
-    }
+    JavaRunConfigurationExtensionManager.getInstance()
+      .updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().addAll(getNamedParams(parameters));
