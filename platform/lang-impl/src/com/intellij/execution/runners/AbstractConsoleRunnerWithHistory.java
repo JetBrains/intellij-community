@@ -15,6 +15,7 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.UIUtil;
@@ -128,7 +129,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return null;
   }
 
-  protected @BuildEventsNls.Title String constructConsoleTitle(final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String consoleTitle) {
+  protected @BuildEventsNls.Title String constructConsoleTitle(final @NotNull @NlsContexts.TabTitle String consoleTitle) {
     return new ConsoleTitleGen(myProject, consoleTitle, shouldAddNumberToTitle()).makeTitle();
   }
 
