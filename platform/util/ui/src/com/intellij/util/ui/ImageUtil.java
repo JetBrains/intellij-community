@@ -57,7 +57,7 @@ public final class ImageUtil {
 
   /**
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
-   * @see #createImage(GraphicsConfiguration, double, double, int, PaintUtil.RoundingMode)
+   * @see #createImage(ScaleContext, double, double, int, PaintUtil.RoundingMode)
    */
   public static @NotNull BufferedImage createImage(ScaleContext context, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
     if (StartupUiUtil.isJreHiDPI(context)) {
