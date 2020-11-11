@@ -16,6 +16,7 @@ import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
+import com.intellij.ide.CopyPasteManagerEx
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -33,16 +34,20 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.UIBundle
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.LinkedListWithSum
 import com.intellij.util.containers.map2Array
 import com.intellij.util.text.DateFormatUtil
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
 import javax.swing.JComponent
+import kotlin.math.max
 
 private val BLANK_KEY = Key.create<Boolean>("Diff.BlankWindow")
 private val BLANK_CONTENT_KEY = Key.create<Boolean>("Diff.BlankWindow.BlankContent")
@@ -335,8 +340,7 @@ private class DnDHandler3(val viewer: ThreesideTextDiffViewer,
 private class RecentContentHandler(val viewer: DiffViewerBase,
                                    val helper: MutableDiffRequestChain.Helper) {
   companion object {
-    private const val MAX_RECENT_FILES = 10
-    private val recentFiles = mutableListOf<RecentBlankContent>()
+    private val recentFiles = LinkedListWithSum<RecentBlankContent> { it.text.length }
 
     fun getRecentFiles() = recentFiles.toList()
   }
@@ -356,11 +360,16 @@ private class RecentContentHandler(val viewer: DiffViewerBase,
       recentFiles.add(0, oldValue)
     }
     else {
-      val timestamp = System.currentTimeMillis()
-      recentFiles.add(0, RecentBlankContent(text, timestamp))
-      while (recentFiles.size > MAX_RECENT_FILES) {
-        recentFiles.removeAt(recentFiles.lastIndex)
-      }
+      recentFiles.add(0, RecentBlankContent(text, System.currentTimeMillis()))
+      deleteAfterAllowedMaximum()
+    }
+  }
+
+  private fun deleteAfterAllowedMaximum() {
+    val maxCount = max(1, Registry.intValue("blank.diff.history.max.items"))
+    val maxMemory = max(0, Registry.intValue("blank.diff.history.max.memory"))
+    CopyPasteManagerEx.deleteAfterAllowedMaximum(recentFiles, maxCount, maxMemory) { item ->
+      RecentBlankContent(UIBundle.message("clipboard.history.purged.item"), item.timestamp)
     }
   }
 
