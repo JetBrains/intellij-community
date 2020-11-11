@@ -13,8 +13,8 @@ import javax.swing.*;
 
 public interface CoreAwareIconManager {
   /**
-   * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
-   * Use {@link #computeFileIcon} where possible (e.g. in background threads) to get a non-deferred icon.
+   * @return a deferred icon for the file, taking into account {@link com.intellij.ide.FileIconProvider} and {@link com.intellij.ide.FileIconPatcher} extensions.
+   * Use {@link com.intellij.util.IconUtil#computeFileIcon} where possible (e.g. in background threads) to get a non-deferred icon.
    */
   @NotNull Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project);
 
