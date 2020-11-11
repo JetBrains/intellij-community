@@ -95,7 +95,7 @@ class KotlinSSRFunctionReplaceTest : KotlinSSRReplaceTest() {
         )
     }
 
-    fun testDotQualifiedSearchPattern() {
+    fun testExtensionSearchPattern() {
         doTest(
             searchPattern = "fun '_RECEIVER{0,1}.'_COLLECTOR()",
             replacePattern = "fun '_RECEIVER.'_COLLECTOR()",
@@ -104,6 +104,19 @@ class KotlinSSRFunctionReplaceTest : KotlinSSRReplaceTest() {
                 """.trimIndent(),
             result = """
                     fun foo() { }
+                """.trimIndent()
+        )
+    }
+
+    fun testExtensionFunction() {
+        doTest(
+            searchPattern = "fun '_RECEIVER{0,1}.'_COLLECTOR(): Int",
+            replacePattern = "fun '_RECEIVER.'_COLLECTOR(): Int",
+            match = """
+                    fun Number.foo(): Int { return 0 }
+                """.trimIndent(),
+            result = """
+                    fun Number.foo(): Int { return 0 }
                 """.trimIndent()
         )
     }
