@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileType.CharsetHintSupplied.CharsetHint.ForcedCharset;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -447,8 +448,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
         return super.getCharset();
       }
       try {
-        if (fileType instanceof FileType.WithForcedCharset) {
-          charset = ((FileType.WithForcedCharset)fileType).getForcedCharset();
+        FileType.CharsetHintSupplied.CharsetHint charsetHint =
+          fileType instanceof FileType.CharsetHintSupplied ? ((FileType.CharsetHintSupplied)fileType).getCharsetHint() : null;
+        if (charsetHint instanceof ForcedCharset) {
+          charset = ((ForcedCharset)charsetHint).getCharset();
         }
         else {
           final byte[] content = VfsUtilCore.loadBytes(this);

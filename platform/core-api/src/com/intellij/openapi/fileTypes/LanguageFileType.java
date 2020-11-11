@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType.CharsetHintSupplied.CharsetHint.ForcedCharset;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -80,8 +81,11 @@ public abstract class LanguageFileType implements FileType {
   }
 
   public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
-    if (this instanceof WithForcedCharset) {
-      return ((WithForcedCharset)this).getForcedCharset();
+    if (this instanceof CharsetHintSupplied) {
+      CharsetHintSupplied.CharsetHint hint = ((CharsetHintSupplied)this).getCharsetHint();
+      if (hint instanceof ForcedCharset) {
+        return ((ForcedCharset)hint).getCharset();
+      }
     }
     return extractCharsetFromFileContent(project, file, content.toString());
   }

@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class EclipseFileType implements FileType.WithForcedCharset {
+public class EclipseFileType implements FileType.CharsetHintSupplied {
   public static final FileType INSTANCE = new EclipseFileType();
 
   private EclipseFileType() {
@@ -51,7 +51,7 @@ public class EclipseFileType implements FileType.WithForcedCharset {
   }
 
   @Override
-  public @NonNls @NotNull Charset getForcedCharset() {
-    return StandardCharsets.UTF_8;
+  public @NotNull CharsetHint getCharsetHint() {
+    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 }

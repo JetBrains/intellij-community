@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public final class WorkspaceFileType implements InternalFileType, FileType.WithForcedCharset {
+public final class WorkspaceFileType implements InternalFileType, FileType.CharsetHintSupplied {
   public static final WorkspaceFileType INSTANCE = new WorkspaceFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "iws";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
@@ -48,7 +48,7 @@ public final class WorkspaceFileType implements InternalFileType, FileType.WithF
   }
 
   @Override
-  public @NonNls @NotNull Charset getForcedCharset() {
-    return StandardCharsets.UTF_8;
+  public @NotNull CharsetHint getCharsetHint() {
+    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 }

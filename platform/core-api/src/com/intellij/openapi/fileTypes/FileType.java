@@ -79,25 +79,46 @@ public interface FileType extends Scheme {
     // if (isBinary()) {
     //   throw new UnsupportedOperationException();
     // }
+    if (this instanceof CharsetHintSupplied) {
+      CharsetHintSupplied.CharsetHint hint = ((CharsetHintSupplied)this).getCharsetHint();
+      if (hint instanceof CharsetHintSupplied.CharsetHint.ForcedCharset) {
+        return ((CharsetHintSupplied.CharsetHint.ForcedCharset)hint).getCharset().name();
+      }
+    }
     return null;
   }
 
   /**
-   * A special interface to mark that files with corresponding {@link FileType} always have the same encoding.
-   * <br>
-   * This interface can be used to avoid content loading to detect file's charset.
+   * A marker interface for {@link FileType} that specifies how charset is evaluated for corresponding files. There are possible cases:
+   * <ul>
+   *   <li>In cases when charset is always the same for every file of a given file type, one could use {@link CharsetHint.ForcedCharset}.</li>
+   *   <li>When file type can be determined using only the file's binary content then {@link CharsetHintSupplied#CONTENT_DEPENDENT_CHARSET} could be used.</li>
+   *   <li>Charset may depends on sibling file's. For example, JSP charset can be evaluated using <i>web.xml</i>.
+   *     In this case {@link CharsetHintSupplied#NO_HINT} should be used.</li>
+   * </ul>
    */
   @ApiStatus.Experimental
-  interface WithForcedCharset extends FileType {
-    @Override
-    @NonNls
-    @Nullable
-    default String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return getForcedCharset().name();
+  interface CharsetHintSupplied extends FileType {
+    @NotNull
+    CharsetHint getCharsetHint();
+
+    @ApiStatus.NonExtendable
+    interface CharsetHint {
+      final class ForcedCharset implements CharsetHint {
+        @NotNull
+        private final Charset myCharset;
+
+        @NotNull
+        public ForcedCharset(@NotNull Charset charset) {myCharset = charset;}
+
+        @NotNull
+        public Charset getCharset() {
+          return myCharset;
+        }
+      }
     }
 
-    @NonNls
-    @NotNull
-    Charset getForcedCharset();
+    CharsetHint CONTENT_DEPENDENT_CHARSET = new CharsetHint() {};
+    CharsetHint NO_HINT = new CharsetHint() {};
   }
 }

@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public final class ProjectFileType implements InternalFileType, FileType.WithForcedCharset {
+public final class ProjectFileType implements InternalFileType, FileType.CharsetHintSupplied {
   public static final ProjectFileType INSTANCE = new ProjectFileType();
 
   public static final String DEFAULT_EXTENSION = "ipr";
@@ -49,7 +49,7 @@ public final class ProjectFileType implements InternalFileType, FileType.WithFor
   }
 
   @Override
-  public @NonNls @NotNull Charset getForcedCharset() {
-    return StandardCharsets.UTF_8;
+  public @NotNull CharsetHint getCharsetHint() {
+    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 }

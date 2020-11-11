@@ -25,7 +25,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class GuiFormFileType implements /*UIBased*/FileType.WithForcedCharset {
+public class GuiFormFileType implements /*UIBased*/FileType.CharsetHintSupplied {
 
   public static final GuiFormFileType INSTANCE = new GuiFormFileType();
 
@@ -64,7 +64,7 @@ public class GuiFormFileType implements /*UIBased*/FileType.WithForcedCharset {
   }
 
   @Override
-  public @NonNls @NotNull Charset getForcedCharset() {
-    return StandardCharsets.UTF_8;
+  public @NotNull CharsetHint getCharsetHint() {
+    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 }

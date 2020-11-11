@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public final class ModuleFileType implements InternalFileType, FileType.WithForcedCharset {
+public final class ModuleFileType implements InternalFileType, FileType.CharsetHintSupplied {
   public static final ModuleFileType INSTANCE = new ModuleFileType();
 
   @NonNls public static final String DEFAULT_EXTENSION = "iml";
@@ -49,7 +49,7 @@ public final class ModuleFileType implements InternalFileType, FileType.WithForc
   }
 
   @Override
-  public @NonNls @NotNull Charset getForcedCharset() {
-    return StandardCharsets.UTF_8;
+  public @NotNull CharsetHint getCharsetHint() {
+    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 }

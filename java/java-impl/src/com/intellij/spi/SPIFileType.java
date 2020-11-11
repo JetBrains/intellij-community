@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public final class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, FileType.WithForcedCharset {
+public final class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, FileType.CharsetHintSupplied {
   public static final SPIFileType INSTANCE = new SPIFileType();
 
   private SPIFileType() {
@@ -62,7 +62,7 @@ public final class SPIFileType extends LanguageFileType implements FileTypeIdent
   }
 
   @Override
-  public @NonNls @NotNull Charset getForcedCharset() {
-    return StandardCharsets.UTF_8;
+  public @NotNull CharsetHint getCharsetHint() {
+    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 }
