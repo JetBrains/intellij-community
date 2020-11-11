@@ -13,13 +13,13 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class TypingEventsLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 1);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 2);
 
   private static final EventId TYPED = GROUP.registerEvent("typed");
   private static final EventId TOO_MANY_EVENTS = GROUP.registerEvent("too.many.events");
 
   private static final EventsRateWindowThrottle ourThrottle =
-    new EventsRateWindowThrottle(2000, 60 * 60 * 1000, System.currentTimeMillis());
+    new EventsRateWindowThrottle(8000, 60 * 60 * 1000, System.currentTimeMillis());
 
   @Override
   public EventLogGroup getGroup() {
