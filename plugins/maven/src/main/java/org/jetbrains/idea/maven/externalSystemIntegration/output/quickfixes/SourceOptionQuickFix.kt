@@ -7,7 +7,7 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.BuildIssueEventImpl
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.build.progress.BuildIssueFilter
+import com.intellij.build.progress.BuildIssueContributor
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.DataProvider
@@ -92,15 +92,14 @@ class Source5BuildIssue(project: Project, private val failedProjectId: String) :
   }
 }
 
-class JpsReleaseVersion5QuickFix : BuildIssueFilter {
+class JpsReleaseVersion5QuickFix : BuildIssueContributor {
   override fun createBuildIssue(project: Project,
-                             parentId: Any,
                              moduleNames: Collection<String>,
                              title: String,
                              message: String,
                              kind: MessageEvent.Kind,
                              virtualFile: VirtualFile?,
-                             navigatable: Navigatable?): BuildIssueEvent? {
+                             navigatable: Navigatable?): BuildIssue? {
     if (message != "java: error: release version 5 not supported") return null
     val manager = MavenProjectsManager.getInstance(project);
     if (!manager.isMavenizedProject) return null
@@ -111,7 +110,7 @@ class JpsReleaseVersion5QuickFix : BuildIssueFilter {
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
     val failedId = MavenProjectsManager.getInstance(project).findProject(module)?.mavenId ?: return null
 
-    return BuildIssueEventImpl(parentId, Source5BuildIssue(project, failedId.displayString), kind)
+    return Source5BuildIssue(project, failedId.displayString)
   }
 
 }

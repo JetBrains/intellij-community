@@ -6,6 +6,7 @@ import com.intellij.build.BuildProgressListener;
 import com.intellij.build.FilePosition;
 import com.intellij.build.events.*;
 import com.intellij.build.events.impl.*;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
@@ -189,10 +190,10 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
 
   @Override
   @NotNull
-  public  BuildProgress<BuildProgressDescriptor> buildIssue(@NotNull BuildIssueEvent event) {
+  public  BuildProgress<BuildProgressDescriptor> buildIssue(@NotNull BuildIssue issue, @NotNull MessageEvent.Kind kind) {
     assertStarted();
     assert myParentProgress != null;
-    myListener.onEvent(getBuildId(), event);
+    myListener.onEvent(getBuildId(), new BuildIssueEventImpl(getId(), issue, kind));
     return myParentProgress;
   }
 

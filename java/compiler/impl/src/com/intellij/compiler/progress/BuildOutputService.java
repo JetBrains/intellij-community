@@ -2,10 +2,10 @@
 package com.intellij.compiler.progress;
 
 import com.intellij.build.*;
-import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.BuildIssueEvent;
 import com.intellij.build.events.MessageEvent;
-import com.intellij.build.progress.BuildIssueFilter;
+import com.intellij.build.issue.BuildIssue;
+import com.intellij.build.progress.BuildIssueContributor;
 import com.intellij.build.progress.BuildProgress;
 import com.intellij.build.progress.BuildProgressDescriptor;
 import com.intellij.compiler.impl.CompilerPropertiesAction;
@@ -42,7 +42,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 @ApiStatus.Internal
 public class BuildOutputService implements BuildViewService {
-  private static final ExtensionPointName<BuildIssueFilter> MESSAGE_PROGRESS_EP = ExtensionPointName.create("com.intellij.build.buildEventFilter");
+  private static final ExtensionPointName<BuildIssueContributor> BUILD_ISSUE_EP = ExtensionPointName.create("com.intellij.build.issueContributor");
 
   private static final @NonNls String ANSI_RESET = "\u001B[0m";
   private static final @NonNls String ANSI_RED = "\u001B[31m";
@@ -151,9 +151,9 @@ public class BuildOutputService implements BuildViewService {
     VirtualFile virtualFile = compilerMessage.getVirtualFile();
     Navigatable navigatable = compilerMessage.getNavigatable();
     String title = getMessageTitle(compilerMessage);
-    BuildIssueEvent event = buildIssue(compilerMessage.getModuleNames(), title, compilerMessage.getMessage(), kind, virtualFile, navigatable);
-    if (event!=null) {
-      myBuildProgress.buildIssue(event);
+    BuildIssue issue = buildIssue(compilerMessage.getModuleNames(), title, compilerMessage.getMessage(), kind, virtualFile, navigatable);
+    if (issue!=null) {
+      myBuildProgress.buildIssue(issue, kind);
     } else if (virtualFile != null) {
       File file = virtualToIoFile(virtualFile);
       FilePosition filePosition;
@@ -178,17 +178,16 @@ public class BuildOutputService implements BuildViewService {
   }
 
   @Nullable
-  private BuildIssueEvent buildIssue(@NotNull  Collection<String> moduleNames,
+  private BuildIssue buildIssue(@NotNull  Collection<String> moduleNames,
                                  @NotNull String title,
                                  @NotNull String message,
                                  @NotNull MessageEvent.Kind kind,
                                  @Nullable VirtualFile virtualFile,
                                  @Nullable Navigatable navigatable) {
 
-    for (BuildIssueFilter ex : MESSAGE_PROGRESS_EP.getExtensionList()) {
-      BuildIssueEvent
-        event = ex.createBuildIssue(myProject, myBuildProgress.getId(), moduleNames, title, message, kind, virtualFile, navigatable);
-      if (event != null) return event;
+    for (BuildIssueContributor ex : BUILD_ISSUE_EP.getExtensionList()) {
+      BuildIssue issue = ex.createBuildIssue(myProject, moduleNames, title, message, kind, virtualFile, navigatable);
+      if (issue != null) return issue;
     }
     return null;
   }
