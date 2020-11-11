@@ -36,9 +36,9 @@ Groovy script
           PsiElement(identifier)('id1')
         Arguments
           PsiElement(()('(')
-          PsiErrorElement:<expression> expected, got '}'
+          PsiErrorElement:unmatched input
             <empty list>
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(})('}')
   PsiElement(new line)('\n\n')
   Method call
@@ -57,7 +57,7 @@ Groovy script
           PsiElement(identifier)('id1')
         Arguments
           PsiElement(()('(')
-          PsiErrorElement:<expression> expected, got '}'
+          PsiErrorElement:')' expected, got '}'
             <empty list>
       PsiElement(})('}')
   PsiElement(new line)('\n\n')
@@ -79,9 +79,9 @@ Groovy script
           PsiElement(()('(')
           Literal
             PsiElement(Integer)('42')
-          PsiErrorElement:')' or ',' expected, got '}'
+          PsiErrorElement:')' or ',' expected
             <empty list>
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(})('}')
   PsiElement(new line)('\n\n')
   Method call
@@ -125,9 +125,9 @@ Groovy script
           Literal
             PsiElement(Integer)('42')
           PsiElement(,)(',')
-          PsiErrorElement:<expression> expected, got '}'
+          PsiErrorElement:unmatched input
             <empty list>
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(})('}')
   PsiElement(new line)('\n\n')
   Method call
@@ -149,6 +149,6 @@ Groovy script
           Literal
             PsiElement(Integer)('42')
           PsiElement(,)(',')
-          PsiErrorElement:<expression> expected, got '}'
+          PsiErrorElement:')' expected, got '}'
             <empty list>
       PsiElement(})('}')
