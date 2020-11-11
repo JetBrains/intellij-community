@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationScript
 
+import com.intellij.configurationScript.ConfigurationScriptBundle.message
 import com.intellij.configurationScript.inspection.InspectionJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.PluginJsonSchemaGenerator
@@ -58,7 +59,7 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
       }
     }
 
-    override fun getName() = "IntelliJ Configuration"
+    override fun getName() = message("intellij.configuration.name")
 
     override fun getSchemaFile(): VirtualFile? {
       if (!SystemProperties.getBooleanProperty("configuration.schema.cache", true) && schemeFile.isInitialized()) {
