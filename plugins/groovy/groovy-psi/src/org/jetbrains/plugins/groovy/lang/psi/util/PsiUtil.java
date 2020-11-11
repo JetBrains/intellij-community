@@ -622,22 +622,12 @@ public final class PsiUtil {
     return isWhiteSpaceOrLineFeed(element) && element.getText().contains("\n");
   }
 
-  @Nullable
-  public static PsiElement getPrevNonSpace(@NotNull final PsiElement elem) {
-    PsiElement prevSibling = elem.getPrevSibling();
-    while (prevSibling instanceof PsiWhiteSpace) {
-      prevSibling = prevSibling.getPrevSibling();
-    }
-    return prevSibling;
+  public static @Nullable PsiElement getPrevNonSpace(@NotNull PsiElement elem) {
+    return PsiUtilKt.skipWhiteSpacesAndNewLinesBackward(elem);
   }
 
-  @Nullable
-  public static PsiElement getNextNonSpace(final PsiElement elem) {
-    PsiElement nextSibling = elem.getNextSibling();
-    while (nextSibling instanceof PsiWhiteSpace) {
-      nextSibling = nextSibling.getNextSibling();
-    }
-    return nextSibling;
+  public static @Nullable PsiElement getNextNonSpace(@NotNull PsiElement elem) {
+    return PsiUtilKt.skipWhiteSpacesAndNewLinesForward(elem);
   }
 
   @NotNull
