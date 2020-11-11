@@ -1,5 +1,3 @@
-# Stubs for requests.adapters (Python 3)
-
 from typing import Any, Container, Mapping, Optional, Text, Tuple, Union
 
 from . import cookies, exceptions, models, structures, utils

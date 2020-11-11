@@ -1,5 +1,3 @@
-# Source: https://github.com/python/cpython/blob/master/Lib/sre_parse.py
-
 import sys
 from sre_constants import _NamedIntConstant as _NIC, error as _Error
 from typing import Any, Dict, FrozenSet, Iterable, List, Match, Optional, Pattern as _Pattern, Tuple, Union, overload
@@ -14,9 +12,9 @@ WHITESPACE: FrozenSet[str]
 ESCAPES: Dict[str, Tuple[_NIC, int]]
 CATEGORIES: Dict[str, Union[Tuple[_NIC, _NIC], Tuple[_NIC, List[Tuple[_NIC, _NIC]]]]]
 FLAGS: Dict[str, int]
-if sys.version_info >= (3, 6):
-    GLOBAL_FLAGS: int
-    class Verbose(Exception): ...
+GLOBAL_FLAGS: int
+
+class Verbose(Exception): ...
 
 class _State:
     flags: int
@@ -76,9 +74,8 @@ class Tokenizer:
         def getuntil(self, terminator: str, name: str) -> str: ...
     else:
         def getuntil(self, terminator: str) -> str: ...
-    if sys.version_info >= (3, 6):
-        @property
-        def pos(self) -> int: ...
+    @property
+    def pos(self) -> int: ...
     def tell(self) -> int: ...
     def seek(self, index: int) -> None: ...
     def error(self, msg: str, offset: int = ...) -> _Error: ...

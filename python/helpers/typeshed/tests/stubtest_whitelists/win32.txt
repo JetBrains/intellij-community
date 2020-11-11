@@ -28,6 +28,7 @@ resource
 spwd
 syslog
 termios
+xxlimited
 
 # Modules that rely on _curses
 curses

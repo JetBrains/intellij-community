@@ -1,5 +1,3 @@
-# Stubs for email.parser (Python 3.4)
-
 import email.feedparser
 from email.message import Message
 from email.policy import Policy

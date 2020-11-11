@@ -1,10 +1,8 @@
 import sys
 from http.client import HTTPResponse
+from os import PathLike
 from typing import Dict, Iterable, Iterator, Optional, Sequence, Tuple, TypeVar, Union, overload
 from urllib.request import Request
-
-if sys.version_info >= (3, 6):
-    from os import PathLike
 
 _T = TypeVar("_T")
 

@@ -1,9 +1,11 @@
-# Stubs for filecmp (Python 2/3)
 import sys
-from typing import AnyStr, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Text, Tuple, Union
+from typing import Any, AnyStr, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Text, Tuple, Union
 
 if sys.version_info >= (3, 6):
     from os import PathLike
+
+if sys.version_info >= (3, 9):
+    from types import GenericAlias
 
 DEFAULT_IGNORES: List[str]
 
@@ -41,7 +43,6 @@ class dircmp(Generic[AnyStr]):
     right: AnyStr
     hide: Sequence[AnyStr]
     ignore: Sequence[AnyStr]
-
     # These properties are created at runtime by __getattr__
     subdirs: Dict[AnyStr, dircmp[AnyStr]]
     same_files: List[AnyStr]
@@ -65,6 +66,8 @@ class dircmp(Generic[AnyStr]):
     def phase3(self) -> None: ...
     def phase4(self) -> None: ...
     def phase4_closure(self) -> None: ...
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
 if sys.version_info >= (3,):
     def clear_cache() -> None: ...

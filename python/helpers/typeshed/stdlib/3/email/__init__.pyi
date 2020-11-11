@@ -1,5 +1,3 @@
-# Stubs for email (Python 3.4)
-
 from email.message import Message
 from email.policy import Policy
 from typing import IO, Callable

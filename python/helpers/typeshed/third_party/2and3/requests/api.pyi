@@ -1,5 +1,3 @@
-# Stubs for requests.api (Python 3)
-
 from _typeshed import SupportsItems
 from typing import Iterable, Optional, Text, Tuple, Union
 

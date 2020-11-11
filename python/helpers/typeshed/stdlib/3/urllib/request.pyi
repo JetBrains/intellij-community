@@ -1,6 +1,5 @@
 import os
 import ssl
-import sys
 from email.message import Message
 from http.client import HTTPMessage, HTTPResponse, _HTTPConnectionProtocol
 from http.cookiejar import CookieJar
@@ -250,22 +249,12 @@ class HTTPErrorProcessor(BaseHandler):
     def http_response(self, request: Request, response: HTTPResponse) -> _UrlopenRet: ...
     def https_response(self, request: Request, response: HTTPResponse) -> _UrlopenRet: ...
 
-if sys.version_info >= (3, 6):
-    def urlretrieve(
-        url: str,
-        filename: Optional[Union[str, os.PathLike[Any]]] = ...,
-        reporthook: Optional[Callable[[int, int, int], None]] = ...,
-        data: Optional[bytes] = ...,
-    ) -> Tuple[str, HTTPMessage]: ...
-
-else:
-    def urlretrieve(
-        url: str,
-        filename: Optional[str] = ...,
-        reporthook: Optional[Callable[[int, int, int], None]] = ...,
-        data: Optional[bytes] = ...,
-    ) -> Tuple[str, HTTPMessage]: ...
-
+def urlretrieve(
+    url: str,
+    filename: Optional[Union[str, os.PathLike[Any]]] = ...,
+    reporthook: Optional[Callable[[int, int, int], None]] = ...,
+    data: Optional[bytes] = ...,
+) -> Tuple[str, HTTPMessage]: ...
 def urlcleanup() -> None: ...
 
 class URLopener:

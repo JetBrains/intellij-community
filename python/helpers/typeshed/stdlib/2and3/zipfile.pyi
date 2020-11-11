@@ -212,6 +212,9 @@ def is_zipfile(filename: Union[StrPath, IO[bytes]]) -> bool: ...
 
 ZIP_STORED: int
 ZIP_DEFLATED: int
+ZIP64_LIMIT: int
+ZIP_FILECOUNT_LIMIT: int
+ZIP_MAX_COMMENT: int
 if sys.version_info >= (3, 3):
     ZIP_BZIP2: int
     ZIP_LZMA: int

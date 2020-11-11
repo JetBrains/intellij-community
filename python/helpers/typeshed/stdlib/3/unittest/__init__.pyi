@@ -1,5 +1,3 @@
-# Stubs for unittest
-
 from typing import Optional
 from unittest.async_case import *
 from unittest.case import *

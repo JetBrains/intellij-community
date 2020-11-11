@@ -1,5 +1,3 @@
-# Stubs for requests.hooks (Python 3)
-
 from typing import Any
 
 HOOKS: Any

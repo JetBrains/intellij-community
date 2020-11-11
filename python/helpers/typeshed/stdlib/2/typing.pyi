@@ -1,5 +1,3 @@
-# Stubs for typing (Python 2.7)
-
 import collections  # Needed by aliases like DefaultDict, see mypy issue 2986
 from abc import ABCMeta, abstractmethod
 from types import CodeType, FrameType, TracebackType

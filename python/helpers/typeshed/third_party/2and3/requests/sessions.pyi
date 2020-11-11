@@ -1,5 +1,3 @@
-# Stubs for requests.sessions (Python 3)
-
 from typing import IO, Any, Callable, Iterable, List, Mapping, MutableMapping, Optional, Text, Tuple, Union
 
 from . import adapters, auth as _auth, compat, cookies, exceptions, hooks, models, status_codes, structures, utils
@@ -34,8 +32,6 @@ should_bypass_proxies = utils.should_bypass_proxies
 get_auth_from_url = utils.get_auth_from_url
 codes = status_codes.codes
 REDIRECT_STATI = models.REDIRECT_STATI
-
-REDIRECT_CACHE_SIZE: Any
 
 def merge_setting(request_setting, session_setting, dict_class=...): ...
 def merge_hooks(request_hooks, session_hooks, dict_class=...): ...

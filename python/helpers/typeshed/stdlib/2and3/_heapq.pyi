@@ -1,5 +1,3 @@
-"""Stub file for the '_heapq' module."""
-
 import sys
 from typing import Any, Callable, Iterable, List, Optional, TypeVar
 

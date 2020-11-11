@@ -1,19 +1,3 @@
-"""Stub for the socket module
-
-This file is organized to mirror the module's documentation, with a very small
-number of exceptions.
-
-To avoid requiring tests on all platforms, platform checks are included only
-where the documentation notes platform availability (as opposed to following
-actual availability), with one or two exceptions.
-
-Module documentation: https://docs.python.org/3/library/socket.html
-CPython module source: https://github.com/python/cpython/blob/master/Lib/socket.py
-CPython C source: https://github.com/python/cpython/blob/master/Modules/socketmodule.c
-"""
-# Authorship from original mypy stubs (not in typeshed git history):
-#   Ron Murawski <ron@horizonchess.com>
-#   adapted for Python 2.7 by Michal Pokorny
 import sys
 from typing import Any, BinaryIO, Iterable, List, Optional, Sequence, Text, TextIO, Tuple, TypeVar, Union, overload
 from typing_extensions import Literal

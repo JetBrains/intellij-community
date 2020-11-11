@@ -47,6 +47,15 @@ class ExtendedInterpolation(Interpolation): ...
 class LegacyInterpolation(Interpolation): ...
 
 class RawConfigParser(_parser):
+    _SECT_TMPL: ClassVar[str] = ...  # Undocumented
+    _OPT_TMPL: ClassVar[str] = ...  # Undocumented
+    _OPT_NV_TMPL: ClassVar[str] = ...  # Undocumented
+
+    SECTCRE: Pattern[str] = ...
+    OPTCRE: ClassVar[Pattern[str]] = ...
+    OPTCRE_NV: ClassVar[Pattern[str]] = ...  # Undocumented
+    NONSPACECRE: ClassVar[Pattern[str]] = ...  # Undocumented
+
     BOOLEAN_STATES: ClassVar[Mapping[str, bool]] = ...  # Undocumented
     default_section: str
     def __init__(

@@ -1,7 +1,3 @@
-# Stubs for unittest
-
-# Based on http://docs.python.org/2.7/library/unittest.html
-
 import datetime
 import types
 from abc import ABCMeta, abstractmethod

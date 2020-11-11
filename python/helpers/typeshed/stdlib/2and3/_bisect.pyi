@@ -1,5 +1,3 @@
-"""Stub file for the '_bisect' module."""
-
 from typing import MutableSequence, Optional, Sequence, TypeVar
 
 _T = TypeVar("_T")

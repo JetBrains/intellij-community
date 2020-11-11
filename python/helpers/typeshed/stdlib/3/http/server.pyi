@@ -1,5 +1,3 @@
-# Stubs for http.server (Python 3.4)
-
 import email.message
 import socketserver
 import sys

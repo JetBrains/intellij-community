@@ -1,5 +1,3 @@
-# Stubs for operator
-
 import sys
 from typing import (
     Any,

@@ -1,5 +1,3 @@
-# Stubs for base64
-
 import sys
 from typing import IO, Optional, Union
 

@@ -1,5 +1,3 @@
-# Stubs for pkg_resources (Python 3.4)
-
 import importlib.abc
 import types
 import zipimport
