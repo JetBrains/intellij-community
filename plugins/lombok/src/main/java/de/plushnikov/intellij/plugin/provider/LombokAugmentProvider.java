@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.provider;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -14,6 +13,7 @@ import de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
+import de.plushnikov.intellij.plugin.processor.method.ExtensionMethodsHelper;
 import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,8 +82,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       return emptyResult;
     }
     // skip processing if disabled, or no lombok library is present
-    final Project project = element.getProject();
-    if (!LombokProjectValidatorActivity.hasLombokLibrary(project)) {
+    if (!LombokProjectValidatorActivity.hasLombokLibrary(element.getProject())) {
       return emptyResult;
     }
 
@@ -160,5 +159,15 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       }
     }
     return result;
+  }
+
+  @Override
+  protected List<PsiMethod> getExtensionMethods(@NotNull PsiClass aClass,
+                                                @Nullable String nameHint,
+                                                @NotNull PsiElement context) {
+    if (!LombokProjectValidatorActivity.hasLombokLibrary(context.getProject())) {
+      return Collections.emptyList();
+    }
+    return ExtensionMethodsHelper.getExtensionMethods(aClass, nameHint, context);
   }
 }

@@ -8,11 +8,15 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -183,12 +187,12 @@ public final class PsiClassImplUtil {
   }
 
   private static MemberCache getMap(@NotNull PsiClass aClass) {
-    return getMap(aClass, aClass.getResolveScope());
+    return getMap(aClass, aClass);
   }
 
-  private static MemberCache getMap(@NotNull PsiClass aClass, @NotNull GlobalSearchScope scope) {
+  private static MemberCache getMap(@NotNull PsiClass aClass, @NotNull PsiElement context) {
     return CachedValuesManager.getProjectPsiDependentCache(aClass, c ->
-      ConcurrentFactoryMap.createMap((GlobalSearchScope s) -> new MemberCache(c, s))).get(scope);
+      ConcurrentFactoryMap.createMap((PsiElement e) -> new MemberCache(c, e))).get(context);
   }
 
   private static final class ClassIconRequest {
@@ -323,15 +327,30 @@ public final class PsiClassImplUtil {
   private static class MemberCache {
     private final @NotNull List<PsiClass> myAllSupers;
     private final ConcurrentMap<MemberType, PsiMember[]> myAllMembers;
+    private final PsiClass myClass;
+    private final @NotNull PsiElement myContext;
 
-    MemberCache(PsiClass psiClass, GlobalSearchScope scope) {
+    MemberCache(PsiClass psiClass, PsiElement context) {
+      myClass = psiClass;
+      myContext = context;
+      GlobalSearchScope scope = context.getResolveScope();
       myAllSupers = JBTreeTraverser
         .from((PsiClass c) -> ContainerUtil.mapNotNull(c.getSupers(), s -> PsiSuperMethodUtil.correctClassByScope(s, scope)))
         .unique()
         .withRoot(psiClass)
         .toList();
       myAllMembers = ConcurrentFactoryMap.createMap(
-        type -> StreamEx.of(myAllSupers).flatArray(type::getMembers).filter(e -> !skipInvalid(e)).toArray(PsiMember.EMPTY_ARRAY));
+        type -> {
+          PsiMember[] self = StreamEx.of(myAllSupers).flatArray(type::getMembers).filter(e -> !skipInvalid(e)).toArray(PsiMember.EMPTY_ARRAY);
+          if (type == MemberType.METHOD) {
+            List<PsiMethod> extensionMethods = PsiAugmentProvider.collectExtensionMethods(psiClass, null, context);
+            if (!extensionMethods.isEmpty()) {
+              self = self.length == 0 ? extensionMethods.toArray(PsiMember.EMPTY_ARRAY)
+                                      : ArrayUtil.mergeArrays(self, extensionMethods.toArray(PsiMember.EMPTY_ARRAY));
+            }
+          }
+          return self;
+        });
     }
 
     @NotNull List<PsiMember> calcMembersByName(@NotNull MemberType type, @NotNull String name) {
@@ -352,6 +371,13 @@ public final class PsiClassImplUtil {
             if (result == null) result = new ArrayList<>();
             result.add(member);
           }
+        }
+      }
+      if (type == MemberType.METHOD) {
+        List<PsiMethod> methods = PsiAugmentProvider.collectExtensionMethods(myClass, name, myContext);
+        if (!methods.isEmpty()) {
+          if (result == null) result = new ArrayList<>();
+          result.addAll(methods);
         }
       }
       return result == null ? Collections.emptyList() : ContainerUtil.filter(result, e -> !skipInvalid(e));
@@ -465,7 +491,7 @@ public final class PsiClassImplUtil {
         }
       }
       else {
-        List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.FIELD, name);
+        List<PsiMember> list = getMap(aClass, place).calcMembersByName(MemberType.FIELD, name);
         if (!list.isEmpty()) {
           boolean resolved = false;
           for (PsiMember candidateField : list) {
@@ -507,7 +533,7 @@ public final class PsiClassImplUtil {
           }
         }
         else {
-          List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.CLASS, name);
+          List<PsiMember> list = getMap(aClass, place).calcMembersByName(MemberType.CLASS, name);
           if (!list.isEmpty()) {
             boolean resolved = false;
             for (PsiMember inner : list) {
@@ -538,7 +564,7 @@ public final class PsiClassImplUtil {
           return true;
         }
       }
-      List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.METHOD, name);
+      List<PsiMember> list = getMap(aClass, place).calcMembersByName(MemberType.METHOD, name);
       if (!list.isEmpty()) {
         boolean resolved = false;
         for (PsiMember candidate : list) {

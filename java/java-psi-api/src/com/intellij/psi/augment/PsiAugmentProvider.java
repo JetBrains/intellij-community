@@ -15,6 +15,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,18 @@ public abstract class PsiAugmentProvider {
     return (List<Psi>)cache.get(type);
   }
 
+  /**
+   * An extension which enables one to inject extension methods with name {@code nameHint} in class {@code aClass} in context `{@code context}`
+   * @param aClass    where extension methods would be injected
+   * @param nameHint  name of the method which is requested or null if all extension methods for this class in this context should be calculated.
+   *                  Implementations are supposed to use this parameter as no additional name check would be performed
+   * @param context   context where extension methods should be applicable
+   */
+  @ApiStatus.Experimental
+  protected List<PsiMethod> getExtensionMethods(@NotNull PsiClass aClass, @Nullable String nameHint, @NotNull PsiElement context) {
+    return Collections.emptyList();
+  }
+  
   /**
    * @deprecated invoke and override {@link #getAugments(PsiElement, Class, String)}.
    */
@@ -136,6 +149,30 @@ public abstract class PsiAugmentProvider {
 
     return result;
   }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static List<PsiMethod> collectExtensionMethods(PsiClass aClass, String nameHint, PsiElement context) {
+    List<PsiMethod> extensionMethods = new SmartList<>();
+    forEach(aClass.getProject(), provider -> {
+      List<PsiMethod> methods = provider.getExtensionMethods(aClass, nameHint, context);
+      for (PsiMethod method : methods) {
+        try {
+          PsiUtilCore.ensureValid(method);
+          extensionMethods.add(method);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(PluginException.createByClass(e, provider.getClass()));
+        }
+      }
+      return true;
+    });
+    return extensionMethods;
+  }
+
 
   @Nullable
   public static PsiType getInferredType(@NotNull PsiTypeElement typeElement) {
