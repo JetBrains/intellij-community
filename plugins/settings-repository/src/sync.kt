@@ -185,20 +185,8 @@ internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager,
 
   val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
   icsManager.schemeManagerFactory.value.process {
-    if (reloadAllSchemes) {
+    if (reloadAllSchemes || shouldReloadSchemeManager(it, updateResult.changed.plus(updateResult.deleted))) {
       schemeManagersToReload.add(it)
-    }
-    else {
-      for (path in updateResult.changed) {
-        if (it.fileSpec == toIdeaPath(path)) {
-          schemeManagersToReload.add(it)
-        }
-      }
-      for (path in updateResult.deleted) {
-        if (it.fileSpec == toIdeaPath(path)) {
-          schemeManagersToReload.add(it)
-        }
-      }
     }
   }
 
@@ -226,6 +214,11 @@ internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager,
     return@withContext !notReloadableComponents.isEmpty() && askToRestart(store, notReloadableComponents, null, true)
   }
 }
+
+private fun shouldReloadSchemeManager(schemeManager: SchemeManagerImpl<*, *>, pathsToCheck: Collection<String>): Boolean {
+  return pathsToCheck.any { schemeManager.fileSpec == toIdeaPath(it) }
+}
+
 
 private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {
   for (stateStorage in stateStorages) {
