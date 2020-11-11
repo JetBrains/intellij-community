@@ -86,16 +86,16 @@ abstract class TargetEnvironmentWizardStepKt(@NlsContexts.DialogTitle title: Str
 
   companion object {
     @JvmStatic
-    protected val ICON_GAP = JBUIScale.scale(6)
+    val ICON_GAP = JBUIScale.scale(6)
 
     @JvmStatic
-    protected val HGAP = JBUIScale.scale(UIUtil.DEFAULT_HGAP)
+    val HGAP = JBUIScale.scale(UIUtil.DEFAULT_HGAP)
 
     @JvmStatic
-    protected val VGAP = JBUIScale.scale(UIUtil.DEFAULT_VGAP)
+    val VGAP = JBUIScale.scale(UIUtil.DEFAULT_VGAP)
 
     @JvmStatic
-    protected val LARGE_VGAP = JBUIScale.scale(UIUtil.LARGE_VGAP)
+    val LARGE_VGAP = JBUIScale.scale(UIUtil.LARGE_VGAP)
 
     @JvmStatic
     @Nls
