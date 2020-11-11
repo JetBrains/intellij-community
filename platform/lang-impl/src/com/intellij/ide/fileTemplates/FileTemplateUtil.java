@@ -31,6 +31,7 @@ import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.Token;
 import org.apache.velocity.runtime.parser.node.*;
 import org.apache.velocity.util.StringUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,7 +218,7 @@ public final class FileTemplateUtil {
       else {
         project = null;
       }
-      VelocityTemplateContext.withContext(project, ()->VelocityWrapper.evaluate(project, context, stringWriter, templateContent));
+      VelocityTemplateContext.withContext(project, () -> VelocityWrapper.evaluate(project, context, stringWriter, templateContent));
     }
     catch (final VelocityException e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -253,7 +254,7 @@ public final class FileTemplateUtil {
     Map<String, Object> map;
     if (props != null) {
       map = new HashMap<>();
-      putAll(map, props);
+      copyAllAsIs(map, props);
     }
     else {
       map = null;
@@ -270,7 +271,7 @@ public final class FileTemplateUtil {
     Map<String, Object> map;
     if (props != null) {
       map = new HashMap<>();
-      putAll(map, props);
+      copyAllAsIs(map, props);
     }
     else {
       map = null;
@@ -290,12 +291,12 @@ public final class FileTemplateUtil {
     if (propsMap == null) {
       Properties p = FileTemplateManager.getInstance(project).getDefaultProperties();
       propsMap = new HashMap<>();
-      putAll(propsMap, p);
+      copyAllAsIs(propsMap, p);
     }
 
     Properties p = new Properties();
     fillDefaultProperties(p, directory);
-    putAll(propsMap, p);
+    copyAllAsIs(propsMap, p);
 
     final CreateFromTemplateHandler handler = findHandler(template);
     if (fileName != null && propsMap.get(FileTemplate.ATTRIBUTE_NAME) == null) {
@@ -334,9 +335,9 @@ public final class FileTemplateUtil {
     }
 
     return WriteCommandAction
-        .writeCommandAction(project)
-        .withName(handler.commandName(template))
-        .compute(()->handler.createFromTemplate(project, directory, fileName_, template, templateText, props_));
+      .writeCommandAction(project)
+      .withName(handler.commandName(template))
+      .compute(() -> handler.createFromTemplate(project, directory, fileName_, template, templateText, props_));
   }
 
   @Nullable
@@ -387,7 +388,26 @@ public final class FileTemplateUtil {
     return getFileType(fileTemplate).getIcon();
   }
 
+  /**
+   * @deprecated Copies only string values which is an unexpected behavior.
+   * Please use {@link #copyAllAsStrings(Map, Properties)} or {@link #copyAllAsIs(Map, Properties)} instead.
+   */
+  @Deprecated(since = "2020.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static void putAll(@NotNull Map<String, Object> props, @NotNull Properties p) {
+    copyAllAsStrings(props, p);
+  }
+
+  public static void copyAllAsIs(@NotNull Map<String, Object> props, @NotNull Properties p){
+    for (Enumeration<?> e = p.propertyNames(); e.hasMoreElements(); ) {
+      String s = (String)e.nextElement();
+
+      //noinspection UseOfPropertiesAsHashtable
+      props.putIfAbsent(s, p.get(s)); // DO NOT CALL getProperty() cause it returns STRING | NULL
+    }
+  }
+
+  public static void copyAllAsStrings(@NotNull Map<String, Object> props, @NotNull Properties p) {
     for (Enumeration<?> e = p.propertyNames(); e.hasMoreElements(); ) {
       String s = (String)e.nextElement();
       props.putIfAbsent(s, p.getProperty(s));
