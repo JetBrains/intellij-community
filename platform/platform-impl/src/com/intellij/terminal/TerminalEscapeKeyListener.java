@@ -66,7 +66,7 @@ public class TerminalEscapeKeyListener {
             !Registry.is("terminal.escape.moves.focus.to.editor")) {
           return; // For example, vi key bindings configured in terminal
         }
-        // Repeat logic of InternalDecorator#init from 8cf12b35fe3e44a32622f52a151ed2bf8880faba
+        // Repeat logic from com.intellij.openapi.wm.impl.InternalDecorator#processKeyBinding
         ToolWindowManager.getInstance(project).activateEditorComponent();
       }
     }
