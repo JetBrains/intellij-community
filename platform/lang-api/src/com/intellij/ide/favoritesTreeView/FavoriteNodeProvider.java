@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
@@ -58,6 +59,7 @@ public abstract class FavoriteNodeProvider {
    * @return the location text, or -1 if {@code element} is not an element supported by this provider.
    */
   @Nullable
+  @NlsSafe
   public abstract String getElementLocation(final Object element);
 
   /**
