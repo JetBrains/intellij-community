@@ -9,6 +9,7 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 
 class TabDescriptor(val component: JComponent, private val displayNamePointer: Supplier<@TabTitle String>) : Disposable {
+  @Suppress("HardCodedStringLiteral")
   @get:TabTitle
   val displayName: @TabTitle String
     get() = displayNamePointer.get()
@@ -43,6 +44,7 @@ class TabDescriptor(val component: JComponent, private val displayNamePointer: S
 class TabGroupId @JvmOverloads constructor(@NonNls val id: String,
                                            private val displayNamePointer: Supplier<@TabTitle String>,
                                            val splitByDefault: Boolean = false) {
+  @Suppress("HardCodedStringLiteral")
   @get:TabTitle
   val displayName: @TabTitle String
     get() = displayNamePointer.get()

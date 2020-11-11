@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -433,7 +434,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       if (name == null) {
         String title = StringUtil.defaultIfEmpty(toolWindow.getTitle(), toolWindow.getStripeTitle());
         title = StringUtil.defaultIfEmpty(title, toolWindow.getId());
-        name = StringUtil.notNullize(title) + " Tool Window";
+        name = StringUtil.notNullize(title) + " " + IdeBundle.message("internal.decorator.accessible.postfix");
       }
       return name;
     }

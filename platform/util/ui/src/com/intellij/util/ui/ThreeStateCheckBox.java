@@ -208,7 +208,7 @@ public class ThreeStateCheckBox extends JCheckBox {
       return super.getAccessibleName();
     }
 
-    private String addStateDescription(@Nls String name) {
+    private @Nls String addStateDescription(@Nls String name) {
       switch(getState()) {
         case SELECTED:
           return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message("accessible.checkbox.name.checked"));

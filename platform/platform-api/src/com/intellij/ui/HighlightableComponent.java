@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HighlightableComponent extends JComponent implements Accessible {
+  @Nls
   protected String myText = "";
   protected Icon myIcon;
   protected int myIconTextGap;
@@ -41,7 +43,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     UISettings.setupComponentAntialiasing(this);
   }
 
-  public void setText(@Nullable String text) {
+  public void setText(@Nullable @Nls String text) {
     String oldAccessibleName = null;
     if (accessibleContext != null) {
       oldAccessibleName = accessibleContext.getAccessibleName();

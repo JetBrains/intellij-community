@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
@@ -118,6 +119,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       }
 
       @Override
+      @NlsSafe
       public String getAccessibleName() {
         StringBuilder builder = new StringBuilder();
         if (project != null) {

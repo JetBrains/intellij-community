@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtilRt;
@@ -506,7 +507,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   protected class AccessibleMultilineTreeCellRenderer extends AccessibleJComponent {
     @Override
     public String getAccessibleName() {
-      String name = accessibleName;
+      @NlsSafe String name = accessibleName;
       if (name == null) {
         name = (String)getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY);
       }

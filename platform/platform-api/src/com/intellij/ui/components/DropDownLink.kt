@@ -8,6 +8,7 @@ import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
@@ -78,6 +79,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     itemListeners.forEach { it.itemStateChanged(ItemEvent(this, ItemEvent.ITEM_STATE_CHANGED, item, state)) }
   }
 
+  @Nls
   protected open fun itemToString(item: T) = item.toString()
 
   protected open fun popupPoint() = Point(0, height + scale(4))
