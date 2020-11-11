@@ -1,7 +1,3 @@
-# Stubs for itertools
-
-# Based on http://docs.python.org/3.2/library/itertools.html
-
 import sys
 from typing import Any, Callable, Generic, Iterable, Iterator, Optional, Tuple, TypeVar, overload
 from typing_extensions import Literal

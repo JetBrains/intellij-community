@@ -24,6 +24,7 @@ copy.PyStringMap
 ctypes.CDLL.__init__
 email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
+fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 hmac.HMAC.__init__
 importlib.metadata
 importlib.resources

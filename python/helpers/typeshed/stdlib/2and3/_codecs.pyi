@@ -1,5 +1,3 @@
-"""Stub file for the '_codecs' module."""
-
 import codecs
 import sys
 from typing import Any, Callable, Dict, Optional, Text, Tuple, Union

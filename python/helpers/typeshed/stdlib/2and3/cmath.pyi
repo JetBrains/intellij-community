@@ -1,5 +1,3 @@
-"""Stub file for the 'cmath' module."""
-
 import sys
 from typing import SupportsComplex, SupportsFloat, Tuple, Union
 

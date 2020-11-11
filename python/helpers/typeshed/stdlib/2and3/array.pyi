@@ -1,7 +1,3 @@
-# Stubs for array
-
-# Based on http://docs.python.org/3.6/library/array.html
-
 import sys
 from typing import Any, BinaryIO, Generic, Iterable, List, MutableSequence, Text, Tuple, TypeVar, Union, overload
 from typing_extensions import Literal

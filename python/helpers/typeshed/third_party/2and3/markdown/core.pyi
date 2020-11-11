@@ -2,8 +2,13 @@ from typing import Any, BinaryIO, Mapping, Optional, Sequence, Text, TextIO, Uni
 from typing_extensions import Literal
 
 from .extensions import Extension
+from .util import Registry
 
 class Markdown:
+    preprocessors: Registry
+    inlinePatterns: Registry
+    treeprocessors: Registry
+    postprocessors: Registry
     def __init__(
         self,
         *,

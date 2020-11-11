@@ -1,4 +1,3 @@
-# Stubs for py_compile (Python 2 and 3)
 import enum
 import sys
 from typing import AnyStr, List, Optional, Text, Type, Union

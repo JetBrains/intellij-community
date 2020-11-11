@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Callable, Generic, List, Mapping, Optional, Sequence, Text, Tuple, Type, TypeVar, Union, overload
+from typing import Any, Callable, Generic, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union, overload
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 _T = TypeVar("_T")
@@ -73,7 +73,7 @@ class Base:
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
 
 class NonCallableMock(Base, Any):  # type: ignore
-    def __new__(cls, *args: Any, **kw: Any) -> NonCallableMock: ...
+    def __new__(__cls, *args: Any, **kw: Any) -> NonCallableMock: ...
     def __init__(
         self,
         spec: Union[List[str], object, Type[object], None] = ...,
@@ -252,7 +252,7 @@ class _patcher:
     def object(  # type: ignore
         self,
         target: Any,
-        attribute: Text,
+        attribute: str,
         *,
         spec: Optional[Any] = ...,
         create: bool = ...,
@@ -265,7 +265,7 @@ class _patcher:
     def object(
         self,
         target: Any,
-        attribute: Text,
+        attribute: str,
         new: _T = ...,
         spec: Optional[Any] = ...,
         create: bool = ...,

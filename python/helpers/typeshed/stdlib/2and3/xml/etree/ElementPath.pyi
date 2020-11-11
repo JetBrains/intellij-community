@@ -1,5 +1,3 @@
-# Stubs for xml.etree.ElementPath (Python 3.4)
-
 from typing import Callable, Dict, Generator, List, Optional, Pattern, Tuple, TypeVar, Union
 from xml.etree.ElementTree import Element
 

@@ -1,5 +1,3 @@
-# Source: https://github.com/python/cpython/blob/master/Lib/sre_constants.py
-
 from typing import Any, Dict, List, Optional, Union
 
 MAGIC: int

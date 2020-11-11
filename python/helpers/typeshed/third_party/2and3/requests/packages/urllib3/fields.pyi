@@ -1,5 +1,3 @@
-# Stubs for requests.packages.urllib3.fields (Python 3.4)
-
 from typing import Any
 
 def guess_content_type(filename, default=...): ...

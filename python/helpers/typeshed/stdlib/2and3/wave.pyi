@@ -1,5 +1,3 @@
-# Stubs for wave (Python 2 and 3)
-
 import sys
 from typing import IO, Any, BinaryIO, NamedTuple, NoReturn, Optional, Text, Tuple, Union
 

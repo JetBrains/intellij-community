@@ -9,10 +9,8 @@ import java.nio.file.Paths
 /**
  * This script was implemented to sync local copy of `typeshed` with bundled `typeshed`.
  *
- * As a result it leaves top-level modules and packages that are listed in `whiteList`.
+ * As a result it skips top-level modules and packages that are listed in `blacklist`.
  * It allows us to reduce the size of bundled `typeshed` and do not run indexing and other analyzing processes on disabled stubs.
- *
- * @see [com.jetbrains.python.tools.splitBuiltins]
  */
 
 val repo: Path = Paths.get("../../../../../../../../../typeshed").abs().normalize()
@@ -210,9 +208,6 @@ val blacklist = sequenceOf(
 
 println("Cleaning")
 cleanTopLevelPackages(bundled, blacklist)
-
-println("Splitting builtins")
-splitBuiltins(bundled)
 
 fun sync(repo: Path, bundled: Path) {
   if (!Files.exists(repo)) throw IllegalArgumentException("Not found: ${repo.abs()}")

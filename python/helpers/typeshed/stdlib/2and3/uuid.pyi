@@ -1,5 +1,3 @@
-# Stubs for uuid
-
 import sys
 from typing import Any, Optional, Text, Tuple
 

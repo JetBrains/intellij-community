@@ -1,5 +1,3 @@
-# Stubs for multiprocessing.managers
-
 # NOTE: These are incomplete!
 
 import queue
@@ -30,6 +28,9 @@ if sys.version_info >= (3, 8):
     _SharedMemory = SharedMemory
     _ShareableList = ShareableList
 
+if sys.version_info >= (3, 9):
+    from types import GenericAlias
+
 _T = TypeVar("_T")
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
@@ -59,27 +60,16 @@ class Token(object):
 class BaseProxy(object):
     _address_to_local: Dict[Any, Any]
     _mutex: Any
-    if sys.version_info >= (3, 6):
-        def __init__(
-            self,
-            token: Any,
-            serializer: str,
-            manager: Any = ...,
-            authkey: Optional[AnyStr] = ...,
-            exposed: Any = ...,
-            incref: bool = ...,
-            manager_owned: bool = ...,
-        ) -> None: ...
-    else:
-        def __init__(
-            self,
-            token: Any,
-            serializer: str,
-            manager: Any = ...,
-            authkey: Optional[AnyStr] = ...,
-            exposed: Any = ...,
-            incref: bool = ...,
-        ) -> None: ...
+    def __init__(
+        self,
+        token: Any,
+        serializer: str,
+        manager: Any = ...,
+        authkey: Optional[AnyStr] = ...,
+        exposed: Any = ...,
+        incref: bool = ...,
+        manager_owned: bool = ...,
+    ) -> None: ...
     def __deepcopy__(self, memo: Optional[Any]) -> Any: ...
     def _callmethod(self, methodname: str, args: Tuple[Any, ...] = ..., kwds: Dict[Any, Any] = ...) -> None: ...
     def _getvalue(self) -> Any: ...
@@ -89,6 +79,8 @@ class ValueProxy(BaseProxy, Generic[_T]):
     def get(self) -> _T: ...
     def set(self, value: _T) -> None: ...
     value: _T
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
 # Returned by BaseManager.get_server()
 class Server:

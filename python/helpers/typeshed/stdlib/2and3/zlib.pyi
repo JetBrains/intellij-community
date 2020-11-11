@@ -1,4 +1,3 @@
-# Stubs for zlib
 import sys
 from array import array
 from typing import Any, Union

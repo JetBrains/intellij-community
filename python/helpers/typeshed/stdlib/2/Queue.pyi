@@ -1,5 +1,3 @@
-# Stubs for Queue (Python 2)
-
 from collections import deque
 from typing import Any, Deque, Generic, Optional, TypeVar
 

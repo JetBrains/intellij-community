@@ -1,5 +1,3 @@
-# Stubs for urlparse (Python 2)
-
 from typing import AnyStr, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union, overload
 
 _String = Union[str, unicode]
