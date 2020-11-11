@@ -15,11 +15,13 @@
  */
 package com.jetbrains.python.quickFixes;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyRemoveUnusedLocalQuickFixTest/")
 public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
@@ -64,6 +66,47 @@ public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
     });
+  }
+
+  // PY-28782
+  public void testRemoveChainedAssignmentStatementFirstTarget() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+    });
+  }
+
+  // PY-28782
+  public void testRemoveChainedAssignmentStatementSecondTarget() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+    });
+  }
+
+  // PY-28782
+  public void testRemoveChainedAssignmentStatementUnpackingFirstTarget() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestNotIgnoreTupleUnpacking(PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard"));
+    });
+  }
+
+  // PY-28782
+  public void testRemoveChainedAssignmentStatementUnpackingSecondTarget() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestNotIgnoreTupleUnpacking(PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard"));
+    });
+  }
+
+  private void doTestNotIgnoreTupleUnpacking(@NotNull String hint) {
+    final String testFileName = getTestName(true);
+    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    inspection.ignoreTupleUnpacking = false;
+    myFixture.configureByFile(testFileName + ".py");
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(true, false, false);
+    final IntentionAction intentionAction = myFixture.findSingleIntention(hint);
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(testFileName + "_after.py", true);
   }
 
   // PY-32037
