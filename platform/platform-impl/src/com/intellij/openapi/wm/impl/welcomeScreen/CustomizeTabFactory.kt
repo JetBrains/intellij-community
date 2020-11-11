@@ -190,7 +190,10 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         fullRow {
           comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty)
           component(focusableLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(null, KeyMapBundle.message("keymap.display.name"))
+            //select Plugins tab and search for keymap
+            WelcomeScreenService.getInstance().selectTabByType(PluginsTabFactory::class.java)
+            WelcomeScreenService.getInstance().pluginManagerConfigurable?.enableSearch("/tag: keymap")?.run()
+
           }).withLargeLeftGap()
         }
       }
