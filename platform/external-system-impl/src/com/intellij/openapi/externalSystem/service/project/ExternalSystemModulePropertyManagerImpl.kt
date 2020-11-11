@@ -126,7 +126,7 @@ class ExternalSystemModulePropertyManagerImpl(private val module: Module) : Exte
     store.rootProjectPath = path
   }
 
-  override fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider) {
+  override fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider?) {
     store.externalSystemModuleType = type
   }
 }
