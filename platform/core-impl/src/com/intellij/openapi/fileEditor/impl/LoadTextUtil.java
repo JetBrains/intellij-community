@@ -242,9 +242,16 @@ public final class LoadTextUtil {
                                                 byte @NotNull [] content,
                                                 int length,
                                                 @NotNull FileType fileType) {
-    String charsetName = fileType.getCharset(virtualFile, content);
+    Charset charset;
+    if (fileType instanceof FileType.WithForcedCharset) {
+      charset = ((FileType.WithForcedCharset)fileType).getForcedCharset();
+    }
+    else {
+      String charsetName = fileType.getCharset(virtualFile, content);
+      charset = charsetName == null ? null : CharsetToolkit.forName(charsetName);
+    }
     DetectResult guessed = guessFromContent(virtualFile, content, length);
-    Charset hardCodedCharset = charsetName == null ? guessed.hardCodedCharset : CharsetToolkit.forName(charsetName);
+    Charset hardCodedCharset = charset == null ? guessed.hardCodedCharset : charset;
 
     if (hardCodedCharset == null && guessed.guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
       return new DetectResult(StandardCharsets.UTF_8, guessed.guessed, guessed.BOM);

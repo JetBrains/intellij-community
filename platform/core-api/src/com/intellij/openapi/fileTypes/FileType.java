@@ -22,6 +22,10 @@ import java.nio.charset.Charset;
  *
  * <p>Use {@link LanguageFileType} for files having {@link com.intellij.lang.Language} support.</p>
  *
+ * <p>Use {@link WithForcedCharset} to force single encoding for all files with corresponding file type.
+ * It helps to avoid excess content loading on charset detection.
+ * </p>
+ *
  * @see com.intellij.openapi.fileTypes.FileTypes
  * @see INativeFileType
  */
@@ -76,5 +80,24 @@ public interface FileType extends Scheme {
     //   throw new UnsupportedOperationException();
     // }
     return null;
+  }
+
+  /**
+   * A special interface to mark that files with corresponding {@link FileType} always have the same encoding.
+   * <br>
+   * This interface can be used to avoid content loading to detect file's charset.
+   */
+  @ApiStatus.Experimental
+  interface WithForcedCharset extends FileType {
+    @Override
+    @NonNls
+    @Nullable
+    default String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+      return getForcedCharset().name();
+    }
+
+    @NonNls
+    @NotNull
+    Charset getForcedCharset();
   }
 }

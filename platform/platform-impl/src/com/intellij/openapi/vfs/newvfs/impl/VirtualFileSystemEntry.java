@@ -447,8 +447,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
         return super.getCharset();
       }
       try {
-        final byte[] content = VfsUtilCore.loadBytes(this);
-        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, fileType);
+        if (fileType instanceof FileType.WithForcedCharset) {
+          charset = ((FileType.WithForcedCharset)fileType).getForcedCharset();
+        }
+        else {
+          final byte[] content = VfsUtilCore.loadBytes(this);
+          charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, fileType);
+        }
       }
       catch (IOException e) {
         return super.getCharset();

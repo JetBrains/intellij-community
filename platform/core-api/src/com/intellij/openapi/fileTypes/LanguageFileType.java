@@ -80,6 +80,9 @@ public abstract class LanguageFileType implements FileType {
   }
 
   public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
+    if (this instanceof WithForcedCharset) {
+      return ((WithForcedCharset)this).getForcedCharset();
+    }
     return extractCharsetFromFileContent(project, file, content.toString());
   }
 }

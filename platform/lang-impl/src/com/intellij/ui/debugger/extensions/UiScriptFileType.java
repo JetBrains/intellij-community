@@ -3,13 +3,14 @@ package com.intellij.ui.debugger.extensions;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
-public final class UiScriptFileType implements FileType {
+public final class UiScriptFileType implements FileType.WithForcedCharset {
   private static UiScriptFileType myInstance;
 
   private UiScriptFileType() {
@@ -53,7 +54,7 @@ public final class UiScriptFileType implements FileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return CharsetToolkit.UTF8;
+  public @NonNls @NotNull Charset getForcedCharset() {
+    return StandardCharsets.UTF_8;
   }
 }
