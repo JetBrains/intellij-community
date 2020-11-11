@@ -292,7 +292,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
     if (canShow()) {
       component.addComponentListener(object : ComponentAdapter() {
         override fun componentMoved(event: ComponentEvent) {
-          hideOrRepaint(event.component, pointProvider)
+          hideOrRepaint(event.component)
         }
 
         override fun componentResized(event: ComponentEvent) {
@@ -301,7 +301,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
             balloon = createAndShow(tracker)
           }
           else {
-            hideOrRepaint(event.component, pointProvider)
+            hideOrRepaint(event.component)
           }
         }
       }.also{ Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
@@ -469,7 +469,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
     balloon = null
   }
 
-  private fun hideOrRepaint(component: Component, pointProvider: (Component) -> Point) {
+  private fun hideOrRepaint(component: Component) {
     balloon?.let {
       if (component.bounds.isEmpty) {
         hideBalloon()
