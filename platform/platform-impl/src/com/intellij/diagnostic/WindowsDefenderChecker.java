@@ -283,7 +283,7 @@ public class WindowsDefenderChecker {
   }
 
   /**
-   * Checks whether each of the given paths in {@link paths} is matched by some pattern in {@link excludedPatterns},
+   * Checks whether each of the given paths in {@code paths} is matched by some pattern in {@code excludedPatterns},
    * returning a map of the results.
    */
   @NotNull
