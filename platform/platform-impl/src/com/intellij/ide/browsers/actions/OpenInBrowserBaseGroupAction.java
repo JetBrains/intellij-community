@@ -3,21 +3,16 @@ package com.intellij.ide.browsers.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.jcef.JBCefApp;
-import com.intellij.ui.scale.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -47,14 +42,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
       AnAction[] actions = new AnAction[browsers.size() + offset];
 
       if (hasLocalBrowser) {
-        actions[0] = new DumbAwareAction(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtil.loadSmallApplicationIcon(ScaleContext.create())) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-            PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
-            OpenInRightSplitAction.Companion.openInRightSplit(project, new WebPreviewVirtualFile(psiFile.getVirtualFile()), null);
-          }
-        };
+        actions[0] = new OpenHtmlInEmbeddedBrowserAction();
       }
 
       if (addDefaultBrowser) {
