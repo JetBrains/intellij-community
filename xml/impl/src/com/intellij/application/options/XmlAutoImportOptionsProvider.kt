@@ -26,7 +26,7 @@ import javax.swing.JPanel
 /**
  * @author Dmitry Avdeev
  */
-class XmlAutoImportOptionsProvider : ConfigurableBuilder("XML"), AutoImportOptionsProvider {
+class XmlAutoImportOptionsProvider : ConfigurableBuilder(XmlBundle.message("border.title.xml")), AutoImportOptionsProvider {
   init {
     checkBox(XmlBundle.message("auto.import.show.popup"), XmlSettings.getInstance()::SHOW_XML_ADD_IMPORT_HINTS)
   }

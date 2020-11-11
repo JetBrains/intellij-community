@@ -34,7 +34,8 @@ private val webEditorOptionDescriptors
     mySelectWholeCssIdentifierOnDoubleClick
   ).map(CheckboxDescriptor::asOptionDescriptor)
 
-internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS"), ConfigurableWithOptionDescriptors, Configurable.WithEpDependencies {
+internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
+  XmlBundle.message("configurable.name.html.css")), ConfigurableWithOptionDescriptors, Configurable.WithEpDependencies {
   override fun createPanel(): DialogPanel {
     return panel {
       titledRow(XmlBundle.message("xml.editor.options.misc.title")) {
