@@ -83,7 +83,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
     // skip processing if disabled, or no lombok library is present
     final Project project = element.getProject();
-    if (!LombokAugmentorKillSwitch.isLombokAugmentorActive() || !LombokProjectValidatorActivity.hasLombokLibrary(project)) {
+    if (!LombokProjectValidatorActivity.hasLombokLibrary(project)) {
       return emptyResult;
     }
 
