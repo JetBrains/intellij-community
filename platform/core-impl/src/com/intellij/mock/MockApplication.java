@@ -344,18 +344,8 @@ public class MockApplication extends MockComponentManager implements Application
                                                      boolean canBeCanceled,
                                                      boolean modal,
                                                      @Nullable Project project,
-                                                     JComponent parentComponent,
-                                                     String cancelText) {
-    return false;
-  }
-
-  @Override
-  public boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable Project project,
-                                                                 @NotNull String progressTitle,
-                                                                 boolean canBeCanceled,
-                                                                 String cancelText,
-                                                                 JComponent parentComponent,
-                                                                 @NotNull Runnable process) {
+                                                     @Nullable JComponent parentComponent,
+                                                     @Nullable String cancelText) {
     return false;
   }
 

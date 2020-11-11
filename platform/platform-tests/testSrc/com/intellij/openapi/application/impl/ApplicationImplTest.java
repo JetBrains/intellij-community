@@ -519,55 +519,6 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (exception != null) throw exception;
   }
 
-  public void testRunProcessWithProgressSynchronouslyInReadAction() throws Throwable {
-    boolean result = ApplicationManagerEx.getApplicationEx()
-      .runProcessWithProgressSynchronouslyInReadAction(getProject(), "Title", true, "Cancel", null, () -> {
-        try {
-          assertFalse(SwingUtilities.isEventDispatchThread());
-          assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-        }
-        catch (Throwable e) {
-          exception = e;
-        }
-      });
-    assertTrue(result);
-    if (exception != null) throw exception;
-  }
-
-  public void testRunProcessWithProgressSynchronouslyInReadActionFromPooledThread() throws Throwable {
-    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(()-> {
-      boolean result = ApplicationManagerEx.getApplicationEx()
-        .runProcessWithProgressSynchronouslyInReadAction(getProject(), "Title", true, "Cancel", null, () -> {
-          try {
-            assertFalse(SwingUtilities.isEventDispatchThread());
-            assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-          }
-          catch (Throwable e) {
-            exception = e;
-          }
-        });
-      assertTrue(result);
-    });
-    TestTimeOut p = setTimeout(500, TimeUnit.MILLISECONDS);
-    while (!p.timedOut()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    joinWithTimeout(thread);
-    if (exception != null) throw exception;
-  }
-
-  public void testRunProcessWithProgressSynchronouslyInReadActionWithPendingWriteAction() throws Throwable {
-    SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()));
-    AtomicBoolean ran = new AtomicBoolean();
-    boolean result = ApplicationManagerEx.getApplicationEx()
-      .runProcessWithProgressSynchronouslyInReadAction(getProject(), "Title", true, "Cancel", null,
-                                                       () -> ran.set(true));
-    assertTrue(result);
-    UIUtil.dispatchAllInvocationEvents();
-    assertTrue(ran.get());
-    if (exception != null) throw exception;
-  }
-
   public void testRWLockPerformance() {
     TestTimeOut p = setTimeout(2, TimeUnit.SECONDS);
     while (!p.timedOut()) {
