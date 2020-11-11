@@ -13187,6 +13187,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeBraces/ifLambda2.kt");
         }
 
+        @TestMetadata("ifLong.kt")
+        public void testIfLong() throws Exception {
+            runTest("testData/intentions/removeBraces/ifLong.kt");
+        }
+
         @TestMetadata("ifWithComment.kt")
         public void testIfWithComment() throws Exception {
             runTest("testData/intentions/removeBraces/ifWithComment.kt");
@@ -13230,6 +13235,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("whenLambda3.kt")
         public void testWhenLambda3() throws Exception {
             runTest("testData/intentions/removeBraces/whenLambda3.kt");
+        }
+
+        @TestMetadata("whenLong.kt")
+        public void testWhenLong() throws Exception {
+            runTest("testData/intentions/removeBraces/whenLong.kt");
         }
 
         @TestMetadata("whenMultiple.kt")
