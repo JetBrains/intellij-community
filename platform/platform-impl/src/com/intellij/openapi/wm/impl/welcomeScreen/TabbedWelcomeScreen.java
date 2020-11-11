@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WelcomeScreenCustomization;
 import com.intellij.openapi.wm.WelcomeScreenTab;
@@ -32,13 +33,20 @@ import static com.intellij.ui.UIBundle.message;
 public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   TabbedWelcomeScreen() {
     setBackground(getMainTabListBackground());
+    Disposer.register(this, WelcomeScreenService.getInstance());
 
     CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> centralPanel = createCardPanel();
 
     DefaultListModel<WelcomeScreenTab> mainListModel = new DefaultListModel<>();
-    WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList().forEach(it -> mainListModel.addElement(it.createWelcomeTab(this)));
+    WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList().forEach(it -> {
+      WelcomeScreenTab tab = it.createWelcomeTab(this);
+      mainListModel.addElement(tab);
+      WelcomeScreenService.getInstance().registerFactoryToTab(it.getClass(), tab);
+    });
 
     JBList<WelcomeScreenTab> tabList = createListWithTabs(mainListModel);
+    WelcomeScreenService.getInstance().registerTabs(tabList);
+
     tabList.addListSelectionListener(e -> {
       centralPanel.select(tabList.getSelectedValue(), true);
       WelcomeScreenEventCollector.logTabSelected(tabList.getSelectedValue());
