@@ -1,11 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator.daemon;
 
-import com.sun.jna.Library;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.NativeLongByReference;
+import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,11 +49,11 @@ public final class UnixUtil {
   public static void setupSignals() {
     LibC libc = checkLibc();
 
-    Pointer sigsetPtr = new NativeLongByReference().getPointer();
-    if (libc.sigfillset(sigsetPtr) == -1) {
+    Memory sigset = new Memory(LibCConstants.MAX_SIZEOF_SIGSET_T);
+    if (libc.sigfillset(sigset) == -1) {
       throw new IllegalStateException("sigfillset: " + getLastErrorString());
     }
-    if (libc.sigprocmask(LibCConstants.SIG_UNBLOCK, sigsetPtr, Pointer.NULL) == -1) {
+    if (libc.sigprocmask(LibCConstants.SIG_UNBLOCK, sigset, Pointer.NULL) == -1) {
       throw new IllegalStateException("sigprocmask: " + getLastErrorString());
     }
 
@@ -126,9 +122,11 @@ public final class UnixUtil {
   }
 
   private interface LibCConstants {
-    int MAX_SIZEOF_STRUCT_SIGACTION = 256; // we assume a buffer of that size if enough to fit struct sigaction
+    int MAX_SIGNAL_NR = 2048;  // that's more than 1024 signals available on Linux
+    int MAX_SIZEOF_SIGSET_T = MAX_SIGNAL_NR / Byte.SIZE;  // sizeof(sigset_t): 128 on Linux, 4 on Darwin, 16 on FreeBSD
+    int MAX_SIZEOF_STRUCT_SIGACTION = MAX_SIZEOF_SIGSET_T + 64;  // struct sigaction: sa_mask + (sa_handler + sa_flags + sa_restorer)
 
-    int SIG_UNBLOCK = 2;
+    int SIG_UNBLOCK = Platform.isLinux() ? 1 : 2;
 
     Pointer SIG_DFL = new Pointer(0L);
     Pointer SIG_IGN = new Pointer(1L);
