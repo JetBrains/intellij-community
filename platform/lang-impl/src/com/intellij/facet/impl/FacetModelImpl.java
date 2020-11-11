@@ -3,6 +3,7 @@ package com.intellij.facet.impl;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManagerImpl;
+import com.intellij.facet.FacetModel;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
