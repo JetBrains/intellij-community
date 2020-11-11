@@ -199,7 +199,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
                        MouseEvent.BUTTON1), ActionPlaces.EDITOR_TAB, null, DataContext.EMPTY_CONTEXT);
       ActionsCollectorImpl.recordActionInvoked(myProject, ActionManager.getInstance().getAction(actionId), event,
                                                Collections.singletonList(ActionsEventLogGroup.ADDITIONAL.with(
-                                                 new ObjectEventData(SAME_WINDOW.with(String.valueOf(sameWindow))))));
+                                                 new ObjectEventData(SAME_WINDOW.with(sameWindow)))));
     }
   }
 
