@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -357,7 +358,7 @@ public class VcsProjectLog implements Disposable {
     }
   }
 
-  static final class InitLogStartupActivity implements StartupActivity {
+  static final class InitLogStartupActivity implements StartupActivity, DumbAware {
     public InitLogStartupActivity() {
       Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
