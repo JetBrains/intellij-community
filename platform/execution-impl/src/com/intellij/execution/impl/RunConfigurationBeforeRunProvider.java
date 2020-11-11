@@ -202,6 +202,7 @@ public class RunConfigurationBeforeRunProvider
 
     final ExecutionEnvironment environment = builder.target(effectiveTarget).build();
     environment.setExecutionId(env.getExecutionId());
+    env.copyUserDataTo(environment);
 
     if (!environment.getRunner().canRun(executorId, environment.getRunProfile())) {
       return false;
