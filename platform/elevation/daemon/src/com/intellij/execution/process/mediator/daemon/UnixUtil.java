@@ -2,6 +2,7 @@
 package com.intellij.execution.process.mediator.daemon;
 
 import com.sun.jna.Library;
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.NativeLongByReference;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 
-@SuppressWarnings("SpellCheckingInspection")
+@SuppressWarnings({"SpellCheckingInspection", "UseOfSystemOutOrSystemErr"})
 public final class UnixUtil {
   private static final boolean IS_UNIX = !System.getProperty("os.name").startsWith("Windows");
   private static final @Nullable LibC LIBC = IS_UNIX ? tryLoadLibC() : null;
@@ -75,12 +76,26 @@ public final class UnixUtil {
 
   private static void resetSignal(int signo) {
     LibC libc = checkLibc();
+
+    Memory sa = new Memory(LibCConstants.MAX_SIZEOF_STRUCT_SIGACTION);
+    if (libc.sigaction(signo, Pointer.NULL, sa) == -1) {
+      throw new IllegalStateException("sigaction(" + signo + "): " + getLastErrorString());
+    }
+    if (!LibCConstants.SIG_IGN.equals(sa.getPointer(0))) {
+      // It's SIG_DFL, or there's a handler installed by the JVM, which is the reason we need this check.
+      // Otherwise we could end up resetting, for example, a handler for SIGSEGV (used by the JVM extensively for its own purposes)
+      // to the default action for that signal - termination, and the VM would die horribly killed by the OS with no mercy whatsoever.
+      //
+      // In either case, be it SIG_DFL or a handler, the signal action will reset to SIG_DFL upon exec() from a forked child.
+      return;
+    }
+
     if (libc.signal(signo, LibCConstants.SIG_DFL) == LibCConstants.SIG_ERR) {
       throw new IllegalStateException("signal(" + signo + "): " + getLastErrorString());
     }
+    System.err.println("Restored ignored signal " + signo + " handler to default");
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void closeStdStreams() {
     try {
       System.in.close();
@@ -103,15 +118,21 @@ public final class UnixUtil {
 
     int sigprocmask(int how, Pointer set, Pointer oldset);
 
+    int sigaction(int sig, Pointer act, Pointer oldact);
+
     Pointer signal(int sig, Pointer handler);
 
     String strerror(int errno);
   }
 
   private interface LibCConstants {
+    int MAX_SIZEOF_STRUCT_SIGACTION = 256; // we assume a buffer of that size if enough to fit struct sigaction
+
     int SIG_UNBLOCK = 2;
-    Pointer SIG_DFL = new Pointer(0);
-    Pointer SIG_ERR = new Pointer(-1);
+
+    Pointer SIG_DFL = new Pointer(0L);
+    Pointer SIG_IGN = new Pointer(1L);
+    Pointer SIG_ERR = new Pointer(-1L);
 
     int SIGHUP = 1;
     int SIGINT = 2;
