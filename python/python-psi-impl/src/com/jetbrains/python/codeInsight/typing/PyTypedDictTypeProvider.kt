@@ -31,6 +31,10 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     return PyTypeUtil.notNullToRef(getTypedDictTypeForResolvedCallee(referenceTarget, context))
   }
 
+  override fun prepareCalleeTypeForCall(type: PyType?, call: PyCallExpression, context: TypeEvalContext): Ref<PyCallableType?>? {
+    return if (type is PyTypedDictType) Ref.create(type) else null
+  }
+
   companion object {
     val nameIsTypedDict = { name: String? -> name == TYPED_DICT || name == TYPED_DICT_EXT }
 

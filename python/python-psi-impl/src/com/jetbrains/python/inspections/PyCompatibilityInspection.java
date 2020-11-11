@@ -164,10 +164,12 @@ public class PyCompatibilityInspection extends PyInspection {
         return;
       }
 
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getProject(), node.getContainingFile());
       final PsiElement resolvedCallee = Optional
         .ofNullable(callee)
         .map(PyExpression::getReference)
         .map(PsiReference::resolve)
+        .map(e -> e instanceof PyClass ? ((PyClass)e).findInitOrNew(false, context) : e)
         .orElse(null);
 
       if (resolvedCallee instanceof PyFunction) {

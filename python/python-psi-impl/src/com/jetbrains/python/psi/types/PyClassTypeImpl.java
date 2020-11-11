@@ -16,6 +16,7 @@ import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -347,10 +348,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    final List<String> methodNames = isDefinition() ? Arrays.asList(PyNames.INIT, PyNames.NEW) : Collections.singletonList(PyNames.CALL);
+    final var resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
     return StreamEx
-      .of(methodNames)
+      .of(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(this, null, resolveContext))
       .map(name -> getParametersOfMethod(name, context))
       .findFirst(Objects::nonNull)
       // If resolved parameters are empty, consider them as invalid and return null
@@ -361,18 +362,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private List<PyCallableParameter> getParametersOfMethod(@NotNull String name, @NotNull TypeEvalContext context) {
-    final List<? extends RatedResolveResult> results =
-      resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext().withTypeEvalContext(context), true);
-    if (results != null) {
-      return StreamEx.of(results)
-        .map(RatedResolveResult::getElement)
-        .select(PyCallable.class)
-        .map(func -> func.getParameters(context))
-        .findFirst()
-        .orElse(null);
-    }
-    return null;
+  private static List<PyCallableParameter> getParametersOfMethod(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    return element instanceof PyCallable ? ((PyCallable)element).getParameters(context) : null;
   }
 
 

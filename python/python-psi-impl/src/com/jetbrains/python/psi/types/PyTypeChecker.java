@@ -734,6 +734,14 @@ public final class PyTypeChecker {
             .foldLeft(PyUnionType::union)
             .orElse(actualType);
         }
+        else if (PyUtil.isInitMethod(function)) {
+          actualType = PyTypeUtil.toStream(actualType)
+            .select(PyInstantiableType.class)
+            .map(PyInstantiableType::toInstance)
+            .select(PyType.class)
+            .foldLeft(PyUnionType::union)
+            .orElse(actualType);
+        }
       }
       if (!match(expectedType, actualType, context, substitutions)) {
         return null;

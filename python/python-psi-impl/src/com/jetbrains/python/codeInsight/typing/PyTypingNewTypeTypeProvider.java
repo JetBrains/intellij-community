@@ -75,6 +75,13 @@ public class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Override
+  public @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
+                                                                          @NotNull PyCallExpression call,
+                                                                          @NotNull TypeEvalContext context) {
+    return type instanceof PyTypingNewType ? Ref.create((PyTypingNewType)type) : null;
+  }
+
   @Nullable
   private static PyTargetExpression getDeclaration(@NotNull PyCallExpression call) {
     final PsiElement parent = call.getParent();

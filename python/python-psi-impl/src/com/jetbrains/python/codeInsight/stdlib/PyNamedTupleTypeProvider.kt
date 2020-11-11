@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.stdlib
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.util.ArrayUtil
+import com.intellij.util.containers.mapSmartNotNull
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
@@ -44,6 +45,10 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
     return null
   }
 
+  override fun prepareCalleeTypeForCall(type: PyType?, call: PyCallExpression, context: TypeEvalContext): Ref<PyCallableType?>? {
+    return if (type is PyNamedTupleType) Ref.create(type) else null
+  }
+
   companion object {
 
     fun isNamedTuple(type: PyType?, context: TypeEvalContext): Boolean {
@@ -65,7 +70,12 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return when {
         referenceTarget is PyFunction && anchor is PyCallExpression -> getNamedTupleFunctionType(referenceTarget, context, anchor)
         referenceTarget is PyTargetExpression -> getNamedTupleTypeForTarget(referenceTarget, context)
-        referenceTarget is PyClass && anchor is PyCallExpression -> getNamedTupleTypeForNTInheritorAsCallee(referenceTarget, context)
+        referenceTarget is PyClass && anchor is PyCallExpression -> {
+          getNamedTupleTypeForNTInheritorAsCallee(referenceTarget, context) ?:
+          PyUnionType.union(
+            referenceTarget.multiFindInitOrNew(false, context).mapSmartNotNull { getNamedTupleFunctionType(it, context, anchor) }
+          )
+        }
         else -> null
       }
     }
@@ -149,6 +159,8 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
     }
 
     private fun getNamedTupleTypeForNTInheritorAsCallee(cls: PyClass, context: TypeEvalContext): PyType? {
+      if (cls.findInitOrNew(false, context) != null) return null
+
       val parameters = if (isTypingNamedTupleDirectInheritor(cls, context)) {
         val name = cls.name ?: return null
         val tupleClass = PyPsiFacade.getInstance(cls.project).createClassByQName(PyTypingTypeProvider.NAMEDTUPLE, cls) ?: return null

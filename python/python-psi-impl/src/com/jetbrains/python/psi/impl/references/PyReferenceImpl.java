@@ -108,24 +108,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<RatedResolveResult> targets = resolveInner();
     if (targets.isEmpty()) return ResolveResult.EMPTY_ARRAY;
 
-    // change class results to constructor results if there are any
-    if (myElement.getParent() instanceof PyCallExpression) { // we're a call
-      final ListIterator<RatedResolveResult> iterator = targets.listIterator();
-      while (iterator.hasNext()) {
-        final RatedResolveResult rrr = iterator.next();
-        final PsiElement element = rrr.getElement();
-        if (element instanceof PyClass) {
-          final PyClass cls = (PyClass)element;
-          final TypeEvalContext context = myContext.getTypeEvalContext();
-          final Collection<? extends PsiElement> constructors = PyCallExpressionHelper.resolveConstructors(cls, myElement, context, false);
-          if (!constructors.isEmpty()) {
-            iterator.remove();
-            constructors.forEach(c -> iterator.add(rrr.replace(c)));
-          }
-        }
-      }
-    }
-
     return RatedResolveResult.sorted(targets).toArray(ResolveResult.EMPTY_ARRAY);
   }
 
