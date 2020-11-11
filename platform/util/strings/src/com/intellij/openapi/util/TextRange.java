@@ -10,6 +10,7 @@ import java.io.Serializable;
  * A text range defined by start and end (exclusive) offset.
  *
  * @see ProperTextRange
+ * @see com.intellij.util.text.TextRangeUtil
  */
 public class TextRange implements Segment, Serializable {
   private static final long serialVersionUID = -670091356599757430L;
