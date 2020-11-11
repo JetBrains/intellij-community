@@ -216,7 +216,11 @@ internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager,
 }
 
 private fun shouldReloadSchemeManager(schemeManager: SchemeManagerImpl<*, *>, pathsToCheck: Collection<String>): Boolean {
-  return pathsToCheck.any { schemeManager.fileSpec == toIdeaPath(it) }
+  return pathsToCheck.any {
+    val path = toIdeaPath(it)
+    val fileSpec = schemeManager.fileSpec
+    fileSpec == path || path.startsWith("$fileSpec/")
+  }
 }
 
 

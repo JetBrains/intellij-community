@@ -31,4 +31,19 @@ class SettingsRepositoryInitializeTest : LoadTestBase() {
       assertThat(schemeManager.allSchemes).containsOnly(remoteScheme)
     }
   }
+
+  @Test fun `scheme is reloaded in case of merge`() {
+    runBlocking {
+      val remoteScheme = TestScheme("remote")
+      val remoteRepository = tempDirManager.createRepository()
+      remoteRepository
+        .add("$dirName/CustomKeymap.xml", serialize(remoteScheme)!!.toByteArray())
+        .commit("add")
+      val schemeManager = createSchemeManager(dirName)
+
+      doSync(icsManager, project = null, syncType = SyncType.MERGE, url = remoteRepository.directory.path)
+
+      assertThat(schemeManager.allSchemes).containsOnly(remoteScheme)
+    }
+  }
 }
