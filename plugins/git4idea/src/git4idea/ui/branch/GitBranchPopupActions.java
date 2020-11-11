@@ -3,7 +3,6 @@ package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -865,15 +864,14 @@ public class GitBranchPopupActions {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      Project project = e.getProject();
-      if (project == null || !hasRemotes(project)) {
+      if (!hasRemotes(myProject)) {
         presentation.setEnabledAndVisible(false);
         return;
       }
       String branchPresentation = getBranchPresentation(myBranchName);
       String description = GitBundle.message("action.Git.Update.Selected.description",
                                              myBranchNameList.size(),
-                                             GitVcsSettings.getInstance(project).getUpdateMethod().getName().toLowerCase(Locale.ROOT));
+                                             GitVcsSettings.getInstance(myProject).getUpdateMethod().getName().toLowerCase(Locale.ROOT));
       presentation.setDescription(description);
       if (GitFetchSupport.fetchSupport(myProject).isFetchRunning()) {
         presentation.setEnabled(false);
