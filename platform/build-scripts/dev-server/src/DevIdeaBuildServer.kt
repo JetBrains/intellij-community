@@ -3,34 +3,25 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PathUtilRt
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
-import io.methvin.watcher.DirectoryChangeListener
-import io.methvin.watcher.DirectoryWatcher
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
-import org.jetbrains.intellij.build.impl.LayoutBuilder
-import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
-import org.jetbrains.jps.model.artifact.JpsArtifactService
-import java.io.File
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import org.apache.log4j.ConsoleAppender
+import org.apache.log4j.Level
+import org.apache.log4j.PatternLayout
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.URLClassLoader
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 private const val SERVER_PORT = 20854
@@ -43,15 +34,24 @@ val skippedPluginModules = hashSetOf(
   "intellij.android.plugin"
 )
 
+val LOG: Logger = LoggerFactory.getLogger(DevIdeaBuildServer::class.java)
+
 internal class DevIdeaBuildServer {
   companion object {
     @JvmStatic
     fun main(args: Array<String>) {
+      // avoiding "log4j:WARN No appenders could be found"
+      // avoiding "log4j:WARN No appenders could be found"
+      System.setProperty("log4j.defaultInitOverride", "true")
+      val root = org.apache.log4j.Logger.getRootLogger()
+      root.level = Level.INFO
+      root.addAppender(ConsoleAppender(PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)))
+
       try {
         start()
       }
       catch (e: ConfigurationException) {
-        System.err.println(e.message)
+        LOG.error(e.message)
         exitProcess(1)
       }
     }
@@ -59,93 +59,12 @@ internal class DevIdeaBuildServer {
 }
 
 private fun start() {
-  val productPropertiesClass = System.getProperty("product.properties")?.takeIf { it.isNotBlank() }?.split(':')
-  if (productPropertiesClass == null || productPropertiesClass.size != 2) {
-    @Suppress("SpellCheckingInspection")
-    throw ConfigurationException("Please specify product properties module and class via system property `product.properties.class`, " +
-                                 "e.g. `-Dproduct.properties=intellij.idea.ultimate.build:org.jetbrains.intellij.build.IdeaUltimateProperties`")
-  }
+  val buildServer = BuildServer(homePath = getHomePath())
 
-  val homePath = getHomePath()
-
-  val propertiesClassModuleOutDir = homePath.resolve("out/classes/production/${productPropertiesClass.get(0)}")
-  if (!Files.exists(propertiesClassModuleOutDir)) {
-    throw ConfigurationException("$propertiesClassModuleOutDir doesn't exist")
-  }
-
-  val productProperties = URLClassLoader.newInstance(arrayOf(propertiesClassModuleOutDir.toUri().toURL()))
-    .loadClass(productPropertiesClass.get(1))
-    .getConstructor(String::class.java).newInstance(homePath.toString()) as ProductProperties
-
-
-  val allNonTrivialPlugins = productProperties.productLayout.allNonTrivialPlugins
-  val bundledMainModuleNames = getBundledMainModuleNames(productProperties, productPropertiesClass)
-
-  val platformPrefix = productProperties.platformPrefix ?: "idea"
-  val runDir = createRunDirForProduct(homePath, platformPrefix)
-
-  val buildContext = BuildContext.createContext(getCommunityHomePath(homePath).toString(), homePath.toString(), productProperties,
-                                                ProprietaryBuildTools.DUMMY, createBuildOptions(homePath))
-  val pluginsDir = runDir.resolve("plugins")
-
-  val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(allNonTrivialPlugins.size)
-  val moduleNameToPlugin = HashMap<String, BuildItem>()
-  for (plugin in allNonTrivialPlugins) {
-    if (skippedPluginModules.contains(plugin.mainModule)) {
-      continue
-    }
-
-    val item = BuildItem(pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(plugin, buildContext)), plugin)
-    mainModuleToNonTrivialPlugin.put(plugin.mainModule, item)
-    moduleNameToPlugin.put(plugin.mainModule, item)
-
-    plugin.moduleJars.entrySet()
-      .asSequence()
-      .filter { !it.key.contains('/') }
-      .forEach {
-        for (name in it.value) {
-          moduleNameToPlugin.put(name, item)
-        }
-      }
-  }
-
-  val pluginLayouts = bundledMainModuleNames.mapNotNull { mainModuleName ->
-    if (skippedPluginModules.contains(mainModuleName)) {
-      return@mapNotNull null
-    }
-
-    // by intention we don't use buildContext.findModule as getPluginsByModules does - module name must match
-    // (old module names are not supported)
-    var item = mainModuleToNonTrivialPlugin.get(mainModuleName)
-    if (item == null) {
-      val pluginLayout = PluginLayout.plugin(mainModuleName)
-      val pluginDir = pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(pluginLayout, buildContext))
-      item = BuildItem(pluginDir, PluginLayout.plugin(mainModuleName))
-      moduleNameToPlugin.put(mainModuleName, item)
-    }
-    item
-  }
-
-  val artifactOutDir = homePath.resolve("out/classes/artifacts").toString()
-  JpsArtifactService.getInstance().getArtifacts(buildContext.project).forEach {
-    it.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(it.outputPath)}"
-  }
-
-  val builder = DistributionJARsBuilder(buildContext, null)
-
-  Files.writeString(runDir.resolve("libClassPath.txt"), createLibClassPath(buildContext, builder, homePath))
-
-  // initial building
-  val start = System.currentTimeMillis()
-  // Ant is not able to build in parallel — not clear how correctly clone with all defined custom tasks
-  buildPlugins(parallelCount = 1, buildContext, pluginLayouts, builder)
-  println("Initial full build of ${pluginLayouts.size} plugins in ${TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start)}s")
-
-  val pluginBuilder = PluginBuilder(builder, buildContext)
-  watchChanges(pluginBuilder, moduleNameToPlugin, buildContext)
-
-  val httpServer = createHttpServer(pluginBuilder, buildContext)
-  println("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
+  val httpServer = createHttpServer(buildServer)
+  LOG.info("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
+  @Suppress("SpellCheckingInspection")
+  LOG.info("Run IDE with VM property: -Didea.use.dev.build.server=true")
   httpServer.start()
 
   val doneSignal = CountDownLatch(1)
@@ -163,56 +82,83 @@ private fun start() {
   catch (ignore: InterruptedException) {
   }
 
-  println("Server stopping...")
+  LOG.info("Server stopping...")
   httpServer.stop(10)
 }
 
-private fun getBundledMainModuleNames(productProperties: ProductProperties, productPropertiesClass: List<String>): List<String> {
-  val bundledPlugins = productProperties.productLayout.bundledPluginModules
-  if (productPropertiesClass.get(1) == "org.jetbrains.intellij.build.IdeaUltimateProperties") {
-    // add extra plugins (as IDEA from sources does and as we want to test it)
-    return bundledPlugins + listOf("intellij.clouds.kubernetes")
+@Serializable
+data class Configuration(val products: Map<String, ProductConfiguration>)
+
+@Serializable
+data class ProductConfiguration(val module: String, @SerialName("class") val className: String)
+
+class BuildServer(val homePath: Path) {
+  private val outDir: Path = homePath.resolve("out/classes/production").toRealPath()
+  private val configuration: Configuration
+
+  private val platformPrefixToPluginBuilder = HashMap<String, IdeBuilder>()
+
+  init {
+    val jsonFormat = Json { isLenient = true }
+    configuration = jsonFormat.decodeFromString(Configuration.serializer(), Files.readString(homePath.resolve("build/dev-build-server.json")))
   }
-  return bundledPlugins
+
+  @Synchronized
+  fun getIdeBuilder(platformPrefix: String): IdeBuilder {
+    var ideBuilder = platformPrefixToPluginBuilder.get(platformPrefix)
+    if (ideBuilder != null) {
+      return ideBuilder
+    }
+
+    val productConfiguration = configuration.products.get(platformPrefix)
+                               ?: throw ConfigurationException("No production configuration for platform prefix `$platformPrefix`, " +
+                                                               "please add to `dev-build-server.json` if needed")
+
+    ideBuilder = initialBuild(productConfiguration, homePath, outDir)
+    platformPrefixToPluginBuilder.put(platformPrefix, ideBuilder)
+    return ideBuilder
+  }
 }
 
-private fun createHttpServer(pluginBuilder: PluginBuilder, buildContext: BuildContext): HttpServer {
+private fun createHttpServer(buildServer: BuildServer): HttpServer {
   val httpServer = HttpServer.create()
   httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 4)
   httpServer.createContext("/build", HttpHandler { exchange ->
-    val statusMessage: String?
+    val platformPrefix = parseQuery(exchange.requestURI).get("platformPrefix")?.first() ?: "idea"
+    var statusMessage: String
+    var statusCode = HttpURLConnection.HTTP_OK
     try {
       exchange.responseHeaders.add("Content-Type", "text/plain")
-      statusMessage = pluginBuilder.buildChanged()
-      buildContext.messages.info(statusMessage)
+      statusMessage = buildServer.getIdeBuilder(platformPrefix).pluginBuilder.buildChanged()
+      LOG.info(statusMessage)
+    }
+    catch (e: ConfigurationException) {
+      statusCode = HttpURLConnection.HTTP_BAD_REQUEST
+      statusMessage = e.message!!
     }
     catch (e: Throwable) {
-      exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, 0)
-      e.printStackTrace(System.err)
+      exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
+      LOG.error("Cannot handle build request", e)
       return@HttpHandler
     }
 
-    exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0)
-    exchange.responseBody.bufferedWriter().use {
-      it.write(statusMessage)
-    }
+    val response = statusMessage.encodeToByteArray()
+    exchange.sendResponseHeaders(statusCode, response.size.toLong())
+    exchange.responseBody.write(response)
   })
   return httpServer
 }
 
-private fun createRunDirForProduct(homePath: Path, platformPrefix: String): Path {
-  // if symlinked to ram disk, use real path for performance reasons and avoid any issues in ant/other code
-  var rootDir = homePath.resolve("out/dev-run")
-  if (Files.exists(rootDir)) {
-    // toRealPath must be called only on existing file
-    rootDir = rootDir.toRealPath()
-  }
-
-  val runDir = rootDir.resolve(platformPrefix)
-  // on start delete everything to avoid stale data
-  clearDirContent(runDir)
-  Files.createDirectories(runDir)
-  return runDir
+fun parseQuery(url: URI): Map<String, List<String?>> {
+  val query = url.query ?: return emptyMap()
+  return query.splitToSequence("&")
+    .map {
+      val index = it.indexOf('=')
+      val key = if (index > 0) it.substring(0, index) else it
+      val value = if (index > 0 && it.length > index + 1) it.substring(index + 1) else null
+      AbstractMap.SimpleImmutableEntry(key, value)
+    }
+    .groupBy(keySelector = { it.key }, valueTransform = { it.value })
 }
 
 fun clearDirContent(dir: Path) {
@@ -223,42 +169,6 @@ fun clearDirContent(dir: Path) {
       }
     }
   }
-}
-
-private fun createLibClassPath(buildContext: BuildContext,
-                               builder: DistributionJARsBuilder,
-                               homePath: Path): String {
-  val layoutBuilder = LayoutBuilder(buildContext, false)
-  val projectStructureMapping = ProjectStructureMapping()
-  builder.processLibDirectoryLayout(layoutBuilder, projectStructureMapping, false)
-  // for some reasons maybe duplicated paths - use set
-  val classPath = LinkedHashSet<String>()
-  for (entry in projectStructureMapping.entries) {
-    when (entry) {
-      is ModuleOutputEntry -> {
-        // File.toURL adds ending slash for directory
-        classPath.add(buildContext.getModuleOutputPath(buildContext.findRequiredModule(entry.moduleName)) + File.separatorChar)
-      }
-      is ProjectLibraryEntry -> {
-        classPath.add(entry.libraryFilePath)
-      }
-      is ModuleLibraryFileEntry -> {
-        classPath.add(entry.libraryFilePath)
-      }
-      else -> throw UnsupportedOperationException("Entry $entry is not supported")
-    }
-  }
-
-  val projectLibDir = homePath.resolve("lib")
-  @Suppress("SpellCheckingInspection")
-  val extraJarNames = listOf("ideaLicenseDecoder.jar", "ls-client-api.jar", "y.jar", "ysvg.jar")
-  for (extraJarName in extraJarNames) {
-    val extraJar = projectLibDir.resolve(extraJarName)
-    if (Files.exists(extraJar)) {
-      classPath.add(extraJar.toAbsolutePath().toString())
-    }
-  }
-  return classPath.joinToString(separator = "\n")
 }
 
 private fun getHomePath(): Path {
@@ -272,65 +182,3 @@ private fun getHomePath(): Path {
 }
 
 private class ConfigurationException(message: String) : RuntimeException(message)
-
-private fun createBuildOptions(homePath: Path): BuildOptions {
-  val buildOptions = BuildOptions()
-  buildOptions.useCompiledClassesFromProjectOutput = true
-  buildOptions.targetOS = BuildOptions.OS_NONE
-  buildOptions.cleanOutputFolder = false
-  buildOptions.skipDependencySetup = true
-  buildOptions.outputRootPath = homePath.resolve("out/dev-server").toString()
-  return buildOptions
-}
-
-private fun watchChanges(pluginBuilder: PluginBuilder,
-                         moduleNameToPlugin: Map<String, BuildItem>,
-                         buildContext: BuildContext) {
-  val moduleDirToPlugin = HashMap<Path, BuildItem>(moduleNameToPlugin.size)
-  val moduleDirs = ArrayList<Path>(moduleNameToPlugin.size)
-  for (entry in moduleNameToPlugin) {
-    val dir = Paths.get(buildContext.getModuleOutputPath(buildContext.findRequiredModule(entry.key)))
-    moduleDirToPlugin.put(dir, entry.value)
-    moduleDirs.add(dir)
-  }
-  val watcher = DirectoryWatcher.builder()
-    .paths(moduleDirs)
-    .fileHashing(false)
-    .listener(DirectoryChangeListener { event ->
-      val path = event.path()
-      if (path.endsWith("classpath.index") || path.endsWith(".DS_Store")) {
-        return@DirectoryChangeListener
-      }
-
-      getPluginDir(moduleDirToPlugin, path, moduleDirs)?.let {
-        pluginBuilder.addDirtyPluginDir(it, path)
-      }
-    })
-    .build()
-  watcher.watchAsync(AppExecutorUtil.getAppExecutorService())
-  Runtime.getRuntime().addShutdownHook(object : Thread() {
-    override fun run() {
-      watcher.close()
-    }
-  })
-}
-
-private fun getPluginDir(moduleDirToPlugin: Map<Path, BuildItem>,
-                         path: Path,
-                         moduleDirs: List<Path>): BuildItem? {
-  moduleDirToPlugin.get(path)?.let {
-    return it
-  }
-
-  for (dir in moduleDirs) {
-    if (path.startsWith(dir)) {
-      return moduleDirToPlugin.get(dir)
-    }
-  }
-  return null
-}
-
-private fun getCommunityHomePath(homePath: Path): Path {
-  val communityDotIdea = homePath.resolve("community/.idea")
-  return if (Files.isDirectory(communityDotIdea)) communityDotIdea.parent else homePath
-}

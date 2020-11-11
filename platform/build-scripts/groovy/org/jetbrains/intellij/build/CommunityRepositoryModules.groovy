@@ -253,7 +253,8 @@ class CommunityRepositoryModules {
       withProjectLibrary("space-idea-sdk")
       withProjectLibrary("jackson-datatype-joda")
       withProjectLibrary("ktor-server-jetty")
-      withProjectLibrary("org.jetbrains.kotlinx:kotlinx-serialization-core")
+      withProjectLibrary("kotlinx-serialization-core")
+      withProjectLibrary("kotlinx-serialization-json")
       withGeneratedResources(new ResourcesGenerator() {
         @Override
         File generateResources(BuildContext context) {

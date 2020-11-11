@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +43,12 @@ public final class BootstrapClassLoaderUtil {
   public static @NotNull ClassLoader initClassLoader() throws MalformedURLException {
     Collection<URL> classpath = new LinkedHashSet<>();
     if (Boolean.getBoolean("idea.use.dev.build.server")) {
-      loadClassPathFromDevBuildServer(classpath);
+      try {
+        loadClassPathFromDevBuildServer(classpath);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
     }
     else {
       parseClassPathString(System.getProperty("java.class.path"), classpath);
@@ -92,8 +99,29 @@ public final class BootstrapClassLoaderUtil {
     return builder.get();
   }
 
-  private static void loadClassPathFromDevBuildServer(@NotNull Collection<URL> classpath) {
-    Path excludedModuleListPath = Paths.get(PathManager.getHomePath(), "out/dev-run", System.getProperty("idea.platform.prefix", "idea"), "libClassPath.txt");
+  private static void loadClassPathFromDevBuildServer(@NotNull Collection<URL> classpath) throws IOException {
+    String platformPrefix = System.getProperty("idea.platform.prefix", "idea");
+    URL serverUrl = new URL("http://127.0.0.1:20854/build?platformPrefix=" + platformPrefix);
+    //noinspection UseOfSystemOutOrSystemErr
+    System.out.println("Waiting for " + serverUrl + " (first launch can take up to 1-2 minute)");
+    HttpURLConnection connection = (HttpURLConnection)serverUrl.openConnection();
+    connection.setConnectTimeout(10_000);
+    // 5 minutes should be enough even for full build
+    connection.setReadTimeout(5 * 60_000);
+    int responseCode;
+    try {
+      responseCode = connection.getResponseCode();
+    }
+    catch (ConnectException e) {
+      throw new RuntimeException("Please run Dev Build Server", e);
+    }
+
+    connection.disconnect();
+    if (responseCode != HttpURLConnection.HTTP_OK) {
+      throw new RuntimeException("Dev Build server not able to handle build request, see server's log for details");
+    }
+
+    Path excludedModuleListPath = Paths.get(PathManager.getHomePath(), "out/dev-run", platformPrefix, "libClassPath.txt");
     try (Stream<String> lineStream = Files.lines(excludedModuleListPath)) {
       lineStream.forEach(s -> {
         if (!s.isEmpty()) {

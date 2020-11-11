@@ -17,13 +17,15 @@ import java.util.concurrent.atomic.AtomicReference
 
 data class BuildItem(val dir: Path, val layout: PluginLayout)
 
-class PluginBuilder(private val builder: DistributionJARsBuilder, private val buildContext: BuildContext) {
+class PluginBuilder(private val builder: DistributionJARsBuilder,
+                    val buildContext: BuildContext,
+                    private val outDir: Path) {
   private val dirtyPlugins = HashSet<BuildItem>()
 
   @Synchronized
   fun addDirtyPluginDir(item: BuildItem, reason: Any) {
     if (dirtyPlugins.add(item)) {
-      buildContext.messages.info("${item.dir.fileName} is changed (at least $reason is changed)")
+      LOG.info("${item.dir.fileName} is changed (at least ${if (reason is Path) outDir.relativize(reason) else reason} is changed)")
     }
   }
 
@@ -41,7 +43,7 @@ class PluginBuilder(private val builder: DistributionJARsBuilder, private val bu
   fun buildChanged(): String {
     val dirtyPlugin = getDirtyPluginsAndClear()
     if (dirtyPlugin.isEmpty()) {
-      return "All plugins up to date."
+      return "All plugins are up to date."
     }
 
     val layoutBuilder = LayoutBuilder(buildContext, false)
