@@ -1124,7 +1124,7 @@ skip_backup:
 command_exists:
   StrCpy $1 "$R5\DefaultIcon"
   StrCpy $2 ""
-  StrCpy $3 " $productLauncher,0"
+  StrCpy $3 "$productLauncher,0"
   Call OMWriteRegStr
   StrCpy $1 "$R5\shell\open\command"
   StrCpy $2 ""
