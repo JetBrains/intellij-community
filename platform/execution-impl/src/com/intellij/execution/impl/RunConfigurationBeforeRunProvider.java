@@ -258,7 +258,7 @@ public class RunConfigurationBeforeRunProvider
           targetDone.up();
           LOG.error(e);
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.defaultModalityState());
     }
     catch (Exception e) {
       LOG.error(e);
