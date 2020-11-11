@@ -186,7 +186,11 @@ public final class PyCallExpressionHelper {
    */
   @NotNull
   static List<@NotNull PyCallableType> multiResolveCallee(@NotNull PyCallExpression call, @NotNull PyResolveContext resolveContext) {
-    return ContainerUtil.concat(getExplicitResolveResults(call, resolveContext), getImplicitResolveResults(call, resolveContext));
+    return PyUtil.getParameterizedCachedValue(
+      call,
+      resolveContext,
+      it -> ContainerUtil.concat(getExplicitResolveResults(call, it), getImplicitResolveResults(call, it))
+    );
   }
 
   private static @NotNull List<@NotNull PyCallableType> multiResolveCallee(@NotNull PySubscriptionExpression subscription,
