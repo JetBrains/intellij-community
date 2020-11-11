@@ -25,13 +25,20 @@ import java.io.Serializable;
  */
 public interface ModelBuilderService extends Serializable {
 
-  interface Parametrized extends ModelBuilderService {
-    Object buildAll(String modelName, Project project, Parameter parameter);
-  }
-
+  /**
+   * A {@link ParameterizedToolingModelBuilder}'s parameter interface to be used when requesting
+   * a parametrized model provided by an implementation of {@link ModelBuilderService.Ex}.
+   *
+   * The string value set via {@link Parameter#setValue(String)} will be passed to the model builder
+   * via the {@link ModelBuilderContext#getParameter()}.
+   */
   interface Parameter {
     String getValue();
     void setValue(String value);
+  }
+
+  interface Ex extends ModelBuilderService {
+    Object buildAll(String modelName, Project project, @NotNull ModelBuilderContext context);
   }
 
   boolean canBuild(String modelName);
