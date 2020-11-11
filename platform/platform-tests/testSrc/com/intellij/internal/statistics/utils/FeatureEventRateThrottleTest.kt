@@ -75,6 +75,22 @@ class FeatureEventRateThrottleTest {
   }
 
   @Test
+  fun `test events are reported if time was moved backwards`() {
+    val throttle = EventsRateWindowThrottle(3, 10, 100)
+    assertAccept(throttle.tryPass(100))
+    assertAccept(throttle.tryPass(105))
+
+    assertAccept(throttle.tryPass(90))
+    assertAccept(throttle.tryPass(97))
+    assertAccept(throttle.tryPass(98))
+
+    assertAccept(throttle.tryPass(89))
+    assertAccept(throttle.tryPass(88))
+    assertAccept(throttle.tryPass(87))
+    assertDenyAndReport(throttle.tryPass(86))
+  }
+
+  @Test
   fun `test consecutive events by different keys in one period`() {
     val throttle = EventsIdentityWindowThrottle(3, 3, 10)
     assertAccept(throttle.tryPass("foo", 100))
