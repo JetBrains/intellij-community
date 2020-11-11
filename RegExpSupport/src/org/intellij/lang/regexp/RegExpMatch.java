@@ -46,4 +46,29 @@ public class RegExpMatch {
 
     return groups.getInt(i * 2 + 1);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    return groups.equals(((RegExpMatch)o).groups);
+  }
+
+  @Override
+  public int hashCode() {
+    return groups.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("RegExpMatch{");
+    final int max = groups.size();
+    for (int i = 0; i < max; i += 2) {
+      builder.append('[').append(groups.getInt(i)).append(", ").append(groups.getInt(i + 1)).append(']');
+    }
+    builder.append('}');
+    return builder.toString();
+  }
 }
