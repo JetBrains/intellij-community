@@ -605,7 +605,17 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         return true;
       }
     }
-    if (ScopeUtil.getScopeOwner(resolveResult) == ourFile && ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
+
+    final var resolvedScopeOwner = ScopeUtil.getScopeOwner(resolveResult);
+    final var resolvedFile = resolveResult.getContainingFile();
+    if (resolvedScopeOwner != null && resolvedFile == theirFile) {
+      if (ControlFlowCache.getScope(resolvedScopeOwner).isGlobal(elementName) &&
+          ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
+        return true;
+      }
+    }
+
+    if (resolvedScopeOwner == ourFile && ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
       return true;
     }
     return false;
