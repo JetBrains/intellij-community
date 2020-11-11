@@ -660,6 +660,9 @@ public final class CompileDriver {
       if (!validateCyclicDependencies(scopeModules)) return false;
       return true;
     }
+    catch (ProcessCanceledException e) {
+      return false;
+    }
     catch (Throwable e) {
       LOG.error(e);
       return false;
