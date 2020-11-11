@@ -43,6 +43,19 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
     }
   }
 
+  // IDEA-254399
+  fun `test commit with spaces at the beginning`() {
+    checkEntryGenerationForSingleCommitWithMessage {
+      "     Commit with spaces at the beginning"
+    }
+  }
+
+  fun `test commit with spaces at the end`() {
+    checkEntryGenerationForSingleCommitWithMessage {
+      "Commit with spaces at the end    "
+    }
+  }
+
   fun `test commit with huge length`() {
     checkEntryGenerationForSingleCommitWithMessage {
       buildString {
