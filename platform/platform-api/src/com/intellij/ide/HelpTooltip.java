@@ -238,8 +238,8 @@ public class HelpTooltip {
    * Enables link in the tooltip below description and sets BrowserUtil.browse action for it.
    * It's then painted with a small arrow button.
    *
-   * @param linkText text to show in the link.
-   * @param linkAction action to execute when link is clicked.
+   * @param linkLabel text to show in the link.
+   * @param url URL to browse.
    * @return {@code this}
    */
   public HelpTooltip setBrowserLink(@NlsContexts.LinkLabel String linkLabel, URL url) {
