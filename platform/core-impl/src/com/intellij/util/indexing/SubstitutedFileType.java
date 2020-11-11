@@ -2,11 +2,11 @@
 package com.intellij.util.indexing;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,11 +38,11 @@ public final class SubstitutedFileType extends LanguageFileType implements FileT
       return fileType;
     }
     if (fileType instanceof LanguageFileType) {
-      final Language language = ((LanguageFileType)fileType).getLanguage();
-      final Language substitutedLanguage = LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
-      LanguageFileType substFileType;
-      if (!substitutedLanguage.equals(language) && (substFileType = substitutedLanguage.getAssociatedFileType()) != null) {
-        return new SubstitutedFileType(fileType, substFileType, substitutedLanguage);
+      Language substLang = LanguageUtil.getLanguageForPsi(project, file, fileType);
+      LanguageFileType substFileType = substLang != null && substLang != ((LanguageFileType)fileType).getLanguage() ?
+                                       substLang.getAssociatedFileType() : null;
+      if (substFileType != null) {
+        return new SubstitutedFileType(fileType, substFileType, substLang);
       }
     }
 

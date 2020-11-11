@@ -547,7 +547,7 @@ public final class FindManagerImpl extends FindManager {
     }
 
     FileType ftype = file.getFileType();
-    Language lang = LanguageUtil.getLanguageForPsi(myProject, file);
+    Language lang = LanguageUtil.getLanguageForPsi(myProject, file, ftype);
 
     SoftReference<CommentsLiteralsSearchData> currentThreadDataRef = data.get();
     CommentsLiteralsSearchData currentThreadData = currentThreadDataRef == null ? null : currentThreadDataRef.get();

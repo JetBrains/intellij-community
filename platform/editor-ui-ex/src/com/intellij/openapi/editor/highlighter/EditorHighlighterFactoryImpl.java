@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -10,7 +11,6 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +52,9 @@ public final class EditorHighlighterFactoryImpl extends EditorHighlighterFactory
   public EditorHighlighter createEditorHighlighter(@NotNull VirtualFile vFile, @NotNull EditorColorsScheme settings, @Nullable Project project) {
     FileType fileType = vFile.getFileType();
     if (fileType instanceof LanguageFileType) {
-      LanguageFileType substFileType = substituteFileType(((LanguageFileType)fileType).getLanguage(), vFile, project);
+      Language substLang = project == null ? null : LanguageUtil.getLanguageForPsi(project, vFile, fileType);
+      LanguageFileType substFileType = substLang != null && substLang != ((LanguageFileType)fileType).getLanguage() ?
+                                       substLang.getAssociatedFileType() : null;
       if (substFileType != null) {
         EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(substFileType);
         EditorHighlighter editorHighlighter = provider.getEditorHighlighter(project, substFileType, vFile, settings);
@@ -75,18 +77,6 @@ public final class EditorHighlighterFactoryImpl extends EditorHighlighterFactory
 
     SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, vFile);
     return createEditorHighlighter(highlighter, settings);
-  }
-
-  @Nullable
-  private static LanguageFileType substituteFileType(Language language, VirtualFile vFile, Project project) {
-    LanguageFileType fileType = null;
-    if (vFile != null && project != null) {
-      Language substLanguage = LanguageSubstitutors.getInstance().substituteLanguage(language, vFile, project);
-      if (substLanguage != language) {
-        fileType = substLanguage.getAssociatedFileType();
-      }
-    }
-    return fileType;
   }
 
   @NotNull

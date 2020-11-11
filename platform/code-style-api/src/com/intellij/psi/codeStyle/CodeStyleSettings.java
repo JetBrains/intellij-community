@@ -792,7 +792,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
         }
       }
 
-      Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile());
+      Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile(), file.getFileType());
       if (language != null) {
         IndentOptions options = getIndentOptions(language);
         if (options != null) {

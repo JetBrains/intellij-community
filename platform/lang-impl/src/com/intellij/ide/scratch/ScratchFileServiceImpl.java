@@ -274,7 +274,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       if (project == null || file == null) return null;
       if (!ScratchUtil.isScratch(file)) return null;
 
-      Language language = LanguageUtil.getLanguageForPsi(project, file);
+      Language language = LanguageUtil.getLanguageForPsi(project, file, fileType);
       return language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
     }
   }

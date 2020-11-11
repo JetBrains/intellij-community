@@ -50,6 +50,8 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
   /**
    * Queries all applicable language substitutors and returns the substituted language, or {@code lang} argument if
    * no substitutor has returned anything.
+   *
+   * @see com.intellij.lang.LanguageUtil#getLanguageForPsi
    */
   public @NotNull Language substituteLanguage(@NotNull Language originalLang, @NotNull VirtualFile file, @NotNull Project project) {
     Iterable<LanguageSubstitutor> substitutors =
