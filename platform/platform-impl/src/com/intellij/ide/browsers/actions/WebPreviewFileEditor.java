@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 
 /**
  * @author Konstantin Bulenkov
@@ -37,30 +35,26 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
     myFile = file.getOriginalFile();
     myPanel = new JCEFHtmlPanel(myFile.getUrl());
     myPanel.getCefBrowser().createImmediately();
-    reloadHtml();
     Alarm alarm = new Alarm(this);
     PsiFile psiFile = PsiManager.getInstance(project).findFile(myFile);
     if (psiFile != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+      reloadHtml(document);
       if (document != null) {
         document.addDocumentListener(new DocumentListener() {
           @Override
           public void documentChanged(@NotNull DocumentEvent event) {
-            FileDocumentManager.getInstance().saveDocument(document);
             alarm.cancelAllRequests();
-            alarm.addRequest(() -> reloadHtml(), 100);
+            alarm.addRequest(() -> reloadHtml(document), 100);
           }
         });
       }
     }
   }
 
-  private void reloadHtml() {
-    try {
-      myPanel.setHtml(FileUtil.loadTextAndClose(myFile.getInputStream()));
-    }
-    catch (IOException ignore) {
-    }
+  private void reloadHtml(Document document) {
+    FileDocumentManager.getInstance().saveDocument(document);
+    myPanel.setHtml(document.getText());
   }
 
   @Override
