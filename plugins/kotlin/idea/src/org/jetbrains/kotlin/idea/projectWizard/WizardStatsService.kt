@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
 
 interface WizardStats {
@@ -117,19 +118,21 @@ class WizardStatsService : CounterUsagesCollector() {
                 *projectCreationStats.toPairs().toTypedArray(),
                 pluginInfoField
             )
+
         }
 
-        fun logDataOnProjectGenerated(projectCreationStats: ProjectCreationStats, uiEditorUsageStats: UiEditorUsageStats) {
+        fun logDataOnProjectGenerated(project: Project?, projectCreationStats: ProjectCreationStats, uiEditorUsageStats: UiEditorUsageStats) {
             projectCreatedEvent.log(
+                project,
                 *projectCreationStats.toPairs().toTypedArray(),
                 *uiEditorUsageStats.toPairs().toTypedArray(),
                 pluginInfoField
             )
         }
 
-        fun logUsedModuleTemplatesOnNewWizardProjectCreated(projectTemplateId: String, moduleTemplates: List<String>) {
+        fun logUsedModuleTemplatesOnNewWizardProjectCreated(project: Project?, projectTemplateId: String, moduleTemplates: List<String>) {
             moduleTemplates.forEach { moduleTemplateId ->
-                logModuleTemplateCreation(projectTemplateId, moduleTemplateId)
+                logModuleTemplateCreation(project, projectTemplateId, moduleTemplateId)
             }
         }
 
@@ -140,8 +143,9 @@ class WizardStatsService : CounterUsagesCollector() {
             )
         }
 
-        private fun logModuleTemplateCreation(projectTemplateId: String, moduleTemplateId: String) {
+        private fun logModuleTemplateCreation(project: Project?, projectTemplateId: String, moduleTemplateId: String) {
             moduleTemplateCreatedEvent.log(
+                project,
                 projectTemplateField.with(projectTemplateId),
                 moduleTemplateField.with(moduleTemplateId),
                 pluginInfoField
