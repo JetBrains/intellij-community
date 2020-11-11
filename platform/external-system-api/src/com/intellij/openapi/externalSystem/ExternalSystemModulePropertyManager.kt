@@ -22,12 +22,15 @@ abstract class ExternalSystemModulePropertyManager {
 
   abstract fun swapStore()
   abstract fun unlinkExternalOptions()
+  fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?) =
+    setExternalOptions(id, moduleData, projectData, null)
   abstract fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?,
                                   modelsProvider: IdeModifiableModelsProvider?)
   abstract fun setExternalId(id: ProjectSystemId)
   abstract fun setLinkedProjectPath(path: String?)
   abstract fun setRootProjectPath(path: String?)
-  abstract fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider)
+  fun setExternalModuleType(type: String?) = setExternalModuleType(type, null)
+  abstract fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider?)
 
   companion object {
     @JvmStatic

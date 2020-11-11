@@ -133,7 +133,7 @@ class ExternalSystemStorageTest {
       it.version = "42.0"
     }
     val projectData = ProjectData(systemId, "", "", projectDir.systemIndependentPath)
-    propertyManager.setExternalOptions(systemId, moduleData, projectData, null)
+    propertyManager.setExternalOptions(systemId, moduleData, projectData)
   }
 
   private fun checkExternalSystemOptions(module: Module, projectDirPath: String) {

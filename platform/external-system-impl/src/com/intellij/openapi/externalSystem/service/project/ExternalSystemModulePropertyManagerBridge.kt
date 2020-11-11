@@ -129,7 +129,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     }
   }
 
-  override fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider) {
+  override fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider?) {
     editEntity(getModuleDiff(modelsProvider)) {
       externalSystemModuleType = type
     }
