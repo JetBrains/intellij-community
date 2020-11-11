@@ -4,9 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginEnabledState;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -29,9 +27,12 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
   protected final @NotNull List<C> mySelection;
 
   protected SelectionBasedPluginModelAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String propertyKey,
+                                            @Nullable ShortcutSet shortcutSet,
                                             @NotNull MyPluginModel pluginModel,
                                             @NotNull List<C> selection) {
     super(IdeBundle.message(propertyKey));
+    setShortcutSet(shortcutSet == null ? CustomShortcutSet.EMPTY : shortcutSet);
+
     myPluginModel = pluginModel;
     mySelection = selection;
   }
@@ -42,11 +43,13 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     protected final @NotNull PluginEnabledState myNewState;
 
-    protected EnableDisableAction(@NotNull MyPluginModel pluginModel,
-                                  @NotNull List<C> selection,
-                                  @NotNull PluginEnabledState newState) {
+    protected EnableDisableAction(@Nullable ShortcutSet shortcutSet,
+                                  @NotNull MyPluginModel pluginModel,
+                                  @NotNull PluginEnabledState newState,
+                                  @NotNull List<C> selection) {
       super(
         getActionTextPropertyKey(newState),
+        shortcutSet,
         pluginModel,
         selection
       );
@@ -121,11 +124,13 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     private final @NotNull JComponent myUiParent;
 
-    protected UninstallAction(@NotNull MyPluginModel pluginModel,
+    protected UninstallAction(@Nullable ShortcutSet shortcutSet,
+                              @NotNull MyPluginModel pluginModel,
                               @NotNull JComponent uiParent,
                               @NotNull List<C> selection) {
       super(
         "plugins.configurable.uninstall.button",
+        shortcutSet,
         pluginModel,
         selection
       );
@@ -140,9 +145,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = mySelection.stream()
-        .noneMatch(this::isBundled);
-
+      boolean enabled = !mySelection.isEmpty() &&
+                        mySelection
+                          .stream()
+                          .noneMatch(this::isBundled);
       e.getPresentation().setEnabledAndVisible(enabled);
     }
 
@@ -179,5 +185,20 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       }
     }
     group.add(createUninstallAction.produce());
+  }
+
+  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<@NotNull PluginEnabledState, @NotNull ? extends EnableDisableAction<C>> createEnableDisableAction,
+                                                                     @NotNull Producer<@NotNull ? extends UninstallAction<C>> createUninstallAction) {
+    DefaultActionGroup result = new DefaultActionGroup();
+    addActionsTo(
+      result,
+      createEnableDisableAction,
+      createUninstallAction
+    );
+
+    return TabbedPaneHeaderComponent.createToolbar(
+      IdeBundle.message("plugin.settings.link.title"),
+      result
+    );
   }
 }

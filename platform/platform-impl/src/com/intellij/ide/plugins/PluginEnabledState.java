@@ -53,6 +53,10 @@ public enum PluginEnabledState {
     return myPerProject;
   }
 
+  public @NotNull PluginEnabledState getInverted() {
+    return getState(!myEnabled, isPerProject());
+  }
+
   public static @NotNull PluginEnabledState getState(boolean enabled,
                                                      boolean perProject) {
     for (PluginEnabledState value : values()) {

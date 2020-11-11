@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
@@ -158,9 +157,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myIconLabel.setOpaque(false);
     header.add(myIconLabel, BorderLayout.WEST);
 
-    myGearButton = TabbedPaneHeaderComponent.createToolbar(
-      IdeBundle.message("plugin.settings.link.title"),
-      createGearActions()
+    myGearButton = SelectionBasedPluginModelAction.createGearButton(
+      EnableDisableAction::new,
+      () -> new UninstallAction()
     );
     myGearButton.setBorder(JBUI.Borders.emptyLeft(5));
     myGearButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
@@ -850,23 +849,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
     return StringUtil.isEmptyOrSpaces(notes) ? null : notes;
   }
 
-  private @NotNull DefaultActionGroup createGearActions() {
-    DefaultActionGroup result = new DefaultActionGroup();
-    SelectionBasedPluginModelAction.addActionsTo(
-      result,
-      state -> new EnableDisableAction(state),
-      () -> new UninstallAction()
-    );
-    return result;
-  }
-
   private final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> {
 
     private EnableDisableAction(@NotNull PluginEnabledState newState) {
       super(
+        null,
         PluginDetailsPageComponent.this.myPluginModel,
-        List.of(PluginDetailsPageComponent.this),
-        newState
+        newState,
+        List.of(PluginDetailsPageComponent.this)
       );
     }
 
@@ -888,6 +878,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     private UninstallAction() {
       super(
+        null,
         PluginDetailsPageComponent.this.myPluginModel,
         PluginDetailsPageComponent.this,
         List.of(PluginDetailsPageComponent.this)

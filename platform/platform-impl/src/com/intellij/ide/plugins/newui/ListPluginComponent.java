@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +61,7 @@ public class ListPluginComponent extends JPanel {
   protected JButton myRestartButton;
   protected InstallButton myInstallButton;
   protected JButton myUpdateButton;
-  private JCheckBox myEnableDisableButton;
+  private JComponent myEnableDisableButton;
   private JCheckBox myChooseUpdateButton;
   private JComponent myAlignButton;
   private JPanel myMetricsPanel;
@@ -167,8 +168,6 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else {
-      JCheckBox enableDisableButton = createEnableDisableButton();
-
       if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
         myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
@@ -181,12 +180,26 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          myLayout.addButtonComponent(myEnableDisableButton = enableDisableButton);
+          PluginEnabledState state = myPluginModel.getState(myPlugin);
+          if (state.isPerProject()) {
+            myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
+              newState -> new EnableDisableAction(newState, List.of(this)),
+              () -> new UninstallAction(List.of())
+            );
+            myEnableDisableButton.setBorder(JBUI.Borders.emptyLeft(5));
+            myEnableDisableButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
+          }
+          else {
+            myEnableDisableButton = createEnableDisableButton(
+              __ -> myPluginModel.changeEnableDisable(
+                Set.of(myPlugin),
+                state.getInverted()
+              )
+            );
+          }
+
+          myLayout.addButtonComponent(myEnableDisableButton);
           myEnableDisableButton.setOpaque(false);
-          myEnableDisableButton.addActionListener(__ -> myPluginModel.changeEnableDisable(
-            Set.of(myPlugin),
-            PluginEnabledState.getState(!myPluginModel.isEnabled(myPlugin))
-          ));
           updateEnabledStateUI();
         }
       }
@@ -194,17 +207,23 @@ public class ListPluginComponent extends JPanel {
       myLayout.addButtonComponent(myAlignButton = new JComponent() {
         @Override
         public Dimension getPreferredSize() {
-          return enableDisableButton.getPreferredSize();
+          return myEnableDisableButton instanceof JCheckBox ?
+                 myEnableDisableButton.getPreferredSize() :
+                 super.getPreferredSize();
         }
       });
       myAlignButton.setOpaque(false);
     }
   }
 
-  @NotNull
-  private static JCheckBox createEnableDisableButton() {
+  private static @NotNull JCheckBox createEnableDisableButton(@NotNull ActionListener listener) {
     return new JCheckBox() {
-      int myBaseline = -1;
+
+      private int myBaseline = -1;
+
+      {
+        addActionListener(listener);
+      }
 
       @Override
       public int getBaseline(int width, int height) {
@@ -225,7 +244,10 @@ public class ListPluginComponent extends JPanel {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
-        return new Dimension(size.width + JBUIScale.scale(8), size.height + JBUIScale.scale(2));
+        return new Dimension(
+          size.width + JBUIScale.scale(8),
+          size.height + JBUIScale.scale(2)
+        );
       }
     };
   }
@@ -593,8 +615,8 @@ public class ListPluginComponent extends JPanel {
   private void updateEnabledStateUI() {
     ProjectDependentPluginEnabledState state = myPluginModel.getProjectDependentState(myPlugin);
 
-    if (myEnableDisableButton != null) {
-      myEnableDisableButton.setSelected(state.isEnabled());
+    if (myEnableDisableButton instanceof JCheckBox) {
+      ((JCheckBox)myEnableDisableButton).setSelected(state.isEnabled());
     }
     myNameComponent.setIcon(state.getIcon());
   }
@@ -700,8 +722,18 @@ public class ListPluginComponent extends JPanel {
 
     SelectionBasedPluginModelAction.addActionsTo(
       group,
-      state -> new EnableDisableAction(state, selection),
-      () -> new UninstallAction(selection)
+      state -> new EnableDisableAction(
+        state.isPerProject() ? null : new CustomShortcutSet(KeyEvent.VK_SPACE),
+        state,
+        selection
+      ),
+      () -> {
+        ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
+        return new UninstallAction(
+          deleteShortcutSet != null ? deleteShortcutSet : new CustomShortcutSet(EventHandler.DELETE_CODE),
+          selection
+        );
+      }
     );
   }
 
@@ -821,15 +853,22 @@ public class ListPluginComponent extends JPanel {
 
     private EnableDisableAction(@NotNull PluginEnabledState newState,
                                 @NotNull List<ListPluginComponent> selection) {
-      super(
-        ListPluginComponent.this.myPluginModel,
-        selection,
-        newState
+      this(
+        null,
+        newState,
+        selection
       );
+    }
 
-      if (!newState.isPerProject()) {
-        setShortcutSet(new CustomShortcutSet(KeyEvent.VK_SPACE));
-      }
+    private EnableDisableAction(@Nullable ShortcutSet shortcutSet,
+                                @NotNull PluginEnabledState newState,
+                                @NotNull List<ListPluginComponent> selection) {
+      super(
+        shortcutSet,
+        ListPluginComponent.this.myPluginModel,
+        newState,
+        selection
+      );
     }
 
     @Override
@@ -838,20 +877,23 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
-  private class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> {
+  private final class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> {
 
-    UninstallAction(@NotNull List<ListPluginComponent> selection) {
+    private UninstallAction(@NotNull List<ListPluginComponent> selection) {
+      this(
+        null,
+        selection
+      );
+    }
+
+    private UninstallAction(@Nullable ShortcutSet shortcutSet,
+                            @NotNull List<ListPluginComponent> selection) {
       super(
+        shortcutSet,
         ListPluginComponent.this.myPluginModel,
         ListPluginComponent.this,
         selection
       );
-
-      ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
-      ShortcutSet shortcutSet = deleteShortcutSet != null ?
-                                deleteShortcutSet :
-                                new CustomShortcutSet(EventHandler.DELETE_CODE);
-      setShortcutSet(shortcutSet);
     }
 
     @Override
