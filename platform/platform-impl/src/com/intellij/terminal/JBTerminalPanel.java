@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.SaveAndSyncHandler;
@@ -15,8 +16,10 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -293,6 +296,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       return;
     }
     super.processMouseWheelEvent(e);
+  }
+
+  @Nullable ToolWindow getContextToolWindow() {
+    return DataManager.getInstance().getDataContext(this).getData(PlatformDataKeys.TOOL_WINDOW);
+  }
+
+  @Nullable Project getContextProject() {
+    return DataManager.getInstance().getDataContext(this).getData(CommonDataKeys.PROJECT);
   }
 
   /**
