@@ -143,7 +143,7 @@ public final class PluginInstaller {
   }
 
   /**
-   * @deprecated Use {@link #installAfterRestart(File, boolean, Path, IdeaPluginDescriptor)}
+   * @deprecated Use {@link #installAfterRestart(Path, boolean, Path, IdeaPluginDescriptor)}
    */
   @Deprecated
   public static void installAfterRestart(@NotNull File sourceFile,
