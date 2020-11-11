@@ -12,8 +12,8 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -105,7 +105,7 @@ final class PluginUpdateInfoDialog extends AbstractUpdateDialog {
     }
     else {
       return IdeBundle.message("notification.content.updated.plugins",
-                               ContainerUtil.map(result.getPluginsInstalled(), (plugin) -> plugin.getName()));
+                               StringUtil.join(result.getPluginsInstalled(), plugin -> plugin.getName(), ", "));
     }
   }
 
