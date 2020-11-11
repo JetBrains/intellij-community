@@ -31,9 +31,4 @@ public abstract class FakeFileType implements FileTypeIdentifiableByVirtualFile 
   public boolean isReadOnly() {
     return true;
   }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    return null;
-  }
 }

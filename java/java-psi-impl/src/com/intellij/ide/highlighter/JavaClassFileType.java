@@ -43,9 +43,4 @@ public final class JavaClassFileType implements FileType {
   public boolean isBinary() {
     return true;
   }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    return null;
-  }
 }

@@ -1109,12 +1109,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     public boolean isBinary() {
       return false;
     }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   public void testPluginWhichOverridesBundledFileTypeMustWin() {
@@ -1189,12 +1183,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     public boolean isReadOnly() {
       return true;
     }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   public void testHashBangPatternsCanBeConfiguredDynamically() {
@@ -1244,12 +1232,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     public boolean isBinary() {
       return false;
     }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   private static class MyHaskellFileType implements FileType {
@@ -1285,12 +1267,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override
     public boolean isBinary() {
       return false;
-    }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
     }
   }
 

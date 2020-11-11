@@ -955,11 +955,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     public boolean isBinary() {
       return false;
     }
-
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   /**

@@ -46,9 +46,4 @@ public class PyRemoteDebugFileType implements FileType {
   public boolean isReadOnly() {
     return true;
   }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return null;
-  }
 }

@@ -50,11 +50,6 @@ public final class NativeFileType implements INativeFileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return null;
-  }
-
-  @Override
   public boolean openFileInAssociatedApplication(final Project project, @NotNull final VirtualFile file) {
     return openAssociatedApplication(file);
   }

@@ -63,8 +63,6 @@ private class SpaceChatFileType private constructor(): FileType {
 
   override fun isReadOnly(): Boolean = true
 
-  override fun getCharset(file: VirtualFile, content: ByteArray): String? = null
-
   companion object {
     val instance = SpaceChatFileType()
   }

@@ -5,11 +5,13 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.nio.charset.Charset;
 
 /**
  * <p>Describes a filetype.</p>
@@ -68,5 +70,11 @@ public interface FileType extends Scheme {
    * @param content File content.
    * @return The character set name, in the format supported by {@link java.nio.charset.Charset} class.
    */
-  @NonNls @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content);
+  default @NonNls @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+    // TODO see MetadataJsonFileType (it's actually text but tries indexing itself as binary)
+    // if (isBinary()) {
+    //   throw new UnsupportedOperationException();
+    // }
+    return null;
+  }
 }

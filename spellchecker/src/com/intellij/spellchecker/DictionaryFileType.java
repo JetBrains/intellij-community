@@ -46,10 +46,4 @@ public class DictionaryFileType implements FileType {
   public boolean isBinary() {
     return false;
   }
-
-  @Nullable
-  @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return null;
-  }
 }

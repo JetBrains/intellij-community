@@ -55,6 +55,4 @@ object SpaceDiffFileType : FileType {
   override fun isBinary(): Boolean = true
 
   override fun isReadOnly(): Boolean = true
-
-  override fun getCharset(file: VirtualFile, content: ByteArray): String? = null
 }

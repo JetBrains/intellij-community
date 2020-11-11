@@ -61,11 +61,6 @@ public abstract class LanguageFileType implements FileType {
     return mySecondary;
   }
 
-  @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    return null;
-  }
-
   /**
    * @deprecated implement own {@link com.intellij.debugger.engine.JavaDebugAware} instead
    */

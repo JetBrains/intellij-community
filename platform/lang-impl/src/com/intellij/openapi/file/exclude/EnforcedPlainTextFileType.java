@@ -53,11 +53,6 @@ public final class EnforcedPlainTextFileType implements FileType, OSFileIdeAssoc
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return null;
-  }
-
-  @Override
   public boolean isFileAssociationAllowed() {
     return false;
   }
