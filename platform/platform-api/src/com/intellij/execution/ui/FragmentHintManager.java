@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.ArrayUtil;
@@ -73,6 +74,9 @@ public class FragmentHintManager {
   }
 
   private static JComponent getComponent(JComponent component) {
+    if (component instanceof LabeledComponent) {
+      component = ((LabeledComponent<?>)component).getComponent();
+    }
     if (component instanceof RawCommandLineEditor) {
       component = ((RawCommandLineEditor)component).getEditorField();
     }
