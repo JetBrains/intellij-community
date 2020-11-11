@@ -125,6 +125,11 @@ public class FrameworkSupportOptionsComponent {
         return myConfigurable.getLibraryVersionFilter().isAccepted(version) &&
                ((FrameworkLibraryVersionImpl)version).getAvailabilityCondition().isAvailableFor(myModel);
       }
+
+      @Override
+      public String toString() {
+        return "FrameworkSupportOptionsFilter(filter = " + myConfigurable.getLibraryVersionFilter() + ")";
+      }
     };
   }
 

@@ -294,8 +294,12 @@ public class LibraryOptionsPanel implements Disposable {
       case DOWNLOAD:
         final LibraryDownloadSettings oldDownloadSettings = mySettings.getDownloadSettings();
         LOG.assertTrue(oldDownloadSettings != null);
+        List<? extends FrameworkLibraryVersion> versions = mySettings.getCompatibleVersions();
+        if (versions.isEmpty()) {
+          LOG.error("No compatible version for " + mySettings.getLibraryDescription() + " with filter " + mySettings.getVersionFilter());
+        }
         final LibraryDownloadSettings newDownloadSettings = DownloadingOptionsDialog.showDialog(myPanel, oldDownloadSettings,
-                                                                                                mySettings.getCompatibleVersions(), true);
+                                                                                                versions, true);
         if (newDownloadSettings != null) {
           mySettings.setDownloadSettings(newDownloadSettings);
         }

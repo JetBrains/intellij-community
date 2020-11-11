@@ -40,4 +40,9 @@ public class CustomLibraryDescriptionImpl extends CustomLibraryDescriptionBase {
   public DownloadableLibraryType getDownloadableLibraryType() {
     return myLibraryType;
   }
+
+  @Override
+  public String toString() {
+    return "CustomLibraryDescriptionImpl(" + myLibraryType.getKind().getKindId() + ")";
+  }
 }
