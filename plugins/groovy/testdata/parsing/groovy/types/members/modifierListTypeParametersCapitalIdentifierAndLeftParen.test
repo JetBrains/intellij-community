@@ -34,9 +34,9 @@ Groovy script
         PsiElement(identifier)('Foo')
         Parameter list
           PsiElement(()('(')
+          PsiElement(new line)('\n')
           PsiErrorElement:identifier expected, got '}'
             <empty list>
         Throw clause
           <empty list>
-      PsiWhiteSpace('\n')
       PsiElement(})('}')
