@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,19 +75,18 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
   private int myLine;
   private String myUrl;
 
-  @NotNull
-  private String myDescription;
+  private @NotNull @NlsSafe String myDescription;
   private char myMnemonic;
   int index; // index in the list of bookmarks in the Navigate|Bookmarks|show
 
   @ApiStatus.Internal
-  public Bookmark(@NotNull String url, int line, @NotNull String description) {
+  public Bookmark(@NotNull String url, int line, @NotNull @NlsSafe String description) {
     myUrl = url;
     myLine = line;
     myDescription = description;
   }
 
-  Bookmark(@NotNull Project project, @NotNull VirtualFile file, int line, @NotNull String description) {
+  Bookmark(@NotNull Project project, @NotNull VirtualFile file, int line, @NotNull @NlsSafe String description) {
     myDescription = description;
 
     initTarget(project, file, line);
@@ -224,12 +224,11 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return myMnemonic == 0 ? DEFAULT_ICON : MnemonicIcon.getIcon(myMnemonic);
   }
 
-  @NotNull
-  public String getDescription() {
+  public @NotNull @NlsSafe String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(@NotNull String description) {
+  public void setDescription(@NotNull @NlsSafe String description) {
     myDescription = description;
   }
 
@@ -577,5 +576,12 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     public ActionGroup getPopupMenuActions() {
       return (ActionGroup)ActionManager.getInstance().getAction("popup@BookmarkContextMenu");
     }
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull @NlsSafe String toString(char mnemonic, boolean point) {
+    StringBuilder sb = new StringBuilder().append(mnemonic);
+    if (point) sb.append('.');
+    return sb.toString(); //NON-NLS
   }
 }

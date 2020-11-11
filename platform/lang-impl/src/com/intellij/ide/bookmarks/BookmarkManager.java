@@ -23,6 +23,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -162,7 +163,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   }
 
   @NotNull
-  public Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull String description) {
+  public Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull @NlsSafe String description) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Bookmark b = new Bookmark(myProject, file, lineIndex, description);
@@ -179,7 +180,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   }
 
   @TestOnly
-  public void addFileBookmark(@NotNull VirtualFile file, @NotNull String description) {
+  public void addFileBookmark(@NotNull VirtualFile file, @NotNull @NlsSafe String description) {
     if (findFileBookmark(file) != null) {
       return;
     }
@@ -440,7 +441,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     getPublisher().bookmarkChanged(bookmark);
   }
 
-  public void setDescription(@NotNull Bookmark bookmark, @NotNull String description) {
+  public void setDescription(@NotNull Bookmark bookmark, @NotNull @NlsSafe String description) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     bookmark.setDescription(description);
     getPublisher().bookmarkChanged(bookmark);
