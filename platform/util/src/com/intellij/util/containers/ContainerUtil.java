@@ -2130,6 +2130,12 @@ public class ContainerUtil {
     }
   }
 
+  public static <K, V> void putIfAbsent(final Map<? super K, ? super V> map, final K key, @NotNull Factory<? extends V> factory) {
+    if (!map.containsKey(key)) {
+      map.put(key, factory.create());
+    }
+  }
+
   public static <K, V> void putIfNotNull(final K key, @Nullable V value, final @NotNull Map<? super K, ? super V> result) {
     if (value != null) {
       result.put(key, value);

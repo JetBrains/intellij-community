@@ -34,18 +34,15 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Method;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCase {
-  private DebugProcessListener myPauseScriptListener;
-  private final List<SuspendContextRunnable> myScriptRunnables = new ArrayList<>();
-  private final SynchronizationBasedSemaphore myScriptRunnablesSema = new SynchronizationBasedSemaphore();
+  private @Nullable BreakpointProvider myBreakpointProvider;
   protected static final int RATHER_LATER_INVOKES_N = 10;
   public DebugProcessImpl myDebugProcess;
   private final List<Throwable> myException = new SmartList<>();
@@ -122,19 +119,13 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     debugProcess.getManagerThread().schedule(debugProcess.createStepOutCommand(context));
   }
 
-  protected void waitBreakpoints() {
-    myScriptRunnablesSema.down();
-    waitFor(() -> myScriptRunnablesSema.waitFor());
-  }
-
   @Override
   protected void tearDown() throws Exception {
     ThreadTracker.awaitJDIThreadsTermination(100, TimeUnit.SECONDS);
     try {
       myDebugProcess = null;
-      myPauseScriptListener = null;
+      myBreakpointProvider = null;
       myRatherLaterRequests.clear();
-      myScriptRunnables.clear();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -152,12 +143,27 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  protected void onBreakpoint(SuspendContextRunnable runnable) {
-    addDefaultBreakpointListener();
-    myScriptRunnables.add(runnable);
+  private @NotNull BreakpointProvider getBreakpointProvider() {
+    if (myBreakpointProvider == null) {
+      final DebugProcessImpl debugProcess = getDebugProcess();
+      assertNotNull("Debug process was not started", debugProcess);
+
+      myBreakpointProvider = new BreakpointProvider(myDebugProcess);
+      DebugProcessListener processListener = new DelayedEventsProcessListener(myBreakpointProvider);
+      debugProcess.addDebugProcessListener(processListener, getTestRootDisposable());
+    }
+    return myBreakpointProvider;
   }
 
-  protected void onStop(final SuspendContextRunnable runnable, final SuspendContextRunnable then){
+  protected void onBreakpoint(SuspendContextRunnable runnable) {
+    getBreakpointProvider().onBreakpoint(runnable);
+  }
+
+  protected void onBreakpoints(SuspendContextRunnable runnable) {
+    getBreakpointProvider().onBreakpoints(runnable);
+  }
+
+  protected void onStop(final SuspendContextRunnable runnable, final SuspendContextRunnable then) {
     onBreakpoint(new SuspendContextRunnable() {
       @Override
       public void run(SuspendContextImpl suspendContext) throws Exception {
@@ -173,59 +179,6 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   protected void doWhenPausedThenResume(final SuspendContextRunnable runnable) {
     onStop(runnable, this::resume);
-  }
-
-  protected void addDefaultBreakpointListener() {
-    if (myPauseScriptListener == null) {
-      final DebugProcessImpl debugProcess = getDebugProcess();
-
-      assertNotNull("Debug process was not started", debugProcess);
-
-      myPauseScriptListener = new DelayedEventsProcessListener(
-        new DebugProcessAdapterImpl() {
-          @Override
-          public void paused(SuspendContextImpl suspendContext) {
-            try {
-              if (myScriptRunnables.isEmpty()) {
-                print("resuming ", ProcessOutputTypes.SYSTEM);
-                printContext(suspendContext);
-                resume(suspendContext);
-                return;
-              }
-              SuspendContextRunnable suspendContextRunnable = myScriptRunnables.remove(0);
-              suspendContextRunnable.run(suspendContext);
-            }
-            catch (Exception e) {
-              addException(e);
-              error(e);
-            }
-            catch (AssertionError e) {
-              addException(e);
-              resume(suspendContext);
-            }
-
-            if (myScriptRunnables.isEmpty()) {
-              myScriptRunnablesSema.up();
-            }
-          }
-
-          //executed in manager thread
-          @Override
-          public void resumed(SuspendContextImpl suspendContext) {
-            final SuspendContextImpl pausedContext = debugProcess.getSuspendManager().getPausedContext();
-            if (pausedContext != null) {
-              debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
-                @Override
-                public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-                  paused(pausedContext);
-                }
-              });
-            }
-          }
-        }
-      );
-      debugProcess.addDebugProcessListener(myPauseScriptListener);
-    }
   }
 
   protected void printFrameProxy(StackFrameProxyImpl frameProxy) throws EvaluateException {
@@ -339,8 +292,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void invokeRatherLater(final DebuggerCommandImpl command) {
+    invokeRatherLater(getDebugProcess(), command);
+  }
+
+  protected void invokeRatherLater(@NotNull DebugProcessImpl debugProcess, DebuggerCommandImpl command) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      InvokeRatherLaterRequest request = new InvokeRatherLaterRequest(command, getDebugProcess());
+      InvokeRatherLaterRequest request = new InvokeRatherLaterRequest(command, debugProcess);
       myRatherLaterRequests.add(request);
 
       if (myRatherLaterRequests.size() == 1) pumpSwingThread();
@@ -483,10 +440,10 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  private static class DelayedEventsProcessListener implements DebugProcessListener {
+  protected static class DelayedEventsProcessListener implements DebugProcessListener {
     private final DebugProcessAdapterImpl myTarget;
 
-    DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
+    public DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
       myTarget = target;
     }
 
@@ -524,6 +481,65 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
     private static void pauseExecution() {
       TimeoutUtil.sleep(10);
+    }
+  }
+
+  protected class BreakpointProvider extends DebugProcessAdapterImpl {
+    private final DebugProcessImpl myDebugProcess;
+    private final List<SuspendContextRunnable> myBreakpointListeners = new ArrayList<>();
+    private final Queue<SuspendContextRunnable> myScriptRunnables = new ArrayDeque<>();
+
+    public BreakpointProvider(DebugProcessImpl debugProcess) {
+      myDebugProcess = debugProcess;
+    }
+
+    public void onBreakpoint(SuspendContextRunnable runnable) {
+      myScriptRunnables.add(runnable);
+    }
+
+    public void onBreakpoints(SuspendContextRunnable runnable) {
+      myBreakpointListeners.add(runnable);
+    }
+
+    @Override
+    public void paused(SuspendContextImpl suspendContext) {
+      try {
+        if (myScriptRunnables.isEmpty() && myBreakpointListeners.isEmpty()) {
+          print("resuming ", ProcessOutputTypes.SYSTEM);
+          printContext(suspendContext);
+          resume(suspendContext);
+          return;
+        }
+        SuspendContextRunnable suspendContextRunnable = myScriptRunnables.poll();
+        if (suspendContextRunnable != null) {
+          suspendContextRunnable.run(suspendContext);
+        }
+        for (SuspendContextRunnable it : myBreakpointListeners) {
+          it.run(suspendContext);
+        }
+      }
+      catch (Exception e) {
+        addException(e);
+        error(e);
+      }
+      catch (AssertionError e) {
+        addException(e);
+        resume(suspendContext);
+      }
+    }
+
+    //executed in manager thread
+    @Override
+    public void resumed(SuspendContextImpl suspendContext) {
+      final SuspendContextImpl pausedContext = myDebugProcess.getSuspendManager().getPausedContext();
+      if (pausedContext != null) {
+        myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
+          @Override
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+            paused(pausedContext);
+          }
+        });
+      }
     }
   }
 }

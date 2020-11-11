@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.managerThread.DebuggerManagerThread;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -45,6 +46,8 @@ public interface DebugProcess extends UserDataHolder {
   PositionManager getPositionManager();
 
   VirtualMachineProxy getVirtualMachineProxy();
+
+  void addDebugProcessListener(DebugProcessListener listener, Disposable parentDisposable);
 
   void addDebugProcessListener(DebugProcessListener listener);
 
