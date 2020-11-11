@@ -76,6 +76,8 @@ public final class PluginManagerCore {
   public static final @NonNls String ENABLE = "enable";
   public static final @NonNls String EDIT = "edit";
 
+  private static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
+
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
   private static volatile @Nullable Set<IdeaPluginDescriptorImpl> pluginIdentitySetCache;
@@ -221,54 +223,47 @@ public final class PluginManagerCore {
     return set != null && set.contains(descriptor.getVersion());
   }
 
-  public static void updateBrokenPlugins(Map<PluginId, Set<String>> brokenPlugins){
+  public static void updateBrokenPlugins(Map<PluginId, Set<String>> brokenPlugins) {
     ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(brokenPlugins);
   }
 
   private static @NotNull Map<PluginId, Set<String>> getBrokenPluginVersions() {
+    if (IGNORE_DISABLED_PLUGINS) return Collections.emptyMap();
+
     Map<PluginId, Set<String>> result = SoftReference.dereference(ourBrokenPluginVersions);
-    if (System.getProperty("idea.ignore.disabled.plugins") != null) {
-      result = Collections.emptyMap();
-      ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
-      return result;
+    if (result == null) {
+      result = readBrokenPluginFile();
+      ourBrokenPluginVersions = new SoftReference<>(result);
     }
-    if (result != null) {
-      return result;
-    }
-    result = readBrokenPluginFile();
-    ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
     return result;
   }
 
   private static Map<PluginId, Set<String>> readBrokenPluginFile() {
-    Map<PluginId, Set<String>> result = new HashMap<>();
-    try (InputStream fileStream = PluginManagerCore.class.getResourceAsStream(BROKEN_PLUGIN_FILE)) {
-      if (fileStream == null) return Collections.emptyMap();
-      try (BufferedReader br = new BufferedReader(new InputStreamReader(fileStream, StandardCharsets.UTF_8))){
-        String s;
-        while ((s = br.readLine()) != null) {
-          s = s.trim();
-          if (s.startsWith("//")) {
-            continue;
-          }
-          List<String> tokens = ParametersListUtil.parse(s);
-          if (tokens.isEmpty()) {
-            continue;
-          }
+    try (InputStream stream = PluginManagerCore.class.getResourceAsStream(BROKEN_PLUGIN_FILE)) {
+      if (stream == null) return Collections.emptyMap();
+
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))){
+        Map<PluginId, Set<String>> result = new HashMap<>();
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+          line = line.trim();
+          if (line.isEmpty() || line.startsWith("//")) continue;
+          List<String> tokens = ParametersListUtil.parse(line);
           if (tokens.size() == 1) {
-            throw new RuntimeException(
-              BROKEN_PLUGIN_FILE + " is broken. The line contains plugin name, but does not contains version: " + s);
+            throw new RuntimeException(BROKEN_PLUGIN_FILE + " is broken. The line contains plugin name, but does not contains version: " + line);
           }
           PluginId pluginId = PluginId.getId(tokens.get(0));
           List<String> versions = tokens.subList(1, tokens.size());
           result.computeIfAbsent(pluginId, k -> new HashSet<>()).addAll(versions);
         }
+
+        return result;
       }
     }
     catch (IOException e) {
       throw new RuntimeException("Failed to read " + BROKEN_PLUGIN_FILE, e);
     }
-    return result;
   }
 
   public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file, boolean append) throws IOException {
