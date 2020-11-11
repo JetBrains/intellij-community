@@ -168,7 +168,7 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
         assertEquals(node.toString(), selectedPathComponent.toString())
       }
       val selectedNodeConsole = runInEdtAndGet { eventView.selectedNodeConsole }
-      consoleTextChecker?.invoke((selectedNodeConsole as ConsoleViewImpl).text)
+      consoleTextChecker?.invoke((selectedNodeConsole as? ConsoleViewImpl)?.text)
       consoleChecker?.invoke(selectedNodeConsole)
     }
 
