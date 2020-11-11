@@ -7,6 +7,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JTable;
 import javax.swing.JTree;
 import java.awt.Component;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,10 +35,10 @@ public abstract class TreeHoverListener extends HoverListener {
 
   private final AtomicInteger rowHolder = new AtomicInteger(-1);
 
-  private void update(@NotNull Component component, @NotNull ToIntFunction<JTree> rowFunction) {
+  private void update(@NotNull Component component, @NotNull ToIntFunction<JTree> rowFunc) {
     if (component instanceof JTree) {
       JTree tree = (JTree)component;
-      int rowNew = rowFunction.applyAsInt(tree);
+      int rowNew = rowFunc.applyAsInt(tree);
       int rowOld = rowHolder.getAndSet(rowNew);
       if (rowNew != rowOld) onHover(tree, rowNew);
     }
@@ -47,16 +48,29 @@ public abstract class TreeHoverListener extends HoverListener {
   private static final Key<Integer> HOVERED_ROW_KEY = Key.create("TreeHoveredRow");
   public static final HoverListener DEFAULT = new TreeHoverListener() {
     @Override
-    public void onHover(@NotNull JTree tree, int rowNew) {
-      int rowOld = getHoveredRow(tree);
-      if (rowNew == rowOld) return;
-      tree.putClientProperty(HOVERED_ROW_KEY, rowNew < 0 ? null : rowNew);
-      if (RenderingUtil.isHoverPaintingDisabled(tree)) return;
-      TreeUtil.repaintRow(tree, rowOld);
-      TreeUtil.repaintRow(tree, rowNew);
+    public void onHover(@NotNull JTree tree, int row) {
+      setHoveredRow(tree, row);
+      // support JBTreeTable and similar views
+      Object property = tree.getClientProperty(RenderingUtil.FOCUSABLE_SIBLING);
+      if (property instanceof JTable) TableHoverListener.setHoveredRow((JTable)property, row);
     }
   };
 
+  @ApiStatus.Internal
+  static void setHoveredRow(@NotNull JTree tree, int rowNew) {
+    int rowOld = getHoveredRow(tree);
+    if (rowNew == rowOld) return;
+    tree.putClientProperty(HOVERED_ROW_KEY, rowNew < 0 ? null : rowNew);
+    if (RenderingUtil.isHoverPaintingDisabled(tree)) return;
+    TreeUtil.repaintRow(tree, rowOld);
+    TreeUtil.repaintRow(tree, rowNew);
+  }
+
+  /**
+   * @param tree a tree, which hover state is interesting
+   * @return a number of a hovered row of the specified tree
+   * @see #DEFAULT
+   */
   public static int getHoveredRow(@NotNull JTree tree) {
     Object property = tree.getClientProperty(HOVERED_ROW_KEY);
     return property instanceof Integer ? (Integer)property : -1;
