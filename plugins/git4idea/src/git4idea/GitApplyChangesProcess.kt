@@ -63,14 +63,13 @@ class GitApplyChangesProcess(private val project: Project,
                              private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String,
                              private val preserveCommitMetadata: Boolean,
                              private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
-  private val LOG = logger<GitApplyChangesProcess>()
   private val repositoryManager = GitRepositoryManager.getInstance(project)
   private val vcsNotifier = VcsNotifier.getInstance(project)
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private val vcsHelper = AbstractVcsHelper.getInstance(project)
 
   fun execute() {
-    val commitsInRoots = DvcsUtil.groupCommitsByRoots<GitRepository>(repositoryManager, commits)
+    val commitsInRoots = DvcsUtil.groupCommitsByRoots(repositoryManager, commits)
     LOG.info("${operationName}ing commits: " + toString(commitsInRoots))
 
     val successfulCommits = mutableListOf<VcsFullCommitDetails>()
@@ -409,6 +408,7 @@ class GitApplyChangesProcess(private val project: Project,
   }
 
   companion object {
+    private val LOG = logger<GitApplyChangesProcess>()
     private const val RESOLVE = "resolve"
   }
 }
