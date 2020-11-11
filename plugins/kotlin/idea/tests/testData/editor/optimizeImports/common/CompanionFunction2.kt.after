@@ -1,0 +1,5 @@
+package test2
+
+fun check() {
+    foo.Test2.Companion.testsss
+}

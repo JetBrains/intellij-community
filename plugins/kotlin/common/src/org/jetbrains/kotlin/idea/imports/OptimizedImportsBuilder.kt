@@ -119,6 +119,7 @@ class OptimizedImportsBuilder(
             parent is KtQualifiedExpression && element == parent.selectorExpression -> parent
             parent is KtCallExpression && element == parent.calleeExpression -> getExpressionToAnalyze(parent)
             parent is KtOperationExpression && element == parent.operationReference -> parent
+            parent is KtCallableReferenceExpression && element == parent.callableReference -> parent
             parent is KtUserType -> null
             else -> element as? KtExpression //TODO: what if not expression? Example: KtPropertyDelegationMethodsReference
         }
