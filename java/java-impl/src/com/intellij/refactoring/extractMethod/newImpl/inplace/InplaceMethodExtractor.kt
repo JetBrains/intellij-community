@@ -1,30 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
-import com.intellij.ide.IdeEventQueue
+import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
@@ -126,34 +124,70 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     preview.addPreview(methodLines) { navigate(project, file, methodNameRange.endOffset) }
   }
 
-  private fun showNavigationGotIt(templateState: TemplateState){
-    val selectedRange = templateState.currentVariableRange ?: return
-    val offset = minOf(selectedRange.startOffset + 3, selectedRange.endOffset)
-    val gotoDeclarationShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
-    val message = JavaRefactoringBundle.message("extract.method.gotit.navigation", gotoDeclarationShortcut)
-    GotItTooltip("extract.method.gotit.navigate", message, templateState).showInEditor(templateState.editor, offset) { gotItBalloon = it }
+  private fun createChangeBasedDisposable(editor: Editor): Disposable {
+    val disposable = Disposer.newDisposable()
+    EditorUtil.disposeWithEditor(editor, disposable)
+    val changeListener = object: DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        Disposer.dispose(disposable)
+      }
+    }
+    editor.document.addDocumentListener(changeListener, disposable)
+    return disposable
   }
 
-  private fun showChangeSignatureGotIt(){
-    gotItBalloon?.hide()
-    val offset = minOf(methodNameRange.startOffset + 3, methodNameRange.endOffset)
+  private fun installGotItTooltips(templateState: TemplateState){
+    templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
+      override fun templateFinished(template: Template, brokenOff: Boolean) {
+        if (! brokenOff) {
+          showNavigationGotIt(editor, methodCallExpressionRange.range)
+          val disposable = createChangeBasedDisposable(editor)
+          val nameRange = methodNameRange.range
+          val caretListener = object: CaretListener {
+            override fun caretPositionChanged(event: CaretEvent) {
+              if (editor.logicalPositionToOffset(event.newPosition) in nameRange) {
+                showChangeSignatureGotIt(editor, nameRange)
+                Disposer.dispose(disposable)
+              }
+            }
+          }
+          editor.caretModel.addCaretListener(caretListener, disposable)
+        }
+      }
+    })
+  }
+
+  private fun showNavigationGotIt(editor: Editor, range: TextRange){
+    val gotoKeyboardShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
+    val gotoMouseShortcut = KeymapUtil.getFirstMouseShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
+    if (gotoKeyboardShortcut.isEmpty() || gotoMouseShortcut.isEmpty()) return
+    val header = JavaRefactoringBundle.message("extract.method.gotit.navigation.header")
+    val message = JavaRefactoringBundle.message("extract.method.gotit.navigation.message", gotoMouseShortcut, gotoKeyboardShortcut)
+    val disposable = Disposer.newDisposable()
+    EditorUtil.disposeWithEditor(editor, disposable)
+    GotItTooltip("extract.method.gotit.navigate", message, disposable)
+      .withHeader(header)
+      .showInEditor(editor, range) { gotItBalloon = it }
+  }
+
+  private fun showChangeSignatureGotIt(editor: Editor, range: TextRange){
     val disposable = Disposer.newDisposable()
     EditorUtil.disposeWithEditor(editor, disposable)
     val moveLeftShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_LEFT)
     val moveRightShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_RIGHT)
     val contextActionShortcut = KeymapUtil.getFirstKeyboardShortcutText("ShowIntentionActions")
-    val message = JavaRefactoringBundle.message("extract.method.gotit.signature", contextActionShortcut, moveLeftShortcut, moveRightShortcut)
-    GotItTooltip("extract.method.signature.change", message, disposable).showInEditor(editor, offset)
+    val header = JavaRefactoringBundle.message("extract.method.gotit.signature.header")
+    val message = JavaRefactoringBundle.message("extract.method.gotit.signature.message", contextActionShortcut, moveLeftShortcut, moveRightShortcut)
+    GotItTooltip("extract.method.signature.change", message, disposable)
+      .withIcon(AllIcons.Gutter.SuggestedRefactoringBulbDisabled)
+      .withHeader(header)
+      .showInEditor(editor, range)
   }
 
-  private fun GotItTooltip.showInEditor(editor: Editor, offset: Int, balloonCreated: (Balloon) -> Unit = {}) {
+  private fun GotItTooltip.showInEditor(editor: Editor, range: TextRange, balloonCreated: (Balloon) -> Unit = {}) {
+    val offset = minOf(range.startOffset + 3, range.endOffset)
     fun getPosition(): Point = editor.offsetToXY(offset)
-
-    fun isVisible(): Boolean {
-      val position = getPosition()
-      val visibleArea = EditorCodePreview.getActivePreview(editor)?.editorVisibleArea ?: editor.scrollingModel.visibleArea
-      return visibleArea.contains(position)
-    }
+    fun isVisible(): Boolean = editor.scrollingModel.visibleArea.contains(getPosition())
 
     withMaxWidth(250)
     withPosition(Balloon.Position.above)
@@ -200,7 +234,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     super.afterTemplateStart()
     popupProvider.setChangeListener { restartInplace() }
     popupProvider.setShowDialogAction { restartInDialog() }
-    popupProvider.setNavigateMethodAction { finishAndGotoDeclaration() }
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
     val editor = templateState.editor as? EditorImpl ?: return
     val presentation = TemplateInlayUtil.createSettingsPresentation(editor)
@@ -209,24 +242,13 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     fragmentsToRevert.forEach { Disposer.register(templateState, it) }
     setActiveExtractor(editor, this)
 
-    showNavigationGotIt(templateState)
-
     Disposer.register(templateState, preview)
     Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(extractOptions.project).reset() })
     Disposer.register(templateState, { methodNameRange.dispose() })
     Disposer.register(templateState, { methodCallExpressionRange.dispose() })
 
-    val connection = myProject.messageBus.connect(templateState)
-    connection.subscribe(AnActionListener.TOPIC, object: AnActionListener {
-      override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-        if (action is GotoDeclarationAction){
-          showChangeSignatureGotIt()
-          templateState.gotoEnd(false)
-        }
-      }
-    })
-
     installMethodNameValidation(templateState)
+    installGotItTooltips(templateState)
   }
 
   private fun setMethodName(methodName: String) {
@@ -280,19 +302,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
         }
       }
     })
-  }
-
-  private fun finishAndGotoDeclaration() {
-    val template = TemplateManagerImpl.getTemplateState(editor)
-    if (template != null) {
-      IdeEventQueue.getInstance().popupManager.closeAllPopups()
-      val file = FileDocumentManager.getInstance().getFile(editor.document)
-      if (file != null) {
-        navigate(myProject, file, methodNameRange.endOffset)
-      }
-      showChangeSignatureGotIt()
-      template.gotoEnd(false)
-    }
   }
 
   fun restartInDialog() {
