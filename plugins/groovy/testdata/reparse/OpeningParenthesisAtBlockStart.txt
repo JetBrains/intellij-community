@@ -80,7 +80,7 @@ Groovy script
         Command arguments
           Reference expression
             PsiElement(identifier)('home')
-      PsiWhiteSpace('\n    ')
+      PsiElement(new line)('\n    ')
       Method call
         Reference expression
           Reference expression
@@ -104,7 +104,7 @@ Groovy script
                 PsiElement(identifier)('it')
           PsiElement(new line)('\n    ')
           PsiElement(})('}')
-      PsiWhiteSpace('\n\n')
+      PsiElement(new line)('\n\n')
       PsiElement(})('}')
   PsiElement(new line)('\n')
   PsiErrorElement:';', <statement> or new line expected, got '}'

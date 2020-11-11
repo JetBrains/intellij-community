@@ -22,19 +22,19 @@ Groovy script
           Annotation member value pair
             Annotation array initializer
               PsiElement([)('[')
-              PsiWhiteSpace('\n  ')
+              PsiElement(new line)('\n  ')
               Literal
                 PsiElement(Integer)('1')
               PsiElement(,)(',')
-              PsiWhiteSpace('\n  ')
+              PsiElement(new line)('\n  ')
               Literal
                 PsiElement(Integer)('2')
               PsiElement(,)(',')
-              PsiWhiteSpace('\n  ')
+              PsiElement(new line)('\n  ')
               Literal
                 PsiElement(Integer)('3')
               PsiElement(,)(',')
-              PsiWhiteSpace('\n')
+              PsiElement(new line)('\n')
               PsiElement(])(']')
           PsiElement())(')')
       PsiElement(new line)('\n')
@@ -47,18 +47,18 @@ Groovy script
           Annotation member value pair
             Annotation array initializer
               PsiElement([)('[')
-              PsiWhiteSpace('\n  ')
+              PsiElement(new line)('\n  ')
               Literal
                 PsiElement(Integer)('1')
               PsiElement(,)(',')
-              PsiWhiteSpace('\n  ')
+              PsiElement(new line)('\n  ')
               Literal
                 PsiElement(Integer)('2')
               PsiElement(,)(',')
-              PsiWhiteSpace('\n  ')
+              PsiElement(new line)('\n  ')
               Literal
                 PsiElement(Integer)('3')
-              PsiWhiteSpace('\n')
+              PsiElement(new line)('\n')
               PsiElement(])(']')
           PsiElement())(')')
     PsiElement(new line)('\n')

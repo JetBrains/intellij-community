@@ -47,7 +47,7 @@ Groovy script
                     PsiElement(identifier)('id2')
                   PsiElement(new line)('\n  ')
                   PsiElement(})('}')
-                PsiWhiteSpace('\n\n   ')
+                PsiElement(new line)('\n\n   ')
                 Closable block
                   PsiElement({)('{')
                   PsiWhiteSpace('\n    ')
@@ -85,7 +85,7 @@ Groovy script
         Open block
           PsiElement({)('{')
           PsiElement(})('}')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(})('}')
   PsiElement(new line)('\n')
 ---

@@ -8,7 +8,7 @@
 Groovy script
   Generalized list
     PsiElement([)('[')
-    PsiWhiteSpace('\n    ')
+    PsiElement(new line)('\n    ')
     Generalized list
       PsiElement([)('[')
       Reference expression
@@ -68,7 +68,7 @@ Groovy script
                         Reference expression
                           PsiElement(identifier)('a')
                         PsiElement(,)(',')
-                        PsiWhiteSpace('\n    ')
+                        PsiElement(new line)('\n    ')
                         Generalized list
                           PsiElement([)('[')
                           Reference expression
@@ -128,7 +128,7 @@ Groovy script
                                             Reference expression
                                               PsiElement(identifier)('a')
                                             PsiElement(,)(',')
-                                            PsiWhiteSpace('\n    ')
+                                            PsiElement(new line)('\n    ')
                                             Generalized list
                                               PsiElement([)('[')
                                               Reference expression
@@ -188,7 +188,7 @@ Groovy script
                                                                 Reference expression
                                                                   PsiElement(identifier)('a')
                                                                 PsiElement(,)(',')
-                                                                PsiWhiteSpace('\n    ')
+                                                                PsiElement(new line)('\n    ')
                                                                 Generalized list
                                                                   PsiElement([)('[')
                                                                   Reference expression
@@ -248,7 +248,7 @@ Groovy script
                                                                                     Reference expression
                                                                                       PsiElement(identifier)('a')
                                                                                     PsiElement(,)(',')
-                                                                                    PsiWhiteSpace('\n')
+                                                                                    PsiElement(new line)('\n')
                                                                                     PsiElement(])(']')
                                                                                   PsiErrorElement:',' or ']' expected
                                                                                     <empty list>

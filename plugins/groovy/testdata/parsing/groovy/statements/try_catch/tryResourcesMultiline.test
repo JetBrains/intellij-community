@@ -39,7 +39,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Try resource list
       PsiElement(()('(')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Variable definitions
         Modifiers
           PsiElement(def)('def')
@@ -63,7 +63,7 @@ Groovy script
         PsiWhiteSpace(' ')
         Variable
           PsiElement(identifier)('a')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement())(')')
     PsiWhiteSpace(' ')
     Open block

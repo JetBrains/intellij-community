@@ -20,7 +20,7 @@ Groovy script
               PsiElement(identifier)('Foo')
             Annotation arguments
               <empty list>
-        PsiWhiteSpace('\n')
+        PsiElement(new line)('\n')
         PsiElement(identifier)('baz')
       PsiElement())(')')
     Throw clause
@@ -45,7 +45,7 @@ Groovy script
               PsiElement(identifier)('Foo')
             Annotation arguments
               <empty list>
-        PsiWhiteSpace('\n')
+        PsiElement(new line)('\n')
         Type element
           Reference element
             PsiElement(identifier)('Baz')

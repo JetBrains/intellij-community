@@ -45,7 +45,7 @@ Groovy script
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
-    PsiWhiteSpace('\n')
+    PsiElement(new line)('\n')
     Variable
       PsiElement(identifier)('a')
     PsiElement(,)(',')
@@ -65,7 +65,7 @@ Groovy script
     PsiElement(()('(')
     Variable
       PsiElement(identifier)('a')
-    PsiWhiteSpace('\n')
+    PsiElement(new line)('\n')
     PsiElement(,)(',')
     Variable
       PsiElement(identifier)('b')
@@ -84,7 +84,7 @@ Groovy script
     Variable
       PsiElement(identifier)('a')
     PsiElement(,)(',')
-    PsiWhiteSpace('\n')
+    PsiElement(new line)('\n')
     Variable
       PsiElement(identifier)('b')
     PsiElement())(')')
@@ -104,7 +104,7 @@ Groovy script
     PsiElement(,)(',')
     Variable
       PsiElement(identifier)('b')
-    PsiWhiteSpace('\n')
+    PsiElement(new line)('\n')
     PsiElement())(')')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
