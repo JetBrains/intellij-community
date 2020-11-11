@@ -243,7 +243,7 @@ public final class PluginManagerCore {
   private static Map<PluginId, Set<String>> readBrokenPluginFile() {
     Map<PluginId, Set<String>> result = new HashMap<>();
     try (InputStream fileStream = PluginManagerCore.class.getResourceAsStream(BROKEN_PLUGIN_FILE)) {
-      if (fileStream == null) return result;
+      if (fileStream == null) return Collections.emptyMap();
       try (BufferedReader br = new BufferedReader(new InputStreamReader(fileStream, StandardCharsets.UTF_8))){
         String s;
         while ((s = br.readLine()) != null) {
