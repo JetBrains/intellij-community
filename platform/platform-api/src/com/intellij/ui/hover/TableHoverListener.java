@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JTable;
+import javax.swing.JTree;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -51,16 +52,29 @@ public abstract class TableHoverListener extends HoverListener {
   private static final Key<Integer> HOVERED_ROW_KEY = Key.create("TableHoveredRow");
   public static final HoverListener DEFAULT = new TableHoverListener() {
     @Override
-    public void onHover(@NotNull JTable table, int rowNew, int columnNew) {
-      int rowOld = getHoveredRow(table);
-      if (rowNew == rowOld) return;
-      table.putClientProperty(HOVERED_ROW_KEY, rowNew < 0 ? null : rowNew);
-      if (RenderingUtil.isHoverPaintingDisabled(table)) return;
-      repaintRow(table, rowOld, columnNew);
-      repaintRow(table, rowNew, columnNew);
+    public void onHover(@NotNull JTable table, int row, int column) {
+      setHoveredRow(table, row);
+      // support JBTreeTable and similar views
+      Object property = table.getClientProperty(RenderingUtil.FOCUSABLE_SIBLING);
+      if (property instanceof JTree) TreeHoverListener.setHoveredRow((JTree)property, row);
     }
   };
 
+  @ApiStatus.Internal
+  static void setHoveredRow(@NotNull JTable table, int rowNew) {
+    int rowOld = getHoveredRow(table);
+    if (rowNew == rowOld) return;
+    table.putClientProperty(HOVERED_ROW_KEY, rowNew < 0 ? null : rowNew);
+    if (RenderingUtil.isHoverPaintingDisabled(table)) return;
+    repaintRow(table, rowOld, 0);
+    repaintRow(table, rowNew, 0);
+  }
+
+  /**
+   * @param table a table, which hover state is interesting
+   * @return a number of a hovered row of the specified table
+   * @see #DEFAULT
+   */
   public static int getHoveredRow(@NotNull JTable table) {
     Object property = table.getClientProperty(HOVERED_ROW_KEY);
     return property instanceof Integer ? (Integer)property : -1;
