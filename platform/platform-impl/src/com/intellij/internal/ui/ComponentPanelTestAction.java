@@ -276,7 +276,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withBrowserLink("Learn more", new URL("https://www.jetbrains.com/"));
 
         new GotItTooltip("textfield", GOT_IT_TEXT2, project).
-          withShowCount(5).showAfter(gotItTooltip, text1, component -> new Point(component.getWidth()/2, component.getHeight()));
+          withShowCount(5).showAfter(gotItTooltip, text1, GotItTooltip.BOTTOM_MIDDLE);
 
       } catch (MalformedURLException ex) {}
 
@@ -833,8 +833,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1) {
         {
           GotItTooltip actionGotIt = new GotItTooltip("short.action", "Short action text", project).withHeader("Header");
-          actionGotIt.assignTo(getTemplatePresentation(), c -> new Point(c.getWidth()/2, c.getHeight()));
-          gotItTooltip.showAfter(actionGotIt, abracadabraButton, c -> new Point(c.getWidth() / 2, c.getHeight()));
+          actionGotIt.assignTo(getTemplatePresentation(), GotItTooltip.BOTTOM_MIDDLE);
+          gotItTooltip.showAfter(actionGotIt, abracadabraButton, GotItTooltip.BOTTOM_MIDDLE);
         }
       }.withShortCut("control K"));
       toolbarActions.add(new MyAction("Long", AllIcons.Ide.Rating2).withShortCut("control N"));
