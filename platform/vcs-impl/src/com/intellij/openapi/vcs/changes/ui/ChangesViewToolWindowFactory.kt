@@ -29,7 +29,6 @@ import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.commit.CommitWorkflowManager.Companion.setCommitFromLocalChanges
-import java.awt.Point
 import javax.swing.JComponent
 
 private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
@@ -91,7 +90,7 @@ internal class SwitchToCommitDialogHint(private val toolWindow: ToolWindowEx, pr
     val c : JComponent = toolbar.getGearButton() ?: toolbar.component
     GotItTooltip("changes.view.toolwindow", message("switch.to.commit.dialog.hint.text"), toolbarVisibilityTracker).
       setOnBalloonCreated { balloon = it }.
-      show(c) { Point(it.width / 2, it.height) }
+      show(c, GotItTooltip.BOTTOM_MIDDLE)
   }
 
   private fun hideHint(dispose: Boolean) {

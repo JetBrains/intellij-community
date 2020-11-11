@@ -31,7 +31,6 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Insets
-import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 
@@ -113,7 +112,7 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
                         connection.disconnect()
                       }
                     })}.
-                  show(it) { component -> Point(component.width / 2, component.height) }
+                  show(it, GotItTooltip.BOTTOM_MIDDLE)
                 }
               }
             })

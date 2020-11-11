@@ -321,7 +321,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
       it.addListener(object : JBPopupListener {
         override fun onClosed(event: LightweightWindowEvent) {
           HelpTooltip.setMasterPopupOpenCondition(tracker.component, null)
-          (tracker.component as JComponent).putClientProperty(PROPERTY_PREFIX, null)
+          UIUtil.putClientProperty(tracker.component as JComponent, BALLOON_PROPERTY, null)
           Disposer.dispose(dispatcherDisposable)
 
           if (event.isOk) {
@@ -508,6 +508,19 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
         it.tooltip.followToolbarComponent(component, toolbar, it.pointProvider)
       }
     }
+
+    // Frequently used point providers
+    @JvmField
+    val TOP_MIDDLE : (Component) -> Point = { Point(it.width / 2, 0) }
+
+    @JvmField
+    val LEFT_MIDDLE : (Component) -> Point = { Point(0, it.height / 2) }
+
+    @JvmField
+    val RIGHT_MIDDLE : (Component) -> Point = { Point(it.width, it.height / 2) }
+
+    @JvmField
+    val BOTTOM_MIDDLE : (Component) -> Point = { Point(it.width / 2, it.height) }
   }
 }
 
