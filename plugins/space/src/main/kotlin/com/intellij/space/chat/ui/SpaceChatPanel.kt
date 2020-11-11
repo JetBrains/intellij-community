@@ -52,7 +52,7 @@ internal class SpaceChatPanel(
   parent: Disposable,
   private val channelsVm: ChannelsVm,
   private val chatRecord: Ref<M2ChannelRecord>,
-  private val headerDetails: SpaceChatHeaderDetails
+  private val headerDetails: SpaceChatHeaderDetails? = null
 ) : BorderLayoutPanel() {
   companion object {
     fun getChatAvatarSize() = JBValue.UIInteger("space.chat.avatar.size", 30)
@@ -126,7 +126,9 @@ internal class SpaceChatPanel(
                            .insets("0", "0", "0", "0")
                            .flowY(),
                          AC().size(":$maxWidth:$maxWidth").gap("push"))
-      add(headerDetails.createComponent(lifetime), CC().growX().minWidth(""))
+      if (headerDetails != null) {
+        add(headerDetails.createComponent(lifetime), CC().growX().minWidth(""))
+      }
       add(timeline, CC().growX().minWidth(""))
       add(createNewMessageField(chatVM), CC().growX().minWidth(""))
     }
