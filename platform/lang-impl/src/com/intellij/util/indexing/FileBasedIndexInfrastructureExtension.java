@@ -26,7 +26,7 @@ public interface FileBasedIndexInfrastructureExtension {
 
   interface FileIndexingStatusProcessor {
     /**
-     * Serves as an optimization when time-consuming {@link FileIndexingStatusProcessor#processUpToDateFile(VirtualFile, int, ID)}
+     * Serves as an optimization when time-consuming {@link FileIndexingStatusProcessor#processUpToDateFile(IndexedFile, int, ID)}
      * should not be called because takes no effect.
      */
     boolean shouldProcessUpToDateFiles();
