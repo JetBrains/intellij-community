@@ -689,7 +689,7 @@
     <statistics.counterUsagesCollector groupId="ui.mnemonic" version="1"/>
 
     <statistics.counterUsagesCollector groupId="event.log" version="57"/>
-    <statistics.counterUsagesCollector groupId="performance" version="57"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.LowMemoryNotifier$UILatencyLogger"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.notification.impl.NotificationsEventLogGroup"/>
     <statistics.counterUsagesCollector groupId="productivity" version="57"/>
     <statistics.counterUsagesCollector groupId="ui.dialogs" version="57"/>
