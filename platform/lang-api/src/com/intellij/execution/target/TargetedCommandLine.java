@@ -16,6 +16,8 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
+import static com.intellij.lang.LangBundle.message;
+
 /**
  * Command line that can be executed on any {@link TargetEnvironment}.
  * <p>
@@ -52,7 +54,7 @@ public final class TargetedCommandLine {
   public String getCommandPresentation(@NotNull TargetEnvironment target) throws ExecutionException {
     String exePath = resolvePromise(myExePath.getTargetValue(), "exe path");
     if (exePath == null) {
-      throw new ExecutionException("Resolved value for exe path is null");
+      throw new ExecutionException(message("targeted.command.line.exe.path.not.set"));
     }
     List<String> parameters = new ArrayList<>();
     for (TargetValue<String> parameter : myParameters) {
@@ -67,7 +69,7 @@ public final class TargetedCommandLine {
       return collectCommands().blockingGet(0);
     }
     catch (java.util.concurrent.ExecutionException | TimeoutException e) {
-      throw new ExecutionException("Couldn't collect commands", e);
+      throw new ExecutionException(message("targeted.command.line.collector.failed"), e);
     }
   }
 
@@ -116,7 +118,7 @@ public final class TargetedCommandLine {
       return promise.blockingGet(0);
     }
     catch (java.util.concurrent.ExecutionException | TimeoutException e) {
-      throw new ExecutionException("Couldn't resolve promise for " + debugName, e);
+      throw new ExecutionException(message("targeted.command.line.resolver.failed.for", debugName), e);
     }
   }
 }
