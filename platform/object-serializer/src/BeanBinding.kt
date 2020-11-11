@@ -5,6 +5,7 @@ import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
 import com.amazon.ion.system.IonReaderBuilder
 import it.unimi.dsi.fastutil.objects.Object2IntMap
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.lang.reflect.Type
 import kotlin.reflect.full.primaryConstructor
@@ -99,15 +100,33 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     val names = constructorInfo.names
     val initArgs = arrayOfNulls<Any?>(names.size)
 
-    val out = context.allocateByteArrayOutputStream()
-    // ionType is already checked - so, struct is expected
-    binaryWriterBuilder.newWriter(out).use { it.writeValue(context.reader) }
+
+    /**
+     * Applies [body] to `context.reader` and makes a copy of the structure being read if the second pass will be required
+     * to handle properties which are not deserialized by invoking the constructor.
+     */
+    fun doReadAndMakeCopyIfNeedsSecondPass(body: (reader: IonReader) -> Unit): BufferExposingByteArrayOutputStream? {
+      return if (bindings.size > names.size) {
+        val out = context.allocateByteArrayOutputStream()
+        // ionType is already checked - so, struct is expected
+        binaryWriterBuilder.newWriter(out).use { it.writeValue(context.reader) }
+        structReaderBuilder.build(out.internalBuffer, 0, out.size()).use { reader ->
+          reader.next()
+          body(reader)
+        }
+        out
+      }
+      else {
+        body(context.reader)
+        null
+      }
+    }
 
     // we cannot read all field values before creating instance because some field value can reference to parent - our instance,
     // so, first, create instance, and only then read rest of fields
     var id = -1
-    structReaderBuilder.build(out.internalBuffer, 0, out.size()).use { reader ->
-      reader.next()
+    val out = doReadAndMakeCopyIfNeedsSecondPass { reader ->
+
       val subReadContext = context.createSubContext(reader)
       readStruct(reader) { fieldName, type ->
         if (type == IonType.NULL) {
@@ -156,7 +175,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
       context.objectIdReader.registerObject(instance, id)
     }
 
-    if (bindings.size > names.size) {
+    if (out != null) {
       structReaderBuilder.build(out.internalBuffer, 0, out.size()).use { reader ->
         reader.next()
         readIntoObject(instance, context.createSubContext(reader), checkId = false /* already registered */) { !names.contains(it) }
