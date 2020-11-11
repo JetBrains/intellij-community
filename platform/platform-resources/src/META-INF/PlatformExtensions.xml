@@ -676,9 +676,7 @@
     <applicationInitializedListener implementation="com.intellij.ide.customize.CustomizeIDEWizardCollectorActivity"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
-    <!-- Android Studio: don't register IntelliJ eventLoggerProvider as only the first registered one is used
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
-    -->
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.internal.statistic.eventLog.fus.SystemStateMonitor"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
 
