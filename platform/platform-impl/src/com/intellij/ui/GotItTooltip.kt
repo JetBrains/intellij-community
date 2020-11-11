@@ -215,30 +215,32 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
         }
         else {
           component.addComponentListener(object : ComponentAdapter() {
-            override fun componentResized(componentEvent: ComponentEvent?) {
-              componentEvent?.let { if (!it.component.bounds.isEmpty) showImpl(it.component as JComponent, pointProvider) }
+            override fun componentResized(event: ComponentEvent) {
+              if (!event.component.bounds.isEmpty) {
+                showImpl(event.component as JComponent, pointProvider)
+              }
             }
           }.also{ Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
         }
       }
       else {
         component.addAncestorListener(object : AncestorListenerAdapter() {
-          override fun ancestorAdded(ancestorEvent: AncestorEvent?) {
-            ancestorEvent?.let { ae ->
-              if (!ae.component.bounds.isEmpty) {
-                showImpl(ae.component, pointProvider)
-              }
-              else {
-                ae.component.addComponentListener(object : ComponentAdapter() {
-                  override fun componentResized(componentEvent: ComponentEvent?) {
-                    componentEvent?.let{ ce -> if (!ce.component.bounds.isEmpty) showImpl(ce.component as JComponent, pointProvider) }
+          override fun ancestorAdded(ancestorEvent: AncestorEvent) {
+            if (!ancestorEvent.component.bounds.isEmpty) {
+              showImpl(ancestorEvent.component, pointProvider)
+            }
+            else {
+              ancestorEvent.component.addComponentListener(object : ComponentAdapter() {
+                override fun componentResized(componentEvent: ComponentEvent) {
+                  if (!componentEvent.component.bounds.isEmpty) {
+                    showImpl(componentEvent.component as JComponent, pointProvider)
                   }
-                }.also{ Disposer.register(this@GotItTooltip, Disposable { component.removeComponentListener(it) }) })
-              }
+                }
+              }.also{ Disposer.register(this@GotItTooltip, Disposable { component.removeComponentListener(it) }) })
             }
           }
 
-          override fun ancestorRemoved(event: AncestorEvent?) {
+          override fun ancestorRemoved(ancestorEvent: AncestorEvent) {
             balloon?.let {
               it.hide(true)
               GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
@@ -268,8 +270,8 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
         }
         balloon = createAndShow(tracker).also { UIUtil.putClientProperty(component, BALLOON_PROPERTY, it) }
       }
-      else if ((balloonProperty as BalloonImpl).isVisible) {
-        (balloon as BalloonImpl).revalidate()
+      else if (balloonProperty is BalloonImpl && balloonProperty.isVisible) {
+        balloonProperty.revalidate()
       }
     }
     else {
@@ -289,25 +291,23 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
   private fun followToolbarComponent(component: JComponent, toolbar: JComponent, pointProvider: (Component) -> Point) {
     if (canShow()) {
       component.addComponentListener(object : ComponentAdapter() {
-        override fun componentMoved(event: ComponentEvent?) {
-          event?.let{ hideOrRepaint(it.component, pointProvider) }
+        override fun componentMoved(event: ComponentEvent) {
+          hideOrRepaint(event.component, pointProvider)
         }
 
-        override fun componentResized(event: ComponentEvent?) {
-          event?.let {
-            if (balloon == null && !it.component.bounds.isEmpty && component.isShowing) {
-              val tracker = PositionTracker.Static<Balloon>(RelativePoint(it.component, pointProvider(it.component)))
-              balloon = createAndShow(tracker)
-            }
-            else {
-              hideOrRepaint(it.component, pointProvider)
-            }
+        override fun componentResized(event: ComponentEvent) {
+          if (balloon == null && !event.component.bounds.isEmpty && event.component.isShowing) {
+            val tracker = PositionTracker.Static<Balloon>(RelativePoint(event.component, pointProvider(event.component)))
+            balloon = createAndShow(tracker)
+          }
+          else {
+            hideOrRepaint(event.component, pointProvider)
           }
         }
       }.also{ Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
 
       toolbar.addAncestorListener(object : AncestorListenerAdapter() {
-        override fun ancestorRemoved(event: AncestorEvent?) {
+        override fun ancestorRemoved(event: AncestorEvent) {
           hideBalloon()
         }
       }.also{ Disposer.register(this, Disposable { component.removeAncestorListener(it) }) })
@@ -474,9 +474,8 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
       if (component.bounds.isEmpty) {
         hideBalloon()
       }
-      else if ((it as BalloonImpl).isVisible) {
-        val tracker = PositionTracker.Static<Balloon>(RelativePoint(component, pointProvider(component)))
-        (it as PositionTracker.Client<Balloon>).revalidate(tracker)
+      else if (it is BalloonImpl && it.isVisible) {
+        it.revalidate()
       }
     }
   }
