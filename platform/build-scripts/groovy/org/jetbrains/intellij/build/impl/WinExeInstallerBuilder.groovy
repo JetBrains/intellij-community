@@ -69,7 +69,6 @@ class WinExeInstallerBuilder {
     buildContext.messages.progress("Building Windows installer $outFileName")
 
     def box = "$buildContext.paths.temp/winInstaller"
-    ant.mkdir(dir: "$box/bin")
     ant.mkdir(dir: "$box/nsiconf")
 
     def bundleJre = jreDirectoryPath != null
@@ -114,36 +113,26 @@ class WinExeInstallerBuilder {
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
     buildContext.messages.block("Running NSIS tool to build .exe installer for Windows") {
       if (SystemInfo.isWindows) {
-        ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
-                          " /DCOMMUNITY_DIR=\"$communityHome\"" +
-                          " /DIPR=\"${customizer.associateIpr}\"" +
-                          " /DOUT_FILE=\"${outFileName}\"" +
-                          " /DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
-                          " \"${box}/nsiconf/idea.nsi\"")
+        ant.exec(executable: "${box}/NSIS/makensis.exe") {
+          arg(value: "/V2")
+          arg(value: "/DCOMMUNITY_DIR=${communityHome}")
+          arg(value: "/DIPR=${customizer.associateIpr}")
+          arg(value: "/DOUT_DIR=${buildContext.paths.artifacts}")
+          arg(value: "/DOUT_FILE=${outFileName}")
+          arg(value: "${box}/nsiconf/idea.nsi")
+        }
       }
       else {
-        String installerToolsDir = "$box/installer"
-        String installScriptPath = "$installerToolsDir/install_nsis3.sh"
-        buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)
-        buildContext.ant.copy(todir: "$installerToolsDir") {
-          fileset(dir: "${buildContext.paths.communityHome}/build/tools") {
-            include(name: "nsis*.*")
-            include(name: "scons*.*")
-          }
+        ant.chmod(file: "${box}/NSIS/Bin/makensis", perm: "u+x")
+        ant.exec(executable: "${box}/NSIS/Bin/makensis") {
+          arg(value: "-V2")
+          arg(value: "-DCOMMUNITY_DIR=${communityHome}")
+          arg(value: "-DIPR=${customizer.associateIpr}")
+          arg(value: "-DOUT_DIR=${buildContext.paths.artifacts}")
+          arg(value: "-DOUT_FILE=${outFileName}")
+          arg(value: "${box}/nsiconf/idea.nsi")
+          env(key: "NSISDIR", value: "${box}/NSIS")
         }
-
-        buildContext.ant.fixcrlf(file: installScriptPath, eol: "unix")
-        ant.exec(command: "chmod u+x \"$installScriptPath\"")
-        ant.exec(command: "\"$installScriptPath\" \"$installerToolsDir\"")
-        ant.exec(command: "\"${installerToolsDir}/nsis-3.02.1/bin/makensis\"" +
-                          " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
-                          " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
-                          " -DNSIS_DIR=\"${box}/NSIS\"" +
-                          " -DCOMMUNITY_DIR=\"$communityHome\"" +
-                          " -DIPR=\"${customizer.associateIpr}\"" +
-                          " -DOUT_FILE=\"${outFileName}\"" +
-                          " -DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
-                          " \"${box}/nsiconf/idea.nsi\"")
       }
     }
 
