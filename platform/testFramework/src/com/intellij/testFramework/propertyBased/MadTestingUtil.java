@@ -168,7 +168,6 @@ public final class MadTestingUtil {
    * "HighlightVisitorInternal" inspection has error-level by default and highlights the first token from erroneous range,
    * which is not very stable and also masks other warning-level inspections available on the same token.
    *
-   * @param disposable when this is disposed, reverts to the previous project inspection profile
    * @param except short names of inspections to disable
    */
   public static void enableAllInspections(@NotNull Project project, String... except) {
