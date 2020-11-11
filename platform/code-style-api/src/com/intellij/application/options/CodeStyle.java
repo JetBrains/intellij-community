@@ -70,7 +70,8 @@ public final class CodeStyle {
    * A shorter way to get language-specific settings it to use one of the methods {@link #getLanguageSettings(PsiFile)}
    * or {@link #getLanguageSettings(PsiFile, Language)}.
    *
-   * @param file The file to get code style settings for.
+   * @param file The file to get code style settings for. The method may substitute it with an associated PSI,
+   *             see {@link #getSettingsPsi(PsiFile)}
    * @return The current root code style settings associated with the file or default settings if the file is invalid.
    */
   @NotNull
@@ -86,15 +87,37 @@ public final class CodeStyle {
       return result;
     }
 
-    if (!file.isPhysical()) {
-      PsiFile originalFile = file.getUserData(PsiFileFactory.ORIGINAL_FILE);
-      if (originalFile != null && originalFile.isPhysical()) {
-        return getSettings(originalFile);
-      }
+    PsiFile settingsFile = getSettingsPsi(file);
+    if (settingsFile == null) {
       return getSettings(project);
     }
-    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
+    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(settingsFile);
     return cachedSettings != null ? cachedSettings : getSettings(project);
+  }
+
+
+  /**
+   * Finds a PSI file to be used to retrieve code style settings. May use {@link PsiFileFactory#ORIGINAL_FILE} if the
+   * given file doesn't match conditions needed to get the settings, e.g., if it's not associated with a virtual file
+   * in the local file system.
+   *
+   * @param file The initial file.
+   * @return The PSI file or {@code null} if neither the initial file nor any other associated file can be used for settings.
+   */
+  @Nullable
+  public static PsiFile getSettingsPsi(@NotNull PsiFile file) {
+    if (hasLocalVirtualFile(file)) return file;
+    PsiFile originalFile = file.getUserData(PsiFileFactory.ORIGINAL_FILE);
+    if (originalFile != null) {
+      return getSettingsPsi(originalFile);
+    }
+    return null;
+  }
+
+
+  private static boolean hasLocalVirtualFile(@NotNull PsiFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    return virtualFile != null && virtualFile.isInLocalFileSystem();
   }
 
 
