@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -384,7 +386,11 @@ class GitApplyChangesProcess(private val project: Project,
     override fun hyperlinkUpdate(notification: Notification, event: HyperlinkEvent) {
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == RESOLVE) {
-          ConflictResolver(project, root, hash, author, message, operationName).mergeNoProceed()
+          object: Task.Backgroundable(project, GitBundle.message("apply.changes.resolving.conflicts.progress.title")) {
+            override fun run(indicator: ProgressIndicator) {
+              ConflictResolver(project, root, hash, author, message, operationName).mergeNoProceed()
+            }
+          }.queue()
         }
       }
     }
