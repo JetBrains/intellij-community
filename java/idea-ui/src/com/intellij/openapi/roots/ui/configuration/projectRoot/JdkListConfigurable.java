@@ -125,6 +125,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Override
   public void dispose() {
     myJdksTreeModel.removeListener(myListener);
+    hasListenerRegistered = false;
     myJdksTreeModel.disposeUIResources();
   }
 
