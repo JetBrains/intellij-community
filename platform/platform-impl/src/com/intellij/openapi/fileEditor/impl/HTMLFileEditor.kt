@@ -46,7 +46,7 @@ internal class HTMLFileEditor private constructor() : UserDataHolderBase(), File
 
   constructor(url: String, timeoutHtml: String? = null) : this() {
     contentPanel.loadURL(url)
-    fallback = timeoutHtml ?: EditorBundle.message("message.html.editor.timeout")
+    fallback = if (!timeoutHtml.isNullOrEmpty()) timeoutHtml else EditorBundle.message("message.html.editor.timeout")
   }
 
   init {
