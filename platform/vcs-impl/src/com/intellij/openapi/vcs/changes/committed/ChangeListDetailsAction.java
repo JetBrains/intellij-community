@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
 import com.intellij.openapi.vcs.ChangeListColumn;
@@ -123,12 +124,12 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
     if (vcs != null && vcs.getCachingCommittedChangesProvider() != null) {
       CommittedChangeList originalChangeList = ReceivedChangeList.unwrap(changeList);
 
-      return nullize(
-        stream(vcs.getCachingCommittedChangesProvider().getColumns())
-          .filter(ChangeListColumn::isCustom)
-          .map(column -> column.getTitle() + ": " + escapeString(toString(column.getValue(originalChangeList))))
-          .collect(joining(BR))
-      );
+      @NlsSafe
+      String result = stream(vcs.getCachingCommittedChangesProvider().getColumns())
+        .filter(ChangeListColumn::isCustom)
+        .map(column -> column.getTitle() + ": " + escapeString(toString(column.getValue(originalChangeList))))
+        .collect(joining(BR));
+      return nullize(result);
     }
 
     return null;
