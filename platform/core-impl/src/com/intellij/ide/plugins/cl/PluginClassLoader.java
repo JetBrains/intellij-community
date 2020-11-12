@@ -302,14 +302,8 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   protected @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) {
-    if (packagePrefix != null && !name.startsWith(packagePrefix) && !packagePrefix.equals("com.intellij.kubernetes.")) {
-      // todo ability to customize (cannot move due to backward compatibility)
-      if (!packagePrefix.equals("com.intellij.lang.properties.") || !name.equals("com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider")) {
-        // packed into plugin jar
-        if (!name.startsWith("com.intellij.ultimate.PluginVerifier")) {
-          return null;
-        }
-      }
+    if (packagePrefix != null && isDefinitelyAlienClass(name, packagePrefix)) {
+      return null;
     }
 
     synchronized (getClassLoadingLock(name)) {
@@ -335,13 +329,8 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       if (logStream != null) {
         try {
           // must be as one write call since write is performed from multiple threads
-          if (packagePrefix == null) {
-            String specifier = getClass() == PluginClassLoader.class ? "m" : "s = " + ((IdeaPluginDescriptor)pluginDescriptor).getDescriptorPath();
-            logStream.write(name + " [" + specifier + "] " + pluginId.getIdString() + '\n');
-          }
-          else {
-            logStream.write(name + " " + pluginId.getIdString() + ':' + packagePrefix + '\n');
-          }
+          String specifier = getClass() == PluginClassLoader.class ? "m" : "s = " + ((IdeaPluginDescriptor)pluginDescriptor).getDescriptorPath();
+          logStream.write(name + " [" + specifier + "] " + pluginId.getIdString() + (packagePrefix == null ? "" : (':' + packagePrefix)) + '\n');
         }
         catch (IOException ignored) {
         }
@@ -349,6 +338,11 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
       return c;
     }
+  }
+
+  protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
+    // packed into plugin jar
+    return !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier");
   }
 
   @Override

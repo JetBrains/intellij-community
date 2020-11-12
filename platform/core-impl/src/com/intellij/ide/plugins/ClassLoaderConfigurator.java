@@ -241,8 +241,55 @@ final class ClassLoaderConfigurator {
     ClassLoader[] parentLoaders = loaders.isEmpty()
                                   ? PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY
                                   : loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY);
-    return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
-                                 descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix);
+    if (descriptor.id.getIdString().equals("com.intellij.properties")) {
+      // todo ability to customize (cannot move due to backward compatibility)
+      return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
+                                   descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix) {
+        @Override
+        protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
+          return super.isDefinitelyAlienClass(name, packagePrefix) && !name.equals("com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider");
+        }
+      };
+    }
+    else if (descriptor.id.getIdString().equals("com.intellij.kubernetes")) {
+      // todo ability to customize (cannot move due to backward compatibility)
+      return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
+                                   descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix) {
+        @Override
+        protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
+          // kubernetes uses project libraries - not yet clear how to deal with that
+          return false;
+        }
+      };
+    }
+    else if (descriptor.contentDescriptor != null) {
+      List<String> packagePrefixes = new ArrayList<>(descriptor.contentDescriptor.items.size());
+      for (PluginContentDescriptor.ModuleItem item : descriptor.contentDescriptor.items) {
+        String packagePrefix = item.packageName;
+        if (packagePrefix != null) {
+          packagePrefixes.add(packagePrefix + '.');
+        }
+      }
+      return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
+                                   descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix) {
+        @Override
+        protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
+          if (super.isDefinitelyAlienClass(name, packagePrefix)) {
+            for (String prefix : packagePrefixes) {
+              if (name.startsWith(prefix)) {
+                return false;
+              }
+            }
+            return true;
+          }
+          return false;
+        }
+      };
+    }
+    else {
+      return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
+                                   descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix);
+    }
   }
 
   private static boolean isClassloaderPerDescriptorEnabled(@NotNull IdeaPluginDescriptorImpl mainDependent) {
@@ -266,7 +313,7 @@ final class ClassLoaderConfigurator {
     String pluginPackagePrefix = dependent.packagePrefix;
     if (pluginPackagePrefix == null) {
       if (parentDescriptor.packagePrefix != null) {
-        throw new PluginException("Sub descriptor must specify package if it is specified for main plugin descriptor",
+        throw new PluginException("Sub descriptor must specify package if it is specified for main plugin descriptor (descriptorFile=" + dependent.descriptorPath + ")",
                                   parentDescriptor.id);
       }
     }
@@ -274,7 +321,7 @@ final class ClassLoaderConfigurator {
       if (pluginPackagePrefix.equals(parentDescriptor.packagePrefix)) {
         throw new PluginException("Sub descriptor must not specify the same package as main plugin descriptor", parentDescriptor.id);
       }
-      if (parentDescriptor.packagePrefix == null && !parentDescriptor.id.getIdString().equals("Docker")) {
+      if (parentDescriptor.packagePrefix == null && !(parentDescriptor.id.getIdString().equals("Docker") || parentDescriptor.id.getIdString().equals("org.jetbrains.plugins.ruby"))) {
         throw new PluginException("Sub descriptor must not specify package if one is not specified for main plugin descriptor",
                                   parentDescriptor.id);
       }

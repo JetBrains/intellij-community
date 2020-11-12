@@ -26,7 +26,7 @@ internal class ClassLoaderConfiguratorTest {
       loadPlugins {
         PluginBuilder().noDepends()
       }
-    }.hasMessageStartingWith("Sub descriptor must specify package if it is specified for main plugin descriptor [")
+    }.hasMessageStartingWith("Sub descriptor must specify package if it is specified for main plugin descriptor ")
   }
 
   @Test

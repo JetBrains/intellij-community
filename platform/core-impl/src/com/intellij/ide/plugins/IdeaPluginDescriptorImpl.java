@@ -70,6 +70,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   final ContainerDescriptor projectContainerDescriptor = new ContainerDescriptor();
   final ContainerDescriptor moduleContainerDescriptor = new ContainerDescriptor();
 
+  PluginContentDescriptor contentDescriptor;
+
   private List<PluginId> modules;
   private ClassLoader classLoader;
   private @NlsSafe String descriptionChildText;
@@ -273,6 +275,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
         case "projectListeners":
           XmlReader.readListeners(child, projectContainerDescriptor, mainDescriptor);
+          break;
+
+        case "content":
+          XmlReader.readContent(child, this);
           break;
 
         case "depends":
@@ -906,9 +912,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     String pathString = path.toString().replace(System.getProperty("user.home") + File.separatorChar, "~" + File.separatorChar);
     return "PluginDescriptor(name=" + name +
            ", id=" + id +
+           ", descriptorPath=" + (descriptorPath == null ? "plugin.xml" : descriptorPath) +
            ", path=" + pathString +
            ", version=" + myVersion +
-           ", descriptorPath=" + (descriptorPath == null ? "plugin.xml" : descriptorPath) +
            ", package=" + packagePrefix +
            ")";
   }

@@ -45,7 +45,7 @@ internal class DevIdeaBuildServer {
       System.setProperty("log4j.defaultInitOverride", "true")
       val root = org.apache.log4j.Logger.getRootLogger()
       root.level = Level.INFO
-      root.addAppender(ConsoleAppender(PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)))
+      root.addAppender(ConsoleAppender(PatternLayout("%d{ABSOLUTE} %m%n")))
 
       try {
         start()

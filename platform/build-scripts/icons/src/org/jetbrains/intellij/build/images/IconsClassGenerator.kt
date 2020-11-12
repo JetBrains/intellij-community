@@ -453,7 +453,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         key = 0
       }
 
-      javaDoc = "/** ${loadedImage.getWidth()}x${loadedImage.getHeight()} */ "
+      javaDoc = "/** ${loadedImage.width}x${loadedImage.height} */ "
     }
     catch (e: NoSuchFileException) {
       if (!image.phantom) {
@@ -671,7 +671,17 @@ internal fun loadAndNormalizeSvgFile(svgFile: Path): String {
 
 private fun getPluginPackageIfPossible(module: JpsModule): String? {
   for (resourceRoot in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
-    val pluginXml = Paths.get(JpsPathUtil.urlToPath(resourceRoot.url)).resolve("META-INF").resolve("plugin.xml")
+    val metaInf = Paths.get(JpsPathUtil.urlToPath(resourceRoot.url), "META-INF")
+    if (!Files.isDirectory(metaInf)) {
+      break
+    }
+
+    var pluginXml = metaInf.resolve("plugin.xml")
+    if (!Files.exists(pluginXml)) {
+      // ok, any xml file
+      pluginXml = Files.newDirectoryStream(metaInf).use { files -> files.find { it.toString().endsWith(".xml") } } ?: break
+    }
+
     try {
       return JDOMUtil.load(pluginXml).getAttributeValue("package") ?: "icons"
     }

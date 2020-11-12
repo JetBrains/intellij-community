@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 final class XmlReader {
   @SuppressWarnings("SSBasedInspection")
@@ -128,6 +125,26 @@ final class XmlReader {
                                           getBoolean("activeInTestMode", child), getBoolean("activeInHeadlessMode", child), mainDescriptor));
       }
     }
+  }
+
+  static void readContent(@NotNull Element list, @NotNull IdeaPluginDescriptorImpl descriptor) {
+    List<Content> content = list.getContent();
+    List<PluginContentDescriptor.ModuleItem> items = new ArrayList<>();
+    for (Content item : content) {
+      if (!(item instanceof Element)) {
+        continue;
+      }
+
+      Element child = (Element)item;
+      if (child.getName().equals("module")) {
+        items.add(new PluginContentDescriptor.ModuleItem(Objects.requireNonNull(child.getAttributeValue("name")),
+                                                         child.getAttributeValue("package")));
+      }
+      else {
+        throw new RuntimeException("Unknown content item type: " + child.getName());
+      }
+    }
+    descriptor.contentDescriptor = new PluginContentDescriptor(items);
   }
 
   static void readIdAndName(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {

@@ -43,7 +43,7 @@ class PluginBuilder(private val builder: DistributionJARsBuilder,
   fun buildChanged(): String {
     val dirtyPlugin = getDirtyPluginsAndClear()
     if (dirtyPlugin.isEmpty()) {
-      return "All plugins are up to date."
+      return "All plugins are up to date"
     }
 
     val layoutBuilder = LayoutBuilder(buildContext, false)
@@ -60,7 +60,7 @@ class PluginBuilder(private val builder: DistributionJARsBuilder,
         throw e
       }
     }
-    return "${dirtyPlugin.joinToString { it.dir.fileName.toString() }} were updated"
+    return "Plugins ${dirtyPlugin.joinToString { it.dir.fileName.toString() }} were updated"
   }
 }
 
