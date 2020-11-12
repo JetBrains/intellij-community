@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
@@ -9,15 +10,18 @@ import com.intellij.ui.layout.*
 import javax.swing.JComponent
 import javax.swing.LayoutFocusTraversalPolicy
 
-class ExtractMethodPopupProvider(annotateNullability: Boolean? = null,
-                                 makeStatic: Boolean? = null,
-                                 staticPassFields: Boolean = false) {
+class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
+                                 val makeStaticDefault: Boolean? = null,
+                                 val staticPassFields: Boolean = false) {
 
-  var annotate = annotateNullability
+  var annotate = annotateDefault
     private set
 
-  var makeStatic = makeStatic
+  var makeStatic = makeStaticDefault
     private set
+
+  val isChanged: Boolean
+    get() = annotate != annotateDefault || makeStatic != makeStaticDefault
 
   private var changeListener: () -> Unit = {}
 
@@ -25,8 +29,8 @@ class ExtractMethodPopupProvider(annotateNullability: Boolean? = null,
     changeListener = listener
   }
 
-  private var showDialogAction: () -> Unit = {}
-  fun setShowDialogAction(action: () -> Unit) {
+  private var showDialogAction: (AnActionEvent?) -> Unit = {}
+  fun setShowDialogAction(action: (AnActionEvent?) -> Unit) {
     showDialogAction = action
   }
 
@@ -63,7 +67,7 @@ class ExtractMethodPopupProvider(annotateNullability: Boolean? = null,
       }
       row {
         cell {
-          link(JavaRefactoringBundle.message("extract.method.link.label.more.options"), null) { showDialogAction() }
+          link(JavaRefactoringBundle.message("extract.method.link.label.more.options"), null) { showDialogAction(null) }
             .applyToComponent { isFocusable = true }
           comment(KeymapUtil.getFirstKeyboardShortcutText(ACTION_EXTRACT_METHOD))
         }
@@ -73,7 +77,7 @@ class ExtractMethodPopupProvider(annotateNullability: Boolean? = null,
     panel.focusTraversalPolicy = LayoutFocusTraversalPolicy()
 
     DumbAwareAction.create {
-      showDialogAction()
+      showDialogAction(it)
     }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(ACTION_EXTRACT_METHOD), panel)
 
     return panel
