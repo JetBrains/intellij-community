@@ -62,21 +62,15 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     RunProfile runProfile = environment.getRunProfile();
     if ((runProfile instanceof TargetEnvironmentAwareRunProfile) &&
         Experiments.getInstance().isFeatureEnabled("run.targets") &&
-        ((TargetEnvironmentAwareRunProfile)runProfile).getDefaultLanguageRuntimeType() != null) {
+        ((TargetEnvironmentAwareRunProfile)runProfile).getDefaultTargetName() != null) {
       executionManager.startRunProfileWithPromise(environment, state, (ignored) -> {
         return doExecuteAsync(state, environment);
       });
     }
     else {
-      executionManager
-        .executePreparationTasks(environment, state)
-        .onSuccess(__ -> {
-          ApplicationManager.getApplication().invokeAndWait(() -> {
-            executionManager.startRunProfile(environment, state, state1 -> {
-              return doExecute(state, environment);
-            });
-          });
-        });
+      executionManager.startRunProfile(environment, state, state1 -> {
+        return doExecute(state, environment);
+      });
     }
   }
 
