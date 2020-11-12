@@ -13,11 +13,10 @@ import com.intellij.diff.FrameDiffTool
 import com.intellij.openapi.project.Project
 import com.intellij.space.chat.ui.SpaceChatContentPanel
 import com.intellij.space.vcs.review.details.getFilePath
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.codereview.comment.wrapComponentUsingRoundedPanel
 import libraries.coroutines.extra.Lifetime
 import javax.swing.JComponent
-import javax.swing.border.CompoundBorder
 
 internal class SpaceReviewCommentPanelFactory(
   private val project: Project,
@@ -39,11 +38,12 @@ internal class SpaceReviewCommentPanelFactory(
 
     if (discussionRecord.archived) return null
 
-    return createSpaceChatContentPanel(discussionRecord).apply {
-      border = CompoundBorder(
-        CompoundBorder(JBUI.Borders.empty(2, 0), IdeBorderFactory.createBorder()),
-        JBUI.Borders.empty(10)
-      )
+    val component = createSpaceChatContentPanel(discussionRecord).apply {
+      isOpaque = false
+      border = JBUI.Borders.empty(10)
+    }
+    return wrapComponentUsingRoundedPanel(component).apply {
+      border = JBUI.Borders.empty(2, 0)
     }
   }
 
