@@ -247,14 +247,16 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
 
     @Override
     protected boolean shouldShowModuleName() {
-      return !(appendModuleName || isSourceSetModule);
+      return !(appendModuleName || isSourceSetModule) || canRealModuleNameBeHidden();
     }
 
     @Override
     protected void updateImpl(@NotNull PresentationData data) {
       super.updateImpl(data);
       if (appendModuleName) {
-        data.addText("[" + myModuleShortName + "]", REGULAR_BOLD_ATTRIBUTES);
+        if (!canRealModuleNameBeHidden()) {
+          data.addText("[" + myModuleShortName + "]", REGULAR_BOLD_ATTRIBUTES);
+        }
       }
       else if (isSourceSetModule) {
         List<ColoredFragment> fragments = data.getColoredText();
