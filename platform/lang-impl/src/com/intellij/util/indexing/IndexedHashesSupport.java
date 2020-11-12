@@ -6,6 +6,7 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileType.CharsetHintSupplied.CharsetHint.ForcedCharset;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.flavor.FileIndexingFlavorProvider;
 import com.intellij.util.indexing.flavor.HashBuilder;
 import com.intellij.util.io.DigestUtil;
@@ -19,6 +20,7 @@ import java.security.MessageDigest;
 
 @ApiStatus.Internal
 public final class IndexedHashesSupport {
+  private static final boolean SKIP_CONTENT_DEPENDENT_CHARSETS = SystemProperties.is("idea.index.hash.skip.content.dependent.charset");
   // TODO replace with sha-256
   private static final HashFunction INDEXED_FILE_CONTENT_HASHER = Hashing.sha1();
 
@@ -56,7 +58,7 @@ public final class IndexedHashesSupport {
       FileType.CharsetHintSupplied.CharsetHint charsetHint =
         fileType instanceof FileType.CharsetHintSupplied ? ((FileType.CharsetHintSupplied)fileType).getCharsetHint() : null;
       // we don't need charset if it depends only on content
-      if (charsetHint != FileType.CharsetHintSupplied.CONTENT_DEPENDENT_CHARSET) {
+      if (charsetHint != FileType.CharsetHintSupplied.CONTENT_DEPENDENT_CHARSET || !SKIP_CONTENT_DEPENDENT_CHARSETS) {
         Charset charset = charsetHint instanceof ForcedCharset
                           ? ((ForcedCharset)charsetHint).getCharset()
                           : getCharsetFromIndexedFile(indexedFile);
