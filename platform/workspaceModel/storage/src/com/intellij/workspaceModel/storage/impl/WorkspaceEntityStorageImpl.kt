@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceExcept
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
+import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.concurrent.ConcurrentHashMap
@@ -198,7 +199,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     this.changeLog.addChangeSourceEvent(entityId, copiedData)
 
     indexes.entitySourceIndex.index(entityId, newSource)
-
+    newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
     return copiedData.createEntity(this)
   }
 

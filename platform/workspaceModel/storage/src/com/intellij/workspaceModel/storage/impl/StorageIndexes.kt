@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
+import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 
 internal open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id
@@ -49,6 +50,8 @@ internal open class StorageIndexes(
     assertPersistentIdIndex(storage)
 
     assertSoftLinksIndex(storage)
+
+    assertVirtualFileIndex(storage)
 
     // Assert external mappings
     for ((_, mappings) in externalMappings) {
@@ -138,6 +141,21 @@ internal open class StorageIndexes(
 
     assert(expectedSize == entitySourceIndex.index.size) { "Incorrect size of entity source index. Expected: $expectedSize, actual: ${entitySourceIndex.index.size}" }
   }
+
+  private fun assertVirtualFileIndex(storage: AbstractEntityStorage) {
+    storage.indexes.virtualFileIndex.entityId2VirtualFileUrl.forEach { (entityId, property2Vfu) ->
+      property2Vfu.forEach { (property, vfuSet) ->
+        vfuSet.forEach { vfu ->
+          val property2EntityId = storage.indexes.virtualFileIndex.vfu2EntityId[vfu]
+          assert(property2EntityId != null) { "VirtualFileUrl: $vfu exists in the first collection by EntityId: $entityId with Property: $property but absent at other" }
+
+          val compositeKey = "${entityId}_$property"
+          val existingEntityId = property2EntityId!![compositeKey]
+          assert(existingEntityId != null) { "VirtualFileUrl: $vfu exist in both maps but EntityId: $entityId with Property: $property absent at other" }
+        }
+      }
+    }
+  }
 }
 
 internal class MutableStorageIndexes(
@@ -165,7 +183,7 @@ internal class MutableStorageIndexes(
       persistentIdIndex.index(pid, persistentId)
     }
 
-    entitySource.virtualFileUrl?.let { virtualFileIndex.index(pid, "entitySource", it) }
+    entitySource.virtualFileUrl?.let { virtualFileIndex.index(pid, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
   }
 
   fun updateSoftLinksIndex(softLinkable: SoftLinkable) {

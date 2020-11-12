@@ -149,6 +149,7 @@ open class VirtualFileIndex internal constructor(
     private fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId}_$propertyName"
 
     companion object {
+      const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
       fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.entityId2VirtualFileUrl, other.vfu2EntityId)
     }
   }
