@@ -9,10 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.LanguageSubstitutors;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.JBIterable;
@@ -40,6 +37,14 @@ public final class LanguageUtil {
     Language fileLanguage = explicit != null ? explicit : getFileTypeLanguage(fileType != null ? fileType : file.getFileType());
 
     if (fileLanguage == null) return null;
+    // run generic file-level substitutors, e.g. for scratches
+    for (LanguageSubstitutor substitutor : LanguageSubstitutors.getInstance().forKey(Language.ANY)) {
+      Language language = substitutor.getLanguage(file, project);
+      if (language != null && language != Language.ANY) {
+        fileLanguage = language;
+        break;
+      }
+    }
     return LanguageSubstitutors.getInstance().substituteLanguage(fileLanguage, file, project);
   }
 

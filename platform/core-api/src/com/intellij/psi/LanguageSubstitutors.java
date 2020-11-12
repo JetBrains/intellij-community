@@ -4,7 +4,6 @@ package com.intellij.psi;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +12,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -51,13 +49,12 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
    * Queries all applicable language substitutors and returns the substituted language, or {@code lang} argument if
    * no substitutor has returned anything.
    *
+   * Prefer {@link com.intellij.lang.LanguageUtil#getLanguageForPsi} for top-level language substitution.
+   *
    * @see com.intellij.lang.LanguageUtil#getLanguageForPsi
    */
   public @NotNull Language substituteLanguage(@NotNull Language originalLang, @NotNull VirtualFile file, @NotNull Project project) {
-    Iterable<LanguageSubstitutor> substitutors =
-      originalLang == LanguageUtil.getFileLanguage(file) ?
-      JBIterable.from(forKey(Language.ANY)).append(forKey(originalLang)) : forKey(originalLang);
-    for (LanguageSubstitutor substitutor : substitutors) {
+    for (LanguageSubstitutor substitutor : forKey(originalLang)) {
       Language substitutedLang = substitutor.getLanguage(file, project);
       if (substitutedLang != null) {
         if (substitutedLang == Language.ANY) {

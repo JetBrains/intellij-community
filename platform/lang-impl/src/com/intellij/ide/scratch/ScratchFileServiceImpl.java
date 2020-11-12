@@ -39,7 +39,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.LanguageSubstitutor;
-import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.LocalSearchScope;
@@ -256,14 +255,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     public static Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
       RootType rootType = findRootType(file instanceof LightVirtualFile? ((LightVirtualFile)file).getOriginalFile() : file);
       if (rootType == null) return null;
-      Language language = rootType.substituteLanguage(project, file);
-      if (language == null || language == Language.ANY) return null;
-      for (LanguageSubstitutor substitutor : LanguageSubstitutors.getInstance().forKey(language)) {
-        if (substitutor instanceof Substitutor) continue;
-        Language substituted = substitutor.getLanguage(file, project);
-        if (substituted != null && substituted != Language.ANY) return substituted;
-      }
-      return language;
+      return rootType.substituteLanguage(project, file);
     }
   }
 
