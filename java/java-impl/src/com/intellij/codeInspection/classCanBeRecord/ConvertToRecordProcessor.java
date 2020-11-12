@@ -186,8 +186,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         }
       }
       else if (nextElement instanceof PsiModifierList) {
-        ((PsiModifierList)nextElement).setModifierProperty(PsiModifier.STATIC, false);
-        recordBuilder.addPsiElement(nextElement);
+        recordBuilder.addModifierList((PsiModifierList)nextElement);
       }
       else if (nextElement instanceof PsiField) {
         PsiField psiField = (PsiField)nextElement;
