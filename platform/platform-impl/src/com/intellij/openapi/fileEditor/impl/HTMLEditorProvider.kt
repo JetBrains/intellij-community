@@ -16,11 +16,14 @@ import com.intellij.ui.jcef.JBCefApp
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val html = file.getUserData(HTML_KEY)
-    val url = file.getUserData(URL_KEY)
-    val timeoutHtml = file.getUserData(TIMEOUT_HTML_KEY)
-    arrayOf(HTML_KEY, URL_KEY, TIMEOUT_HTML_KEY).forEach { file.putUserData(it, null) }
-    return if (html != null) HTMLFileEditor(html) else HTMLFileEditor(url!!, timeoutHtml)
+    val fileEditor = file.getUserData(EDITOR_KEY)
+    return if (fileEditor != null) fileEditor else {
+      val url = file.getUserData(AFFINITY_KEY)!!
+      val html = (file as LightVirtualFile).content.toString()
+      val newEditor = if (url.isNotEmpty()) HTMLFileEditor(url, html) else HTMLFileEditor(html)
+      file.putUserData(EDITOR_KEY, newEditor)
+      newEditor
+    }
   }
 
   override fun accept(project: Project, file: VirtualFile): Boolean =
@@ -31,30 +34,25 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   companion object {
-    private val AFFINITY_KEY: Key<Boolean> = Key.create("html.editor.affinity.key")
-    private val HTML_KEY: Key<String> = Key.create("html.editor.html.key")
-    private val URL_KEY: Key<String> = Key.create("html.editor.url.key")
-    private val TIMEOUT_HTML_KEY: Key<String> = Key.create("html.editor.timeout.text.key")
+    private val AFFINITY_KEY: Key<String> = Key.create("html.editor.affinity.key")
+    private val EDITOR_KEY: Key<FileEditor> = Key.create("html.editor.component.key")
 
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, @DetailedDescription html: String) {
-      val file = LightVirtualFile(title)
-      file.putUserData(AFFINITY_KEY, true)
-      file.putUserData(HTML_KEY, html)
+      val file = LightVirtualFile(title, html)
+      file.putUserData(AFFINITY_KEY, "")
       FileEditorManager.getInstance(project).openFile(file, true)
     }
 
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, url: String, @DetailedDescription timeoutHtml: String? = null) {
-      val file = LightVirtualFile(title)
-      file.putUserData(AFFINITY_KEY, true)
-      file.putUserData(URL_KEY, url)
-      file.putUserData(TIMEOUT_HTML_KEY, timeoutHtml)
+      val file = LightVirtualFile(title, timeoutHtml ?: "")
+      file.putUserData(AFFINITY_KEY, url)
       FileEditorManager.getInstance(project).openFile(file, true)
     }
 
     @JvmStatic
     fun isHTMLEditor(file: VirtualFile): Boolean =
-      file.getUserData(AFFINITY_KEY) == true
+      file.getUserData(AFFINITY_KEY) != null
   }
 }
