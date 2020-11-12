@@ -5,6 +5,7 @@ import com.intellij.facet.Facet
 import com.intellij.facet.FacetConfiguration
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetType
+import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
@@ -196,6 +197,10 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     model.addFacet(facet)
     runWriteActionAndWait { model.commit() }
     return facet
+  }
+
+  fun removeFacet(facet: Facet<*>) {
+    FacetUtil.deleteFacet(facet)
   }
 
   val sdkType: SdkTypeId
