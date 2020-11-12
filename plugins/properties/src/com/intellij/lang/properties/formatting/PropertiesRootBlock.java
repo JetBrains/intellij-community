@@ -90,17 +90,26 @@ class PropertiesRootBlock extends AbstractBlock {
     final ASTNode[] nonWhiteSpaces = propertyNode.getChildren(TokenSet.create(PropertiesTokenTypes.KEY_CHARACTERS,
                                                                               PropertiesTokenTypes.KEY_VALUE_SEPARATOR,
                                                                               PropertiesTokenTypes.VALUE_CHARACTERS));
+    final Alignment alignment = mySettings.getCommonSettings(PropertiesLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS
+                                ? mySeparatorAlignment
+                                : null;
+
+    boolean hasKVSeparator = false;
     for (ASTNode node : nonWhiteSpaces) {
       if (node instanceof PropertyKeyImpl) {
         collector.add(new PropertyBlock(node, null));
       }
-      if (PropertiesTokenTypes.KEY_VALUE_SEPARATOR.equals(node.getElementType())) {
-        collector.add(new PropertyBlock(node, mySettings.getCommonSettings(PropertiesLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS
-                                              ? mySeparatorAlignment
-                                              : null));
+      else if (PropertiesTokenTypes.KEY_VALUE_SEPARATOR.equals(node.getElementType())) {
+        collector.add(new PropertyBlock(node, alignment));
+        hasKVSeparator = true;
       }
-      if (node instanceof PropertyValueImpl) {
-        collector.add(new PropertyBlock(node, null));
+      else if (node instanceof PropertyValueImpl) {
+        if (hasKVSeparator) {
+          collector.add(new PropertyBlock(node, null));
+        }
+        else {
+          collector.add(new PropertyBlock(node, alignment));
+        }
       }
     }
   }
