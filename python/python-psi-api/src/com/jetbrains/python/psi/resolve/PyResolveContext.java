@@ -90,6 +90,8 @@ public final class PyResolveContext {
     PyResolveContext that = (PyResolveContext)o;
 
     if (myAllowImplicits != that.myAllowImplicits) return false;
+    if (myAllowProperties != that.myAllowProperties) return false;
+    if (myAllowRemote != that.myAllowRemote) return false;
     if (!myTypeEvalContext.equals(that.myTypeEvalContext)) return false;
 
     return true;
@@ -98,6 +100,8 @@ public final class PyResolveContext {
   @Override
   public int hashCode() {
     int result = (myAllowImplicits ? 1 : 0);
+    result = 31 * result + (myAllowProperties ? 1 : 0);
+    result = 31 * result + (myAllowRemote ? 1 : 0);
     result = 31 * result + myTypeEvalContext.hashCode();
     return result;
   }
