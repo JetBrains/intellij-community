@@ -8,7 +8,9 @@ import com.intellij.execution.ui.RunContentManagerImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ToolWindowEmptyStateAction
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.SimpleTextAttributes
@@ -21,15 +23,28 @@ class ActivateRunToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.RUN,
   }
 
   override fun setupEmptyText(project: Project, text: StatusText) {
+    text.isCenterAlignText = false
+    text.appendLine(LangBundle.message("run.toolwindow.empty.text.0"))
     text.appendLine(LangBundle.message("run.toolwindow.empty.text.1"))
     text.appendLine(LangBundle.message("run.toolwindow.empty.text.2"))
-    text.appendLine(LangBundle.message("run.toolwindow.empty.text.3") + " ")
-    text.appendText(LangBundle.message("run.toolwindow.empty.text.4"), SimpleTextAttributes.LINK_ATTRIBUTES) {
-      EditConfigurationsDialog(project).show()
-    }
+
+    appendLaunchConfigurationText(text, project, "ChooseRunConfiguration")
     text.appendLine("")
-    text.appendLine(AllIcons.General.ContextHelp, LangBundle.message("run.toolwindow.empty.text.help"), SimpleTextAttributes.LINK_ATTRIBUTES) {
+    text.appendLine(AllIcons.General.ContextHelp, LangBundle.message("run.toolwindow.empty.text.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
       HelpManager.getInstance().invokeHelp("procedures.running.run")
+    }
+  }
+
+  companion object {
+    fun appendLaunchConfigurationText(text: StatusText, project: Project, actionId: String) {
+      val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
+      val shortcutText = shortcut?.let { " (${KeymapUtil.getShortcutText(shortcut)})" } ?: ""
+      val line = LangBundle.message("run.toolwindow.empty.text.3", shortcutText)
+      text.appendLine(line.substringBefore('<'))
+      text.appendText(line.substringAfter('<').substringBefore('>'), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+        EditConfigurationsDialog(project).show()
+      }
+      text.appendText(line.substringAfter('>'))
     }
   }
 }
