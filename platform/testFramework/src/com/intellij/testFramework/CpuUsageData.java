@@ -25,29 +25,32 @@ public final class CpuUsageData {
   public final long durationMs;
   private final FreeMemorySnapshot myMemStart;
   private final FreeMemorySnapshot myMemEnd;
-  private final long myCompilationTime;
-  private final long myProcessTime;
+  private final long myCompilationTimeMs;
+  private final long myProcessTimeMs;
   private final List<Pair<Long, String>> myGcTimes = new ArrayList<>();
   private final List<Pair<Long, String>> myThreadTimes = new ArrayList<>();
 
   private CpuUsageData(long durationMs,
                        @NotNull Object2LongMap<GarbageCollectorMXBean> gcTimes,
                        @NotNull Long2ObjectMap<Pair<ThreadInfo, Long>> threadTimes,
-                       long compilationTime,
-                       long processTime,
+                       long compilationTimeMs,
+                       long processTimeMs,
                        @NotNull FreeMemorySnapshot memStart,
                        @NotNull FreeMemorySnapshot memEnd) {
     this.durationMs = durationMs;
     myMemStart = memStart;
     myMemEnd = memEnd;
-    myCompilationTime = compilationTime;
-    myProcessTime = processTime;
+    myCompilationTimeMs = compilationTimeMs;
+    myProcessTimeMs = processTimeMs;
     gcTimes.forEach((bean,value) -> myGcTimes.add(Pair.create(value, bean.getName())));
     threadTimes.forEach((id, pair) -> {
       ThreadInfo info = pair.first;
       Long nanos = pair.second;
       myThreadTimes.add(Pair.create(TimeUnit.NANOSECONDS.toMillis(nanos), info.getThreadName()));
     });
+    assert durationMs >= 0 : durationMs;
+    assert compilationTimeMs >= 0 : compilationTimeMs;
+    assert processTimeMs >= 0 : processTimeMs;
   }
 
   public String getGcStats() {
@@ -56,9 +59,9 @@ public final class CpuUsageData {
 
   String getProcessCpuStats() {
     long gcTotal = myGcTimes.stream().mapToLong(p -> p.first).sum();
-    return myCompilationTime + "ms (" +(myCompilationTime*100/(myProcessTime==0?1000000:myProcessTime))+"%) JITc"+
-           (gcTotal > 0 ? " and " + gcTotal + "ms ("+ (gcTotal*100/(myProcessTime==0?1000000:myProcessTime))+"%) GC": "") +
-           " of " + myProcessTime + "ms total";
+    return myCompilationTimeMs + "ms (" + (myCompilationTimeMs * 100 / (myProcessTimeMs == 0 ? 1000000 : myProcessTimeMs)) + "%) JITc" +
+           (gcTotal > 0 ? " and " + gcTotal + "ms (" + (gcTotal*100/(myProcessTimeMs == 0 ? 1000000 : myProcessTimeMs)) + "%) GC" : "") +
+           " of " + myProcessTimeMs + "ms total";
   }
 
   public String getThreadStats() {
@@ -78,9 +81,22 @@ public final class CpuUsageData {
   }
 
   boolean hasAnyActivityBesides(Thread thread) {
-    return myCompilationTime > 0 ||
+    return myCompilationTimeMs > 0 ||
            myThreadTimes.stream().anyMatch(pair -> pair.first > 0 && !pair.second.equals(thread.getName())) ||
            myGcTimes.stream().anyMatch(pair -> pair.first > 0);
+  }
+
+  @NotNull PerformanceTestInfo.IterationResult getIterationResult(int expectedOnMyMachine) {
+    if (myCompilationTimeMs >= durationMs) {
+      // too many irrelevant activity, try again
+      return PerformanceTestInfo.IterationResult.DISTRACTED;
+    }
+    // ignore JIT times
+    long actualTimeMs = durationMs - myCompilationTimeMs;
+    return actualTimeMs < expectedOnMyMachine ? PerformanceTestInfo.IterationResult.ACCEPTABLE :
+           // Allow 10% more in case of test machine is busy.
+           actualTimeMs < expectedOnMyMachine * 1.1 ? PerformanceTestInfo.IterationResult.BORDERLINE :
+           PerformanceTestInfo.IterationResult.SLOW;
   }
 
   @NotNull
@@ -94,6 +110,7 @@ public final class CpuUsageData {
     return stats.isEmpty() ? "insignificant" : stats;
   }
 
+  @NotNull
   public static <E extends Throwable> CpuUsageData measureCpuUsage(ThrowableRunnable<E> runnable) throws E {
     FreeMemorySnapshot memStart = new FreeMemorySnapshot();
 
@@ -119,7 +136,7 @@ public final class CpuUsageData {
     long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 
     long processTime = TimeUnit.NANOSECONDS.toMillis(ourOSBean.getProcessCpuTime() - processStart);
-    long compTime = getTotalCompilationMillis() - compStart;
+    long compilationTime = getTotalCompilationMillis() - compStart;
 
     FreeMemorySnapshot memEnd = new FreeMemorySnapshot();
 
@@ -136,7 +153,7 @@ public final class CpuUsageData {
       gcTimes.put(bean, bean.getCollectionTime() - gcTimes.getLong(bean));
     }
 
-    return new CpuUsageData(duration, gcTimes, threadTimes, compTime, processTime, memStart, memEnd);
+    return new CpuUsageData(duration, gcTimes, threadTimes, compilationTime, processTime, memStart, memEnd);
   }
 
   static long getTotalCompilationMillis() {

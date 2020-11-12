@@ -125,30 +125,23 @@ public class PerformanceTestInfo {
       }
 
       int expectedOnMyMachine = getExpectedTimeOnThisMachine();
-      IterationResult iterationResult = data.durationMs < expectedOnMyMachine ? IterationResult.acceptable :
-                                        // Allow 10% more in case of test machine is busy.
-                                        data.durationMs < expectedOnMyMachine * 1.1 ? IterationResult.borderline :
-                                        IterationResult.slow;
+      IterationResult iterationResult = data.getIterationResult(expectedOnMyMachine);
 
-      testShouldPass |= iterationResult != IterationResult.slow;
+      testShouldPass |= iterationResult != IterationResult.SLOW;
 
       logMessage = formatMessage(data, expectedOnMyMachine, iterationResult);
 
-      if (iterationResult == IterationResult.acceptable) {
+      if (iterationResult == IterationResult.ACCEPTABLE) {
         TeamCityLogger.info(logMessage);
         System.out.println("\nSUCCESS: " + logMessage);
-      }
-      else {
-        TeamCityLogger.warning(logMessage, null);
-        if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-          System.out.println("\nWARNING: " + logMessage);
-        }
-      }
-
-      if (iterationResult == IterationResult.acceptable) {
         return;
       }
-      if (attempts == 0 || waitForJit && updateJitUsage() == JitUsageResult.definitelyLow) {
+      TeamCityLogger.warning(logMessage, null);
+      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+        System.out.println("\nWARNING: " + logMessage);
+      }
+
+      if (attempts == 0 || waitForJit && updateJitUsage() == JitUsageResult.DEFINITELY_LOW) {
         if (testShouldPass) return;
         throw new AssertionFailedError(logMessage);
       }
@@ -166,8 +159,8 @@ public class PerformanceTestInfo {
   private String formatMessage(CpuUsageData data, int expectedOnMyMachine, IterationResult iterationResult) {
     long duration = data.durationMs;
     int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-    String colorCode = iterationResult == IterationResult.acceptable ? "32;1m" : // green
-                       iterationResult == IterationResult.borderline ? "33;1m" : // yellow
+    String colorCode = iterationResult == IterationResult.ACCEPTABLE ? "32;1m" : // green
+                       iterationResult == IterationResult.BORDERLINE ? "33;1m" : // yellow
                        "31;1m"; // red
     return String.format(
       "%s took \u001B[%s%d%% %s time\u001B[0m than expected" +
@@ -197,25 +190,30 @@ public class PerformanceTestInfo {
     if (lastJitStamp >= 0) {
       if (elapsedMillis >= 3_000) {
         if (jitNow - lastJitUsage <= elapsedMillis / 10) {
-          return JitUsageResult.definitelyLow;
+          return JitUsageResult.DEFINITELY_LOW;
         }
       } else {
         // don't update stamps too frequently,
         // because JIT times are quite discrete: they only change after a compilation is finished,
         // and some compilations take a second or even more
-        return JitUsageResult.unclear;
+        return JitUsageResult.UNCLEAR;
       }
     }
 
     lastJitStamp = timeNow;
     lastJitUsage = jitNow;
 
-    return JitUsageResult.unclear;
+    return JitUsageResult.UNCLEAR;
   }
 
-  private enum JitUsageResult {definitelyLow, unclear}
+  private enum JitUsageResult {DEFINITELY_LOW, UNCLEAR}
 
-  private enum IterationResult { acceptable, borderline, slow }
+  enum IterationResult {
+    ACCEPTABLE, // test was completed within specified range
+    BORDERLINE, // test barely managed to complete within specified range
+    SLOW,       // test was too slow
+    DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g. JIT or GC)
+  }
 
   private int getExpectedTimeOnThisMachine() {
     int expectedOnMyMachine = expectedMs;
