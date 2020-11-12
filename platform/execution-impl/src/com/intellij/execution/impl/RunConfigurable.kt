@@ -46,6 +46,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -66,6 +67,7 @@ internal val TEMPLATES_NODE_USER_OBJECT = object : Any() {
 private const val INITIAL_VALUE_KEY = "initialValue"
 private val LOG = logger<RunConfigurable>()
 
+@Nls
 internal fun getUserObjectName(userObject: Any): String {
   return when {
     userObject is ConfigurationType -> userObject.displayName
