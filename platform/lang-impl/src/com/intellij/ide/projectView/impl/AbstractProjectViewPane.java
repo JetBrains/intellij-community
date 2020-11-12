@@ -41,12 +41,14 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tabs.impl.SingleHeightTabs;
+import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -60,6 +62,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -572,14 +575,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected @NotNull TreeExpander createTreeExpander() {
     return new DefaultTreeExpander(this::getTree) {
+      private boolean isExpandAllAllowed() {
+        JTree tree = getTree();
+        TreeModel model = tree == null ? null : tree.getModel();
+        return model == null || model instanceof AsyncTreeModel || model instanceof InvokerSupplier;
+      }
+
       @Override
       public boolean isExpandAllVisible() {
-        return getAsyncSupport() != null && Registry.is("ide.project.view.expand.all.action.visible");
+        return isExpandAllAllowed() && Registry.is("ide.project.view.expand.all.action.visible");
       }
 
       @Override
       public boolean canExpand() {
-        return getAsyncSupport() != null && super.canExpand();
+        return isExpandAllAllowed() && super.canExpand();
       }
 
       @Override
