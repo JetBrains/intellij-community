@@ -72,18 +72,26 @@ internal class HandshakeUnixFifoReader(path: Path) : HandshakeFileReader(path) {
 
     private fun mkfifo(path: Path) {
       val process = ProcessBuilder("mkfifo", "-m", "0666", path.toString()).start()
-      val completed = try {
-        Thread.interrupted() // clear
-        process.waitFor(MKFIFO_PROCESS_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+      try {
+        val completed = try {
+          Thread.interrupted() // clear
+          process.waitFor(MKFIFO_PROCESS_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        }
+        catch (e: InterruptedException) {
+          throw IOException("mkfifo interrupted", e)
+        }
+        if (!completed) {
+          throw IOException("mkfifo timed out ($MKFIFO_PROCESS_TIMEOUT_MS ms)")
+        }
+        if (process.exitValue() != 0) {
+          throw IOException("mkfifo failed with exit code ${process.exitValue()}: ${String(process.errorStream.readAllBytes())}")
+        }
       }
-      catch (e: InterruptedException) {
-        throw IOException("mkfifo interrupted", e)
-      }
-      if (!completed) {
-        throw IOException("mkfifo timed out ($MKFIFO_PROCESS_TIMEOUT_MS ms)")
-      }
-      if (process.exitValue() != 0) {
-        throw IOException("mkfifo failed with exit code ${process.exitValue()}: ${String(process.errorStream.readAllBytes())}")
+      catch (e: Throwable) {
+        process.destroyForcibly().onExit().whenComplete { _, _ ->
+          Files.deleteIfExists(path)
+        }
+        throw e
       }
     }
   }
