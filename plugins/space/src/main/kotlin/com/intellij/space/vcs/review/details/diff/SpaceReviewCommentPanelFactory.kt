@@ -32,6 +32,9 @@ internal class SpaceReviewCommentPanelFactory(
 
     val discussionRef = propagatedCodeDiscussion.discussion
     val discussionRecord = discussionRef.resolve()
+
+    if (discussionRecord.archived) return null
+
     return createSpaceChatPanel(discussionRecord)
   }
 
