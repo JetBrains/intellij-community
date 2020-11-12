@@ -84,8 +84,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
   }
 
   @Override
-  @NotNull
-  public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
     assertWritable();
     return VfsUtilCore.outputStreamAddingBOM(new ByteArrayOutputStream() {
       @Override
@@ -116,8 +115,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     setModificationStamp(LocalTimeCounter.currentTime());
   }
 
-  @NotNull
-  public CharSequence getContent() {
+  public @NotNull CharSequence getContent() {
     return myContent;
   }
 
