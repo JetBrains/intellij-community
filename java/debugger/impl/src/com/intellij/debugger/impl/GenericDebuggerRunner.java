@@ -91,8 +91,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
         try {
           promise.setResult(doExecute(state, env));
         }
-        catch (ExecutionException e) {
-          LOG.warn(e);
+        catch (Throwable e) {
+          LOG.warn("Failed to execute debug configuration async", e);
           promise.setError(e.getLocalizedMessage());
         }
       });

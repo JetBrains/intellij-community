@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.build
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.JavaCommandLineState
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.impl.DefaultJavaProgramRunner
@@ -41,8 +40,8 @@ internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
           val descriptor = doExecute(state, env)
           promise.setResult(descriptor)
         }
-        catch (e: ExecutionException) {
-          LOG.warn(e)
+        catch (e: Throwable) {
+          LOG.warn("Failed to execute delegate run configuration async", e)
           promise.setError(e.localizedMessage)
         }
       }

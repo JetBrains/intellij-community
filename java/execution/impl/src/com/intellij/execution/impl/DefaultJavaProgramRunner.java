@@ -165,8 +165,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
           try {
             descriptor = executeJavaState(state, env, proxy);
           }
-          catch (ExecutionException e) {
-            LOG.warn(e);
+          catch (Throwable e) {
+            LOG.warn("Failed to execute java run configuration async", e);
             promise.setError(e.getLocalizedMessage());
           }
           promise.setResult(descriptor);
