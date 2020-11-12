@@ -365,10 +365,10 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
         createBalloon().
       also {
         it.setAnimationEnabled(false)
-        (it as BalloonImpl).setHideListener( Runnable {
-          it.hide(true)
-          GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.OutsideClick)
-        } )
+        //(it as BalloonImpl).setHideListener( Runnable {
+        //  it.hide(true)
+        //  GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.OutsideClick)
+        //} )
       }
 
     val collector = GotItUsageCollector.instance
