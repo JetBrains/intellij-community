@@ -159,7 +159,7 @@ public final class PsiClassImplUtil {
     if (name == null) return Collections.emptyList();
 
     return checkBases
-           ? getMap(aClass).calcMembersByName(type, name)
+           ? getMap(aClass).calcMembersByName(type, name, null, null)
            : ContainerUtil.filter(type.getMembers(aClass), member -> name.equals(member.getName()));
   }
 
@@ -187,12 +187,12 @@ public final class PsiClassImplUtil {
   }
 
   private static MemberCache getMap(@NotNull PsiClass aClass) {
-    return getMap(aClass, aClass);
+    return getMap(aClass, aClass.getResolveScope());
   }
 
-  private static MemberCache getMap(@NotNull PsiClass aClass, @NotNull PsiElement context) {
+  private static MemberCache getMap(@NotNull PsiClass aClass, @NotNull GlobalSearchScope scope) {
     return CachedValuesManager.getProjectPsiDependentCache(aClass, c ->
-      ConcurrentFactoryMap.createMap((PsiElement e) -> new MemberCache(c, e))).get(context);
+      ConcurrentFactoryMap.createMap((GlobalSearchScope s) -> new MemberCache(c, s))).get(scope);
   }
 
   private static final class ClassIconRequest {
@@ -327,33 +327,18 @@ public final class PsiClassImplUtil {
   private static class MemberCache {
     private final @NotNull List<PsiClass> myAllSupers;
     private final ConcurrentMap<MemberType, PsiMember[]> myAllMembers;
-    private final PsiClass myClass;
-    private final @NotNull PsiElement myContext;
 
-    MemberCache(PsiClass psiClass, PsiElement context) {
-      myClass = psiClass;
-      myContext = context;
-      GlobalSearchScope scope = context.getResolveScope();
+    MemberCache(PsiClass psiClass, GlobalSearchScope scope) {
       myAllSupers = JBTreeTraverser
         .from((PsiClass c) -> ContainerUtil.mapNotNull(c.getSupers(), s -> PsiSuperMethodUtil.correctClassByScope(s, scope)))
         .unique()
         .withRoot(psiClass)
         .toList();
       myAllMembers = ConcurrentFactoryMap.createMap(
-        type -> {
-          PsiMember[] self = StreamEx.of(myAllSupers).flatArray(type::getMembers).filter(e -> !skipInvalid(e)).toArray(PsiMember.EMPTY_ARRAY);
-          if (type == MemberType.METHOD) {
-            List<PsiMethod> extensionMethods = PsiAugmentProvider.collectExtensionMethods(psiClass, null, context);
-            if (!extensionMethods.isEmpty()) {
-              self = self.length == 0 ? extensionMethods.toArray(PsiMember.EMPTY_ARRAY)
-                                      : ArrayUtil.mergeArrays(self, extensionMethods.toArray(PsiMember.EMPTY_ARRAY));
-            }
-          }
-          return self;
-        });
+        type -> StreamEx.of(myAllSupers).flatArray(type::getMembers).filter(e -> !skipInvalid(e)).toArray(PsiMember.EMPTY_ARRAY));
     }
 
-    @NotNull List<PsiMember> calcMembersByName(@NotNull MemberType type, @NotNull String name) {
+    @NotNull List<PsiMember> calcMembersByName(@NotNull MemberType type, @NotNull String name, PsiClass psiClass, PsiElement context) {
       List<PsiMember> result = null;
       for (PsiClass eachSuper : myAllSupers) {
         if (type == MemberType.METHOD) {
@@ -373,8 +358,8 @@ public final class PsiClassImplUtil {
           }
         }
       }
-      if (type == MemberType.METHOD) {
-        List<PsiMethod> methods = PsiAugmentProvider.collectExtensionMethods(myClass, name, myContext);
+      if (type == MemberType.METHOD && psiClass != null && context != null) {
+        List<PsiMethod> methods = PsiAugmentProvider.collectExtensionMethods(psiClass, name, context);
         if (!methods.isEmpty()) {
           if (result == null) result = new ArrayList<>();
           result.addAll(methods);
@@ -384,7 +369,7 @@ public final class PsiClassImplUtil {
     }
 
     PsiMember[] getAllMembers(@NotNull MemberType type, @Nullable String name) {
-      return name == null ? myAllMembers.get(type) : calcMembersByName(type, name).toArray(PsiMember.EMPTY_ARRAY);
+      return name == null ? myAllMembers.get(type) : calcMembersByName(type, name, null, null).toArray(PsiMember.EMPTY_ARRAY);
     }
   }
 
@@ -491,7 +476,7 @@ public final class PsiClassImplUtil {
         }
       }
       else {
-        List<PsiMember> list = getMap(aClass, place).calcMembersByName(MemberType.FIELD, name);
+        List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.FIELD, name, aClass, place);
         if (!list.isEmpty()) {
           boolean resolved = false;
           for (PsiMember candidateField : list) {
@@ -533,7 +518,7 @@ public final class PsiClassImplUtil {
           }
         }
         else {
-          List<PsiMember> list = getMap(aClass, place).calcMembersByName(MemberType.CLASS, name);
+          List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.CLASS, name, aClass, place);
           if (!list.isEmpty()) {
             boolean resolved = false;
             for (PsiMember inner : list) {
@@ -564,7 +549,7 @@ public final class PsiClassImplUtil {
           return true;
         }
       }
-      List<PsiMember> list = getMap(aClass, place).calcMembersByName(MemberType.METHOD, name);
+      List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.METHOD, name, aClass, place);
       if (!list.isEmpty()) {
         boolean resolved = false;
         for (PsiMember candidate : list) {
@@ -937,7 +922,7 @@ public final class PsiClassImplUtil {
       }
       return ret;
     }
-    List<PsiMember> list = getMap(psiClass).calcMembersByName(MemberType.METHOD, name);
+    List<PsiMember> list = getMap(psiClass).calcMembersByName(MemberType.METHOD, name, null, null);
     if (list.isEmpty()) return Collections.emptyList();
     return withSubstitutors(psiClass, list.toArray(PsiMember.EMPTY_ARRAY));
   }
