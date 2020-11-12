@@ -5,6 +5,7 @@ import circlet.client.api.M2ChannelRecord
 import circlet.client.api.Navigator
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.fullName
+import circlet.completion.mentions.MentionConverter
 import circlet.m2.ChannelsVm
 import circlet.m2.M2MessageVm
 import circlet.m2.channel.M2ChannelVm
@@ -13,6 +14,7 @@ import circlet.platform.api.isTemporary
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatHeaderDetails
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItemWithThread
@@ -175,3 +177,6 @@ internal fun M2MessageVm.getLink(hostUrl: String): String? =
 @Nls
 internal fun TD_MemberProfile.link(server: String): HtmlChunk =
   HtmlChunk.link(Navigator.m.member(username).absoluteHref(server), name.fullName()) // NON-NLS
+
+@NlsSafe
+internal fun processItemText(server: String, @NlsSafe text: String) = MentionConverter.html(text, server)
