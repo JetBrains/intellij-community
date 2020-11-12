@@ -39,8 +39,7 @@ public final class AmbiguousComponentResolutionException extends PicoIntrospecti
   public AmbiguousComponentResolutionException(Class ambiguousDependency, Object[] componentKeys) {
     super("");
     this.ambiguousDependency = ambiguousDependency;
-    this.ambiguousComponentKeys = new Class[componentKeys.length];
-    System.arraycopy(componentKeys, 0, ambiguousComponentKeys, 0, componentKeys.length);
+    this.ambiguousComponentKeys = componentKeys.clone();
   }
 
   /**

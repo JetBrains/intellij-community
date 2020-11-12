@@ -40,12 +40,7 @@ public abstract class SynchronizedBidiMultiMap<K, V> {
   }
 
   public synchronized void put(K key, V... values) {
-    myKey2Values.merge(key, values, (/*@NotNull*/ arr1, arr2) -> {
-      V[] mergeResult = arrayFactory().create(arr1.length + arr2.length);
-      System.arraycopy(arr1, 0, mergeResult, 0, arr1.length);
-      System.arraycopy(arr2, 0, mergeResult, arr1.length, arr2.length);
-      return mergeResult;
-    });
+    myKey2Values.merge(key, values, (/*@NotNull*/ arr1, arr2) -> ArrayUtil.mergeArrays(arr1, arr2, arrayFactory()));
     for (V value : values) {
       myValue2Keys.put(value, key);
     }

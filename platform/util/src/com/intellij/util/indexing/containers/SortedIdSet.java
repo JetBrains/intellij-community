@@ -18,6 +18,8 @@ package com.intellij.util.indexing.containers;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
   private int[] mySet;
   private int mySetLength;
@@ -59,9 +61,7 @@ public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
     }
     if (mySetLength == mySet.length) {
       int nextArraySize = mySet.length < 1024 ? mySet.length << 1 : mySet.length + mySet.length / 5;
-      int[] newSet = new int[nextArraySize];
-      System.arraycopy(mySet, 0, newSet, 0, mySet.length);
-      mySet = newSet;
+      mySet = Arrays.copyOf(mySet, nextArraySize);
     }
     pos = -pos - 1;
 

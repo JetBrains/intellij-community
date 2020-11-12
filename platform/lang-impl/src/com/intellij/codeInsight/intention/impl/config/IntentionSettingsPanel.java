@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,9 +46,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
           final Runnable runnable = () -> {
             intentionSelected(actionMetaData);
             if (myDetailsComponent != null) {
-              String[] text = new String[actionMetaData.myCategory.length + 1];
-              System.arraycopy(actionMetaData.myCategory, 0, text,0,actionMetaData.myCategory.length);
-              text[text.length - 1] = actionMetaData.getFamily();
+              String[] text = ArrayUtil.append(actionMetaData.myCategory, actionMetaData.getFamily());
               myDetailsComponent.setText(text);
             }
           };

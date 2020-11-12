@@ -198,7 +198,7 @@ final class TerminalBlock {
                                      myVariable,
                                      lastStatement instanceof PsiReturnStatement || lastStatement instanceof PsiThrowStatement
                                      ? statements
-                                     : Arrays.copyOfRange(statements, 0, statements.length - 1));
+                                     : Arrays.copyOf(statements, statements.length - 1));
           }
         }
       }
@@ -265,7 +265,7 @@ final class TerminalBlock {
         // to support conditions like if(...) continue; break; or if(...) continue; return ...;
         count--;
       }
-      statements = Arrays.copyOfRange(myStatements, 0, count);
+      statements = Arrays.copyOf(myStatements, count);
       tb = new TerminalBlock(myOperations, myVariable, Arrays.copyOfRange(myStatements, count, myStatements.length)).extractFilter();
     }
     PsiStatement sourceStatement = getStreamSourceStatement();

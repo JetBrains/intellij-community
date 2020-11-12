@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -177,8 +178,7 @@ public final class ClasspathCache {
     else {
       Loader[] loadersArray = (Loader[])o;
       if (ClassPath.ourClassLoadingInfo) assert ArrayUtilRt.find(loadersArray, loader) == -1;
-      Loader[] newArray = new Loader[loadersArray.length + 1];
-      System.arraycopy(loadersArray, 0, newArray, 0, loadersArray.length);
+      Loader[] newArray = Arrays.copyOf(loadersArray, loadersArray.length + 1);
       newArray[loadersArray.length] = loader;
       map.put(hash, newArray);
     }

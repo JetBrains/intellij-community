@@ -43,8 +43,7 @@ public final class SmartFMap<K,V> implements Map<K,V> {
     Object[] array = (Object[])oldMap;
     for (int i = 0; i < array.length; i += 2) {
       if (key.equals(array[i])) {
-        Object[] newArray = new Object[array.length];
-        System.arraycopy(array, 0, newArray, 0, array.length);
+        Object[] newArray = array.clone();
         newArray[i + 1] = value;
         return newArray;
       }
@@ -58,8 +57,7 @@ public final class SmartFMap<K,V> implements Map<K,V> {
       return map;
     }
 
-    Object[] newArray = new Object[array.length + 2];
-    System.arraycopy(array, 0, newArray, 0, array.length);
+    Object[] newArray = Arrays.copyOf(array, array.length + 2);
     newArray[array.length] = key;
     newArray[array.length + 1] = value;
     return newArray;

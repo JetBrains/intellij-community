@@ -17,6 +17,8 @@ package com.intellij.util.containers;
 
 import com.intellij.util.DeprecatedMethodException;
 
+import java.util.Arrays;
+
 /**
  * @deprecated use TLongArrayList instead
  */
@@ -37,9 +39,7 @@ public class LongArrayList implements Cloneable {
   public void trimToSize() {
     int oldCapacity = myData.length;
     if (mySize < oldCapacity){
-      long[] oldData = myData;
-      myData = new long[mySize];
-      System.arraycopy(oldData, 0, myData, 0, mySize);
+      myData = Arrays.copyOf(myData, mySize);
     }
   }
 
@@ -51,8 +51,7 @@ public class LongArrayList implements Cloneable {
       if (newCapacity < minCapacity){
         newCapacity = minCapacity;
       }
-      myData = new long[newCapacity];
-      System.arraycopy(oldData, 0, myData, 0, mySize);
+      myData = Arrays.copyOf(myData, newCapacity);
     }
   }
 
@@ -86,8 +85,7 @@ public class LongArrayList implements Cloneable {
   public Object clone() {
     try{
       LongArrayList v = (LongArrayList)super.clone();
-      v.myData = new long[mySize];
-      System.arraycopy(myData, 0, v.myData, 0, mySize);
+      v.myData = myData.clone();
       return v;
     }
     catch(CloneNotSupportedException e){
@@ -97,9 +95,7 @@ public class LongArrayList implements Cloneable {
   }
 
   public long[] toArray() {
-    long[] result = new long[mySize];
-    System.arraycopy(myData, 0, result, 0, mySize);
-    return result;
+    return Arrays.copyOf(myData, mySize);
   }
 
   public long[] toArray(long[] a) {

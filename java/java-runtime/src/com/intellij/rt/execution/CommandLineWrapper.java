@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarInputStream;
@@ -78,8 +79,7 @@ public final class CommandLineWrapper {
 
       String programParameters = manifest != null ? manifest.getMainAttributes().getValue("Program-Parameters") : null;
       if (programParameters == null) {
-        mainArgs = new String[args.length - 2];
-        System.arraycopy(args, 2, mainArgs, 0, mainArgs.length);
+        mainArgs = Arrays.copyOfRange(args, 2, args.length);
       }
       else {
         List<String> list = splitBySpaces(programParameters);
@@ -174,8 +174,7 @@ public final class CommandLineWrapper {
       startArgsIdx += 2;
     }
     else {
-      mainArgs = new String[args.length - startArgsIdx];
-      System.arraycopy(args, startArgsIdx, mainArgs, 0, mainArgs.length);
+      mainArgs = Arrays.copyOfRange(args, startArgsIdx, args.length);
     }
 
     String mainClassName = args[startArgsIdx - 1];

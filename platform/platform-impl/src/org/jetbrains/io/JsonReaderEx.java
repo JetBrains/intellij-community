@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
-import java.util.Arrays;
 
 public final class JsonReaderEx implements Closeable {
   /** The only non-execute prefix this parser permits */
@@ -180,7 +179,7 @@ public final class JsonReaderEx implements Closeable {
         throw createParseError("Cannot create sub reader, next token " + nextToken + " is not value");
     }
 
-    JsonReaderEx subReader = new JsonReaderEx(in, position, Arrays.copyOf(stack, stack.length));
+    JsonReaderEx subReader = new JsonReaderEx(in, position, stack.clone());
     subReader.stackSize = stackSize;
     subReader.peeked = peeked;
     subReader.peekedLong = peekedLong;

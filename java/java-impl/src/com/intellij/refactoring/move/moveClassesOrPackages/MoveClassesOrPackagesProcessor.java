@@ -125,8 +125,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
-    PsiElement[] elements = new PsiElement[myElementsToMove.length];
-    System.arraycopy(myElementsToMove, 0, elements, 0, myElementsToMove.length);
+    PsiElement[] elements = myElementsToMove.clone();
     return new MoveMultipleElementsViewDescriptor(elements, MoveClassesOrPackagesUtil.getPackageName(myTargetPackage));
   }
 

@@ -35,6 +35,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -71,8 +72,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     myURLLabel.setText(myURL.toDecodedString());
 
     TreeNode[] path = node.getSelfPath();
-    TreeNode[] subPath = new TreeNode[path.length - 1];
-    System.arraycopy(path, 1, subPath, 0, path.length - 1);
+    TreeNode[] subPath = Arrays.copyOfRange(path, 1, path.length);
 
     myBrowser.setRepositoryURL(root.getURL(), false, new OpeningExpander.Factory(
       subPath, node.getParent() instanceof RepositoryTreeNode ? (RepositoryTreeNode)node.getParent() : null));

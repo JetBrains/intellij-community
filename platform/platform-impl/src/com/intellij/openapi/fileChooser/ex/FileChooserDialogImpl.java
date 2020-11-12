@@ -187,9 +187,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     if (array.length > 0 && myPathTextField != null && myPathTextField.getField().getText().replace('\\', '/').equals(array[0])) {
-      String[] paths = new String[array.length - 1];
-      System.arraycopy(array, 1, paths, 0, array.length - 1);
-      return paths;
+      return Arrays.copyOfRange(array, 1, array.length);
     }
     return array;
   }

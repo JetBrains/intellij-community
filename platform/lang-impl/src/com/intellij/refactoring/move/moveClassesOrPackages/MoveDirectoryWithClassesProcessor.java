@@ -98,10 +98,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   @NotNull
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
-    PsiElement[] elements = new PsiElement[myFilesToMove.size()];
-    final PsiFile[] classes = PsiUtilCore.toPsiFileArray(getPsiFiles());
-    System.arraycopy(classes, 0, elements, 0, classes.length);
-    return new MoveMultipleElementsViewDescriptor(elements, getTargetName());
+    return new MoveMultipleElementsViewDescriptor(PsiUtilCore.toPsiFileArray(getPsiFiles()), getTargetName());
   }
 
   private Set<PsiFile> getPsiFiles() {

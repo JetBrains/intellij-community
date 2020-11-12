@@ -57,7 +57,7 @@ public class LoremGenerator {
     String[] words;
 
     if (startWithCommon) {
-      words = Arrays.copyOfRange(COMMON_P, 0, Math.min(wordsCount, COMMON_P.length));
+      words = Arrays.copyOf(COMMON_P, Math.min(wordsCount, COMMON_P.length));
       if (words.length > 5) {
         words[4] += ',';
       }

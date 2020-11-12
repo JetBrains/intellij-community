@@ -17,6 +17,7 @@ import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
+import java.util.Arrays;
 
 /**
  * A sequence of bytes backed by byte array (or sub-array).
@@ -113,9 +114,7 @@ public class ByteArraySequence implements ByteSequence {
 
   @Override
   public byte @NotNull [] toBytes() {
-    byte[] bytes = new byte[length()];
-    System.arraycopy(myBytes, myOffset, bytes, 0, length());
-    return bytes;
+    return Arrays.copyOfRange(myBytes, myOffset, myOffset + length());
   }
 
   @NotNull

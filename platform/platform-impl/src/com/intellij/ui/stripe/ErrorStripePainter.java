@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.stripe;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.RegionPainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.AlphaComposite;
-import java.awt.Composite;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -88,9 +87,7 @@ public class ErrorStripePainter extends RegionPainter.Image {
       myArray = new Value[count];
     }
     else if (myArray.length < count) {
-      Value[] old = myArray;
-      myArray = new Value[count];
-      System.arraycopy(old, 0, myArray, 0, old.length);
+      myArray = ArrayUtil.realloc(myArray, count, Value[]::new);
     }
     if (myArraySize != count) {
       myArraySize = count;

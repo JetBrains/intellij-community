@@ -92,7 +92,7 @@ public final class PluginManagerCore {
   static final boolean usePluginClassLoader = Boolean.getBoolean("idea.from.sources.plugins.class.loader");
 
   @ApiStatus.Internal
-  private static final List<Supplier<HtmlChunk>> ourPluginErrors = new ArrayList<>();
+  private static final List<Supplier<? extends HtmlChunk>> ourPluginErrors = new ArrayList<>();
 
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
@@ -184,7 +184,7 @@ public final class PluginManagerCore {
     }
   }
 
-  private static void registerPluginErrors(List<Supplier<HtmlChunk>> errors) {
+  private static void registerPluginErrors(List<? extends Supplier<? extends HtmlChunk>> errors) {
     synchronized (ourPluginErrors) {
       ourPluginErrors.addAll(errors);
     }
@@ -430,7 +430,7 @@ public final class PluginManagerCore {
    * for such plugins to avoid breaking compatibility with them.
    */
   static @Nullable IdeaPluginDescriptorImpl getImplicitDependency(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                  @NotNull Supplier<IdeaPluginDescriptorImpl> javaDepGetter) {
+                                                                  @NotNull Supplier<? extends IdeaPluginDescriptorImpl> javaDepGetter) {
     // skip our plugins as expected to be up-to-date whether bundled or not
     if (descriptor.isBundled() ||
         descriptor.getPluginId() == CORE_ID ||
@@ -529,8 +529,8 @@ public final class PluginManagerCore {
   }
 
   private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, PluginLoadingError> pluginErrors,
-                                                        @NotNull List<Supplier<@NlsContexts.DetailedDescription String>> globalErrors,
-                                                        @NotNull List<Supplier<HtmlChunk>> actions) {
+                                                        @NotNull List<? extends Supplier<? extends @NlsContexts.DetailedDescription String>> globalErrors,
+                                                        @NotNull List<? extends Supplier<? extends HtmlChunk>> actions) {
     ourPluginLoadingErrors = pluginErrors;
 
     // Log includes all messages, not only those which need to be reported to the user
@@ -606,8 +606,8 @@ public final class PluginManagerCore {
                                                                                @NotNull Function<? super PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
                                                                                boolean withOptional,
                                                                                boolean hasAllModules,
-                                                                               @NotNull Supplier<IdeaPluginDescriptorImpl> javaDep,
-                                                                               @NotNull Set<IdeaPluginDescriptorImpl> uniqueCheck) {
+                                                                               @NotNull Supplier<? extends IdeaPluginDescriptorImpl> javaDep,
+                                                                               @NotNull Set<? super IdeaPluginDescriptorImpl> uniqueCheck) {
     List<PluginDependency> dependencies = rootDescriptor.pluginDependencies;
     List<PluginId> incompatibleModuleIds = rootDescriptor.incompatibilities == null ? Collections.emptyList() : rootDescriptor.incompatibilities;
     if (dependencies == null) {
@@ -740,7 +740,7 @@ public final class PluginManagerCore {
                                                         @NotNull Set<PluginId> disabledRequiredIds,
                                                         @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idMap,
                                                         @NotNull Map<PluginId, PluginLoadingError> pluginErrors,
-                                                        @NotNull List<Supplier<String>> globalErrors) {
+                                                        @NotNull List<? extends Supplier<String>> globalErrors) {
     List<Supplier<HtmlChunk>> actions = new ArrayList<>();
     if (!disabledIds.isEmpty()) {
       @NlsSafe String nameToDisable;
@@ -1366,8 +1366,7 @@ public final class PluginManagerCore {
       PluginLoadingResult result = context.result;
       if (!result.incompletePlugins.isEmpty()) {
         int oldSize = initResult.sortedPlugins.length;
-        IdeaPluginDescriptorImpl[] all = new IdeaPluginDescriptorImpl[oldSize + result.incompletePlugins.size()];
-        System.arraycopy(initResult.sortedPlugins, 0, all, 0, oldSize);
+        IdeaPluginDescriptorImpl[] all = Arrays.copyOf(initResult.sortedPlugins, oldSize + result.incompletePlugins.size());
         ArrayUtil.copy(result.incompletePlugins.values(), all, oldSize);
         ourPlugins = all;
       }

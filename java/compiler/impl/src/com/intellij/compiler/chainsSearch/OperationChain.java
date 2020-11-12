@@ -113,9 +113,7 @@ public final class OperationChain {
     OperationChain head = create(signature, weight, context);
     if (head == null) return null;
 
-    ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
-    System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
-    newReverseOperations[length()] = head.getPath()[0];
+    ChainOperation[] newReverseOperations = ArrayUtil.append(myReverseOperations, head.getPath()[0]);
     return new OperationChain(head.getQualifierClass(), newReverseOperations, head.getHead() , signature, Math.min(weight, getChainWeight()));
   }
 
@@ -124,17 +122,14 @@ public final class OperationChain {
                                       @NotNull ChainCompletionContext context) {
     OperationChain head = create(cast, 0, context);
     if (head == null) return null;
-    ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
-    System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
-    newReverseOperations[length()] = head.getPath()[0];
+    ChainOperation[] newReverseOperations = ArrayUtil.append(myReverseOperations, head.getPath()[0]);
     return new OperationChain(head.getQualifierClass(), newReverseOperations, head.getHead(), myHeadMethodCall, getChainWeight());
   }
 
   @NotNull
   OperationChain removeHeadCast(@NotNull ChainCompletionContext context) {
     LOG.assertTrue(getHead() instanceof TypeCast);
-    ChainOperation[] newReverseOperations = new ChainOperation[length() - 1];
-    System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, length() - 1);
+    ChainOperation[] newReverseOperations = Arrays.copyOf(myReverseOperations, length() - 1);
     return new OperationChain(Objects.requireNonNull(context.resolvePsiClass(myHeadMethodCall.getQualifierDef())),
                               newReverseOperations,
                               myHeadMethodCall,

@@ -18,6 +18,7 @@ import java.util.function.BiPredicate;
 public final class ArrayUtil {
   public static final char[] EMPTY_CHAR_ARRAY = ArrayUtilRt.EMPTY_CHAR_ARRAY;
   public static final byte[] EMPTY_BYTE_ARRAY = ArrayUtilRt.EMPTY_BYTE_ARRAY;
+  public static final double[] EMPTY_DOUBLE_ARRAY = new double[0];
   public static final int[] EMPTY_INT_ARRAY = ArrayUtilRt.EMPTY_INT_ARRAY;
   public static final Object[] EMPTY_OBJECT_ARRAY = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   public static final String[] EMPTY_STRING_ARRAY = ArrayUtilRt.EMPTY_STRING_ARRAY;
@@ -36,33 +37,38 @@ public final class ArrayUtil {
   private ArrayUtil() { }
 
   @Contract(pure=true)
-  public static byte @NotNull [] realloc(byte @NotNull [] array, final int newSize) {
+  public static byte @NotNull [] realloc(byte @NotNull [] array, int newSize) {
     if (newSize == 0) {
-      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+      return EMPTY_BYTE_ARRAY;
     }
 
-    final int oldSize = array.length;
-    return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
+    return array.length == newSize ? array : Arrays.copyOf(array, newSize);
+  }
+  @Contract(pure=true)
+  public static double @NotNull [] realloc(double @NotNull [] array, int newSize) {
+    if (newSize == 0) {
+      return EMPTY_DOUBLE_ARRAY;
+    }
+
+    return array.length == newSize ? array : Arrays.copyOf(array, newSize);
   }
 
   @Contract(pure=true)
-  public static boolean @NotNull [] realloc(boolean @NotNull [] array, final int newSize) {
+  public static boolean @NotNull [] realloc(boolean @NotNull [] array, int newSize) {
     if (newSize == 0) {
       return ArrayUtilRt.EMPTY_BOOLEAN_ARRAY;
     }
 
-    final int oldSize = array.length;
-    return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
+    return array.length == newSize ? array : Arrays.copyOf(array, newSize);
   }
 
   @Contract(pure=true)
-  public static short @NotNull [] realloc(short @NotNull [] array, final int newSize) {
+  public static short @NotNull [] realloc(short @NotNull [] array, int newSize) {
     if (newSize == 0) {
       return ArrayUtilRt.EMPTY_SHORT_ARRAY;
     }
 
-    final int oldSize = array.length;
-    return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
+    return array.length == newSize ? array : Arrays.copyOf(array, newSize);
   }
 
   @Contract(pure=true)
@@ -71,23 +77,21 @@ public final class ArrayUtil {
       return EMPTY_LONG_ARRAY;
     }
 
-    final int oldSize = array.length;
-    return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
+    return array.length == newSize ? array : Arrays.copyOf(array, newSize);
   }
 
   @Contract(pure=true)
-  public static int @NotNull [] realloc(int @NotNull [] array, final int newSize) {
+  public static int @NotNull [] realloc(int @NotNull [] array, int newSize) {
     if (newSize == 0) {
-      return ArrayUtilRt.EMPTY_INT_ARRAY;
+      return EMPTY_INT_ARRAY;
     }
 
-    final int oldSize = array.length;
-    return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
+    return array.length == newSize ? array : Arrays.copyOf(array, newSize);
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] realloc(T @NotNull [] array, final int newSize, @NotNull ArrayFactory<? extends T> factory) {
-    final int oldSize = array.length;
+  public static <T> T @NotNull [] realloc(T @NotNull [] array, int newSize, @NotNull ArrayFactory<? extends T> factory) {
+    int oldSize = array.length;
     if (oldSize == newSize) {
       return array;
     }
@@ -131,6 +135,22 @@ public final class ArrayUtil {
     System.arraycopy(array, index, result, index+1, array.length - index);
     return result;
   }
+  @Contract(pure=true)
+  public static long @NotNull [] insert(long @NotNull [] array, int index, long value) {
+    long[] result = new long[array.length + 1];
+    System.arraycopy(array, 0, result, 0, index);
+    result[index] = value;
+    System.arraycopy(array, index, result, index+1, array.length - index);
+    return result;
+  }
+  @Contract(pure=true)
+  public static char @NotNull [] insert(char @NotNull [] array, int index, char value) {
+    char[] result = new char[array.length + 1];
+    System.arraycopy(array, 0, result, 0, index);
+    result[index] = value;
+    System.arraycopy(array, index, result, index+1, array.length - index);
+    return result;
+  }
 
   @Contract(pure=true)
   public static byte @NotNull [] append(byte @NotNull [] array, byte value) {
@@ -146,12 +166,12 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static char @NotNull [] realloc(char @NotNull [] array, final int newSize) {
+  public static char @NotNull [] realloc(char @NotNull [] array, int newSize) {
     if (newSize == 0) {
       return ArrayUtilRt.EMPTY_CHAR_ARRAY;
     }
 
-    final int oldSize = array.length;
+    int oldSize = array.length;
     return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
   }
 
@@ -193,9 +213,9 @@ public final class ArrayUtil {
       return a1;
     }
 
-    final Class<T> class1 = getComponentType(a1);
-    final Class<T> class2 = getComponentType(a2);
-    final Class<T> aClass = class1.isAssignableFrom(class2) ? class1 : class2;
+    Class<T> class1 = getComponentType(a1);
+    Class<T> class2 = getComponentType(a2);
+    Class<T> aClass = class1.isAssignableFrom(class2) ? class1 : class2;
 
     T[] result = newArray(aClass, a1.length + a2.length);
     System.arraycopy(a1, 0, result, 0, a1.length);
@@ -279,12 +299,12 @@ public final class ArrayUtil {
   @Contract(pure=true)
   public static <T> T @NotNull [] mergeArrayAndCollection(T @NotNull [] array,
                                                           @NotNull Collection<? extends T> collection,
-                                                          final @NotNull ArrayFactory<? extends T> factory) {
+                                                          @NotNull ArrayFactory<? extends T> factory) {
     if (collection.isEmpty()) {
       return array;
     }
 
-    final T[] array2;
+    T[] array2;
     try {
       T[] a = factory.create(collection.size());
       array2 = collection.toArray(a);
@@ -297,7 +317,7 @@ public final class ArrayUtil {
       return array2;
     }
 
-    final T[] result = factory.create(array.length + collection.size());
+    T[] result = factory.create(array.length + collection.size());
     System.arraycopy(array, 0, result, 0, array.length);
     System.arraycopy(array2, 0, result, array.length, array2.length);
     return result;
@@ -312,12 +332,12 @@ public final class ArrayUtil {
    * @return new array
    */
   @Contract(pure=true)
-  public static <T> T @NotNull [] append(final T @NotNull [] src, final @Nullable T element) {
+  public static <T> T @NotNull [] append(T @NotNull [] src, @Nullable T element) {
     return append(src, element, getComponentType(src));
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] prepend(final T element, final T @NotNull [] array) {
+  public static <T> T @NotNull [] prepend(T element, T @NotNull [] array) {
     return prepend(element, array, getComponentType(array));
   }
 
@@ -331,7 +351,7 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] prepend(final T element, final T @NotNull [] src, @NotNull ArrayFactory<? extends T> factory) {
+  public static <T> T @NotNull [] prepend(T element, T @NotNull [] src, @NotNull ArrayFactory<? extends T> factory) {
     int length = src.length;
     T[] result = factory.create(length + 1);
     System.arraycopy(src, 0, result, 1, length);
@@ -342,14 +362,14 @@ public final class ArrayUtil {
   @Contract(pure=true)
   public static byte @NotNull [] prepend(byte element, byte @NotNull [] array) {
     int length = array.length;
-    final byte[] result = new byte[length + 1];
+    byte[] result = new byte[length + 1];
     result[0] = element;
     System.arraycopy(array, 0, result, 1, length);
     return result;
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] append(final T @NotNull [] src, final T element, @NotNull ArrayFactory<? extends T> factory) {
+  public static <T> T @NotNull [] append(T @NotNull [] src, T element, @NotNull ArrayFactory<? extends T> factory) {
     int length = src.length;
     T[] result = factory.create(length + 1);
     System.arraycopy(src, 0, result, 0, length);
@@ -358,7 +378,7 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] append(T @NotNull [] src, final @Nullable T element, @NotNull Class<T> componentType) {
+  public static <T> T @NotNull [] append(T @NotNull [] src, @Nullable T element, @NotNull Class<T> componentType) {
     int length = src.length;
     T[] result = newArray(componentType, length + 1);
     System.arraycopy(src, 0, result, 0, length);
@@ -374,7 +394,7 @@ public final class ArrayUtil {
    * @return modified array.
    */
   @Contract(pure=true)
-  public static <T> T @NotNull [] remove(final T @NotNull [] src, int idx) {
+  public static <T> T @NotNull [] remove(T @NotNull [] src, int idx) {
     int length = src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
@@ -392,7 +412,7 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] remove(final T @NotNull [] src, int idx, @NotNull ArrayFactory<? extends T> factory) {
+  public static <T> T @NotNull [] remove(T @NotNull [] src, int idx, @NotNull ArrayFactory<? extends T> factory) {
     int length = src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
@@ -404,21 +424,21 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] remove(final T @NotNull [] src, T element) {
+  public static <T> T @NotNull [] remove(T @NotNull [] src, T element) {
     int index = ArrayUtilRt.find(src, element);
     return index == -1 ? src : remove(src, index);
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] remove(final T @NotNull [] src, T element, @NotNull ArrayFactory<? extends T> factory) {
-    final int idx = find(src, element);
+  public static <T> T @NotNull [] remove(T @NotNull [] src, T element, @NotNull ArrayFactory<? extends T> factory) {
+    int idx = find(src, element);
     if (idx == -1) return src;
 
     return remove(src, idx, factory);
   }
 
   @Contract(pure=true)
-  public static int @NotNull [] remove(final int @NotNull [] src, int idx) {
+  public static int @NotNull [] remove(int @NotNull [] src, int idx) {
     int length = src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
@@ -429,7 +449,7 @@ public final class ArrayUtil {
     return result;
   }
   @Contract(pure=true)
-  public static short @NotNull [] remove(final short @NotNull [] src, int idx) {
+  public static short @NotNull [] remove(short @NotNull [] src, int idx) {
     int length = src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
@@ -446,7 +466,7 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int find(final T @NotNull [] src, final T obj) {
+  public static <T> int find(T @NotNull [] src, T obj) {
     return ArrayUtilRt.find(src, obj);
   }
 
@@ -605,37 +625,37 @@ public final class ArrayUtil {
   }
 
   public static <T> void swap(T @NotNull [] array, int i1, int i2) {
-    final T t = array[i1];
+    T t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
 
   public static void swap(int @NotNull [] array, int i1, int i2) {
-    final int t = array[i1];
+    int t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
 
   public static void swap(boolean @NotNull [] array, int i1, int i2) {
-    final boolean t = array[i1];
+    boolean t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
 
   public static void swap(char @NotNull [] array, int i1, int i2) {
-    final char t = array[i1];
+    char t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
 
   public static <T> void rotateLeft(T @NotNull [] array, int i1, int i2) {
-    final T t = array[i1];
+    T t = array[i1];
     System.arraycopy(array, i1 + 1, array, i1, i2 - i1);
     array[i2] = t;
   }
 
   public static <T> void rotateRight(T @NotNull [] array, int i1, int i2) {
-    final T t = array[i2];
+    T t = array[i2];
     System.arraycopy(array, i1, array, i1 + 1, i2 - i1);
     array[i1] = t;
   }
@@ -692,9 +712,9 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(final T @NotNull [] src, final @Nullable T obj) {
+  public static <T> int lastIndexOf(T @NotNull [] src, @Nullable T obj) {
     for (int i = src.length - 1; i >= 0; i--) {
-      final T o = src[i];
+      T o = src[i];
       if (o == null) {
         if (obj == null) {
           return i;
@@ -710,9 +730,9 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static int lastIndexOf(final int @NotNull [] src, final int obj) {
+  public static int lastIndexOf(int @NotNull [] src, int obj) {
     for (int i = src.length - 1; i >= 0; i--) {
-      final int o = src[i];
+      int o = src[i];
       if (o == obj) {
         return i;
       }
@@ -721,9 +741,9 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static int lastIndexOfNot(final int @NotNull [] src, final int obj) {
+  public static int lastIndexOfNot(int @NotNull [] src, int obj) {
     for (int i = src.length - 1; i >= 0; i--) {
-      final int o = src[i];
+      int o = src[i];
       if (o != obj) {
         return i;
       }
@@ -732,9 +752,9 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(final T @NotNull [] src, final T obj, @NotNull BiPredicate<? super T, ? super T> predicate) {
+  public static <T> int lastIndexOf(T @NotNull [] src, T obj, @NotNull BiPredicate<? super T, ? super T> predicate) {
     for (int i = src.length - 1; i >= 0; i--) {
-      final T o = src[i];
+      T o = src[i];
       if (predicate.test(obj, o)) {
         return i;
       }
@@ -743,9 +763,9 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull List<? extends T> src, final T obj, @NotNull BiPredicate<? super T, ? super T> comparator) {
+  public static <T> int lastIndexOf(@NotNull List<? extends T> src, T obj, @NotNull BiPredicate<? super T, ? super T> comparator) {
     for (int i = src.size() - 1; i >= 0; i--) {
-      final T o = src.get(i);
+      T o = src.get(i);
       if (comparator.test(obj, o)) {
         return i;
       }
@@ -755,7 +775,7 @@ public final class ArrayUtil {
 
   @SafeVarargs
   @Contract(pure=true)
-  public static <T> boolean contains(final @Nullable T o, T @NotNull ... objects) {
+  public static <T> boolean contains(@Nullable T o, T @NotNull ... objects) {
     return indexOf(objects, o) >= 0;
   }
 
@@ -815,7 +835,7 @@ public final class ArrayUtil {
     return ArrayUtilRt.toStringArray(collection);
   }
 
-  public static <T> void copy(final @NotNull Collection<? extends T> src, final T @NotNull [] dst, final int dstOffset) {
+  public static <T> void copy(@NotNull Collection<? extends T> src, T @NotNull [] dst, int dstOffset) {
     int i = dstOffset;
     for (T t : src) {
       dst[i++] = t;
@@ -825,19 +845,19 @@ public final class ArrayUtil {
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static <T> T @Nullable [] copyOf(T @Nullable [] original) {
     if (original == null) return null;
-    return Arrays.copyOf(original, original.length);
+    return original.clone();
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static boolean @Nullable [] copyOf(boolean @Nullable [] original) {
     if (original == null) return null;
-    return original.length == 0 ? ArrayUtilRt.EMPTY_BOOLEAN_ARRAY : Arrays.copyOf(original, original.length);
+    return original.length == 0 ? ArrayUtilRt.EMPTY_BOOLEAN_ARRAY : original.clone();
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static int @Nullable [] copyOf(int @Nullable [] original) {
     if (original == null) return null;
-    return original.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : Arrays.copyOf(original, original.length);
+    return original.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : original.clone();
   }
 
   @Contract(pure = true)

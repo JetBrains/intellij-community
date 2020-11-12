@@ -56,8 +56,7 @@ final class Reindexer {
   }
 
   private static int[] createSorted(int[] ints1) {
-    int[] sorted1 = new int[ints1.length];
-    System.arraycopy(ints1, 0, sorted1, 0, ints1.length);
+    int[] sorted1 = ints1.clone();
     Arrays.sort(sorted1);
     return sorted1;
   }

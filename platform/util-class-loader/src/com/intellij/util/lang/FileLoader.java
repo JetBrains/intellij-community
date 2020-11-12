@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -146,8 +147,7 @@ final class FileLoader extends Loader {
       nextEntry = new DirEntry(nameHash, name.substring(prevIndex, nameEnd));
       DirEntry[] newChildrenDirectories;
       if (directories != null) {
-        newChildrenDirectories = new DirEntry[directories.length + 1];
-        System.arraycopy(directories, 0, newChildrenDirectories, 0, directories.length);
+        newChildrenDirectories = Arrays.copyOf(directories, directories.length + 1);
         newChildrenDirectories[directories.length] = nextEntry;
       }
       else {

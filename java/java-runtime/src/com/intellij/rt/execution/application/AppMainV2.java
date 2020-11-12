@@ -9,6 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -84,8 +85,7 @@ public final class AppMainV2 {
     }
 
     String mainClass = args[0];
-    String[] params = new String[args.length - 1];
-    System.arraycopy(args, 1, params, 0, args.length - 1);
+    String[] params = Arrays.copyOfRange(args, 1, args.length);
 
     Class<?> appClass = Class.forName(mainClass);
     Method m;

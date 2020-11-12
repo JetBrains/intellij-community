@@ -902,9 +902,7 @@ public final class PsiClassImplUtil {
     }
 
     if (resolvedCount < referenceCount) {
-      PsiClass[] shorter = new PsiClass[resolvedCount];
-      System.arraycopy(resolved, 0, shorter, 0, resolvedCount);
-      resolved = shorter;
+      resolved = ArrayUtil.realloc(resolved, resolvedCount,PsiClass.ARRAY_FACTORY);
     }
 
     return resolved;

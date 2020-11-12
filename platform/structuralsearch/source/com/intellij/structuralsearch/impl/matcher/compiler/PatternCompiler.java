@@ -288,8 +288,7 @@ public final class PatternCompiler {
           if (result == Boolean.FALSE) {
             return finalElements;
           }
-          alternativeVariant = new String[prefixSequence.length];
-          System.arraycopy(prefixSequence, 0, alternativeVariant, 0, prefixSequence.length);
+          alternativeVariant = prefixSequence.clone();
         }
       }
     }

@@ -1033,8 +1033,7 @@ public final class ExpectedTypesProvider {
 
       final PsiExpression[] leftArgs;
       if (index <= args.length - 1) {
-        leftArgs = new PsiExpression[index];
-        System.arraycopy(args, 0, leftArgs, 0, index);
+        leftArgs = Arrays.copyOf(args, index);
         if (forCompletion) {
           args[index] = null;
         }

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -51,8 +52,7 @@ public abstract class BundleBase {
                                            int unassignedParams,
                                            Object @NotNull ... params) {
     if (unassignedParams <= 0) throw new IllegalArgumentException();
-    Object[] newParams = new Object[params.length + unassignedParams];
-    System.arraycopy(params, 0, newParams, 0, params.length);
+    Object[] newParams = Arrays.copyOf(params, params.length + unassignedParams);
     @NonNls String prefix = "#$$$TemplateParameter$$$#";
     @NonNls String suffix = "#$$$/TemplateParameter$$$#";
     for (int i = 0; i < unassignedParams; i++) {

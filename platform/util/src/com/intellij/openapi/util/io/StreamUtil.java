@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public final class StreamUtil {
   private StreamUtil() { }
@@ -72,9 +73,7 @@ public final class StreamUtil {
     }
 
     if (dst == buffer.length) return buffer;
-    char[] result = new char[dst];
-    System.arraycopy(buffer, 0, result, 0, result.length);
-    return result;
+    return Arrays.copyOf(buffer, dst);
   }
 
   private static char[] readChars(Reader reader) throws IOException {
