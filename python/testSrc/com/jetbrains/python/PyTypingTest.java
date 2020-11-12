@@ -1474,6 +1474,9 @@ public class PyTypingTest extends PyTestCase {
 
     doTestNoInjectedText("from typing import Literal, TypeAlias\n" +
                          "MyType: TypeAlias = Literal[42, \"f<caret>oo\", True]\n");
+
+    doTestNoInjectedText("import typing\n" +
+                         "a: typing.Literal[\"f<caret>oo\"]\n");
   }
 
   // PY-41847
