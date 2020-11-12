@@ -129,10 +129,10 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       patchJavaCommandLineParams((JavaCommandLine)state, env);
 
       ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
-      return executeJavaState(state, env, proxy, false, true);
+      return executeJavaState(state, env, proxy);
     }
     else {
-      return executeJavaState(state, env, null, true, false);
+      return executeJavaState(state, env, null);
     }
   }
 
@@ -163,7 +163,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
         ((JavaCommandLineState)state).prepareTargetToCommandExecution(env, () -> {
           RunContentDescriptor descriptor = null;
           try {
-            descriptor = executeJavaState(state, env, proxy, !((JavaCommandLineState)state).shouldAddJavaProgramRunnerActions(), true);
+            descriptor = executeJavaState(state, env, proxy);
           }
           catch (ExecutionException e) {
             LOG.warn(e);
@@ -174,18 +174,16 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
         return promise;
       }
 
-      return Promises.resolvedPromise(executeJavaState(state, env, proxy, false, true));
+      return Promises.resolvedPromise(executeJavaState(state, env, proxy));
     }
     else {
-      return Promises.resolvedPromise(executeJavaState(state, env, null, true, false));
+      return Promises.resolvedPromise(executeJavaState(state, env, null));
     }
   }
 
   private @Nullable RunContentDescriptor executeJavaState(@NotNull RunProfileState state,
                                                           @NotNull ExecutionEnvironment env,
-                                                          @Nullable ProcessProxy proxy,
-                                                          boolean addDefaultActions,
-                                                          boolean isJavaCommandLineInActions) throws ExecutionException {
+                                                          @Nullable ProcessProxy proxy) throws ExecutionException {
     ExecutionResult executionResult = state.execute(env.getExecutor(), this);
     if (proxy != null) {
       ProcessHandler handler = executionResult != null ? executionResult.getProcessHandler() : null;
@@ -209,8 +207,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
-    if (addDefaultActions) {
-      addDefaultActions(contentBuilder, executionResult, isJavaCommandLineInActions);
+    if (!(state instanceof JavaCommandLineState) || ((JavaCommandLineState)state).shouldAddJavaProgramRunnerActions()) {
+      addDefaultActions(contentBuilder, executionResult, state instanceof JavaCommandLine);
     }
     return contentBuilder.showRunContent(env.getContentToReuse());
   }
