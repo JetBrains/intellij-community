@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
@@ -241,6 +242,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   private fun createProductIcon(): JComponent {
     val menu = JPopupMenu()
+    MnemonicHelper.init(menu)
 
     val ic = object : JLabel() {
       override fun getIcon(): Icon {
