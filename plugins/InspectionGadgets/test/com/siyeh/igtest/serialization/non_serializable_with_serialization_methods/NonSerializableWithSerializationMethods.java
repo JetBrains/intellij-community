@@ -19,11 +19,17 @@ public class <warning descr="Non-serializable class 'NonSerializableWithSerializ
     }
 }
 
-record <warning descr="Non-serializable class 'R' defines 'readObject()' and 'writeObject()'">R</warning>() {
+record <warning descr="Non-serializable record 'R' defines 'readObject()' and 'writeObject()'">R</warning>() {
 
     private void readObject(java.io.ObjectInputStream str) {
     }
 
     private void writeObject(java.io.ObjectOutputStream str) {
     }
+}
+interface <warning descr="Non-serializable interface 'I' defines 'readObject()' and 'writeObject()'">I</warning> {
+
+  void readObject(java.io.ObjectInputStream str);
+
+  void writeObject(java.io.ObjectOutputStream str);
 }
