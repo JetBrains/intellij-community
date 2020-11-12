@@ -198,12 +198,9 @@ public final class PyCallExpressionHelper {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
 
     final var results =
-      PyUtil.filterTopPriorityElements(
-        forEveryScopeTakeOverloadsOtherwiseImplementations(
-          Arrays.asList(subscription.getReference(resolveContext).multiResolve(false)),
-          ResolveResult::getElement,
-          context
-        )
+      forEveryScopeTakeOverloadsOtherwiseImplementations(
+        Arrays.asList(subscription.getReference(resolveContext).multiResolve(false)),
+        context
       );
 
     return selectCallableTypes(results, context);
@@ -232,12 +229,9 @@ public final class PyCallExpressionHelper {
         final var classType = (PyClassType)type;
 
         final var implicitlyInvokedMethods =
-          PyUtil.filterTopPriorityElements(
-            forEveryScopeTakeOverloadsOtherwiseImplementations(
-              resolveImplicitlyInvokedMethods(classType, call, resolveContext),
-              RatedResolveResult::getElement,
-              context
-            )
+          forEveryScopeTakeOverloadsOtherwiseImplementations(
+            resolveImplicitlyInvokedMethods(classType, call, resolveContext),
+            context
           );
 
         if (implicitlyInvokedMethods.isEmpty()) {
@@ -276,12 +270,7 @@ public final class PyCallExpressionHelper {
         final ResolveResultList resolveResults = new ResolveResultList();
         PyResolveUtil.addImplicitResolveResults(referencedName, resolveResults, qualifiedCallee);
 
-        return selectCallableTypes(
-          PyUtil.filterTopPriorityElements(
-            forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, ResolveResult::getElement, context)
-          ),
-          context
-        );
+        return selectCallableTypes(forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, context), context);
       }
     }
 
@@ -1097,6 +1086,14 @@ public final class PyCallExpressionHelper {
     return new ArgumentMappingResults(mappedParameters, unmappedParameters, unmappedArguments,
                                       parametersMappedToVariadicPositionalArguments, parametersMappedToVariadicKeywordArguments,
                                       tupleMappedParameters);
+  }
+
+  @NotNull
+  private static List<PsiElement> forEveryScopeTakeOverloadsOtherwiseImplementations(@NotNull List<? extends ResolveResult> results,
+                                                                                     @NotNull TypeEvalContext context) {
+    return PyUtil.filterTopPriorityElements(
+      forEveryScopeTakeOverloadsOtherwiseImplementations(results, ResolveResult::getElement, context)
+    );
   }
 
   @NotNull
