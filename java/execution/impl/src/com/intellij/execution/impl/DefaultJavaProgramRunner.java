@@ -152,20 +152,15 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    ProcessProxy proxy;
     if (state instanceof JavaCommandLine) {
       patchJavaCommandLineParams((JavaCommandLine)state, env);
-      proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
-    }
-    else {
-      proxy = null;
     }
 
     AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
     state.prepareTargetToCommandExecution(env, () -> {
       RunContentDescriptor descriptor = null;
       try {
-        descriptor = executeJavaState(state, env, proxy);
+        descriptor = executeJavaState(state, env, null);
       }
       catch (Throwable e) {
         LOG.warn("Failed to execute java run configuration async", e);
