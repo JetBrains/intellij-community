@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
+import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBLabel
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
+import javax.swing.event.AncestorEvent
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 
@@ -75,6 +77,9 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val keymapProperty = propertyGraph.graphProperty { keymapManager.activeKeymap }
   private val colorBlindnessProperty = propertyGraph.graphProperty { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
   private val adjustColorsProperty = propertyGraph.graphProperty { settings.colorBlindness != null }
+
+  private var keymapComboBox: CellBuilder<ComboBox<Keymap>>? = null
+  private var colorThemeComboBox: CellBuilder<ComboBox<LafManager.LafReference>>? = null
 
   init {
     lafProperty.afterChange({
@@ -160,14 +165,14 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         fullRow {
-          val theme = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
+          colorThemeComboBox = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
           val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"),
                                       syncThemeProperty).withLargeLeftGap().apply {
             component.isOpaque = false
             component.isVisible = laf.autodetectSupported
           }
 
-          theme.enableIf(syncCheckBox.selected.not())
+          colorThemeComboBox!!.enableIf(syncCheckBox.selected.not())
           component(laf.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
         }
       }.largeGapAfter()
@@ -188,12 +193,11 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(KeyMapBundle.message("keymap.display.name"))
         fullRow {
-          comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty)
+          keymapComboBox = comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty)
           component(focusableLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
             //select Plugins tab and search for keymap
             WelcomeScreenService.getInstance().selectTabByType(PluginsTabFactory::class.java)
             WelcomeScreenService.getInstance().pluginManagerConfigurable?.enableSearch("/tag: keymap")?.run()
-
           }).withLargeLeftGap()
         }
       }
@@ -209,6 +213,24 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
       .withBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground())
+      .apply {this.addAncestorListener(object: AncestorListenerAdapter() {
+        override fun ancestorAdded(event: AncestorEvent?) {
+          super.ancestorAdded(event)
+          onShown()
+        }
+      })}
+  }
+
+  private fun onShown() {
+    keymapComboBox?.component?.apply {
+      val comboBoxModel = this.model as DefaultComboBoxModel
+      comboBoxModel.removeAllElements()
+      comboBoxModel.addAll(getKeymaps())
+      comboBoxModel.selectedItem = keymapProperty.get()
+    }
+    colorThemeComboBox?.component?.apply {
+      this.model = laf.lafComboBoxModel
+    }
   }
 
   private fun Row.createColorBlindnessSettingBlock() {
