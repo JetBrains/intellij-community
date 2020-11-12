@@ -3,6 +3,7 @@ package com.intellij.psi.augment;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
@@ -35,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class PsiAugmentProvider {
   private static final Logger LOG = Logger.getInstance(PsiAugmentProvider.class);
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
+  private static final @NotNull ExtensionPoint<PsiAugmentProvider> EP = EP_NAME.getPoint();
   @SuppressWarnings("rawtypes")
   private /* non-static */ final Key<CachedValue<Map<Class, List>>> myCacheKey = Key.create(getClass().getName());
 
@@ -231,7 +233,7 @@ public abstract class PsiAugmentProvider {
 
   private static void forEach(Project project, Processor<? super PsiAugmentProvider> processor) {
     boolean dumb = DumbService.isDumb(project);
-    for (PsiAugmentProvider provider : EP_NAME.getExtensionList()) {
+    for (PsiAugmentProvider provider : EP.getExtensionList()) {
       if (!dumb || DumbService.isDumbAware(provider)) {
         try {
           boolean goOn = processor.process(provider);
