@@ -1546,32 +1546,38 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     DebuggerManagerThreadImpl.assertIsManagerThread();
     qName = reformatArrayName(qName);
-    ReferenceType refType = null;
     VirtualMachineProxyImpl virtualMachine = getVirtualMachineProxy();
     ClassType classClassType = (ClassType)ContainerUtil.getFirstItem(virtualMachine.classesByName(CommonClassNames.JAVA_LANG_CLASS));
-    if (classClassType != null) {
-      final Method forNameMethod;
-      List<Value> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
-      args.add(virtualMachine.mirrorOf(qName));
-      if (classLoader != null) {
-        //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
-        forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
-        args.add(virtualMachine.mirrorOf(true));
-        args.add(classLoader);
-      }
-      else {
-        //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
-        forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
-      }
-      Value classReference = invokeMethod(evaluationContext, classClassType, forNameMethod, args, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
-      if (classReference instanceof ClassObjectReference) {
-        refType = ((ClassObjectReference)classReference).reflectedType();
-        if (classLoader instanceof ClassLoaderReferenceImpl) {
-          ((ClassLoaderReferenceImpl)classLoader).addVisible(refType);
-        }
-      }
+    if (classClassType == null) {
+      LOG.error("Unable to find loaded class " + CommonClassNames.JAVA_LANG_CLASS);
+      return null;
     }
-    return refType;
+    final Method forNameMethod;
+    List<Value> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
+    args.add(virtualMachine.mirrorOf(qName));
+    if (classLoader != null) {
+      //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
+      forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
+      args.add(virtualMachine.mirrorOf(true));
+      args.add(classLoader);
+    }
+    else {
+      //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
+      forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
+    }
+    if (forNameMethod == null) {
+      LOG.error("Unable to find forName method in " + classClassType);
+      return null;
+    }
+    Value classReference = invokeMethod(evaluationContext, classClassType, forNameMethod, args, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
+    if (classReference instanceof ClassObjectReference) {
+      ReferenceType refType = ((ClassObjectReference)classReference).reflectedType();
+      if (classLoader instanceof ClassLoaderReferenceImpl) {
+        ((ClassLoaderReferenceImpl)classLoader).addVisible(refType);
+      }
+      return refType;
+    }
+    return null;
   }
 
   public void logThreads() {
