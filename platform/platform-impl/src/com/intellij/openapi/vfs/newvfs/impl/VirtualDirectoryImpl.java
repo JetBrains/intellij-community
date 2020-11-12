@@ -307,7 +307,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private void refreshCaseSensitivity(@NotNull String childName) {
-    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEvent(this, childName);
+    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(this, childName);
     if (caseSensitivityEvent != null) {
       RefreshQueue.getInstance().processSingleEvent(caseSensitivityEvent);
     }
