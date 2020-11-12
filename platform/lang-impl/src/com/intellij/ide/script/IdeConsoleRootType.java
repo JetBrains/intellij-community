@@ -2,7 +2,7 @@
 package com.intellij.ide.script;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -22,7 +22,7 @@ import javax.swing.*;
  */
 public class IdeConsoleRootType extends com.intellij.execution.console.IdeConsoleRootType  {
   IdeConsoleRootType() {
-    super("ide", ApplicationNamesInfo.getInstance().getProductName() + " Consoles");
+    super("ide", LangBundle.message("root.type.ide.consoles"));
   }
 
   @NotNull
