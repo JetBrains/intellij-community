@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
 import java.awt.Color
 import java.awt.Dimension
@@ -62,9 +63,9 @@ class UISettings {
   val lessonLinkColor = JBColor(Color(17, 96, 166), Color(104, 159, 220))
   val shortcutTextColor = JBColor(Color(12, 12, 12), Color(200, 200, 200))
   val separatorColor = JBColor(Color(204, 204, 204), Color(149, 149, 149))
-  val shortcutBackgroundColor = JBColor(Color(218, 226, 237), Color(39, 43, 46))
-  val passedColor = JBColor(Color(105, 105, 105), Color(103, 103, 103))
-  val backgroundColor = Color(245, 245, 245)
+  val shortcutBackgroundColor = JBColor(Color(0xE6EEF7), Color(39, 43, 46))
+  val passedColor = JBColor(Color(200, 200, 200), Color(103, 103, 103))
+  val backgroundColor = UIUtil.getTreeBackground()
   val descriptionColor = Color(128, 128, 128)
   val completedColor = JBColor(Color(50, 100, 50), Color(100, 150, 100))
   var questionColor = lessonActiveColor

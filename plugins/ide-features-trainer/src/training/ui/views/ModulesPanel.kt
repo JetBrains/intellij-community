@@ -48,7 +48,7 @@ class ModulesPanel(private val learnToolWindow: LearnToolWindow?) : JPanel() {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
     isFocusable = false
     isOpaque = true
-    background = background
+    background = UISettings.instance.backgroundColor
 
     //Obligatory block
     setupFontStyles()
@@ -97,7 +97,7 @@ class ModulesPanel(private val learnToolWindow: LearnToolWindow?) : JPanel() {
         name = "modulesPanel"
         layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
         border = UISettings.instance.eastBorder
-        isOpaque = false
+        isOpaque = true
         isFocusable = false
       }
 
@@ -252,13 +252,6 @@ class ModulesPanel(private val learnToolWindow: LearnToolWindow?) : JPanel() {
         }
       }
     }
-  }
-
-  override fun getBackground(): Color {
-    return if (!UIUtil.isUnderDarcula())
-      UISettings.instance.backgroundColor
-    else
-      UIUtil.getPanelBackground()
   }
 
   companion object {
