@@ -141,11 +141,4 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   public boolean shouldAddJavaProgramRunnerActions() {
     return true;
   }
-
-  public void prepareTargetToCommandExecution(ExecutionEnvironment env, Runnable runOnSuccessOnAWT) throws ExecutionException {
-    ExecutionManager executionManager = ExecutionManager.getInstance(env.getProject());
-    executionManager.executePreparationTasks(env, this).onSuccess((Object o) -> {
-      ApplicationManager.getApplication().invokeLater(runOnSuccessOnAWT);
-    });
-  }
 }

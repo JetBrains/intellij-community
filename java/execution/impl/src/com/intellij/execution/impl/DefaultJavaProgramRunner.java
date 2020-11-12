@@ -15,6 +15,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.*;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
@@ -54,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -102,11 +102,12 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
 
     ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
     RunProfile runProfile = environment.getRunProfile();
-    if ((runProfile instanceof TargetEnvironmentAwareRunProfile) &&
+    if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
         Experiments.getInstance().isFeatureEnabled("run.targets") &&
+        currentState instanceof TargetEnvironmentAwareRunProfileState &&
         ((TargetEnvironmentAwareRunProfile)runProfile).getDefaultTargetName() != null) {
       executionManager.startRunProfileWithPromise(environment, currentState, (ignored) -> {
-        return doExecuteAsync(currentState, environment);
+        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)currentState, environment);
       });
     }
     else {
@@ -124,16 +125,12 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
 
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-
+    ProcessProxy proxy = null;
     if (state instanceof JavaCommandLine) {
       patchJavaCommandLineParams((JavaCommandLine)state, env);
-
-      ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
-      return executeJavaState(state, env, proxy);
+      proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
     }
-    else {
-      return executeJavaState(state, env, null);
-    }
+    return executeJavaState(state, env, proxy);
   }
 
   private void patchJavaCommandLineParams(@NotNull JavaCommandLine state, @NotNull ExecutionEnvironment env)
@@ -150,35 +147,33 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
   }
 
   @NotNull
-  protected Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env)
+  protected Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
+                                                                   @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
+    ProcessProxy proxy;
     if (state instanceof JavaCommandLine) {
       patchJavaCommandLineParams((JavaCommandLine)state, env);
-
-      ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
-      if (state instanceof JavaCommandLineState) {
-        AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
-        ((JavaCommandLineState)state).prepareTargetToCommandExecution(env, () -> {
-          RunContentDescriptor descriptor = null;
-          try {
-            descriptor = executeJavaState(state, env, proxy);
-          }
-          catch (Throwable e) {
-            LOG.warn("Failed to execute java run configuration async", e);
-            promise.setError(e.getLocalizedMessage());
-          }
-          promise.setResult(descriptor);
-        });
-        return promise;
-      }
-
-      return Promises.resolvedPromise(executeJavaState(state, env, proxy));
+      proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
     }
     else {
-      return Promises.resolvedPromise(executeJavaState(state, env, null));
+      proxy = null;
     }
+
+    AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
+    state.prepareTargetToCommandExecution(env, () -> {
+      RunContentDescriptor descriptor = null;
+      try {
+        descriptor = executeJavaState(state, env, proxy);
+      }
+      catch (Throwable e) {
+        LOG.warn("Failed to execute java run configuration async", e);
+        promise.setError(e.getLocalizedMessage());
+      }
+      promise.setResult(descriptor);
+    });
+    return promise;
   }
 
   private @Nullable RunContentDescriptor executeJavaState(@NotNull RunProfileState state,
