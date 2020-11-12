@@ -465,10 +465,10 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
         if (lesson.passed) {
           val point = jLabel.location
           if (!SystemInfo.isMac) {
-            FeaturesTrainerIcons.Checkmark.paintIcon(this, g, point.x, point.y + 1)
+            FeaturesTrainerIcons.Img.Checkmark.paintIcon(this, g, point.x, point.y + 1)
           }
           else {
-            FeaturesTrainerIcons.Checkmark.paintIcon(this, g, point.x, point.y + 2)
+            FeaturesTrainerIcons.Img.Checkmark.paintIcon(this, g, point.x, point.y + 2)
           }
         }
       }

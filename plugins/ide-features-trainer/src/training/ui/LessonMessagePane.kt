@@ -382,7 +382,7 @@ class LessonMessagePane : JTextPane() {
         if (startOffset != 0) startOffset++
         try {
           val rectangle = modelToView(startOffset)
-          val checkmark = if (useNewLearningUi) FeaturesTrainerIcons.GreenCheckmark else FeaturesTrainerIcons.Checkmark
+          val checkmark = if (useNewLearningUi) FeaturesTrainerIcons.Img.GreenCheckmark else FeaturesTrainerIcons.Img.Checkmark
           if (SystemInfo.isMac) {
             checkmark.paintIcon(this, g, rectangle.x - UISettings.instance.checkIndent, rectangle.y + JBUI.scale(1))
           }

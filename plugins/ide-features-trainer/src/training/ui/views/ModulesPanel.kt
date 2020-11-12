@@ -244,10 +244,10 @@ class ModulesPanel(private val learnToolWindow: LearnToolWindow?) : JPanel() {
           val basePoint = this.locationOnScreen
           val y = point.y + 1 - basePoint.y
           if (!SystemInfo.isMac) {
-            FeaturesTrainerIcons.Checkmark.paintIcon(this, g, UISettings.instance.westInset, y + 4)
+            FeaturesTrainerIcons.Img.Checkmark.paintIcon(this, g, UISettings.instance.westInset, y + 4)
           }
           else {
-            FeaturesTrainerIcons.Checkmark.paintIcon(this, g, UISettings.instance.westInset, y + 2)
+            FeaturesTrainerIcons.Img.Checkmark.paintIcon(this, g, UISettings.instance.westInset, y + 2)
           }
         }
       }

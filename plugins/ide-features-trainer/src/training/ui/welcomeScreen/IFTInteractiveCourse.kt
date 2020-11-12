@@ -13,7 +13,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColors
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import icons.FeaturesTrainerIcons.PluginIcon
+import icons.FeaturesTrainerIcons.Img.PluginIcon
 import training.actions.OpenLessonAction
 import training.actions.StartLearnAction
 import training.learn.CourseManager

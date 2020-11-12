@@ -18,7 +18,7 @@ import javax.swing.JComponent
 
 class StartLearnAction : AnAction(
   LearnBundle.message("learn.WelcomeScreen.StartLearn.text", ApplicationNamesInfo.getInstance().fullProductName),
-  LearnBundle.message("learn.WelcomeScreen.StartLearn.description"), FeaturesTrainerIcons.FeatureTrainer) {
+  LearnBundle.message("learn.WelcomeScreen.StartLearn.description"), FeaturesTrainerIcons.Img.FeatureTrainer) {
 
   override fun actionPerformed(e: AnActionEvent) {
     if (LangManager.getInstance().isLangUndefined()) {
