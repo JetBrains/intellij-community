@@ -7,6 +7,7 @@ import circlet.client.api.mc.MCMessage
 import circlet.code.api.*
 import circlet.completion.mentions.MentionConverter
 import circlet.m2.channel.M2ChannelVm
+import circlet.platform.client.property
 import circlet.platform.client.resolve
 import circlet.platform.client.resolveAll
 import circlet.principals.asUser
@@ -17,10 +18,10 @@ import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.space.chat.model.api.SpaceChatItem
-import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.chat.ui.message.MessageTitleComponent
 import com.intellij.space.chat.ui.thread.createThreadComponent
 import com.intellij.space.components.SpaceWorkspaceComponent
@@ -40,6 +41,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR
+import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
@@ -51,8 +53,11 @@ import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import org.jetbrains.annotations.Nls
 import runtime.Ui
+import runtime.reactive.Property
 import runtime.reactive.awaitLoaded
+import runtime.reactive.map
 import java.awt.*
+import java.awt.event.ActionListener
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -75,11 +80,12 @@ internal class SpaceChatItemComponentFactory(
       when (val details = item.details) {
         is CodeDiscussionAddedFeedEvent -> {
           val discussion = details.codeDiscussion.resolve()
+          val resolved = lifetime.map(details.codeDiscussion.property()) { it.resolved }
           val thread = item.thread!!
-          createDiff(project, discussion, thread) ?: createUnsupportedMessageTypePanel(item.link)
+          createDiff(project, discussion, resolved, thread) ?: createUnsupportedMessageTypePanel(item.link)
         }
         is M2TextItemContent -> {
-          val messagePanel = createSimpleMessagePanel(item)
+          val messagePanel = createSimpleMessageComponent(item)
           val thread = item.thread
           if (thread == null) {
             messagePanel
@@ -96,23 +102,23 @@ internal class SpaceChatItemComponentFactory(
         is ReviewRevisionsChangedEvent -> {
           val review = details.review?.resolve()
           if (review == null) {
-            EventMessagePanel(createSimpleMessagePanel(item))
+            EventMessagePanel(createSimpleMessageComponent(item))
           }
           else {
             details.createComponent(review)
           }
         }
-        is ReviewCompletionStateChangedEvent -> EventMessagePanel(createSimpleMessagePanel(item))
+        is ReviewCompletionStateChangedEvent -> EventMessagePanel(createSimpleMessageComponent(item))
         is ReviewerChangedEvent -> {
           val user = details.uid.resolve().link(server)
           val text = when (details.changeType) {
             ReviewerChangedType.Joined -> SpaceBundle.message("chat.reviewer.added", user)
             ReviewerChangedType.Left -> SpaceBundle.message("chat.reviewer.removed", user)
           }
-          EventMessagePanel(createSimpleMessagePanel(text))
+          EventMessagePanel(createSimpleMessageComponent(text))
         }
         is MergeRequestMergedEvent -> EventMessagePanel(
-          createSimpleMessagePanel(
+          createSimpleMessageComponent(
             HtmlChunk.raw(
               SpaceBundle.message(
                 "chat.review.merged",
@@ -123,14 +129,14 @@ internal class SpaceChatItemComponentFactory(
           )
         )
         is MergeRequestBranchDeletedEvent -> EventMessagePanel(
-          createSimpleMessagePanel(
+          createSimpleMessageComponent(
             HtmlChunk.raw(
               SpaceBundle.message("chat.review.deleted.branch", HtmlChunk.text(details.branch).bold()) // NON-NLS
             ).wrapWith(html()).toString()
           )
         )
         is ReviewTitleChangedEvent -> EventMessagePanel(
-          createSimpleMessagePanel(
+          createSimpleMessageComponent(
             HtmlChunk.raw(
               SpaceBundle.message(
                 "chat.review.title.changed",
@@ -140,7 +146,7 @@ internal class SpaceChatItemComponentFactory(
             ).wrapWith(html()).toString()
           )
         )
-        is MCMessage -> EventMessagePanel(createSimpleMessagePanel(item.text))
+        is MCMessage -> EventMessagePanel(createSimpleMessageComponent(item.text))
         else -> createUnsupportedMessageTypePanel(item.link)
       }
     return Item(
@@ -158,7 +164,7 @@ internal class SpaceChatItemComponentFactory(
       ReviewRevisionsChangedType.Removed -> SpaceBundle.message("chat.commits.removed.message", commitsCount)
     }
 
-    val message = createSimpleMessagePanel(text)
+    val message = createSimpleMessageComponent(text)
 
     val content = JPanel(VerticalLayout(JBUI.scale(5))).apply {
       isOpaque = false
@@ -237,9 +243,15 @@ internal class SpaceChatItemComponentFactory(
   private fun createDiff(
     project: Project,
     discussion: CodeDiscussionRecord,
+    resolved: Property<Boolean>,
     thread: M2ChannelVm
   ): JComponent? {
-    val fileNameComponent = JBUI.Panels.simplePanel(createFileNameComponent(discussion.anchor.filename!!)).apply {
+    val collapseButton = InlineIconButton(AllIcons.General.CollapseComponent, AllIcons.General.CollapseComponentHover)
+    val expandButton = InlineIconButton(AllIcons.General.ExpandComponent, AllIcons.General.ExpandComponentHover)
+
+    val fileNameComponent = JBUI.Panels.simplePanel(
+      createFileNameComponent(discussion.anchor.filename!!, collapseButton, expandButton, resolved)
+    ).apply {
       isOpaque = false
       border = JBUI.Borders.empty(8)
     }
@@ -260,17 +272,18 @@ internal class SpaceChatItemComponentFactory(
       add(fileNameComponent)
       add(diffEditorComponent, VerticalLayout.FILL_HORIZONTAL)
     }
+    val reviewCommentComponent = createSimpleMessageComponent("")
+
     val panel = JPanel(VerticalLayout(UI.scale(4))).apply {
       isOpaque = false
       add(snapshotComponent, VerticalLayout.FILL_HORIZONTAL)
+      add(reviewCommentComponent, VerticalLayout.FILL_HORIZONTAL)
     }
-    // TODO: don't subscribe on comment in factory
+
     thread.mvms.forEach(lifetime) {
       val comment = it.messages.first()
-      if (panel.componentCount == 2) {
-        panel.remove(1)
-      }
-      panel.add(createSimpleMessagePanel(comment.convertToChatItem(comment.getLink(server))))
+      reviewCommentComponent.setBody(processItemText(comment.message.text))
+      reviewCommentComponent.repaint()
     }
     val threadComponent = createThreadComponent(project, lifetime, thread, withFirst = false)
 
@@ -278,13 +291,31 @@ internal class SpaceChatItemComponentFactory(
       isOpaque = false
       add(panel, VerticalLayout.FILL_HORIZONTAL)
       add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
+      addDiscussionExpandCollapseHandling(
+        this,
+        listOf(threadComponent, reviewCommentComponent, diffEditorComponent),
+        collapseButton,
+        expandButton,
+        resolved
+      )
     }
   }
 
-  private fun createFileNameComponent(filePath: String): JComponent {
+  private fun createFileNameComponent(
+    filePath: String,
+    collapseButton: InlineIconButton,
+    expandButton: InlineIconButton,
+    resolved: Property<Boolean>
+  ): JComponent {
     val name = PathUtil.getFileName(filePath)
     val parentPath = PathUtil.getParentPath(filePath)
     val nameLabel = JBLabel(name, null, SwingConstants.LEFT).setCopyable(true)
+
+    val resolvedLabel = JBLabel(SpaceBundle.message("chat.message.resolved.text"), UIUtil.ComponentStyle.SMALL).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      background = UIUtil.getPanelBackground()
+      isOpaque = true
+    }
 
     return NonOpaquePanel(HorizontalLayout(JBUI.scale(5))).apply {
       add(nameLabel)
@@ -295,14 +326,59 @@ internal class SpaceChatItemComponentFactory(
           setCopyable(true)
         })
       }
+      add(resolvedLabel)
+      add(collapseButton)
+      add(expandButton)
+
+      resolved.forEach(lifetime) {
+        resolvedLabel.isVisible = it
+        revalidate()
+        repaint()
+      }
     }
   }
 
-  private fun createSimpleMessagePanel(message: SpaceChatItem) = createSimpleMessagePanel(message.text)
+  private fun createSimpleMessageComponent(message: SpaceChatItem): HtmlEditorPane = createSimpleMessageComponent(message.text)
 
-  private fun createSimpleMessagePanel(@Nls text: String) = HtmlEditorPane().apply {
-    setBody(MentionConverter.html(text, server)) // NON-NLS
+  private fun createSimpleMessageComponent(@Nls text: String): HtmlEditorPane = HtmlEditorPane().apply {
+    setBody(processItemText(text))
   }
+
+  @NlsSafe
+  private fun processItemText(@NlsSafe text: String) = MentionConverter.html(text, server)
+
+  // TODO: Extract it to code-review module
+  private fun addDiscussionExpandCollapseHandling(
+    parentComponent: JComponent,
+    componentsToHide: Collection<JComponent>,
+    collapseButton: InlineIconButton,
+    expandButton: InlineIconButton,
+    resolved: Property<Boolean>
+  ) {
+    val collapseModel = SingleValueModelImpl(true)
+    collapseButton.actionListener = ActionListener { collapseModel.value = true }
+    expandButton.actionListener = ActionListener { collapseModel.value = false }
+
+    resolved.forEach(lifetime) {
+      collapseModel.value = it
+    }
+
+    fun stateUpdated(collapsed: Boolean) {
+      collapseButton.isVisible = resolved.value && !collapsed
+      expandButton.isVisible = resolved.value && collapsed
+
+      val areComponentsVisible = !resolved.value || !collapsed
+      componentsToHide.forEach { it.isVisible = areComponentsVisible }
+      parentComponent.revalidate()
+      parentComponent.repaint()
+    }
+
+    collapseModel.addValueUpdatedListener {
+      stateUpdated(it)
+    }
+    stateUpdated(true)
+  }
+
 
   private class EventMessagePanel(content: JComponent) : BorderLayoutPanel() {
     private val lineColor = Color(22, 125, 255, 51)
