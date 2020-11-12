@@ -38,7 +38,6 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
       "intellij.java.compiler.antTasks",
       "intellij.platform.testFramework"
     ]
-    productLayout.compatiblePluginsToIgnore.add("intellij.python.conda")
   }
 
   @Override
