@@ -56,7 +56,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private PsiClassStub<?> myResult;
   private PsiModifierListStub myModList;
   private PsiRecordHeaderStub myHeaderStub;
-  private Map<TypeInfo, ClsTypeAnnotationBuilder> myAnnoBuilders;
+  private Map<TypeInfo, ClsTypeAnnotationCollector> myAnnoBuilders;
   private ClassInfo myClassInfo;
 
   public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement<?> parent, int access, String shortName) {
@@ -259,14 +259,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (myAnnoBuilders == null) {
       myAnnoBuilders = new HashMap<>();
     }
-    return myAnnoBuilders.computeIfAbsent(info, typeInfo -> new ClsTypeAnnotationBuilder(typeInfo, myFirstPassData))
+    return myAnnoBuilders.computeIfAbsent(info, typeInfo -> new ClsTypeAnnotationCollector(typeInfo, myFirstPassData))
       .collect(typePath, desc);
   }
 
   @Override
   public void visitEnd() {
     if (myAnnoBuilders != null) {
-      myAnnoBuilders.values().forEach(ClsTypeAnnotationBuilder::build);
+      myAnnoBuilders.values().forEach(ClsTypeAnnotationCollector::install);
     }
     myClassInfo.typeParameters.fillInTypeParameterList(myResult);
   }
@@ -512,7 +512,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final class FieldAnnotationCollectingVisitor extends FieldVisitor {
     private final @NotNull PsiModifierListStub myModList;
     private final @NotNull FirstPassData myFirstPassData;
-    private final @NotNull ClsTypeAnnotationBuilder myAnnoBuilder;
+    private final @NotNull ClsTypeAnnotationCollector myAnnoBuilder;
 
     private FieldAnnotationCollectingVisitor(@NotNull PsiFieldStub stub,
                                              @NotNull PsiModifierListStub modList,
@@ -520,7 +520,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       super(Opcodes.API_VERSION);
       myModList = modList;
       myFirstPassData = firstPassData;
-      myAnnoBuilder = new ClsTypeAnnotationBuilder(stub.getType(false), firstPassData);
+      myAnnoBuilder = new ClsTypeAnnotationCollector(stub.getType(false), firstPassData);
     }
 
     @Override
@@ -537,14 +537,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     @Override
     public void visitEnd() {
-      myAnnoBuilder.build();
+      myAnnoBuilder.install();
     }
   }
 
   private static final class RecordComponentAnnotationCollectingVisitor extends RecordComponentVisitor {
     private final @NotNull PsiModifierListStub myModList;
     private final @NotNull FirstPassData myFirstPassData;
-    private final @NotNull ClsTypeAnnotationBuilder myAnnoBuilder;
+    private final @NotNull ClsTypeAnnotationCollector myAnnoBuilder;
 
     private RecordComponentAnnotationCollectingVisitor(@NotNull PsiRecordComponentStub stub,
                                                        @NotNull PsiModifierListStub modList,
@@ -552,7 +552,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       super(Opcodes.API_VERSION);
       myModList = modList;
       myFirstPassData = firstPassData;
-      myAnnoBuilder = new ClsTypeAnnotationBuilder(stub.getType(false), firstPassData);
+      myAnnoBuilder = new ClsTypeAnnotationCollector(stub.getType(false), firstPassData);
     }
 
     @Override
@@ -569,7 +569,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     @Override
     public void visitEnd() {
-      myAnnoBuilder.build();
+      myAnnoBuilder.install();
     }
   }
 
@@ -585,7 +585,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private int myParamNameIndex;
     private int myUsedParamSize;
     private int myUsedParamCount;
-    private Map<TypeInfo, ClsTypeAnnotationBuilder> myAnnoBuilders;
+    private Map<TypeInfo, ClsTypeAnnotationCollector> myAnnoBuilders;
 
     private MethodAnnotationCollectingVisitor(PsiMethodStub owner,
                                               @NotNull MethodInfo methodInfo,
@@ -656,14 +656,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       if (myAnnoBuilders == null) {
         myAnnoBuilders = new HashMap<>();
       }
-      return myAnnoBuilders.computeIfAbsent(info, typeInfo -> new ClsTypeAnnotationBuilder(typeInfo, myFirstPassData))
+      return myAnnoBuilders.computeIfAbsent(info, typeInfo -> new ClsTypeAnnotationCollector(typeInfo, myFirstPassData))
         .collect(typePath, desc);
     }
 
     @Override
     public void visitEnd() {
       if (myAnnoBuilders != null) {
-        myAnnoBuilders.values().forEach(ClsTypeAnnotationBuilder::build);
+        myAnnoBuilders.values().forEach(ClsTypeAnnotationCollector::install);
       }
       myMethodInfo.typeParameters.fillInTypeParameterList(myOwner);
     }

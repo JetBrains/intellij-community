@@ -13,10 +13,10 @@ import org.jetbrains.org.objectweb.asm.TypePath;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
-class ClsTypeAnnotationBuilder extends TypeAnnotationContainer.Builder {
+class ClsTypeAnnotationCollector extends TypeAnnotationContainer.Collector {
   private final @NotNull FirstPassData myFirstPassData;
 
-  ClsTypeAnnotationBuilder(@NotNull TypeInfo info, @NotNull FirstPassData classInfo) {
+  ClsTypeAnnotationCollector(@NotNull TypeInfo info, @NotNull FirstPassData classInfo) {
     super(info);
     myFirstPassData = classInfo;
   }
@@ -53,7 +53,7 @@ class ClsTypeAnnotationBuilder extends TypeAnnotationContainer.Builder {
         return ArrayUtil.EMPTY_BYTE_ARRAY;
       }
       byte[] result = new byte[depth];
-      Arrays.fill(result, TypeAnnotationContainer.Builder.ENCLOSING_CLASS);
+      Arrays.fill(result, TypeAnnotationContainer.Collector.ENCLOSING_CLASS);
       return result;
     }
     ByteArrayOutputStream result = new ByteArrayOutputStream();
@@ -68,17 +68,17 @@ class ClsTypeAnnotationBuilder extends TypeAnnotationContainer.Builder {
         case TypePath.ARRAY_ELEMENT:
           if (arrayLevel <= 0 || atWildcard) return null;
           arrayLevel--;
-          result.write(TypeAnnotationContainer.Builder.ARRAY_ELEMENT);
+          result.write(TypeAnnotationContainer.Collector.ARRAY_ELEMENT);
           break;
         case TypePath.WILDCARD_BOUND:
           if (!atWildcard) return null;
           atWildcard = false;
-          result.write(TypeAnnotationContainer.Builder.WILDCARD_BOUND);
+          result.write(TypeAnnotationContainer.Collector.WILDCARD_BOUND);
           break;
         case TypePath.TYPE_ARGUMENT:
           if (atWildcard || arrayLevel > 0) return null;
           while (depth-- > 0) {
-            result.write(TypeAnnotationContainer.Builder.ENCLOSING_CLASS);
+            result.write(TypeAnnotationContainer.Collector.ENCLOSING_CLASS);
             typeText = PsiNameHelper.getOuterClassReference(typeText);
           }
           int argumentIndex = path.getStepArgument(i);
@@ -97,14 +97,14 @@ class ClsTypeAnnotationBuilder extends TypeAnnotationContainer.Builder {
           }
           qualifiedName = PsiNameHelper.getQualifiedClassName(typeText, false);
           depth = myFirstPassData.getInnerDepth(qualifiedName);
-          result.write(TypeAnnotationContainer.Builder.TYPE_ARGUMENT);
+          result.write(TypeAnnotationContainer.Collector.TYPE_ARGUMENT);
           result.write(argumentIndex);
           break;
       }
     }
     if (!atWildcard && arrayLevel == 0) {
       while (depth-- > 0) {
-        result.write(TypeAnnotationContainer.Builder.ENCLOSING_CLASS);
+        result.write(TypeAnnotationContainer.Collector.ENCLOSING_CLASS);
       }
     }
     return result.toByteArray();
