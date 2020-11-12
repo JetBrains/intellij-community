@@ -6,7 +6,6 @@ indent_style = space
 indent_size = 2
 ij_continuation_indent_size = 2
 max_line_length = 140
-charset = utf-8
 
 ij_any_else_on_new_line = true
 ij_any_catch_on_new_line = true
