@@ -543,8 +543,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Object selectedValue = myListModel.getElementAt(forIndex);
       if (!listStep.hasSubstep(selectedValue)) return;
 
-      PopupStep<?> step = listStep.onChosen(selectedValue, false);
-      showNextStepPopup(step, selectedValue);
+      PopupStep<?> step = listStep.onChosen(selectedValue, true);
+      if (step != PopupStep.FINAL_CHOICE) showNextStepPopup(step, selectedValue);
     }
   }
 
