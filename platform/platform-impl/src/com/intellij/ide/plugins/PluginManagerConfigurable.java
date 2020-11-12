@@ -1334,7 +1334,7 @@ public class PluginManagerConfigurable
   }
 
   @Nullable
-  public static synchronized String getSize(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized @NlsSafe String getSize(@NotNull IdeaPluginDescriptor plugin) {
     String size = null;
     if (plugin instanceof PluginNode) {
       size = ((PluginNode)plugin).getSize();

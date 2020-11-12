@@ -50,6 +50,7 @@ import static com.intellij.openapi.util.Pair.pair;
  * @author pti
  */
 public final class UpdateInfoDialog extends AbstractUpdateDialog {
+  private final Project myProject;
   private final UpdateChannel myUpdatedChannel;
   private final Collection<PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
@@ -59,13 +60,15 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final File myTestPatch;
   private final AbstractAction myWhatsNewAction;
 
-  public UpdateInfoDialog(@NotNull UpdateChannel channel,
-                   @NotNull BuildInfo newBuild,
-                   @Nullable UpdateChain patches,
-                   boolean enableLink,
-                   @Nullable Collection<PluginDownloader> updatedPlugins,
-                   @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
+  public UpdateInfoDialog(@Nullable Project project,
+                          @NotNull UpdateChannel channel,
+                          @NotNull BuildInfo newBuild,
+                          @Nullable UpdateChain patches,
+                          boolean enableLink,
+                          @Nullable Collection<PluginDownloader> updatedPlugins,
+                          @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
+    myProject = project;
     myUpdatedChannel = channel;
     myUpdatedPlugins = updatedPlugins;
     myNewBuild = newBuild;
@@ -85,6 +88,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   @SuppressWarnings("HardCodedStringLiteral")
   UpdateInfoDialog(@Nullable Project project, UpdateChannel channel, BuildInfo newBuild, UpdateChain patches, @Nullable File patchFile) {
     super(true);
+    myProject = project;
     myUpdatedChannel = channel;
     myUpdatedPlugins = null;
     myNewBuild = newBuild;
@@ -214,7 +218,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart() {
-    if (!ContainerUtil.isEmpty(myUpdatedPlugins) && !new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet()) {
+    if (!ContainerUtil.isEmpty(myUpdatedPlugins) && !new PluginUpdateDialog(myProject, myUpdatedPlugins, null).showAndGet()) {
       return;  // update cancelled
     }
     downloadPatchAndRestart(myNewBuild, myUpdatedChannel, myPatches, myTestPatch, myUpdatedPlugins, null);

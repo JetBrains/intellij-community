@@ -5,8 +5,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SettingsEntryPointAction;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,10 +22,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,6 +54,7 @@ public class PluginUpdateDialog extends DialogWrapper {
   private final PluginsGroupComponent myPluginsPanel;
   private final PluginsGroup myGroup = new PluginsGroup("");
   private final PluginDetailsPageComponent myDetailsPage;
+  private final JLabel myTotalLabel = new JLabel();
 
   private final JLabel myIgnoreAction;
 
@@ -91,7 +94,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     });
 
     //noinspection unchecked
-    myDetailsPage = new PluginDetailsPageComponent(myPluginModel, LinkListener.NULL, false);
+    myDetailsPage = new PluginDetailsPageComponent(myPluginModel, LinkListener.NULL, true);
     myDetailsPage.setOnlyUpdateMode();
 
     MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
@@ -111,6 +114,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     myPluginsPanel.addGroup(myGroup);
 
     setOKButtonText(IdeBundle.message("plugins.configurable.update.button"));
+    updateButtons();
     init();
 
     JRootPane rootPane = getPeer().getRootPane();
@@ -120,12 +124,26 @@ public class PluginUpdateDialog extends DialogWrapper {
   }
 
   private void updateButtons() {
+    long total = 0;
     int count = 0;
+
     for (ListPluginComponent plugin : myGroup.ui.plugins) {
       if (plugin.getChooseUpdateButton().isSelected()) {
         count++;
+        try {
+          total += Long.parseLong(((PluginNode)plugin.getPluginDescriptor()).getSize());
+        }
+        catch (NumberFormatException ignore) {
+        }
       }
     }
+
+    String text = null;
+    if (total > 0) {
+      text = IdeBundle.message("plugin.update.dialog.total.label", StringUtilRt.formatFileSize(total).toUpperCase(Locale.ENGLISH));
+    }
+
+    myTotalLabel.setText(text);
     getOKAction().setEnabled(count > 0);
   }
 
@@ -218,11 +236,9 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   @NotNull
   private ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor updateDescriptor) {
-    IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(updateDescriptor.getPluginId());
-    assert descriptor != null : updateDescriptor;
     //noinspection unchecked
-    ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, LinkListener.NULL, false);
-    component.setOnlyUpdateMode(updateDescriptor);
+    ListPluginComponent component = new ListPluginComponent(myPluginModel, updateDescriptor, LinkListener.NULL, true);
+    component.setOnlyUpdateMode();
     component.getChooseUpdateButton().addActionListener(e -> updateButtons());
     return component;
   }
@@ -242,7 +258,17 @@ public class PluginUpdateDialog extends DialogWrapper {
     myGroup.ui.panel.getParent().remove(myGroup.ui.panel);
     myGroup.ui.panel.setPreferredSize(new Dimension());
 
-    splitter.setFirstComponent(PluginManagerConfigurable.createScrollPane(myPluginsPanel, true));
+    JPanel leftPanel = new JPanel(new BorderLayout());
+    leftPanel.add(PluginManagerConfigurable.createScrollPane(myPluginsPanel, true));
+
+    OpaquePanel titlePanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
+    titlePanel.setBorder(JBUI.Borders.empty(6, 10));
+    leftPanel.add(titlePanel, BorderLayout.SOUTH);
+
+    myTotalLabel.setForeground(PluginsGroupComponent.SECTION_HEADER_FOREGROUND);
+    titlePanel.add(myTotalLabel);
+
+    splitter.setFirstComponent(leftPanel);
     splitter.setSecondComponent(myDetailsPage);
 
     return splitter;

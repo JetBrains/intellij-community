@@ -63,6 +63,7 @@ public class ListPluginComponent extends JPanel {
   private JCheckBox myEnableDisableButton;
   private JCheckBox myChooseUpdateButton;
   private JComponent myAlignButton;
+  private JPanel myMetricsPanel;
   private JLabel myRating;
   private JLabel myDownloads;
   private JLabel myVersion;
@@ -230,19 +231,19 @@ public class ListPluginComponent extends JPanel {
   }
 
   private void createMetricsPanel() {
-    JPanel panel = new NonOpaquePanel(new TextHorizontalLayout(JBUIScale.scale(7)));
-    panel.setBorder(JBUI.Borders.emptyTop(5));
-    myLayout.addLineComponent(panel);
+    myMetricsPanel = new NonOpaquePanel(new TextHorizontalLayout(JBUIScale.scale(7)));
+    myMetricsPanel.setBorder(JBUI.Borders.emptyTop(5));
+    myLayout.addLineComponent(myMetricsPanel);
 
     if (myMarketplace) {
       String downloads = PluginManagerConfigurable.getDownloads(myPlugin);
       if (downloads != null) {
-        myDownloads = createRatingLabel(panel, downloads, AllIcons.Plugins.Downloads);
+        myDownloads = createRatingLabel(myMetricsPanel, downloads, AllIcons.Plugins.Downloads);
       }
 
       String rating = PluginManagerConfigurable.getRating(myPlugin);
       if (rating != null) {
-        myRating = createRatingLabel(panel, rating, AllIcons.Plugins.Rating);
+        myRating = createRatingLabel(myMetricsPanel, rating, AllIcons.Plugins.Rating);
       }
     }
     else {
@@ -250,13 +251,13 @@ public class ListPluginComponent extends JPanel {
         !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : IdeBundle.message("plugin.status.bundled");
 
       if (!StringUtil.isEmptyOrSpaces(version)) {
-        myVersion = createRatingLabel(panel, version, null);
+        myVersion = createRatingLabel(myMetricsPanel, version, null);
       }
     }
 
     String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
     if (!StringUtil.isEmptyOrSpaces(vendor)) {
-      myVendor = createRatingLabel(panel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
+      myVendor = createRatingLabel(myMetricsPanel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
     }
   }
 
@@ -322,23 +323,38 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
-  public void setOnlyUpdateMode(@NotNull IdeaPluginDescriptor descriptor) {
+  public void setOnlyUpdateMode() {
     myOnlyUpdateMode = true;
 
-    if (myEnableDisableButton != null) {
-      myLayout.removeButtonComponent(myEnableDisableButton);
-      myEnableDisableButton = null;
-    }
-    if (myAlignButton != null) {
-      myLayout.removeButtonComponent(myAlignButton);
-      myAlignButton = null;
-    }
-
-    setUpdateDescriptor(descriptor);
     removeButtons(false);
 
     myLayout.setCheckBoxComponent(myChooseUpdateButton = new JCheckBox((String)null, true));
     myChooseUpdateButton.setOpaque(false);
+
+    IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(myPlugin.getPluginId());
+    if (descriptor != null) {
+      if (myDownloads != null) {
+        myMetricsPanel.remove(myDownloads);
+      }
+      if (myRating != null) {
+        myMetricsPanel.remove(myRating);
+      }
+      if (myVendor != null) {
+        myMetricsPanel.remove(myVendor);
+      }
+      if (myVersion != null) {
+        myMetricsPanel.remove(myVendor);
+      }
+
+      String version = PluginManagerConfigurable.getVersion(descriptor, myPlugin);
+      String size = PluginManagerConfigurable.getSize(myPlugin);
+      if (!StringUtil.isEmpty(size)) {
+        version += " | " + size;
+      }
+      myVersion = createRatingLabel(myMetricsPanel, null, version, null, null, false);
+    }
+
+    updateColors(EventHandler.SelectionType.NONE);
   }
 
   public JCheckBox getChooseUpdateButton() {
@@ -753,7 +769,7 @@ public class ListPluginComponent extends JPanel {
         }
       }
     }
-    else if (!restart && !update && !myOnlyUpdateMode) {
+    else if (!restart && !update) {
       DumbAwareAction action = keyCode == KeyEvent.VK_SPACE && event.getModifiersEx() == 0 ?
                                createEnableDisableAction(selection) :
                                keyCode == EventHandler.DELETE_CODE ?

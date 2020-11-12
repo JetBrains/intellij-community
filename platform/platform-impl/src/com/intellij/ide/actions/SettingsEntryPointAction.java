@@ -121,8 +121,8 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
         public void actionPerformed(@NotNull AnActionEvent e) {
           if (myPlatformUpdateInfo.getPatches() == null ||
               (!SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath())))) {
-            new UpdateInfoDialog(myPlatformUpdateInfo.getUpdatedChannel(), myPlatformUpdateInfo.getNewBuild(), null, true, null,
-                                 myIncompatiblePlugins).show();
+            new UpdateInfoDialog(e.getProject(), myPlatformUpdateInfo.getUpdatedChannel(), myPlatformUpdateInfo.getNewBuild(), null, true,
+                                 null, myIncompatiblePlugins).show();
           }
           else {
             CheckForUpdateResult platformUpdateInfo = myPlatformUpdateInfo;
