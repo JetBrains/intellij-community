@@ -412,7 +412,9 @@ class LessonMessagePane : JTextPane() {
           val color = g2d.color
           val fontSize = UISettings.instance.fontSize
 
-          g2d.color = UISettings.instance.shortcutBackgroundColor
+          val bg = UISettings.instance.shortcutBackgroundColor
+          val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
+          g2d.color = needColor
           val r2d: RoundRectangle2D = if (!SystemInfo.isMac)
             RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent + 1,
                                     rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),

@@ -59,6 +59,7 @@ class LearningItems : JPanel() {
 
   private fun createLessonItem(lesson: Lesson): JPanel {
     val result = JPanel()
+    result.isOpaque = false
     result.layout = HorizontalLayout(5)
     val checkmarkIconLabel = JLabel(if (lesson.passed) FeaturesTrainerIcons.Img.GreenCheckmark else EmptyIcon.ICON_16)
     result.add(JLabel(EmptyIcon.ICON_16))
@@ -83,12 +84,13 @@ class LearningItems : JPanel() {
 
   private fun createModuleItem(module: Module): JPanel {
     val modulePanel = JPanel()
-    modulePanel.isOpaque = true
+    modulePanel.isOpaque = false
     modulePanel.layout = VerticalLayout(5)
     modulePanel.background = Color(0, 0, 0, 0)
 
     val result = JPanel()
     result.isOpaque = true
+    result.background = UISettings.instance.backgroundColor
 
     result.toolTipText = module.description
 
@@ -98,6 +100,7 @@ class LearningItems : JPanel() {
 
     val expandPanel = JPanel().also {
       it.layout = VerticalLayout(5)
+      it.isOpaque = false
       it.background = Color(0, 0, 0, 0)
       val expandIcon = IconUtil.toSize(if (expanded.contains(module)) UIUtil.getTreeExpandedIcon() else UIUtil.getTreeCollapsedIcon(),
                                        JBUIScale.scale(16), JBUIScale.scale(16))
@@ -141,7 +144,7 @@ class LearningItems : JPanel() {
       }
 
       override fun mouseExited(e: MouseEvent) {
-        result.background = null
+        result.background = UISettings.instance.backgroundColor
         result.cursor = Cursor.getDefaultCursor()
         result.revalidate()
         result.repaint()
