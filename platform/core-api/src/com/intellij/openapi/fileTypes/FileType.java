@@ -22,7 +22,7 @@ import java.nio.charset.Charset;
  *
  * <p>Use {@link LanguageFileType} for files having {@link com.intellij.lang.Language} support.</p>
  *
- * <p>Use {@link WithForcedCharset} to force single encoding for all files with corresponding file type.
+ * <p>Use {@link CharsetHintSupplied} to force single encoding for all files with corresponding file type.
  * It helps to avoid excess content loading on charset detection.
  * </p>
  *
