@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.impl.SpaceChatReviewHeaderDetails
-import com.intellij.space.chat.ui.SpaceChatItemComponentFactory
 import com.intellij.space.chat.ui.SpaceChatPanel
 import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
@@ -28,6 +27,15 @@ internal class SpaceChatReviewHeaderComponent(
   lifetime: Lifetime,
   details: SpaceChatReviewHeaderDetails
 ) : JPanel() {
+  companion object {
+    private const val STATE_ICON_FACTOR: Double = 2.0 / 3
+
+    private const val STATE_ICON_GAP_FACTOR: Double = 0.5
+  }
+
+  private val stateIconSize: Int
+    get() = (SpaceChatPanel.getChatAvatarSize().get() * STATE_ICON_FACTOR).toInt()
+
   init {
     isOpaque = false
     layout = MigLayout(LC().gridGap("0", "0")
@@ -38,7 +46,7 @@ internal class SpaceChatReviewHeaderComponent(
 
     val reviewStateIconPanel = BorderLayoutPanel().apply {
       isOpaque = false
-      border = JBUI.Borders.emptyRight(SpaceChatItemComponentFactory.Item.AVATAR_GAP)
+      border = JBUI.Borders.emptyRight((stateIconSize * STATE_ICON_GAP_FACTOR).toInt())
     }
     val headerContent = HtmlEditorPane().apply {
       font = font.deriveFont((font.size * 1.5).toFloat())
@@ -65,7 +73,7 @@ internal class SpaceChatReviewHeaderComponent(
       CodeReviewState.Opened -> VcsCodeReviewIcons.PullRequestOpen
       CodeReviewState.Closed, CodeReviewState.Deleted -> VcsCodeReviewIcons.PullRequestClosed
     }
-    return JLabel(resizeIcon(icon, SpaceChatPanel.getChatAvatarSize().get()))
+    return JLabel(resizeIcon(icon, stateIconSize))
   }
 
   @Nls
