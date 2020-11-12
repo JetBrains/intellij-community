@@ -37,7 +37,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
       @NotNull
       @Override
       protected PsiTypeElement compute() {
-        return new ClsTypeElementImpl(ClsFieldImpl.this, getStub().getType(false));
+        return new ClsTypeElementImpl(ClsFieldImpl.this, getStub().getType());
       }
     };
     myInitializer = new VolatileNullableLazyValue<PsiExpression>() {

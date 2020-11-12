@@ -62,7 +62,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
 
   @Override
   @NotNull
-  public TypeInfo getReturnTypeText(boolean doResolve) {
+  public TypeInfo getReturnTypeText() {
     return myReturnType;
   }
 

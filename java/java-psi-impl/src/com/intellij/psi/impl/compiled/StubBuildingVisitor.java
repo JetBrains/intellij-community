@@ -520,7 +520,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       super(Opcodes.API_VERSION);
       myModList = modList;
       myFirstPassData = firstPassData;
-      myAnnoBuilder = new ClsTypeAnnotationCollector(stub.getType(false), firstPassData);
+      myAnnoBuilder = new ClsTypeAnnotationCollector(stub.getType(), firstPassData);
     }
 
     @Override
@@ -552,7 +552,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       super(Opcodes.API_VERSION);
       myModList = modList;
       myFirstPassData = firstPassData;
-      myAnnoBuilder = new ClsTypeAnnotationCollector(stub.getType(false), firstPassData);
+      myAnnoBuilder = new ClsTypeAnnotationCollector(stub.getType(), firstPassData);
     }
 
     @Override
@@ -632,12 +632,12 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       TypeReference ref = new TypeReference(typeRef);
       TypeInfo info = null;
       if (ref.getSort() == TypeReference.METHOD_RETURN) {
-        info = myOwner.getReturnTypeText(false);
+        info = myOwner.getReturnTypeText();
       }
       else if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER) {
         int parameterIndex = ref.getFormalParameterIndex();
         if (parameterIndex < myParamStubs.length) {
-          info = myParamStubs[parameterIndex].getType(false);
+          info = myParamStubs[parameterIndex].getType();
         }
       }
       else if (ref.getSort() == TypeReference.METHOD_TYPE_PARAMETER) {

@@ -26,7 +26,7 @@ public class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRecordCom
       @NotNull
       @Override
       protected PsiTypeElement compute() {
-        return new ClsTypeElementImpl(ClsRecordComponentImpl.this, getStub().getType(false));
+        return new ClsTypeElementImpl(ClsRecordComponentImpl.this, getStub().getType());
       }
     };
   }
