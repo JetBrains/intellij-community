@@ -115,7 +115,7 @@ public final class PyCallExpressionHelper {
           multiResolveCallee(call.getCallee(), resolveContext),
           RatedResolveResult::getElement,
           context
-        ).collect(Collectors.toList())
+        )
       );
 
     for (QualifiedRatedResolveResult resolveResult : results) {
@@ -130,7 +130,7 @@ public final class PyCallExpressionHelper {
         }
       }
 
-      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(call, resolveResult, resolveContext)) {
+      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(resolveResult, resolveContext)) {
         ContainerUtil.addIfNotNull(callableTypes, toCallableType(call, clarifiedResolveResult, context));
       }
     }
@@ -203,7 +203,7 @@ public final class PyCallExpressionHelper {
           Arrays.asList(subscription.getReference(resolveContext).multiResolve(false)),
           ResolveResult::getElement,
           context
-        ).collect(Collectors.toList())
+        )
       );
 
     return selectCallableTypes(ResolveResultList.getElements(results), context);
@@ -231,7 +231,12 @@ public final class PyCallExpressionHelper {
       if (type instanceof PyClassType) {
         final var classType = (PyClassType)type;
 
-        final var implicitlyInvokedMethods = resolveImplicitlyInvokedMethods(classType, call, resolveContext);
+        final var implicitlyInvokedMethods = forEveryScopeTakeOverloadsOtherwiseImplementations(
+          resolveImplicitlyInvokedMethods(classType, call, resolveContext),
+          Function.identity(),
+          context
+        );
+
         if (implicitlyInvokedMethods.isEmpty()) {
           result.add(classType);
         }
@@ -268,7 +273,10 @@ public final class PyCallExpressionHelper {
         final ResolveResultList resolveResults = new ResolveResultList();
         PyResolveUtil.addImplicitResolveResults(referencedName, resolveResults, qualifiedCallee);
 
-        return selectCallableTypes(ResolveResultList.getElements(resolveResults), context);
+        return selectCallableTypes(
+          forEveryScopeTakeOverloadsOtherwiseImplementations(ResolveResultList.getElements(resolveResults), Function.identity(), context),
+          context
+        );
       }
     }
 
@@ -303,8 +311,7 @@ public final class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull PyCallExpression call,
-                                                                   @NotNull QualifiedRatedResolveResult resolveResult,
+  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull QualifiedRatedResolveResult resolveResult,
                                                                    @NotNull PyResolveContext resolveContext) {
     final PsiElement resolved = resolveResult.getElement();
 
@@ -1080,11 +1087,11 @@ public final class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static <E> Stream<E> forEveryScopeTakeOverloadsOtherwiseImplementations(@NotNull Collection<E> elements,
-                                                                                  @NotNull Function<? super E, PsiElement> mapper,
-                                                                                  @NotNull TypeEvalContext context) {
+  private static <E> List<E> forEveryScopeTakeOverloadsOtherwiseImplementations(@NotNull List<E> elements,
+                                                                                @NotNull Function<? super E, PsiElement> mapper,
+                                                                                @NotNull TypeEvalContext context) {
     if (!containsOverloadsAndImplementations(elements, mapper, context)) {
-      return elements.stream();
+      return elements;
     }
 
     return StreamEx
@@ -1092,7 +1099,8 @@ public final class PyCallExpressionHelper {
       .groupingBy(element -> Optional.ofNullable(ScopeUtil.getScopeOwner(mapper.apply(element))), LinkedHashMap::new, Collectors.toList())
       .values()
       .stream()
-      .flatMap(oneScopeElements -> takeOverloadsOtherwiseImplementations(oneScopeElements, mapper, context));
+      .flatMap(oneScopeElements -> takeOverloadsOtherwiseImplementations(oneScopeElements, mapper, context))
+      .collect(Collectors.toList());
   }
 
   private static <E> boolean containsOverloadsAndImplementations(@NotNull Collection<E> elements,
