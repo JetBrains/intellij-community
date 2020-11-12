@@ -171,6 +171,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   private fun showChangeSignatureGotIt(editor: Editor, range: TextRange){
+    gotItBalloon?.hide(true)
     val disposable = Disposer.newDisposable()
     EditorUtil.disposeWithEditor(editor, disposable)
     val moveLeftShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_LEFT)
