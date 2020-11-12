@@ -606,7 +606,7 @@ public class HintManagerImpl extends HintManager {
     return getHintPosition(hint, editor, pos, pos, constraint);
   }
 
-  private static Point getHintPosition(@NotNull LightweightHint hint,
+  public static Point getHintPosition(@NotNull LightweightHint hint,
                                        @NotNull Editor editor,
                                        @NotNull VisualPosition pos1,
                                        @NotNull VisualPosition pos2,

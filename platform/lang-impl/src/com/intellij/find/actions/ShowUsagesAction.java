@@ -73,10 +73,7 @@ import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
@@ -1236,7 +1233,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       Runnable clearContinuation = () -> state.continuation = null;
       runWhenHidden(label, clearContinuation);
 
-      if (editor == null || editor.isDisposed() || !editor.getComponent().isShowing()) {
+      if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
         int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
         HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
       }
