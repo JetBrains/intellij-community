@@ -87,13 +87,13 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @NotNull
   @Override
-  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) {
+  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String name) {
     FSDir fsDir = convertDirectory(parent);
 
-    assert fsDir.findChild(file) == null : "File " + file + " already exists in " + parent.getPath();
-    fsDir.addChild(new FSFile(fsDir, file));
+    assert fsDir.findChild(name) == null : "File " + name + " already exists in " + parent.getPath();
+    fsDir.addChild(new FSFile(fsDir, name));
 
-    return new FakeVirtualFile(parent, file);
+    return new FakeVirtualFile(parent, name);
   }
 
   @Nullable
