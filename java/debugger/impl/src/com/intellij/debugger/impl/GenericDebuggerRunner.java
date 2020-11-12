@@ -17,8 +17,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.runners.JvmPatchableProgramRunner;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -60,11 +60,12 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
 
     ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
     RunProfile runProfile = environment.getRunProfile();
-    if ((runProfile instanceof TargetEnvironmentAwareRunProfile) &&
+    if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
         Experiments.getInstance().isFeatureEnabled("run.targets") &&
+        state instanceof TargetEnvironmentAwareRunProfileState &&
         ((TargetEnvironmentAwareRunProfile)runProfile).getDefaultTargetName() != null) {
       executionManager.startRunProfileWithPromise(environment, state, (ignored) -> {
-        return doExecuteAsync(state, environment);
+        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)state, environment);
       });
     }
     else {
@@ -81,21 +82,19 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
   }
 
   @NotNull
-  protected Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env)
+  protected Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
+                                                                   @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     AsyncPromise<@Nullable RunContentDescriptor> promise = new AsyncPromise<>();
-    ExecutionManager executionManager = ExecutionManager.getInstance(env.getProject());
-    executionManager.executePreparationTasks(env, state).onSuccess((Object o) -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        try {
-          promise.setResult(doExecute(state, env));
-        }
-        catch (Throwable e) {
-          LOG.warn("Failed to execute debug configuration async", e);
-          promise.setError(e.getLocalizedMessage());
-        }
-      });
+    state.prepareTargetToCommandExecution(env, () -> {
+      try {
+        promise.setResult(doExecute(state, env));
+      }
+      catch (Throwable e) {
+        LOG.warn("Failed to execute debug configuration async", e);
+        promise.setError(e.getLocalizedMessage());
+      }
     });
     return promise;
   }
