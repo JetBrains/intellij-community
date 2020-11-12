@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -20,14 +21,15 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 
 public class VcsLogTabsManager {
@@ -85,35 +87,27 @@ public class VcsLogTabsManager {
   @NotNull
   private MainVcsLogUi openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, @NotNull VcsLogManager.LogWindowKind kind,
                                   boolean focus, @Nullable VcsLogFilterCollection filters) {
-    VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory =
-      new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters), kind);
-
-    MainVcsLogUi ui;
     if (kind == VcsLogManager.LogWindowKind.EDITOR) {
-      ui = openLogEditorTab(myProject, manager, getFullName(tabId), factory, focus); //NON-NLS used for the file name, not displayed
-      ui.getFilterUi().addFilterListener(() -> {
-        VcsLogEditorUtilKt.updateTabName(myProject, ui);
-      });
+      DefaultVcsLogFile file = new DefaultVcsLogFile(getFullName(tabId), tabId, filters); //NON-NLS used for the file name, not displayed
+      FileEditor[] editors = FileEditorManager.getInstance(myProject).openFile(file, focus, true);
+      return Objects.requireNonNull(VcsLogEditorUtilKt.findVcsLogUi(editors, MainVcsLogUi.class));
     }
     else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
-      ui = VcsLogContentUtil.openLogTab(myProject, manager, TAB_GROUP_ID, u -> generateShortDisplayName(u), factory, focus);
+      VcsLogManager.VcsLogUiFactory<MainVcsLogUi> factory = getPersistentVcsLogUiFactory(manager, tabId, kind, filters);
+      MainVcsLogUi ui = VcsLogContentUtil.openLogTab(myProject, manager, TAB_GROUP_ID, u -> generateShortDisplayName(u), factory, focus);
       ui.getFilterUi().addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
+      return ui;
     }
-    else {
-      throw new UnsupportedOperationException("Only log in editor or tool window is supported");
-    }
-    return ui;
+    throw new UnsupportedOperationException("Only log in editor or tool window is supported");
   }
 
-  @NotNull
-  private static MainVcsLogUi openLogEditorTab(@NotNull Project project, @NotNull VcsLogManager manager,
-                                               @NotNull String fileName,
-                                               @NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory,
-                                               boolean focus) {
-    MainVcsLogUi ui = manager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR);
-    DefaultVcsLogFile file = new DefaultVcsLogFile(fileName, new VcsLogPanel(manager, ui));
-    FileEditorManager.getInstance(project).openFile(file, focus);
-    return ui;
+  @RequiresEdt
+  @ApiStatus.Internal
+  public VcsLogManager.VcsLogUiFactory<MainVcsLogUi> getPersistentVcsLogUiFactory(@NotNull VcsLogManager manager,
+                                                                                  @NotNull String tabId,
+                                                                                  @NotNull VcsLogManager.LogWindowKind kind,
+                                                                                  @Nullable VcsLogFilterCollection filters) {
+    return new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters), kind);
   }
 
   @NotNull
