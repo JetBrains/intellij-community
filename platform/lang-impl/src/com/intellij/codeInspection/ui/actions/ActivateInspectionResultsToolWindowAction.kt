@@ -37,13 +37,13 @@ class ActivateInspectionResultsToolWindowAction : ToolWindowEmptyStateAction(Too
       }
     }
     text.appendLine("")
-    text.appendLine(AllIcons.General.ContextHelp, InspectionsBundle.message("inspections.empty.state.help"), SimpleTextAttributes.LINK_ATTRIBUTES) {
+    text.appendLine(AllIcons.General.ContextHelp, InspectionsBundle.message("inspections.empty.state.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
       HelpManager.getInstance().invokeHelp("procedures.inspecting.running")
     }
   }
 
   private fun appendActionLink(text: StatusText, project: Project, actionId: String, @Nls actionText: String) {
-    text.appendText(actionText, SimpleTextAttributes.LINK_ATTRIBUTES) {
+    text.appendText(actionText, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
       val dataContext = FileEditorManager.getInstance(project).selectedEditor?.let { DataManager.getInstance().getDataContext(it.component) }
                         ?: SimpleDataContext.getProjectContext(project)
       val event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)
