@@ -60,7 +60,7 @@ class LearningItems : JPanel() {
   private fun createLessonItem(lesson: Lesson): JPanel {
     val result = JPanel()
     result.layout = HorizontalLayout(5)
-    val checkmarkIconLabel = JLabel(if (lesson.passed) FeaturesTrainerIcons.GreenCheckmark else EmptyIcon.ICON_16)
+    val checkmarkIconLabel = JLabel(if (lesson.passed) FeaturesTrainerIcons.Img.GreenCheckmark else EmptyIcon.ICON_16)
     result.add(JLabel(EmptyIcon.ICON_16))
     result.add(checkmarkIconLabel)
 

@@ -26,7 +26,7 @@ class UISettings {
   val westInset: Int by lazy { JBUI.scale(13) }
   val southInset: Int by lazy { JBUI.scale(32) }
   val eastInset: Int by lazy { JBUI.scale(32) }
-  val checkWidth: Int by lazy { FeaturesTrainerIcons.Checkmark.iconWidth }
+  val checkWidth: Int by lazy { FeaturesTrainerIcons.Img.Checkmark.iconWidth }
   val checkRightIndent: Int by lazy { 5 }
 
   //GAPS
