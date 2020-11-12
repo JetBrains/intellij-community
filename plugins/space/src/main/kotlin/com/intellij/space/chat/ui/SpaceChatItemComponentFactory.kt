@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.chat.ui.message.MessageTitleComponent
+import com.intellij.space.chat.ui.thread.createThreadComponent
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
@@ -36,7 +37,6 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR
@@ -45,7 +45,6 @@ import com.intellij.util.ui.codereview.ToggleableContainer
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
-import com.intellij.util.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
@@ -77,8 +76,7 @@ internal class SpaceChatItemComponentFactory(
         is CodeDiscussionAddedFeedEvent -> {
           val discussion = details.codeDiscussion.resolve()
           val thread = item.thread!!
-          createDiff(project, discussion, thread)
-            ?.withThread(lifetime, thread, withFirst = false) ?: createUnsupportedMessageTypePanel(item.link)
+          createDiff(project, discussion, thread) ?: createUnsupportedMessageTypePanel(item.link)
         }
         is M2TextItemContent -> {
           val messagePanel = createSimpleMessagePanel(item)
@@ -87,7 +85,12 @@ internal class SpaceChatItemComponentFactory(
             messagePanel
           }
           else {
-            messagePanel.withThread(lifetime, thread)
+            val threadComponent = createThreadComponent(project, lifetime, thread)
+            JPanel(VerticalLayout(0)).apply {
+              isOpaque = false
+              add(messagePanel, VerticalLayout.FILL_HORIZONTAL)
+              add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
+            }
           }
         }
         is ReviewRevisionsChangedEvent -> {
@@ -231,43 +234,6 @@ internal class SpaceChatItemComponentFactory(
     })
   }
 
-  private fun JComponent.withThread(lifetime: Lifetime, thread: M2ChannelVm, withFirst: Boolean = true): JComponent {
-    return JPanel(VerticalLayout(0)).also { panel ->
-      panel.isOpaque = false
-
-      val threadAvatarSize = JBValue.UIInteger("space.chat.thread.avatar.size", 20)
-      val avatarProvider = SpaceAvatarProvider(lifetime, panel, threadAvatarSize)
-
-      val itemsListModel = SpaceChatItemListModel()
-
-      // TODO: don't subscribe on thread changes in factory
-      thread.mvms.forEach(lifetime) { messageList ->
-        itemsListModel.messageListUpdated(
-          messageList.messages
-            .drop(if (withFirst) 0 else 1)
-            .map { it.convertToChatItem(it.getLink(server)) }
-        )
-      }
-
-      val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
-      val threadTimeline = TimelineThreadCommentsPanel(
-        itemsListModel,
-        commentComponentFactory = itemComponentFactory::createComponent,
-        offset = 0
-      ).apply {
-        border = JBUI.Borders.empty(10, 0)
-      }
-
-      val replyComponent = createReplyComponent(thread).apply {
-        border = JBUI.Borders.empty()
-      }
-
-      panel.add(this, VerticalLayout.FILL_HORIZONTAL)
-      panel.add(threadTimeline, VerticalLayout.FILL_HORIZONTAL)
-      panel.add(replyComponent, VerticalLayout.FILL_HORIZONTAL)
-    }
-  }
-
   private fun createDiff(
     project: Project,
     discussion: CodeDiscussionRecord,
@@ -306,7 +272,13 @@ internal class SpaceChatItemComponentFactory(
       }
       panel.add(createSimpleMessagePanel(comment.convertToChatItem(comment.getLink(server))))
     }
-    return panel
+    val threadComponent = createThreadComponent(project, lifetime, thread, withFirst = false)
+
+    return JPanel(VerticalLayout(0)).apply {
+      isOpaque = false
+      add(panel, VerticalLayout.FILL_HORIZONTAL)
+      add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
+    }
   }
 
   private fun createFileNameComponent(filePath: String): JComponent {
