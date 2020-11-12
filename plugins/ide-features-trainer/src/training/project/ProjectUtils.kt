@@ -57,7 +57,12 @@ object ProjectUtils {
         else {
           dest = canonicalPlace
         }
-        langSupport.installAndOpenLearningProject(dest, projectToClose, postInitCallback)
+        langSupport.installAndOpenLearningProject(dest, projectToClose) {
+          it.basePath?.let { path ->
+            copyLearnProjectIcon(File(path))
+          }
+          postInitCallback(it)
+        }
       }
       else {
         val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dest)
@@ -98,8 +103,6 @@ object ProjectUtils {
         error("Cannot create learning demo project. See LOG files for details.")
       }
     }
-    //copy learn project icon to .idea
-    copyLearnProjectIcon(targetDirectory.toFile())
     LangManager.getInstance().state.languageToProjectMap[langSupport.primaryLanguage] = targetDirectory.toAbsolutePath().toString()
   }
 
