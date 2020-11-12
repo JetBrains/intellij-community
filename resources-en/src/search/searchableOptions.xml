@@ -118,10 +118,9 @@
     <option name="tooltip" hit="Tooltip initial delay (ms):" />
     <option name="options" hit="UI Options" />
     <option name="ui" hit="UI Options" />
-    <option name="layout" hit="Widescreen tool window layout" />
-    <option name="tool" hit="Widescreen tool window layout" />
-    <option name="widescreen" hit="Widescreen tool window layout" />
-    <option name="window" hit="Widescreen tool window layout" />
+    <option name="layout" hit="Tool window layout:" />
+    <option name="tool" hit="Tool window layout:" />
+    <option name="window" hit="Tool window layout:" />
     <option name="options" hit="Window Options" />
     <option name="window" hit="Window Options" />
   </configurable>
