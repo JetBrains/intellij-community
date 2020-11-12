@@ -38,6 +38,19 @@ class EditorDiffPreviewFilesManager(private val project: Project) :
       state.openInNewWindow = value
     }
 
+  fun openFile(file: PreviewDiffVirtualFile,
+               focusEditor: Boolean,
+               openInNewWindow: Boolean,
+               shouldCloseFile: Boolean): Array<out FileEditor> {
+    val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
+    if (shouldCloseFile && editorManager.isFileOpen(file)) {
+      editorManager.closeFile(file)
+    }
+    shouldOpenInNewWindow = openInNewWindow
+
+    return openFile(file, focusEditor)
+  }
+
   fun openFile(file: PreviewDiffVirtualFile, focusEditor: Boolean): Array<out FileEditor> {
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
     if (editorManager.isFileOpen(file)) {

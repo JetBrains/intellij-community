@@ -374,6 +374,9 @@
     <action id="Vcs.Diff.IncludeOnlyChangedLinesIntoCommit" class="com.intellij.openapi.actionSystem.EmptyAction">
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Vcs.Diff.ExcludeChangedLinesFromCommit" anchor="after"/>
     </action>
+    <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
+    </action>
 
     <reference ref="Vcs.VcsClone">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
