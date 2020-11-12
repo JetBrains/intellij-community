@@ -1102,12 +1102,7 @@
       <searchConfiguration name="Logger should be a top-level declaration" uuid="03c8b094-627d-3aaa-8d8b-4a66542826cd" description="Creating a logger for each instance of a class isn't optimized.&#10;The idiomatic way to create a logger is using a top-level declaration." problemDescriptor="Logger should be a top-level declaration." text="class $Class$ { val $logger$ }" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Class" within="" contains="" />
-        <constraint name="logger" nameOfExprType="libraries\.klogging\.BaseLogger" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Logger should be a top-level declaration" uuid="03c8b094-627d-3aaa-8d8b-4a66542826cd" text="class $Class$ { val $logger$ }" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="Class" within="" contains="" />
-        <constraint name="logger" nameOfExprType="Logger" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
+        <constraint name="logger" nameOfExprType="Logger|libraries\.klogging\.BaseLogger" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="Manual TextRange.substring implementation" description="Reports code pattern like str.substring(range.getStartOffset(), range.getEndOffset()). This code could be replaced with range.substring(str)" problemDescriptor="TextRange.substring() could be used" text="$str$.substring($range$.getStartOffset(), $range$.getEndOffset())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$range$.substring($str$)">
         <constraint name="__context__" within="" contains="" />
