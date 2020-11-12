@@ -135,7 +135,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       @Override
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
         LocalChangeList oldList = (LocalChangeList)oldDefaultList;
-        if (automatic || oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) {
+        if (automatic || oldDefaultList == null || oldDefaultList.equals(newDefaultList)) {
           return;
         }
 
@@ -176,6 +176,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList, boolean silently) {
+    if (!silently && oldList.hasDefaultName()) return;
     synchronized (myDataLock) {
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("Schedule empty changelist deletion: %s, silently = %s", oldList.getName(), silently));
