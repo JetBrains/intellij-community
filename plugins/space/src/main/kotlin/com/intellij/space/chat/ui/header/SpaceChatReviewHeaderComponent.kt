@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.impl.SpaceChatReviewHeaderDetails
-import com.intellij.space.chat.ui.SpaceChatPanel
+import com.intellij.space.chat.ui.SpaceChatContentPanel
 import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.ColorUtil
@@ -34,7 +34,7 @@ internal class SpaceChatReviewHeaderComponent(
   }
 
   private val stateIconSize: Int
-    get() = (SpaceChatPanel.getChatAvatarSize().get() * STATE_ICON_FACTOR).toInt()
+    get() = (SpaceChatContentPanel.getChatAvatarSize().get() * STATE_ICON_FACTOR).toInt()
 
   init {
     isOpaque = false
