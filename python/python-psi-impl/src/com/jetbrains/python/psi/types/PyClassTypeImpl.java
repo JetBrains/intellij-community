@@ -351,21 +351,16 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     final var resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
     return StreamEx
-      .of(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(this, null, resolveContext))
-      .map(name -> getParametersOfMethod(name, context))
-      .findFirst(Objects::nonNull)
+      .of(PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(this, null, resolveContext)))
+      .select(PyCallable.class)
+      .map(callable -> callable.getParameters(context))
+      .findFirst()
       // If resolved parameters are empty, consider them as invalid and return null
       .filter(parameters -> !parameters.isEmpty())
       // Skip "self" for __init__/__call__ and "cls" for __new__
       .map(parameters -> ContainerUtil.subList(parameters, 1))
       .orElse(null);
   }
-
-  @Nullable
-  private static List<PyCallableParameter> getParametersOfMethod(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    return element instanceof PyCallable ? ((PyCallable)element).getParameters(context) : null;
-  }
-
 
   private static boolean isMethodType(@NotNull PyClassType type) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());

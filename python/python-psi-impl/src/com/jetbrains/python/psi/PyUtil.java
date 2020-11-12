@@ -544,6 +544,10 @@ public final class PyUtil {
     return ContainerUtil.filter(resolveResults, resolveResult -> getRate(resolveResult) >= maxRate);
   }
 
+  public static @NotNull <E extends ResolveResult> List<PsiElement> filterTopPriorityElements(@NotNull List<? extends E> resolveResults) {
+    return ContainerUtil.mapNotNull(filterTopPriorityResults(resolveResults), ResolveResult::getElement);
+  }
+
   private static int getMaxRate(@NotNull List<? extends ResolveResult> resolveResults) {
     return resolveResults
       .stream()
@@ -553,7 +557,7 @@ public final class PyUtil {
   }
 
   private static int getRate(@NotNull ResolveResult resolveResult) {
-    return resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
+    return resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : RatedResolveResult.RATE_NORMAL;
   }
 
   /**

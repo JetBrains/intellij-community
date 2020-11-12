@@ -13,7 +13,10 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyGotoDeclarationHandler
+import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
+import com.jetbrains.python.pyi.PyiUtil
 
 class PyNavigationTest : PyTestCase() {
 
@@ -127,6 +130,62 @@ class PyNavigationTest : PyTestCase() {
     )
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
     assertInstanceOf(target, PyClass::class.java)
+  }
+
+  fun testGotoDeclarationOnInitializationWithDunderInitOverloads() {
+    // go to the first overload
+
+    myFixture.configureByText(
+      "a.py",
+      "from typing import overload\n" +
+      "class A:\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: None) -> None:\n" +
+      "        pass\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: int) -> None:\n" +
+      "        pass\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: str) -> None:\n" +
+      "        pass\n" +
+      "<caret>A(\"abc\")"
+    )
+
+    val foo = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor) as PyFunction
+    assertEquals(PyNames.INIT, foo.name)
+
+    val context = TypeEvalContext.codeAnalysis(myFixture.project, myFixture.file)
+    PyiUtil
+      .getOverloads(foo, context)
+      .forEach { if (it !== foo) assertTrue(PyPsiUtils.isBefore(foo, it)) }
+  }
+
+  fun testGotoDeclarationOnInitializationWithDunderInitOverloadsAndImplementation() {
+    // go to the implementation
+
+    myFixture.configureByText(
+      "a.py",
+      "from typing import overload\n" +
+      "class A:\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: None) -> None:\n" +
+      "        pass\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: int) -> None:\n" +
+      "        pass\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: str) -> None:\n" +
+      "        pass\n" +
+      "    def __init__(self, value):\n" +
+      "        pass\n" +
+      "<caret>A(\"abc\")"
+    )
+
+    val foo = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor) as PyFunction
+    assertEquals(PyNames.INIT, foo.name)
+
+    val context = TypeEvalContext.codeAnalysis(myFixture.project, myFixture.file)
+    assertFalse(PyiUtil.isOverload(foo, context))
   }
 
   private fun doTestGotoDeclarationOrUsagesOutcome(expectedOutcome: GTDUOutcome, text: String) {

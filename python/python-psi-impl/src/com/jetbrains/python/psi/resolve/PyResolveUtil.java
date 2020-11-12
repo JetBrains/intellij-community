@@ -470,7 +470,7 @@ public final class PyResolveUtil {
         final var cls = type.getPyClass();
 
         final var constructor = ContainerUtil.find(
-          PyCallExpressionHelper.resolveImplicitlyInvokedMethods(type, call, resolveContext),
+          PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(type, call, resolveContext)),
           it -> it instanceof PyPossibleClassMember && ((PyPossibleClassMember)it).getContainingClass() == cls
         );
 
