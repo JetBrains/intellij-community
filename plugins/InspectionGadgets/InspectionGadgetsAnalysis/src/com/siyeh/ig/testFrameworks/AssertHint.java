@@ -2,7 +2,6 @@
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +80,11 @@ public final class AssertHint {
            null;
   }
 
-  public static @Nullable AssertHint createAssertEqualsLikeHintForCompletion(PsiExpression[] args, PsiMethod method, int index) {
+  public static @Nullable AssertHint createAssertEqualsLikeHintForCompletion(@Nullable PsiMethodCallExpression call,
+                                                                             @Nullable PsiExpression @NotNull [] args,
+                                                                             PsiMethod method,
+                                                                             int index) {
+    if (call == null) return null;
     String name = method.getName();
     if (args.length == 0) return null;
     int argCount = Math.max(index + 1, args.length);
@@ -91,8 +94,6 @@ public final class AssertHint {
     }
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (argCount != parameters.length) return null;
-    PsiMethodCallExpression call = ObjectUtils.tryCast(args[0].getParent().getParent(), PsiMethodCallExpression.class);
-    if (call == null) return null;
     if (argCount == 2) {
       return new AssertHint(0, false, null, method, call);
     }

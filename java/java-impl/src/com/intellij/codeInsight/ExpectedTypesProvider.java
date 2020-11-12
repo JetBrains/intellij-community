@@ -1189,7 +1189,7 @@ public final class ExpectedTypesProvider {
 
     @Nullable
     private static PsiType getDefaultType(@NotNull final PsiMethod method, final PsiSubstitutor substitutor, @NotNull final PsiType parameterType,
-                                          @NotNull final PsiExpression argument, PsiExpression @NotNull [] args, int index) {
+                                          @NotNull final PsiExpression argument, @Nullable PsiExpression @NotNull [] args, int index) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return parameterType;
 
@@ -1197,7 +1197,8 @@ public final class ExpectedTypesProvider {
       if (hardcoded != null) return hardcoded;
 
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(containingClass.getProject());
-      AssertHint assertHint = AssertHint.createAssertEqualsLikeHintForCompletion(args, method, index);
+      PsiMethodCallExpression call = ObjectUtils.tryCast(argument.getParent().getParent(), PsiMethodCallExpression.class);
+      AssertHint assertHint = AssertHint.createAssertEqualsLikeHintForCompletion(call, args, method, index);
       if (assertHint != null) {
         PsiExpression other = assertHint.getOtherExpression(argument);
         if (other != null) {
