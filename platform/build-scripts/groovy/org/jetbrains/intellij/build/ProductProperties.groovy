@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 
 /**
  * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
@@ -212,4 +213,9 @@ abstract class ProductProperties {
    * the IDE classpath when launching it to build search index, jar order, etc
    */
   List<String> getAdditionalPluginPaths(BuildContext context) { null }
+
+  /**
+   * @return custom properties for {@link org.jetbrains.intellij.build.impl.productInfo.ProductInfoData}
+   */
+  List<CustomProperty> generateCustomPropertiesForProductInfo() { [] }
 }
