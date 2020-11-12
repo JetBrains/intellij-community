@@ -104,21 +104,15 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     RunProfile runProfile = environment.getRunProfile();
     if ((runProfile instanceof TargetEnvironmentAwareRunProfile) &&
         Experiments.getInstance().isFeatureEnabled("run.targets") &&
-        ((TargetEnvironmentAwareRunProfile)runProfile).getDefaultLanguageRuntimeType() != null) {
+        ((TargetEnvironmentAwareRunProfile)runProfile).getDefaultTargetName() != null) {
       executionManager.startRunProfileWithPromise(environment, currentState, (ignored) -> {
         return doExecuteAsync(currentState, environment);
       });
     }
     else {
-      executionManager
-        .executePreparationTasks(environment, currentState)
-        .onSuccess(__ -> {
-          ApplicationManager.getApplication().invokeAndWait(() -> {
-            executionManager.startRunProfile(environment, currentState, (ignored) -> {
-              return doExecute(currentState, environment);
-            });
-          });
-        });
+      executionManager.startRunProfile(environment, currentState, (ignored) -> {
+        return doExecute(currentState, environment);
+      });
     }
   }
 
