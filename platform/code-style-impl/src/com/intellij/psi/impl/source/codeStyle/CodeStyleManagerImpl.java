@@ -113,7 +113,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       for (PostFormatProcessor postFormatProcessor : PostFormatProcessor.EP_NAME.getExtensionList()) {
         try {
           result = postFormatProcessor.processElement(result, settingsForFile);
-          if (result.isValid() && !brokenProcFound) {
+          if (!result.isValid() && !brokenProcFound) {
             LOG.error(new RuntimeExceptionWithAttachments(String.format("PSI crash detected: processor=%s, result=%s", postFormatProcessor,
                                                                         result), new Attachment("text", result.getText())));
             brokenProcFound = true;
