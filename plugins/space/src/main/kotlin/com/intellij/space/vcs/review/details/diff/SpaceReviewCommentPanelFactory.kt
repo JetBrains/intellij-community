@@ -9,11 +9,15 @@ import circlet.m2.channel.M2DraftsVm
 import circlet.platform.client.KCircletClient
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.JBUI
 import com.intellij.diff.FrameDiffTool
 import com.intellij.openapi.project.Project
 import com.intellij.space.chat.ui.SpaceChatPanel
 import com.intellij.space.vcs.review.details.getFilePath
 import libraries.coroutines.extra.Lifetime
+import javax.swing.JComponent
 
 internal class SpaceReviewCommentPanelFactory(
   private val project: Project,
@@ -25,7 +29,7 @@ internal class SpaceReviewCommentPanelFactory(
 ) {
   private val selectedChangeFilePath = getFilePath(selectedChange)
 
-  internal fun createForDiscussion(propagatedCodeDiscussion: PropagatedCodeDiscussion): SpaceChatPanel? {
+  internal fun createForDiscussion(propagatedCodeDiscussion: PropagatedCodeDiscussion): JComponent? {
     val filename = propagatedCodeDiscussion.anchor.filename
 
     if (filename?.removePrefix("/") != selectedChangeFilePath.path) return null
@@ -35,7 +39,17 @@ internal class SpaceReviewCommentPanelFactory(
 
     if (discussionRecord.archived) return null
 
-    return createSpaceChatPanel(discussionRecord)
+    val spaceChatComponent = BorderLayoutPanel().apply {
+      isOpaque = false
+      border = IdeBorderFactory.createBorder()
+      addToCenter(createSpaceChatPanel(discussionRecord))
+    }
+
+    return BorderLayoutPanel().apply {
+      isOpaque = false
+      border = JBUI.Borders.empty(2, 0)
+      addToCenter(spaceChatComponent)
+    }
   }
 
   private fun createSpaceChatPanel(discussionRecord: CodeDiscussionRecord): SpaceChatPanel {
