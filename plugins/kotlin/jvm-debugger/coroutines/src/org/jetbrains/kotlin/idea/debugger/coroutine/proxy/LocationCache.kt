@@ -13,16 +13,17 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
 
 class LocationCache(val context: DefaultExecutionContext) {
     fun createLocation(stackTraceElement: StackTraceElement): Location {
-        val type = context.classesCache[stackTraceElement.className].firstOrNull()
+        val className = stackTraceElement.className
+        val type = context.classesCache[className].firstOrNull() ?: error("Unable to find loaded class $className")
         return createLocation(type, stackTraceElement.methodName, stackTraceElement.lineNumber)
     }
 
     fun createLocation(
-        type: ReferenceType?,
+        type: ReferenceType,
         methodName: String,
         line: Int
     ): Location {
-        if (type != null && line >= 0) {
+        if (line >= 0) {
             try {
                 val location = type.locationsOfLine(null, null, line).stream()
                         .filter { l: Location -> l.method().name() == methodName }
