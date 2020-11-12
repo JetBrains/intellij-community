@@ -24,10 +24,14 @@ class <warning descr="Externalizable class 'D' defines 'readObject()' and 'write
   }
 
   private void writeObject(java.io.ObjectOutputStream str) {
+    new <warning descr="Externalizable anonymous class extending 'D' defines 'readObject()'">D</warning>(){
+      private void readObject(java.io.ObjectInputStream str){
+      }
+    };
   }
 }
 
-record <warning descr="Externalizable class 'R' defines 'writeObject()'">R</warning>() implements Externalizable {
+record <warning descr="Externalizable record 'R' defines 'writeObject()'">R</warning>() implements Externalizable {
 
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
   }
@@ -49,5 +53,9 @@ record Z() implements Externalizable {
 
   private void writeObject() {
   }
+}
+interface <warning descr="Externalizable interface 'I' defines 'readObject()'">I</warning> extends Externalizable {
+
+  void readObject(java.io.ObjectInputStream str);
 }
 
