@@ -295,6 +295,7 @@ public final class ExecutionUtil {
 
   @Nls
   public static String getExecutorName(@NotNull Executor executor) {
+    //noinspection HardCodedStringLiteral
     return ObjectUtils.notNull(ExecutionBundle.message("executor." + executor.getId() + ".name"), executor.getId());
   }
 }
