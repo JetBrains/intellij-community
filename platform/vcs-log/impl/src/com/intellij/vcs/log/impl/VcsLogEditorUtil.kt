@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiEx
 
 internal fun getLogIds(editor: FileEditor): Set<String> =
@@ -24,17 +23,6 @@ internal fun getExistingLogIds(project: Project): Set<String> {
 
 internal fun <T : VcsLogUiEx> findVcsLogUi(editors: Array<FileEditor>, clazz: Class<T>): T? {
   return editors.asSequence().mapNotNull { VcsLogContentUtil.getLogUi(it.component) }.filterIsInstance(clazz).firstOrNull()
-}
-
-internal fun findVcsLogUi(project: Project, condition: (VcsLogUi) -> Boolean): VcsLogUi? {
-  val editorManager = FileEditorManager.getInstance(project)
-
-  for (editor in editorManager.allEditors) {
-    val ui = VcsLogContentUtil.getLogUis(editor.component).find(condition)
-    if (ui != null) return ui
-  }
-
-  return null
 }
 
 internal fun updateTabName(project: Project, ui: VcsLogUiEx) {

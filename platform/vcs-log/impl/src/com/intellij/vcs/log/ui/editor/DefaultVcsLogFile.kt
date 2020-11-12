@@ -7,6 +7,8 @@ import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFilePathWrapper
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -15,30 +17,52 @@ import com.intellij.vcs.log.ui.VcsLogPanel
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
-internal class DefaultVcsLogFile(name: String, internal val tabId: String, private var filters: VcsLogFilterCollection?)
-  : VcsLogFile(name) {
+internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.VcsLogComplexPath,
+                                 private var filters: VcsLogFilterCollection? = null) :
+  VcsLogFile(VcsLogTabsManager.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
+  
+  private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.getInstance()
+  internal val tabId get() = pathId.logId
+
+  internal var tabName = name
 
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
   }
 
   override fun createMainComponent(project: Project): JComponent {
-    val projectLog = VcsProjectLog.getInstance(project)
-    val logManager = projectLog.logManager!!
-    val tabsManager = projectLog.tabsManager
+    val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
+    VcsProjectLog.runWhenLogIsReady(project) { logManager ->
+      val projectLog = VcsProjectLog.getInstance(project)
+      val tabsManager = projectLog.tabsManager
 
-    try {
-      val factory = tabsManager.getPersistentVcsLogUiFactory(logManager, tabId, VcsLogManager.LogWindowKind.EDITOR, filters)
-      val ui = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR)
-      ui.filterUi.addFilterListener { updateTabName(project, ui) }
-      if (filters != null) filters = null
-      return VcsLogPanel(logManager, ui)
+      try {
+        val factory = tabsManager.getPersistentVcsLogUiFactory(logManager, tabId, VcsLogManager.LogWindowKind.EDITOR, filters)
+        val ui = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR)
+        tabName = VcsLogTabsManager.generateDisplayName(ui)
+        ui.filterUi.addFilterListener {
+          tabName = VcsLogTabsManager.generateDisplayName(ui)
+          updateTabName(project, ui)
+        }
+        if (filters != null) filters = null
+        panel.add(VcsLogPanel(logManager, ui), BorderLayout.CENTER)
+      }
+      catch (e: CannotAddVcsLogWindowException) {
+        LOG.error(e)
+        panel.emptyText.text = VcsLogBundle.message("vcs.log.duplicated.tab.id.error")
+      }
     }
-    catch (e: CannotAddVcsLogWindowException) {
-      LOG.error(e)
-      return JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.duplicated.tab.id.error"))
-    }
+    return panel
   }
+
+  override fun getFileSystem(): VirtualFileSystem = fileSystemInstance
+  override fun getPath(): String {
+    return fileSystemInstance.getPath(pathId)
+  }
+
+  override fun enforcePresentableName(): Boolean = true
+  override fun getPresentableName(): String = tabName
+  override fun getPresentablePath(): String = tabName
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -69,7 +93,6 @@ class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
     if (file !is DefaultVcsLogFile) return null
-    val ui = findVcsLogUi(project) { it.id == file.tabId } ?: return file.presentableName
-    return VcsLogTabsManager.generateDisplayName(ui)
+    return file.tabName
   }
 }

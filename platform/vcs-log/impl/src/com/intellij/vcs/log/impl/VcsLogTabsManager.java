@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.TabGroupId;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -21,7 +22,7 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
-import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile;
+import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +55,7 @@ public class VcsLogTabsManager {
         myIsLogDisposing = false;
         ApplicationManager.getApplication().invokeLater(() -> {
           if (LOG.assertTrue(!Disposer.isDisposed(manager), "Attempting to open tabs on disposed VcsLogManager")) {
-            createLogTabs(manager);
+            reopenLogTabs(manager);
           }
         }, ModalityState.NON_MODAL, o -> manager != VcsProjectLog.getInstance(project).getLogManager());
       }
@@ -67,8 +68,17 @@ public class VcsLogTabsManager {
   }
 
   @RequiresEdt
-  private void createLogTabs(@NotNull VcsLogManager manager) {
-    myUiProperties.getTabs().forEach((id, kind) -> openLogTab(manager, id, kind, false, null));
+  private void reopenLogTabs(@NotNull VcsLogManager manager) {
+    myUiProperties.getTabs().forEach((id, kind) -> {
+      if (kind == VcsLogManager.LogWindowKind.EDITOR) {
+        openEditorLogTab(id, false, null);
+      }
+      else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
+        openToolWindowLogTab(manager, id, false, null);
+      } else {
+        LOG.warn("Unsupported log tab kind " + kind);
+      }
+    });
   }
 
   // for statistics
@@ -82,24 +92,32 @@ public class VcsLogTabsManager {
                                  @NotNull VcsLogManager.LogWindowKind kind) {
     String tabId = generateTabId(myProject);
     myUiProperties.resetState(tabId);
-    return openLogTab(manager, tabId, kind, true, filters);
-  }
-
-  @NotNull
-  private MainVcsLogUi openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, @NotNull VcsLogManager.LogWindowKind kind,
-                                  boolean focus, @Nullable VcsLogFilterCollection filters) {
     if (kind == VcsLogManager.LogWindowKind.EDITOR) {
-      DefaultVcsLogFile file = new DefaultVcsLogFile(getFullName(tabId), tabId, filters); //NON-NLS used for the file name, not displayed
-      FileEditor[] editors = FileEditorManager.getInstance(myProject).openFile(file, focus, true);
+      FileEditor[] editors = openEditorLogTab(tabId, true, filters);
       return Objects.requireNonNull(VcsLogEditorUtilKt.findVcsLogUi(editors, MainVcsLogUi.class));
     }
     else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
-      VcsLogManager.VcsLogUiFactory<MainVcsLogUi> factory = getPersistentVcsLogUiFactory(manager, tabId, kind, filters);
-      MainVcsLogUi ui = VcsLogContentUtil.openLogTab(myProject, manager, TAB_GROUP_ID, u -> generateShortDisplayName(u), factory, focus);
-      ui.getFilterUi().addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
-      return ui;
+      return openToolWindowLogTab(manager, tabId, true, filters);
     }
     throw new UnsupportedOperationException("Only log in editor or tool window is supported");
+  }
+
+  private FileEditor @NotNull [] openEditorLogTab(@NotNull String tabId, boolean focus, @Nullable VcsLogFilterCollection filters) {
+    VirtualFile file = VcsLogVirtualFileSystem.getInstance().createVcsLogFile(myProject, tabId, filters);
+    return FileEditorManager.getInstance(myProject).openFile(file, focus, true);
+  }
+
+  @NotNull
+  private MainVcsLogUi openToolWindowLogTab(@NotNull VcsLogManager manager,
+                                            @NotNull String tabId,
+                                            boolean focus,
+                                            @Nullable VcsLogFilterCollection filters) {
+    VcsLogManager.VcsLogUiFactory<MainVcsLogUi> factory = getPersistentVcsLogUiFactory(manager, tabId,
+                                                                                       VcsLogManager.LogWindowKind.TOOL_WINDOW,
+                                                                                       filters);
+    MainVcsLogUi ui = VcsLogContentUtil.openLogTab(myProject, manager, TAB_GROUP_ID, u -> generateShortDisplayName(u), factory, focus);
+    ui.getFilterUi().addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
+    return ui;
   }
 
   @RequiresEdt
@@ -121,7 +139,7 @@ public class VcsLogTabsManager {
 
   @NotNull
   @NlsContexts.TabTitle
-  private static String getFullName(@NotNull @NlsContexts.TabTitle String shortName) {
+  public static String getFullName(@NotNull @NlsContexts.TabTitle String shortName) {
     return ContentUtilEx.getFullName(VcsLogBundle.message("vcs.log.tab.name"), shortName);
   }
 
@@ -139,7 +157,8 @@ public class VcsLogTabsManager {
     String newId;
     do {
       newId = UUID.randomUUID().toString();
-    } while (existingIds.contains(newId));
+    }
+    while (existingIds.contains(newId));
 
     return newId;
   }
