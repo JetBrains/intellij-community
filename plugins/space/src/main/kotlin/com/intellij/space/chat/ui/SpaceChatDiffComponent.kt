@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.JBColor
+import com.intellij.ui.JBColor.namedColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.codereview.timeline.TimelineDiffComponentFactory
 import org.jetbrains.annotations.Nls
@@ -21,7 +22,6 @@ import runtime.code.InlineDiffLine
 import runtime.text.TextRange
 import runtime.text.end
 import java.awt.Color
-import java.util.*
 import javax.swing.JComponent
 
 internal fun createDiffComponent(
@@ -50,12 +50,12 @@ private fun EditorEx.convertLinesNumber(lines: List<InlineDiffLine>): EditorEx {
       object : LineNumberConverter {
         override fun convert(editor: Editor, lineNumber: Int) = lines[lineNumber - 1].oldLineNum?.plus(1)
 
-        override fun getMaxLineNumber(editor: Editor): Int? = lines.mapNotNull { it.oldLineNum }.max()
+        override fun getMaxLineNumber(editor: Editor): Int? = lines.mapNotNull { it.oldLineNum }.maxOrNull()
       },
       object : LineNumberConverter {
         override fun convert(editor: Editor, lineNumber: Int) = lines[lineNumber - 1].newLineNum?.plus(1)
 
-        override fun getMaxLineNumber(editor: Editor): Int? = lines.mapNotNull { it.newLineNum }.max()
+        override fun getMaxLineNumber(editor: Editor): Int? = lines.mapNotNull { it.newLineNum }.maxOrNull()
       }
     )
   }
@@ -129,7 +129,10 @@ private object AnchorLine : TextDiffType {
   @Nls
   override fun getName() = SpaceBundle.message("review.diff.type.anchor.name")
 
-  override fun getColor(editor: Editor?): Color = JBColor(0xF8ECCE, 0xF8ECCE)
+  override fun getColor(editor: Editor?): Color = namedColor(
+    "Space.Review.diffAnchorBackground",
+    JBColor(0xFBF1D1, 0x544B2D)
+  )
 
   override fun getIgnoredColor(editor: Editor?) = getColor(editor)
 
