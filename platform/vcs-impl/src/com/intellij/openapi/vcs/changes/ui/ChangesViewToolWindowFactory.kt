@@ -1,30 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.icons.AllIcons
-import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
-import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi.HIDE_ID_LABEL
-import com.intellij.ui.GotItTooltip
-import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.awt.RelativePoint.getSouthOf
-import com.intellij.util.ui.PositionTracker
-import com.intellij.util.ui.UIUtil.uiTraverser
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
-import javax.swing.JComponent
 
 private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
   override fun updateState(project: Project, toolWindow: ToolWindow) {
@@ -51,37 +37,16 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   }
 }
 
-internal class SwitchToCommitDialogHint(private val toolWindow: ToolWindowEx, private val toolbar: ActionToolbar) :
-  ChangesViewContentManagerListener,
-  Activatable {
+internal class SwitchToCommitDialogHint(toolWindow: ToolWindowEx, toolbar: ActionToolbar) : ChangesViewContentManagerListener {
 
-  private val toolbarVisibilityTracker =
-    UiNotifyConnector(toolbar.component, this).also { Disposer.register(toolWindow.disposable, it) }
-  private var balloon: Balloon? = null
-
+  private val actionToolbarTooltip =
+    ActionToolbarGotItTooltip("changes.view.toolwindow", message("switch.to.commit.dialog.hint.text"),
+                              toolWindow.disposable, toolbar, gearButtonOrToolbar)
   init {
-    toolWindow.project.messageBus.connect(toolbarVisibilityTracker).subscribe(ChangesViewContentManagerListener.TOPIC, this)
+    toolWindow.project.messageBus.connect(actionToolbarTooltip.tooltipDisposable).subscribe(ChangesViewContentManagerListener.TOPIC, this)
   }
 
-  override fun showNotify() = showHint()
-  override fun hideNotify() = hideHint(false)
-
-  override fun toolWindowMappingChanged() = hideHint(true)
-
-  private fun showHint() {
-    val c : JComponent = toolbar.getGearButton() ?: toolbar.component
-    GotItTooltip("changes.view.toolwindow", message("switch.to.commit.dialog.hint.text"), toolbarVisibilityTracker).
-      setOnBalloonCreated { balloon = it }.
-      show(c, GotItTooltip.BOTTOM_MIDDLE)
-  }
-
-  private fun hideHint(dispose: Boolean) {
-    balloon?.hide(true)
-    GotItUsageCollector.instance.logClose("changes.view.toolwindow", GotItUsageCollectorGroup.CloseType.AncestorRemoved)
-    balloon = null
-
-    if (dispose) Disposer.dispose(toolbarVisibilityTracker)
-  }
+  override fun toolWindowMappingChanged() = actionToolbarTooltip.hideHint(true)
 
   companion object {
     fun install(project: Project) {
@@ -92,13 +57,3 @@ internal class SwitchToCommitDialogHint(private val toolWindow: ToolWindowEx, pr
     }
   }
 }
-
-private class SouthPositionTracker(private val component: JComponent) : PositionTracker<Balloon>(component) {
-  override fun recalculateLocation(balloon: Balloon): RelativePoint = getSouthOf(component)
-}
-
-private fun ActionToolbar.getGearButton(): ActionButton? =
-  uiTraverser(component)
-    .filter(ActionButton::class.java)
-    .filter { it.icon == AllIcons.General.GearPlain }
-    .first()
