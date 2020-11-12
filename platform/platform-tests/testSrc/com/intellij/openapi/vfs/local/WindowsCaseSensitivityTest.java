@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
-import static com.intellij.openapi.util.io.IoTestUtil.setCaseSensitivity;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -68,10 +67,10 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     assertNotNull(vDir);
     assertFalse(vDir.isCaseSensitive());
-    VirtualFile readme = WriteAction.computeAndWait(() -> vDir.createChildData(vDir, "readme.txt"));
-    setCaseSensitivity(dir, true);
+    VirtualFile readme = createChildData(vDir, "readme.txt");
+    IoTestUtil.setCaseSensitivity(dir, true);
     vDir.refresh(false, true);
-    VirtualFile README = WriteAction.computeAndWait(() -> vDir.createChildData(vDir, "README.TXT"));  // fails with "already exists" exception
+    VirtualFile README = createChildData(vDir, "README.TXT");  // fails with "already exists" exception
     assertTrue(vDir.isCaseSensitive());
     assertNotEquals(readme, README);
   }
