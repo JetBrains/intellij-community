@@ -262,7 +262,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     leftPanel.add(PluginManagerConfigurable.createScrollPane(myPluginsPanel, true));
 
     OpaquePanel titlePanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
-    titlePanel.setBorder(JBUI.Borders.empty(6, 10));
+    titlePanel.setBorder(JBUI.Borders.empty(13, 12));
     leftPanel.add(titlePanel, BorderLayout.SOUTH);
 
     myTotalLabel.setForeground(PluginsGroupComponent.SECTION_HEADER_FOREGROUND);
