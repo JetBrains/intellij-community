@@ -27,6 +27,9 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import libraries.coroutines.extra.Lifetime
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import runtime.reactive.Property
 import runtime.reactive.map
 import java.awt.event.ActionListener
@@ -114,7 +117,7 @@ class SpaceChatCodeDiscussionComponentFactory(
       isOpaque = true
     }
 
-    return NonOpaquePanel(HorizontalLayout(JBUI.scale(5))).apply {
+    return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("${JBUI.scale(5)}", "0").fill().noGrid())).apply {
       add(nameLabel)
 
       if (parentPath.isNotBlank()) {
@@ -123,9 +126,9 @@ class SpaceChatCodeDiscussionComponentFactory(
           setCopyable(true)
         })
       }
-      add(resolvedLabel)
-      add(collapseButton)
-      add(expandButton)
+      add(resolvedLabel, CC().hideMode(3))
+      add(collapseButton, CC().hideMode(3))
+      add(expandButton, CC().hideMode(3))
 
       resolved.forEach(lifetime) {
         resolvedLabel.isVisible = it
