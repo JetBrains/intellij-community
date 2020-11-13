@@ -82,7 +82,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private JLabel myRating;
   private JLabel myDownloads;
   private JLabel mySize;
-  private LinkPanel myVendor;
+  private LinkPanel myAuthor;
   private final LicensePanel myLicensePanel = new LicensePanel(false);
   private LinkPanel myHomePage;
   private JBScrollPane myBottomScrollPane;
@@ -287,7 +287,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myRating =
         ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, ListPluginComponent.GRAY_COLOR, true);
     }
-    myVendor = new LinkPanel(panel1, false, true, null, TextHorizontalLayout.FIX_LABEL);
+    myAuthor = new LinkPanel(panel1, false, true, null, TextHorizontalLayout.FIX_LABEL);
 
     myEnabledForProject = new JLabel();
     myEnabledForProject.setHorizontalTextPosition(SwingConstants.LEFT);
@@ -551,13 +551,19 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
 
     String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
+    String organization = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getOrganization());
     if (StringUtil.isEmptyOrSpaces(vendor)) {
-      myVendor.hide();
+      myAuthor.hide();
     }
     else {
-      myVendor.show(vendor, () -> mySearchListener
-        .linkSelected(null,
-                      SearchWords.ORGANIZATION.getValue() + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
+      if (StringUtil.isEmptyOrSpaces(organization)) {
+        myAuthor.show(vendor, null);
+      } else {
+        myAuthor.show(organization, () -> mySearchListener
+          .linkSelected(null,
+                        SearchWords.ORGANIZATION.getValue() +
+                        (organization.indexOf(' ') == -1 ? organization : StringUtil.wrapWithDoubleQuote(organization))));
+      }
     }
 
     showLicensePanel();

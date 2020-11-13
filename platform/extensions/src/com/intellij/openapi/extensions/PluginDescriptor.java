@@ -61,6 +61,8 @@ public interface PluginDescriptor {
 
   @NlsSafe String getVendor();
 
+  @NlsSafe String getOrganization();
+
   @NlsSafe String getVersion();
 
   @Nullable String getResourceBundleBaseName();

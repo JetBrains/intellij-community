@@ -731,6 +731,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Override
+  public String getOrganization() {
+    //TODO[ivan.chirkov]: support organizations for installed plugins
+    return "";
+  }
+
+  @Override
   public String getVersion() {
     return myVersion;
   }

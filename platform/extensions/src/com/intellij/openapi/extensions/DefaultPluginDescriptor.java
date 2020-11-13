@@ -87,6 +87,11 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
   }
 
   @Override
+  public String getOrganization() {
+    return null;
+  }
+
+  @Override
   public String getVersion() {
     return null;
   }

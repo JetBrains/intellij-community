@@ -25,6 +25,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private boolean licenseOptional;
   private String version;
   private String vendor;
+  private String organization;
   private @NlsSafe String description;
   private String sinceBuild;
   private String untilBuild;
@@ -174,6 +175,15 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setVendor(@NotNull String vendor) {
     this.vendor = vendor;
+  }
+
+  @Override
+  public String getOrganization() {
+    return organization;
+  }
+
+  public void setOrganization(@NotNull String organization) {
+    this.organization = organization;
   }
 
   @Override
