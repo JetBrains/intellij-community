@@ -2,6 +2,7 @@
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.GitCommitChangeType
+import circlet.client.api.GitFile
 import circlet.client.api.isDirectory
 import circlet.code.api.ChangeInReview
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -134,3 +135,20 @@ fun getFilePath(changeInReview: ChangeInReview): FilePath {
   }
   return RemoteFilePath(path, isDirectory)
 }
+
+internal fun GitFile?.getFilePath(): FilePath? {
+  this ?: return null
+  return RemoteFilePath(path.trimStart('/', '\\'), isDirectory())
+}
+
+internal fun getChangeFilePathInfo(changeInReview: ChangeInReview): ChangeFilePathInfo =
+  when (changeInReview.change.changeType) {
+    GitCommitChangeType.ADDED ->
+      ChangeFilePathInfo(null, changeInReview.change.new.getFilePath())
+    GitCommitChangeType.MODIFIED ->
+      ChangeFilePathInfo(changeInReview.change.old.getFilePath(), changeInReview.change.new.getFilePath())
+    GitCommitChangeType.DELETED ->
+      ChangeFilePathInfo(changeInReview.change.old.getFilePath(), null)
+  }
+
+internal data class ChangeFilePathInfo(val old: FilePath?, val new: FilePath?)

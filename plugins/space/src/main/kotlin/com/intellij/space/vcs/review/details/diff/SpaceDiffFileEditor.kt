@@ -2,7 +2,7 @@
 package com.intellij.space.vcs.review.details.diff
 
 import circlet.client.codeView
-import com.intellij.diff.DiffContentFactory
+import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.requests.DiffRequest
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
+import com.intellij.space.vcs.review.details.getChangeFilePathInfo
 import com.intellij.space.vcs.review.details.getFileContent
 import com.intellij.space.vcs.review.details.getFilePath
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -95,21 +96,17 @@ internal class DiffProcessor(project: Project,
             val leftFileText = getFileContent(sideBySideDiff.left)
             val rightFileText = getFileContent(sideBySideDiff.right)
 
-            val contents = listOf(leftFileText, rightFileText).map {
-              DiffContentFactory.getInstance().create(
-                project,
-                it,
-                null,
-                true
-              )
-            }.toList()
-
-            val titles = listOf(selectedCommitHashes.first(),
-                                selectedCommitHashes.last())
+            val (oldFilePath, newFilePath) = getChangeFilePathInfo(change)
+            val diffContentFactory = DiffContentFactoryImpl.getInstanceEx()
+            val titles = listOf(selectedCommitHashes.first(), selectedCommitHashes.last())
+            val documents = listOf(
+              oldFilePath?.let { diffContentFactory.create(project, leftFileText, it) } ?: diffContentFactory.createEmpty(),
+              newFilePath?.let { diffContentFactory.create(project, rightFileText, it) } ?: diffContentFactory.createEmpty()
+            )
 
             val diffRequestData = DiffRequestData(nextLifetime, spaceDiffVm, changesVm)
 
-            return@runBlocking SimpleDiffRequest(getFilePath(change).toString(), contents, titles).apply {
+            return@runBlocking SimpleDiffRequest(getFilePath(change).toString(), documents, titles).apply {
               putUserData(SpaceDiffKeys.DIFF_REQUEST_DATA, diffRequestData)
             }
           }

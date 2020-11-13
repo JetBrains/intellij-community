@@ -26,7 +26,6 @@ class SpaceReviewCommentsDiffExtension : DiffExtension() {
     val discussions = diffRequestData.changesVm.selectedChangeDiscussions.value ?: return
     val project = context.project!!
     val lifetime = diffRequestData.lifetime
-    val handler = createHandler(viewer)
     val client = diffRequestData.changesVm.client
 
     viewer as DiffViewerBase
@@ -38,6 +37,8 @@ class SpaceReviewCommentsDiffExtension : DiffExtension() {
 
       override fun onAfterRediff() {
         if (!viewerIsReady) {
+          val handler = createHandler(viewer)
+
           discussions.values.forEach { propagatedCodeDiscussion ->
             addCommentToDiff(chatPanelFactory, propagatedCodeDiscussion, lifetime, handler)
           }
