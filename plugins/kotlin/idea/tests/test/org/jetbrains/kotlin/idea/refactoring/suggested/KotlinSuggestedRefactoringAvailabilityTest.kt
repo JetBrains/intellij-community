@@ -341,21 +341,21 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
     fun testImportAnotherType() {
         doTest(
             """
-                import java.util.Date
+                import java.util.ArrayList
                 
                 interface I {
-                    fun foo(): <caret>Date
+                    fun foo(): <caret>ArrayList<Int>
                 }
             """.trimIndent(),
             {
-                replaceTextAtCaret("Date", "java.sql.Date")
+                replaceTextAtCaret("ArrayList<Int>", "kotlin.collections.ArrayList<Int>")
             },
             {
-                removeImport("java.util.Date")
-                addImport("java.sql.Date")
+                removeImport("java.util.ArrayList")
+                addImport("kotlin.collections.ArrayList")
             },
             {
-                replaceTextAtCaret("java.sql.Date", "Date")
+                replaceTextAtCaret("kotlin.collections.ArrayList<Int>", "ArrayList<Int>")
             },
             expectedAvailability = Availability.NotAvailable,
             expectedAvailabilityAfterResolve = Availability.Available((changeSignatureAvailableTooltip("foo", "implementations")))
