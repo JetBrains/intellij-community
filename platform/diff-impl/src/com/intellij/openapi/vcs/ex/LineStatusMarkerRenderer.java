@@ -9,9 +9,14 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupEditorFilter;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -86,6 +91,11 @@ public abstract class LineStatusMarkerRenderer {
   @RequiresEdt
   private void updateHighlighters() {
     if (myDisposed) return;
+
+    EditorFactory.getInstance().editors(myTracker.getDocument())
+      .forEach(editor -> {
+        if (editor instanceof EditorEx) ((EditorEx)editor).getGutterComponentEx().repaint();
+      });
 
     List<? extends Range> ranges = shouldPaintErrorStripeMarkers() ? myTracker.getRanges() : null;
     if (ContainerUtil.isEmpty(ranges)) {

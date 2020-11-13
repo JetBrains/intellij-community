@@ -769,10 +769,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         expireInactiveRangesDamagedNotifications()
 
         EditorFactory.getInstance().allEditors
-          .filterIsInstance(EditorEx::class.java)
-          .forEach {
-            it.gutterComponentEx.repaint()
-          }
+          .forEach { if (it is EditorEx) it.gutterComponentEx.repaint() }
       }
     }
 
