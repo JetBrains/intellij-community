@@ -16,10 +16,6 @@ public interface PersistentHashMapBase<Key, Value> {
   //TODO: should it be the part of interface?
   boolean isCorrupted();
 
-  @NotNull
-  //TODO: should it be the part of interface?
-  Object getDataAccessLock();
-
   //TODO: should it be the part of interface?
   void dropMemoryCaches();
 

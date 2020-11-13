@@ -270,7 +270,6 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     };
   }
 
-  @Override
   @NotNull
   public Object getDataAccessLock() {
     return myEnumerator.getDataAccessLock();
