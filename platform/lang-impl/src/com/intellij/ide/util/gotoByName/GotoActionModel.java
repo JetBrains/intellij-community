@@ -11,6 +11,8 @@ import com.intellij.ide.ui.RegistryTextOptionDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.internal.statistic.local.ActionGlobalUsageInfo;
+import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -29,6 +31,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -76,6 +79,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Nullable private final WeakReference<Editor> myEditor;
 
   protected final ActionManager myActionManager = ActionManager.getInstance();
+  private final ActionsGlobalSummaryManager myStatManager = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager.class);
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
@@ -301,6 +305,12 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   protected String getActionId(@NotNull AnAction anAction) {
     return myActionManager.getId(anAction);
+  }
+
+  private double getActionUsagesRatio(@Nullable String actionID) {
+    if (actionID == null) return .0;
+    ActionGlobalUsageInfo statistics = myStatManager.getActionStatistics(actionID);
+    return statistics != null ? statistics.getUsagesPerUserRatio() : .0;
   }
 
   @NotNull
@@ -671,6 +681,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     public int compareWeights(@NotNull ActionWrapper o) {
       int compared = myMode.compareTo(o.getMode());
       if (compared != 0) return compared;
+
+      if (Registry.is("search.everywhere.consider.action.statistics")) {
+        double myRatio = myModel.getActionUsagesRatio(myModel.getActionId(getAction()));
+        double oRatio = myModel.getActionUsagesRatio(myModel.getActionId(o.getAction()));
+        int byStat = -Double.compare(myRatio, oRatio);
+        if (byStat != 0) return byStat;
+      }
+
       Presentation myPresentation = myAction.getTemplatePresentation();
       Presentation oPresentation = o.getAction().getTemplatePresentation();
       String myText = StringUtil.notNullize(myActionText);

@@ -33,6 +33,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
@@ -577,14 +579,20 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   private void showDescriptionForIndex(int index) {
-    if (index >= 0 && !myListModel.isMoreElement(index)) {
-      SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(index);
-      //noinspection ConstantConditions
-      Object data = contributor.getDataForItem(
-        myListModel.getElementAt(index), SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.getName());
-      if (data instanceof String) {
-        ActionMenu.showDescriptionInStatusBar(true, myResultsList, (String)data);
-      }
+    if (index < 0 || myListModel.isMoreElement(index)) return;
+
+    if (Registry.is("search.everywhere.show.weights")) {
+      @NlsSafe String weight = Integer.toString(myListModel.getWeightAt(index));
+      ActionMenu.showDescriptionInStatusBar(true, myResultsList, weight);
+      return;
+    }
+
+    SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(index);
+    //noinspection ConstantConditions
+    Object data = contributor.getDataForItem(
+      myListModel.getElementAt(index), SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.getName());
+    if (data instanceof String) {
+      ActionMenu.showDescriptionInStatusBar(true, myResultsList, (String)data);
     }
   }
 
