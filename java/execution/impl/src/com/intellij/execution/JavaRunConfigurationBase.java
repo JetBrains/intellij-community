@@ -20,4 +20,6 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
                                   @NotNull ConfigurationFactory factory) {
     super(configurationModule, factory);
   }
+
+
 }

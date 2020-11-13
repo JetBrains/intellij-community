@@ -3,7 +3,6 @@ package com.intellij.execution.configurations
 
 import com.intellij.execution.ui.FragmentedSettings
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.util.xmlb.annotations.*
 
 @Tag("predefined_log_file")
@@ -53,6 +52,9 @@ open class RunConfigurationOptions : BaseState(), FragmentedSettings {
 
   @get:OptionTag(tag = "target", valueAttribute = "name", nameAttribute = "")
   var remoteTarget by string()
+
+  @get:OptionTag(tag = "projectPathOnTarget")
+  var projectPathOnTarget by string()
 
   @get:XCollection(propertyElementName = "selectedOptions")
   override var selectedOptions by list<FragmentedSettings.Option>();

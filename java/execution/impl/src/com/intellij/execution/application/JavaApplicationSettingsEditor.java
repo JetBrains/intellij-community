@@ -23,6 +23,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                     ModuleClasspathCombo classpathCombo,
                                     CommonParameterFragments<ApplicationConfiguration> commonParameterFragments) {
     fragments.add(commonParameterFragments.programArguments());
+    fragments.add(new TargetPathFragment<>());
     fragments.add(commonParameterFragments.createRedirectFragment());
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment = createMainClass(classpathCombo);
     fragments.add(mainClassFragment);
