@@ -110,7 +110,9 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val (callElements, method) = MethodExtractor().extractMethod(extractOptions)
     val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
     editor.caretModel.moveToOffset(callExpression.textOffset)
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+    val manager = PsiDocumentManager.getInstance(project)
+    manager.doPostponedOperationsAndUnblockDocument(editor.document)
+    manager.commitDocument(editor.document)
     setElementToRename(method)
 
     methodNameRange = editor.document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
