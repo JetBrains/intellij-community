@@ -38,8 +38,8 @@ import java.util.stream.Stream;
  Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
  directly in storage used for offset and in case of btree enumerator directly in btree leaf.
  **/
-public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMap<Key, Value> {
-  private static final Logger LOG = Logger.getInstance(PersistentHashMap.class);
+public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<Key, Value> {
+  private static final Logger LOG = Logger.getInstance(PersistentHashMapImpl.class);
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
   private static final int DEAD_KEY_NUMBER_MASK = 0xFFFFFFFF;
 
@@ -79,6 +79,7 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
   private static final boolean doHardConsistencyChecks = false;
   private final PersistentEnumeratorBase<Key> myEnumerator;
 
+  @Override
   @TestOnly
   public boolean isCorrupted() {
     return myEnumerator.isCorrupted();
@@ -112,53 +113,17 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
     return myCanReEnumerate && size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE;
   }
 
+  public PersistentHashMapImpl(@NotNull PersistentHashMapBuilder<Key, Value> builder) throws IOException {
+    @NotNull Path file = builder.getFile();
+    @NotNull KeyDescriptor<Key> keyDescriptor = builder.getKeyDescriptor();
+    @NotNull DataExternalizer<Value> valueExternalizer = builder.getValueExternalizer();
+    final int initialSize = builder.getInitialSize(INITIAL_INDEX_SIZE);
+    int version = builder.getVersion(0);
+    @Nullable StorageLockContext lockContext = builder.getLockContext();
+    @NotNull PersistentHashMapValueStorage.CreationTimeOptions options = PersistentHashMapValueStorage.CreationTimeOptions.threadLocalOptions();
 
-  public PersistentHashMap(@NotNull File file,
-                           @NotNull KeyDescriptor<Key> keyDescriptor,
-                           @NotNull DataExternalizer<Value> valueExternalizer) throws IOException {
-    this(file.toPath(), keyDescriptor, valueExternalizer, INITIAL_INDEX_SIZE);
-  }
-
-  public PersistentHashMap(@NotNull Path file,
-                           @NotNull KeyDescriptor<Key> keyDescriptor,
-                           @NotNull DataExternalizer<Value> valueExternalizer) throws IOException {
-    this(file, keyDescriptor, valueExternalizer, INITIAL_INDEX_SIZE);
-  }
-
-  public PersistentHashMap(@NotNull Path file,
-                           @NotNull KeyDescriptor<Key> keyDescriptor,
-                           @NotNull DataExternalizer<Value> valueExternalizer,
-                           final int initialSize) throws IOException {
-    this(file, keyDescriptor, valueExternalizer, initialSize, 0);
-  }
-
-  public PersistentHashMap(@NotNull Path file,
-                           @NotNull KeyDescriptor<Key> keyDescriptor,
-                           @NotNull DataExternalizer<Value> valueExternalizer,
-                           final int initialSize,
-                           int version) throws IOException {
-    this(file, keyDescriptor, valueExternalizer, initialSize, version, null);
-  }
-
-  public PersistentHashMap(@NotNull Path file,
-                           @NotNull KeyDescriptor<Key> keyDescriptor,
-                           @NotNull DataExternalizer<Value> valueExternalizer,
-                           final int initialSize,
-                           int version,
-                           @Nullable StorageLockContext lockContext) throws IOException {
-    this(file, keyDescriptor, valueExternalizer, initialSize, version, lockContext,
-         PersistentHashMapValueStorage.CreationTimeOptions.threadLocalOptions());
-  }
-
-  private PersistentHashMap(@NotNull Path file,
-                            @NotNull KeyDescriptor<Key> keyDescriptor,
-                            @NotNull DataExternalizer<Value> valueExternalizer,
-                            final int initialSize,
-                            int version,
-                            @Nullable StorageLockContext lockContext,
-                            @NotNull PersistentHashMapValueStorage.CreationTimeOptions options) throws IOException {
     // it's important to initialize it as early as possible
-    myIsReadOnly = isReadOnly();
+    myIsReadOnly = builder.getReadOnly(false);
     if (myIsReadOnly) options = options.setReadOnly();
 
     myEnumerator = PersistentEnumeratorDelegate.createDefaultEnumerator(checkDataFiles(file),
@@ -172,7 +137,7 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
 
     final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
-    myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantNonNegativeIntegralValues();
+    myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && builder.getWantNonNegativeIntegralValues(false);
     myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
 
     myRecordBuffer = ThreadLocal
@@ -251,14 +216,6 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
     return version + options.getVersion();
   }
 
-  protected boolean wantNonNegativeIntegralValues() {
-    return false;
-  }
-
-  protected boolean isReadOnly() {
-    return false;
-  }
-
   private static final int MAX_RECYCLED_BUFFER_SIZE = 4096;
 
   private SLRUCache<Key, BufferExposingByteArrayOutputStream> createAppendCache(final KeyDescriptor<Key> keyDescriptor) {
@@ -313,6 +270,7 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
     };
   }
 
+  @Override
   @NotNull
   public Object getDataAccessLock() {
     return myEnumerator.getDataAccessLock();
@@ -327,6 +285,7 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
            (int)(myLiveAndGarbageKeysCounter & DEAD_KEY_NUMBER_MASK) > 0;
   }
 
+  @Override
   public final void dropMemoryCaches() {
     if (myDoTrace) LOG.info("Drop memory caches " + myStorageFile);
     synchronized (getDataAccessLock()) {
@@ -344,18 +303,22 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
     }
   }
 
+  @Override
   public int getSize() {
     return (int)(myLiveAndGarbageKeysCounter / LIVE_KEY_MASK);
   }
 
-  int getGarbageSize() {
+  @Override
+  public int getGarbageSize() {
     return (int)myLiveAndGarbageKeysCounter;
   }
 
+  @Override
   public Path getBaseFile() {
     return myEnumerator.myFile;
   }
 
+  @Override
   @TestOnly // public for tests
   @SuppressWarnings("WeakerAccess") // used in upsource for some reason
   public boolean makesSenseToCompact() {
@@ -384,25 +347,13 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
   @NotNull
   private static Path checkDataFiles(@NotNull Path file) {
     if (!Files.exists(file)) {
-      deleteFilesStartingWith(getDataFile(file).toFile());
+      deleteFilesStartingWithInternal(getDataFile(file).toFile());
     }
     return file;
   }
 
-  public static void deleteFilesStartingWith(@NotNull File prefixFile) {
+  private static void deleteFilesStartingWithInternal(@NotNull File prefixFile) {
     IOUtil.deleteAllFilesStartingWith(prefixFile);
-  }
-
-  /**
-   * Deletes {@param map} files and trying to close it before.
-   */
-  public static void deleteMap(@NotNull PersistentHashMap<?, ?> map) {
-    Path baseFile = map.getBaseFile();
-    try {
-      map.close();
-    }
-    catch (IOException ignored) {}
-    deleteFilesStartingWith(baseFile.toFile());
   }
 
   @NotNull
@@ -478,6 +429,7 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
   /**
    * @deprecated hash map is not an enumerator
    */
+  @Override
   @Deprecated
   public int enumerate(Key name) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
@@ -485,22 +437,6 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
       myIntAddressForNewRecord = canUseIntAddressForNewRecord(myValueStorage.getSize());
       return myEnumerator.enumerate(name);
     }
-  }
-
-  /**
-   * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender}
-   */
-  @Deprecated
-  @ApiStatus.Experimental
-  public interface ValueDataAppender extends AppendablePersistentMap.ValueDataAppender {
-  }
-
-  /**
-   * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender} as the second parameter
-   */
-  @Deprecated
-  public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
-    appendData(key, (AppendablePersistentMap.ValueDataAppender) appender);
   }
 
   /**
@@ -580,12 +516,14 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
   }
 
   @NotNull
+  @Override
   public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
     final List<Key> values = new ArrayList<>();
     processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(values));
     return values;
   }
 
+  @Override
   public final boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException {
     synchronized (getDataAccessLock()) {
       try {
@@ -671,7 +609,7 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
     }
 
     if (myValueStorage.performChunksCompaction(readResult.chunksCount)) {
-      long newValueOffset = myValueStorage.compactChunks(new ValueDataAppender() {
+      long newValueOffset = myValueStorage.compactChunks(new AppendablePersistentMap.ValueDataAppender() {
         @Override
         public void append(@NotNull DataOutput out) throws IOException {
           myValueExternalizer.save(out, valueRead);
@@ -698,6 +636,7 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
     return valueRead;
   }
 
+  @Override
   public final boolean containsMapping(Key key) throws IOException {
     synchronized (getDataAccessLock()) {
       return doContainsMapping(key);
@@ -728,6 +667,7 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
     }
   }
 
+  @Override
   public final void remove(Key key) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (getDataAccessLock()) {
@@ -856,6 +796,7 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
   }
 
   // make it visible for tests
+  @Override
   @ApiStatus.Internal
   public void compact() throws IOException {
     if (!isCompactionSupported()) throw new IncorrectOperationException();
@@ -933,6 +874,7 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
     }
   }
 
+  @Override
   @ApiStatus.Internal
   public boolean isCompactionSupported() {
     return !myIsReadOnly && !myIntMapping;
@@ -1069,14 +1011,16 @@ public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMa
 
   @Override
   public String toString() {
-    return super.toString() + ": " + myStorageFile;
+    return getClass().getName() + "@" + Integer.toHexString(hashCode()) + ": " + myStorageFile;
   }
 
+  @Override
   @TestOnly
-  PersistentHashMapValueStorage getValueStorage() {
+  public PersistentHashMapValueStorage getValueStorage() {
     return myValueStorage;
   }
 
+  @Override
   @TestOnly
   public boolean getReadOnly() {
     return myIsReadOnly;

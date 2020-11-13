@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
-import com.intellij.util.io.AppendablePersistentMap;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -16,7 +13,7 @@ import java.nio.file.Path;
 /**
  * @author Dmitry Avdeev
  */
-class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValueContainer<Value>> {
+class ValueContainerMap<Key, Value> extends PersistentHashMapImpl<Key, UpdatableValueContainer<Value>> {
   @NotNull private final DataExternalizer<Value> myValueExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
 
@@ -24,8 +21,9 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
                     boolean keyIsUniqueForIndexedFile,
-                    @NotNull ValueContainerInputRemapping inputRemapping) throws IOException {
-    super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping));
+                    @NotNull ValueContainerInputRemapping inputRemapping,
+                    boolean isReadonly) throws IOException {
+    super(PersistentHashMapBuilder.newBuilder(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping)).withReadonly(isReadonly));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
