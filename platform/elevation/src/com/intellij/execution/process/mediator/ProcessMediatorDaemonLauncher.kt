@@ -40,22 +40,7 @@ object ProcessMediatorDaemonLauncher {
   fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon {
     val appExecutorService = AppExecutorUtil.getAppExecutorService()
 
-    // Unix sudo may take different forms, and not all of them are reliable in terms of process lifecycle management,
-    // input/output redirection, and so on. To overcome the limitations we use an RSA-secured channel for initial communication
-    // instead of process stdio, and launch it in a trampoline mode. In this mode the sudo'ed process forks the real daemon process,
-    // relays the handshake message from it, and exits, so that the sudo process is done as soon as the handshake message is exchanged.
-    // Using a trampoline also ensures that the launched process is certainly not a session leader, and allows it to become one.
-    // In particular, this is a workaround for high CPU consumption of the osascript (used on macOS instead of sudo) process;
-    // we want it to finish as soon as possible.
-    val handshakeTransport = if (SystemInfo.isWindows) {
-      HandshakeTransport.createProcessStdoutTransport()
-    }
-    else try {
-      appExecutorService.submitAndAwaitCloseable { openUnixHandshakeTransport() }
-    }
-    catch (e: IOException) {
-      throw ExecutionException(ElevationBundle.message("dialog.message.handshake.failed"), e)
-    }
+    val handshakeTransport = createHandshakeTransport()
     val daemonLaunchOptions = handshakeTransport.getDaemonLaunchOptions().let {
       if (SystemInfo.isWindows) it else it.copy(trampoline = sudo, daemonize = sudo, leaderPid = ProcessHandle.current().pid())
     }
@@ -85,6 +70,25 @@ object ProcessMediatorDaemonLauncher {
                                   handshake.port,
                                   DaemonClientCredentials(handshake.token))
       }
+    }
+  }
+
+  private fun createHandshakeTransport(): HandshakeTransport {
+    // Unix sudo may take different forms, and not all of them are reliable in terms of process lifecycle management,
+    // input/output redirection, and so on. To overcome the limitations we use an RSA-secured channel for initial communication
+    // instead of process stdio, and launch it in a trampoline mode. In this mode the sudo'ed process forks the real daemon process,
+    // relays the handshake message from it, and exits, so that the sudo process is done as soon as the handshake message is exchanged.
+    // Using a trampoline also ensures that the launched process is certainly not a session leader, and allows it to become one.
+    // In particular, this is a workaround for high CPU consumption of the osascript (used on macOS instead of sudo) process;
+    // we want it to finish as soon as possible.
+    return if (SystemInfo.isWindows) {
+      HandshakeTransport.createProcessStdoutTransport()
+    }
+    else try {
+      AppExecutorUtil.getAppExecutorService().submitAndAwaitCloseable { openUnixHandshakeTransport() }
+    }
+    catch (e: IOException) {
+      throw ExecutionException(ElevationBundle.message("dialog.message.handshake.failed"), e)
     }
   }
 
