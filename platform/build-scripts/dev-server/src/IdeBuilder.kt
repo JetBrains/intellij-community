@@ -27,7 +27,7 @@ class IdeBuilder(val pluginBuilder: PluginBuilder, builder: DistributionJARsBuil
 }
 
 internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: Path, outDir: Path): IdeBuilder {
-  val productProperties = URLClassLoader.newInstance(arrayOf(outDir.resolve(productConfiguration.module).toUri().toURL()))
+  val productProperties = URLClassLoader.newInstance(productConfiguration.modules.map { outDir.resolve(it).toUri().toURL() }.toTypedArray())
     .loadClass(productConfiguration.className)
     .getConstructor(String::class.java).newInstance(homePath.toString()) as ProductProperties
 

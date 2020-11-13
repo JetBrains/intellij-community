@@ -64,7 +64,9 @@ private fun start() {
   val httpServer = createHttpServer(buildServer)
   LOG.info("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
   @Suppress("SpellCheckingInspection")
-  LOG.info("Run IDE with VM property: -Didea.use.dev.build.server=true")
+  LOG.info("Custom plugins: ${System.getProperty("additional.plugins") ?: "not set"} (use VM property -Dadditional.plugins to specify additional module ids)")
+  @Suppress("SpellCheckingInspection")
+  LOG.info("Run IDE with VM property -Didea.use.dev.build.server=true to use it")
   httpServer.start()
 
   val doneSignal = CountDownLatch(1)
@@ -90,7 +92,7 @@ private fun start() {
 data class Configuration(val products: Map<String, ProductConfiguration>)
 
 @Serializable
-data class ProductConfiguration(val module: String, @SerialName("class") val className: String)
+data class ProductConfiguration(val modules: List<String>, @SerialName("class") val className: String)
 
 class BuildServer(val homePath: Path) {
   private val outDir: Path = homePath.resolve("out/classes/production").toRealPath()
