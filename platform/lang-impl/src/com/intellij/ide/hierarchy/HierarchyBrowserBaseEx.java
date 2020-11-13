@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.PsiElementNavigatable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -50,6 +51,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +82,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected String myCurrentViewType;
 
-  private final Map<String, Supplier<String>> myI18nMap;
+  private final Map<String, Supplier<@Nls String>> myI18nMap;
 
   private static class Sheet implements Disposable {
     private AsyncTreeModel myAsyncTreeModel;
@@ -201,7 +203,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
    * Put (scope type -> presentable name) pairs into a map.
    * This map is used in {@link #changeView(String, boolean)} method to get a proper localization in UI.
    */
-  protected Map<String, Supplier<String>> getPresentableNameMap() {
+  protected Map<String, Supplier<@Nls String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
     map.put(SCOPE_PROJECT, () -> ProjectProductionScope.INSTANCE.getPresentableName());
     map.put(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"));
@@ -363,6 +365,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     if (myContent != null) {
+      //noinspection HardCodedStringLiteral
       final String displayName = getContentDisplayName(myI18nMap.computeIfAbsent(typeName, key -> () -> key).get(), element);
       if (displayName != null) {
         myContent.setDisplayName(displayName);
@@ -439,7 +442,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   @Nullable
-  protected String getContentDisplayName(@NotNull String typeName, @NotNull PsiElement element) {
+  protected @NlsContexts.TabTitle String getContentDisplayName(@Nls @NotNull String typeName, @NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return MessageFormat.format(typeName, ((PsiNamedElement)element).getName());
     }
@@ -760,6 +763,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       final Project project = e.getProject();
       if (project == null) return;
       presentation.setEnabled(isEnabled());
+      //noinspection HardCodedStringLiteral
       String scopeType = getCurrentScopeType();
       presentation.setText(myI18nMap.getOrDefault(scopeType, () -> scopeType));
     }

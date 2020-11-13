@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -60,9 +61,9 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
     return IdeBundle.message("hierarchy.method.next.occurence.name");
   }
 
-  protected static JPanel createStandardLegendPanel(final String methodDefinedText,
-                                                    final String methodNotDefinedLegallyText,
-                                                    final String methodShouldBeDefined) {
+  protected static JPanel createStandardLegendPanel(@NlsContexts.Label String methodDefinedText,
+                                                    @NlsContexts.Label String methodNotDefinedLegallyText,
+                                                    @NlsContexts.Label String methodShouldBeDefined) {
     final JPanel panel = new JPanel(new GridBagLayout());
 
     final GridBagConstraints gc =

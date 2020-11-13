@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +82,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   private final class ChangeViewTypeActionBase extends ToggleAction {
     private final String myTypeName;
 
-    private ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon, String typeName) {
+    private ChangeViewTypeActionBase(final @NlsActions.ActionText String shortDescription, final @NlsActions.ActionDescription String longDescription, final Icon icon, String typeName) {
       super(shortDescription, longDescription, icon);
       myTypeName = typeName;
     }
