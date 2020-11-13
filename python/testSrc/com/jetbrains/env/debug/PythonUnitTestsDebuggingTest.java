@@ -2,17 +2,27 @@
 package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.testing.PyAbstractTestFactory;
 import com.jetbrains.python.testing.PyTestFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.Set;
 
 public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
+  @Override
+  public void runPythonTest(PyTestTask testTask) {
+    // Don't run on TeamCity because of PY-45432.
+    Assume.assumeFalse(UsefulTestCase.IS_UNDER_TEAMCITY);
+    super.runPythonTest(testTask);
+  }
+
   @Test
   public void testPythonExceptionDataClass() {
     PyUnitTestDebuggingTask.PythonExceptionData pythonExceptionModel = PyUnitTestDebuggingTask.PythonExceptionData.fromString(
