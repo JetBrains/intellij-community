@@ -68,12 +68,12 @@ public abstract class PsiAugmentProvider {
   /**
    * An extension which enables one to inject extension methods with name {@code nameHint} in class {@code aClass} in context `{@code context}`
    * @param aClass    where extension methods would be injected
-   * @param nameHint  name of the method which is requested or null if all extension methods for this class in this context should be calculated.
+   * @param nameHint  name of the method which is requested.
    *                  Implementations are supposed to use this parameter as no additional name check would be performed
    * @param context   context where extension methods should be applicable
    */
   @ApiStatus.Experimental
-  protected List<PsiMethod> getExtensionMethods(@NotNull PsiClass aClass, @Nullable String nameHint, @NotNull PsiElement context) {
+  protected List<PsiMethod> getExtensionMethods(@NotNull PsiClass aClass, @NotNull String nameHint, @NotNull PsiElement context) {
     return Collections.emptyList();
   }
   
@@ -154,7 +154,7 @@ public abstract class PsiAugmentProvider {
 
   @ApiStatus.Experimental
   @NotNull
-  public static List<PsiMethod> collectExtensionMethods(PsiClass aClass, String nameHint, PsiElement context) {
+  public static List<PsiMethod> collectExtensionMethods(PsiClass aClass, @NotNull String nameHint, PsiElement context) {
     List<PsiMethod> extensionMethods = new SmartList<>();
     forEach(aClass.getProject(), provider -> {
       List<PsiMethod> methods = provider.getExtensionMethods(aClass, nameHint, context);

@@ -25,9 +25,9 @@ public class ExtensionMethodsHelper {
   private static final Logger LOG = Logger.getInstance(ExtensionMethodsHelper.class);
 
   public static List<PsiMethod> getExtensionMethods(final @NotNull PsiClass targetClass,
-                                                    final String nameHint,
+                                                    final @NotNull String nameHint,
                                                     final @NotNull PsiElement place) {
-    if (nameHint == null || !(place instanceof PsiMethodCallExpression)) {
+    if (!(place instanceof PsiMethodCallExpression)) {
       return Collections.emptyList();
     }
     PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)place).getMethodExpression();

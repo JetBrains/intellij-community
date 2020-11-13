@@ -163,7 +163,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
   @Override
   protected List<PsiMethod> getExtensionMethods(@NotNull PsiClass aClass,
-                                                @Nullable String nameHint,
+                                                @NotNull String nameHint,
                                                 @NotNull PsiElement context) {
     if (!LombokProjectValidatorActivity.hasLombokLibrary(context.getProject())) {
       return Collections.emptyList();
