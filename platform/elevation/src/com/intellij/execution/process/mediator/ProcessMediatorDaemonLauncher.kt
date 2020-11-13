@@ -21,19 +21,19 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.orNull
 import com.intellij.util.io.BaseInputStreamReader
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.MetadataUtils
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.Reader
 import java.net.InetAddress
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutorService
 
 private typealias Port = Int
 
@@ -42,8 +42,9 @@ private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 
 object ProcessMediatorDaemonLauncher {
   fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon {
-    return AppExecutorUtil.getAppExecutorService().submitAndAwait {
+    return GlobalScope.async(Dispatchers.IO) {
       createHandshakeTransport().use { handshakeTransport ->
+        ensureActive()
 
         val daemonLaunchOptions = handshakeTransport.getDaemonLaunchOptions().let {
           if (SystemInfo.isWindows) it else it.copy(trampoline = sudo, daemonize = sudo, leaderPid = ProcessHandle.current().pid())
@@ -73,7 +74,7 @@ object ProcessMediatorDaemonLauncher {
                                   handshake.port,
                                   DaemonClientCredentials(handshake.token))
       }
-    }
+    }.awaitWithCheckCanceled()
   }
 
   private fun createHandshakeTransport(): HandshakeTransport {
@@ -148,15 +149,12 @@ object ProcessMediatorDaemonLauncher {
   }
 }
 
-private fun <R> ExecutorService.submitAndAwait(block: () -> R): R {
-  val future = CompletableFuture.supplyAsync(block, this)
-  return awaitWithCheckCanceled(future)
-}
 
-private fun <R> awaitWithCheckCanceled(future: CompletableFuture<R>): R {
+private fun <R> Deferred<R>.awaitWithCheckCanceled(): R = asCompletableFuture().awaitWithCheckCanceled()
+private fun <R> CompletableFuture<R>.awaitWithCheckCanceled(): R {
   try {
-    if (ApplicationManager.getApplication() == null) return future.join()
-    return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
+    if (ApplicationManager.getApplication() == null) return join()
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(this)
   }
   catch (e: Throwable) {
     throw ExceptionUtil.findCause(e, java.util.concurrent.ExecutionException::class.java)?.cause ?: e
