@@ -67,9 +67,7 @@ internal class SpaceReviewersSelectorVm(override val lifetime: Lifetime,
           }
         }
         is CommitSetReviewDetailsVm -> {
-          projectService.getProjectMembersWhoCanViewProject(batch,
-                                                            detailsVm.projectKey.identifier,
-                                                            text)
+          projectService.getMembersWhoCanViewProject(batch, detailsVm.projectKey.identifier, text)
         }
         else -> throw IllegalArgumentException("Unsupported review type")
       }
