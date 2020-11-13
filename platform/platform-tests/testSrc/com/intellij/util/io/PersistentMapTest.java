@@ -401,12 +401,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
     myMap.put("AAA", "AAA_VALUE");
 
     myMap.close();
-    myMap = new PersistentHashMap<String, String>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE) {
-      @Override
-      protected boolean isReadOnly() {
-        return true;
-      }
-    };
+    myMap = PersistentHashMapBuilder.newBuilder(myFile.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE).readonly().build();
 
     try {
       compactMap();

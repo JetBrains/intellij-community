@@ -15,6 +15,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.PersistentHashMapBuilder
 import java.io.File
 import java.io.FileFilter
 import java.io.IOException
@@ -98,14 +99,12 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
   }
 
   open fun openIndexStorage(indexesRoot: File): PersistentHashMap<HashCode, Value>? {
-    return object : PersistentHashMap<HashCode, Value>(
-      File(indexesRoot, "$indexName.input"),
+    return PersistentHashMapBuilder.newBuilder(
+      File(indexesRoot, "$indexName.input").toPath(),
       HashCodeDescriptor.instance,
-      indexExternalizer) {
-      override fun isReadOnly(): Boolean {
-        return true
-      }
-    }
+      indexExternalizer)
+      .readonly()
+      .build()
   }
 
   protected abstract fun getIndexRoot(): File
