@@ -98,6 +98,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                    { lafManager.lookAndFeelReference },
                    { QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) },
                    lafManager.lookAndFeelCellRenderer).shouldUpdateLaF()
+          theme.component.accessibleContext.accessibleName = message("combobox.look.and.feel")
 
           val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"),
                                       { lafManager.autodetect },
@@ -119,6 +120,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             )
             .shouldUpdateLaF()
             .enableIf(overrideLaF.selected)
+            .component.accessibleContext.accessibleName = cdOverrideLaFFont.name
           component(Label(message("label.font.size")))
           .withLargeLeftGap()
             .enableIf(overrideLaF.selected)
@@ -127,6 +129,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                            settings.fontSize)
             .shouldUpdateLaF()
             .enableIf(overrideLaF.selected)
+            .component.accessibleContext.accessibleName = message("label.font.size")
         }
       }
       titledRow(message("title.accessibility")) {
@@ -174,6 +177,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                              { it, value -> it.selectedItem = value ?: supportedValues.first() },
                              modelBinding)
                 .onApply(onApply)
+                .component.accessibleContext.accessibleName = UIBundle.message("color.blindness.checkbox.text")
             }
 
             component(Link(UIBundle.message("color.blindness.link.to.help"))
@@ -269,9 +273,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
               else
                 AntialiasingType.values()
-            comboBox(DefaultComboBoxModel(ideAAOptions), settings::ideAAType, renderer = AAListCellRenderer(false))
-              .shouldUpdateLaF()
-              .onApply {
+            val comboboxIde = comboBox(DefaultComboBoxModel(ideAAOptions), settings::ideAAType, renderer = AAListCellRenderer(false))
+            .shouldUpdateLaF()
+              comboboxIde.component.accessibleContext.accessibleName = message("label.text.antialiasing.scope.ide")
+            comboboxIde.onApply {
                 for (w in Window.getWindows()) {
                   for (c in UIUtil.uiTraverser(w).filter(JComponent::class.java)) {
                     GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent())
@@ -283,6 +288,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             label(message("label.text.antialiasing.scope.editor"))
             comboBox(DefaultComboBoxModel(AntialiasingType.values()), settings::editorAAType, renderer = AAListCellRenderer(true))
               .shouldUpdateLaF()
+              .component.accessibleContext.accessibleName = message("label.text.antialiasing.scope.editor")
           }
         )
       }
@@ -338,6 +344,7 @@ fun Cell.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue
       isEditable = true
       renderer = SimpleListCellRenderer.create("") { it.toString() }
       selectedItem = modelBinding.get()
+      accessibleContext.accessibleName = message("presentation.mode.fon.size")
     }
     .withBinding(
       { component -> component.editor.item as String? },
