@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -333,17 +334,20 @@ public abstract class XDebuggerEditorBase implements Expandable {
     return myDebuggerEditorsProvider;
   }
 
-  public Project getProject() {
+  public final Project getProject() {
     return myProject;
   }
 
   protected Document createDocument(final XExpression text) {
+    if (myProject.isDefault()) {
+      return new DocumentImpl(text.getExpression());
+    }
     XDebuggerEditorsProvider provider = getEditorsProvider();
     if (myContext != null && provider instanceof XDebuggerEditorsProviderBase) {
-      return ((XDebuggerEditorsProviderBase)provider).createDocument(getProject(), text, myContext, myMode);
+      return ((XDebuggerEditorsProviderBase)provider).createDocument(myProject, text, myContext, myMode);
     }
     else {
-      return provider.createDocument(getProject(), text, mySourcePosition, myMode);
+      return provider.createDocument(myProject, text, mySourcePosition, myMode);
     }
   }
 
