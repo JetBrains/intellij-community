@@ -16,7 +16,7 @@ public interface PersistentHashMapBase<Key, Value> {
 
   void dropMemoryCaches();
 
-  Path getBaseFile();
+  void deleteMap();
 
   void put(Key key, Value value) throws IOException;
 

@@ -62,7 +62,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
   }
 
   @NonNls
-  static final String DATA_FILE_EXTENSION = ".values";
+  static final String DATA_FILE_EXTENSION = PersistentHashMap.DATA_FILE_EXTENSION;
   private long myLiveAndGarbageKeysCounter;
   // first four bytes contain live keys count (updated via LIVE_KEY_MASK), last four bytes - number of dead keys
   private int myReadCompactionGarbageSize;
@@ -311,9 +311,18 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     return (int)myLiveAndGarbageKeysCounter;
   }
 
-  @Override
   public Path getBaseFile() {
     return myEnumerator.myFile;
+  }
+
+  @Override
+  public void deleteMap() {
+    Path baseFile = getBaseFile();
+    try {
+      this.close();
+    }
+    catch (IOException ignored) {}
+    IOUtil.deleteAllFilesStartingWith(baseFile.toFile());
   }
 
   @TestOnly // public for tests
@@ -344,13 +353,9 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
   @NotNull
   private static Path checkDataFiles(@NotNull Path file) {
     if (!Files.exists(file)) {
-      deleteFilesStartingWithInternal(getDataFile(file).toFile());
+      IOUtil.deleteAllFilesStartingWith(getDataFile(file).toFile());
     }
     return file;
-  }
-
-  private static void deleteFilesStartingWithInternal(@NotNull File prefixFile) {
-    IOUtil.deleteAllFilesStartingWith(prefixFile);
   }
 
   @NotNull

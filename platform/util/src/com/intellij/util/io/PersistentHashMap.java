@@ -102,13 +102,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl.dropMemoryCaches();
   }
 
-  public final Path getBaseFile() {
-    //TODO: drop it from here
-    return myImpl.getBaseFile();
-  }
-
   public static void deleteFilesStartingWith(@NotNull File prefixFile) {
-    //TODO: drop it from here
     IOUtil.deleteAllFilesStartingWith(prefixFile);
   }
 
@@ -116,13 +110,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    * Deletes {@param map} files and trying to close it before.
    */
   public static void deleteMap(@NotNull PersistentHashMap<?, ?> map) {
-    //TODO: make it a member of the Impl
-    Path baseFile = map.getBaseFile();
-    try {
-      map.close();
-    }
-    catch (IOException ignored) {}
-    deleteFilesStartingWith(baseFile.toFile());
+    map.myImpl.deleteMap();
   }
 
   @Override
