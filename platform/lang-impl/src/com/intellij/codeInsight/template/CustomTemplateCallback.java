@@ -63,6 +63,9 @@ public class CustomTemplateCallback {
     return myFile;
   }
 
+  /**
+   * This method may return outdated PSI on uncommitted document.
+   */
   @NotNull
   public PsiElement getContext() {
     return getContext(myFile, getOffset(), myInInjectedFragment);
