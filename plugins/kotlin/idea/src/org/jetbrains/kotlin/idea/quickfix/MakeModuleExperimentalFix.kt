@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.checkers.ExperimentalUsageChecker
 
-class MakeModuleExperimentalFix(
+open class MakeModuleExperimentalFix(
     file: KtFile,
     private val module: Module,
     private val annotationFqName: FqName
