@@ -24,6 +24,7 @@ class ImportMapperTest : KotlinLightCodeInsightFixtureTestCase() {
     private val javaFullClassNameIndex get() = JavaFullClassNameIndex.getInstance()
     private val kotlinFullClassNameIndex get() = KotlinFullClassNameIndex.getInstance()
     private val kotlinTypeAliasShortNameIndex get() = KotlinTypeAliasShortNameIndex.getInstance()
+    private val importMapper get() = ImportMapper.getInstance(project)
 
     private fun findInIndex(fqName: FqName, scope: GlobalSearchScope): PsiElement? =
         javaFullClassNameIndex.get(fqName.asString().hashCode(), project, scope)?.firstOrNull()
@@ -31,7 +32,7 @@ class ImportMapperTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun test() {
         val scope = GlobalSearchScope.everythingScope(project)
-        val importsMap = ImportMapper.getImport2AliasMap()
+        val importsMap = importMapper.getImport2AliasMap()
         for ((oldName, aliasFqName) in importsMap) {
             val aliases = kotlinTypeAliasShortNameIndex.get(aliasFqName.shortName().asString(), project, scope).map {
                 it.getTypeReference() ?: error("Type reference is not found: ${it.text}")
@@ -47,10 +48,10 @@ class ImportMapperTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test old version`() {
-        assertNull(ImportMapper.findCorrespondingKotlinFqName(FqName("kotlin.jvm.Throws"), ApiVersion.KOTLIN_1_3))
+        assertNull(importMapper.findCorrespondingKotlinFqName(FqName("kotlin.jvm.Throws"), ApiVersion.KOTLIN_1_3))
     }
 
     fun `test new version`() {
-        assertNotNull(ImportMapper.findCorrespondingKotlinFqName(FqName("kotlin.jvm.Throws"), ApiVersion.KOTLIN_1_4))
+        assertNotNull(importMapper.findCorrespondingKotlinFqName(FqName("kotlin.jvm.Throws"), ApiVersion.KOTLIN_1_4))
     }
 }

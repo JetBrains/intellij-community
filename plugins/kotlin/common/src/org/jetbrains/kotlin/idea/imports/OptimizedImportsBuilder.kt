@@ -91,6 +91,8 @@ class OptimizedImportsBuilder(
         file.importDirectives.mapNotNull { it.importPath }.toSet()
     }
 
+    private val importMapper get() = ImportMapper.getInstance(file.project)
+
     fun buildOptimizedImports(): List<ImportPath>? {
         val facade = file.getResolutionFacade()
         file.importDirectives
@@ -127,11 +129,11 @@ class OptimizedImportsBuilder(
 
     private val DeclarationDescriptor.importDescriptorWithMapping: FqName?
         get() = importableFqName?.let { fqName ->
-            ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
+            importMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
         }
 
     private val ImportableDescriptor.importDescriptorWithMapping: FqName
-        get() = ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
+        get() = importMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
 
     private fun tryBuildOptimizedImports(): List<ImportPath>? {
         val importsToGenerate = hashSetOf<ImportPath>()
@@ -143,7 +145,7 @@ class OptimizedImportsBuilder(
             for (name in data.namesToImport.getValue(fqName)) {
                 val alias = if (name != fqName.shortName()) name else null
 
-                val resultFqName = ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
+                val resultFqName = importMapper.findCorrespondingKotlinFqName(fqName, apiVersion) ?: fqName
                 val explicitImportPath = ImportPath(resultFqName, false, alias)
                 if (explicitImportPath in importsToGenerate) continue
 

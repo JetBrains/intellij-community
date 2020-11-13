@@ -5,12 +5,18 @@
 
 package org.jetbrains.kotlin.idea.imports
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.name.FqName
 
+@Service
+class ImportMapper {
+    companion object {
+        fun getInstance(project: Project): ImportMapper = project.getService(ImportMapper::class.java)
+    }
 
-object ImportMapper {
     private data class FqNameWithVersion(val fqName: FqName, val version: ApiVersion)
 
     private val UTIL_TO_COLLECTIONS
