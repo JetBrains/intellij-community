@@ -38,7 +38,7 @@ class JavaBasicCompletionLesson(module: Module)
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
     actionTask("EditorChooseLookupItem") {
-      LessonsBundle.message("basic.completion.start.typing", code("Run")) +
+      LessonsBundle.message("basic.completion.start.typing", code("Ran")) +
       " " + JavaLessonsBundle.message("java.basic.completion.choose.first", action(it))
     }
     caret(18, 36)
