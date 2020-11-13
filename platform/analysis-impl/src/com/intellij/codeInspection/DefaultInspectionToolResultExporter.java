@@ -95,35 +95,38 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     return myProblemElements;
   }
 
-  protected synchronized void writeOutput(CommonProblemDescriptor @NotNull [] descriptions, @NotNull RefEntity refElement) throws
-                                                                                                                           IOException {
-    Path file = InspectionsResultUtil.getInspectionResultFile(myContext.getOutputPath(), myToolWrapper.getShortName());
-    boolean exists = Files.exists(file);
-    Files.createDirectories(file.getParent());
-    try (Writer writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
-      if (!exists) {
-        writer.write('<');
-        writer.write(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
-        writer.write(' ');
-        writer.write(GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE);
-        writer.write('=');
-        writer.write('"');
-        writer.write(Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper));
-        writer.write('"');
-        writer.write('>');
+  private static final Object WRITER_LOCK = new Object();
+  protected void writeOutput(CommonProblemDescriptor @NotNull [] descriptions, @NotNull RefEntity refElement) throws IOException {
+    InspectionEP inspectionEP = myToolWrapper.getExtension();
+    synchronized (inspectionEP != null ? inspectionEP : WRITER_LOCK) {
+      Path file = InspectionsResultUtil.getInspectionResultFile(myContext.getOutputPath(), myToolWrapper.getShortName());
+      boolean exists = Files.exists(file);
+      Files.createDirectories(file.getParent());
+      try (Writer writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
+        if (!exists) {
+          writer.write('<');
+          writer.write(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
+          writer.write(' ');
+          writer.write(GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE);
+          writer.write('=');
+          writer.write('"');
+          writer.write(Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper));
+          writer.write('"');
+          writer.write('>');
+          writer.write('\n');
+        }
+  
+        exportResults(descriptions, refElement, p -> {
+          try {
+            JbXmlOutputter.collapseMacrosAndWrite(p, getContext().getProject(), writer);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        });
+  
         writer.write('\n');
       }
-
-      exportResults(descriptions, refElement, p -> {
-        try {
-          JbXmlOutputter.collapseMacrosAndWrite(p, getContext().getProject(), writer);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      });
-
-      writer.write('\n');
     }
   }
 
