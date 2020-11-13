@@ -18,10 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.ActionLink;
@@ -104,6 +101,11 @@ public class XDebuggerTreeInlayPopup<D> {
     JComponent toolbar = createToolbar(mainPanel, tree);
     tree.setBackground(UIUtil.getToolTipBackground());
     toolbar.setBackground(UIUtil.getToolTipActionBackground());
+    WindowMoveListener moveListener = new WindowMoveListener(mainPanel);
+    tree.addMouseListener(moveListener);
+    tree.addMouseMotionListener(moveListener);
+    toolbar.addMouseListener(moveListener);
+    toolbar.addMouseMotionListener(moveListener);
     return mainPanel
       .addToCenter(scrollPane)
       .addToBottom(toolbar);
