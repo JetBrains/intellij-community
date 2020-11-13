@@ -34,8 +34,8 @@ class KotlinSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringCha
         perform { myFixture.type("ing") }
         perform("nextSignature: 'foo(p: String)'") { commitAll() }
 
-        perform {
-            perform { myFixture.type(", ") }
+        perform("nextSignature: 'foo(p: String, )'") {
+            perform("nextSignature: 'foo(p: String,)'") { myFixture.type(", ") }
             commitAll()
         }
     }
@@ -93,7 +93,7 @@ class KotlinSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringCha
         perform("nextSignature: 'foo(p: Any)'", "nextSignature: 'foo(p: Any)'") {
             addImport("java.util.ArrayList")
         }
-        perform("nextSignature: 'foo(p: Any, p2: String)'") {
+        perform("nextSignature: 'foo(p: Any,)'", "nextSignature: 'foo(p: Any, p2: String)'") {
             myFixture.type(", p2: String")
             commitAll()
         }
@@ -121,7 +121,7 @@ class KotlinSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringCha
             myFixture.type("<String>")
             commitAll()
         }
-        perform("nextSignature: 'foo(p: ArrayList<String>, p2: Any)'") {
+        perform("nextSignature: 'foo(p: ArrayList<String>,)'", "nextSignature: 'foo(p: ArrayList<String>, p2: Any)'") {
             myFixture.type(", p2: Any")
             commitAll()
         }
@@ -149,7 +149,7 @@ class KotlinSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringCha
             myFixture.type("<String>")
             commitAll()
         }
-        perform("nextSignature: 'foo(p: ArrayList<String>, p2: Any)'") {
+        perform("nextSignature: 'foo(p: ArrayList<String>,)'", "nextSignature: 'foo(p: ArrayList<String>, p2: Any)'") {
             myFixture.type(", p2: Any")
             commitAll()
         }
@@ -199,12 +199,12 @@ class KotlinSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringCha
             commitAll()
         }
 
-        perform {
+        perform("inconsistentState") {
             myFixture.type("/*")
             commitAll()
         }
 
-        perform {
+        perform("inconsistentState") {
             myFixture.type(" this is comment for parameter")
             commitAll()
         }
@@ -214,12 +214,12 @@ class KotlinSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringCha
             commitAll()
         }
 
-        perform {
+        perform("nextSignature: 'foo(p1: Any/* this is comment for parameter*/,)'", "inconsistentState") {
             myFixture.type(", p2: Int /*")
             commitAll()
         }
 
-        perform {
+        perform("inconsistentState") {
             myFixture.type("this is comment for another parameter")
             commitAll()
         }
