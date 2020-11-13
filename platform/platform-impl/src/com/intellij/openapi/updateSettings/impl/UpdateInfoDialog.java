@@ -138,13 +138,11 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   protected JComponent createCenterPanel() {
     String licenseInfo = myLicenseInfo != null ? myLicenseInfo.first : null;
     boolean licenseWarn = myLicenseInfo != null && myLicenseInfo.second;
-    return UpdateInfoPanel
-      .create(myNewBuild, myPatches, myTestPatch, myWriteProtected, licenseInfo, licenseWarn, myEnableLink, myUpdatedChannel);
+    return UpdateInfoPanel.create(myNewBuild, myPatches, myTestPatch, myWriteProtected, licenseInfo, licenseWarn, myEnableLink, myUpdatedChannel);
   }
 
-  @NotNull
   @Override
-  protected DialogStyle getStyle() {
+  protected @NotNull DialogStyle getStyle() {
     return DialogStyle.COMPACT;
   }
 
