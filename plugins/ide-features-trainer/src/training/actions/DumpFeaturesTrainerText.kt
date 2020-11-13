@@ -13,8 +13,7 @@ import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LearningBalloonConfig
 import java.awt.datatransfer.StringSelection
 
-@Suppress("HardCodedStringLiteral")
-class DumpFeaturesTrainerText : AnAction("Copy IFT Course Text to Clipboard") {
+class DumpFeaturesTrainerText : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val lessonsForModules = CourseManager.instance.lessonsForModules

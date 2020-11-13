@@ -5,8 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import training.learn.lesson.LessonManager
 
-@Suppress("HardCodedStringLiteral")
-class SetCurrentLessonAsPassed: AnAction("Set Current Lesson as Passed") {
+class SetCurrentLessonAsPassed: AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val currentLesson = LessonManager.instance.currentLesson ?: return
