@@ -11,12 +11,12 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
@@ -318,13 +318,13 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     else {
       panels = Arrays.asList(newEnvironmentPanel, existingSdkPanel);
     }
-    myInterpretersDecorator = new HideableDecorator(decoratorPanel, getProjectInterpreterTitle(defaultPanel), false);
+    myInterpretersDecorator = new HideableDecorator(decoratorPanel, getProjectInterpreterTitle(defaultPanel).toString(), false);
     myInterpretersDecorator.setContentComponent(container);
 
     myInterpreterPanel = new PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.new.project.interpreter"),
                                                 getIcon(), panels, defaultPanel);
     myInterpreterPanel.addChangeListener(() -> {
-      myInterpretersDecorator.setTitle(getProjectInterpreterTitle(myInterpreterPanel.getSelectedPanel()));
+      myInterpretersDecorator.setTitle(getProjectInterpreterTitle(myInterpreterPanel.getSelectedPanel()).toString());
       final boolean useNewEnvironment = myInterpreterPanel.getSelectedPanel() instanceof PyAddNewEnvironmentPanel;
       PySdkSettings.getInstance().setUseNewEnvironmentForNewProject(useNewEnvironment);
       checkValid();
@@ -350,8 +350,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     });
   }
 
-  @NotNull
-  private static @NlsContexts.Separator String getProjectInterpreterTitle(@NotNull PyAddSdkPanel panel) {
+  private static @NotNull TextWithMnemonic getProjectInterpreterTitle(@NotNull PyAddSdkPanel panel) {
     final String name;
     if (panel instanceof PyAddNewEnvironmentPanel) {
       name = PyBundle.message("python.sdk.new.environment.kind", ((PyAddNewEnvironmentPanel)panel).getSelectedPanel().getEnvName());
@@ -360,7 +359,8 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       final Sdk sdk = panel.getSdk();
       name = sdk != null ? sdk.getName() : panel.getPanelName();
     }
-    return PyBundle.message("python.sdk.python.interpreter.title.0", name);
+    return TextWithMnemonic.parse(PyBundle.message("python.sdk.python.interpreter.title.0", "[name]"))
+      .replaceFirst("[name]", name);
   }
 
   @Nullable
