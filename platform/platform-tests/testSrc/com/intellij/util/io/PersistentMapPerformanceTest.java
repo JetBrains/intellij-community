@@ -43,7 +43,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
   }
 
   interface MapIntAppender<T> {
-    void append(PersistentHashMap<T, ?> map, int indexKey, PersistentHashMap.ValueDataAppender appender) throws IOException;
+    void append(PersistentHashMap<T, ?> map, int indexKey, AppendablePersistentMap.ValueDataAppender appender) throws IOException;
   }
 
   private static <T> void run2GTest(MapConstructor<T, String> constructor, MapIntSetter<T, String> setter, MapGetter<T, String> getter)

@@ -673,7 +673,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     if (myValueStorage.performChunksCompaction(readResult.chunksCount)) {
       long newValueOffset = myValueStorage.compactChunks(new ValueDataAppender() {
         @Override
-        public void append(DataOutput out) throws IOException {
+        public void append(@NotNull DataOutput out) throws IOException {
           myValueExternalizer.save(out, valueRead);
         }
       }, readResult);
