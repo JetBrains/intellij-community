@@ -30,7 +30,6 @@ class MPSProperties extends JetBrainsProductProperties {
                 "intellij.platform.externalSystem.impl"
         ]
 
-        productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
         productLayout.additionalPlatformJars.
                 putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
         productLayout.additionalPlatformJars.put("forms_rt.jar", "intellij.java.guiForms.compiler")
@@ -72,8 +71,6 @@ class MPSProperties extends JetBrainsProductProperties {
                 withProjectLibrary("pty4j") // for terminal plugin
                 withoutProjectLibrary("Ant")
                 withoutProjectLibrary("Gradle")
-                //Removing Idea Tips & Tricks
-                excludeFromModule("intellij.java.ide.resources", "ProductivityFeaturesRegistry.xml")
             }
         } as Consumer<PlatformLayout>
 
