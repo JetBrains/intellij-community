@@ -98,12 +98,6 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     return false;
   }
 
-  @NotNull
-  public final Object getDataAccessLock() {
-    //TODO: should it be the part of interface?
-    return myImpl.getDataAccessLock();
-  }
-
   public final void dropMemoryCaches() {
     myImpl.dropMemoryCaches();
   }
