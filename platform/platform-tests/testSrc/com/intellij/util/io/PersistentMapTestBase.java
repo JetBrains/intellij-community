@@ -41,6 +41,10 @@ abstract class PersistentMapTestBase extends UsefulTestCase {
     return unwrapMap().getGarbageSize();
   }
 
+  protected void compactMap() throws IOException {
+    unwrapMap().compact();
+  }
+
   @Override
   protected void tearDown() throws Exception {
     try {

@@ -64,7 +64,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       map.close();
       assertTrue(PersistentHashMapImpl.unwrap(map).getValueStorage().getSize() > 2 * PersistentHashMapValueStorage.SOFT_MAX_RETAINED_LIMIT);
       map = mapConstructor.createMap(myFile);
-      map.compact();
+      PersistentHashMapImpl.unwrap(map).compact();
 
       for (int i = 0; i < keys; ++i) {
         Collection<String> strings = map.get(i);
@@ -147,7 +147,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
   public void testPutCompactGet() throws IOException {
     myMap.put("a", "b");
-    myMap.compact();
+    compactMap();
     assertEquals("b", myMap.get("a"));
   }
 
@@ -170,7 +170,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
         assertEquals(key + "_value", val);
       }
     }
-    myMap.compact();
+    compactMap();
 
     { // after compact
       final Collection<String> allKeys = new HashSet<>(myMap.getAllKeysWithExistingMapping());
@@ -336,7 +336,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       }
     }
 
-    myMap.compact();
+    compactMap();
 
     assertEquals(0, getGarbageSize());
 
@@ -381,7 +381,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
           assertEquals(testMapping.get(key), val);
         }
       }
-      map.compact();
+      PersistentHashMapImpl.unwrap(map).compact();
 
       { // after compact
         final Collection<Integer> allKeys = new HashSet<>(map.getAllKeysWithExistingMapping());
@@ -409,7 +409,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
     };
 
     try {
-      myMap.compact();
+      compactMap();
       fail();
     } catch (IncorrectOperationException ignore) {}
 

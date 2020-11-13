@@ -157,7 +157,8 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   /**
-   * Process all keys registered in the map. Note that keys which were removed after {@link #compact()} call will be processed as well. Use
+   * Process all keys registered in the map. Note that keys which were removed after
+   * {@link PersistentHashMapImpl#compact()} call will be processed as well. Use
    * {@link #processKeysWithExistingMapping(Processor)} to process only keys with existing mappings
    */
   @Override
@@ -210,16 +211,6 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   @Override
   public final void close() throws IOException {
     myImpl.close();
-  }
-
-  @ApiStatus.Internal
-  public final void compact() throws IOException {
-    myImpl.compact();
-  }
-
-  @ApiStatus.Internal
-  public final boolean isCompactionSupported() {
-    return myImpl.isCompactionSupported();
   }
 
   @Override

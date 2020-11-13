@@ -798,7 +798,6 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
   }
 
   // make it visible for tests
-  @Override
   @ApiStatus.Internal
   public void compact() throws IOException {
     if (!isCompactionSupported()) throw new IncorrectOperationException();
@@ -876,7 +875,6 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     }
   }
 
-  @Override
   @ApiStatus.Internal
   public boolean isCompactionSupported() {
     return !myIsReadOnly && !myIntMapping;

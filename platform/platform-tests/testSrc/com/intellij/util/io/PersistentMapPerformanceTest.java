@@ -118,7 +118,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
 
       map = constructor.createMap(file);
       if (isSmall) {
-        map.compact();
+        PersistentHashMapImpl.unwrap(map).compact();
       }
       else {
         assertTrue(map.isDirty());  // autocompact on open should leave the map dirty
@@ -346,7 +346,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
           myMap.remove(key);
         }
         stringCache.removeAll();
-        myMap.compact();
+        PersistentHashMapImpl.unwrap(myMap).compact();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
