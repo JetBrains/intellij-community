@@ -320,6 +320,7 @@ public final class FileTemplateUtil {
       propsMap.put(dummyRef, "");
     }
 
+    handler.prepareProperties(propsMap, fileName, template, project);
     handler.prepareProperties(propsMap, fileName, template);
     handler.prepareProperties(propsMap);
 

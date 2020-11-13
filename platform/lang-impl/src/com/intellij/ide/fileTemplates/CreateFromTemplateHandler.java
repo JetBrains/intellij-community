@@ -54,6 +54,11 @@ public interface CreateFromTemplateHandler {
 
   default void prepareProperties(@NotNull Map<String, Object> props, String fileName, @NotNull FileTemplate template) {}
 
+  default void prepareProperties(@NotNull Map<String, Object> props,
+                                 String fileName,
+                                 @NotNull FileTemplate template,
+                                 @NotNull Project project) {}
+
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Title)
   default String commandName(@NotNull FileTemplate template) {
