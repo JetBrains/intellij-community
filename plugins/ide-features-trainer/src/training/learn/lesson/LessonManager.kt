@@ -190,6 +190,7 @@ class LessonManager {
   fun clearRestoreMessage() {
     if (shownRestoreNotification != null) {
       learnPanel?.clearRestoreMessage()
+      shownRestoreNotification = null
     }
   }
 
