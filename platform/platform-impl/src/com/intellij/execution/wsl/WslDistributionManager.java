@@ -6,35 +6,44 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
-public class WslDistributionManager {
+@Service(Service.Level.APP)
+public final class WslDistributionManager {
 
   private static final Logger LOG = Logger.getInstance(WslDistributionManager.class);
-  private static final WslDistributionManager INSTANCE = new WslDistributionManager();
+  // Distributions created by tools, e.g. Docker. Not suitable for running users apps.
+  private static final Set<String> INTERNAL_DISTRIBUTIONS = Set.of("docker-desktop-data");
 
   public static @NotNull WslDistributionManager getInstance() {
-    return INSTANCE;
+    return ApplicationManager.getApplication().getService(WslDistributionManager.class);
   }
 
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
+    checkEdtAndReadAction();
     List<WSLDistribution> parsedFromWslList;
     try {
       long startNano = System.nanoTime();
       parsedFromWslList = parseFromWslList();
       LOG.info("Installed WSL distributions parsed in " + TimeoutUtil.getDurationMillis(startNano) + "ms");
     }
-    catch (ExecutionException e) {
+    catch (IOException e) {
       LOG.info("Cannot parse WSL distributions", e);
       parsedFromWslList = Collections.emptyList();
     }
@@ -48,29 +57,47 @@ public class WslDistributionManager {
     return result;
   }
 
-  private static @NotNull List<WSLDistribution> parseFromWslList() throws ExecutionException {
+  private static @NotNull List<WSLDistribution> parseFromWslList() throws IOException {
     GeneralCommandLine commandLine = createCommandLine();
     commandLine.setCharset(StandardCharsets.UTF_16LE);
-    ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, 5000);
-    if (output.isTimeout()) {
-      throw new ExecutionException(commandLine.getCommandLineString() + " is timed out"); //NON-NLS
+    ProcessOutput output;
+    try {
+      output = ExecUtil.execAndGetOutput(commandLine, 10000);
     }
-    if (output.getExitCode() != 0) {
-      throw new ExecutionException(commandLine.getCommandLineString() + " has terminated with exit code " + output.getExitCode()); //NON-NLS
+    catch (ExecutionException e) {
+      throw new IOException("Failed to run " + commandLine.getCommandLineString(), e);
     }
-    if (!output.getStderr().isEmpty()) {
-      throw new ExecutionException(commandLine.getCommandLineString() + " failed with " + output.getStderr()); //NON-NLS
+    if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
+      String details = StringUtil.join(ContainerUtil.newArrayList(
+        "timeout: " + output.isTimeout(),
+        "exitCode: " + output.getExitCode(),
+        "stdout: " + output.getStdout(),
+        "stderr: " + output.getStderr()
+      ), ", ");
+      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + details);
     }
-    List<@NlsSafe String> lines = output.getStdoutLines();
-    return ContainerUtil.map(lines, WSLDistribution::new);
+    List<@NlsSafe String> distributions = ContainerUtil.filter(output.getStdoutLines(), distribution -> {
+      return !INTERNAL_DISTRIBUTIONS.contains(distribution);
+    });
+    return ContainerUtil.map(distributions, WSLDistribution::new);
   }
 
-  private static @NotNull GeneralCommandLine createCommandLine() throws ExecutionException {
+  private static @NotNull GeneralCommandLine createCommandLine() throws IOException {
     File wslExe = PathEnvironmentVariableUtil.findInPath("wsl.exe");
     if (wslExe == null) {
-      throw new ExecutionException("No wsl.exe found in %PATH%"); //NON-NLS
+      throw new IOException("No wsl.exe found in %PATH%");
     }
     return new GeneralCommandLine(wslExe.getAbsolutePath(), "--list", "--quiet");
   }
 
+  private static void checkEdtAndReadAction() {
+    Application application = ApplicationManager.getApplication();
+    if (application == null || !application.isInternal() || application.isHeadlessEnvironment()) {
+      return;
+    }
+    if (application.isReadAccessAllowed()) {
+      LOG.error("Please call WslDistributionManager.getInstalledDistributions on a background thread and " +
+                "not under read action as it runs a potentially long operation.");
+    }
+  }
 }
