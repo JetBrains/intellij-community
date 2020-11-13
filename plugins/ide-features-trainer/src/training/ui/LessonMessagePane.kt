@@ -405,47 +405,16 @@ class LessonMessagePane : JTextPane() {
       val myMessages = lessonMessage.messageParts
       for (myMessage in myMessages) {
         if (myMessage.type == MessagePart.MessageType.SHORTCUT) {
-          val startOffset = myMessage.startOffset
-          val endOffset = myMessage.endOffset
-          val rectangleStart = modelToView(startOffset + 1)
-          val rectangleEnd = modelToView(endOffset - 1)
-          val color = g2d.color
-          val fontSize = UISettings.instance.fontSize
-
           val bg = UISettings.instance.shortcutBackgroundColor
           val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
-          g2d.color = needColor
-          val r2d: RoundRectangle2D = if (!SystemInfo.isMac)
-            RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent + 1,
-                                    rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
-                                    arc.toDouble(), arc.toDouble())
-          else
-            RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent,
-                                    rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
-                                    arc.toDouble(), arc.toDouble())
-          g2d.fill(r2d)
-          g2d.color = color
-        } else if (myMessage.type == MessagePart.MessageType.CODE) {
-          val startOffset = myMessage.startOffset
-          val endOffset = myMessage.endOffset
-          val rectangleStart = modelToView(startOffset + 1)
-          val rectangleEnd = modelToView(endOffset - 1)
-          val color = g2d.color
-          val fontSize = UISettings.instance.fontSize
-
-          val bg = UISettings.instance.backgroundColor
-          //val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
-          g2d.color = UISettings.instance.codeBorderColor
-          val r2d: RoundRectangle2D = if (!SystemInfo.isMac)
-            RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent + 1,
-                                    rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
-                                    arc.toDouble(), arc.toDouble())
-          else
-            RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent,
-                                    rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
-                                    arc.toDouble(), arc.toDouble())
-          g2d.draw(r2d)
-          g2d.color = color
+          drawRectangleAroundText(myMessage, g2d, needColor) { r2d ->
+            g2d.fill(r2d)
+          }
+        }
+        else if (myMessage.type == MessagePart.MessageType.CODE) {
+          drawRectangleAroundText(myMessage, g2d, UISettings.instance.codeBorderColor) { r2d ->
+            g2d.draw(r2d)
+          }
         }
         else if (myMessage.type == MessagePart.MessageType.ICON_IDX) {
           val rect = modelToView(myMessage.startOffset + 1)
@@ -454,6 +423,30 @@ class LessonMessagePane : JTextPane() {
         }
       }
     }
+  }
+
+  private fun drawRectangleAroundText(myMessage: MessagePart,
+                                      g2d: Graphics2D,
+                                      needColor: Color,
+                                      draw: (r2d: RoundRectangle2D) -> Unit) {
+    val startOffset = myMessage.startOffset
+    val endOffset = myMessage.endOffset
+    val rectangleStart = modelToView(startOffset + 1)
+    val rectangleEnd = modelToView(endOffset - 1)
+    val color = g2d.color
+    val fontSize = UISettings.instance.fontSize
+
+    g2d.color = needColor
+    val r2d: RoundRectangle2D = if (!SystemInfo.isMac)
+      RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent + 1,
+                              rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
+                              arc.toDouble(), arc.toDouble())
+    else
+      RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent,
+                              rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
+                              arc.toDouble(), arc.toDouble())
+    draw(r2d)
+    g2d.color = color
   }
 
   companion object {
