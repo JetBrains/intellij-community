@@ -80,7 +80,7 @@
 
     <!-- Help -->
     <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="FeaturesTrainerIcons.Img.FeatureTrainerToolWindow">
-      <add-to-group group-id="HelpMenu"/>
+      <add-to-group group-id="HelpMenu" relative-to-action="ShowTips" anchor="after"/>
     </action>
   </actions>
 
