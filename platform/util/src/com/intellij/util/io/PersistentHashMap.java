@@ -102,24 +102,9 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl.dropMemoryCaches();
   }
 
-  public final int getSize() {
-    return myImpl.getSize();
-  }
-
-  public final int getGarbageSize() {
-    //TODO: drop it from here
-    return myImpl.getGarbageSize();
-  }
-
   public final Path getBaseFile() {
     //TODO: drop it from here
     return myImpl.getBaseFile();
-  }
-
-  @TestOnly // public for tests
-  public final boolean makesSenseToCompact() {
-    //TODO: drop it from here
-    return myImpl.makesSenseToCompact();
   }
 
   public static void deleteFilesStartingWith(@NotNull File prefixFile) {
@@ -158,6 +143,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    */
   @Deprecated
   @ApiStatus.Experimental
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public interface ValueDataAppender extends AppendablePersistentMap.ValueDataAppender {
   }
 
@@ -238,7 +224,6 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl.close();
   }
 
-  // make it visible for tests
   @ApiStatus.Internal
   public final void compact() throws IOException {
     myImpl.compact();
@@ -252,16 +237,5 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   @Override
   public final String toString() {
     return myImpl.toString();
-  }
-
-  @TestOnly
-  public final PersistentHashMapValueStorage getValueStorage() {
-    //TODO: remove it?
-    return myImpl.getValueStorage();
-  }
-
-  @TestOnly
-  public final boolean getReadOnly() {
-    return myImpl.getReadOnly();
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -302,12 +303,10 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     }
   }
 
-  @Override
   public int getSize() {
     return (int)(myLiveAndGarbageKeysCounter / LIVE_KEY_MASK);
   }
 
-  @Override
   public int getGarbageSize() {
     return (int)myLiveAndGarbageKeysCounter;
   }
@@ -317,7 +316,6 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     return myEnumerator.myFile;
   }
 
-  @Override
   @TestOnly // public for tests
   @SuppressWarnings("WeakerAccess") // used in upsource for some reason
   public boolean makesSenseToCompact() {
@@ -1013,15 +1011,28 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     return getClass().getName() + "@" + Integer.toHexString(hashCode()) + ": " + myStorageFile;
   }
 
-  @Override
   @TestOnly
   public PersistentHashMapValueStorage getValueStorage() {
     return myValueStorage;
   }
 
-  @Override
   @TestOnly
   public boolean getReadOnly() {
     return myIsReadOnly;
+  }
+
+  @NotNull
+  @TestOnly
+  public static <Key, Value> PersistentHashMapImpl<Key, Value> unwrap(@NotNull PersistentHashMap<Key, Value> map) {
+    //NOTE: on production, it may be another implementation behind the PersistentHashMap
+    try {
+      Field field = PersistentHashMap.class.getDeclaredField("myImpl");
+      field.setAccessible(true);
+      //noinspection unchecked
+      return (PersistentHashMapImpl<Key, Value>)field.get(map);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

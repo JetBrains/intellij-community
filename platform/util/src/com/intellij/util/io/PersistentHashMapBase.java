@@ -14,18 +14,9 @@ import java.util.Collection;
 public interface PersistentHashMapBase<Key, Value> {
   boolean isCorrupted();
 
-  //TODO: should it be the part of interface?
   void dropMemoryCaches();
 
-  int getSize();
-
-  //TODO: should it be the part of interface?
-  int getGarbageSize();
-
   Path getBaseFile();
-
-  @TestOnly
-  boolean makesSenseToCompact();
 
   void put(Key key, Value value) throws IOException;
 
@@ -77,10 +68,4 @@ public interface PersistentHashMapBase<Key, Value> {
 
   @ApiStatus.Internal
   boolean isCompactionSupported();
-
-  @TestOnly
-  PersistentHashMapValueStorage getValueStorage();
-
-  @TestOnly
-  boolean getReadOnly();
 }

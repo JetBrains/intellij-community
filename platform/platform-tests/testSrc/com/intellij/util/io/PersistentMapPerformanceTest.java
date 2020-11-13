@@ -113,7 +113,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       }
       map.close();
       final boolean isSmall = stringsCount < 1000000;
-      assertTrue(map.makesSenseToCompact());
+      assertTrue(makesSenseToCompact(map));
       long started = System.currentTimeMillis();
 
       map = constructor.createMap(file);
@@ -123,7 +123,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       else {
         assertTrue(map.isDirty());  // autocompact on open should leave the map dirty
       }
-      assertFalse(map.makesSenseToCompact());
+      assertFalse(makesSenseToCompact(map));
       LOG.debug(String.valueOf(System.currentTimeMillis() - started));
       for (int i = 0; i < stringsCount; ++i) {
         if (i >= 2 * stringsCount / 3) {
@@ -138,6 +138,10 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     finally {
       clearMap(file, map);
     }
+  }
+
+  private static <T> boolean makesSenseToCompact(PersistentHashMap<T, Integer> map) {
+    return PersistentHashMapImpl.unwrap(map).makesSenseToCompact();
   }
 
   public void testOpeningWithCompact3() throws IOException {

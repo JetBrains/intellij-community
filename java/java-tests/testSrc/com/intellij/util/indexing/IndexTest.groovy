@@ -78,6 +78,7 @@ import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.PersistentHashMapImpl
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
@@ -977,8 +978,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     try {
       MapIndexStorage<String, String> storage = assertInstanceOf(index, MapReduceIndex.class).getStorage()
       PersistentHashMap<String, UpdatableValueContainer<String>> map = storage.getIndexMap()
-      assertTrue(map.getReadOnly())
-      assertTrue(map.getValueStorage().isReadOnly())
+      assertTrue(PersistentHashMapImpl.unwrap(map).getReadOnly())
+      assertTrue(PersistentHashMapImpl.unwrap(map).getValueStorage().isReadOnly())
     }
     finally {
       index.dispose()
