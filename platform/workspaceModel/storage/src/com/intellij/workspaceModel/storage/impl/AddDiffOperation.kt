@@ -10,7 +10,6 @@ import java.io.File
 
 internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
 
-  private val LOG = logger<AddDiffOperation>()
   private val replaceMap = HashBiMap.create<EntityId, EntityId>()
   private val diffLog = diff.changeLog.changeLog
 
@@ -372,5 +371,9 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     target.serializeTo(folder.resolve("Instant_Save_Target").outputStream())
     diff.serializeTo(folder.resolve("Instant_Save_Source").outputStream())
     diff.serializeDiff(folder.resolve("Instant_Save_Diff").outputStream())
+  }
+
+  companion object {
+    private val LOG = logger<AddDiffOperation>()
   }
 }
