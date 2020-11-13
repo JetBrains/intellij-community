@@ -41,8 +41,8 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl = impl;
   }
 
-  @TestOnly
   public boolean isCorrupted() {
+    //note: this method used in Scala plugin
     return myImpl.isCorrupted();
   }
 

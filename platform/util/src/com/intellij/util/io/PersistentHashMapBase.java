@@ -12,8 +12,6 @@ import java.util.Collection;
  * A Base interface for custom PersistentHashMap implementations
  */
 public interface PersistentHashMapBase<Key, Value> {
-  @TestOnly
-  //TODO: should it be the part of interface?
   boolean isCorrupted();
 
   //TODO: should it be the part of interface?
