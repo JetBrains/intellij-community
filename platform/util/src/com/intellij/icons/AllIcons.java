@@ -48,6 +48,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon DiffWithClipboard = load("actions/diffWithClipboard.svg", -3860075951405125257L, 2);
     /** 16x16 */ public static final @NotNull Icon Download = load("actions/download.svg", -5995640021644586396L, 2);
     /** 16x16 */ public static final @NotNull Icon Dump = load("actions/dump.svg", -1999792581111822882L, 2);
+    /** 16x16 */ public static final @NotNull Icon DynamicUsages = load("actions/dynamicUsages.svg", -3038340384984333293L, 2);
     /** 16x16 */ public static final @NotNull Icon Edit = load("actions/edit.svg", 6256745109677636307L, 2);
     /** 16x16 */ public static final @NotNull Icon EditScheme = load("actions/editScheme.svg", 2969091749870783802L, 2);
     /** 16x16 */ public static final @NotNull Icon EditSource = load("actions/editSource.svg", 561957038266216006L, 2);
@@ -65,6 +66,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ForceRefresh = load("actions/forceRefresh.svg", -4820043730813305509L, 2);
     /** 16x16 */ public static final @NotNull Icon Forward = load("actions/forward.svg", -6911971082377513030L, 2);
     /** 16x16 */ public static final @NotNull Icon GC = load("actions/gc.svg", -8575168390950363090L, 2);
+    /** 16x16 */ public static final @NotNull Icon GeneratedFolder = load("actions/generatedFolder.svg", 3275380518479818409L, 2);
     /** 16x16 */ public static final @NotNull Icon GroupBy = load("actions/groupBy.svg", -211287332248382369L, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByClass = load("actions/GroupByClass.svg", -6060827396505222324L, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByFile = load("actions/GroupByFile.svg", -3508076526395798427L, 2);

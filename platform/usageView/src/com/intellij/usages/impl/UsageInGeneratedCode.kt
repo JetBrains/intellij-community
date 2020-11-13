@@ -48,7 +48,7 @@ private class UsageInGeneratedCodeFilteringRule(private val project: Project) : 
 
 private class UsageInGeneratedCodeToggleAction : RuleAction(
   UsageViewBundle.messagePointer("action.show.in.generated.code"),
-  AllIcons.Modules.GeneratedFolder
+  AllIcons.Actions.GeneratedFolder
 ) {
 
   override fun getOptionValue(e: AnActionEvent): Boolean {
