@@ -487,9 +487,20 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     }
   }
 
+  /**
+   * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender}
+   */
+  @Deprecated
   @ApiStatus.Experimental
-  public interface ValueDataAppender {
-    void append(DataOutput out) throws IOException;
+  public interface ValueDataAppender extends AppendablePersistentMap.ValueDataAppender {
+  }
+
+  /**
+   * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender} as the second parameter
+   */
+  @Deprecated
+  public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
+    appendData(key, (AppendablePersistentMap.ValueDataAppender) appender);
   }
 
   /**
@@ -500,7 +511,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    * be eventually called for the key, deserializer will read all bytes retrieving Strings and collecting them into Set
    */
   @Override
-  public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
+  public final void appendData(Key key, @NotNull AppendablePersistentMap.ValueDataAppender appender) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (getDataAccessLock()) {
       try {
@@ -521,7 +532,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     }
   };
 
-  private void doAppendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
+  private void doAppendData(Key key, @NotNull AppendablePersistentMap.ValueDataAppender appender) throws IOException {
     assert !myIntMapping;
     myEnumerator.markDirty(true);
 
