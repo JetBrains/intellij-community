@@ -431,6 +431,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           return DisplayPriority.LANGUAGE_SETTINGS;
         }
 
+        @Override
+        public int getWeight() {
+          if (page instanceof DisplayPrioritySortable) {
+            return ((DisplayPrioritySortable)page).getWeight();
+          }
+          return ColorAndFontPanelFactoryEx.super.getWeight();
+        }
+
         @NotNull
         @Override
         public Class<?> getOriginalClass() {
