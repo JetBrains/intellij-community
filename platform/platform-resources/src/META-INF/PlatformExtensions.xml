@@ -630,7 +630,7 @@
     <statistics.validation.customValidationRule implementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl$ProductivityUtilValidator" />
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector$RegistryUtilValidator" />
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.openapi.updateSettings.impl.UpdateDialogURLValidationRule"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector$UrlValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.TipsOfTheDayUsagesCollector$TipInfoValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ui.GotItIDValidator"/>
@@ -681,7 +681,7 @@
     <statistics.counterUsagesCollector groupId="editor.notification.panel" version="1"/>
     <statistics.counterUsagesCollector groupId="customize.wizard" version="1"/>
 
-    <statistics.counterUsagesCollector groupId="ide.update.dialog" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector"/>
 
     <statistics.counterUsagesCollector groupId="light.edit" version="1"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger"/>
