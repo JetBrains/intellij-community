@@ -2,10 +2,9 @@
 package com.intellij.space.plugins.pipelines.ui
 
 import circlet.pipelines.DefaultDslFileName
-import circlet.pipelines.config.api.ScriptConfig
-import circlet.pipelines.config.api.ScriptStep
-import circlet.pipelines.config.api.ScriptStep.*
-import circlet.pipelines.config.api.ScriptStep.ProcessExecutable.*
+import circlet.pipelines.config.idea.api.*
+import circlet.pipelines.config.idea.api.ScriptStep.*
+import circlet.pipelines.config.idea.api.ProcessExecutable.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
@@ -50,6 +49,9 @@ import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeSelectionModel
+import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.jvm.javaType
+import kotlin.reflect.typeOf
 
 class SpaceToolWindowViewModel(val lifetime: Lifetime) {
   val taskIsRunning = mutableProperty(false)
@@ -221,7 +223,7 @@ class SpaceToolWindowService(val project: Project) : LifetimedDisposable by Life
   }
 
   private fun resetNodes(root: DefaultMutableTreeNode,
-                         config: ScriptConfig?,
+                         config: IdeaScriptConfig?,
                          error: String?,
                          state: ScriptState,
                          extendedViewModeEnabled: Boolean) {
@@ -238,12 +240,12 @@ class SpaceToolWindowService(val project: Project) : LifetimedDisposable by Life
       return
     }
 
-    val tasks = config.jobs
+    val jobs = config.jobs
     val targets = config.targets
     val pipelines = config.pipelines
 
     var jobsTypesCount = 0
-    if (tasks.any()) {
+    if (jobs.any()) {
       jobsTypesCount++
     }
     if (targets.any()) {
@@ -253,29 +255,11 @@ class SpaceToolWindowService(val project: Project) : LifetimedDisposable by Life
       jobsTypesCount++
     }
     val shouldAddGroupingNodes = jobsTypesCount > 1
-    if (tasks.any()) {
-      val tasksCollectionNode = getGroupingNode(root, "tasks", shouldAddGroupingNodes)
-      config.jobs.forEach {
-        val taskNode = SpaceModelTreeNode(it.name, true)
-        if (extendedViewModeEnabled) {
-          val triggers = it.triggers
-          if (triggers.any()) {
-            val triggersNode = SpaceModelTreeNode("triggers")
-            triggers.forEach { trigger ->
-              triggersNode.add(SpaceModelTreeNode(trigger::class.java.simpleName))
-            }
-
-            taskNode.add(triggersNode)
-          }
-
-          val jobsNode = SpaceModelTreeNode("jobs")
-          it.steps.forEach { step ->
-            jobsNode.add(step.toTreeNode())
-          }
-          taskNode.add(jobsNode)
-        }
-
-        tasksCollectionNode.add(taskNode)
+    if (jobs.any()) {
+      val jobsCollectionNode = getGroupingNode(root, "jobs", shouldAddGroupingNodes)
+      config.jobs.forEach { job ->
+        val jobNode = job.toTreeNode(showChildren = extendedViewModeEnabled)
+        jobsCollectionNode.add(jobNode)
       }
     }
 
@@ -350,22 +334,52 @@ class SpaceToolWindowService(val project: Project) : LifetimedDisposable by Life
   }
 }
 
-private fun ScriptStep.toTreeNode(): SpaceModelTreeNode = when (val job = this) {
-  is CompositeStep -> SpaceModelTreeNode(job::class.java.simpleName).apply {
-    job.children.forEach { child ->
-      add(child.toTreeNode())
+private fun ScriptJob.toTreeNode(showChildren: Boolean) = SpaceModelTreeNode(name, true).apply {
+  if (showChildren) {
+    if (triggers.any()) {
+      add(triggers.toTreeNode())
     }
+    add(steps.toTreeNode())
   }
-  is SimpleStep.Process.Container -> SpaceModelTreeNode("container: ${job.image}").apply {
-    add(job.data.exec.toTreeNode())
-  }
-  is SimpleStep.Process.VM -> SpaceModelTreeNode("vm: ${job.image}")
-  is SimpleStep.DockerComposeStep -> SpaceModelTreeNode("compose: ${job.mainService}")
 }
 
-private fun ProcessExecutable<*>.toTreeNode() = DefaultMutableTreeNode(treeNodeText)
+private fun List<Trigger>.toTreeNode() = SpaceModelTreeNode("triggers").apply {
+  forEach { trigger ->
+    add(trigger.toTreeNode())
+  }
+}
 
-private val ProcessExecutable<*>.treeNodeText: String
+private fun Trigger.toTreeNode() = SpaceModelTreeNode(usefulSubTypeName() ?: "other trigger")
+
+private fun StepSequence.toTreeNode() = SpaceModelTreeNode("steps").apply {
+  forEach { step ->
+    add(step.toTreeNode())
+  }
+}
+
+private fun ScriptStep.toTreeNode(): SpaceModelTreeNode = when (val step = this) {
+  is CompositeStep -> SpaceModelTreeNode(step.treeNodeText).apply {
+    step.children.forEach { subStep ->
+      add(subStep.toTreeNode())
+    }
+  }
+  is SimpleStep.Process.Container -> SpaceModelTreeNode("container: ${step.image}").apply {
+    add(step.data.exec.toTreeNode())
+  }
+  is SimpleStep.Process.VM -> SpaceModelTreeNode("vm: ${step.image}")
+  is SimpleStep.DockerComposeStep -> SpaceModelTreeNode("compose: ${step.mainService}")
+  else -> SpaceModelTreeNode(step::class.simpleName)
+}
+
+private val CompositeStep.treeNodeText: String get() = when(this) {
+  is CompositeStep.Fork -> "parallel"
+  is CompositeStep.Sequence -> "sequence"
+  else -> usefulSubTypeName() ?: "composite step"
+}
+
+private fun ProcessExecutable.toTreeNode() = DefaultMutableTreeNode(treeNodeText)
+
+private val ProcessExecutable.treeNodeText: String
   get() = when (this) {
     is ContainerExecutable.DefaultCommand -> "exec: defaultCommand${args.presentArgs()}"
     is ContainerExecutable.OverrideEntryPoint -> "exec: overrideEntryPoint: $entryPoint${args.presentArgs()}"
@@ -373,8 +387,32 @@ private val ProcessExecutable<*>.treeNodeText: String
     is KotlinScript -> "exec: kts script"
     is ShellScript -> "exec: shell script"
     is VMExecutable -> "exec: VM executable"
+    else -> "exec: ${this::class.simpleName}"
   }
 
 private fun List<String>.presentArgs(): String {
   return if (this.any()) ". args: ${this.joinToString()}" else ""
+}
+
+/**
+ * Returns the name of this object's dynamic type (which is a subtype of its static type [T]).
+ * If this object is of an anonymous type, this method falls back to the name of the closest supertype of the runtime type of this object
+ * that implements/extends its static type [T].
+ * If this object is a direct anonymous implementation of the static type [T], this method returns `null` to allow other fallbacks.
+ *
+ * Most instances of the interfaces are anonymous classes at the moment in the space project.
+ * For instance, the [Trigger] interface may have subinterfaces that we don't know of at compile time here, but could be added in the
+ * future.
+ * Since the object is of an anonymous class, we should use the name of the closest supertype that implements [Trigger], e.g. GitPush.
+ */
+@OptIn(ExperimentalStdlibApi::class)
+private inline fun <reified T : Any> T.usefulSubTypeName(): String? {
+  val simpleClassName = this::class.simpleName
+  if (simpleClassName != null) { // false for anonymous classes
+    return simpleClassName
+  }
+  // There is always at least one supertype (T), because we know this is an anonymous class that is also an instance of T
+  val subTypeOfT = this::class.supertypes.first { it.isSubtypeOf(typeOf<T>()) }
+  val simpleSubtypeName = subTypeOfT.javaType.typeName.substringAfterLast('.')
+  return simpleSubtypeName.takeIf { it != T::class.simpleName }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.plugins.pipelines.viewmodel
 
-import circlet.pipelines.config.api.ScriptConfig
+import circlet.pipelines.config.idea.api.IdeaScriptConfig
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.impl.OutputBuildEventImpl
@@ -12,11 +12,10 @@ import runtime.reactive.ObservableList
 import runtime.reactive.Property
 import javax.swing.tree.DefaultMutableTreeNode
 
-
 enum class ScriptState { NotInitialised, Building, Ready }
 
 interface ScriptModel {
-  val config: Property<ScriptConfig?>
+  val config: Property<IdeaScriptConfig?>
   val error: Property<String?>
   val state: Property<ScriptState>
 }
