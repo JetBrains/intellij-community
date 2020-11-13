@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : FeatureUsageStateEventTracker {
-  private val OS_GROUP = EventLogGroup("system.os", 4)
+  private val OS_GROUP = EventLogGroup("system.os", 5)
   private val INITIAL_DELAY = 5
   private val PERIOD_DELAY = 24 * 60
 
@@ -101,6 +101,7 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
 
   private fun getOSName() : String {
     return when {
+      SystemInfo.isChromeOS -> "ChromeOS"
       SystemInfo.isLinux -> "Linux"
       SystemInfo.isMac -> "Mac"
       SystemInfo.isWindows -> "Windows"
