@@ -232,8 +232,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
    * [objectClasses] - set of kotlin objects
    */
   private fun recursiveClassFinder(kryo: Kryo, entity: Any, simpleClasses: MutableSet<TypeInfo>, objectClasses: MutableSet<TypeInfo>) {
-    val jCLass = entity.javaClass
-    val classAlreadyRegistered = registerKClass(entity::class, jCLass, kryo, objectClasses, simpleClasses)
+    val jClass = entity.javaClass
+    val classAlreadyRegistered = registerKClass(entity::class, jClass, kryo, objectClasses, simpleClasses)
     if (classAlreadyRegistered) return
     if (entity is VirtualFileUrl) return
     if (entity is Enum<*>) return
@@ -242,7 +242,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // lateinit property seems not captured by fields
       recursiveClassFinder(kryo, entity.entitySource, simpleClasses, objectClasses)
     }
-    jCLass.declaredFields.forEach {
+    jClass.declaredFields.forEach {
       val retType = it.type.name
 
       if ((retType.startsWith("kotlin") || retType.startsWith("java"))
@@ -251,8 +251,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       ) return@forEach
 
       it.trySetAccessible()
-      if (!Modifier.isStatic(it.modifiers) && !it.canAccess(entity)) return@forEach
-      if (Modifier.isStatic(it.modifiers)) return@forEach
+      if (Modifier.isStatic(it.modifiers) || !it.canAccess(entity)) return@forEach
       val property = ReflectionUtil.getFieldValue<Any>(it, entity) ?: run {
         registerKClass(it.type.kotlin, it.type, kryo, objectClasses, simpleClasses)
         return@forEach
@@ -274,12 +273,12 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   }
 
   private fun registerKClass(kClass: KClass<out Any>,
-                             jCLass: Class<out Any>,
+                             jClass: Class<out Any>,
                              kryo: Kryo,
                              objectClasses: MutableSet<TypeInfo>,
                              simpleClasses: MutableSet<TypeInfo>): Boolean {
-    val typeInfo = TypeInfo(kClass.jvmName, typesResolver.getPluginId(kClass.java))
-    if (kryo.classResolver.getRegistration(kClass.java) != null) return true
+    val typeInfo = TypeInfo(jClass.name, typesResolver.getPluginId(jClass))
+    if (kryo.classResolver.getRegistration(jClass) != null) return true
 
     val objectInstance = kClass.objectInstance
     if (objectInstance != null) {
