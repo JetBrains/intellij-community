@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileType.CharsetHintSupplied.CharsetHint.ForcedCharset;
+import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
@@ -130,8 +130,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
       // use getByFile() to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
       FileType fileType = ObjectUtils.notNull(((FileTypeManagerImpl)FileTypeManager.getInstance()).getByFile(this), UnknownFileType.INSTANCE);
 
-      FileType.CharsetHintSupplied.CharsetHint charsetHint =
-        fileType instanceof FileType.CharsetHintSupplied ? ((FileType.CharsetHintSupplied)fileType).getCharsetHint() : null;
+      FileType.CharsetHint charsetHint = fileType.getCharsetHint();
       if (charsetHint instanceof ForcedCharset) {
         setCharset(((ForcedCharset)charsetHint).getCharset());
       } else if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary()) {

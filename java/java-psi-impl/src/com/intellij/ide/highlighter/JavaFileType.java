@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public final class JavaFileType extends LanguageFileType implements FileType.CharsetHintSupplied {
+import static com.intellij.openapi.fileTypes.FileType.CharsetHint.CONTENT_DEPENDENT_CHARSET;
+
+public final class JavaFileType extends LanguageFileType implements FileType {
   @NonNls public static final String DEFAULT_EXTENSION = "java";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".java";
   public static final JavaFileType INSTANCE = new JavaFileType();

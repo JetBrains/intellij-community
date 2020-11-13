@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class EclipseFileType implements FileType.CharsetHintSupplied {
+public class EclipseFileType implements FileType {
   public static final FileType INSTANCE = new EclipseFileType();
 
   private EclipseFileType() {

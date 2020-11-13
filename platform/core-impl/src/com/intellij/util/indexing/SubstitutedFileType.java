@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public final class SubstitutedFileType extends LanguageFileType implements FileType.CharsetHintSupplied {
+public final class SubstitutedFileType extends LanguageFileType {
   @NotNull private final FileType myOriginalFileType;
   @NotNull private final FileType myFileType;
 
@@ -26,10 +26,7 @@ public final class SubstitutedFileType extends LanguageFileType implements FileT
 
   @Override
   public @NotNull CharsetHint getCharsetHint() {
-    if (myFileType instanceof CharsetHintSupplied) {
-      return ((CharsetHintSupplied)myFileType).getCharsetHint();
-    }
-    return NO_HINT;
+    return myFileType.getCharsetHint();
   }
 
   @NotNull

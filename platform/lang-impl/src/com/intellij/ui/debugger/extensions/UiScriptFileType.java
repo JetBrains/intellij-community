@@ -10,7 +10,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public final class UiScriptFileType implements FileType.CharsetHintSupplied {
+public final class UiScriptFileType implements FileType {
   private static UiScriptFileType myInstance;
 
   private UiScriptFileType() {

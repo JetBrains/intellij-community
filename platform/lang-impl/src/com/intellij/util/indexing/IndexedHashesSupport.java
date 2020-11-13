@@ -5,7 +5,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileType.CharsetHintSupplied.CharsetHint.ForcedCharset;
+import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.flavor.FileIndexingFlavorProvider;
 import com.intellij.util.indexing.flavor.HashBuilder;
@@ -55,10 +55,9 @@ public final class IndexedHashesSupport {
 
     if (!FileContentImpl.getFileTypeWithoutSubstitution(indexedFile).isBinary()) {
       FileType fileType = indexedFile.getFileType();
-      FileType.CharsetHintSupplied.CharsetHint charsetHint =
-        fileType instanceof FileType.CharsetHintSupplied ? ((FileType.CharsetHintSupplied)fileType).getCharsetHint() : null;
+      FileType.CharsetHint charsetHint = fileType.getCharsetHint();
       // we don't need charset if it depends only on content
-      if (charsetHint != FileType.CharsetHintSupplied.CONTENT_DEPENDENT_CHARSET || !SKIP_CONTENT_DEPENDENT_CHARSETS) {
+      if (charsetHint != FileType.CharsetHint.CONTENT_DEPENDENT_CHARSET || !SKIP_CONTENT_DEPENDENT_CHARSETS) {
         Charset charset = charsetHint instanceof ForcedCharset
                           ? ((ForcedCharset)charsetHint).getCharset()
                           : getCharsetFromIndexedFile(indexedFile);

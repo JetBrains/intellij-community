@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public final class ModuleFileType implements InternalFileType, FileType.CharsetHintSupplied {
+public final class ModuleFileType implements InternalFileType, FileType {
   public static final ModuleFileType INSTANCE = new ModuleFileType();
 
   @NonNls public static final String DEFAULT_EXTENSION = "iml";

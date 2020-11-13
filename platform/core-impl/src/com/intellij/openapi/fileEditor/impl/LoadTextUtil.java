@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileType.CharsetHintSupplied.CharsetHint.ForcedCharset;
+import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -244,9 +244,7 @@ public final class LoadTextUtil {
                                                 int length,
                                                 @NotNull FileType fileType) {
     Charset charset;
-
-    FileType.CharsetHintSupplied.CharsetHint charsetHint =
-      fileType instanceof FileType.CharsetHintSupplied ? ((FileType.CharsetHintSupplied)fileType).getCharsetHint() : null;
+    FileType.CharsetHint charsetHint = fileType.getCharsetHint();
     if (charsetHint instanceof ForcedCharset) {
       charset = ((ForcedCharset)charsetHint).getCharset();
     }

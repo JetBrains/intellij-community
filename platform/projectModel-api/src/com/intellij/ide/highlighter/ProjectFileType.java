@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public final class ProjectFileType implements InternalFileType, FileType.CharsetHintSupplied {
+public final class ProjectFileType implements InternalFileType {
   public static final ProjectFileType INSTANCE = new ProjectFileType();
 
   public static final String DEFAULT_EXTENSION = "ipr";

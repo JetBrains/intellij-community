@@ -25,7 +25,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class GuiFormFileType implements /*UIBased*/FileType.CharsetHintSupplied {
+public class GuiFormFileType implements /*UIBased*/FileType {
 
   public static final GuiFormFileType INSTANCE = new GuiFormFileType();
 

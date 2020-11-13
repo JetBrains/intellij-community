@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public final class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, FileType.CharsetHintSupplied {
+public final class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, FileType {
   public static final SPIFileType INSTANCE = new SPIFileType();
 
   private SPIFileType() {
