@@ -51,6 +51,11 @@ public class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeImportsTes
             runTest("testData/editor/optimizeImports/common/ClassMemberImported.kt");
         }
 
+        @TestMetadata("Companion.kt")
+        public void testCompanion() throws Exception {
+            runTest("testData/editor/optimizeImports/common/Companion.kt");
+        }
+
         @TestMetadata("CompanionFunction.kt")
         public void testCompanionFunction() throws Exception {
             runTest("testData/editor/optimizeImports/common/CompanionFunction.kt");

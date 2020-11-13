@@ -115,10 +115,10 @@ class OptimizedImportsBuilder(
     private fun KtImportDirective.isExistedUnresolvedName(facade: ResolutionFacade) =
         importedName in data.unresolvedNames && !canResolve(facade)
 
-    private fun getExpressionToAnalyze(element: KtElement): KtExpression? {
+    private tailrec fun getExpressionToAnalyze(element: KtElement): KtExpression? {
         val parent = element.parent
         return when {
-            parent is KtQualifiedExpression && element == parent.selectorExpression -> parent
+            parent is KtQualifiedExpression -> getExpressionToAnalyze(parent)
             parent is KtCallExpression && element == parent.calleeExpression -> getExpressionToAnalyze(parent)
             parent is KtOperationExpression && element == parent.operationReference -> parent
             parent is KtCallableReferenceExpression && element == parent.callableReference -> parent
