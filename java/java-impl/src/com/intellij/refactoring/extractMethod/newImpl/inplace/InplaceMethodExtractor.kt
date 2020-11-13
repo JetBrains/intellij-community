@@ -107,7 +107,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val replacedImport = FragmentState(importRange, document.getText(importRange.range))
     fragmentsToRevert.add(replacedImport)
 
-    val (callElements, method) = MethodExtractor().extractMethod(extractOptions.copy(methodName = "extracted"))
+    val (callElements, method) = MethodExtractor().extractMethod(extractOptions)
     val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
     editor.caretModel.moveToOffset(callExpression.textOffset)
     val manager = PsiDocumentManager.getInstance(project)
@@ -212,9 +212,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
     ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
-    val result = super.performInplaceRefactoring(nameSuggestions)
-    ApplicationManager.getApplication().runWriteAction { setMethodName(extractOptions.methodName) }
-    return result
+    return super.performInplaceRefactoring(nameSuggestions)
   }
 
   override fun revertState() {
@@ -345,8 +343,9 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
           val options = restartOptions
           if (message != null && options != null) {
             WriteCommandAction.runWriteCommandAction(myProject) {
-              val extractor = InplaceMethodExtractor(editor, options, popupProvider)
+              val extractor = InplaceMethodExtractor(editor, options.copy(methodName = "extracted"), popupProvider)
               extractor.performInplaceRefactoring(linkedSetOf())
+              extractor.setMethodName(options.methodName)
               CommonRefactoringUtil.showErrorHint(myProject, editor, message, ExtractMethodHandler.getRefactoringName(), null)
             }
           }
