@@ -1,4 +1,3 @@
-intellij.codeWithMe.plugin
 intellij.completionMlRanking
 intellij.completionMlRankingModels
 intellij.configurationScript
