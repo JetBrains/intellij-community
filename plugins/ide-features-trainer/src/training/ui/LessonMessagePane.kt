@@ -112,7 +112,7 @@ class LessonMessagePane : JTextPane() {
     StyleConstants.setBold(SHORTCUT, true)
     StyleConstants.setForeground(SHORTCUT, JBColor.BLACK)
 
-    StyleConstants.setForeground(CODE, JBColor.BLUE)
+    StyleConstants.setForeground(CODE, UISettings.instance.codeForegroundColor)
     EditorColorsManager.getInstance().globalScheme.editorFontName
     StyleConstants.setFontFamily(CODE, EditorColorsManager.getInstance().globalScheme.editorFontName)
     StyleConstants.setFontSize(CODE, UISettings.instance.fontSize)
@@ -132,7 +132,7 @@ class LessonMessagePane : JTextPane() {
     StyleConstants.setForeground(BOLD, UISettings.instance.defaultTextColor)
     StyleConstants.setForeground(SHORTCUT, UISettings.instance.shortcutTextColor)
     StyleConstants.setForeground(LINK, UISettings.instance.lessonLinkColor)
-    StyleConstants.setForeground(CODE, UISettings.instance.lessonLinkColor)
+    StyleConstants.setForeground(CODE, UISettings.instance.codeForegroundColor)
 
     this.setParagraphAttributes(PARAGRAPH_STYLE, true)
   }
@@ -219,7 +219,7 @@ class LessonMessagePane : JTextPane() {
         MessagePart.MessageType.TEXT_REGULAR -> insertText(message.text, REGULAR)
         MessagePart.MessageType.TEXT_BOLD -> insertText(message.text, BOLD)
         MessagePart.MessageType.SHORTCUT -> appendShortcut(message).let { newRanges.add(it) }
-        MessagePart.MessageType.CODE -> insertText(message.text, CODE)
+        MessagePart.MessageType.CODE -> insertText(" ${message.text} ", CODE)
         MessagePart.MessageType.CHECK -> insertText(message.text, ROBOTO)
         MessagePart.MessageType.LINK -> appendLink(message)?.let { newRanges.add(it) }
         MessagePart.MessageType.ICON_IDX -> LearningUiManager.iconMap[message.text]?.let { addPlaceholderForIcon(it) }
@@ -424,6 +424,27 @@ class LessonMessagePane : JTextPane() {
                                     rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
                                     arc.toDouble(), arc.toDouble())
           g2d.fill(r2d)
+          g2d.color = color
+        } else if (myMessage.type == MessagePart.MessageType.CODE) {
+          val startOffset = myMessage.startOffset
+          val endOffset = myMessage.endOffset
+          val rectangleStart = modelToView(startOffset + 1)
+          val rectangleEnd = modelToView(endOffset - 1)
+          val color = g2d.color
+          val fontSize = UISettings.instance.fontSize
+
+          val bg = UISettings.instance.backgroundColor
+          //val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
+          g2d.color = UISettings.instance.codeBorderColor
+          val r2d: RoundRectangle2D = if (!SystemInfo.isMac)
+            RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent + 1,
+                                    rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
+                                    arc.toDouble(), arc.toDouble())
+          else
+            RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent,
+                                    rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
+                                    arc.toDouble(), arc.toDouble())
+          g2d.draw(r2d)
           g2d.color = color
         }
         else if (myMessage.type == MessagePart.MessageType.ICON_IDX) {
