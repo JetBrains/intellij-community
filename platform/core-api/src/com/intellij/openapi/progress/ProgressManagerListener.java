@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ProgressManagerListener {
-  Topic<ProgressManagerListener> TOPIC = new Topic<>(ProgressManagerListener.class, Topic.BroadcastDirection.NONE);
+  Topic<ProgressManagerListener> TOPIC = new Topic<>(ProgressManagerListener.class, Topic.BroadcastDirection.NONE, true);
 
   void onTaskRunnableCreated(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation);
 
