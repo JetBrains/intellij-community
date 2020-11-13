@@ -44,7 +44,10 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
   }
 
   fun reportMissingLibrariesVersions(collector: ErrorCollector) {
-    val libraries = libraries(JpsJavaClasspathKind.PRODUCTION_COMPILE) + libraries(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
+    val libraries = libraries(JpsJavaClasspathKind.PRODUCTION_COMPILE) +
+                    libraries(JpsJavaClasspathKind.PRODUCTION_RUNTIME) +
+                    libraries(JpsJavaClasspathKind.TEST_COMPILE) +
+                    libraries(JpsJavaClasspathKind.TEST_RUNTIME)
     licenses.filter {
       it.version.isNullOrBlank() &&
       it.license != LibraryLicense.JETBRAINS_OWN &&
