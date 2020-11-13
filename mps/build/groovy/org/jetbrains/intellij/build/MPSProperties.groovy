@@ -72,7 +72,6 @@ class MPSProperties extends JetBrainsProductProperties {
                 withProjectLibrary("pty4j") // for terminal plugin
                 withoutProjectLibrary("Ant")
                 withoutProjectLibrary("Gradle")
-                excludeFromModule("intellij.platform.ide", "messages/FeatureStatisticsBundle.properties")
                 //Removing Idea Tips & Tricks
                 excludeFromModule("intellij.java.ide.resources", "ProductivityFeaturesRegistry.xml")
             }
