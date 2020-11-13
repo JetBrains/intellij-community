@@ -74,7 +74,7 @@ public final class DescriptorUtil {
     if (plugin == null) return Collections.emptyList();
     List<String> result = new ArrayList<>();
     ContainerUtil.addIfNotNull(result, plugin.getPluginId());
-    for (Dependency dependency : plugin.getDependencies()) {
+    for (Dependency dependency : plugin.getDepends()) {
       if (Boolean.TRUE.equals(dependency.getOptional().getValue())) {
         ContainerUtil.addIfNotNull(result, dependency.getRawText());
       }

@@ -96,7 +96,7 @@ final class RegistrationCheckerUtil {
     processedFiles.add(pluginXmlFile);
 
     // <depends> plugin.xml files
-    for (Dependency dependency : pluginXml.getRootElement().getDependencies()) {
+    for (Dependency dependency : pluginXml.getRootElement().getDepends()) {
       XmlFile depPluginXml = dependency.getResolvedConfigFile();
       if (depPluginXml != null) {
         final DomFileElement<IdeaPlugin> dependentIdeaPlugin = DescriptorUtil.getIdeaPluginFileElement(depPluginXml);

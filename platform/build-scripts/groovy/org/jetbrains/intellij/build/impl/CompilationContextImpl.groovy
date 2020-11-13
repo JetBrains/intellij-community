@@ -245,7 +245,9 @@ class CompilationContextImpl implements CompilationContext {
       it.outputPath = "$baseArtifactsOutput/${PathUtilRt.getFileName(it.outputPath)}"
     }
 
-    messages.info("Incremental compilation: " + options.incrementalCompilation)
+    if (!options.useCompiledClassesFromProjectOutput) {
+      messages.info("Incremental compilation: " + options.incrementalCompilation)
+    }
     if (options.incrementalCompilation) {
       System.setProperty("kotlin.incremental.compilation", "true")
       outputDirectoriesToKeep.add(dataDirName)
@@ -258,7 +260,8 @@ class CompilationContextImpl implements CompilationContext {
 
     if (options.cleanOutputFolder) {
       cleanOutput(outputDirectoriesToKeep)
-    } else {
+    }
+    else {
       messages.info("cleanOutput step was skipped")
     }
   }

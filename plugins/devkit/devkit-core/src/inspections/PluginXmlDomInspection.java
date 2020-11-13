@@ -373,7 +373,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (!ideaPlugin.hasRealPluginId()) return;
 
     MultiMap<String, Dependency> dependencies = MultiMap.create();
-    ideaPlugin.getDependencies().forEach(dependency -> {
+    ideaPlugin.getDepends().forEach(dependency -> {
       if (DomUtil.hasXml(dependency.getConfigFile())) {
         dependencies.putValue(dependency.getConfigFile().getStringValue(), dependency);
       }

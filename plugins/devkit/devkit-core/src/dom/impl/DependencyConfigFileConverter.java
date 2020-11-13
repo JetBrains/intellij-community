@@ -56,7 +56,7 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
           if (!(file instanceof XmlFile)) return false;
           final IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin((XmlFile)file);
           if (ideaPlugin == null) return false;
-          return !ContainerUtil.process(ideaPlugin.getDependencies(), dependency -> {
+          return !ContainerUtil.process(ideaPlugin.getDepends(), dependency -> {
             final GenericAttributeValue<PathReference> configFileAttribute = dependency.getConfigFile();
             if (!DomUtil.hasXml(configFileAttribute)) return true;
             final PathReference pathReference = configFileAttribute.getValue();

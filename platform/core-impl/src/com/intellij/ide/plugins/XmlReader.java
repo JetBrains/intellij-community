@@ -147,6 +147,31 @@ final class XmlReader {
     descriptor.contentDescriptor = new PluginContentDescriptor(items);
   }
 
+  @SuppressWarnings("DuplicatedCode")
+  static void readNewDependencies(@NotNull Element list, @NotNull IdeaPluginDescriptorImpl descriptor) {
+    List<Content> content = list.getContent();
+    List<ModuleDependenciesDescriptor.ModuleItem> items = new ArrayList<>();
+    for (Content item : content) {
+      if (!(item instanceof Element)) {
+        continue;
+      }
+
+      Element child = (Element)item;
+      switch (child.getName()) {
+        case "module":
+          items.add(new ModuleDependenciesDescriptor.ModuleItem(Objects.requireNonNull(child.getAttributeValue("name")),
+                                                                child.getAttributeValue("package")));
+          break;
+        case "plugin":
+          // todo
+          break;
+        default:
+          throw new RuntimeException("Unknown content item type: " + child.getName());
+      }
+    }
+    descriptor.dependenciesDescriptor = new ModuleDependenciesDescriptor(items);
+  }
+
   static void readIdAndName(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {
     String idString = descriptor.id == null ? element.getChildTextTrim("id") : descriptor.id.getIdString();
     String name = element.getChildTextTrim("name");

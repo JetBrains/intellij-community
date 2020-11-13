@@ -6,20 +6,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-final class PluginContentDescriptor {
+final class ModuleDependenciesDescriptor {
   final List<ModuleItem> modules;
 
-  PluginContentDescriptor(@NotNull List<ModuleItem> modules) {
+  ModuleDependenciesDescriptor(@NotNull List<ModuleItem> modules) {
     this.modules = modules;
-  }
-
-  @Nullable ModuleItem findModuleByName(@NotNull String name) {
-    for (ModuleItem module : modules) {
-      if (module.name.equals(name)) {
-        return module;
-      }
-    }
-    return null;
   }
 
   static final class ModuleItem {

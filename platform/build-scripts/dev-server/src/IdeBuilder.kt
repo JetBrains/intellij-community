@@ -99,6 +99,10 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
 
 private fun watchChanges(pluginBuilder: PluginBuilder, moduleNameToPlugin: Map<String, BuildItem>, outDir: Path, logger: BuildMessages) {
   val moduleDirs = ArrayList<Path>(moduleNameToPlugin.size)
+  val isDebugEnabled = LOG.isDebugEnabled
+  if (isDebugEnabled) {
+    LOG.debug("Modules to watch: ${moduleNameToPlugin.keys.sorted().joinToString() }}")
+  }
   for (entry in moduleNameToPlugin) {
     val dir = outDir.resolve(entry.key)
     moduleDirs.add(dir)

@@ -71,6 +71,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   final ContainerDescriptor moduleContainerDescriptor = new ContainerDescriptor();
 
   PluginContentDescriptor contentDescriptor;
+  ModuleDependenciesDescriptor dependenciesDescriptor;
 
   private List<PluginId> modules;
   private ClassLoader classLoader;
@@ -279,6 +280,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
         case "content":
           XmlReader.readContent(child, this);
+          break;
+
+        case "dependencies":
+          XmlReader.readNewDependencies(child, this);
           break;
 
         case "depends":
