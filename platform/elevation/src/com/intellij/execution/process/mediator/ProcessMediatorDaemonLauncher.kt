@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.orNull
 import com.intellij.util.io.BaseInputStreamReader
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
@@ -62,9 +63,11 @@ object ProcessMediatorDaemonLauncher {
         }
 
         val handshake = handshakeTransport.readHandshake() ?: throw ProcessCanceledException()
-        val daemonProcessHandle =
-          if (SystemInfo.isWindows) trampolineProcessHandle  // can't get access a process owned by another user
-          else ProcessHandle.of(handshake.pid).orElseThrow(::ProcessCanceledException)
+
+        val daemonProcessHandle = ProcessHandle.of(handshake.pid).orNull()
+                                  // Use the launcher process handle instead unless it's a short-living trampoline.
+                                  // In particular, this happens on Windows, where we can't access a process owned by another user.
+                                  ?: trampolineProcessHandle.takeUnless { daemonLaunchOptions.trampoline }
 
         ProcessMediatorDaemonImpl(daemonProcessHandle,
                                   handshake.port,
@@ -160,7 +163,7 @@ private fun <R> awaitWithCheckCanceled(future: CompletableFuture<R>): R {
   }
 }
 
-private class ProcessMediatorDaemonImpl(private val processHandle: ProcessHandle,
+private class ProcessMediatorDaemonImpl(private val processHandle: ProcessHandle?,
                                         private val port: Port,
                                         private val credentials: DaemonClientCredentials) : ProcessMediatorDaemon {
 
@@ -168,14 +171,14 @@ private class ProcessMediatorDaemonImpl(private val processHandle: ProcessHandle
     return ManagedChannelBuilder.forAddress(LOOPBACK_IP, port).usePlaintext()
       .intercept(MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata()))
       .build().also { channel ->
-        processHandle.onExit().whenComplete { _, _ -> channel.shutdown() }
+        processHandle?.onExit()?.whenComplete { _, _ -> channel.shutdown() }
       }
   }
 
   override fun stop() = Unit
 
   override fun blockUntilShutdown() {
-    processHandle.onExit().get()
+    processHandle?.onExit()?.get()
   }
 }
 
