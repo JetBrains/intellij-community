@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
  directly in storage used for offset and in case of btree enumerator directly in btree leaf.
  **/
-public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value> {
+public class PersistentHashMapImpl<Key, Value> implements AppendablePersistentMap<Key, Value> {
   private static final Logger LOG = Logger.getInstance(PersistentHashMap.class);
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
   private static final int DEAD_KEY_NUMBER_MASK = 0xFFFFFFFF;
