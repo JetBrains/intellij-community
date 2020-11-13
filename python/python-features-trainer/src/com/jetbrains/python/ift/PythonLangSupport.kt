@@ -1,33 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.ift
 
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.GeneratorPeerImpl
-import com.jetbrains.python.newProject.PyNewProjectSettings
-import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
-import com.jetbrains.python.newProject.steps.PythonBaseProjectGenerator
-import com.jetbrains.python.newProject.steps.PythonGenerateProjectCallback
-import com.jetbrains.python.newProject.welcome.PyWelcomeSettings
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.modules
 import training.lang.AbstractLangSupport
 import training.learn.LearnBundle
 import training.learn.exceptons.NoSdkException
-import training.learn.lesson.kimpl.LessonUtil
-import training.project.ProjectUtils
 import java.nio.file.Path
 
 class PythonLangSupport : AbstractLangSupport() {
@@ -38,37 +29,6 @@ class PythonLangSupport : AbstractLangSupport() {
   override val defaultProductName: String = "PyCharm"
 
   private val sourcesDirectoryName: String = "src"
-
-  override fun installAndOpenLearningProject(projectPath: Path,
-                                             projectToClose: Project?,
-                                             postInitCallback: (learnProject: Project) -> Unit) {
-    if (LessonUtil.productName != "PyCharm") {
-      super.installAndOpenLearningProject(projectPath, projectToClose, postInitCallback)
-    }
-    else {
-      val projectDirectory = projectPath.toAbsolutePath().toString()
-      // use Python New Project Wizard logic to create project with default settings
-      val callback = PythonGenerateProjectCallback<PyNewProjectSettings>()
-      val step = ProjectSpecificSettingsStep(PythonBaseProjectGenerator(), callback)
-      step.createPanel()
-      step.setLocation(projectDirectory)
-
-      val settings = PyWelcomeSettings.instance
-      val oldValue = settings.createWelcomeScriptForEmptyProject
-      settings.createWelcomeScriptForEmptyProject = false
-
-      invokeLater {
-        callback.consume(step, GeneratorPeerImpl())
-        val project = ProjectManager.getInstance().openProjects.find { it.name == defaultProjectName }
-                      ?: throw error("Cannot find open project with name: $defaultProjectName")
-        ProjectUtils.copyLearningProjectFiles(projectPath, this)
-        ProjectUtils.createVersionFile(projectPath)
-        postInitCallback(project)
-        settings.createWelcomeScriptForEmptyProject = oldValue
-      }
-      Disposer.dispose(step)
-    }
-  }
 
   override fun applyToProjectAfterConfigure(): (Project) -> Unit = { project ->
     // mark src directory as sources root
@@ -90,9 +50,6 @@ class PythonLangSupport : AbstractLangSupport() {
   }
 
   override fun getSdkForProject(project: Project): Sdk? {
-    if (LessonUtil.productName == "PyCharm") {
-      return null // sdk already configured in this case
-    }
     val sdkList = ProgressManager.getInstance().runProcessWithProgressSynchronously<List<Sdk>, Exception>(
       { findAllPythonSdks(Path.of(project.basePath)) },
       LearnBundle.message("learn.project.initializing.python.sdk.finding.progress.title"),
@@ -100,8 +57,11 @@ class PythonLangSupport : AbstractLangSupport() {
       project
     )
     var preferredSdk = filterSystemWideSdks(sdkList)
-      .filter { !PythonSdkUtil.isInvalid(it) && !PythonSdkUtil.isVirtualEnv(it) }
-      .sortedWith(PreferredSdkComparator.INSTANCE)
+      .filter {
+        !(!isNoOlderThan27(it) || PythonSdkUtil.isInvalid(it) || PythonSdkUtil.isVirtualEnv(it)
+          || PythonSdkUtil.isCondaVirtualEnv(it) || PythonSdkUtil.isRemote(it))
+      }
+      .sortedWith(compareBy { sdk: Sdk -> PythonSdkUtil.isConda(sdk) }.thenComparing(PreferredSdkComparator.INSTANCE))
       .firstOrNull()
     if (preferredSdk == null) {
       throw NoSdkException()
@@ -112,7 +72,18 @@ class PythonLangSupport : AbstractLangSupport() {
     return preferredSdk
   }
 
+  private fun isNoOlderThan27(sdk: Sdk): Boolean {
+    val languageLevel = if (sdk is PyDetectedSdk) {
+      sdk.guessedLanguageLevel
+    }
+    else {
+      PythonSdkFlavor.getFlavor(sdk)?.getLanguageLevel(sdk)
+    }
+    return languageLevel?.isAtLeast(LanguageLevel.PYTHON27) ?: false
+  }
+
   override fun applyProjectSdk(sdk: Sdk, project: Project) {
+    setReadyToUseSdk(project, project.modules.first(), sdk)
     val rootManager = ProjectRootManagerEx.getInstanceEx(project)
     rootManager.addProjectJdkListener {
       if (rootManager.projectSdk?.sdkType !is PythonSdkType) {
