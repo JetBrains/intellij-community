@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
-import com.intellij.ProjectTopics;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,8 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
@@ -20,7 +17,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.ExceptionUtil;
@@ -32,6 +28,7 @@ import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
+import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.ModuleIndexableFilesIterator;
 import com.intellij.util.indexing.roots.SdkIndexableFilesIterator;
@@ -146,7 +143,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
     try {
       orderedProviders = getOrderedProviders();
-      providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders);
+      providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
       myProject.putUserData(CONTENT_SCANNED, true);
     } finally {
       projectIndexingHistory.getTimes().setScanFilesEnd(Instant.now());
@@ -287,12 +284,13 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private Map<IndexableFilesIterator, List<VirtualFile>> collectIndexableFilesConcurrently(
     @NotNull Project project,
     @NotNull ProgressIndicator indicator,
-    @NotNull List<IndexableFilesIterator> providers
+    @NotNull List<IndexableFilesIterator> providers,
+    @NotNull ProjectIndexingHistory projectIndexingHistory
   ) {
     if (providers.isEmpty()) {
       return Collections.emptyMap();
     }
-    VirtualFileFilter unindexedFileFilter = new UnindexedFilesFinder(project, myIndex, myRunExtensionsForFilesMarkedAsIndexed);
+    UnindexedFilesFinder unindexedFileFilter = new UnindexedFilesFinder(project, myIndex, myRunExtensionsForFilesMarkedAsIndexed);
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles = new IdentityHashMap<>();
     ConcurrentBitSet visitedFileSet = new ConcurrentBitSet();
 
@@ -305,13 +303,24 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     List<Runnable> tasks = ContainerUtil.map(providers, provider -> {
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(1);
       List<VirtualFile> files = new ArrayList<>();
+      ScanningStatistics scanningStatistics = new ScanningStatistics(provider.getDebugName());
       providerToFiles.put(provider, files);
       ContentIterator collectingIterator = fileOrDir -> {
         if (subTaskIndicator.isCanceled()) {
           return false;
         }
-        if (unindexedFileFilter.accept(fileOrDir)) {
-          files.add(fileOrDir);
+        UnindexedFileStatus status;
+        long statusTime = System.nanoTime();
+        try {
+          status = unindexedFileFilter.getFileStatus(fileOrDir);
+        } finally {
+          statusTime = System.nanoTime() - statusTime;
+        }
+        if (status != null) {
+          if (status.getShouldIndex()) {
+            files.add(fileOrDir);
+          }
+          scanningStatistics.addStatus(status, statusTime);
         }
         return true;
       };
@@ -320,6 +329,9 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
         try {
           provider.iterateFiles(project, collectingIterator, visitedFileSet);
         } finally {
+          synchronized (projectIndexingHistory) {
+            projectIndexingHistory.addScanningStatistics(scanningStatistics);
+          }
           subTaskIndicator.finished();
         }
       };
