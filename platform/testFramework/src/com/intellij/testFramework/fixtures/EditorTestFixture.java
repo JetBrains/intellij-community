@@ -324,4 +324,8 @@ public class EditorTestFixture {
     FileBreadcrumbsCollector breadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
     return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));
   }
+
+  public Editor getEditor() {
+    return myEditor;
+  }
 }
