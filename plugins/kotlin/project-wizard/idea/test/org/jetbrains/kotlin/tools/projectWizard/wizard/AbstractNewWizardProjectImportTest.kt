@@ -5,15 +5,14 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.PlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -42,8 +41,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-//TODO change to HeavyPlatformTestCase when we stop supporting <= 192
-abstract class AbstractNewWizardProjectImportTest : PlatformTestCase() {
+abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
     abstract fun createWizard(directory: Path, buildSystem: BuildSystem, projectDirectory: Path): Wizard
 
     lateinit var sdkCreationChecker: KotlinSdkCreationChecker
@@ -121,31 +119,28 @@ abstract class AbstractNewWizardProjectImportTest : PlatformTestCase() {
             serviceDirectoryPath = GradleEnvironment.Headless.GRADLE_SERVICE_DIRECTORY ?: serviceDirectoryPath
         }
 
-        // not needed on 192 (and causes error on 192 ):
-        if (!is192()) {
-            val settings = GradleProjectSettings().apply {
-                externalProjectPath = directory.toString()
-                isUseAutoImport = false
-                isUseQualifiedModuleNames = true
-                gradleJvm = SDK_NAME
-                distributionType = distributionTypeSettings
-            }
-            ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).linkProject(settings)
+        val settings = GradleProjectSettings().apply {
+            externalProjectPath = directory.toString()
+            isUseAutoImport = false
+            isUseQualifiedModuleNames = true
+            gradleJvm = SDK_NAME
+            distributionType = distributionTypeSettings
         }
+
+        ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).linkProject(settings)
     }
 
     protected fun checkScriptConfigurationsIfAny() {
-        if (is192()) return
-
         val settings = getGradleProjectSettings(project).firstOrNull() ?: error("Cannot find linked gradle project: ${project.basePath}")
         val scripts = File(settings.externalProjectPath).walkTopDown().filter {
             it.name.endsWith("gradle.kts")
         }
-        scripts.forEach {
-            val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(it)!!
-            val psiFile = project.getKtFile(virtualFile) ?: error("Cannot find KtFile for $it")
+
+        scripts.forEach { file ->
+            val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
+            val psiFile = project.getKtFile(virtualFile) ?: error("Cannot find KtFile for $file")
             assertTrue(
-                "Configuration for ${it.path} is missing",
+                "Configuration for ${file.path} is missing",
                 project.service<ScriptConfigurationManager>().hasConfiguration(psiFile)
             )
 
@@ -157,10 +152,6 @@ abstract class AbstractNewWizardProjectImportTest : PlatformTestCase() {
             }
         }
     }
-
-    private fun is192() =
-        ApplicationInfoImpl.getShadowInstance().minorVersionMainPart == "2"
-                && ApplicationInfoImpl.getShadowInstance().majorVersion == "2019"
 
     companion object {
         private const val SDK_NAME = "defaultSdk"
