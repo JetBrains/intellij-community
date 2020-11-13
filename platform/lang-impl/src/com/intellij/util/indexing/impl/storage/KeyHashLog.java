@@ -48,9 +48,13 @@ class KeyHashLog<Key> implements Closeable {
   private volatile int myLastScannedId;
 
   KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile) throws IOException {
+    this(descriptor, baseStorageFile, false);
+  }
+
+  private KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile, boolean compact) throws IOException {
     myKeyDescriptor = descriptor;
     myBaseStorageFile = baseStorageFile;
-    if (isRequiresCompaction()) {
+    if (compact && isRequiresCompaction()) {
       performCompaction();
     }
     myKeyHashToVirtualFileMapping =
@@ -384,6 +388,25 @@ class KeyHashLog<Key> implements Closeable {
     @Override
     public int[] read(@NotNull DataInput in) throws IOException {
       return new int[] {DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in)};
+    }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void main(String[] args) throws Exception {
+    String indexPath = args[0];
+    EnumeratorStringDescriptor enumeratorStringDescriptor = EnumeratorStringDescriptor.INSTANCE;
+
+    try (KeyHashLog<String> keyHashLog = new KeyHashLog<>(enumeratorStringDescriptor, Path.of(indexPath), false)) {
+      IntSet allHashes = keyHashLog.getSuitableKeyHashes(new IdFilter() {
+        @Override
+        public boolean containsFileId(int id) {
+          return true;
+        }
+      });
+
+      for (Integer hash : allHashes) {
+        System.out.println("key hash = " + hash);
+      }
     }
   }
 }
