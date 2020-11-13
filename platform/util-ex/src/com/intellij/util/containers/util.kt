@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import java.util.*
-import java.util.HashSet
 import java.util.stream.Stream
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
@@ -124,7 +123,7 @@ fun <T> Stream<T>?.getIfSingle(): T? =
   this?.limit(2)
     ?.map { Optional.ofNullable(it) }
     ?.reduce(Optional.empty()) { a, b -> if (a.isPresent xor b.isPresent) b else Optional.empty() }
-    ?.orElse(null)
+    ?.orNull()
 
 /**
  * There probably could be some performance issues if there is lots of streams to concat. See
@@ -269,3 +268,5 @@ inline fun <T> Iterator<T>.stopAfter(crossinline predicate: (T) -> Boolean): Ite
     }
   }
 }
+
+fun <T> Optional<T>.orNull(): T? = orElse(null)
