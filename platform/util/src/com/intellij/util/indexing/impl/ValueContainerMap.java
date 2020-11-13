@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
+import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +50,32 @@ class ValueContainerMap<Key, Value> extends PersistentHashMapImpl<Key, Updatable
         super.doPut(key, valueContainer);
       }
     }
+  }
+
+  @NotNull
+  public ChangeTrackingValueContainer<Value> createChangeTrackingValueContainer(final Key key) {
+    return new ChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<Value>() {
+      @Override
+      public @NotNull Object getLock() {
+        return ValueContainerMap.this.getDataAccessLock();
+      }
+
+      @NotNull
+      @Override
+      public ValueContainer<Value> compute() {
+        ValueContainer<Value> value;
+        try {
+          value = ValueContainerMap.this.get(key);
+          if (value == null) {
+            value = new ValueContainerImpl<>();
+          }
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        return value;
+      }
+    });
   }
 
   private static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
