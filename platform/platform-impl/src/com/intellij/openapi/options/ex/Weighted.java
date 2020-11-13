@@ -12,7 +12,7 @@ import java.util.Comparator;
  *
  * @see DisplayPrioritySortable
  */
-interface Weighted {
+public interface Weighted {
   int getWeight();
 
   Comparator<Configurable> COMPARATOR = (configurable1, configurable2) -> {
