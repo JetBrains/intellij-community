@@ -48,6 +48,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon DiffWithClipboard = load("actions/diffWithClipboard.svg", -3860075951405125257L, 2);
     /** 16x16 */ public static final @NotNull Icon Download = load("actions/download.svg", -5995640021644586396L, 2);
     /** 16x16 */ public static final @NotNull Icon Dump = load("actions/dump.svg", -1999792581111822882L, 2);
+    /** 16x16 */ public static final @NotNull Icon DynamicUsages = load("actions/dynamicUsages.svg", -3038340384984333293L, 2);
     /** 16x16 */ public static final @NotNull Icon Edit = load("actions/edit.svg", 6256745109677636307L, 2);
     /** 16x16 */ public static final @NotNull Icon EditScheme = load("actions/editScheme.svg", 2969091749870783802L, 2);
     /** 16x16 */ public static final @NotNull Icon EditSource = load("actions/editSource.svg", 561957038266216006L, 2);
