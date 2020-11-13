@@ -12,9 +12,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.ui.EditorNotifications
 
 class JvmStartupActivity : StartupActivity {
@@ -35,10 +36,14 @@ class JvmStartupActivity : StartupActivity {
             }
         })
 
-        VirtualFileManager.getInstance().addVirtualFileListener(object : VirtualFileListener {
-            override fun fileMoved(event: VirtualFileMoveEvent) {
-                if (event.file.fileType == JavaFileType.INSTANCE) EditorNotifications.getInstance(project).updateNotifications(event.file)
+        connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+            override fun after(events: MutableList<out VFileEvent>) {
+                for (event in events) {
+                    if (event is VFileMoveEvent && event.file.fileType == JavaFileType.INSTANCE) {
+                        EditorNotifications.getInstance(project).updateNotifications(event.file)
+                    }
+                }
             }
-        }, project)
+        })
     }
 }
