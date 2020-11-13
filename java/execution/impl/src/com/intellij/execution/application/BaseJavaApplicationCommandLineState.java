@@ -52,6 +52,9 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   public void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
                                               @Nullable TargetEnvironmentConfiguration configuration,
                                               @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
+    if (myConfiguration.getProjectPathOnTarget() != null) {
+      request.setProjectPathOnTarget(myConfiguration.getProjectPathOnTarget());
+    }
     prepareRemoteConnection(request, configuration);
     super.prepareTargetEnvironmentRequest(request, configuration, targetProgressIndicator);
     TargetEnvironment.TargetPortBinding portRequest = myDebuggerPortRequest;
