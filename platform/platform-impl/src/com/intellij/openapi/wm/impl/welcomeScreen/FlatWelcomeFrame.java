@@ -11,6 +11,8 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEditServiceListener;
 import com.intellij.ide.plugins.PluginDropHandler;
 import com.intellij.ide.plugins.newui.VerticalLayout;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.idea.SplashManager;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
@@ -76,7 +78,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
   public static final int DEFAULT_HEIGHT = USE_TABBED_WELCOME_SCREEN ? 600 : 460;
   public static final int MAX_DEFAULT_WIDTH = 800;
-  private final AbstractWelcomeScreen myScreen;
+  private AbstractWelcomeScreen myScreen;
   private WelcomeBalloonLayoutImpl myBalloonLayout;
   private boolean myDisposed;
 
@@ -98,50 +100,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     setGlassPane(glassPane);
     glassPane.setVisible(false);
 
-    int defaultHeight = DEFAULT_HEIGHT;
-
-    if (IdeFrameDecorator.isCustomDecorationActive()) {
-      Color backgroundColor = UIManager.getColor("WelcomeScreen.background");
-      FrameHeader header = new DefaultFrameHeader(this);
-      if (backgroundColor != null) {
-        header.setBackground(backgroundColor);
-      }
-
-      JComponent holder = CustomFrameDialogContent
-        .getCustomContentHolder(this, myScreen.getWelcomePanel(), header);
-
-      setContentPane(holder);
-      if (holder instanceof CustomFrameDialogContent) {
-        defaultHeight += ((CustomFrameDialogContent)holder).getHeaderHeight();
-      }
-    }
-    else {
-      if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.setJMenuBar(new WelcomeFrameMenuBar());
-      }
-      setContentPane(myScreen.getWelcomePanel());
-    }
+    updateComponentsAndResize();
 
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
-    if (USE_TABBED_WELCOME_SCREEN) {
-      getRootPane().setPreferredSize(JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight));
-    }
-    else {
-      int width = RecentProjectListActionProvider.getInstance().getActions(false).size() == 0 ? 666 : MAX_DEFAULT_WIDTH;
-      getRootPane().setPreferredSize(JBUI.size(width, defaultHeight));
-    }
-    setResizable(USE_TABBED_WELCOME_SCREEN);
 
-    Dimension size = getPreferredSize();
-    Point location = WindowStateService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY);
-    Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
-    setBounds(
-      screenBounds.x + (screenBounds.width - size.width) / 2,
-      screenBounds.y + (screenBounds.height - size.height) / 3,
-      size.width,
-      size.height
-    );
 
     setAutoRequestFocus(false);
 
@@ -168,6 +131,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         saveLocation(getBounds());
       }
     });
+    connection.subscribe(LafManagerListener.TOPIC, new LafManagerListener(){
+
+      @Override
+      public void lookAndFeelChanged(@NotNull LafManager source) {
+        myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
+        myScreen = USE_TABBED_WELCOME_SCREEN ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
+        updateComponentsAndResize();
+        repaint();
+      }
+    });
 
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
@@ -175,6 +148,47 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     UIUtil.decorateWindowHeader(getRootPane());
     UIUtil.setCustomTitleBar(this, getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
+  }
+
+  private void updateComponentsAndResize() {
+    int defaultHeight = DEFAULT_HEIGHT;
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
+      Color backgroundColor = UIManager.getColor("WelcomeScreen.background");
+      FrameHeader header = new DefaultFrameHeader(this);
+      if (backgroundColor != null) {
+        header.setBackground(backgroundColor);
+      }
+      JComponent holder = CustomFrameDialogContent
+        .getCustomContentHolder(this, myScreen.getWelcomePanel(), header);
+      setContentPane(holder);
+    }
+    else {
+      if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
+        rootPane.setJMenuBar(new WelcomeFrameMenuBar());
+      }
+      setContentPane(myScreen.getWelcomePanel());
+    }
+    if (USE_TABBED_WELCOME_SCREEN) {
+      getRootPane().setPreferredSize(JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight));
+      getRootPane().setMaximumSize(JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight));
+    }
+    else {
+      int width = RecentProjectListActionProvider.getInstance().getActions(false).size() == 0 ? 666 : MAX_DEFAULT_WIDTH;
+      getRootPane().setPreferredSize(JBUI.size(width, defaultHeight));
+    }
+    setResizable(USE_TABBED_WELCOME_SCREEN);
+
+    Dimension size = getPreferredSize();
+    Point location = WindowStateService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY);
+    Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
+    setBounds(
+      screenBounds.x + (screenBounds.width - size.width) / 2,
+      screenBounds.y + (screenBounds.height - size.height) / 3,
+      size.width,
+      size.height
+    );
+    UIUtil.decorateWindowHeader(getRootPane());
+
   }
 
   @Override
@@ -507,4 +521,5 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
                                     ActionManager.getInstance().getAction(IdeActions.GROUP_HELP_MENU));
     }
   }
+
 }
