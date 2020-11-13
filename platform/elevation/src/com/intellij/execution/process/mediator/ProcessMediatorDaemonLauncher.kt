@@ -7,6 +7,7 @@ import com.intellij.execution.process.*
 import com.intellij.execution.process.elevation.ElevationBundle
 import com.intellij.execution.process.elevation.ElevationLogger
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
+import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.execution.process.mediator.handshake.*
@@ -58,22 +59,18 @@ object ProcessMediatorDaemonLauncher {
     val daemonLaunchOptions = handshakeTransport.getDaemonLaunchOptions().let {
       if (SystemInfo.isWindows) it else it.copy(trampoline = sudo, daemonize = sudo, leaderPid = ProcessHandle.current().pid())
     }
-
-    val trampolineCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getProperties(),
-                                                        ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
-      .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
-      .withParameters(daemonLaunchOptions.asCmdlineArgs())
+    val daemonCommandLine = createLauncherCommandLine(daemonLaunchOptions)
 
     return handshakeTransport.use {
       appExecutorService.submitAndAwait {
-        val maybeSudoTrampolineCommandLine =
-          if (!sudo) trampolineCommandLine
-          else ExecUtil.sudoCommand(trampolineCommandLine, "Elevation daemon")
+        val launcherCommandLine =
+          if (!sudo) daemonCommandLine
+          else ExecUtil.sudoCommand(daemonCommandLine, "Elevation daemon")
 
-        val trampolineProcessHandler = handshakeTransport.createDaemonProcessHandler(maybeSudoTrampolineCommandLine).also {
+        val launcherProcessHandler = handshakeTransport.createDaemonProcessHandler(launcherCommandLine).also {
           it.startNotify()
         }
-        val trampolineProcessHandle = trampolineProcessHandler.process.toHandle().apply {
+        val trampolineProcessHandle = launcherProcessHandler.process.toHandle().apply {
           onExit().whenComplete { _, _ ->
             handshakeTransport.close()
           }
@@ -107,6 +104,13 @@ object ProcessMediatorDaemonLauncher {
     }
       // neither a named pipe nor an open port is safe from prying eyes
       .encrypted()
+  }
+
+  private fun createLauncherCommandLine(daemonLaunchOptions: DaemonLaunchOptions): GeneralCommandLine {
+    return createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getProperties(),
+                                   ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
+      .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
+      .withParameters(daemonLaunchOptions.asCmdlineArgs())
   }
 
   private fun HandshakeTransport.createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
