@@ -24,6 +24,7 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
+import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,11 +80,11 @@ public abstract class SpellCheckerDictionaryGenerator {
         generate(dict, progressIndicator);
         progressIndicator.setFraction(i / (dictionaries.size() + 1.));
       }
-    }, "Generating Dictionaries", true, myProject);
+    }, SpellCheckerBundle.message("dictionary.generator.progress.title"), true, myProject);
   }
 
   private void generate(@NotNull String dict, ProgressIndicator progressIndicator) {
-    progressIndicator.setText("Processing dictionary: " + dict);
+    progressIndicator.setText(SpellCheckerBundle.message("dictionary.generator.processing.title", dict));
     generateDictionary(myProject, myDict2FolderMap.get(dict), myDictOutputFolder + "/" + dict + ".dic", progressIndicator);
   }
 
@@ -94,7 +95,7 @@ public abstract class SpellCheckerDictionaryGenerator {
     // Collect stuff
     ApplicationManager.getApplication().runReadAction(() -> {
       for (VirtualFile folder : folderPaths) {
-        progressIndicator.setText2("Scanning folder: " + folder.getPath());
+        progressIndicator.setText2(SpellCheckerBundle.message("dictionary.generator.scanning.folder.title", folder.getPath()));
         final PsiManager manager = PsiManager.getInstance(project);
         processFolder(seenNames, manager, folder);
       }

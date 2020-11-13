@@ -42,7 +42,7 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
 
     override fun getName(): String = suggestion
 
-    override fun getTooltipText(): String = "Replace with '${suggestion}'"
+    override fun getTooltipText(): String = SpellCheckerBundle.message("change.to.tooltip", suggestion)
 
     override fun getFamilyName(): String = fixName
 
