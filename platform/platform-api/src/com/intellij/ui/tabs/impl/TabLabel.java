@@ -268,8 +268,10 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public void paint(final Graphics g) {
     if (myTabs.isDropTarget(myInfo)) {
-      g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
-      g.fillRect(0, 0, getWidth(), getHeight());
+      if (myTabs.getDropSide() == -1) {
+        g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
+        g.fillRect(0, 0, getWidth(), getHeight());
+      }
       return;
     }
     doPaint(g);
