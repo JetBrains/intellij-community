@@ -9,7 +9,7 @@ class InplaceExtractMethodCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("extract.method.inplace", 1)
+    private val GROUP = EventLogGroup("extract.method.inplace", 2)
 
 
     @JvmField val settingsChange = EventFields.Enum("settingsChange", ExtractMethodSettingChange::class.java) { it.fusName }
@@ -17,14 +17,11 @@ class InplaceExtractMethodCollector : CounterUsagesCollector() {
     @JvmField val nameChanged = EventFields.Boolean("nameChanged")
     @JvmField val linkUsed = EventFields.Boolean("linkUsed")
 
-    @JvmField val show = registerInplacePopupEventEvent("showPopup")
-    @JvmField val hide = registerInplacePopupEventEvent("hidePopup")
-    @JvmField val openExtractDialog = registerInplacePopupEventEvent("openExtractDialog")
-    @JvmField val executed = registerInplacePopupEventEvent("executed")
-    @JvmField val settingsChanged = registerInplacePopupEventEvent("settingsChanged")
-
-    private fun registerInplacePopupEventEvent(eventId: String) =
-      GROUP.registerVarargEvent(eventId, EventFields.InputEvent, nameChanged, changedOnHide, settingsChange, linkUsed)
+    @JvmField val show = GROUP.registerEvent("showPopup", EventFields.InputEvent)
+    @JvmField val hide = GROUP.registerEvent("hidePopup", changedOnHide)
+    @JvmField val openExtractDialog = GROUP.registerEvent("openExtractDialog", linkUsed)
+    @JvmField val executed = GROUP.registerEvent("executed", nameChanged)
+    @JvmField val settingsChanged = GROUP.registerEvent("settingsChanged", settingsChange)
   }
 }
 

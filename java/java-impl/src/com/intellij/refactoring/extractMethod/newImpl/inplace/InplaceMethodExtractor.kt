@@ -263,8 +263,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   private fun afterTemplateFinished(brokenOff: Boolean) {
     if (! brokenOff){
-      val isNameChanged = extractOptions.methodName != getMethodName()
-      InplaceExtractMethodCollector.executed.log(InplaceExtractMethodCollector.nameChanged.with(isNameChanged))
+      InplaceExtractMethodCollector.executed.log(extractOptions.methodName != getMethodName())
       installGotItTooltips()
     }
   }
@@ -272,14 +271,11 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   private fun logStatisticsOnShow(editor: Editor, mouseEvent: MouseEvent? = null){
     val showEvent = mouseEvent
                     ?: KeyEvent(editor.component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_TAB, KeyEvent.VK_TAB.toChar())
-    val eventField = EventFields.InputEvent.with(FusInputEvent(showEvent, javaClass.simpleName))
-    InplaceExtractMethodCollector.show.log(editor.project, eventField)
+    InplaceExtractMethodCollector.show.log(editor.project, FusInputEvent(showEvent, javaClass.simpleName))
   }
 
   private fun logStatisticsOnHide(popupProvider: ExtractMethodPopupProvider){
-    InplaceExtractMethodCollector.hide.log(
-      myProject, InplaceExtractMethodCollector.changedOnHide.with(popupProvider.isChanged)
-    )
+    InplaceExtractMethodCollector.hide.log(myProject, popupProvider.isChanged)
     if (popupProvider.annotate != popupProvider.annotateDefault) {
       val change = if (popupProvider.annotate == true) ExtractMethodSettingChange.AnnotateOn else ExtractMethodSettingChange.AnnotateOff
       logSettingsChange(change)
@@ -298,7 +294,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   private fun logSettingsChange(settingsChange: ExtractMethodSettingChange?){
     if (settingsChange != null) {
-      InplaceExtractMethodCollector.settingsChanged.log(myProject, InplaceExtractMethodCollector.settingsChange.with(settingsChange))
+      InplaceExtractMethodCollector.settingsChanged.log(myProject, settingsChange)
     }
   }
 
@@ -358,9 +354,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   fun restartInDialog(isLinkUsed: Boolean = false) {
-    InplaceExtractMethodCollector.openExtractDialog.log(
-      myProject, InplaceExtractMethodCollector.linkUsed.with(isLinkUsed)
-    )
+    InplaceExtractMethodCollector.openExtractDialog.log(myProject, isLinkUsed)
     val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic)
     MethodExtractor().doDialogExtract(newOptions)
   }
