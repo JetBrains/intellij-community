@@ -177,6 +177,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
     //shift right for checkmark
     if (useNewLearningUi) {
       lessonPanel.add(moduleNameLabel)
+      lessonPanel.add(UISettings.rigidGap(UISettings::moduleNameLessonGap))
       lessonPanel.add(lessonNameLabel)
       lessonPanel.add(lessonMessagePane)
       //lessonPanel.add(Box.createVerticalStrut(UISettings.instance.beforeButtonGap))
@@ -206,7 +207,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   fun setModuleName(@Nls moduleName: String) {
-    moduleNameLabel.text = moduleName
+    moduleNameLabel.text = "← $moduleName"
     moduleNameLabel.foreground = UISettings.instance.defaultTextColor
     moduleNameLabel.isFocusable = false
     this.revalidate()

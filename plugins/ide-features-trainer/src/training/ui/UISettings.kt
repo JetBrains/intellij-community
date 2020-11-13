@@ -4,6 +4,7 @@ package training.ui
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.JBColor
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
@@ -23,8 +24,8 @@ class UISettings {
   val width: Int by lazy { JBUI.scale(500) }
 
   //MAIN INSETS
-  val northInset: Int by lazy { JBUI.scale(16) }
-  val westInset: Int by lazy { JBUI.scale(13) }
+  val northInset: Int by lazy { JBUI.scale(24) }
+  val westInset: Int by lazy { JBUI.scale(19) }
   val southInset: Int by lazy { JBUI.scale(32) }
   val eastInset: Int by lazy { JBUI.scale(32) }
   val checkWidth: Int by lazy { FeaturesTrainerIcons.Img.Checkmark.iconWidth }
@@ -45,6 +46,7 @@ class UISettings {
   val groupGap: Int by lazy { JBUI.scale(24) }
   val moduleNameSeparatorGap: Int by lazy { JBUI.scale(5) }
   val moduleNameLessonsGap: Int by lazy { JBUI.scale(10) }
+  val moduleNameLessonGap: Int by lazy { JBUI.scale(32) }
   val languagePanelButtonsGap: Int by lazy { JBUI.scale(8) }
 
   //FONTS
@@ -54,7 +56,7 @@ class UISettings {
   val plainFont: Font by lazy { Font(fontFace, Font.PLAIN, fontSize) }
   val italicFont: Font by lazy { plainFont.deriveFont(Font.ITALIC) }
   val boldFont: Font by lazy { plainFont.deriveFont(Font.BOLD) }
-  val lessonHeaderFont: Font by lazy { Font(fontFace, Font.BOLD, fontSize + 2) }
+  val lessonHeaderFont: Font by lazy { UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(JBUIScale.scale(18.0f)) }
   val helpHeaderFont: Font by lazy { Font(fontFace, Font.BOLD, fontSize + 1) }
 
   //COLORS
@@ -64,6 +66,8 @@ class UISettings {
   val shortcutTextColor = JBColor(Color(12, 12, 12), Color(200, 200, 200))
   val separatorColor = JBColor(Color(204, 204, 204), Color(149, 149, 149))
   val shortcutBackgroundColor = JBColor(Color(0xE6EEF7), Color(39, 43, 46))
+  val codeForegroundColor = JBColor.namedColor("ParameterInfo.foreground", JBColor(0x1D1D1D, 0xBBBBBB))
+  val codeBorderColor = JBColor.namedColor("Button.disabledBorderColor", JBColor(0xC4C4C4, 0x5E6060))
   val passedColor = JBColor(Color(200, 200, 200), Color(103, 103, 103))
   val backgroundColor = UIUtil.getTreeBackground()
   val descriptionColor = Color(128, 128, 128)
