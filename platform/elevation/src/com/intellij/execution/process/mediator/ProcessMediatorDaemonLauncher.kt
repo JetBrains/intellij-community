@@ -26,7 +26,10 @@ import com.intellij.util.io.BaseInputStreamReader
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.MetadataUtils
-import java.io.*
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
+import java.io.Reader
 import java.net.InetAddress
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
@@ -38,16 +41,13 @@ private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 
 object ProcessMediatorDaemonLauncher {
   fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon {
-    val appExecutorService = AppExecutorUtil.getAppExecutorService()
+    return AppExecutorUtil.getAppExecutorService().submitAndAwait {
+      createHandshakeTransport().use { handshakeTransport ->
 
-    val handshakeTransport = createHandshakeTransport()
-    val daemonLaunchOptions = handshakeTransport.getDaemonLaunchOptions().let {
-      if (SystemInfo.isWindows) it else it.copy(trampoline = sudo, daemonize = sudo, leaderPid = ProcessHandle.current().pid())
-    }
-    val daemonCommandLine = createLauncherCommandLine(daemonLaunchOptions)
-
-    return handshakeTransport.use {
-      appExecutorService.submitAndAwait {
+        val daemonLaunchOptions = handshakeTransport.getDaemonLaunchOptions().let {
+          if (SystemInfo.isWindows) it else it.copy(trampoline = sudo, daemonize = sudo, leaderPid = ProcessHandle.current().pid())
+        }
+        val daemonCommandLine = createLauncherCommandLine(daemonLaunchOptions)
         val launcherCommandLine =
           if (!sudo) daemonCommandLine
           else ExecUtil.sudoCommand(daemonCommandLine, "Elevation daemon")
@@ -85,7 +85,7 @@ object ProcessMediatorDaemonLauncher {
       HandshakeTransport.createProcessStdoutTransport()
     }
     else try {
-      AppExecutorUtil.getAppExecutorService().submitAndAwaitCloseable { openUnixHandshakeTransport() }
+      openUnixHandshakeTransport()
     }
     catch (e: IOException) {
       throw ExecutionException(ElevationBundle.message("dialog.message.handshake.failed"), e)
@@ -148,17 +148,6 @@ object ProcessMediatorDaemonLauncher {
 private fun <R> ExecutorService.submitAndAwait(block: () -> R): R {
   val future = CompletableFuture.supplyAsync(block, this)
   return awaitWithCheckCanceled(future)
-}
-
-private fun <R : Closeable?> ExecutorService.submitAndAwaitCloseable(block: () -> R): R {
-  val future = CompletableFuture.supplyAsync(block, this)
-  return try {
-    awaitWithCheckCanceled(future)
-  }
-  catch (e: Throwable) {
-    future.whenComplete { closeable, _ -> closeable?.close() }
-    throw e
-  }
 }
 
 private fun <R> awaitWithCheckCanceled(future: CompletableFuture<R>): R {
