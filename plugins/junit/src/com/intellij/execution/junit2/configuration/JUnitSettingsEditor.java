@@ -104,5 +104,6 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                    selectedType == JUnitConfigurationModel.TAGS ||
                                    selectedType == JUnitConfigurationModel.CATEGORY);
       });
+    fragments.add(new TargetPathFragment<>());
   }
 }

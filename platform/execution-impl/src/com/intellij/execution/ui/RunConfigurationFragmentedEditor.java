@@ -138,7 +138,13 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
                                                 : null);
   }
 
-  public void targetChanged(String targetName) {}
+  public void targetChanged(String targetName) {
+    SettingsEditorFragment<Settings, ?> targetPathFragment =
+      ContainerUtil.find(getFragments(), fragment -> TargetPathFragment.ID.equals(fragment.getId()));
+    if (targetPathFragment != null) {
+      targetPathFragment.setSelected(targetName != null);
+    }
+  }
 
   @Override
   protected void initFragments(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
