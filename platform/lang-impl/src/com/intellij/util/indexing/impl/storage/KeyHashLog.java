@@ -23,10 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -49,7 +46,7 @@ class KeyHashLog<Key> implements Closeable {
   private volatile int myLastScannedId;
 
   KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile) throws IOException {
-    this(descriptor, baseStorageFile, false);
+    this(descriptor, baseStorageFile, true);
   }
 
   private KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile, boolean compact) throws IOException {
@@ -229,7 +226,9 @@ class KeyHashLog<Key> implements Closeable {
         oldMapping.unlockRead();
       }
 
-      Path newDataFile = oldDataFile.resolveSibling(oldDataFile.getFileName().toString() + ".new");
+      String dataFileName = oldDataFile.getFileName().toString();
+      String newDataFileName = "new." + dataFileName;
+      Path newDataFile = oldDataFile.resolveSibling(newDataFileName);
       AppendableStorageBackedByResizableMappedFile<int[]> newMapping = openMapping(newDataFile, 32 * 2 * data.size());
 
       newMapping.lockWrite();
@@ -248,12 +247,22 @@ class KeyHashLog<Key> implements Closeable {
         newMapping.unlockWrite();
       }
 
-      FileUtil.deleteWithRenaming(oldDataFile.toFile());
-      FileUtil.rename(newDataFile.toFile(), oldDataFile.toFile());
+      IOUtil.deleteAllFilesStartingWith(oldDataFile.toFile());
+
+      try (DirectoryStream<Path> paths = Files.newDirectoryStream(newDataFile.getParent())) {
+        for (Path path : paths) {
+          String name = path.getFileName().toString();
+          if (name.startsWith(newDataFileName)) {
+            FileUtil.rename(path.toFile(), dataFileName + name.substring(newDataFileName.length()));
+          }
+        }
+      }
+
       try {
         Files.delete(getCompactionMarker());
       }
       catch (IOException ignored) {}
+
     } catch (ProcessCanceledException e) {
       LOG.error(e);
       throw e;
