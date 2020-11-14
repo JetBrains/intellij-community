@@ -17,6 +17,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
@@ -107,6 +108,14 @@ object ProcessMediatorDaemonLauncher {
       ElevationLogger.LOG.warn("Daemon process finished with exit code $errorExit")
     }
     ElevationLogger.LOG.warn("Daemon process stderr:\n$stderr")
+
+    if (SystemInfo.isMac) {
+      if (output.isExitCodeSet && output.exitCode == 1 &&
+          sudoPath != null && "osascript" in sudoPath.fileName.toString() &&
+          "execution error: User cancelled" in stderr) {
+        throw ProcessCanceledException()
+      }
+    }
 
     val reason = when {
       errorExit != null -> IdeBundle.message("finished.with.exit.code.text.message", errorExit)
