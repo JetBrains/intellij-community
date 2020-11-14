@@ -14,13 +14,6 @@ class ScanningStatistics(val fileSetName: String) {
   var timeUpdatingContentLessIndexes: TimeNano = 0
   var timeIndexingWithoutContent: TimeNano = 0
 
-  val perIndexer = hashMapOf<String /* ID.name() */, StatsPerIndexer>()
-
-  data class StatsPerIndexer(
-    var numberOfFiles: Int,
-    var numberOfFilesIndexedByInfrastructureExtension: Int
-  )
-
   fun addStatus(unindexedFileStatus: UnindexedFileStatus, statusTime: TimeNano) {
     numberOfScannedFiles++
     if (unindexedFileStatus.shouldIndex) {
