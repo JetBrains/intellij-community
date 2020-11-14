@@ -17,6 +17,8 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
 
   var numberOfIndexedFiles: Int = 0
 
+  var numberOfFilesFullyIndexedByExtensions: Int = 0
+
   var numberOfTooLargeForIndexingFiles: Int = 0
 
   val statsPerIndexer = hashMapOf<String /* ID.name() */, StatsPerIndexer>()
@@ -48,6 +50,9 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     fileSize: Long
   ) {
     numberOfIndexedFiles++
+    if (fileStatistics.wasFullyIndexedByExtensions) {
+      numberOfFilesFullyIndexedByExtensions++
+    }
     fileStatistics.perIndexerTimes.forEach { (indexId, time) ->
       val stats = statsPerIndexer.getOrPut(indexId.name) {
         StatsPerIndexer(TimeStats(), 0, 0, 0)
