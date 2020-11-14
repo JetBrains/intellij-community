@@ -36,6 +36,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.Reader
 import java.net.InetAddress
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
 private typealias Port = Int
@@ -57,6 +58,7 @@ object ProcessMediatorDaemonLauncher {
         val launcherCommandLine =
           if (!sudo) daemonCommandLine
           else ExecUtil.sudoCommand(daemonCommandLine, "Elevation daemon")
+        val sudoPath = if (launcherCommandLine !== daemonCommandLine) Path.of(launcherCommandLine.exePath) else null
 
         val launcherProcessHandler = handshakeTransport.createDaemonProcessHandler(launcherCommandLine)
         val handshake = launcherProcessHandler.withOutputCaptured(SynchronizedProcessOutput()) { launcherOutput ->
@@ -68,16 +70,16 @@ object ProcessMediatorDaemonLauncher {
           try {
             select<Handshake?> {
               handshakeAsync.onAwait { it }
-              finishedAsync.onAwait { handshakeFailed(it) }
+              finishedAsync.onAwait { handshakeFailed(it, sudoPath) }
             }
             // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
             ?: select<Nothing> {
-              finishedAsync.onAwait { handshakeFailed(it) }
-              onTimeout(1000) { launcherOutput.setTimeout(); handshakeFailed(launcherOutput) }
+              finishedAsync.onAwait { handshakeFailed(it, sudoPath) }
+              onTimeout(1000) { launcherOutput.setTimeout(); handshakeFailed(launcherOutput, sudoPath) }
             }
           }
           catch (e: IOException) {
-            handshakeFailed(launcherOutput, e)
+            handshakeFailed(launcherOutput, sudoPath, e)
           }
         }
         val daemonProcessHandle = ProcessHandle.of(handshake.pid).orNull()
@@ -92,7 +94,7 @@ object ProcessMediatorDaemonLauncher {
     }.awaitWithCheckCanceled()
   }
 
-  private fun handshakeFailed(output: ProcessOutput, error: IOException? = null): Nothing = synchronized(output) {
+  private fun handshakeFailed(output: ProcessOutput, sudoPath: Path?, error: IOException? = null): Nothing = synchronized(output) {
     val stderr = output.stderr
     val errorExit =
       if (output.isExitCodeSet && output.exitCode != 0) ProcessTerminatedListener.stringifyExitCode(output.exitCode)
@@ -109,7 +111,10 @@ object ProcessMediatorDaemonLauncher {
       error == null -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.eof")
       else -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.ioe")
     }
-    val message = ElevationBundle.message("dialog.message.failed.to.launch.daemon", reason)
+    val message = when (sudoPath) {
+      null -> ElevationBundle.message("dialog.message.failed.to.launch.daemon", reason)
+      else -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.with.sudo", sudoPath.fileName, reason)
+    }
     throw ExecutionException(message)
   }
 
