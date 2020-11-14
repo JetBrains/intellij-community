@@ -102,8 +102,6 @@ public class XDebuggerTreeInlayPopup<D> {
     tree.setBackground(UIUtil.getToolTipBackground());
     toolbar.setBackground(UIUtil.getToolTipActionBackground());
     WindowMoveListener moveListener = new WindowMoveListener(mainPanel);
-    tree.addMouseListener(moveListener);
-    tree.addMouseMotionListener(moveListener);
     toolbar.addMouseListener(moveListener);
     toolbar.addMouseMotionListener(moveListener);
     return mainPanel
