@@ -13,6 +13,7 @@ import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRunti
 import com.intellij.execution.process.mediator.handshake.*
 import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.util.ExecUtil
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
@@ -57,33 +58,32 @@ object ProcessMediatorDaemonLauncher {
           if (!sudo) daemonCommandLine
           else ExecUtil.sudoCommand(daemonCommandLine, "Elevation daemon")
 
-        val launcherProcessHandler = handshakeTransport.createDaemonProcessHandler(launcherCommandLine).also {
-          it.startNotify()
-        }
-        val trampolineProcessHandle = launcherProcessHandler.process.toHandle()
+        val launcherProcessHandler = handshakeTransport.createDaemonProcessHandler(launcherCommandLine)
+        val handshake = launcherProcessHandler.withOutputCaptured(SynchronizedProcessOutput()) { launcherOutput ->
+          startNotify()
 
-        val handshakeAsync = async(Dispatchers.IO) { handshakeTransport.readHandshake() }
-        val finishedAsync = trampolineProcessHandle.onExit().asDeferred()
+          val handshakeAsync = async(Dispatchers.IO) { handshakeTransport.readHandshake() }
+          val finishedAsync = launcherOutput.onFinished().asDeferred()
 
-        val handshake = try {
-          select<Handshake?> {
-            handshakeAsync.onAwait { it }
-            finishedAsync.onAwait { handshakeFailed() }
+          try {
+            select<Handshake?> {
+              handshakeAsync.onAwait { it }
+              finishedAsync.onAwait { handshakeFailed(it) }
+            }
+            // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
+            ?: select<Nothing> {
+              finishedAsync.onAwait { handshakeFailed(it) }
+              onTimeout(1000) { launcherOutput.setTimeout(); handshakeFailed(launcherOutput) }
+            }
           }
-          // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
-          ?: select<Nothing> {
-            finishedAsync.onAwait { handshakeFailed() }
-            onTimeout(1000) { handshakeFailed() }
+          catch (e: IOException) {
+            handshakeFailed(launcherOutput, e)
           }
         }
-        catch (e: IOException) {
-          handshakeFailed(e)
-        }
-
         val daemonProcessHandle = ProcessHandle.of(handshake.pid).orNull()
                                   // Use the launcher process handle instead unless it's a short-living trampoline.
                                   // In particular, this happens on Windows, where we can't access a process owned by another user.
-                                  ?: trampolineProcessHandle.takeUnless { daemonLaunchOptions.trampoline }
+                                  ?: launcherProcessHandler.process.toHandle().takeUnless { daemonLaunchOptions.trampoline }
 
         ProcessMediatorDaemonImpl(daemonProcessHandle,
                                   handshake.port,
@@ -92,9 +92,24 @@ object ProcessMediatorDaemonLauncher {
     }.awaitWithCheckCanceled()
   }
 
-  private fun handshakeFailed(error: IOException? = null): Nothing {
+  private fun handshakeFailed(output: ProcessOutput, error: IOException? = null): Nothing = synchronized(output) {
+    val stderr = output.stderr
+    val errorExit =
+      if (output.isExitCodeSet && output.exitCode != 0) ProcessTerminatedListener.stringifyExitCode(output.exitCode)
+      else null
+
     ElevationLogger.LOG.warn("Reading handshake failed", error)
-    val message = ElevationBundle.message("dialog.message.handshake.failed")
+    if (errorExit != null) {
+      ElevationLogger.LOG.warn("Daemon process finished with exit code $errorExit")
+    }
+    ElevationLogger.LOG.warn("Daemon process stderr:\n$stderr")
+
+    val reason = when {
+      errorExit != null -> IdeBundle.message("finished.with.exit.code.text.message", errorExit)
+      error == null -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.eof")
+      else -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.ioe")
+    }
+    val message = ElevationBundle.message("dialog.message.failed.to.launch.daemon", reason)
     throw ExecutionException(message)
   }
 
@@ -113,7 +128,7 @@ object ProcessMediatorDaemonLauncher {
       openUnixHandshakeTransport()
     }
     catch (e: IOException) {
-      throw ExecutionException(ElevationBundle.message("dialog.message.handshake.failed"), e)
+      throw ExecutionException(ElevationBundle.message("dialog.message.handshake.init.failed"), e)
     }
   }
 
@@ -181,6 +196,19 @@ private fun <R> CompletableFuture<R>.awaitWithCheckCanceled(): R {
     throw ExceptionUtil.findCause(e, java.util.concurrent.ExecutionException::class.java)?.cause ?: e
   }
 }
+
+
+private inline fun <P : ProcessHandler, T : ProcessOutput, R> P.withOutputCaptured(output: T, block: P.(T) -> R): R {
+  val capturingProcessListener = CapturingProcessAdapter(output)
+  addProcessListener(capturingProcessListener)
+  return try {
+    block(output)
+  }
+  finally {
+    removeProcessListener(capturingProcessListener)
+  }
+}
+
 
 private class ProcessMediatorDaemonImpl(private val processHandle: ProcessHandle?,
                                         private val port: Port,
