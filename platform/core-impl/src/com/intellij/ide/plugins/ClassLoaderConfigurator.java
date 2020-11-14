@@ -250,7 +250,9 @@ final class ClassLoaderConfigurator {
         }
       };
     }
-    else if (descriptor.id.getIdString().equals("com.intellij.kubernetes")) {
+    else if (descriptor.id.getIdString().equals("com.intellij.kubernetes") &&
+             descriptor.descriptorPath == null &&
+             descriptor.dependenciesDescriptor != null /* old plugin version */) {
       // kubernetes uses project libraries - not yet clear how to deal with that, that's why here we don't use default implementation
       return createFilteringPluginClassLoader(descriptor, parentLoaders, createDependencyBasedPredicate(descriptor));
     }
