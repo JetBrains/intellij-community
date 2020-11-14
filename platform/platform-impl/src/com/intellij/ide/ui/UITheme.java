@@ -5,7 +5,7 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
@@ -130,11 +130,12 @@ public final class UITheme {
       @Nullable
       @Override
       public String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
-        if (classLoader instanceof PluginClassLoader) {
-          String pluginId = ((PluginClassLoader)classLoader).getPluginId().getIdString();
+        if (classLoader instanceof PluginAwareClassLoader) {
+          String pluginId = ((PluginAwareClassLoader)classLoader).getPluginId().getIdString();
           Object icons = theme.icons.get(pluginId);
           if (icons instanceof Map) {
-            Object pluginIconPath = ((Map)icons).get(path);
+            @SuppressWarnings("unchecked")
+            Object pluginIconPath = ((Map<String, Object>)icons).get(path);
             if (pluginIconPath instanceof String) {
               return iconsMapper.apply((String)pluginIconPath);
             }
