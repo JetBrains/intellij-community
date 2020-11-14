@@ -142,6 +142,9 @@ public final class UITheme {
           }
 
           Object value = theme.icons.get(path);
+          if (value == null && path.charAt(0) != '/') {
+            value = theme.icons.get('/' + path);
+          }
           return value instanceof String ? iconsMapper.apply((String)value) : null;
         }
 

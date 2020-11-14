@@ -218,20 +218,20 @@ public final class IconLoader {
       classLoader = patchedPath.second;
     }
 
-    ImageDataLoader resolver = new ImageDataByClassloaderResolver(effectivePath, classLoader, cacheKey, imageFlags);
+    ImageDataLoader resolver = new RasterizedImageDataLoader(effectivePath, classLoader, cacheKey, imageFlags);
     if (startTime != -1) {
       IconLoadMeasurer.findIcon.end(startTime);
     }
     return resolver;
   }
 
-  private static final class ImageDataByClassloaderResolver implements ImageDataLoader {
+  private static final class RasterizedImageDataLoader implements ImageDataLoader {
     private final WeakReference<ClassLoader> classLoaderRef;
     private final long cacheKey;
     private final int imageFlags;
     private final String path;
 
-    ImageDataByClassloaderResolver(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int imageFlags) {
+    RasterizedImageDataLoader(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int imageFlags) {
       this.path = path;
       classLoaderRef = new WeakReference<>(classLoader);
       this.cacheKey = cacheKey;
@@ -261,7 +261,8 @@ public final class IconLoader {
     @Override
     public @Nullable IconLoader.ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
       ClassLoader classLoader = classLoaderRef.get();
-      return classLoader == null ? null : createNewResolverIfNeeded(classLoader, originalPath, transform);
+      String pathWithLeadingSlash = originalPath.charAt(0) == '/' ? originalPath : ('/' + originalPath);
+      return classLoader == null ? null : createNewResolverIfNeeded(classLoader, pathWithLeadingSlash, transform);
     }
 
     @Override
@@ -271,16 +272,65 @@ public final class IconLoader {
 
     @Override
     public String toString() {
-      return "ImageDataByClassloaderResolver(" +
+      return "RasterizedImageDataLoader(" +
              ", classLoader=" + classLoaderRef.get() +
              ", path='" + path + '\'' +
              ')';
     }
   }
 
-  private @Nullable static ImageDataResolverImpl createNewResolverIfNeeded(@Nullable ClassLoader originalClassLoader,
-                                                                           @NotNull String originalPath,
-                                                                           @NotNull IconTransform transform) {
+  private static final class FinalImageDataLoader implements ImageDataLoader {
+    private final WeakReference<ClassLoader> classLoaderRef;
+    private final String path;
+
+    FinalImageDataLoader(@NotNull String path, @NotNull ClassLoader classLoader) {
+      this.path = path;
+      classLoaderRef = new WeakReference<>(classLoader);
+    }
+
+    @Override
+    public @Nullable Image loadImage(List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
+      // do not use cache
+      int flags = ImageLoader.ALLOW_FLOAT_SCALING;
+      if (isDark) {
+        flags |= ImageLoader.USE_DARK;
+      }
+      ClassLoader classLoader = classLoaderRef.get();
+      if (classLoader == null) {
+        return null;
+      }
+      return ImageLoader.load(path, filters, null, classLoader, flags, scaleContext, !path.endsWith(".svg"));
+    }
+
+    @Override
+    public @Nullable URL getURL() {
+      ClassLoader classLoader = classLoaderRef.get();
+      return classLoader == null ? null : classLoader.getResource(path);
+    }
+
+    @Override
+    public @Nullable IconLoader.ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
+      // this resolver is already produced as result of patch
+      return null;
+    }
+
+    @Override
+    public boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
+      return classLoaderRef.get() == classLoader;
+    }
+
+    @Override
+    public String toString() {
+      return "FinalImageDataLoader(" +
+             ", classLoader=" + classLoaderRef.get() +
+             ", path='" + path + '\'' +
+             ')';
+    }
+  }
+
+  private @Nullable static ImageDataLoader createNewResolverIfNeeded(@Nullable ClassLoader originalClassLoader,
+                                                   @NotNull String originalPath,
+                                                   @NotNull IconTransform transform) {
     Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, originalClassLoader);
     if (patchedPath == null) {
       return null;
@@ -289,7 +339,7 @@ public final class IconLoader {
     ClassLoader classLoader = patchedPath.second == null ? originalClassLoader : patchedPath.second;
     String path = patchedPath.first;
     if (path != null && path.startsWith("/")) {
-      return new ImageDataResolverImpl(path.substring(1), null, classLoader, HandleNotFound.IGNORE, false);
+      return new FinalImageDataLoader(path.substring(1), classLoader == null ? transform.getClass().getClassLoader() : classLoader);
     }
 
     // This use case for temp themes only. Here we want immediately replace existing icon to a local one
