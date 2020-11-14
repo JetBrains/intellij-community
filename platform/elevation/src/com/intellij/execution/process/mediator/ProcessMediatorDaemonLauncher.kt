@@ -11,10 +11,10 @@ import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.execution.process.mediator.handshake.*
+import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
@@ -28,6 +28,8 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.MetadataUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.selects.select
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -40,6 +42,7 @@ private typealias Port = Int
 private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 
 
+@Suppress("EXPERIMENTAL_API_USAGE")
 object ProcessMediatorDaemonLauncher {
   fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon {
     return GlobalScope.async(Dispatchers.IO) {
@@ -57,13 +60,25 @@ object ProcessMediatorDaemonLauncher {
         val launcherProcessHandler = handshakeTransport.createDaemonProcessHandler(launcherCommandLine).also {
           it.startNotify()
         }
-        val trampolineProcessHandle = launcherProcessHandler.process.toHandle().apply {
-          onExit().whenComplete { _, _ ->
-            handshakeTransport.close()
+        val trampolineProcessHandle = launcherProcessHandler.process.toHandle()
+
+        val handshakeAsync = async(Dispatchers.IO) { handshakeTransport.readHandshake() }
+        val finishedAsync = trampolineProcessHandle.onExit().asDeferred()
+
+        val handshake = try {
+          select<Handshake?> {
+            handshakeAsync.onAwait { it }
+            finishedAsync.onAwait { handshakeFailed() }
+          }
+          // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
+          ?: select<Nothing> {
+            finishedAsync.onAwait { handshakeFailed() }
+            onTimeout(1000) { handshakeFailed() }
           }
         }
-
-        val handshake = handshakeTransport.readHandshake() ?: throw ProcessCanceledException()
+        catch (e: IOException) {
+          handshakeFailed(e)
+        }
 
         val daemonProcessHandle = ProcessHandle.of(handshake.pid).orNull()
                                   // Use the launcher process handle instead unless it's a short-living trampoline.
@@ -75,6 +90,12 @@ object ProcessMediatorDaemonLauncher {
                                   DaemonClientCredentials(handshake.token))
       }
     }.awaitWithCheckCanceled()
+  }
+
+  private fun handshakeFailed(error: IOException? = null): Nothing {
+    ElevationLogger.LOG.warn("Reading handshake failed", error)
+    val message = ElevationBundle.message("dialog.message.handshake.failed")
+    throw ExecutionException(message)
   }
 
   private fun createHandshakeTransport(): HandshakeTransport {
