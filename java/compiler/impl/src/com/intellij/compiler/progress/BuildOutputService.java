@@ -45,11 +45,13 @@ public class BuildOutputService implements BuildViewService {
   private final @NotNull Project myProject;
   private final @NotNull BuildProgress<BuildProgressDescriptor> myBuildProgress;
   private final @NotNull @NlsContexts.TabTitle String myContentName;
+  private final ConsolePrinter myConsolePrinter;
 
   public BuildOutputService(@NotNull Project project, @NotNull @NlsContexts.TabTitle String contentName) {
     myProject = project;
     myContentName = contentName;
     myBuildProgress = BuildViewManager.createBuildProgress(project);
+    myConsolePrinter = new ConsolePrinter(myBuildProgress);
   }
 
   @Override
@@ -128,10 +130,10 @@ public class BuildOutputService implements BuildViewService {
       boolean isUpToDate = exitStatus == ExitStatus.UP_TO_DATE;
       if (JavaCompilerBundle.message("classes.up.to.date.check").equals(myContentName)) {
         if (isUpToDate) {
-          myBuildProgress.output(JavaCompilerBundle.message("compiler.build.messages.classes.check.uptodate"), true);
+          myConsolePrinter.print(JavaCompilerBundle.message("compiler.build.messages.classes.check.uptodate"), MessageEvent.Kind.SIMPLE);
         }
         else {
-          myBuildProgress.output(JavaCompilerBundle.message("compiler.build.messages.classes.check.outdated"), true);
+          myConsolePrinter.print(JavaCompilerBundle.message("compiler.build.messages.classes.check.outdated"), MessageEvent.Kind.SIMPLE);
         }
       }
       message = BuildBundle.message("build.messages.finished", wordsToBeginFromLowerCase(myContentName));
@@ -164,26 +166,8 @@ public class BuildOutputService implements BuildViewService {
         String title = getMessageTitle(compilerMessage);
         myBuildProgress.message(title, compilerMessage.getMessage(), kind, navigatable);
       }
-      myBuildProgress.output(wrapWithAnsiColor(kind, compilerMessage.getMessage()) + '\n', kind != MessageEvent.Kind.ERROR);
+      myConsolePrinter.print(compilerMessage.getMessage(), kind);
     }
-  }
-
-  @Nls
-  private static String wrapWithAnsiColor(MessageEvent.Kind kind, @Nls String message) {
-    @NlsSafe
-    String color;
-    if (kind == MessageEvent.Kind.ERROR) {
-      color = ANSI_RED;
-    }
-    else if (kind == MessageEvent.Kind.WARNING) {
-      color = ANSI_YELLOW;
-    }
-    else {
-      color = ANSI_BOLD;
-    }
-    @NlsSafe
-    final String ansiReset = ANSI_RESET;
-    return color + message + ansiReset;
   }
 
   @NotNull
@@ -271,7 +255,7 @@ public class BuildOutputService implements BuildViewService {
             if (isSeenMessage) return;
           }
         }
-        myBuildProgress.output(msg + '\n', true);
+        myConsolePrinter.print(msg, MessageEvent.Kind.SIMPLE);
       }
     });
   }
@@ -326,6 +310,41 @@ public class BuildOutputService implements BuildViewService {
         return MessageEvent.Kind.STATISTICS;
       default:
         return MessageEvent.Kind.SIMPLE;
+    }
+  }
+
+  private static class ConsolePrinter {
+    private final @NotNull BuildProgress<BuildProgressDescriptor> progress;
+    private volatile boolean isNewLinePosition = true;
+
+    private ConsolePrinter(@NotNull BuildProgress<BuildProgressDescriptor> progress) {this.progress = progress;}
+
+    private void print(@NotNull @Nls String message, @NotNull MessageEvent.Kind kind){
+      String text = wrapWithAnsiColor(kind, message);
+      if (!isNewLinePosition && !startsWithChar(message, '\r')) {
+        text = '\n' + text;
+      }
+      isNewLinePosition = endsWithLineBreak(message);
+      progress.output(text, kind != MessageEvent.Kind.ERROR);
+    }
+
+    @Nls
+    private static String wrapWithAnsiColor(MessageEvent.Kind kind, @Nls String message) {
+      if (kind == MessageEvent.Kind.SIMPLE) return message;
+      @NlsSafe
+      String color;
+      if (kind == MessageEvent.Kind.ERROR) {
+        color = ANSI_RED;
+      }
+      else if (kind == MessageEvent.Kind.WARNING) {
+        color = ANSI_YELLOW;
+      }
+      else {
+        color = ANSI_BOLD;
+      }
+      @NlsSafe
+      final String ansiReset = ANSI_RESET;
+      return color + message + ansiReset;
     }
   }
 }
