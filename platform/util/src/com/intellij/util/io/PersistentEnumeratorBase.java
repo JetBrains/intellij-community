@@ -491,6 +491,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
     catch (NoDataException e) {
+      if (myFile.getFileSystem().isReadOnly()) {
+        throw e;
+      }
       markCorrupted();
       return null;
     }
