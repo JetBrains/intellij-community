@@ -390,7 +390,9 @@ final class StubSerializationHelper {
     String externalId = null;
     try {
       externalId = myNameStorage.valueOf(id);
-    } catch (Throwable ignore) {}
+    } catch (Throwable e) {
+      LOG.info(e);
+    }
     var root = ourRootStubSerializer.get();
     return new SerializerNotFoundException(
       (root != null ? StubSerializationUtil.brokenStubFormat(root) : "") +
