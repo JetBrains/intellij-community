@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -80,6 +82,20 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
         PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(lastValue);
       }
     }
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public Collection<String> dumpNameStorage() {
+    assert myUnmodifiable;
+    assert myNameStorage instanceof PersistentStringEnumerator;
+    try {
+      return ((PersistentStringEnumerator)myNameStorage).getAllDataObjects(null);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return Collections.emptyList();
   }
 
   @Override

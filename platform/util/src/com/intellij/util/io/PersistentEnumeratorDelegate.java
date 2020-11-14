@@ -131,7 +131,7 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
     return myEnumerator.tryEnumerate(name);
   }
 
-  @TestOnly
+  @ApiStatus.Internal
   public Collection<Data> getAllDataObjects(@Nullable final PersistentEnumeratorBase.DataFilter filter) throws IOException {
     return myEnumerator.getAllDataObjects(filter);
   }
