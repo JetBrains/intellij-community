@@ -101,5 +101,10 @@ data class ProjectIndexingHistory(val project: Project) {
     var scanFilesEnd: Instant? = null,
     var suspendedDuration: Duration? = null,
     var wasInterrupted: Boolean = false
-  )
+  ) {
+    val indexingDuration: Duration?
+      get() = if (indexingStart != null && indexingEnd != null) {
+        Duration.between(indexingStart, indexingEnd)
+      } else null
+  }
 }
