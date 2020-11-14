@@ -15,6 +15,7 @@ import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
+import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,8 +100,9 @@ public final class FileBasedIndexProjectHandler {
       IndexUpdateRunner.IndexingInterruptedException interruptedException = null;
       ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project);
       projectIndexingHistory.getTimes().setIndexingStart(Instant.now());
+      String fileSetName = "Refreshed files";
       try {
-        statistics = indexUpdateRunner.indexFiles(project, "Refreshed files", files, indicator);
+        statistics = indexUpdateRunner.indexFiles(project, fileSetName, files, indicator);
       } catch (IndexUpdateRunner.IndexingInterruptedException e) {
         projectIndexingHistory.getTimes().setWasInterrupted(true);
         statistics = e.myStatistics;
@@ -108,6 +110,10 @@ public final class FileBasedIndexProjectHandler {
       } finally {
         projectIndexingHistory.getTimes().setIndexingEnd(Instant.now());
       }
+      ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
+      scanningStatistics.setNumberOfScannedFiles(files.size());
+      scanningStatistics.setNumberOfFilesForIndexing(files.size());
+      projectIndexingHistory.addScanningStatistics(scanningStatistics);
       projectIndexingHistory.addProviderStatistics(statistics);
       IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
       if (interruptedException != null) {
