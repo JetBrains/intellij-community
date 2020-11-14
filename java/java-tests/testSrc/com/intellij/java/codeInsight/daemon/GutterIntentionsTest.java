@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -80,7 +80,7 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
                                                "}");
     myFixture.enableInspections(new RedundantThrowsDeclarationLocalInspection());
     myFixture.doHighlighting();
-    CachedIntentions intentions = IntentionsUI.getInstance(getProject()).getCachedIntentions(getEditor(), getFile());
-    assertThat(intentions.getAllActions().get(0).getText()).startsWith("Remove ");
+    List<IntentionAction> actions = myFixture.getAvailableIntentions();
+    assertThat(actions.get(0).getText()).startsWith("Remove ");
   }
 }
