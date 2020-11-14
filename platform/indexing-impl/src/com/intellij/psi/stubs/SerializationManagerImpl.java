@@ -19,9 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -85,17 +83,21 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public Collection<String> dumpNameStorage() {
+  public Map<String, Integer> dumpNameStorage() {
     assert myUnmodifiable;
     assert myNameStorage instanceof PersistentStringEnumerator;
     try {
-      return ((PersistentStringEnumerator)myNameStorage).getAllDataObjects(null);
+      Collection<String> stubNames = ((PersistentStringEnumerator)myNameStorage).getAllDataObjects(null);
+      Map<String, Integer> dump = new HashMap<>();
+      for (String name : stubNames) {
+        dump.put(name, myNameStorage.tryEnumerate(name));
+      }
+      return dump;
     }
     catch (IOException e) {
       LOG.error(e);
     }
-    return Collections.emptyList();
+    return Collections.emptyMap();
   }
 
   @Override
