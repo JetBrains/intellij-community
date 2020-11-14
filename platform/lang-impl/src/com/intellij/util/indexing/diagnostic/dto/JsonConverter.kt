@@ -32,15 +32,16 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
   val indexedFilePaths = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) indexedFiles else null
 
   return JsonFileProviderIndexStatistics(
-    fileSetName,
-    numberOfIndexedFiles,
-    JsonDuration(totalIndexingTime),
-    numberOfTooLargeForIndexingFiles.toPositiveInt(),
-    tooLargeForIndexingFiles.biggestElements.map { it.toJson() }.takeIf { it.isNotEmpty() },
-    statsPerFileType.sortedByDescending { it.partOfTotalIndexingTime.percentages },
-    statsPerIndexer.sortedByDescending { it.partOfTotalIndexingTime.percentages },
-    fastIndexers.map { it.indexId }.sorted(),
-    indexedFilePaths
+    providerName = fileSetName,
+    totalNumberOfFiles = numberOfIndexedFiles,
+    totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
+    totalIndexingTime = JsonDuration(totalIndexingTime),
+    numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles.toPositiveInt(),
+    tooLargeForIndexingFiles = tooLargeForIndexingFiles.biggestElements.map { it.toJson() }.takeIf { it.isNotEmpty() },
+    statsPerFileType = statsPerFileType.sortedByDescending { it.partOfTotalIndexingTime.percentages },
+    statsPerIndexer = statsPerIndexer.sortedByDescending { it.partOfTotalIndexingTime.percentages },
+    fastIndexers = fastIndexers.map { it.indexId }.sorted(),
+    indexedFiles = indexedFilePaths
   )
 }
 
