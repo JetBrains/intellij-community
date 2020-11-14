@@ -15,6 +15,7 @@ import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Key
@@ -57,7 +58,8 @@ object ProcessMediatorDaemonLauncher {
         val daemonCommandLine = createLauncherCommandLine(daemonLaunchOptions)
         val launcherCommandLine =
           if (!sudo) daemonCommandLine
-          else ExecUtil.sudoCommand(daemonCommandLine, "Elevation daemon")
+          else ExecUtil.sudoCommand(daemonCommandLine, ElevationBundle.message("dialog.title.sudo.prompt.product.elevation.daemon",
+                                                                               ApplicationNamesInfo.getInstance().fullProductName))
         val sudoPath = if (launcherCommandLine !== daemonCommandLine) Path.of(launcherCommandLine.exePath) else null
 
         val launcherProcessHandler = handshakeTransport.createDaemonProcessHandler(launcherCommandLine)
