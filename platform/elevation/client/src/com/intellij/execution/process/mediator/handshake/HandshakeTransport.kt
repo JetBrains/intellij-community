@@ -20,10 +20,6 @@ interface HandshakeTransport : Closeable {
   @Throws(IOException::class)
   fun readHandshake(): Handshake?
 
-  /**
-   * The contract is that invoking close() interrupts any ongoing blocking operations,
-   * and makes [readHandshake] throw. The implementations must guarantee that.
-   */
   override fun close()
 
   companion object
@@ -68,11 +64,7 @@ private abstract class AbstractHandshakeTransport : HandshakeTransport {
   abstract fun getHandshakeOption(): DaemonLaunchOptions.HandshakeOption
 
   override fun readHandshake(): Handshake? {
-    return handshakeReader.read(Handshake::parseDelimitedFrom).also {
-      if (it?.port == 0) {
-        throw IOException("Invalid/incomplete handshake message from daemon: $it")
-      }
-    }
+    return handshakeReader.read(Handshake::parseDelimitedFrom)
   }
 
   override fun close() = handshakeReader.close()
