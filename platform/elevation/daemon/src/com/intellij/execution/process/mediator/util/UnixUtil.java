@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.process.mediator.daemon;
+package com.intellij.execution.process.mediator.util;
 
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.Objects;
+import static com.intellij.execution.process.mediator.util.NativeCall.NativeCallException;
+import static com.intellij.execution.process.mediator.util.NativeCall.tryRun;
 
 @SuppressWarnings({"SpellCheckingInspection", "UseOfSystemOutOrSystemErr"})
 public final class UnixUtil {
@@ -24,6 +24,18 @@ public final class UnixUtil {
     }
   }
 
+  public static boolean isUnix() {
+    return IS_UNIX;
+  }
+
+  public static void setup(boolean daemonize) {
+    checkLibc();
+    tryRun(UnixUtil::setupSignals, "Failed to setup signals");
+    if (daemonize) {
+      tryRun(UnixUtil::leadSession, "Failed to make session leader");
+    }
+  }
+
   private static @NotNull LibC checkLibc() {
     if (!IS_UNIX) {
       throw new IllegalStateException("Not a Unix system");
@@ -34,48 +46,48 @@ public final class UnixUtil {
     return LIBC;
   }
 
-  public static boolean isUnix() {
-    return IS_UNIX;
-  }
-
-  public static void daemonize() {
+  private static void leadSession() throws NativeCallException {
     LibC libc = checkLibc();
     int sid = libc.setsid();
     if (sid == -1) {
-      throw new IllegalStateException("setsid: " + getLastErrorString());
+      throw libcCallError("setsid");
     }
   }
 
-  public static void setupSignals() {
+  private static void setupSignals() throws NativeCallException {
     LibC libc = checkLibc();
 
     Memory sigset = new Memory(LibCConstants.MAX_SIZEOF_SIGSET_T);
     if (libc.sigfillset(sigset) == -1) {
-      throw new IllegalStateException("sigfillset: " + getLastErrorString());
+      throw libcCallError("sigfillset");
     }
     if (libc.sigprocmask(LibCConstants.SIG_UNBLOCK, sigset, Pointer.NULL) == -1) {
-      throw new IllegalStateException("sigprocmask: " + getLastErrorString());
+      throw libcCallError("sigprocmask");
     }
 
-    resetSignal(LibCConstants.SIGHUP);
-    resetSignal(LibCConstants.SIGINT);
-    resetSignal(LibCConstants.SIGQUIT);
-    resetSignal(LibCConstants.SIGILL);
-    resetSignal(LibCConstants.SIGTRAP);
-    resetSignal(LibCConstants.SIGABRT);
-    resetSignal(LibCConstants.SIGFPE);
-    resetSignal(LibCConstants.SIGSEGV);
-    resetSignal(LibCConstants.SIGPIPE);
-    resetSignal(LibCConstants.SIGALRM);
-    resetSignal(LibCConstants.SIGTERM);
+    tryResetSignal(LibCConstants.SIGHUP, "SIGHUP");
+    tryResetSignal(LibCConstants.SIGINT, "SIGINT");
+    tryResetSignal(LibCConstants.SIGQUIT, "SIGQUIT");
+    tryResetSignal(LibCConstants.SIGILL, "SIGILL");
+    tryResetSignal(LibCConstants.SIGTRAP, "SIGTRAP");
+    tryResetSignal(LibCConstants.SIGABRT, "SIGABRT");
+    tryResetSignal(LibCConstants.SIGFPE, "SIGFPE");
+    tryResetSignal(LibCConstants.SIGSEGV, "SIGSEGV");
+    tryResetSignal(LibCConstants.SIGPIPE, "SIGPIPE");
+    tryResetSignal(LibCConstants.SIGALRM, "SIGALRM");
+    tryResetSignal(LibCConstants.SIGTERM, "SIGTERM");
   }
 
-  private static void resetSignal(int signo) {
+  private static void tryResetSignal(int signo, @NotNull String signalName) {
+    tryRun(() -> resetSignal(signo), "Failed to reset " + signalName);
+  }
+
+  private static void resetSignal(int signo) throws NativeCallException {
     LibC libc = checkLibc();
 
     Memory sa = new Memory(LibCConstants.MAX_SIZEOF_STRUCT_SIGACTION);
     if (libc.sigaction(signo, Pointer.NULL, sa) == -1) {
-      throw new IllegalStateException("sigaction(" + signo + "): " + getLastErrorString());
+      throw libcCallError("sigaction(" + signo + ")");
     }
     if (!LibCConstants.SIG_IGN.equals(sa.getPointer(0))) {
       // It's SIG_DFL, or there's a handler installed by the JVM, which is the reason we need this check.
@@ -87,24 +99,19 @@ public final class UnixUtil {
     }
 
     if (libc.signal(signo, LibCConstants.SIG_DFL) == LibCConstants.SIG_ERR) {
-      throw new IllegalStateException("signal(" + signo + "): " + getLastErrorString());
+      throw libcCallError("signal(" + signo + ")");
     }
     System.err.println("Restored ignored signal " + signo + " handler to default");
   }
 
-  public static void closeStdStreams() {
-    try {
-      System.in.close();
+  private static @NotNull NativeCallException libcCallError(@NotNull String message) {
+    if (LIBC != null) {
+      int lastError = Native.getLastError();
+      if (lastError != 0) {
+        message += ": " + LIBC.strerror(lastError);
+      }
     }
-    catch (IOException e) {
-      System.err.println("Unable to close daemon stdin: " + e.getMessage());
-    }
-    System.out.close();
-    System.err.close();
-  }
-
-  private static String getLastErrorString() {
-    return Objects.requireNonNull(checkLibc()).strerror(Native.getLastError());
+    return new NativeCallException(message);
   }
 
   private interface LibC extends Library {
