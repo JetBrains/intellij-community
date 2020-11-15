@@ -62,7 +62,7 @@ public class WSLDistribution {
   }
 
   public WSLDistribution(@NotNull String msId) {
-    this(new WslDistributionDescriptor(msId, msId, null, msId), null);
+    this(new WslDistributionDescriptor(msId), null);
   }
 
   /**
@@ -99,7 +99,7 @@ public class WSLDistribution {
    * @return creates and patches command line, e.g:
    * {@code ruby -v} => {@code bash -c "ruby -v"}
    */
-  public @NotNull GeneralCommandLine createWslCommandLine(String @NotNull ... command) {
+  public @NotNull GeneralCommandLine createWslCommandLine(String @NotNull ... command) throws ExecutionException {
     return patchCommandLine(new GeneralCommandLine(command), null, new WSLCommandLineOptions());
   }
 
@@ -176,7 +176,12 @@ public class WSLDistribution {
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setRemoteWorkingDirectory(remoteWorkingDir)
       .setSudo(askForSudo);
-    return patchCommandLine(commandLine, project, options);
+    try {
+      return patchCommandLine(commandLine, project, options);
+    }
+    catch (ExecutionException e) {
+      throw new IllegalStateException("Cannot patch command line for WSL", e);
+    }
   }
 
   /**
@@ -196,9 +201,14 @@ public class WSLDistribution {
   @NotNull
   public <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                            @Nullable Project project,
-                                                           @NotNull WSLCommandLineOptions options) {
+                                                           @NotNull WSLCommandLineOptions options) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
-    Path wslExe = findWslExe(options);
+    Path executable = getExecutablePath();
+    boolean launchWithWslExe = options.isLaunchWithWslExe() || executable == null;
+    Path wslExe = launchWithWslExe ? findWslExe() : null;
+    if (wslExe == null && executable == null) {
+      throw new ExecutionException(IdeBundle.message("wsl.not.installed.dialog.message"));
+    }
     boolean executeCommandInShell = wslExe == null || options.isExecuteCommandInShell();
     List<String> linuxCommand = buildLinuxCommand(commandLine, executeCommandInShell);
 
@@ -265,7 +275,7 @@ public class WSLDistribution {
       }
     }
     else {
-      commandLine.setExePath(Objects.requireNonNull(getExecutablePath()).toString());
+      commandLine.setExePath(executable.toString());
       commandLine.addParameter(getRunCommandLineParameter());
       commandLine.addParameter(linuxCommandStr);
     }
@@ -292,8 +302,8 @@ public class WSLDistribution {
     }
   }
 
-  private static @Nullable Path findWslExe(@NotNull WSLCommandLineOptions options) {
-    File file = options.isLaunchWithWslExe() ? PathEnvironmentVariableUtil.findInPath("wsl.exe") : null;
+  static @Nullable Path findWslExe() {
+    File file = PathEnvironmentVariableUtil.findInPath("wsl.exe");
     return file != null ? file.toPath() : null;
   }
 
