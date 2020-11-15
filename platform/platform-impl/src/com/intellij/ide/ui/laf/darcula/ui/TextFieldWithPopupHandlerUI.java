@@ -562,7 +562,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         if (extension instanceof Extension) {
           addExtension((Extension)extension);
         }
-        addExtension(new SearchExtension(PopupState.forPopupMenu()));
+        JTextComponent component = getComponent();
+        Object popup = component.getClientProperty(POPUP);
+        addExtension(new SearchExtension<>(PopupState.forPopupMenu(), (JPopupMenu)popup));
         addExtension(new ClearExtension());
       }
       else if ("searchWithJbPopup".equals(variant)) {
@@ -570,7 +572,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         if (extension instanceof Extension) {
           addExtension((Extension)extension);
         }
-        addExtension(new SearchExtension(PopupState.forPopup()));
+        JTextComponent component = getComponent();
+        Object popup = component.getClientProperty(POPUP);
+        addExtension(new SearchExtension<>(PopupState.forPopup(), (JBPopup)popup));
         addExtension(new ClearExtension());
       }
     }
@@ -602,6 +606,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   public static final class IconHolder {
     public final Rectangle bounds = new Rectangle();
     public final Extension extension;
+
     public boolean hovered;
     public Icon icon;
 
@@ -630,12 +635,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
 
-  private final class SearchExtension implements Extension {
-    private final PopupState myPopupState;
+  private final class SearchExtension<Popup> implements Extension {
+    private final PopupState<Popup> myPopupState;
     private Rectangle bounds; // should be bound to IconHandler#bounds
+    private final Popup myPopup;
 
-    public SearchExtension(PopupState popupState){
+    private SearchExtension(PopupState<Popup> popupState, Popup popup){
       this.myPopupState = popupState;
+      this.myPopup = popup;
     }
 
     @Override
@@ -665,26 +672,23 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       if(component == null){
         return null;
       }
-      Object property = component.getClientProperty(POPUP);
-      if(property instanceof JPopupMenu){
-        JPopupMenu popup = (JPopupMenu) property;
+      if(myPopup instanceof JPopupMenu){
         return () -> {
           if (myPopupState.isRecentlyHidden()) return; // do not show new popup
           Rectangle editor = getVisibleEditorRect();
           if (editor != null) {
-            myPopupState.prepareToShow(popup);
-            popup.show(component, bounds.x, editor.y + editor.height);
+            myPopupState.prepareToShow(myPopup);
+            ((JPopupMenu)myPopup).show(component, bounds.x, editor.y + editor.height);
           }
         };
       }
-      if(property instanceof JBPopup){
-        JBPopup popup = (JBPopup) property;
+      if(myPopup instanceof JBPopup){
         return () -> {
           if (myPopupState.isRecentlyHidden()) return; // do not show new popup
           Rectangle editor = getVisibleEditorRect();
           if (editor != null) {
-            myPopupState.prepareToShow(popup);
-            popup.showUnderneathOf(component);
+            myPopupState.prepareToShow(myPopup);
+            ((JBPopup)myPopup).showUnderneathOf(component);
           }
         };
       }
