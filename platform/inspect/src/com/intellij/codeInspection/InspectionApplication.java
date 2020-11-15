@@ -267,7 +267,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   private QodanaConfig loadQodanaConfig(Path projectPath) {
     if (myQodanaRun) {
       QodanaConfig config = QodanaConfig.Companion.load(projectPath, this);
-      config.write();
+      config.copyToLog(projectPath);
       QodanaProfile profile = config.getProfile();
       String name = profile.getName();
       if (!name.isEmpty()) {
