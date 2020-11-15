@@ -6,7 +6,7 @@
 
 
 #import <Foundation/Foundation.h>
-#import <JavaVM/jni.h>
+#import <JavaNativeFoundation/jnf_fallback_jni.h>
 
 
 @interface Launcher : NSObject {
