@@ -141,12 +141,13 @@ public class PerformanceTestInfo {
         System.out.println("\nWARNING: " + logMessage);
       }
 
-      if (attempts == 0 || waitForJit && updateJitUsage() == JitUsageResult.DEFINITELY_LOW) {
+      JitUsageResult jitUsage = null;
+      if (attempts == 0 || waitForJit && (jitUsage = updateJitUsage()) == JitUsageResult.DEFINITELY_LOW) {
         if (testShouldPass) return;
         throw new AssertionFailedError(logMessage);
       }
 
-      String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain";
+      String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain"+(waitForJit ? " (waiting for JITc; its usage was "+jitUsage+" in this iteration)" : "");
       TeamCityLogger.warning(s, null);
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
         System.out.println(s);
