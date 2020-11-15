@@ -56,7 +56,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       type("k");
       assertNotEmpty(highlightErrors());
       backspace();
-    }).usesAllCPUCores().assertTiming();
+    }).usesAllCPUCores().reattemptUntilJitSettlesDown().assertTiming();
   }
 
   public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
@@ -75,10 +75,11 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       assertNotEmpty(highlightErrors());
 
       backspace();
-    }).usesAllCPUCores().assertTiming();
+    }).usesAllCPUCores().reattemptUntilJitSettlesDown().assertTiming();
   }
 
   public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
+    @Language("JAVA")
     String text = "class Foo { native Foo foo(); }\n" +
                   "class Bar<T extends Foo> extends Foo {\n" +
                   "  native Bar<T> foo();" +
@@ -96,7 +97,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       assertNotEmpty(highlightErrors());
 
       backspace();
-    }).usesAllCPUCores().assertTiming();
+    }).usesAllCPUCores().reattemptUntilJitSettlesDown().assertTiming();
   }
 
   public void testReactivityPerformance() throws Throwable {
