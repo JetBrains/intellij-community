@@ -13,6 +13,7 @@ import com.intellij.execution.process.mediator.handshake.HandshakeWriter
 import com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.rpc.Handshake
+import com.intellij.execution.process.mediator.util.UnixUtil
 import com.intellij.execution.process.mediator.util.rsaEncrypt
 import io.grpc.Server
 import io.grpc.ServerBuilder
@@ -160,11 +161,7 @@ fun main(args: Array<String>) {
     trampoline(launchOptions)  // never returns
   }
   if (UnixUtil.isUnix()) {
-    UnixUtil.setupSignals()
-  }
-  if (launchOptions.daemonize) {
-    require(UnixUtil.isUnix()) { "--daemonize must only be used on Unix" }
-    UnixUtil.daemonize()
+    UnixUtil.setup(launchOptions.daemonize)
   }
 
   val daemon: ProcessMediatorServerDaemon
@@ -195,7 +192,14 @@ fun main(args: Array<String>) {
     }
   }
   if (launchOptions.daemonize) {
-    UnixUtil.closeStdStreams()
+    try {
+      System.`in`.close()
+    }
+    catch (e: IOException) {
+      System.err.println("Unable to close daemon stdin: " + e.message)
+    }
+    System.out.close()
+    System.err.close()
   }
 
   Runtime.getRuntime().addShutdownHook(
