@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.targets
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.InspectionApplication
 import com.intellij.codeInspection.ex.InspectionProfileImpl
@@ -15,6 +13,7 @@ import com.intellij.psi.search.scope.ProjectFilesScope
 import com.intellij.psi.search.scope.packageSet.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.isAncestor
+import org.yaml.snakeyaml.Yaml
 import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
@@ -64,14 +63,14 @@ class QodanaConfig(val version: String = CONFIG_VERSION,
 
     fun load(projectPath: Path, application: InspectionApplication): QodanaConfig {
       val path = projectPath.resolve(QODANA_CONFIG_FILENAME)
-      val mapper = ObjectMapper(YAMLFactory())
 
+      val yaml = Yaml()
       var qodanaConfig = if (!path.exists()) {
         return EMPTY
       }
       else {
         InputStreamReader(Files.newInputStream(path)).use {
-          mapper.readValue(it, QodanaConfig::class.java)
+          yaml.loadAs(it, QodanaConfig::class.java)
         }
       }
 
