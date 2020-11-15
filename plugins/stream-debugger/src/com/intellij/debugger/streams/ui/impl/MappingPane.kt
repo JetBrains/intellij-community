@@ -20,7 +20,7 @@ import javax.swing.SwingConstants
  * @author Vitaliy.Bibaev
  */
 class MappingPane(@Nls name: String,
-                  fullCallExpression: String,
+                  @Nls fullCallExpression: String,
                   private val beforeValues: List<ValueWithPosition>,
                   private val mapping: LinkedValuesMapping,
                   private val controller: TraceController) : JPanel(BorderLayout()) {
