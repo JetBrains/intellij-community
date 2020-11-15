@@ -73,7 +73,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   private HTTPMethod myTasksListMethodType = HTTPMethod.GET;
   private HTTPMethod mySingleTaskMethodType = HTTPMethod.GET;
 
-  private ResponseType myResponseType = ResponseType.XML;
+  private ResponseType myResponseType = ResponseType.JSON;
 
   private EnumMap<ResponseType, ResponseHandler> myResponseHandlersMap = new EnumMap<>(ResponseType.class);
 
@@ -128,7 +128,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     myLoginMethodType = HTTPMethod.GET;
     myTasksListMethodType = HTTPMethod.GET;
     mySingleTaskMethodType = HTTPMethod.GET;
-    myResponseType = ResponseType.XML;
+    myResponseType = ResponseType.JSON;
     myTemplateVariables = new ArrayList<>();
     myResponseHandlersMap = new EnumMap<>(ResponseType.class);
     myResponseHandlersMap.put(ResponseType.XML, getXmlResponseHandlerDefault());
