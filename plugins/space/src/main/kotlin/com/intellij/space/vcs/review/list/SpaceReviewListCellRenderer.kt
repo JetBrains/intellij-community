@@ -132,11 +132,13 @@ internal class SpaceReviewListCellRenderer(
 
     val (reviewRef, messagesCount, _, participantsRef) = value
 
-    val reviewers = participantsRef.resolve().participants?.filter {
+    val participants = participantsRef.resolve().participants
+
+    val reviewers = participants?.filter {
       it.role == CodeReviewParticipantRole.Reviewer
     }
 
-    val authors = participantsRef.resolve().participants?.filter {
+    val authors = participants?.filter {
       it.role == CodeReviewParticipantRole.Author
     }
 
@@ -186,11 +188,9 @@ internal class SpaceReviewListCellRenderer(
     }
 
     firstReviewLabel.apply {
-      icon = emptyAvatar
       configureMemberLabel(firstReviewLabel, reviewers?.firstOrNull()?.user?.resolve())
     }
     secondReviewLabel.apply {
-      icon = emptyAvatar
       configureMemberLabel(secondReviewLabel, reviewers?.secondOrNull()?.user?.resolve())
     }
 
@@ -204,11 +204,13 @@ internal class SpaceReviewListCellRenderer(
 
 
   private fun configureMemberLabel(label: JLabel, profile: TD_MemberProfile?) {
-    label.toolTipText = ""
-    label.icon = emptyAvatar
-    profile?.let {
-      label.icon = avatarProvider.getIcon(it)
-      label.toolTipText = it.englishFullName() // NON-NLS
+    if (profile != null) {
+      label.icon = avatarProvider.getIcon(profile)
+      label.toolTipText = profile.englishFullName() // NON-NLS
+    }
+    else {
+      label.icon = emptyAvatar
+      label.toolTipText = ""
     }
   }
 }
