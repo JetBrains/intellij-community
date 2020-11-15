@@ -65,7 +65,12 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
           return;
         }
         String completionPrefix = stringElemText.substring(braceOffset + 1, relOffset);
-        if (!PyNames.isIdentifier(completionPrefix)) {
+        boolean autoPopupAfterOpeningBrace = completionPrefix.isEmpty() && parameters.isAutoPopup();
+        if (autoPopupAfterOpeningBrace) {
+          return;
+        }
+        boolean impossibleReferencePrefix = !completionPrefix.isEmpty() && !PyNames.isIdentifier(completionPrefix);
+        if (impossibleReferencePrefix) {
           return;
         }
         PyExpression fString = PyUtil.createExpressionFromFragment("f" + stringElemText, stringLiteral.getParent());
