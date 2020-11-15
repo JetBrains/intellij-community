@@ -66,7 +66,7 @@ class QodanaConfig(val version: String = CONFIG_VERSION,
       val path = projectPath.resolve(QODANA_CONFIG_FILENAME)
       val mapper = ObjectMapper(YAMLFactory())
 
-      val qodanaConfig = if (!path.exists()) {
+      var qodanaConfig = if (!path.exists()) {
         return EMPTY
       }
       else {
@@ -75,14 +75,18 @@ class QodanaConfig(val version: String = CONFIG_VERSION,
         }
       }
 
-      if (application.myProfileName.isEmpty() && qodanaConfig.profile.path.isEmpty()) {
+      if (qodanaConfig.profile.name.isEmpty() && qodanaConfig.profile.path.isEmpty()) {
+        qodanaConfig = QodanaConfig(qodanaConfig.version, QodanaProfile(DEFAULT_QODANA_PROFILE, ""))
+      }
+
+      if (application.myProfileName != null || application.myProfilePath != null) {
         if (application.myProfileName != null) {
           return QodanaConfig(CONFIG_VERSION, QodanaProfile("", application.myProfileName), qodanaConfig.exclude)
         }
         if (application.myProfilePath != null) {
-          return QodanaConfig(CONFIG_VERSION, QodanaProfile("", application.myProfilePath), qodanaConfig.exclude)
+          return QodanaConfig(CONFIG_VERSION, QodanaProfile(application.myProfilePath, "" ), qodanaConfig.exclude)
         }
-        return QodanaConfig(CONFIG_VERSION, QodanaProfile(DEFAULT_QODANA_PROFILE, application.myProfilePath), qodanaConfig.exclude)
+        return QodanaConfig(CONFIG_VERSION, QodanaProfile(DEFAULT_QODANA_PROFILE, ""), qodanaConfig.exclude)
       }
       else {
         return qodanaConfig
