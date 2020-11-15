@@ -99,11 +99,11 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
 
   override fun checkConfiguration() {
     if (sortedConfigurationsWithTargets.isEmpty()) {
-      throw RuntimeConfigurationException("There is nothing to run")
+      throw RuntimeConfigurationException(ExecutionBundle.message("nothing.to.run.error.message"))
     }
 
     if (ExecutionTargetManager.getInstance(project).getTargetsFor(this).isEmpty()) {
-      throw RuntimeConfigurationException("No suitable targets to run on; please choose a target for each configuration")
+      throw RuntimeConfigurationException(ExecutionBundle.message("no.suitable.targets.to.run.error.message"))
     }
   }
 
