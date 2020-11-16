@@ -342,7 +342,7 @@ public final class FileTemplateUtil {
   }
 
   @Nullable
-  private static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
+  public static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
     VirtualFile baseDir = directory.getProject().getBaseDir();
     return baseDir != null ? VfsUtilCore.getRelativePath(directory.getVirtualFile(), baseDir) : null;
   }
