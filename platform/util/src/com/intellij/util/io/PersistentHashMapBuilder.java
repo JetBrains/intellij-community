@@ -60,19 +60,19 @@ public final class PersistentHashMapBuilder<Key, Value> {
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> withInitialSize(@Nullable Integer initialSize) {
+  public PersistentHashMapBuilder<Key, Value> withInitialSize(int initialSize) {
     myInitialSize = initialSize;
     return this;
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> withVersion(@Nullable Integer version) {
+  public PersistentHashMapBuilder<Key, Value> withVersion(int version) {
     myVersion = version;
     return this;
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> withReadonly(@Nullable Boolean readonly) {
+  public PersistentHashMapBuilder<Key, Value> withReadonly(boolean readonly) {
     myIsReadOnly = readonly;
     return this;
   }
@@ -83,8 +83,8 @@ public final class PersistentHashMapBuilder<Key, Value> {
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> inlineValues(@Nullable Boolean inlineValues) {
-    if (Boolean.TRUE.equals(inlineValues) && !(myValueExternalizer instanceof IntInlineKeyDescriptor)) {
+  public PersistentHashMapBuilder<Key, Value> inlineValues(boolean inlineValues) {
+    if (inlineValues && !(myValueExternalizer instanceof IntInlineKeyDescriptor)) {
       throw new IllegalStateException("can't inline values for externalizer " + myValueExternalizer.getClass());
     }
     myInlineValues = inlineValues;
