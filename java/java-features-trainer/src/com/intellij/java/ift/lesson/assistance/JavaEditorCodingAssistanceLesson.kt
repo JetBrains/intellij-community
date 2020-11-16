@@ -2,7 +2,8 @@
 package com.intellij.java.ift.lesson.assistance
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import training.commands.kotlin.TaskRuntimeContext
+import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
+import com.intellij.testGuiFramework.impl.jList
 import training.learn.interfaces.Module
 import training.learn.lesson.general.assistance.EditorCodingAssistanceLesson
 import training.learn.lesson.kimpl.LessonSample
@@ -10,9 +11,11 @@ import training.learn.lesson.kimpl.LessonSample
 class JavaEditorCodingAssistanceLesson(module: Module, lang: String, sample: LessonSample) :
   EditorCodingAssistanceLesson(module, lang, sample) {
 
-  override fun TaskRuntimeContext.checkErrorFixed(): Boolean {
-    return editor.document.charsSequence.contains("throws IOException")
+  override fun IdeFrameFixture.simulateErrorFixing() {
+    jList(intentionDisplayName).clickItem(intentionDisplayName)
   }
+
+  override val fixedText: String = "throws IOException"
 
   override val intentionDisplayName: String
     get() = QuickFixBundle.message("add.exception.to.throws.family")

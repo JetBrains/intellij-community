@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.assistance
 
-import com.intellij.testGuiFramework.impl.jList
+import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.interfaces.Module
@@ -12,11 +12,13 @@ import training.learn.lesson.kimpl.LessonSample
 abstract class EditorCodingAssistanceLesson(module: Module, lang: String, private val sample: LessonSample) :
   KLesson("CodeAssistance.EditorCodingAssistance", LessonsBundle.message("editor.coding.assistance.lesson.name"), module, lang) {
 
-  protected abstract fun TaskRuntimeContext.checkErrorFixed(): Boolean
-
   protected abstract val intentionDisplayName: String
 
   protected abstract val variableNameToHighlight: String
+
+  protected abstract val fixedText: String
+
+  protected abstract fun IdeFrameFixture.simulateErrorFixing()
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
@@ -36,12 +38,12 @@ abstract class EditorCodingAssistanceLesson(module: Module, lang: String, privat
 
     task("ShowIntentionActions") {
       text(LessonsBundle.message("editor.coding.assistance.show.intention", action(it), strong(intentionDisplayName)))
-      stateCheck { checkErrorFixed() }
+      stateCheck { editor.document.charsSequence.contains(fixedText) }
       test {
         actions(it)
         ideFrame {
           Thread.sleep(500)
-          jList(intentionDisplayName).clickItem(intentionDisplayName)
+          simulateErrorFixing()
         }
       }
     }
