@@ -360,7 +360,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       }
     }
     if (executor != null && executor != DefaultRunExecutor.getRunExecutorInstance() && !runnerFound) {
-      throw RuntimeConfigurationError("${executor.id}: there are no runners for $configuration")
+      throw RuntimeConfigurationError(ExecutionBundle.message("dialog.message.no.runners.for.configuration", executor.id, configuration))
     }
     if (executor != null) {
       val beforeRunWarning = doCheck { configuration.checkSettingsBeforeRun() }
