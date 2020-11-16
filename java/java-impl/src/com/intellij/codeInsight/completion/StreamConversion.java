@@ -169,19 +169,11 @@ final class StreamConversion {
 
     PsiType listType = null;
     PsiType setType = null;
-    boolean hasIterable = false;
-    boolean hasString = false;
     for (ExpectedTypeInfo info : expectedTypes) {
       PsiType type = info.getDefaultType();
-      if (type.equalsToText(JAVA_LANG_STRING)) {
-        hasString = true;
-        continue;
-      }
-
       PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(type);
       PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(type, true);
       if (expectedClass == null || expectedComponent == null || !TypeConversionUtil.isAssignable(expectedComponent, component)) continue;
-      hasIterable = true;
 
       if (InheritanceUtil.isInheritorOrSelf(list, expectedClass, true)) {
         listType = type;
@@ -191,24 +183,21 @@ final class StreamConversion {
       }
     }
 
-    if (expectedTypes.isEmpty()) {
+    if (listType == null) {
       listType = factory.createType(list, component);
+    }
+
+    if (setType == null) {
       setType = factory.createType(set, component);
     }
 
     List<Pair<String, PsiType>> result = new ArrayList<>();
-    if (listType != null) {
-      result.add(Pair.create("toList", listType));
-      result.add(Pair.create("toUnmodifiableList", listType));
-    }
-    if (setType != null) {
-      result.add(Pair.create("toSet", setType));
-      result.add(Pair.create("toUnmodifiableSet", setType));
-    }
-    if (expectedTypes.isEmpty() || hasIterable) {
-      result.add(Pair.create("toCollection", factory.createType(collection, component)));
-    }
-    if ((expectedTypes.isEmpty() || hasString) && joiningApplicable) {
+    result.add(Pair.create("toList", listType));
+    result.add(Pair.create("toUnmodifiableList", listType));
+    result.add(Pair.create("toSet", setType));
+    result.add(Pair.create("toUnmodifiableSet", setType));
+    result.add(Pair.create("toCollection", factory.createType(collection, component)));
+    if (joiningApplicable) {
       result.add(Pair.create("joining", factory.createType(string)));
     }
     return result;

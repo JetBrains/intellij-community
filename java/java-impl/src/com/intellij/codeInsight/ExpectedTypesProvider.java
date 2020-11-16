@@ -1048,11 +1048,19 @@ public final class ExpectedTypesProvider {
       Set<ExpectedTypeInfo> set = new LinkedHashSet<>();
       for (CandidateInfo candidateInfo : methodCandidates) {
         PsiMethod method = (PsiMethod)candidateInfo.getElement();
+        PsiTypeParameter returnTypeParameter = getReturnTypeParameterNotMentionedPreviously(index, method);
         PsiSubstitutor substitutor;
         if (candidateInfo instanceof MethodCandidateInfo) {
           MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
           substitutor = info.inferSubstitutorFromArgs(policy, args);
           if (!info.isStaticsScopeCorrect() && !method.hasModifierProperty(PsiModifier.STATIC) || info.getInferenceErrorMessage() != null) continue;
+          if (forCompletion && returnTypeParameter != null) {
+            PsiType substituted = substitutor.substitute(returnTypeParameter);
+            if (substituted instanceof PsiClassType) {
+              // Relax return type substitution
+              substitutor = substitutor.put(returnTypeParameter, PsiWildcardType.createExtends(method.getManager(), substituted));
+            }
+          }
         }
         else {
           substitutor = candidateInfo.getSubstitutor();
@@ -1093,6 +1101,18 @@ public final class ExpectedTypesProvider {
       }
 
       return set.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
+    }
+
+    @Nullable
+    private static PsiTypeParameter getReturnTypeParameterNotMentionedPreviously(int index, PsiMethod method) {
+      PsiTypeParameter returnTypeParameter = ObjectUtils.tryCast(PsiUtil.resolveClassInClassTypeOnly(method.getReturnType()), PsiTypeParameter.class);
+      if (returnTypeParameter == null || returnTypeParameter.getOwner() != method) return null;
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      for (int i = 0; i < index && i < parameters.length; i++) {
+        PsiType prevParameterType = parameters[i].getType();
+        if (PsiTypesUtil.mentionsTypeParameters(prevParameterType, Set.of(returnTypeParameter))) return null;
+      }
+      return returnTypeParameter;
     }
 
     private static CandidateInfo @NotNull [] selectCandidateChosenOnCompletion(@Nullable PsiElement call, CandidateInfo @NotNull [] candidates) {
