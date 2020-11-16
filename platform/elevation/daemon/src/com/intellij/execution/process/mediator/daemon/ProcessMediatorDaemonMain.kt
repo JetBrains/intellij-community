@@ -13,6 +13,7 @@ import com.intellij.execution.process.mediator.handshake.HandshakeWriter
 import com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.rpc.Handshake
+import com.intellij.execution.process.mediator.util.MachUtil
 import com.intellij.execution.process.mediator.util.UnixUtil
 import com.intellij.execution.process.mediator.util.rsaEncrypt
 import io.grpc.Server
@@ -162,6 +163,9 @@ fun main(args: Array<String>) {
   }
   if (UnixUtil.isUnix()) {
     UnixUtil.setup(launchOptions.daemonize)
+    if (MachUtil.isMac()) {
+      MachUtil.setup(launchOptions.machNamespaceUid)
+    }
   }
 
   val daemon: ProcessMediatorServerDaemon
