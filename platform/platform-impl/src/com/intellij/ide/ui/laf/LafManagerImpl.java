@@ -472,7 +472,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     if (SystemInfoRt.isMac) {
-      String className = IntelliJLaf.class.getName();
+      String className = DarculaLaf.class.getName();
       UIManager.LookAndFeelInfo laf = findLaf(className);
       if (laf != null) {
         return laf;
@@ -489,7 +489,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find app L&F: " + appLafName);
     }
 
-    String defaultLafName = IntelliJLaf.class.getName();
+    String defaultLafName = DarculaLaf.class.getName();
     UIManager.LookAndFeelInfo laf = findLaf(defaultLafName);
     if (laf != null) {
       return laf;
