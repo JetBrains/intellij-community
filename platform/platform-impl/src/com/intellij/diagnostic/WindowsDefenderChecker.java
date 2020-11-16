@@ -257,7 +257,7 @@ public class WindowsDefenderChecker {
   }
 
   /**
-   * Produces a {@link Pattern} that approximates how Windows Defender interprets the exclusion path {@link path}.
+   * Produces a {@link Pattern} that approximates how Windows Defender interprets the exclusion path {@code path}.
    * The path is split around wildcards; the non-wildcard portions are quoted, and regex equivalents of
    * the wildcards are inserted between them. See
    * https://docs.microsoft.com/en-us/windows/security/threat-protection/windows-defender-antivirus/configure-extension-file-exclusions-windows-defender-antivirus
