@@ -25,6 +25,8 @@ class JavaLangSupport : AbstractLangSupport() {
 
   override val defaultProductName: String = "IDEA"
 
+  override val filename: String = "Learning.java"
+
   override val projectSandboxRelativePath: String = "Sample.java"
 
   override fun installAndOpenLearningProject(projectPath: Path,

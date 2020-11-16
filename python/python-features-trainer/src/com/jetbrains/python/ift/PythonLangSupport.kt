@@ -30,6 +30,8 @@ class PythonLangSupport : AbstractLangSupport() {
 
   private val sourcesDirectoryName: String = "src"
 
+  override val filename: String = "Learning.py"
+
   override fun applyToProjectAfterConfigure(): (Project) -> Unit = { project ->
     // mark src directory as sources root
     val module = project.modules.first()
