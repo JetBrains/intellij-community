@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String> implements AbstractStringEnumerator {
+public class PersistentStringEnumerator extends PersistentEnumerator<String> implements AbstractStringEnumerator {
   @Nullable private final CachingEnumerator<String> myCache;
 
   public PersistentStringEnumerator(@NotNull Path file) throws IOException {

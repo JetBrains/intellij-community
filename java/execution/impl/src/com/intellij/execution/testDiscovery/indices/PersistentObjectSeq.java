@@ -4,12 +4,10 @@ package com.intellij.execution.testDiscovery.indices;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.InvertedIndex;
-import com.intellij.util.io.PersistentEnumeratorDelegate;
+import com.intellij.util.io.PersistentEnumerator;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.ConcurrentHashMap;
 
 class PersistentObjectSeq {
   private static final Logger LOG = Logger.getInstance(PersistentObjectSeq.class);
@@ -36,7 +34,7 @@ class PersistentObjectSeq {
     });
   }
 
-  public void add(PersistentEnumeratorDelegate<?> enumerator) {
+  public void add(PersistentEnumerator<?> enumerator) {
     myObjects.add(new PersistentObject() {
       @Override
       public void flush() {

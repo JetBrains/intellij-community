@@ -127,11 +127,11 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     myIsReadOnly = builder.getReadOnly(false);
     if (myIsReadOnly) options = options.setReadOnly();
 
-    myEnumerator = PersistentEnumeratorDelegate.createDefaultEnumerator(checkDataFiles(file),
-                                                                        keyDescriptor,
-                                                                        initialSize,
-                                                                        lockContext,
-                                                                        modifyVersionDependingOnOptions(version, options));
+    myEnumerator = PersistentEnumerator.createDefaultEnumerator(checkDataFiles(file),
+                                                                keyDescriptor,
+                                                                initialSize,
+                                                                lockContext,
+                                                                modifyVersionDependingOnOptions(version, options));
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;

@@ -19,7 +19,6 @@ import com.intellij.openapi.Forceable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.Closeable;
 import java.io.File;
@@ -27,33 +26,33 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 
-public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data>, Closeable, Forceable {
+public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Closeable, Forceable {
   @NotNull protected final PersistentEnumeratorBase<Data> myEnumerator;
 
-  public PersistentEnumeratorDelegate(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
+  public PersistentEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
     this(file, dataDescriptor, initialSize, null);
   }
 
-  public PersistentEnumeratorDelegate(@NotNull final Path file,
-                                      @NotNull KeyDescriptor<Data> dataDescriptor,
-                                      final int initialSize,
-                                      @Nullable StorageLockContext lockContext) throws IOException {
+  public PersistentEnumerator(@NotNull final Path file,
+                              @NotNull KeyDescriptor<Data> dataDescriptor,
+                              final int initialSize,
+                              @Nullable StorageLockContext lockContext) throws IOException {
     myEnumerator = new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext);
   }
 
-  public PersistentEnumeratorDelegate(@NotNull final File file,
-                                      @NotNull KeyDescriptor<Data> dataDescriptor,
-                                      final int initialSize,
-                                      @Nullable StorageLockContext lockContext,
-                                      int version) throws IOException {
+  public PersistentEnumerator(@NotNull final File file,
+                              @NotNull KeyDescriptor<Data> dataDescriptor,
+                              final int initialSize,
+                              @Nullable StorageLockContext lockContext,
+                              int version) throws IOException {
     this(file.toPath(), dataDescriptor, initialSize, lockContext, version);
   }
 
-  public PersistentEnumeratorDelegate(@NotNull Path file,
-                                      @NotNull KeyDescriptor<Data> dataDescriptor,
-                                      final int initialSize,
-                                      @Nullable StorageLockContext lockContext,
-                                      int version) throws IOException {
+  public PersistentEnumerator(@NotNull Path file,
+                              @NotNull KeyDescriptor<Data> dataDescriptor,
+                              final int initialSize,
+                              @Nullable StorageLockContext lockContext,
+                              int version) throws IOException {
     myEnumerator = createDefaultEnumerator(file, dataDescriptor, initialSize, lockContext, version);
   }
 
