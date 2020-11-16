@@ -26,15 +26,14 @@ import training.lang.LangSupport
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.NewLearnProjectUtil
-import training.learn.exceptons.BadLessonException
-import training.learn.exceptons.BadModuleException
 import training.learn.exceptons.InvalidSdkException
-import training.learn.exceptons.LessonIsOpenedException
 import training.learn.interfaces.Lesson
 import training.learn.interfaces.LessonType
 import training.learn.lesson.LessonManager
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.listeners.NextLessonListener
+import training.learn.lesson.kimpl.KLesson
+import training.learn.lesson.kimpl.LessonContextImpl
+import training.learn.lesson.kimpl.LessonExecutor
+import training.learn.lesson.kimpl.LessonUtil
 import training.learn.lesson.listeners.StatisticLessonListener
 import training.project.ProjectUtils
 import training.ui.LearnToolWindowFactory
@@ -63,8 +62,7 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
   }
 
   @Synchronized
-  @Throws(BadModuleException::class, BadLessonException::class, IOException::class, FontFormatException::class, InterruptedException::class,
-          ExecutionException::class, LessonIsOpenedException::class)
+  @Throws(IOException::class, FontFormatException::class, InterruptedException::class, ExecutionException::class)
   private fun openLesson(projectWhereToStartLesson: Project, lesson: Lesson) {
     LOG.debug("${projectWhereToStartLesson.name}: start openLesson method")
     try {
@@ -138,7 +136,6 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       }
 
       LOG.debug("${projectWhereToStartLesson.name}: Add listeners to lesson")
-      addNextLessonListenerIfNeeded(currentProject, lesson)
       addStatisticLessonListenerIfNeeded(currentProject, lesson)
 
       //open next lesson if current is passed
@@ -205,12 +202,6 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
     ApplicationManager.getApplication().invokeLater {
       LessonUtil.hideStandardToolwindows(project)
     }
-  }
-
-  private fun addNextLessonListenerIfNeeded(currentProject: Project, lesson: Lesson) {
-    val lessonListener = NextLessonListener(currentProject)
-    if (!lesson.lessonListeners.any { it is NextLessonListener })
-      lesson.addLessonListener(lessonListener)
   }
 
   private fun addStatisticLessonListenerIfNeeded(currentProject: Project, lesson: Lesson) {
