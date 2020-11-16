@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
@@ -104,6 +105,16 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
     }
 
     @Override
+    public void printHyperlink(String line, Runnable action) {
+      myLoggingHandler.printHyperlink(line, new HyperlinkInfo() {
+        @Override
+        public void navigate(Project project) {
+          action.run();
+        }
+      });
+    }
+
+    @Override
     public void close() {
       if (myLoggingHandler instanceof LoggingHandlerBase) {
         ((LoggingHandlerBase)myLoggingHandler).close();
@@ -114,6 +125,12 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
       return myLoggingHandler instanceof LoggingHandlerBase && ((LoggingHandlerBase)myLoggingHandler).isClosed();
     }
 
+    @Override
+    public void scrollTo(int offset) {
+      myLoggingHandler.scrollTo(offset);
+    }
+
+    @Override
     public void clear() {
       myLoggingHandler.clear();
     }
