@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
@@ -22,6 +21,7 @@ import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     if (whatsNewUrl == null) throw new IllegalStateException();
 
     Project project = e.getProject();
-    if (project == null || !JBCefApp.isSupported() || !Experiments.getInstance().isFeatureEnabled("whats.new.notification")) {
+    if (project == null || !JBCefApp.isSupported()) {
       BrowserUtil.browse(whatsNewUrl);
     }
     else {
@@ -53,6 +53,11 @@ public class WhatsNewAction extends AnAction implements DumbAware {
       e.getPresentation().setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
       e.getPresentation().setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
     }
+  }
+
+  @ApiStatus.Internal
+  public static boolean isAvailable() {
+    return Boolean.getBoolean("whats.new.notification");
   }
 
   @Contract("_, null, null -> fail")
