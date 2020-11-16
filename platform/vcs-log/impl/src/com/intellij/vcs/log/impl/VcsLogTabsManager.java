@@ -113,7 +113,6 @@ public class VcsLogTabsManager {
     MainVcsLogUi ui = manager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR);
     DefaultVcsLogFile file = new DefaultVcsLogFile(fileName, new VcsLogPanel(manager, ui));
     FileEditorManager.getInstance(project).openFile(file, focus);
-    manager.scheduleInitialization();
     return ui;
   }
 

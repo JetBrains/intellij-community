@@ -38,7 +38,6 @@ internal class GitCompareBranchesFile(project: Project,
       }
     }
     else {
-      logManager.scheduleInitialization()
       action(logManager)
     }
   }

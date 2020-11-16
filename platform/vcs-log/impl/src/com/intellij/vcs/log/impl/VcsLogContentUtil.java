@@ -146,7 +146,6 @@ public final class VcsLogContentUtil {
     if (focus) {
       toolWindow.activate(null);
     }
-    logManager.scheduleInitialization();
     return logUi;
   }
 
