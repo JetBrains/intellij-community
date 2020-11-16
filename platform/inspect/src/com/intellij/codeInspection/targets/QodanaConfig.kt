@@ -28,9 +28,9 @@ private const val CONFIG_ALL_INSPECTIONS = "All"
 
 typealias Excludes = List<Exclusion>
 
-data class QodanaProfile(val path: String = "", val name: String = "")
+data class QodanaProfile(var path: String = "", var name: String = "")
 
-data class Exclusion(val name: String = "", val paths: List<String> = emptyList(), val patterns: List<String> = emptyList()) {
+data class Exclusion(var name: String = "", var paths: List<String> = emptyList(), var patterns: List<String> = emptyList()) {
   fun getScope(project: Project): PackageSet? {
     val sets = mutableListOf<PackageSet>()
 
@@ -54,9 +54,9 @@ data class Exclusion(val name: String = "", val paths: List<String> = emptyList(
   }
 }
 
-class QodanaConfig(val version: String = CONFIG_VERSION,
-                   val profile: QodanaProfile = QodanaProfile(),
-                   val exclude: Excludes = emptyList()) {
+class QodanaConfig(var version: String = CONFIG_VERSION,
+                   var profile: QodanaProfile = QodanaProfile(),
+                   var exclude: Excludes = emptyList()) {
   companion object {
     @JvmField
     val EMPTY = QodanaConfig()
