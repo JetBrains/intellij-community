@@ -38,8 +38,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -740,5 +743,30 @@ public final class EditorTestUtil {
       myWidth = width;
     }
   }
-}
+
+  public static <E extends Exception> void saveEncodingsIn(@NotNull Project project, String newIdeCharset, String newProjectCharset, @NotNull ThrowableRunnable<E> task) throws E {
+    EncodingManager encodingManager = EncodingManager.getInstance();
+    String oldIde = encodingManager.getDefaultCharsetName();
+    if (newIdeCharset != null) {
+      encodingManager.setDefaultCharsetName(newIdeCharset);
+    }
+
+    EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
+    String oldProject = encodingProjectManager.getDefaultCharsetName();
+    if (newProjectCharset != null) {
+      encodingProjectManager.setDefaultCharsetName(newProjectCharset);
+    }
+
+    try {
+      task.run();
+    }
+    finally {
+      if (newIdeCharset != null) {
+        encodingManager.setDefaultCharsetName(oldIde);
+      }
+      if (newProjectCharset != null) {
+        encodingProjectManager.setDefaultCharsetName(oldProject);
+      }
+    }
+  }}
 

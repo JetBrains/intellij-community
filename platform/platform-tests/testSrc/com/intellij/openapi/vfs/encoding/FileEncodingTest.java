@@ -38,11 +38,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.OpenProjectTaskBuilder;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.utils.EncodingManagerUtilKt;
+import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
@@ -264,7 +260,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   private void doHtmlTest(@org.intellij.lang.annotations.Language("HTML") String metaWithWindowsEncoding,
-                          @org.intellij.lang.annotations.Language("HTML") String metaWithUtf8Encoding) throws IOException {
+                          @org.intellij.lang.annotations.Language("HTML") String metaWithUtf8Encoding) {
     Path temp = getTempDir().newPath("copy.html");
     PathKt.write(temp, "<html><head>" + metaWithWindowsEncoding + "</head>" +
                        THREE_RUSSIAN_LETTERS +
@@ -761,8 +757,8 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertNull(file.getBOM());
   }
 
-  public void testNewFileCreatedInProjectEncoding() {
-    EncodingManagerUtilKt.doEncodingTest(myProject, () -> {
+  public void testNewFileCreatedInProjectEncoding() throws IOException {
+    EditorTestUtil.saveEncodingsIn(getProject(), "UTF-8", WINDOWS_1251.name(), () -> {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 
@@ -770,8 +766,8 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     });
   }
 
-  public void testNewFileCreatedInProjectEncodingEvenIfItSetToDefault() {
-    EncodingManagerUtilKt.doEncodingTest(myProject, Charset.defaultCharset().name().equals("UTF-8") ? "windows-1251" : "UTF-8", "", () -> {
+  public void testNewFileCreatedInProjectEncodingEvenIfItSetToDefault() throws IOException {
+    EditorTestUtil.saveEncodingsIn(getProject(), Charset.defaultCharset().name().equals("UTF-8") ? "windows-1251" : "UTF-8", "", () -> {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 
