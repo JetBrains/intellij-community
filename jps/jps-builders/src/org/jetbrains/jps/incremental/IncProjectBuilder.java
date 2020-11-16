@@ -49,8 +49,9 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -1134,7 +1135,8 @@ public final class IncProjectBuilder {
             }
           }
         }
-        return method.invoke(context, args);
+        final MethodHandle mh = MethodHandles.lookup().unreflect(method);
+        return args == null? mh.invoke(context) : mh.bindTo(context).asSpreader(Object[].class, args.length).invoke(args);
       }
     });
   }
@@ -1564,54 +1566,48 @@ public final class IncProjectBuilder {
   }
 
   private static CompileContext createContextWrapper(final CompileContext delegate) {
-    final ClassLoader loader = delegate.getClass().getClassLoader();
     final UserDataHolderBase localDataHolder = new UserDataHolderBase();
     final Set<Object> deletedKeysSet = ContainerUtil.newConcurrentSet();
     final Class<UserDataHolder> dataHolderInterface = UserDataHolder.class;
     final Class<MessageHandler> messageHandlerInterface = MessageHandler.class;
-    return (CompileContext)Proxy.newProxyInstance(loader, new Class[]{CompileContext.class}, new InvocationHandler() {
+    return (CompileContext)Proxy.newProxyInstance(delegate.getClass().getClassLoader(), new Class[]{CompileContext.class}, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        final Class<?> declaringClass = method.getDeclaringClass();
-        if (dataHolderInterface.equals(declaringClass)) {
-          final Object firstArgument = args[0];
-          if (!(firstArgument instanceof GlobalContextKey)) {
-            final boolean isWriteOperation = args.length == 2 /*&& void.class.equals(method.getReturnType())*/;
-            if (isWriteOperation) {
-              if (args[1] == null) {
-                deletedKeysSet.add(firstArgument);
+        if (args != null) {
+          final Class<?> declaringClass = method.getDeclaringClass();
+          if (dataHolderInterface.equals(declaringClass)) {
+            final Object firstArgument = args[0];
+            if (!(firstArgument instanceof GlobalContextKey)) {
+              final boolean isWriteOperation = args.length == 2 /*&& void.class.equals(method.getReturnType())*/;
+              if (isWriteOperation) {
+                if (args[1] == null) {
+                  deletedKeysSet.add(firstArgument);
+                }
+                else {
+                  deletedKeysSet.remove(firstArgument);
+                }
               }
               else {
-                deletedKeysSet.remove(firstArgument);
+                if (deletedKeysSet.contains(firstArgument)) {
+                  return null;
+                }
+              }
+              final Object result = method.invoke(localDataHolder, args);
+              if (isWriteOperation || result != null) {
+                return result;
               }
             }
-            else {
-              if (deletedKeysSet.contains(firstArgument)) {
-                return null;
-              }
-            }
-            final Object result = method.invoke(localDataHolder, args);
-            if (isWriteOperation || result != null) {
-              return result;
+          }
+          else if (messageHandlerInterface.equals(declaringClass)) {
+            final BuildMessage msg = (BuildMessage)args[0];
+            if (msg.getKind() == BuildMessage.Kind.ERROR) {
+              Utils.ERRORS_DETECTED_KEY.set(localDataHolder, Boolean.TRUE);
             }
           }
+          return MethodHandles.lookup().unreflect(method).bindTo(delegate).asSpreader(Object[].class, args.length).invoke(args);
         }
-        else if (messageHandlerInterface.equals(declaringClass)) {
-          final BuildMessage msg = (BuildMessage)args[0];
-          if (msg.getKind() == BuildMessage.Kind.ERROR) {
-            Utils.ERRORS_DETECTED_KEY.set(localDataHolder, Boolean.TRUE);
-          }
-        }
-        try {
-          return method.invoke(delegate, args);
-        }
-        catch (InvocationTargetException e) {
-          final Throwable targetEx = e.getTargetException();
-          if (targetEx instanceof ProjectBuildException) {
-            throw targetEx;
-          }
-          throw e;
-        }
+
+        return MethodHandles.lookup().unreflect(method).invoke(delegate);
       }
     });
   }
