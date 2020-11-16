@@ -758,7 +758,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testNewFileCreatedInProjectEncoding() throws IOException {
-    EditorTestUtil.saveEncodingsIn(getProject(), "UTF-8", WINDOWS_1251.name(), () -> {
+    EditorTestUtil.saveEncodingsIn(getProject(), StandardCharsets.UTF_8, WINDOWS_1251, () -> {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 
@@ -767,7 +767,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testNewFileCreatedInProjectEncodingEvenIfItSetToDefault() throws IOException {
-    EditorTestUtil.saveEncodingsIn(getProject(), Charset.defaultCharset().name().equals("UTF-8") ? "windows-1251" : "UTF-8", "", () -> {
+    EditorTestUtil.saveEncodingsIn(getProject(), Charset.defaultCharset().name().equals("UTF-8") ? WINDOWS_1251 : StandardCharsets.UTF_8, null, () -> {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 

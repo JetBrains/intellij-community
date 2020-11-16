@@ -76,7 +76,7 @@ public class ComplexUndoTest extends EditorUndoTestCase {
 
   public void testDoesNotLoseCharset() {
     char utf8character = '\u00e9';
-    EditorTestUtil.saveEncodingsIn(myProject, null, WINDOWS_1251.name(), () -> PlatformTestUtil.withEncoding(WINDOWS_1251.name(), () -> {
+    EditorTestUtil.saveEncodingsIn(myProject, null, WINDOWS_1251, () -> PlatformTestUtil.withEncoding(WINDOWS_1251.name(), () -> {
       assertEquals(CharsetToolkit.UTF8, EncodingManager.getInstance().getDefaultCharsetName());
       assertEquals(WINDOWS_1251, Charset.defaultCharset());
       VirtualFile virtualFile = createFileInCommand("f.java");

@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
@@ -744,17 +745,17 @@ public final class EditorTestUtil {
     }
   }
 
-  public static <E extends Exception> void saveEncodingsIn(@NotNull Project project, String newIdeCharset, String newProjectCharset, @NotNull ThrowableRunnable<E> task) throws E {
+  public static <E extends Exception> void saveEncodingsIn(@NotNull Project project, Charset newIdeCharset, Charset newProjectCharset, @NotNull ThrowableRunnable<E> task) throws E {
     EncodingManager encodingManager = EncodingManager.getInstance();
     String oldIde = encodingManager.getDefaultCharsetName();
     if (newIdeCharset != null) {
-      encodingManager.setDefaultCharsetName(newIdeCharset);
+      encodingManager.setDefaultCharsetName(newIdeCharset.name());
     }
 
     EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
     String oldProject = encodingProjectManager.getDefaultCharsetName();
     if (newProjectCharset != null) {
-      encodingProjectManager.setDefaultCharsetName(newProjectCharset);
+      encodingProjectManager.setDefaultCharsetName(newProjectCharset.name());
     }
 
     try {
