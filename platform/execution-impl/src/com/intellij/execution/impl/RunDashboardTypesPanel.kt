@@ -8,6 +8,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.SpeedSearchUtil
@@ -167,14 +168,15 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
               append(value.displayName)
             }
             else {
-              append(value.toString())
+              @NlsSafe val itemText = value.toString()
+              append(itemText)
             }
           }
         })
         .setMovable(true)
         .setResizable(true)
         .setNamerForFiltering { if (it is ConfigurationType) it.displayName else null }
-        .setAdText("Select one or more types")
+        .setAdText(ExecutionBundle.message("run.dashboard.configurable.types.panel.hint"))
         .setItemsChosenCallback { selectedValues ->
           val value = ContainerUtil.getOnlyItem(selectedValues)
           if (value is String) {
