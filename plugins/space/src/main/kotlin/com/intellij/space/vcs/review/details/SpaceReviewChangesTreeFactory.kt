@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.RemoteFilePath
+import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
@@ -133,12 +133,12 @@ fun getFilePath(changeInReview: ChangeInReview): FilePath {
     GitCommitChangeType.ADDED, GitCommitChangeType.MODIFIED -> changeInReview.change.new!!.isDirectory()
     GitCommitChangeType.DELETED -> changeInReview.change.old!!.isDirectory()
   }
-  return RemoteFilePath(path, isDirectory)
+  return LocalFilePath(path, isDirectory)
 }
 
 internal fun GitFile?.getFilePath(): FilePath? {
   this ?: return null
-  return RemoteFilePath(path.trimStart('/', '\\'), isDirectory())
+  return LocalFilePath(path.trimStart('/', '\\'), isDirectory())
 }
 
 internal fun getChangeFilePathInfo(changeInReview: ChangeInReview): ChangeFilePathInfo =
