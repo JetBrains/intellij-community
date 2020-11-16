@@ -6,19 +6,17 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
-public class CredentialsManagerImpl extends CredentialsManager {
-
+final class CredentialsManagerImpl extends CredentialsManager {
   @Override
   public List<CredentialsType<?>> getAllTypes() {
-    return Arrays.asList(CredentialsType.EP_NAME.getExtensions());
+    return CredentialsType.EP_NAME.getExtensionList();
   }
 
   @Override
   public void loadCredentials(String interpreterPath, @Nullable Element element, RemoteSdkAdditionalData data) {
-    for (CredentialsType type : getAllTypes()) {
+    for (CredentialsType type : CredentialsType.EP_NAME.getExtensionList()) {
       if (type.hasPrefix(interpreterPath)) {
         Object credentials = type.createCredentials();
         type.getHandler(credentials).load(element);
@@ -26,7 +24,8 @@ public class CredentialsManagerImpl extends CredentialsManager {
         return;
       }
     }
-    final UnknownCredentialsHolder credentials = CredentialsType.UNKNOWN.createCredentials();
+
+    UnknownCredentialsHolder credentials = CredentialsType.UNKNOWN.createCredentials();
     credentials.setSdkId(interpreterPath);
     credentials.load(element);
     data.setCredentials(CredentialsType.UNKNOWN_CREDENTIALS, credentials);
