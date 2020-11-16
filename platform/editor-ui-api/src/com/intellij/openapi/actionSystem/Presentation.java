@@ -395,12 +395,15 @@ public final class Presentation implements Cloneable {
   }
 
   public void putClientProperty(@NonNls @NotNull String key, @Nullable Object value) {
-    Object oldValue = myUserMap.get(key);
-    if (Comparing.equal(oldValue, value)) return;
-    if (key.equals("customComponent") && oldValue != null) {
-      LOG.error("Trying to reset custom component in a presentation", new Throwable());
+    Object oldValue;
+    synchronized (this) {
+      oldValue = myUserMap.get(key);
+      if (Comparing.equal(oldValue, value)) return;
+      if (key.equals("customComponent") && oldValue != null) {
+        LOG.error("Trying to reset custom component in a presentation", new Throwable());
+      }
+      myUserMap = value == null ? myUserMap.minus(key) : myUserMap.plus(key, value);
     }
-    myUserMap = value == null ? myUserMap.minus(key) : myUserMap.plus(key, value);
     fireObjectPropertyChange(key, oldValue, value);
   }
 
