@@ -558,6 +558,9 @@
     <reference id="OpenInRightSplit">
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </reference>
+    <reference id="SplitChooser">
+      <add-to-group group-id="RunContextPopupGroup" anchor="after" relative-to-action="OpenInRightSplit"/>
+    </reference>
 
     <group id="RevealGroup" popup="true">
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>

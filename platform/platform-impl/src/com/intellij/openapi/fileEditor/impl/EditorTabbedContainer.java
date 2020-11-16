@@ -438,6 +438,21 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
   }
 
+  public void processSplit() {
+    final TabInfo tabInfo = this.myTabs.getSelectedInfo();
+    if (tabInfo == null) {
+      return;
+    }
+
+    Image img = JBTabsImpl.getComponentImage(tabInfo);
+    VirtualFile file = (VirtualFile)tabInfo.getObject();
+    Presentation presentation = new Presentation(tabInfo.getText());
+    presentation.setIcon(tabInfo.getIcon());
+    EditorWithProviderComposite windowFileComposite = myWindow.findFileComposite(file);
+    FileEditor[] editors = windowFileComposite != null ? windowFileComposite.getEditors() : FileEditor.EMPTY_ARRAY;
+    final DockableEditor dockableEditor = createDockableEditor(myProject, img, file, presentation, myWindow, DockManagerImpl.isNorthPanelAvailable(editors));
+  }
+
   class MyDragOutDelegate implements TabInfo.DragOutDelegate {
 
     private VirtualFile myFile;

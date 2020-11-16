@@ -48,7 +48,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
-  private MyDropAreaPainter myCurrentPainter;
+  private AbstractPainter myCurrentPainter;
   private Disposable myGlassPaneListenersDisposable = Disposer.newDisposable();
 
   private final boolean myDisposeWhenEmpty;
@@ -233,7 +233,9 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       Disposer.register(mySplitters.parentDisposable, myGlassPaneListenersDisposable);
       IdeGlassPaneUtil.find(myCurrentOver.getComponent()).addPainter(myCurrentOver.getComponent(), myCurrentPainter, myGlassPaneListenersDisposable);
     }
-    myCurrentPainter.processDropOver();
+    if (myCurrentPainter instanceof MyDropAreaPainter) {
+      ((MyDropAreaPainter)myCurrentPainter).processDropOver();
+    }
 
     return myCurrentOverImg;
   }
