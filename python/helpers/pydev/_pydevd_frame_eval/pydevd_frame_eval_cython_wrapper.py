@@ -53,4 +53,4 @@ dummy_trace_dispatch = mod.dummy_trace_dispatch
 
 get_thread_info_py = mod.get_thread_info_py
 
-clear_thread_local_info = mod.clear_thread_local_info
+clear_thread_local_info = mod.clear_thread_local_info_py

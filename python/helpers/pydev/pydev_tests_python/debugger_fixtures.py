@@ -380,7 +380,10 @@ def case_setup_multiproc():
     runner = DebuggerRunnerSimple()
 
     class WriterThread(debugger_unittest.AbstractDispatcherThread):
-        pass
+        def all_finished_ok(self):
+            for w in self.writers:
+                w.finished_ok = True
+            self.finished_ok = True
 
     class CaseSetup(object):
 
