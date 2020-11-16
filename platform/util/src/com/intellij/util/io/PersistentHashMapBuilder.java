@@ -25,6 +25,7 @@ public final class PersistentHashMapBuilder<Key, Value> {
   private Boolean myIsReadOnly;
   private Boolean myHasChunks;
   private IOCancellationCallback myCancellationCallback;
+  private Boolean myCompactOnClose = null;
 
   private PersistentHashMapBuilder(@NotNull Path file,
                                    @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -150,6 +151,17 @@ public final class PersistentHashMapBuilder<Key, Value> {
     return this;
   }
 
+  @NotNull
+  public PersistentHashMapBuilder<Key, Value> withCompactOnClose(boolean compactOnClose) {
+    myCompactOnClose = compactOnClose;
+    return this;
+  }
+
+  @NotNull
+  public PersistentHashMapBuilder<Key, Value> compactOnClose() {
+    return withCompactOnClose(true);
+  }
+
   public int getInitialSize(int defaultValue) {
     if (myInitialSize != null) return myInitialSize;
     return defaultValue;
@@ -168,6 +180,11 @@ public final class PersistentHashMapBuilder<Key, Value> {
   public boolean getReadOnly(boolean defaultValue) {
     if (myIsReadOnly != null) return myIsReadOnly;
     return defaultValue;
+  }
+
+  public boolean getCompactOnClose(boolean defaultCompactOnClose) {
+    if (myCompactOnClose != null) return myCompactOnClose;
+    return defaultCompactOnClose;
   }
 
   @Nullable

@@ -23,8 +23,9 @@ class ValueContainerMap<Key, Value> extends PersistentHashMapImpl<Key, Updatable
                     @NotNull DataExternalizer<Value> valueExternalizer,
                     boolean keyIsUniqueForIndexedFile,
                     @NotNull ValueContainerInputRemapping inputRemapping,
-                    boolean isReadonly) throws IOException {
-    super(PersistentHashMapBuilder.newBuilder(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping)).withReadonly(isReadonly));
+                    boolean isReadonly,
+                    boolean compactOnClose) throws IOException {
+    super(PersistentHashMapBuilder.newBuilder(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping)).withReadonly(isReadonly).withCompactOnClose(compactOnClose));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }

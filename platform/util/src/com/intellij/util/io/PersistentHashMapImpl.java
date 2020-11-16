@@ -79,6 +79,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
   private boolean myIntAddressForNewRecord;
   private static final boolean doHardConsistencyChecks = false;
   private final PersistentEnumeratorBase<Key> myEnumerator;
+  private final boolean myCompactOnClose;
 
   @Override
   @TestOnly
@@ -121,6 +122,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     final int initialSize = builder.getInitialSize(INITIAL_INDEX_SIZE);
     int version = builder.getVersion(0);
     @Nullable StorageLockContext lockContext = builder.getLockContext();
+    myCompactOnClose = builder.getCompactOnClose(false);
     @NotNull PersistentHashMapValueStorage.CreationTimeOptions options = PersistentHashMapValueStorage.CreationTimeOptions.threadLocalOptions();
 
     // it's important to initialize it as early as possible
@@ -195,7 +197,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     catch (IOException e) {
       try {
         // attempt to close already opened resources
-        close();
+        close(true);
       }
       catch (Throwable ignored) {
       }
@@ -205,7 +207,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
       LOG.error(t);
       try {
         // attempt to close already opened resources
-        close();
+        close(true);
       }
       catch (Throwable ignored) {
       }
@@ -319,7 +321,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
   public void deleteMap() {
     Path baseFile = getBaseFile();
     try {
-      this.close();
+      this.close(true);
     }
     catch (IOException ignored) {}
     IOUtil.deleteAllFilesStartingWith(baseFile.toFile());
@@ -739,10 +741,20 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
 
   @Override
   public final void close() throws IOException {
+    close(false);
+  }
+
+  private void close(boolean emergency) throws IOException {
     if (myDoTrace) LOG.info("Closed " + myStorageFile);
     synchronized (getDataAccessLock()) {
       if (!isClosed()) {
-        doClose();
+        try {
+          if (!emergency && myCompactOnClose && isCompactionSupported()) {
+            compact();
+          }
+        } finally {
+          doClose();
+        }
       }
     }
   }
@@ -1024,7 +1036,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
   @NotNull
   @TestOnly
   public static <Key, Value> PersistentHashMapImpl<Key, Value> unwrap(@NotNull PersistentHashMap<Key, Value> map) {
-    //NOTE: on production, it may be another implementation behind the PersistentHashMap
+    //NOTE: on production, it can be another implementation behind the PersistentHashMap
     try {
       Field field = PersistentHashMap.class.getDeclaredField("myImpl");
       field.setAccessible(true);

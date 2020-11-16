@@ -21,7 +21,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
-  private ValueContainerMap<Key, Value> myInnerMap;
   protected PersistentMap<Key, UpdatableValueContainer<Value>> myMap;
   protected SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   protected final Path myBaseStorageFile;
@@ -66,13 +65,14 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   }
 
   protected void initMapAndCache() throws IOException {
+    ValueContainerMap<Key, Value> map;
     PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(() -> checkCanceled());
     PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
     if (myKeyIsUniqueForIndexedFile) {
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
     }
     try {
-      myInnerMap = new ValueContainerMap<>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myInputRemapping, myReadOnly);
+      map = new ValueContainerMap<>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myInputRemapping, myReadOnly, compactOnClose());
     } finally {
       PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
@@ -84,7 +84,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
       @Override
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
-        return myInnerMap.createChangeTrackingValueContainer(key);
+        return map.createChangeTrackingValueContainer(key);
       }
 
       @Override
@@ -101,7 +101,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
             }
           }
           try {
-            myInnerMap.put(key, storedContainer);
+            map.put(key, storedContainer);
           }
           catch (IOException e) {
             throw new RuntimeException(e);
@@ -110,7 +110,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
       }
     };
 
-    myMap = new PersistentHashMap<>(myInnerMap);
+    myMap = new PersistentHashMap<>(map);
   }
 
   @Override
@@ -193,15 +193,8 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     });
   }
 
-  protected void compactIfSupported() throws StorageException {
-    try {
-      if (myInnerMap.isCompactionSupported()) {
-        myInnerMap.compact();
-      }
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
+  protected boolean compactOnClose() {
+    return false;
   }
 
   @Override
