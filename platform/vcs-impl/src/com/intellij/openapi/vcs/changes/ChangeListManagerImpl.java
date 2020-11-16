@@ -826,7 +826,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     });
   }
 
-  Map<VirtualFile, LogicalLock> getLogicallyLockedFolders() {
+  public Map<VirtualFile, LogicalLock> getLogicallyLockedFolders() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return new HashMap<>(myComposite.getLogicallyLockedFileHolder().getMap());
@@ -858,7 +858,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     });
   }
 
-  MultiMap<String, VirtualFile> getSwitchedFilesMap() {
+  public MultiMap<String, VirtualFile> getSwitchedFilesMap() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return myComposite.getSwitchedFileHolder().getBranchToFileMap();
@@ -867,7 +867,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   @Nullable
-  Map<VirtualFile, String> getSwitchedRoots() {
+  public Map<VirtualFile, String> getSwitchedRoots() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return myComposite.getRootSwitchFileHolder().getFilesMapCopy();
