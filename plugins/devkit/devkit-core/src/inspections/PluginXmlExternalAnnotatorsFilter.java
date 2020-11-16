@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.lang.ExternalAnnotatorsFilter;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.xml.XMLExternalAnnotator;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
@@ -17,6 +18,9 @@ public final class PluginXmlExternalAnnotatorsFilter implements ExternalAnnotato
     if (!(annotator instanceof XMLExternalAnnotator)) {
       return false;
     }
-    return DescriptorUtil.isPluginXml(file);
+
+    return ReadAction.compute(() -> {
+      return DescriptorUtil.isPluginXml(file);
+    });
   }
 }
