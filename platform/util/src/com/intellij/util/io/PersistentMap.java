@@ -1,6 +1,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -23,4 +24,8 @@ public interface PersistentMap<K, V> extends KeyValueStore<K, V> {
   void markDirty() throws IOException;
 
   boolean isCorrupted();
+
+  //TODO should not be a part of PersistentMap interface
+  @ApiStatus.Internal
+  void deleteMap();
 }

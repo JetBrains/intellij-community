@@ -741,7 +741,9 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
   public final void close() throws IOException {
     if (myDoTrace) LOG.info("Closed " + myStorageFile);
     synchronized (getDataAccessLock()) {
-      doClose();
+      if (!isClosed()) {
+        doClose();
+      }
     }
   }
 

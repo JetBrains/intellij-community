@@ -14,8 +14,6 @@ import java.util.Collection;
 public interface PersistentHashMapBase<Key, Value> extends AppendablePersistentMap<Key, Value> {
   void dropMemoryCaches();
 
-  void deleteMap();
-
   @NotNull
   Collection<Key> getAllKeysWithExistingMapping() throws IOException;
 

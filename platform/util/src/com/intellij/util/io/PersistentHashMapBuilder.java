@@ -18,11 +18,13 @@ public final class PersistentHashMapBuilder<Key, Value> {
   @NotNull private final KeyDescriptor<Key> myKeyDescriptor;
   @NotNull private final DataExternalizer<Value> myValueExternalizer;
 
-  private Integer myInitialSize = null;
-  private Integer myVersion = null;
-  private StorageLockContext myLockContext = null;
-  private Boolean myInlineValues = null;
-  private Boolean myIsReadOnly = null;
+  private Integer myInitialSize;
+  private Integer myVersion;
+  private StorageLockContext myLockContext;
+  private Boolean myInlineValues;
+  private Boolean myIsReadOnly;
+  private Boolean myHasChunks;
+  private IOCancellationCallback myCancellationCallback;
 
   private PersistentHashMapBuilder(@NotNull Path file,
                                    @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -34,7 +36,32 @@ public final class PersistentHashMapBuilder<Key, Value> {
 
   @NotNull
   public PersistentHashMap<Key, Value> build() throws IOException {
-    return new PersistentHashMap<>(this, false);
+    Boolean oldHasNoChunksValue = null;
+    if (myHasChunks != null) {
+      oldHasNoChunksValue = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
+      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(!myHasChunks);
+    }
+    Boolean previousReadOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get();
+    PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(myIsReadOnly);
+
+    IOCancellationCallback previousIoCancellationCallback = null;
+    if (myCancellationCallback != null) {
+      previousIoCancellationCallback = PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.get();
+      PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(myCancellationCallback);
+    }
+    try {
+      return new PersistentHashMap<>(this, false);
+    }
+    finally {
+      if (myHasChunks != null) {
+        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(oldHasNoChunksValue);
+      }
+      PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(previousReadOnly);
+
+      if (myCancellationCallback != null) {
+        PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(previousIoCancellationCallback);
+      }
+    }
   }
 
   @NotNull
@@ -99,6 +126,23 @@ public final class PersistentHashMapBuilder<Key, Value> {
   @NotNull
   public PersistentHashMapBuilder<Key, Value> withStorageLockContext(@Nullable StorageLockContext context) {
     myLockContext = context;
+    return this;
+  }
+
+  @NotNull
+  public PersistentHashMapBuilder<Key, Value> hasChunks(boolean hasChunks) {
+    myHasChunks = hasChunks;
+    return this;
+  }
+  @NotNull
+  public PersistentHashMapBuilder<Key, Value> hasNoChunks() {
+    myHasChunks = false;
+    return this;
+  }
+
+  @NotNull
+  public PersistentHashMapBuilder<Key, Value> withIoCancellationCallback(@NotNull IOCancellationCallback ioCancellationCallback) {
+    myCancellationCallback = ioCancellationCallback;
     return this;
   }
 

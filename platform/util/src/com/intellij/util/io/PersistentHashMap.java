@@ -47,6 +47,11 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     return myImpl.isCorrupted();
   }
 
+  @Override
+  public void deleteMap() {
+    myImpl.deleteMap();
+  }
+
   public PersistentHashMap(@NotNull File file,
                            @NotNull KeyDescriptor<Key> keyDescriptor,
                            @NotNull DataExternalizer<Value> valueExternalizer) throws IOException {
