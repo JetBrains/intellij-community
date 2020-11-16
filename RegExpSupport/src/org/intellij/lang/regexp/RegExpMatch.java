@@ -11,6 +11,12 @@ public class RegExpMatch {
 
   private final IntList groups = new IntArrayList();
 
+  public RegExpMatch() {}
+
+  public RegExpMatch(int start, int end) {
+    add(start, end);
+  }
+
   public void add(int start, int end) {
     groups.add(start);
     groups.add(end);
