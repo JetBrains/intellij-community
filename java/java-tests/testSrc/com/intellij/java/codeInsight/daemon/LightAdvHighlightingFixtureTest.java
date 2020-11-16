@@ -203,6 +203,13 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     myFixture.addClass("package a; public class Base<T> { protected Base() {}}");
     doTest();
   }
+  
+  public void testDiamondsWithProtectedCallInConstruction() {
+    myFixture.addClass("package a; public class Base { " +
+                       " protected String createString() {return null;}" +
+                       "}");
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
