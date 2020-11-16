@@ -1,3 +1,3 @@
 import java.util.stream.IntStream
 
-// DEPENDENCIES: javaHome:9; classpath:runtime-classes
+// DEPENDENCIES: javaHome:11; classpath:runtime-classes
