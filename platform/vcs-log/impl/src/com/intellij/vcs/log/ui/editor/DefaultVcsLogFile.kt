@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.editor
 import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,7 +41,7 @@ internal class DefaultVcsLogFile(name: String, panel: VcsLogPanel) : VcsLogFile(
   override fun isValid(): Boolean = vcsLogPanel != null
 }
 
-class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider {
+class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
   override fun getEditorTabTooltipText(project: Project, file: VirtualFile): String? {
     if (file !is DefaultVcsLogFile) return null
