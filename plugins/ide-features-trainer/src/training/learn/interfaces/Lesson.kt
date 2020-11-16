@@ -27,9 +27,6 @@ interface Lesson {
 
   val lessonType: LessonType get() = module.moduleType
 
-  val classLoader: ClassLoader
-    get() = module.classLoader
-
   val passed: Boolean
     get() = LessonStateManager.getStateFromBase(id) == LessonState.PASSED
 
