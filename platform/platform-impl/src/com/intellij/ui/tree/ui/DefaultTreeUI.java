@@ -250,10 +250,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
         }
       }
       paintDropLine(g);
-      rendererPane.removeAll();
     }
     finally {
       g.dispose();
+      // remove all renderers
+      rendererPane.removeAll();
     }
   }
 
