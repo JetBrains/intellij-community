@@ -132,7 +132,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
 
   private static final String DEPRECATED_VALUE = "DEPRECATED_VALUE";
   /**
-   * @deprecated Override {@link #calcIdLabel(Value, DebugProcess, DescriptorLabelListener)}
+   * @deprecated Override {@link #calcIdLabel(ValueDescriptor, DebugProcess, DescriptorLabelListener)}
    */
   @Deprecated
   @Nullable
