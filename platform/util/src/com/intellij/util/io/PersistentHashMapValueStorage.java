@@ -46,7 +46,7 @@ public final class PersistentHashMapValueStorage {
   static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
   public static final class CreationTimeOptions {
-    public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION =
+    public static final ThreadLocal<IOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION =
       new ThreadLocal<>();
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
@@ -59,18 +59,18 @@ public final class PersistentHashMapValueStorage {
       }
     };
 
-    private final ExceptionalIOCancellationCallback myExceptionalIOCancellationCallback;
+    private final IOCancellationCallback myIOCancellationCallback;
     private final boolean myReadOnly;
     private final boolean myCompactChunksWithValueDeserialization;
     private final boolean myHasNoChunks;
     private final boolean myDoCompression;
 
-    private CreationTimeOptions(ExceptionalIOCancellationCallback callback,
+    private CreationTimeOptions(IOCancellationCallback callback,
                                 boolean readOnly,
                                 boolean compactChunksWithValueDeserialization,
                                 boolean hasNoChunks,
                                 boolean doCompression) {
-      myExceptionalIOCancellationCallback = callback;
+      myIOCancellationCallback = callback;
       myReadOnly = readOnly;
       myCompactChunksWithValueDeserialization = compactChunksWithValueDeserialization;
       myHasNoChunks = hasNoChunks;
@@ -88,7 +88,7 @@ public final class PersistentHashMapValueStorage {
     @NotNull
     CreationTimeOptions setReadOnly() {
       return new CreationTimeOptions(
-        myExceptionalIOCancellationCallback,
+        myIOCancellationCallback,
         true,
         myCompactChunksWithValueDeserialization,
         myHasNoChunks,
@@ -105,10 +105,6 @@ public final class PersistentHashMapValueStorage {
         HAS_NO_CHUNKS.get() == Boolean.TRUE,
         DO_COMPRESSION.get() == Boolean.TRUE);
     }
-  }
-
-  public interface ExceptionalIOCancellationCallback {
-    void checkCancellation();
   }
 
   @NotNull
@@ -644,7 +640,7 @@ public final class PersistentHashMapValueStorage {
 
   // hook for exceptional termination of long io operation
   private void checkCancellation() {
-    if (myOptions.myExceptionalIOCancellationCallback != null) myOptions.myExceptionalIOCancellationCallback.checkCancellation();
+    if (myOptions.myIOCancellationCallback != null) myOptions.myIOCancellationCallback.checkCancelled();
   }
 
   private int readChunkSize(@NotNull DataInputStream in) throws IOException {
