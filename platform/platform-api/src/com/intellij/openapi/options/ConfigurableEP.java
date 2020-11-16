@@ -268,7 +268,14 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   private ComponentManager componentManager;
   private Project myProject;
 
-  public ConfigurableEP() {
+  @NonInjectable
+  public ConfigurableEP(@NotNull PluginDescriptor pluginDescriptor) {
+    this(ApplicationManager.getApplication());
+
+    setPluginDescriptor(pluginDescriptor);
+  }
+
+  protected ConfigurableEP() {
     this(ApplicationManager.getApplication());
   }
 

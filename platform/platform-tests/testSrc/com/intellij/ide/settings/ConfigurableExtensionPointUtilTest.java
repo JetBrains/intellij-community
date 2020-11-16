@@ -2,6 +2,7 @@
 package com.intellij.ide.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -163,7 +164,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   @NotNull
   private static ConfigurableEP<Configurable> deserializeConfigurable(@NotNull String text) throws IOException, JDOMException {
     Element element = JDOMUtil.load(text);
-    ConfigurableEP<Configurable> bean = new ConfigurableEP<>();
+    ConfigurableEP<Configurable> bean = new ConfigurableEP<>(new DefaultPluginDescriptor("ConfigurableExtensionTest"));
     XmlSerializer.deserializeInto(element, bean);
     return bean;
   }

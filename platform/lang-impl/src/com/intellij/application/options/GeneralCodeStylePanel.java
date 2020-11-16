@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -11,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -50,7 +50,9 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
+final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
+  private static final ExtensionPointName<GeneralCodeStyleOptionsProviderEP> EP_NAME = new ExtensionPointName<>("com.intellij.generalCodeStyleOptionsProvider");
+
   @SuppressWarnings("UnusedDeclaration")
   private static final Logger LOG = Logger.getInstance(GeneralCodeStylePanel.class);
   private List<GeneralCodeStyleOptionsProvider> myAdditionalOptions;
@@ -126,7 +128,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourSelectedTabIndex = myTabbedPane.getSelectedIndex();
     });
-    GeneralCodeStyleOptionsProviderEP.EP_NAME.addExtensionPointListener(
+    EP_NAME.addExtensionPointListener(
       new ExtensionPointListener<GeneralCodeStyleOptionsProviderEP>() {
         @Override
         public void extensionAdded(@NotNull GeneralCodeStyleOptionsProviderEP extension,
@@ -144,7 +146,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   private void updateGeneralOptionsPanel() {
     myAdditionalSettingsPanel.removeAll();
-    myAdditionalOptions = ConfigurableWrapper.createConfigurables(GeneralCodeStyleOptionsProviderEP.EP_NAME);
+    myAdditionalOptions = ConfigurableWrapper.createConfigurables(EP_NAME);
     for (GeneralCodeStyleOptionsProvider provider : myAdditionalOptions) {
       JComponent generalSettingsComponent = provider.createComponent();
       if (generalSettingsComponent != null) {

@@ -2,6 +2,7 @@
 package com.intellij.ide.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -14,7 +15,7 @@ public class ConfigurableExtensionTest extends LightPlatformTestCase {
       "    <configurable instance=\"com.intellij.javaee.XMLCatalogConfigurable\" displayName=\"XML Catalog\"/>\n" +
       "  </projectConfigurable>");
 
-    ConfigurableEP<?> bean = new ConfigurableEP<>();
+    ConfigurableEP<?> bean = new ConfigurableEP<>(new DefaultPluginDescriptor("ConfigurableExtensionTest"));
     XmlSerializer.deserializeInto(element, bean);
     assertNotNull(bean.children);
     assertEquals(1, bean.children.size());
