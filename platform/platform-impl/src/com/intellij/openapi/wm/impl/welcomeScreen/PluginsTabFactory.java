@@ -30,7 +30,6 @@ public class PluginsTabFactory implements WelcomeTabFactory {
       @Override
       protected JComponent buildComponent() {
         PluginManagerConfigurable configurable = new PluginManagerConfigurable();
-        WelcomeScreenService.getInstance().setPluginManagerConfigurable(configurable);
         BorderLayoutPanel pluginsPanel = UI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
           .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
         configurable.getTopComponent().setPreferredSize(new JBDimension(configurable.getTopComponent().getPreferredSize().width, 35));
