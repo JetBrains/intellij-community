@@ -38,9 +38,7 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
                                       @Nullable StorageLockContext lockContext) throws IOException {
-    myEnumerator = useBtree() ?
-                   new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext) :
-                   new PersistentEnumerator<>(file, dataDescriptor, initialSize);
+    myEnumerator = new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext);
   }
 
   public PersistentEnumeratorDelegate(@NotNull final File file,
@@ -65,20 +63,12 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
                                                                        final int initialSize,
                                                                        @Nullable StorageLockContext lockContext,
                                                                        int version) throws IOException {
-    return useBtree()
-           ? new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version)
-           : new PersistentEnumerator<>(file, dataDescriptor, initialSize, null, version);
+    return new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version);
   }
 
   @ApiStatus.Internal
   public static int getVersion() {
-    return useBtree() ? PersistentBTreeEnumerator.VERSION : PersistentEnumerator.VERSION;
-  }
-
-  @ApiStatus.Internal
-  public static boolean useBtree() {
-    String property = System.getProperty("idea.use.btree");
-    return !"false".equals(property);
+    return PersistentBTreeEnumerator.VERSION;
   }
 
   @Override

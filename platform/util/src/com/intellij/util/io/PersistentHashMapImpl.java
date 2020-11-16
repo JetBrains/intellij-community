@@ -209,7 +209,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
       }
       catch (Throwable ignored) {
       }
-      throw new PersistentEnumerator.CorruptedException(file);
+      throw new PersistentEnumeratorBase.CorruptedException(file);
     }
   }
 
@@ -532,7 +532,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
         if (myAppendCache != null) {
           myAppendCache.clear();
         }
-        return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
+        return myEnumerator.processAllDataObject(processor, new PersistentEnumeratorBase.DataFilter() {
           @Override
           public boolean accept(final int id) {
             return readValueId(id) != NULL_ADDR;
@@ -828,7 +828,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
           newCompact(newStorage);
         }
         else {
-          myEnumerator.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+          myEnumerator.traverseAllRecords(new PersistentEnumeratorBase.RecordsProcessor() {
             @Override
             public boolean process(final int keyId) throws IOException {
               final long record = readValueId(keyId);
@@ -895,7 +895,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     long started = System.currentTimeMillis();
     final List<CompactionRecordInfo> infos = new ArrayList<>(10000);
 
-    myEnumerator.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+    myEnumerator.traverseAllRecords(new PersistentEnumeratorBase.RecordsProcessor() {
       @Override
       public boolean process(final int keyId) {
         final long record = readValueId(keyId);
