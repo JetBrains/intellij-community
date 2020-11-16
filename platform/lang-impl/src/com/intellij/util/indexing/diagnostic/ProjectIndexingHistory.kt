@@ -91,6 +91,8 @@ data class ProjectIndexingHistory(val project: Project) {
   )
 
   data class IndexingTimes(
+    var totalStart: Instant? = null,
+    var totalEnd: Instant? = null,
     var indexingStart: Instant? = null,
     var indexingEnd: Instant? = null,
     var pushPropertiesStart: Instant? = null,

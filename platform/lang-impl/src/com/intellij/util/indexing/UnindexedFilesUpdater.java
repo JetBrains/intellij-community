@@ -179,36 +179,43 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
     projectIndexingHistory.setNumberOfIndexingThreads(numberOfIndexingThreads);
 
-    for (IndexableFilesIterator provider : orderedProviders) {
-      List<VirtualFile> providerFiles = providerToFiles.get(provider);
-      if (providerFiles == null || providerFiles.isEmpty()) {
-        continue;
-      }
-      concurrentTasksProgressManager.setText(provider.getIndexingProgressText());
-      SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(providerFiles.size());
-      try {
-        IndexingJobStatistics statistics;
-        IndexUpdateRunner.IndexingInterruptedException exception = null;
+    projectIndexingHistory.getTimes().setIndexingStart(Instant.now());
+    try {
+      for (IndexableFilesIterator provider : orderedProviders) {
+        List<VirtualFile> providerFiles = providerToFiles.get(provider);
+        if (providerFiles == null || providerFiles.isEmpty()) {
+          continue;
+        }
+        concurrentTasksProgressManager.setText(provider.getIndexingProgressText());
+        SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(providerFiles.size());
         try {
-          statistics = indexUpdateRunner.indexFiles(myProject, provider.getDebugName(), providerFiles, subTaskIndicator);
-        } catch (IndexUpdateRunner.IndexingInterruptedException e) {
-          exception = e;
-          statistics = e.myStatistics;
-        }
+          IndexingJobStatistics statistics;
+          IndexUpdateRunner.IndexingInterruptedException exception = null;
+          try {
+            statistics = indexUpdateRunner.indexFiles(myProject, provider.getDebugName(), providerFiles, subTaskIndicator);
+          }
+          catch (IndexUpdateRunner.IndexingInterruptedException e) {
+            exception = e;
+            statistics = e.myStatistics;
+          }
 
-        try {
-          projectIndexingHistory.addProviderStatistics(statistics);
-        }
-        catch (Exception e) {
-          LOG.error("Failed to add indexing statistics for " + provider.getDebugName(), e);
-        }
+          try {
+            projectIndexingHistory.addProviderStatistics(statistics);
+          }
+          catch (Exception e) {
+            LOG.error("Failed to add indexing statistics for " + provider.getDebugName(), e);
+          }
 
-        if (exception != null) {
-          ExceptionUtil.rethrow(exception.getCause());
+          if (exception != null) {
+            ExceptionUtil.rethrow(exception.getCause());
+          }
         }
-      } finally {
-        subTaskIndicator.finished();
+        finally {
+          subTaskIndicator.finished();
+        }
       }
+    } finally {
+      projectIndexingHistory.getTimes().setIndexingEnd(Instant.now());
     }
 
     if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Unindexed files update");
@@ -381,7 +388,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
     ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject);
-    projectIndexingHistory.getTimes().setIndexingStart(Instant.now());
+    projectIndexingHistory.getTimes().setTotalStart(Instant.now());
     myIndex.filesUpdateStarted(myProject);
     try {
       updateUnindexedFiles(projectIndexingHistory, indicator);
@@ -395,7 +402,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
     finally {
       myIndex.filesUpdateFinished(myProject);
-      projectIndexingHistory.getTimes().setIndexingEnd(Instant.now());
+      projectIndexingHistory.getTimes().setTotalEnd(Instant.now());
       IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
     }
   }
