@@ -208,7 +208,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   fun setModuleName(@Nls moduleName: String) {
-    moduleNameLabel.text = "   $moduleName"
+    moduleNameLabel.text = "    $moduleName"
     moduleNameLabel.foreground = UISettings.instance.defaultTextColor
     moduleNameLabel.isFocusable = false
     this.revalidate()
@@ -530,7 +530,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.clearRestoreMessages()
   }
 
-  class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("ferfe", null, linkListener) {
+  class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("", null, linkListener) {
 
     init {
       font = UIUtil.getLabelFont()
@@ -548,7 +548,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
       g2d.color = foreground
       g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
                    textBounds.x + 5 * textBounds.height / 17, textBounds.y + textBounds.height / 2 - arrowWingHeight)
-      g2d.drawLine(textBounds.x + 1, textBounds.y + textBounds.height / 2,
+      g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
                    textBounds.x + 9 * textBounds.height / 17, textBounds.y + textBounds.height / 2)
       g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
                    textBounds.x + 5 * textBounds.height / 17, textBounds.y + textBounds.height / 2 + arrowWingHeight)
