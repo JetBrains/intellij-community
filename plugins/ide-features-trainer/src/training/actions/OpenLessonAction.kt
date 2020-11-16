@@ -7,6 +7,8 @@ import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -163,6 +165,16 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
         for (fileEditor in editors) {
           if (fileEditor is TextEditor) {
             textEditor = fileEditor
+          }
+        }
+        if (textEditor == null) {
+          LOG.error("Cannot open editor for $vf")
+          if (lesson.lessonType == LessonType.SCRATCH) {
+            invokeLater {
+              runWriteAction {
+                vf.delete(this)
+              }
+            }
           }
         }
       }
