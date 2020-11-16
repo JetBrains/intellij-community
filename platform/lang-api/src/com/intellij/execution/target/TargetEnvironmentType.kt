@@ -18,6 +18,12 @@ import javax.swing.JComponent
  */
 //todo[remoteServers]: suggest "predefined" configurations (e.g one per every configured SFTP connection)
 abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: String) : ContributedTypeBase<C>(id) {
+
+  /**
+   * Returns true if configurations of given type can be run on this OS.
+   */
+  open fun isSystemCompatible(): Boolean = true
+
   /**
    * Returns true if the new configuration of given type may be set up by the user iteratively with the help of [createStepsForNewWizard]
    */

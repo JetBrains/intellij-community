@@ -105,7 +105,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     super.disposeUIResources()
   }
 
-  private fun allTargets() = targetManager.targets.resolvedConfigs()
+  private fun allTargets() = targetManager.targets.resolvedConfigs().filter { it.getTargetType().isSystemCompatible() }
 
   private fun addTargetNode(target: TargetEnvironmentConfiguration): MyNode {
     val configurable = TargetEnvironmentDetailsConfigurable(project, target, defaultLanguageRuntime, TREE_UPDATER)
@@ -160,6 +160,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       return TargetEnvironmentType.EXTENSION_NAME.extensionList
+        .filter { it.isSystemCompatible() }
         .map { CreateNewTargetAction(project, it) }
         .toArray(AnAction.EMPTY_ARRAY)
     }
