@@ -350,7 +350,7 @@
       <action id="Diff.MagicResolveConflicts" class="com.intellij.openapi.actionSystem.EmptyAction"
               icon="AllIcons.Diff.MagicResolveToolbar"/>
 
-      <group id="compare.contents" icon="AllIcons.Actions.Diff" popup="true">
+      <group id="compare.contents" icon="AllIcons.Actions.Diff" popup="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup">
         <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction"
                 icon="AllIcons.Diff.Compare4LeftMiddle"/>
         <action id="Diff.ComparePartial.Base.Right" class="com.intellij.openapi.actionSystem.EmptyAction"
