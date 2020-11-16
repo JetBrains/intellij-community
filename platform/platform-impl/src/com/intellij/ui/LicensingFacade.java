@@ -78,7 +78,7 @@ public final class LicensingFacade {
    *  <pre>
    *  confirmationStamp := key:'license-key' | stamp:'license-server-stamp' | eval:'eval-key'
    *  <br><br>
-   *  licenseKey := 'licensId'-'licenseJsonBase64'-'signatureBase64'-'certificateBase64'  <br>
+   *  licenseKey := 'licenseId'-'licenseJsonBase64'-'signatureBase64'-'certificateBase64'  <br>
    *    the signed part is licenseJson
    *  <br><br>
    *  license-server-stamp := 'timestampLong':'machineId':'signatureType':'signatureBase64':'certificateBase64'[:'intermediate-certificateBase64']
@@ -87,6 +87,8 @@ public final class LicensingFacade {
    *    machineId should be the same as {@link PermanentInstallationID#get()} returns
    *   <br><br>
    *  eval-key := 'expiration-date-long'
+   *
+   * @see <a href="https://plugins.jetbrains.com/docs/marketplace/add-marketplace-license-verification-calls-to-the-plugin-code.html">JetBrains Marketplace online documentation</a> for more information
    *  </pre>
    */
   @Nullable
