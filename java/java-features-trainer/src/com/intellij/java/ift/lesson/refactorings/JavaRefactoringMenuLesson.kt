@@ -12,6 +12,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.general.refactorings.RefactoringMenuLessonBase
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.parseLessonSample
 import javax.swing.JDialog
 
@@ -60,6 +61,7 @@ class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("jav
     caret(inlineVariableName)
 
     actionTask("Inline") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.refactoring.menu.inline.variable",
                             code(inlineVariableName), action("Refactorings.QuickListPopupAction"), action(it))
     }
@@ -72,6 +74,7 @@ class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("jav
     caret("txt", true)
 
     actionTask("IntroduceConstant") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.refactoring.menu.introduce.constant",
                             action("Refactorings.QuickListPopupAction"), action(it))
     }

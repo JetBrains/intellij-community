@@ -10,6 +10,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.parseLessonSample
 
 class JavaOccurrencesLesson(module: Module)
@@ -57,6 +58,7 @@ class JavaOccurrencesLesson(module: Module)
     prepareSample(sample)
 
     actionTask("Find") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.find.occurrences.invoke.find", code("cellphone"), action(it))
     }
     task("FindNext") {

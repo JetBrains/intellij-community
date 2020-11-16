@@ -11,6 +11,7 @@ import training.learn.LessonsBundle
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.dropMnemonic
 import training.learn.lesson.kimpl.parseLessonSample
 import javax.swing.JDialog
@@ -22,6 +23,7 @@ class JavaExtractMethodCocktailSortLesson(module: Module)
       prepareSample(javaSortSample)
 
       actionTask("ExtractMethod") {
+        restoreIfModifiedOrMoved()
         LessonsBundle.message("extract.method.invoke.action", action(it))
       }
       // Now will be open the first dialog

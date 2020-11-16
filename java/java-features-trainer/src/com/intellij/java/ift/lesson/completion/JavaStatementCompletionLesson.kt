@@ -10,6 +10,8 @@ import training.commands.kotlin.TaskRuntimeContext
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
+import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.parseLessonSample
 
 class JavaStatementCompletionLesson(module: Module)
@@ -23,7 +25,7 @@ class JavaStatementCompletionLesson(module: Module)
             for (int i = 2; i < 100; i++) {
                 boolean isPrime = true;
     
-                for (int j = 2; j < i; j++)
+                for (int j = 2; j < i; j++)<caret>
     
                 if (isPrime) {
                     System.out.print(i + " ");
@@ -35,14 +37,17 @@ class JavaStatementCompletionLesson(module: Module)
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-    caret(8, 40)
     actionTask("EditorCompleteStatement") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.statement.completion.complete.for", action(it), code("for"))
     }
     task("EditorCompleteStatement") {
       text(JavaLessonsBundle.message("java.statement.completion.complete.if", code("if"), action(it)))
       stateCheck {
         return@stateCheck checkIfAppended()
+      }
+      proposeRestore {
+        checkExpectedStateOfEditor(previous.sample) { typedString -> "if".startsWith(typedString) }
       }
     }
     actionTask("EditorCompleteStatement") {

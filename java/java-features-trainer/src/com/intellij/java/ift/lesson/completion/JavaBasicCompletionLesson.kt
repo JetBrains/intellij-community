@@ -7,6 +7,9 @@ import training.learn.LessonsBundle
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
+import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
 import training.learn.lesson.kimpl.parseLessonSample
 
 class JavaBasicCompletionLesson(module: Module)
@@ -16,7 +19,9 @@ class JavaBasicCompletionLesson(module: Module)
     import java.lang.*;
     import java.util.*;
     
-    class BasicCompletionDemo implements Runnable{
+    import static java.lang.Byte.MAX_VALUE;
+    
+    class BasicCompletionDemo {
     
         private int i = 0;
     
@@ -25,11 +30,10 @@ class JavaBasicCompletionLesson(module: Module)
         }
     
         public BasicCompletionDemo() {
-            byte b = MAX_VALUE
+            byte b = MAX_VALUE;
         }
     
-        @Override
-        public void run() {
+        public void random() {
             Random random = new <caret>
         }
     }
@@ -37,24 +41,37 @@ class JavaBasicCompletionLesson(module: Module)
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-    actionTask("EditorChooseLookupItem") {
-      LessonsBundle.message("basic.completion.start.typing", code("Ran")) +
-      " " + JavaLessonsBundle.message("java.basic.completion.choose.first", action(it))
+    task("EditorChooseLookupItem") {
+      text(LessonsBundle.message("basic.completion.start.typing", code("Ran")) +
+           " " + JavaLessonsBundle.message("java.basic.completion.choose.first", action(it)))
+      trigger(it) {
+        editor.document.charsSequence.contains("Random()")
+      }
+      proposeRestore {
+        checkExpectedStateOfEditor(previous.sample) { typedString -> "Random".startsWith(typedString) }
+      }
     }
-    caret(18, 36)
+    caret(19, 36)
     actionTask("CodeCompletion") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.basic.completion.activate", action(it))
     }
-    actionTask("EditorChooseLookupItem") {
-      JavaLessonsBundle.message("java.basic.completion.choose.item", code("i"), action(it))
+    task("EditorChooseLookupItem") {
+      text(JavaLessonsBundle.message("java.basic.completion.choose.item", code("i"), action(it)))
+      trigger(it) {
+        editor.document.charsSequence.contains("Random(i)")
+      }
+      restoreIfModifiedOrMoved()
     }
     actionTask("EditorCompleteStatement") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.basic.completion.complete", action(it))
     }
+    caret(15, 23)
     task("CodeCompletion") {
-      caret(13, 27)
       text(JavaLessonsBundle.message("java.basic.completion.deeper.level", action(it)))
       triggers(it, it)
+      restoreIfModifiedOrMovedIncorrectly(" MAX_VALUE")
     }
     text(JavaLessonsBundle.message("java.basic.completion.module.promotion", strong(LessonsBundle.message("refactorings.module.name"))))
   }

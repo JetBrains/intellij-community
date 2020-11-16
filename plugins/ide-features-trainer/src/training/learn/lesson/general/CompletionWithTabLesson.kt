@@ -6,6 +6,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
 abstract class CompletionWithTabLesson(module: Module, lang: String, private val proposal: String) :
   KLesson("Completion with tab", LessonsBundle.message("completion.with.tab.lesson.name"), module, lang) {
@@ -16,9 +17,13 @@ abstract class CompletionWithTabLesson(module: Module, lang: String, private val
     get() = {
       prepareSample(sample)
 
-      actionTask("CodeCompletion") { LessonsBundle.message("completion.with.tab.begin.completion", action(it)) }
+      actionTask("CodeCompletion") {
+        restoreIfModifiedOrMoved()
+        LessonsBundle.message("completion.with.tab.begin.completion", action(it))
+      }
 
       actionTask("EditorChooseLookupItemReplace") {
+        restoreIfModifiedOrMoved()
         LessonsBundle.message("completion.with.tab.finish.with.tab", code(proposal), action("EditorTab"))
       }
     }

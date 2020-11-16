@@ -6,6 +6,7 @@ import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
 
 abstract class ContextActionsLesson(module: Module, lang: String) :
   KLesson("context.actions", LessonsBundle.message("context.actions.lesson.name"), module, lang) {
@@ -14,17 +15,18 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
   abstract val warningQuickFix: String
   abstract val warningCaret: String
 
-  abstract val generalIntention: String
-  abstract val generalIntentionCaret: String
+  abstract val intentionText: String
+  abstract val intentionCaret: String
+  abstract val intentionPossibleArea: String
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-    caret(warningCaret)
     task("ShowIntentionActions") {
       text(LessonsBundle.message("context.actions.invoke.intentions.for.warning", LessonUtil.actionName(it), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains(warningQuickFix)
       }
+      restoreIfModifiedOrMovedIncorrectly(warningCaret)
     }
 
     var before = ""
@@ -41,14 +43,16 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
       stateCheck {
         (insideIntention() && before != editor.document.text).also { updateBefore() }
       }
+      restoreIfModifiedOrMovedIncorrectly(warningCaret)
     }
 
-    caret(generalIntentionCaret)
+    caret(intentionCaret)
     task("ShowIntentionActions") {
       text(LessonsBundle.message("context.actions.invoke.general.intentions", LessonUtil.actionName(it), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains(generalIntention)
+        item.toString().contains(intentionText)
       }
+      restoreIfModifiedOrMovedIncorrectly(intentionPossibleArea)
     }
 
     prepareRuntimeTask {
@@ -56,10 +60,11 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
     }
 
     task {
-      text(LessonsBundle.message("context.actions.apply.intention", strong(generalIntention)))
+      text(LessonsBundle.message("context.actions.apply.intention", strong(intentionText)))
       stateCheck {
         (insideIntention() && before != editor.document.text).also { updateBefore() }
       }
+      restoreIfModifiedOrMovedIncorrectly(intentionPossibleArea)
     }
 
     text(LessonsBundle.message("context.actions.refactorings.promotion",
