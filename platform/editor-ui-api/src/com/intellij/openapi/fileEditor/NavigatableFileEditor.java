@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * File editor which supports possibility to navigate to {@link Navigatable} element
  *
  * @author spleaner
+ * @see FileEditorNavigatable
  */
 public interface NavigatableFileEditor extends FileEditor {
 
