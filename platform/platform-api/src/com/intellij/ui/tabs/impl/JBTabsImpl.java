@@ -817,7 +817,7 @@ public class JBTabsImpl extends JComponent
 
 
   /**
-   * TODO use {@link RdGraphicsExKt#childAtMouse(IdeGlassPane, Container)}
+   * TODO use RdGraphicsExKt#childAtMouse(IdeGlassPane, Container)
    */
   @Deprecated
   final class TabActionsAutoHideListener extends MouseMotionAdapter implements Weighted {
