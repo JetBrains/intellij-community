@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
@@ -372,11 +373,8 @@ public class SearchTextField extends JPanel {
       final String value = (String)list.getSelectedValue();
       getTextEditor().setText(value != null ? value : "");
       addCurrentTextToHistory();
-      if (myPopup != null) {
-        myPopup.cancel();
-        myPopup = null;
-        reInitPopup();
-      }
+      reInitPopup();
+
     };
   }
 
@@ -391,6 +389,11 @@ public class SearchTextField extends JPanel {
   }
 
   private void reInitPopup() {
+    if(myPopup != null){
+      myPopup.cancel();
+      Disposer.dispose(myPopup);
+      myPopup = null;
+    }
     final JList<String> list = new JBList<>(myModel);
     final Runnable chooseRunnable = createItemChosenCallback(list);
     if(ApplicationManager.getApplication() != null && JBPopupFactory.getInstance() != null) {
