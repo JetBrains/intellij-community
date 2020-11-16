@@ -27,8 +27,8 @@ object FeatureUsageLogger {
   /**
    * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
    */
-  fun log(group: EventLogGroup, action: String) {
-    loggerProvider.logger.logAsync(group, action, false)
+  fun log(group: EventLogGroup, action: String): CompletableFuture<Void> {
+    return loggerProvider.logger.logAsync(group, action, false)
   }
 
   /**
