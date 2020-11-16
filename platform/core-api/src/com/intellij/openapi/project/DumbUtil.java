@@ -14,7 +14,7 @@ public interface DumbUtil {
 
   /**
    * @return true iff one may use file based indices, i.e. project is not in dumb mode, or
-   * {@link com.intellij.util.indexing.FileBasedIndex#ignoreDumbMode(Runnable, com.intellij.util.indexing.DumbModeAccessType)} was used
+   * {@link com.intellij.util.indexing.FileBasedIndex#ignoreDumbMode} was used
    */
   boolean mayUseIndices();
 }
