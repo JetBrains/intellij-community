@@ -110,9 +110,11 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     var (callElements, method) = MethodExtractor().extractMethod(extractOptions)
     val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
     editor.caretModel.moveToOffset(callExpression.textOffset)
-    methodNameRange = editor.document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
-    methodCallExpressionRange = editor.document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
+    methodCallExpressionRange = editor.document.createRangeMarker(callExpression.methodExpression.textRange)
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method)
+    methodNameRange = editor.document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
+    methodCallExpressionRange.isGreedyToRight = true
+    methodCallExpressionRange.isGreedyToLeft = true
     setElementToRename(method)
 
     preview = EditorCodePreview.create(editor)
