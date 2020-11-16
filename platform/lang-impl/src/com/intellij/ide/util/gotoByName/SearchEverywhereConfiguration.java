@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project;
 @State(name = "SearchEverywhereConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SearchEverywhereConfiguration extends ChooseByNameFilterConfiguration<String>  {
 
-  public static SearchEverywhereConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, SearchEverywhereConfiguration.class);
+  public static SearchEverywhereConfiguration getInstance() {
+    return ServiceManager.getService(SearchEverywhereConfiguration.class);
   }
 
   @Override
