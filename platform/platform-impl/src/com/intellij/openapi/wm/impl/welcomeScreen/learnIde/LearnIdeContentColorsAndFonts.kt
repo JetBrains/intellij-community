@@ -3,8 +3,8 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.UIUtil
 import java.awt.Font
 import javax.swing.JLabel
 import javax.swing.text.SimpleAttributeSet
@@ -35,8 +35,11 @@ object LearnIdeContentColorsAndFonts {
   val HEADER = SimpleAttributeSet()
 
   init {
+
+    val labelFontName = UIUtil.getLabelFont().fontName
+
     StyleConstants.setFontSize(REGULAR, UISettings.instance.fontSize - 1)
-    StyleConstants.setFontFamily(REGULAR, UISettings.instance.fontFace)
+    StyleConstants.setFontFamily(REGULAR, labelFontName)
     StyleConstants.setForeground(REGULAR, HeaderColor)
 
     StyleConstants.setLeftIndent(REGULAR, 0.0f)
@@ -46,7 +49,7 @@ object LearnIdeContentColorsAndFonts {
     StyleConstants.setLineSpacing(REGULAR, 0.0f)
 
     StyleConstants.setFontSize(HEADER, HeaderFont.size)
-    StyleConstants.setFontFamily(HEADER, UISettings.instance.fontFace)
+    StyleConstants.setFontFamily(HEADER, labelFontName)
     StyleConstants.setForeground(HEADER, HeaderColor)
     StyleConstants.setBold(HEADER, true)
 
@@ -56,7 +59,7 @@ object LearnIdeContentColorsAndFonts {
     StyleConstants.setSpaceBelow(PARAGRAPH_STYLE, 0.0f)
     StyleConstants.setLineSpacing(PARAGRAPH_STYLE, 0.0f)
 
-    StyleConstants.setFontFamily(MODULE_HEADER, UISettings.instance.fontFace)
+    StyleConstants.setFontFamily(MODULE_HEADER, labelFontName)
     StyleConstants.setFontSize(MODULE_HEADER, UISettings.instance.fontSize - 1)
     StyleConstants.setForeground(MODULE_HEADER, ModuleHeaderColor)
     StyleConstants.setLeftIndent(MODULE_HEADER, 0.0f)
@@ -65,7 +68,7 @@ object LearnIdeContentColorsAndFonts {
     StyleConstants.setSpaceBelow(MODULE_HEADER, 0.0f)
     StyleConstants.setLineSpacing(MODULE_HEADER, 0.0f)
 
-    StyleConstants.setFontFamily(MODULE_DESCRIPTION, UISettings.instance.fontFace)
+    StyleConstants.setFontFamily(MODULE_DESCRIPTION, labelFontName)
     StyleConstants.setFontSize(MODULE_DESCRIPTION, UISettings.instance.fontSize - 2)
     StyleConstants.setForeground(MODULE_DESCRIPTION, ModuleDescriptionColor)
     StyleConstants.setLeftIndent(MODULE_DESCRIPTION, 0.0f)
