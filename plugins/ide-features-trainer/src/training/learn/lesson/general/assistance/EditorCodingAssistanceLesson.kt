@@ -52,16 +52,12 @@ abstract class EditorCodingAssistanceLesson(module: Module, lang: String, privat
       }
     }
 
-    prepareRuntimeTask {
-      val offset = editor.document.charsSequence.indexOf(variableNameToHighlight)
-      if (offset != -1) {
-        editor.caretModel.moveToOffset(offset)
-      }
-    }
+    caret(variableNameToHighlight)
 
     task("HighlightUsagesInFile") {
       text(LessonsBundle.message("editor.coding.assistance.highlight.usages", action(it)))
       trigger(it) { checkSymbolAtCaretIsLetter() }
+      restoreIfModifiedOrMoved()
       test { actions(it) }
     }
   }

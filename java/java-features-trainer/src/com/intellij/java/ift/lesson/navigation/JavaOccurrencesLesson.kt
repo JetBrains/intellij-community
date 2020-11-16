@@ -20,12 +20,13 @@ class JavaOccurrencesLesson(module: Module)
         final private String DATABASE = "MyDataBase";
         DataEntry myPerson;
 
-        OccurrencesDemo(String name, int age, String <select>cellphone</select>){
+        OccurrencesDemo(String name, int age, String <select>cellphone</select>) {
             myPerson = new Person(name, age, "Cellphone: " + cellphone);
         }
 
-        interface DataEntry{
+        interface DataEntry {
             String getCellphone();
+            
             String getName();
         }
 

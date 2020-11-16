@@ -12,7 +12,7 @@ import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
-class CodeFormatLesson(module: Module, override val lang: String, private val sample: LessonSample) :
+class CodeFormatLesson(module: Module, override val lang: String, private val sample: LessonSample, private val optimizeImports: Boolean) :
   KLesson("CodeAssistance.CodeFormatting", LessonsBundle.message("code.format.lesson.name"), module, lang) {
 
   override val lessonContent: LessonContext.() -> Unit = {
@@ -40,7 +40,7 @@ class CodeFormatLesson(module: Module, override val lang: String, private val sa
       }
     }
 
-    if (lang != "ruby") {
+    if (optimizeImports) {
       task("ShowReformatFileDialog") {
         text(LessonsBundle.message("code.format.show.reformat.file.dialog", action(it)))
         triggerStart(it)
