@@ -314,10 +314,11 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
 
   public void testPerformance() throws IOException {
     final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
+    PersistentHashMapImpl<String, String> unwrappedMap = PersistentHashMapImpl.unwrap(myMap);
     final IntObjectCache.DeletedPairsListener listener = (key, mapKey) -> {
       try {
         final String _mapKey = (String)mapKey;
-        assertEquals(myMap.enumerate(_mapKey), key);
+        assertEquals(unwrappedMap.enumerate(_mapKey), key);
 
         final String expectedMapValue = _mapKey == null ? null : _mapKey + "_value";
         final String actual = myMap.get(_mapKey);
@@ -337,7 +338,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
         stringCache.addDeletedPairsListener(listener);
         for (int i = 0; i < 100000; ++i) {
           final String string = createRandomString();
-          final int id = myMap.enumerate(string);
+          final int id = unwrappedMap.enumerate(string);
           stringCache.put(id, string);
           myMap.put(string, string + "_value");
         }

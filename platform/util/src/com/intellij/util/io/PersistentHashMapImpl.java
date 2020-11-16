@@ -428,12 +428,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     }
   }
 
-  /**
-   * @deprecated hash map is not an enumerator
-   */
-  @Override
-  @Deprecated
-  public int enumerate(Key name) throws IOException {
+  int enumerate(Key name) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (getDataAccessLock()) {
       myIntAddressForNewRecord = canUseIntAddressForNewRecord(myValueStorage.getSize());

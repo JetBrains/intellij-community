@@ -41,6 +41,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl = impl;
   }
 
+  @Override
   public boolean isCorrupted() {
     //note: this method used in Scala plugin
     return myImpl.isCorrupted();
@@ -119,14 +120,6 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   /**
-   * @deprecated hash map is not an enumerator
-   */
-  @Deprecated
-  public final int enumerate(Key name) throws IOException {
-    return myImpl.enumerate(name);
-  }
-
-  /**
    * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender}
    */
   @Deprecated
@@ -195,6 +188,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     return myImpl.get(key);
   }
 
+  @Override
   public final boolean containsMapping(Key key) throws IOException {
     return myImpl.containsMapping(key);
   }
