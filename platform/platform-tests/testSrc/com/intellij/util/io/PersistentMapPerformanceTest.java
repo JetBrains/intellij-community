@@ -112,11 +112,13 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
         }
       }
       map.close();
+      //noinspection ConstantConditions
       final boolean isSmall = stringsCount < 1000000;
       assertTrue(makesSenseToCompact(map));
       long started = System.currentTimeMillis();
 
       map = constructor.createMap(file);
+      //noinspection ConstantConditions
       if (isSmall) {
         PersistentHashMapImpl.unwrap(map).compact();
       }
@@ -184,12 +186,10 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     PersistentHashMap<Integer, Integer> map = null;
 
     try {
-      map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
-        @Override
-        protected boolean inlineValues() {
-          return true;
-        }
-      };
+      map = PersistentHashMapBuilder
+        .newBuilder(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
+        .inlineValues()
+        .build();
 
       final PersistentHashMap<Integer, Integer> mapFinal = map;
       for (Int2IntMap.Entry entry : checkMap.int2IntEntrySet()) {
@@ -205,12 +205,10 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       map.close();
       LOG.debug("Done:" + (System.currentTimeMillis() - started));
       started = System.currentTimeMillis();
-      map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
-        @Override
-        protected boolean inlineValues() {
-          return true;
-        }
-      };
+      map = PersistentHashMapBuilder.newBuilder(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
+        .inlineValues()
+        .build();
+
       final PersistentHashMap<Integer, Integer> mapFinal2 = map;
       for (Int2IntMap.Entry entry : checkMap.int2IntEntrySet()) {
         try {
