@@ -18,6 +18,7 @@ import training.commands.kotlin.PreviousTaskInfo
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskTestContext
 import training.learn.ActionsRecorder
+import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
 import training.ui.LearnToolWindowFactory
 import training.util.useNewLearningUi
@@ -37,7 +38,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
     get() = FileEditorManager.getInstance(project).selectedTextEditor
 
   val editor: Editor
-    get() = selectedEditor ?: error("no editor selected now")
+    get() = selectedEditor ?: throw NoTextEditor()
 
   data class TaskData(var shouldRestoreToTask: (() -> TaskContext.TaskId?)? = null,
                       var delayMillis: Int = 0)

@@ -22,6 +22,10 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import training.check.Check
+import training.commands.kotlin.TaskContext
+import training.learn.exceptons.NoTextEditor
+import training.learn.lesson.LessonManager
+import training.ui.LearningUiManager
 import training.util.DataLoader
 import java.awt.KeyboardFocusManager
 import java.awt.event.KeyEvent
@@ -302,6 +306,17 @@ class ActionsRecorder(private val project: Project,
         return true
       }
       return false
+    }
+    catch (e: NoTextEditor) {
+      val activeToolWindow = LearningUiManager.activeToolWindow
+      val lesson = LessonManager.instance.currentLesson
+      if (activeToolWindow != null && lesson != null) {
+        val notification = TaskContext.RestoreNotification(LearnBundle.message("learn.restore.notification.editor.closed")) {
+          CourseManager.instance.openLesson(activeToolWindow.project, lesson)
+        }
+        LessonManager.instance.setRestoreNotification(notification)
+      }
+      LessonManager.instance.stopLesson()
     }
     catch (e: Exception) {
       LOG.error("IFT check produces exception", e)
