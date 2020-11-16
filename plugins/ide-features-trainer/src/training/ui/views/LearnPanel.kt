@@ -8,6 +8,7 @@ import com.intellij.openapi.project.guessCurrentProject
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.ui.JBUI
@@ -34,7 +35,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
   private val lessonPanel = JPanel()
 
   private val moduleNameLabel: JLabel = if (!useNewLearningUi) JLabel()
-  else LinkLabel<Any>("", null) { _, _ ->
+  else LinkLabelWithBackArrow<Any> { _, _ ->
     LessonManager.instance.stopLesson()
     LearningUiManager.resetModulesView()
   }
@@ -207,7 +208,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   fun setModuleName(@Nls moduleName: String) {
-    moduleNameLabel.text = "← $moduleName"
+    moduleNameLabel.text = "   $moduleName"
     moduleNameLabel.foreground = UISettings.instance.defaultTextColor
     moduleNameLabel.isFocusable = false
     this.revalidate()
@@ -527,6 +528,31 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
 
   fun clearRestoreMessage() {
     lessonMessagePane.clearRestoreMessages()
+  }
+
+  class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("ferfe", null, linkListener) {
+
+    init {
+      font = UIUtil.getLabelFont()
+    }
+
+    override fun paint(g: Graphics?) {
+      super.paint(g)
+      val arrowWingHeight = textBounds.height / 4
+
+      val g2d = g as Graphics2D
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+      val stroke3: Stroke = BasicStroke(1.2f * font.size / 13, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+      g2d.stroke = stroke3
+      g2d.color = foreground
+      g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
+                   textBounds.x + 5 * textBounds.height / 17, textBounds.y + textBounds.height / 2 - arrowWingHeight)
+      g2d.drawLine(textBounds.x + 1, textBounds.y + textBounds.height / 2,
+                   textBounds.x + 9 * textBounds.height / 17, textBounds.y + textBounds.height / 2)
+      g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
+                   textBounds.x + 5 * textBounds.height / 17, textBounds.y + textBounds.height / 2 + arrowWingHeight)
+    }
   }
 
   companion object {

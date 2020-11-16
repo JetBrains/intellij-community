@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
@@ -46,7 +47,7 @@ class LessonMessagePane : JTextPane() {
   private val restoreMessages = mutableListOf<LessonMessage>()
   private val inactiveMessages = mutableListOf<LessonMessage>()
 
-  private val fontFamily = Font(UISettings.instance.fontFace, Font.PLAIN, UISettings.instance.fontSize).family
+  private val fontFamily: String = UIUtil.getLabelFont().fontName
 
   private val ranges = mutableSetOf<RangeData>()
 
@@ -94,33 +95,34 @@ class LessonMessagePane : JTextPane() {
   }
 
   private fun initStyleConstants() {
-    font = Font(UISettings.instance.fontFace, Font.PLAIN, UISettings.instance.fontSize)
+    val labelFontName = UIUtil.getLabelFont().fontName
+    val fontSize = UISettings.instance.fontSize.toInt()
 
     StyleConstants.setForeground(INACTIVE, UISettings.instance.passedColor)
 
     StyleConstants.setFontFamily(REGULAR, fontFamily)
-    StyleConstants.setFontSize(REGULAR, UISettings.instance.fontSize)
+    StyleConstants.setFontSize(REGULAR, fontSize)
     StyleConstants.setForeground(REGULAR, JBColor.BLACK)
 
     StyleConstants.setFontFamily(BOLD, fontFamily)
-    StyleConstants.setFontSize(BOLD, UISettings.instance.fontSize)
+    StyleConstants.setFontSize(BOLD, fontSize)
     StyleConstants.setBold(BOLD, true)
     StyleConstants.setForeground(BOLD, JBColor.BLACK)
 
     StyleConstants.setFontFamily(SHORTCUT, fontFamily)
-    StyleConstants.setFontSize(SHORTCUT, UISettings.instance.fontSize)
+    StyleConstants.setFontSize(SHORTCUT, fontSize)
     StyleConstants.setBold(SHORTCUT, true)
     StyleConstants.setForeground(SHORTCUT, JBColor.BLACK)
 
     StyleConstants.setForeground(CODE, UISettings.instance.codeForegroundColor)
     EditorColorsManager.getInstance().globalScheme.editorFontName
     StyleConstants.setFontFamily(CODE, EditorColorsManager.getInstance().globalScheme.editorFontName)
-    StyleConstants.setFontSize(CODE, UISettings.instance.fontSize)
+    StyleConstants.setFontSize(CODE, fontSize)
 
     StyleConstants.setForeground(LINK, JBColor.BLUE)
     StyleConstants.setFontFamily(LINK, fontFamily)
     StyleConstants.setUnderline(LINK, true)
-    StyleConstants.setFontSize(LINK, UISettings.instance.fontSize)
+    StyleConstants.setFontSize(LINK, fontSize)
 
     StyleConstants.setLeftIndent(PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
     StyleConstants.setRightIndent(PARAGRAPH_STYLE, 0f)
@@ -437,13 +439,14 @@ class LessonMessagePane : JTextPane() {
     val fontSize = UISettings.instance.fontSize
 
     g2d.color = needColor
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     val r2d: RoundRectangle2D = if (!SystemInfo.isMac)
-      RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent + 1,
-                              rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
+      RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent + JBUIScale.scale(2f),
+                              rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 2 * indent).toDouble(),
                               arc.toDouble(), arc.toDouble())
     else
-      RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent,
-                              rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 3 * indent).toDouble(),
+      RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent + JBUIScale.scale(1f),
+                              rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 2 * indent).toDouble(),
                               arc.toDouble(), arc.toDouble())
     draw(r2d)
     g2d.color = color

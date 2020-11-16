@@ -69,7 +69,7 @@ class ModulesPanel(private val learnToolWindow: LearnToolWindow?) : JPanel() {
 
   private fun setupFontStyles() {
     StyleConstants.setFontFamily(REGULAR, UISettings.instance.fontFace)
-    StyleConstants.setFontSize(REGULAR, UISettings.instance.fontSize)
+    StyleConstants.setFontSize(REGULAR, UISettings.instance.fontSize.toInt())
     StyleConstants.setForeground(REGULAR, UISettings.instance.descriptionColor)
 
     StyleConstants.setLeftIndent(PARAGRAPH_STYLE, 0.0f)
