@@ -2,6 +2,8 @@
 package org.jetbrains.yaml;
 
 import com.intellij.application.options.*;
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
+import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAccessor;
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 
 import javax.swing.*;
+
+import java.lang.reflect.Field;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
@@ -171,5 +175,18 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       YAMLCodeStyleSettings yamlSettings = settings.getCustomSettings(YAMLCodeStyleSettings.class);
       myIndentSequence.setSelected(yamlSettings.INDENT_SEQUENCE_VALUE);
     }
+  }
+
+  @Override
+  public @Nullable CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
+                                                      @NotNull Field field) {
+    if (codeStyleObject instanceof YAMLCodeStyleSettings && "ALIGN_VALUES_PROPERTIES".equals(field.getName())) {
+      return new MagicIntegerConstAccessor(
+        codeStyleObject, field,
+        Holder.ALIGN_VALUES,
+        new String[] {"do_not_align", "on_colon", "on_value"}
+      );
+    }
+    return super.getAccessor(codeStyleObject, field);
   }
 }
