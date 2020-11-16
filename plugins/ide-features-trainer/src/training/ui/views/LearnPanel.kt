@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.guessCurrentProject
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.VerticalLayout
@@ -75,7 +76,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
       initModulePanel()
       add(modulePanel, BorderLayout.PAGE_END)
     }
-    else if (lesson.helpLinks.isNotEmpty()) {
+    else if (lesson.helpLinks.isNotEmpty() && Registry.`is`("ift.help.links", false)) {
       initFooterPanel(lesson)
       add(footer, BorderLayout.PAGE_END)
     }
@@ -93,6 +94,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
     shiftedFooter.border = MatteBorder(1, 0, 0, 0, UISettings.instance.separatorColor)
 
     val footerContent = JPanel()
+    footerContent.isOpaque = false
     footerContent.layout = VerticalLayout(5)
     footerContent.add(JLabel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text")).also {
       it.font = UISettings.instance.helpHeaderFont
@@ -110,6 +112,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
     shiftedFooter.add(Box.createHorizontalGlue())
 
     footer.add(shiftedFooter)
+    footer.isOpaque = false
     footer.layout = BoxLayout(footer, BoxLayout.Y_AXIS)
     footer.border = UISettings.instance.checkmarkShiftBorder
   }

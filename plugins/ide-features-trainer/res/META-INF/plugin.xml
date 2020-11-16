@@ -89,6 +89,10 @@
                  description="Turn on it to look at new developing UI for IFT"
                  defaultValue="TRUE"
                  restartRequired="false"/>
+    <registryKey key="ift.help.links"
+                 description="Turn on IFT Help and Resources section"
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
     <registryKey key="ift.experimental.lessons"
                  description="Turn on it to preview incomplete lessons"
                  defaultValue="FALSE"
