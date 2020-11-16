@@ -11,6 +11,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.dropMnemonic
 import javax.swing.JList
 
@@ -18,6 +19,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String, module: Module, langu
   : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name"), module, languageId) {
   fun LessonContext.extractParameterTasks() {
     actionTask("Refactorings.QuickListPopupAction") {
+      restoreIfModifiedOrMoved()
       LessonsBundle.message("refactoring.menu.show.refactoring.list", action(it))
     }
     task(ActionsBundle.message("action.IntroduceParameter.text").dropMnemonic()) {
@@ -25,6 +27,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String, module: Module, langu
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JList<*> ->
         ui.model.size > 0 && ui.model.getElementAt(0).toString().contains(it)
       }
+      restoreIfModifiedOrMoved()
       test {
         type("pa")
       }
@@ -35,6 +38,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String, module: Module, langu
                                  action("EditorChooseLookupItem"), LessonUtil.actionName(it)))
       trigger(it)
       stateCheck { hasInplaceRename() }
+      restoreIfModifiedOrMoved()
       test {
         GuiTestUtil.shortcut(Key.ENTER)
       }

@@ -21,6 +21,7 @@ import training.learn.lesson.LessonManager
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import kotlin.random.Random
@@ -43,6 +44,7 @@ abstract class RecentFilesLesson(module: Module, lang: String)
     task("GotoDeclaration") {
       text(LessonsBundle.message("recent.files.first.transition", code(transitionMethodName), action(it)))
       trigger(it) { virtualFile.name.startsWith(transitionFileName) }
+      restoreIfModifiedOrMoved()
       test { actions(it) }
     }
 

@@ -18,6 +18,7 @@ import training.learn.LessonsBundle
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.closeAllFindTabs
 
 abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
@@ -34,6 +35,7 @@ abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
         trigger(it, { state() }) { before, _ ->
           before != null && !isInsidePsi(before.target.navigationElement, before.position)
         }
+        restoreIfModifiedOrMoved()
         test { actions(it) }
       }
 
@@ -49,6 +51,7 @@ abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
                    isInsidePsi(navigationElement, before.position) &&
                    !isInsidePsi(navigationElement, now.position)
         }
+        restoreIfModifiedOrMoved()
         test {
           actions(it)
           ideFrame {
@@ -67,6 +70,7 @@ abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
         triggerByUiComponentAndHighlight { ui: BaseLabel ->
           ui.text?.contains(LearnBundle.message("usages.tab.name")) ?: false
         }
+        restoreIfModifiedOrMoved()
         test {
           actions(it)
         }

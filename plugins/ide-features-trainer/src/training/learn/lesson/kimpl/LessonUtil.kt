@@ -62,18 +62,48 @@ object LessonUtil {
     return sample.text.substring(0, sample.startOffset) + inserted + sample.text.substring(sample.startOffset)
   }
 
-  fun TaskRuntimeContext.checkPositionOfEditor(sample: LessonSample): TaskContext.RestoreNotification? {
-    fun invalidCaret(): Boolean {
-      val selection = sample.selection
-      val currentCaret = editor.caretModel.currentCaret
-      return if (selection != null && selection.first != selection.second) {
-        currentCaret.selectionStart != selection.first || currentCaret.selectionEnd != selection.second
-      }
-      else currentCaret.offset != sample.startOffset
+  /**
+   * Checks that user edited sample text, moved caret to any place of editor or changed selection
+   */
+  fun TaskContext.restoreIfModifiedOrMoved(sample: LessonSample? = null) {
+    proposeRestore {
+      checkPositionOfEditor(sample ?: previous.sample)
     }
+  }
 
+  /**
+   * Checks that user edited sample text or moved caret outside of [possibleCaretArea] text
+   */
+  fun TaskContext.restoreIfModifiedOrMovedIncorrectly(possibleCaretArea: String, sample: LessonSample? = null) {
+    proposeRestore {
+      checkPositionOfEditor(sample ?: previous.sample) {
+        checkCaretOnText(possibleCaretArea)
+      }
+    }
+  }
+
+  fun TaskRuntimeContext.checkPositionOfEditor(sample: LessonSample,
+                                               checkCaret: TaskRuntimeContext.(LessonSample) -> Boolean = { checkCaretValid(it) }
+  ): TaskContext.RestoreNotification? {
     return checkExpectedStateOfEditor(sample, false)
-           ?: if (invalidCaret()) sampleRestoreNotification(TaskContext.CaretRestoreProposal, sample) else null
+           ?: if (!checkCaret(sample)) sampleRestoreNotification(TaskContext.CaretRestoreProposal, sample) else null
+  }
+
+  private fun TaskRuntimeContext.checkCaretValid(sample: LessonSample): Boolean {
+    val selection = sample.selection
+    val currentCaret = editor.caretModel.currentCaret
+    return if (selection != null && selection.first != selection.second) {
+      currentCaret.selectionStart == selection.first && currentCaret.selectionEnd == selection.second
+    }
+    else currentCaret.offset == sample.startOffset
+  }
+
+  private fun TaskRuntimeContext.checkCaretOnText(text: String): Boolean {
+    val caretOffset = editor.caretModel.offset
+    val textStartOffset = editor.document.charsSequence.indexOf(text)
+    if (textStartOffset == -1) throw IllegalArgumentException("Not found text: '$text' in the document")
+    val textEndOffset = textStartOffset + text.length
+    return caretOffset in textStartOffset..textEndOffset
   }
 
   fun TaskRuntimeContext.checkExpectedStateOfEditor(sample: LessonSample,

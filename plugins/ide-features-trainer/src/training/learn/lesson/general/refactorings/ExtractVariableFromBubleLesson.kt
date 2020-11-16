@@ -8,6 +8,7 @@ import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
 class ExtractVariableFromBubbleLesson(module: Module, lang: String, private val sample: LessonSample)
   : KLesson("Extract variable", LessonsBundle.message("extract.variable.lesson.name"), module, lang) {
@@ -17,6 +18,7 @@ class ExtractVariableFromBubbleLesson(module: Module, lang: String, private val 
       task("IntroduceVariable") {
         text(LessonsBundle.message("extract.variable.start.refactoring", action(it), code("i + 1")))
         triggerStart("IntroduceVariable")
+        restoreIfModifiedOrMoved()
         test {
           actions(it)
         }

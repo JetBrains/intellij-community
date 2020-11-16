@@ -4,14 +4,13 @@ package training.learn.lesson.general.assistance
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.button
-import com.intellij.testGuiFramework.util.Key
 import training.learn.LessonsBundle
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
 class CodeFormatLesson(module: Module, override val lang: String, private val sample: LessonSample) :
   KLesson("CodeAssistance.CodeFormatting", LessonsBundle.message("code.format.lesson.name"), module, lang) {
@@ -25,14 +24,18 @@ class CodeFormatLesson(module: Module, override val lang: String, private val sa
     }
 
     actionTask("ReformatCode") {
+      restoreIfModifiedOrMoved()
       LessonsBundle.message("code.format.reformat.selection", action(it))
+    }
+
+    prepareRuntimeTask {
+      editor.selectionModel.removeSelection()
     }
 
     task("ReformatCode") {
       text(LessonsBundle.message("code.format.reformat.file", action(it)))
       trigger(it) { editor.selectionModel.selectedText == null }
       test {
-        GuiTestUtil.shortcut(Key.DOWN)
         actions(it)
       }
     }

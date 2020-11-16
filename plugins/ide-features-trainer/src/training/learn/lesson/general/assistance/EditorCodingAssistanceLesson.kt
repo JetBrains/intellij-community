@@ -8,6 +8,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
 abstract class EditorCodingAssistanceLesson(module: Module, lang: String, private val sample: LessonSample) :
   KLesson("CodeAssistance.EditorCodingAssistance", LessonsBundle.message("editor.coding.assistance.lesson.name"), module, lang) {
@@ -24,12 +25,14 @@ abstract class EditorCodingAssistanceLesson(module: Module, lang: String, privat
     prepareSample(sample)
 
     actionTask("GotoNextError") {
+      restoreIfModifiedOrMoved()
       LessonsBundle.message("editor.coding.assistance.goto.next.error", action(it))
     }
 
     task("ShowErrorDescription") {
       text(LessonsBundle.message("editor.coding.assistance.show.error.description", action(it)))
       trigger(it)
+      restoreIfModifiedOrMoved()
       test {
         Thread.sleep(500)
         actions(it)
@@ -39,6 +42,7 @@ abstract class EditorCodingAssistanceLesson(module: Module, lang: String, privat
     task("ShowIntentionActions") {
       text(LessonsBundle.message("editor.coding.assistance.show.intention", action(it), strong(intentionDisplayName)))
       stateCheck { editor.document.charsSequence.contains(fixedText) }
+      restoreIfModifiedOrMoved()
       test {
         actions(it)
         ideFrame {

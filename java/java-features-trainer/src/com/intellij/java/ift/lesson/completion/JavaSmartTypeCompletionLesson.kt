@@ -6,6 +6,7 @@ import com.intellij.java.ift.JavaLessonsBundle
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.parseLessonSample
 
 class JavaSmartTypeCompletionLesson(module: Module)
@@ -39,17 +40,19 @@ class JavaSmartTypeCompletionLesson(module: Module)
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
+    caret(13, 19)
     task {
-      caret(13, 19)
       text(JavaLessonsBundle.message("java.smart.type.completion.apply", action("SmartTypeCompletion"), action("EditorChooseLookupItem")))
       trigger("SmartTypeCompletion")
       trigger("EditorChooseLookupItem")
+      restoreIfModifiedOrMoved()
     }
+    caret(20, 16)
     task {
-      caret(20, 16)
       text(JavaLessonsBundle.message("java.smart.type.completion.return", action("SmartTypeCompletion"), action("EditorChooseLookupItem")))
       triggers("SmartTypeCompletion", "SmartTypeCompletion")
       trigger("EditorChooseLookupItem")
+      restoreIfModifiedOrMoved()
     }
   }
 }

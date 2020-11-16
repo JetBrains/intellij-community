@@ -15,14 +15,13 @@ class JavaPostfixCompletionLesson(module: Module)
   val sample = parseLessonSample("""
     class PostfixCompletionDemo{
         public void demonstrate(int show_times){
-            (show_times == 10)
+            (show_times == 10)<caret>
         }
     }
   """.trimIndent())
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-    caret(4, 27)
     actionTask("EditorChooseLookupItem") {
       JavaLessonsBundle.message("java.postfix.completion.apply", code("."), code("if"), action("EditorChooseLookupItem"))
     }

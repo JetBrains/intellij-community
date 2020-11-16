@@ -7,6 +7,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import kotlin.math.min
 
 class ParameterInfoLesson(module: Module, lang: String, private val sample: LessonSample) :
@@ -21,6 +22,7 @@ class ParameterInfoLesson(module: Module, lang: String, private val sample: Less
     }
 
     actionTask("ParameterInfo") {
+      restoreIfModifiedOrMoved()
       LessonsBundle.message("parameter.info.use.action", action(it))
     }
 
