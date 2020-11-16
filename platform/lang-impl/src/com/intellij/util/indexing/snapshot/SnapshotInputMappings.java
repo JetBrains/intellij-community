@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -82,8 +83,8 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
     return myHashIdForwardIndexAccessor;
   }
 
-  public File getInputIndexStorageFile() {
-    return new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
+  public Path getInputIndexStorageFile() {
+    return IndexInfrastructure.getIndexRootDir(myIndexId).toPath().resolve("fileIdToHashId");
   }
 
   @NotNull

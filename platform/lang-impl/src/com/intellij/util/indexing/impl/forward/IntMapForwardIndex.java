@@ -4,17 +4,17 @@ package com.intellij.util.indexing.impl.forward;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class IntMapForwardIndex implements IntForwardIndex {
   @NotNull
-  private final File myStorageFile;
+  private final Path myStorageFile;
   private final boolean myHasChunks;
   @NotNull
   private volatile PersistentMap<Integer, Integer> myPersistentMap;
 
-  public IntMapForwardIndex(@NotNull File storageFile,
+  public IntMapForwardIndex(@NotNull Path storageFile,
                             boolean hasChunks) throws IOException {
     myStorageFile = storageFile;
     myHasChunks = hasChunks;
@@ -22,10 +22,10 @@ public class IntMapForwardIndex implements IntForwardIndex {
   }
 
   @NotNull
-  private static PersistentMap<Integer, Integer> createMap(@NotNull File storageFile,
+  private static PersistentMap<Integer, Integer> createMap(@NotNull Path storageFile,
                                                            boolean hasChunks) throws IOException {
     return PersistentHashMapBuilder
-      .newBuilder(storageFile.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
+      .newBuilder(storageFile, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
       .inlineValues()
       .hasChunks(hasChunks)
       .build();
