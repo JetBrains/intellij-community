@@ -27,12 +27,12 @@ public class IntMapForwardIndex implements IntForwardIndex {
     Boolean old = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
     try {
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(!myHasChunks);
-      myPersistentMap = new PersistentHashMap<Integer, Integer>(myStorageFile.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
-        @Override
-        protected boolean wantNonNegativeIntegralValues() {
-          return true;
-        }
-      };
+      myPersistentMap = new PersistentHashMap<>(myStorageFile.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
+          @Override
+          protected boolean inlineValues() {
+            return true;
+          }
+        };
     }
     catch (IOException e) {
       IOUtil.deleteAllFilesStartingWith(myStorageFile);

@@ -32,7 +32,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   PersistentHashMap(@NotNull PersistentHashMapBuilder<Key, Value> builder, boolean checkInheritedMembers) throws IOException {
     if (checkInheritedMembers) {
       builder.withReadonly(isReadOnly());
-      builder.withWantNonNegativeIntegralValues(wantNonNegativeIntegralValues());
+      builder.inlineValues(inlineValues());
     }
     myImpl = new PersistentHashMapImpl<>(builder);
   }
@@ -86,7 +86,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    * @deprecated Please use {@link PersistentHashMapBuilder} instead
    */
   @Deprecated
-  protected boolean wantNonNegativeIntegralValues() {
+  protected boolean inlineValues() {
     return false;
   }
 

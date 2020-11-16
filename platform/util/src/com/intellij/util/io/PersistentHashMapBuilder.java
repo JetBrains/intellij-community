@@ -19,7 +19,7 @@ public final class PersistentHashMapBuilder<Key, Value> {
   private Integer myInitialSize = null;
   private Integer myVersion = null;
   private StorageLockContext myLockContext = null;
-  private Boolean myWantNonNegativeIntegralValues = null;
+  private Boolean myInlineValues = null;
   private Boolean myIsReadOnly = null;
 
   private PersistentHashMapBuilder(@NotNull Path file,
@@ -81,14 +81,17 @@ public final class PersistentHashMapBuilder<Key, Value> {
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> withWantNonNegativeIntegralValues(@Nullable Boolean wantNonNegativeIntegralValues) {
-    myWantNonNegativeIntegralValues = wantNonNegativeIntegralValues;
+  public PersistentHashMapBuilder<Key, Value> inlineValues(@Nullable Boolean inlineValues) {
+    if (Boolean.TRUE.equals(inlineValues) && !(myValueExternalizer instanceof IntInlineKeyDescriptor)) {
+      throw new IllegalStateException("can't inline values for externalizer " + myValueExternalizer.getClass());
+    }
+    myInlineValues = inlineValues;
     return this;
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> wantNonNegativeIntegralValues() {
-    return withWantNonNegativeIntegralValues(true);
+  public PersistentHashMapBuilder<Key, Value> inlineValues() {
+    return inlineValues(true);
   }
 
   @NotNull
@@ -107,8 +110,8 @@ public final class PersistentHashMapBuilder<Key, Value> {
     return defaultValue;
   }
 
-  public boolean getWantNonNegativeIntegralValues(boolean defaultValue) {
-    if (myWantNonNegativeIntegralValues != null) return myWantNonNegativeIntegralValues;
+  public boolean getInlineValues(boolean defaultValue) {
+    if (myInlineValues != null) return myInlineValues;
     return defaultValue;
   }
 

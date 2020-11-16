@@ -138,7 +138,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
 
     final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
-    myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && builder.getWantNonNegativeIntegralValues(false);
+    myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && builder.getInlineValues(false);
     myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
 
     myRecordBuffer = ThreadLocal
