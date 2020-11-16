@@ -26,6 +26,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.orNull
 import com.intellij.util.io.BaseInputStreamReader
+import com.sun.jna.platform.unix.LibC
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.MetadataUtils
@@ -55,6 +56,8 @@ object ProcessMediatorDaemonLauncher {
 
         val daemonLaunchOptions = handshakeTransport.getDaemonLaunchOptions().let {
           if (SystemInfo.isWindows) it else it.copy(trampoline = sudo, daemonize = sudo, leaderPid = ProcessHandle.current().pid())
+        }.let {
+          if (!SystemInfo.isMac) it else it.copy(machNamespaceUid = LibC.INSTANCE.getuid())
         }
         val daemonCommandLine = createLauncherCommandLine(daemonLaunchOptions)
         val launcherCommandLine =
