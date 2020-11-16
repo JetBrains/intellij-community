@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
+import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -9,7 +10,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
@@ -107,24 +107,19 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val replacedImport = FragmentState(importRange, document.getText(importRange.range))
     fragmentsToRevert.add(replacedImport)
 
-    val (callElements, method) = MethodExtractor().extractMethod(extractOptions)
+    var (callElements, method) = MethodExtractor().extractMethod(extractOptions)
     val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
     editor.caretModel.moveToOffset(callExpression.textOffset)
-    val manager = PsiDocumentManager.getInstance(project)
-    manager.doPostponedOperationsAndUnblockDocument(editor.document)
-    manager.commitDocument(editor.document)
-    setElementToRename(method)
-
     methodNameRange = editor.document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
     methodCallExpressionRange = editor.document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
+    method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method)
+    setElementToRename(method)
 
     preview = EditorCodePreview.create(editor)
 
-    val callLines = findLines(document, enclosingTextRangeOf(callElements.first(), callElements.last()))
-    val callNavigatableRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
+    val callLines = findLines(document, callRange.range)
     val file = method.containingFile.virtualFile
-    Disposer.register(preview, Disposable { callNavigatableRange.dispose() })
-    preview.addPreview(callLines) { navigate(project, file, callNavigatableRange.endOffset)}
+    preview.addPreview(callLines) { navigate(project, file, methodCallExpressionRange.endOffset)}
 
     val methodLines = findLines(document, method.textRange).trimToLength(4)
     preview.addPreview(methodLines) { navigate(project, file, methodNameRange.endOffset) }
