@@ -1,4 +1,4 @@
-import jspecify.annotations.DefaultNonNull;
+import org.jspecify.annotations.DefaultNonNull;
 
 @DefaultNonNull
 class X {

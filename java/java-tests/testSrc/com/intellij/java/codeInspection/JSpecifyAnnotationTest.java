@@ -33,7 +33,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,7 +56,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     }
   }; 
   
-  private static final String PACKAGE_NAME = "jspecify.annotations";
+  private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/codeanalysis/");
   @Parameterized.Parameter
   public String myFileName;
@@ -90,7 +89,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
   @Test
   public void test() throws IOException {
     Path path = PATH.resolve(myFileName);
-    String fileText = new String(Files.readAllBytes(path), StandardCharsets.UTF_8).replace("\r\n", "\n");
+    String fileText = Files.readString(path).replace("\r\n", "\n");
     String stripped = fileText.replaceAll("/\\*ca-[a-z\\-]+\\*/", "");
     PsiFile file = myFixture.configureByText(path.getFileName().toString(), stripped);
 
