@@ -6,8 +6,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.codeInsight.intention.*
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.codeInspection.ex.QuickFixWrapper
@@ -39,6 +38,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         const val FIXTURE_CLASS_DIRECTIVE = "FIXTURE_CLASS"
         const val SHOULD_FAIL_WITH_DIRECTIVE = "SHOULD_FAIL_WITH"
         const val FORCE_PACKAGE_FOLDER_DIRECTIVE = "FORCE_PACKAGE_FOLDER"
+        const val PRIORITY_DIRECTIVE = "PRIORITY"
 
         private val quickFixesAllowedToResolveInWriteAction = AllowedToResolveUnderWriteActionData(
                 KotlinRoot.DIR.resolve("idea/testData/quickfix/allowResolveInWriteAction.txt").path,
@@ -169,9 +169,18 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 return
             }
 
-            val writeActionResolveHandler: () -> Unit = {
-                val unwrappedIntention = unwrapIntention(intention)
+            val unwrappedIntention = unwrapIntention(intention)
+            val priorityName = InTextDirectivesUtils.findStringWithPrefixes(contents, "// $PRIORITY_DIRECTIVE: ")
+            if (priorityName != null) {
+                val expectedPriority = enumValueOf<PriorityAction.Priority>(priorityName)
+                val actualPriority = (unwrappedIntention as? PriorityAction)?.priority
+                assertTrue(
+                        "Expected action priority: $expectedPriority\nActual priority: $actualPriority",
+                        expectedPriority == actualPriority
+                )
+            }
 
+            val writeActionResolveHandler: () -> Unit = {
                 val intentionClassName = unwrappedIntention.javaClass.name
                 if (!quickFixesAllowedToResolveInWriteAction.isWriteActionAllowed(intentionClassName)) {
                     throw ResolveInDispatchThreadException("Resolve is not allowed under the write action for `$intentionClassName`!")
