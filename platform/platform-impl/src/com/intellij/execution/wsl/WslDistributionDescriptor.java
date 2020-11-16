@@ -4,12 +4,15 @@ package com.intellij.execution.wsl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +38,7 @@ final class WslDistributionDescriptor {
   private @NlsSafe String myPresentableName;
 
   private final AtomicNotNullLazyValue<String> myMntRootProvider = AtomicNotNullLazyValue.createValue(this::computeMntRoot);
+  private final AtomicNullableLazyValue<String> myUserHomeProvider = AtomicNullableLazyValue.createValue(this::computeUserHome);
 
   /**
    * Necessary for serializer
@@ -112,10 +116,15 @@ final class WslDistributionDescriptor {
     return myMntRootProvider.getValue();
   }
 
+  public final @Nullable @NlsSafe String getUserHome() {
+    return myUserHomeProvider.getValue();
+  }
+
   /**
    * @see #getMntRoot()
    */
   private @NotNull @NlsSafe String computeMntRoot() {
+    computeUserHome();
     String windowsCurrentDirectory = System.getProperty("user.dir");
 
     if (StringUtil.isEmpty(windowsCurrentDirectory) || windowsCurrentDirectory.length() < 3) {
@@ -123,41 +132,9 @@ final class WslDistributionDescriptor {
       return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
     }
 
-    WSLDistribution distribution = WSLUtil.getDistributionById(getId());
-    if (distribution == null) {
-      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
-    }
-    ProcessOutput pwdOutput;
-    try {
-      WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
-      pwdOutput = distribution.executeOnWsl(Collections.singletonList("pwd"), options, -1, null);
-    }
-    catch (ExecutionException e) {
-      LOG.warn("Error reading pwd output for " + getId(), e);
-      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
-    }
-
-    if (pwdOutput.getExitCode() != 0) {
-      LOG.info("Non-zero exit code while fetching pwd: " +
-               "[id=" + getId() + "; " +
-               "[exitCode=" + pwdOutput.getExitCode() + "; " +
-               "[stderr=" + pwdOutput.getStderr() + "; " +
-               "[stdout=" + pwdOutput.getStdout() + "]");
-      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
-    }
-
-    List<String> pwdOutputLines = pwdOutput.getStdoutLines();
-
-    if (pwdOutputLines.size() != 1) {
-      LOG.warn("One line response expected from `pwd`: " +
-               "[id=" + getId() + "; " +
-               "exitCode=" + pwdOutput.getExitCode() + "; " +
-               "stderr=" + pwdOutput.getStderr() + "; " +
-               "stdout=" + pwdOutput.getStdout() + "]");
-      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
-    }
-
-    String wslCurrentDirectory = pwdOutputLines.get(0).trim();
+    WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
+    String wslCurrentDirectory = readWslOutputLine(options, Collections.singletonList("pwd"));
+    if (wslCurrentDirectory == null) return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
 
     String currentPathSuffix = WSLDistribution.convertWindowsPath(windowsCurrentDirectory);
     if (StringUtil.endsWithIgnoreCase(wslCurrentDirectory, currentPathSuffix)) {
@@ -167,5 +144,57 @@ final class WslDistributionDescriptor {
              "[pwd=" + wslCurrentDirectory + "; " +
              "suffix=" + currentPathSuffix + "]");
     return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
+  }
+
+  @Nullable
+  private String readWslOutputLine(WSLCommandLineOptions options, List<String> command) {
+    List<String> pwdOutputLines = readWSLOutput(options, command);
+    if (pwdOutputLines == null) return null;
+    if (pwdOutputLines.size() != 1) {
+      LOG.warn("One line response expected: " +
+               "[id=" + getId() + "; " +
+               "stdout=" + pwdOutputLines + "]");
+      return null;
+    }
+
+    return pwdOutputLines.get(0).trim();
+  }
+
+  @Nullable
+  private List<String> readWSLOutput(WSLCommandLineOptions options, List<String> command) {
+    WSLDistribution distribution = WSLUtil.getDistributionById(getId());
+    if (distribution == null) {
+      return null;
+    }
+    ProcessOutput pwdOutput;
+    try {
+      pwdOutput = distribution.executeOnWsl(command, options, -1, null);
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Error reading pwd output for " + getId(), e);
+      return null;
+    }
+
+    if (pwdOutput.getExitCode() != 0) {
+      LOG.info("Non-zero exit code while fetching pwd: " +
+               "[id=" + getId() + "; " +
+               "[exitCode=" + pwdOutput.getExitCode() + "; " +
+               "[stderr=" + pwdOutput.getStderr() + "; " +
+               "[stdout=" + pwdOutput.getStdout() + "]");
+      return null;
+    }
+
+    return pwdOutput.getStdoutLines();
+  }
+
+  private @NonNls @Nullable String computeUserHome() {
+    List<String> env = readWSLOutput(new WSLCommandLineOptions().setLaunchWithWslExe(false).setExecuteCommandInShell(false), Collections.singletonList("env"));
+    if (env == null) return null;
+    for (String s : env) {
+      if (s.startsWith("HOME=")) {
+        return s.substring(5);
+      }
+    }
+    return null;
   }
 }

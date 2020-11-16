@@ -368,6 +368,10 @@ public final class PathManager {
     return platformPath(selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", "");
   }
 
+  public static @NotNull String getDefaultUnixSystemPath(@NotNull String userHome, @NotNull String pathsSelector) {
+    return getUnixPlatformPath(userHome, pathsSelector, null, ".cache", "");
+  }
+
   public static @NotNull @NonNls String getTempPath() {
     return getSystemPath() + "/tmp";
   }
@@ -748,15 +752,23 @@ public final class PathManager {
     }
 
     if (SystemInfoRt.isUnix) {
-      String dir = System.getenv(xdgVar);
-      if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
-      dir = dir + '/' + vendorName;
-      if (!selector.isEmpty()) dir = dir + '/' + selector;
-      if (!xdgSub.isEmpty()) dir = dir + '/' + xdgSub;
-      return dir;
+      return getUnixPlatformPath(userHome, selector, xdgVar, xdgDfl, xdgSub);
     }
 
     throw new UnsupportedOperationException("Unsupported OS: " + SystemInfoRt.OS_NAME);
+  }
+
+  @NotNull
+  private static String getUnixPlatformPath(String userHome, @NonNls String selector,
+                                            @NonNls String xdgVar,
+                                            @NonNls String xdgDfl,
+                                            @NonNls String xdgSub) {
+    String dir = xdgVar != null ? System.getenv(xdgVar) : null;
+    if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
+    dir = dir + '/' + vendorName();
+    if (!selector.isEmpty()) dir = dir + '/' + selector;
+    if (!xdgSub.isEmpty()) dir = dir + '/' + xdgSub;
+    return dir;
   }
 
   private static String vendorName() {

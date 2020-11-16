@@ -3,6 +3,8 @@ package org.jetbrains.jps.model.serialization.library;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +52,7 @@ public final class JpsSdkTableSerializer {
   private static final String SIMPLE_TYPE = "simple";
   private static final String URL_ATTRIBUTE = "url";
   private static final String ADDITIONAL_TAG = "additional";
+  public static final String WSL_PREFIX = "//wsl$/";
 
   public static void loadSdks(@Nullable Element sdkListElement, JpsLibraryCollection result) {
     for (Element sdkElement : JDOMUtil.getChildren(sdkListElement, JDK_TAG)) {
@@ -93,7 +96,16 @@ public final class JpsSdkTableSerializer {
       }
     }
     else if (type.equals(SIMPLE_TYPE)) {
-      library.addRoot(rootElement.getAttributeValue(URL_ATTRIBUTE), rootType);
+      String url = rootElement.getAttributeValue(URL_ATTRIBUTE);
+      if (url == null) return;
+      if (SystemInfoRt.isLinux && url.contains(WSL_PREFIX)) {
+        int startPos = url.indexOf(WSL_PREFIX);
+        int endPos = url.indexOf('/', startPos + WSL_PREFIX.length());
+        if (endPos >= 0) {
+          url = url.substring(0, startPos) + url.substring(endPos);
+        }
+      }
+      library.addRoot(url, rootType);
     }
   }
 
