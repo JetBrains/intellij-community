@@ -75,16 +75,16 @@ public class VcsLogTabsManager {
   }
 
   @NotNull
-  MainVcsLogUi openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters,
+  MainVcsLogUi openAnotherLogTab(@NotNull VcsLogManager manager, @NotNull VcsLogFilterCollection filters,
                                  @NotNull VcsLogManager.LogWindowKind kind) {
-    return openLogTab(manager, generateTabId(myProject), kind, true, filters);
+    String tabId = generateTabId(myProject);
+    myUiProperties.resetState(tabId);
+    return openLogTab(manager, tabId, kind, true, filters);
   }
 
   @NotNull
   private MainVcsLogUi openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, @NotNull VcsLogManager.LogWindowKind kind,
                                   boolean focus, @Nullable VcsLogFilterCollection filters) {
-    if (filters != null) myUiProperties.resetState(tabId);
-
     VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory =
       new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters), kind);
 
