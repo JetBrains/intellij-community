@@ -15,6 +15,7 @@ import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.*
+import com.intellij.icons.AllIcons
 import com.intellij.ide.CopyPasteManagerEx
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.dnd.FileCopyPasteUtil
@@ -443,6 +444,10 @@ private fun createBlankNotificationProvider(viewer: DiffViewer?, content: Docume
       else {
         JBPopupMenu.showByEditor(editor, menu.component)
       }
+    }.apply {
+      setIcon(AllIcons.General.LinkDropTriangle)
+      isIconAtRight = true
+      setUseIconAsLink(true)
     }
   }
 

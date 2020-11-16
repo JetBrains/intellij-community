@@ -236,7 +236,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     // paint icon
 
     if (myIcon != null) {
-      int x = isIconAtRight() ? getWidth() - myIcon.getIconWidth() : 0;
+      int x = getIconOffset();
       myIcon.paintIcon(this, g, x, (getHeight() - myIcon.getIconHeight()) / 2);
     }
 
@@ -342,6 +342,10 @@ public class HighlightableComponent extends JComponent implements Accessible {
       return 2;
     }
     return myIcon.getIconWidth() + myIconTextGap;
+  }
+
+  protected int getIconOffset() {
+    return isIconAtRight() ? getWidth() - myIcon.getIconWidth() : 0;
   }
 
   @Nullable
