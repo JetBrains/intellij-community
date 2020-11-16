@@ -1393,7 +1393,7 @@ public class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCompletionT
 
             @TestMetadata("ParametrizedExpectedType.kt")
             public void testParametrizedExpectedType() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/extensions/ParametrizedExpectedType.kt");
+                runTest("testData/basic/common/extensions/ParametrizedExpectedType.kt");
             }
 
             @TestMetadata("StarTypeArg.kt")
@@ -2192,7 +2192,7 @@ public class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCompletionT
 
             @TestMetadata("extensionRecompletion.kt")
             public void testExtensionRecompletion() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/extensionRecompletion.kt");
+                runTest("testData/basic/common/primitiveCompletion/extensionRecompletion.kt");
             }
 
             @TestMetadata("genericExtensionPropertyAndFunctionExplicitReceiver.kt")
