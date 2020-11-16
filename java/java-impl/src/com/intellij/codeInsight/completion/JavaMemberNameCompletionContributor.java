@@ -83,7 +83,12 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor i
       completeFieldName(lookupSet, variable, result.getPrefixMatcher(), parameters.getInvocationCount() >= 1);
     }
 
-    if (PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class)).accepts(position)) {
+    if (psiElement(PsiIdentifier.class).withParent(PsiRecordComponent.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).accepts(position)) {
+      PsiRecordComponent component = (PsiRecordComponent)parameters.getPosition().getParent();
+      completeComponentName(lookupSet, component, result.getPrefixMatcher());
+    }
+
+      if (PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class)).accepts(position)) {
       completeMethodName(lookupSet, parameters.getPosition().getParent(), result.getPrefixMatcher());
     }
 
@@ -278,6 +283,17 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor i
     return ArrayUtilRt.toStringArray(unresolvedRefs);
   }
 
+  private static void completeComponentName(Set<LookupElement> set, PsiRecordComponent var, final PrefixMatcher matcher) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
+
+    Project project = var.getProject();
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    
+    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, var.getType());
+    final String[] suggestedNames = suggestedNameInfo.names;
+    addLookupItems(set, suggestedNameInfo, matcher, project, suggestedNames);
+  }
+  
   private static void completeFieldName(Set<LookupElement> set, PsiField var, final PrefixMatcher matcher, boolean includeOverlapped) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
 
