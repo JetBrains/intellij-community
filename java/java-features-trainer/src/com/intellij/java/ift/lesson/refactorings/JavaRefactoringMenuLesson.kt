@@ -63,7 +63,7 @@ class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("jav
     actionTask("Inline") {
       restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.refactoring.menu.inline.variable",
-                            code(inlineVariableName), action("Refactorings.QuickListPopupAction"), action(it))
+                                code(inlineVariableName), action("Refactorings.QuickListPopupAction"), action(it))
     }
     task {
       stateCheck {
@@ -76,7 +76,7 @@ class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("jav
     actionTask("IntroduceConstant") {
       restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.refactoring.menu.introduce.constant",
-                            action("Refactorings.QuickListPopupAction"), action(it))
+                                action("Refactorings.QuickListPopupAction"), action(it))
     }
     task {
       stateCheck {
@@ -85,7 +85,7 @@ class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("jav
     }
     task {
       text(JavaLessonsBundle.message("java.refactoring.menu.confirm.constant",
-                                 LessonUtil.rawEnter(), strong(CommonBundle.getOkButtonText())))
+                                     LessonUtil.rawEnter(), strong(CommonBundle.getOkButtonText())))
       stateCheck {
         !extractConstantDialogShowing()
       }

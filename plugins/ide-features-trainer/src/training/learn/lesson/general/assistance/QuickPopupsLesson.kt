@@ -12,6 +12,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
 class QuickPopupsLesson(module: Module, lang: String, private val sample: LessonSample) :
   KLesson("CodeAssistance.QuickPopups", LessonsBundle.message("quick.popups.lesson.name"), module, lang) {
@@ -22,12 +23,14 @@ class QuickPopupsLesson(module: Module, lang: String, private val sample: Lesson
     task("QuickJavaDoc") {
       text(LessonsBundle.message("quick.popups.show.documentation", action(it)))
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { _: DocumentationComponent -> true }
+      restoreIfModifiedOrMoved()
       test { actions(it) }
     }
 
     task {
       text(LessonsBundle.message("quick.popups.press.escape", action("EditorEscape")))
       stateCheck { checkDocComponentClosed() }
+      restoreIfModifiedOrMoved()
       test {
         GuiTestUtil.shortcut(Key.ESCAPE)
       }
@@ -36,6 +39,7 @@ class QuickPopupsLesson(module: Module, lang: String, private val sample: Lesson
     task("QuickImplementations") {
       text(LessonsBundle.message("quick.popups.show.implementation", action(it)))
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { _: ImplementationViewComponent -> true }
+      restoreIfModifiedOrMoved()
       test { actions(it) }
     }
   }

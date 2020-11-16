@@ -93,7 +93,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    moduleType = LessonType.PROJECT) {
       fun ls(sampleName: String) = loadSample("CodeAssistance/$sampleName")
       listOf(
-        CodeFormatLesson(it, lang, ls("CodeFormat.py.sample")),
+        CodeFormatLesson(it, lang, ls("CodeFormat.py.sample"), true),
         ParameterInfoLesson(it, lang, ls("ParameterInfo.py.sample")),
         QuickPopupsLesson(it, lang, ls("QuickPopups.py.sample")),
         PythonEditorCodingAssistanceLesson(it, lang, ls("EditorCodingAssistance.py.sample")),

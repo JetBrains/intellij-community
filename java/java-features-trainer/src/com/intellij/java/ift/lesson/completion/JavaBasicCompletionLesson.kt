@@ -67,6 +67,7 @@ class JavaBasicCompletionLesson(module: Module)
       restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.basic.completion.complete", action(it))
     }
+    waitBeforeContinue(500)
     caret(15, 23)
     task("CodeCompletion") {
       text(JavaLessonsBundle.message("java.basic.completion.deeper.level", action(it)))

@@ -81,7 +81,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    moduleType = LessonType.PROJECT) {
       fun ls(sampleName: String) = loadSample("CodeAssistance/$sampleName")
       listOf(
-        CodeFormatLesson(it, lang, ls("CodeFormat.java.sample")),
+        CodeFormatLesson(it, lang, ls("CodeFormat.java.sample"), true),
         ParameterInfoLesson(it, lang, ls("ParameterInfo.java.sample")),
         QuickPopupsLesson(it, lang, ls("QuickPopups.java.sample")),
         JavaEditorCodingAssistanceLesson(it, lang, ls("EditorCodingAssistance.java.sample")),

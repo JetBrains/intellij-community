@@ -19,6 +19,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.closeAllFindTabs
 
 class JavaInheritanceHierarchyLesson(module: Module)
@@ -29,6 +30,7 @@ class JavaInheritanceHierarchyLesson(module: Module)
     caret("foo(demo)")
 
     actionTask("GotoImplementation") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.inheritance.hierarchy.goto.implementation", action(it), code("SomeInterface#foo"))
     }
 
@@ -38,6 +40,8 @@ class JavaInheritanceHierarchyLesson(module: Module)
       stateCheck {
         (virtualFile.name == "DerivedClass1.java" || virtualFile.name == "DerivedClass2.java") && atDeclarationPosition()
       }
+
+      restoreIfModifiedOrMoved()
 
       test {
         Thread.sleep(1000)
@@ -50,6 +54,7 @@ class JavaInheritanceHierarchyLesson(module: Module)
       stateCheck {
         virtualFile.name == "SomeInterface.java" && atDeclarationPosition()
       }
+      restoreIfModifiedOrMoved()
 
       test { actions(it) }
     }
@@ -60,6 +65,7 @@ class JavaInheritanceHierarchyLesson(module: Module)
       triggerByUiComponentAndHighlight { ui: InplaceButton ->
         ui.toolTipText == IdeBundle.message("show.in.find.window.button.name")
       }
+      restoreIfModifiedOrMoved()
 
       test { actions(it) }
     }
@@ -74,6 +80,8 @@ class JavaInheritanceHierarchyLesson(module: Module)
         ui.text == (CodeInsightBundle.message("goto.implementation.findUsages.title", "foo")) ||
         ui.text == (JavaAnalysisBundle.message("navigate.to.overridden.methods.title", "foo"))
       }
+      restoreIfModifiedOrMoved()
+
       test {
         ideFrame {
           val target = previous.ui!!
@@ -84,18 +92,22 @@ class JavaInheritanceHierarchyLesson(module: Module)
     }
 
     actionTask("HideActiveWindow") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.inheritance.hierarchy.hide.find.tool.window", action(it), findToolWindow())
     }
 
     actionTask("MethodHierarchy") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.inheritance.hierarchy.open.method.hierarchy", action(it))
     }
 
     actionTask("HideActiveWindow") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.inheritance.hierarchy.hide.method.hierarchy", hierarchyToolWindow(), action(it))
     }
 
     actionTask("TypeHierarchy") {
+      restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.inheritance.hierarchy.open.class.hierarchy", action(it))
     }
 
