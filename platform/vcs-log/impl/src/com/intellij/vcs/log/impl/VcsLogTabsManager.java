@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 public class VcsLogTabsManager {
   private static final Logger LOG = Logger.getInstance(VcsLogTabsManager.class);
@@ -135,12 +136,12 @@ public class VcsLogTabsManager {
   private static String generateTabId(@NotNull Project project) {
     Set<String> existingIds = ContainerUtil.union(VcsLogContentUtil.getExistingLogIds(project),
                                                   VcsLogEditorUtilKt.getExistingLogIds(project));
-    for (int i = 1; ; i++) {
-      String idString = Integer.toString(i);
-      if (!existingIds.contains(idString)) {
-        return idString;
-      }
-    }
+    String newId;
+    do {
+      newId = UUID.randomUUID().toString();
+    } while (existingIds.contains(newId));
+
+    return newId;
   }
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
