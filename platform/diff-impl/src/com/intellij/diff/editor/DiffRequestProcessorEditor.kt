@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import java.awt.BorderLayout
@@ -45,6 +46,7 @@ open class DiffRequestProcessorEditor(
   private val panel = MyPanel(processor.component)
 
   init {
+    putUserData(EditorWindow.HIDE_TABS, true)
     if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, processor.context)) {
       Disposer.register(this, Disposable {
         Disposer.dispose(processor)
