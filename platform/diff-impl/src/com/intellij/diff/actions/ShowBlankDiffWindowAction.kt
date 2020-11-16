@@ -7,8 +7,8 @@ import com.intellij.diff.actions.impl.MutableDiffRequestChain
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.contents.FileContent
+import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -121,7 +121,7 @@ internal class SwitchToFileEditorAction : BlankSwitchContentActionBase() {
 
 internal class SwitchToRecentEditorActionGroup : ActionGroup(), DumbAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    return RecentContentHandler.getRecentFiles().map2Array { MySwitchAction(it) }
+    return BlankDiffWindowUtil.getRecentFiles().map2Array { MySwitchAction(it) }
   }
 
   @Suppress("DialogTitleCapitalization")
@@ -342,53 +342,18 @@ private class DnDHandler3(val viewer: ThreesideTextDiffViewer,
 
 private class RecentContentHandler(val viewer: DiffViewerBase,
                                    val helper: MutableDiffRequestChain.Helper) {
-  companion object {
-    private val recentFiles = LinkedListWithSum<RecentBlankContent> { it.text.length }
-
-    fun getRecentFiles() = recentFiles.toList()
-  }
-
   fun install() {
     viewer.addListener(MyListener())
   }
 
-  @RequiresEdt
-  private fun saveRecentContent(content: DocumentContent) {
-    val text = content.document.text
-    if (text.isBlank()) return
-
-    val oldValue = recentFiles.find { it.text == text }
-    if (oldValue != null) {
-      recentFiles.remove(oldValue)
-      recentFiles.add(0, oldValue)
-    }
-    else {
-      recentFiles.add(0, RecentBlankContent(text, System.currentTimeMillis()))
-      deleteAfterAllowedMaximum()
-    }
-  }
-
-  private fun deleteAfterAllowedMaximum() {
-    val maxCount = max(1, Registry.intValue("blank.diff.history.max.items"))
-    val maxMemory = max(0, Registry.intValue("blank.diff.history.max.memory"))
-    CopyPasteManagerEx.deleteAfterAllowedMaximum(recentFiles, maxCount, maxMemory) { item ->
-      RecentBlankContent(UIBundle.message("clipboard.history.purged.item"), item.timestamp)
-    }
-  }
-
   private inner class MyListener : DiffViewerListener() {
     override fun onDispose() {
-      for (content in viewer.request.contents) {
-        if (content is DocumentContent &&
-            content.getUserData(BlankDiffWindowUtil.REMEMBER_CONTENT_KEY) == true) {
-          saveRecentContent(content)
-        }
-      }
+      BlankDiffWindowUtil.saveRecentContents(viewer.request)
     }
   }
 }
 
-private data class RecentBlankContent(val text: @NlsSafe String, val timestamp: Long)
+internal data class RecentBlankContent(val text: @NlsSafe String, val timestamp: Long)
 
 object BlankDiffWindowUtil {
   val BLANK_KEY = Key.create<Boolean>("Diff.BlankWindow")
@@ -403,6 +368,47 @@ object BlankDiffWindowUtil {
     val chain = MutableDiffRequestChain(content1, baseContent, content2)
     chain.putUserData(BLANK_KEY, true)
     return chain
+  }
+
+
+  private val ourRecentFiles = LinkedListWithSum<RecentBlankContent> { it.text.length }
+
+  internal fun getRecentFiles(): List<RecentBlankContent> = ourRecentFiles.toList()
+
+  @RequiresEdt
+  fun saveRecentContents(request: DiffRequest) {
+    if (request is ContentDiffRequest) {
+      for (content in request.contents) {
+        saveRecentContent(content)
+      }
+    }
+  }
+
+  @RequiresEdt
+  fun saveRecentContent(content: DiffContent) {
+    if (content !is DocumentContent) return
+    if (!DiffUtil.isUserDataFlagSet(REMEMBER_CONTENT_KEY, content)) return
+
+    val text = content.document.text
+    if (text.isBlank()) return
+
+    val oldValue = ourRecentFiles.find { it.text == text }
+    if (oldValue != null) {
+      ourRecentFiles.remove(oldValue)
+      ourRecentFiles.add(0, oldValue)
+    }
+    else {
+      ourRecentFiles.add(0, RecentBlankContent(text, System.currentTimeMillis()))
+      deleteAfterAllowedMaximum()
+    }
+  }
+
+  private fun deleteAfterAllowedMaximum() {
+    val maxCount = max(1, Registry.intValue("blank.diff.history.max.items"))
+    val maxMemory = max(0, Registry.intValue("blank.diff.history.max.memory"))
+    CopyPasteManagerEx.deleteAfterAllowedMaximum(ourRecentFiles, maxCount, maxMemory) { item ->
+      RecentBlankContent(UIBundle.message("clipboard.history.purged.item"), item.timestamp)
+    }
   }
 }
 
@@ -445,7 +451,7 @@ private fun createBlankNotificationProvider(viewer: DiffViewer?, content: Docume
   panel.createActionLabel(DiffBundle.message("notification.action.text.blank.diff.select.file")) {
     SwitchToFileEditorAction().perform(editor, viewer, helper)
   }
-  if (RecentContentHandler.getRecentFiles().isNotEmpty()) {
+  if (BlankDiffWindowUtil.getRecentFiles().isNotEmpty()) {
     panel.createActionLabel(DiffBundle.message("notification.action.text.blank.diff.recent")) {
       val menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, SwitchToRecentEditorActionGroup())
       menu.setTargetComponent(editor.component)
