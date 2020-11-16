@@ -191,10 +191,8 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
   @Override
   @NotNull
   public  BuildProgress<BuildProgressDescriptor> buildIssue(@NotNull BuildIssue issue, @NotNull MessageEvent.Kind kind) {
-    assertStarted();
-    assert myParentProgress != null;
     myListener.onEvent(getBuildId(), new BuildIssueEventImpl(getId(), issue, kind));
-    return myParentProgress;
+    return this;
   }
 
   protected void assertStarted() {
