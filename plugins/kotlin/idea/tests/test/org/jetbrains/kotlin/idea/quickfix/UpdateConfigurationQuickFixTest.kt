@@ -112,20 +112,6 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals("1.0", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.apiVersion)
     }
 
-    fun testIncreaseLangLevelFacet() {
-        configureRuntime("mockRuntime11")
-        resetProjectSettings(LanguageVersion.KOTLIN_1_0)
-        configureKotlinFacet(module) {
-            settings.languageLevel = LanguageVersion.KOTLIN_1_0
-            settings.apiLevel = LanguageVersion.KOTLIN_1_0
-        }
-        myFixture.configureByText("foo.kt", "val x get() = 1")
-
-        assertEquals(LanguageVersion.KOTLIN_1_0, module.languageVersionSettings.languageVersion)
-        myFixture.launchAction(myFixture.findSingleIntention("Set module language version to 1.1"))
-        assertEquals(LanguageVersion.KOTLIN_1_1, module.languageVersionSettings.languageVersion)
-    }
-
     fun testIncreaseLangAndApiLevel() {
         configureRuntime("mockRuntime11")
         resetProjectSettings(LanguageVersion.KOTLIN_1_0)
