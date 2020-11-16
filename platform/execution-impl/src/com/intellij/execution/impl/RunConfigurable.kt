@@ -24,6 +24,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.LabeledComponent.create
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.text.StringUtil
@@ -52,16 +53,13 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.datatransfer.Transferable
 import java.awt.event.KeyEvent
-import java.util.*
 import java.util.function.ToIntFunction
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.tree.*
 
-private const val TEMPLATE_GROUP_NODE_NAME = "Templates"
-
 internal val TEMPLATES_NODE_USER_OBJECT = object : Any() {
-  override fun toString() = TEMPLATE_GROUP_NODE_NAME
+  override fun toString() = ExecutionBundle.message("run.configuration.templates.node.name")
 }
 
 private const val INITIAL_VALUE_KEY = "initialValue"
@@ -69,12 +67,16 @@ private val LOG = logger<RunConfigurable>()
 
 @Nls
 internal fun getUserObjectName(userObject: Any): String {
+  @Suppress("HardCodedStringLiteral")
   return when {
     userObject is ConfigurationType -> userObject.displayName
-    userObject === TEMPLATES_NODE_USER_OBJECT -> TEMPLATE_GROUP_NODE_NAME
+    userObject === TEMPLATES_NODE_USER_OBJECT -> ExecutionBundle.message("run.configuration.templates.node.name")
     userObject is ConfigurationFactory -> userObject.name
-    //Folder objects are strings
-    else -> if (userObject is SingleConfigurationConfigurable<*>) userObject.nameText else (userObject as? RunnerAndConfigurationSettingsImpl)?.name ?: userObject.toString()
+    userObject is SingleConfigurationConfigurable<*> -> userObject.nameText
+    userObject is RunnerAndConfigurationSettingsImpl -> userObject.name
+    // Folder objects are strings
+    userObject is String -> userObject
+    else -> userObject.toString()
   }
 }
 
@@ -326,7 +328,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     updateRightPanel(configurable)
   }
 
-  private fun showFolderField(node: DefaultMutableTreeNode, folderName: String) {
+  private fun showFolderField(node: DefaultMutableTreeNode, @Nls folderName: String) {
     rightPanel.removeAll()
     val p = JPanel(MigLayout("ins ${toolbarDecorator!!.actionsPanel.height} 5 0 0, flowx"))
     val textField = JTextField(folderName)
@@ -1245,7 +1247,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     return initialPosition - position
   }
 
-  protected inner class MyMoveAction(text: String, description: String?, icon: Icon, private val direction: Int) :
+  protected inner class MyMoveAction(@NlsActions.ActionText text: String,
+                                     @NlsActions.ActionDescription description: String?,
+                                     icon: Icon,
+                                     private val direction: Int) :
     AnAction(text, description, icon), AnActionButtonRunnable, AnActionButtonUpdater {
     override fun actionPerformed(e: AnActionEvent) {
       doMove()
