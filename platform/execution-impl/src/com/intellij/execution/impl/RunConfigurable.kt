@@ -680,7 +680,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val nameText = if (configurable != null) configurable.nameText else configurationBean.settings.name
         if (!names.add(nameText)) {
           TreeUtil.selectNode(tree, node)
-          throw ConfigurationException("${type.displayName} with name \'$nameText\' already exists")
+          throw ConfigurationException(
+            ExecutionBundle.message("dialog.message.run.configuration.already.exists", type.displayName, nameText))
         }
         configurationBeans.add(configurationBean)
         if (settings === selectedSettings) {
@@ -695,11 +696,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       val folderName = node.userObject as String
       if (folderName.isEmpty()) {
         TreeUtil.selectNode(tree, node)
-        throw ConfigurationException("Folder name shouldn't be empty")
+        throw ConfigurationException(ExecutionBundle.message("dialog.message.folder.name.should.not.be.empty"))
       }
       if (!names.add(folderName)) {
         TreeUtil.selectNode(tree, node)
-        throw ConfigurationException("Folders name \'$folderName\' is duplicated")
+        throw ConfigurationException(ExecutionBundle.message("dialog.message.folders.have.same.name", folderName))
       }
     }
 
