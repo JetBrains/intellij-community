@@ -15,6 +15,7 @@ data class DaemonLaunchOptions(
   val trampoline: Boolean = false,
   val daemonize: Boolean = false,
   val leaderPid: Long? = null,
+  val machNamespaceUid: Int? = null,
   val handshakeOption: HandshakeOption? = null,
   val tokenEncryptionOption: TokenEncryptionOption? = null,
 ) {
@@ -53,6 +54,7 @@ data class DaemonLaunchOptions(
       "--trampoline".takeIf { trampoline },
       "--daemonize".takeIf { daemonize },
       leaderPid?.let { "--leader-pid=$it" },
+      machNamespaceUid?.let { "--mach-namespace-uid=$it" },
       handshakeOption,
       tokenEncryptionOption,
     ).mapNotNull { it?.toString() }
@@ -69,6 +71,7 @@ data class DaemonLaunchOptions(
         " [ --trampoline ]" +
         " [ --daemonize ]" +
         " [ --leader-pid=pid ]" +
+        " [ --mach-namespace-uid=uid ]" +
         " [ --handshake-file=file|- | --handshake-port=port ]" +
         " [ --token-encrypt-rsa=public-key ]"
       )
@@ -89,6 +92,7 @@ data class DaemonLaunchOptions(
       var trampoline = false
       var daemonize = false
       var leaderPid: Long? = null
+      var machNamespaceUid: Int? = null
       var handshakeOption: HandshakeOption? = null
       var tokenEncryptionOption: TokenEncryptionOption? = null
 
@@ -105,6 +109,10 @@ data class DaemonLaunchOptions(
         when (option) {
           "--leader-pid" -> {
             leaderPid = value.toLong()
+          }
+
+          "--mach-namespace-uid" -> {
+            machNamespaceUid = value.toInt()
           }
 
           "--handshake-file" -> {
@@ -130,6 +138,7 @@ data class DaemonLaunchOptions(
         trampoline = trampoline,
         daemonize = daemonize,
         leaderPid = leaderPid,
+        machNamespaceUid = machNamespaceUid,
         handshakeOption = handshakeOption,
         tokenEncryptionOption = tokenEncryptionOption,
       )
