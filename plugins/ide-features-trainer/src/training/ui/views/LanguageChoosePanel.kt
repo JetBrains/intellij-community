@@ -73,11 +73,11 @@ class LanguageChoosePanel(private val toolWindow: LearnToolWindow?,
     description.border = EmptyBorder(0, 0, 0, 0)
 
     StyleConstants.setFontFamily(REGULAR, UISettings.instance.plainFont.family)
-    StyleConstants.setFontSize(REGULAR, UISettings.instance.fontSize)
+    StyleConstants.setFontSize(REGULAR, UISettings.instance.fontSize.toInt())
     StyleConstants.setForeground(REGULAR, UISettings.instance.questionColor)
 
     StyleConstants.setFontFamily(REGULAR_GRAY, UISettings.instance.plainFont.family)
-    StyleConstants.setFontSize(REGULAR_GRAY, UISettings.instance.fontSize)
+    StyleConstants.setFontSize(REGULAR_GRAY, UISettings.instance.fontSize.toInt())
     StyleConstants.setForeground(REGULAR_GRAY, UISettings.instance.descriptionColor)
 
     StyleConstants.setLeftIndent(PARAGRAPH_STYLE, 0.0f)

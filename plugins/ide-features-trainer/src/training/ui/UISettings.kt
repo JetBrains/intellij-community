@@ -50,14 +50,14 @@ class UISettings {
   val languagePanelButtonsGap: Int by lazy { JBUI.scale(8) }
 
   //FONTS
-  val fontSize: Int by lazy { UISettings.instance.fontSize.ifZero(JBUI.scale(13)) }
+  val fontSize: Float by lazy { UISettings.instance.fontSize.ifZero(JBUI.scale(13)) * 1f }
   val fontFace: String by lazy { UISettings.instance.fontFace ?: JLabel().font.fontName }
-  val moduleNameFont: Font by lazy { Font(fontFace, Font.PLAIN, fontSize + 1) }
-  val plainFont: Font by lazy { Font(fontFace, Font.PLAIN, fontSize) }
+  val moduleNameFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize + 1f) }
+  val plainFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize) }
   val italicFont: Font by lazy { plainFont.deriveFont(Font.ITALIC) }
   val boldFont: Font by lazy { plainFont.deriveFont(Font.BOLD) }
   val lessonHeaderFont: Font by lazy { UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(JBUIScale.scale(18.0f)) }
-  val helpHeaderFont: Font by lazy { Font(fontFace, Font.BOLD, fontSize + 1) }
+  val helpHeaderFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize + 1f).deriveFont(Font.BOLD) }
 
   //COLORS
   val defaultTextColor = JBColor(Color(30, 30, 30), Color(208, 208, 208))
