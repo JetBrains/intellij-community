@@ -8,6 +8,7 @@ import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.contents.FileContent
 import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -53,10 +54,8 @@ import java.io.File
 import javax.swing.JComponent
 import kotlin.math.max
 
-private val BLANK_KEY = Key.create<Boolean>("Diff.BlankWindow")
-private val BLANK_CONTENT_KEY = Key.create<Boolean>("Diff.BlankWindow.BlankContent")
-
 class ShowBlankDiffWindowAction : DumbAwareAction() {
+
   init {
     isEnabledInModalContext = true
   }
@@ -89,14 +88,9 @@ class ShowBlankDiffWindowAction : DumbAwareAction() {
       content2 = createEditableContent(project)
     }
 
-    val chain = if (baseContent != null) {
-      MutableDiffRequestChain(content1, baseContent, content2)
-    }
-    else {
-      MutableDiffRequestChain(content1, content2)
-    }
+    val chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, baseContent)
+    chain.putUserData(DiffUserDataKeys.PLACE, "BlankDiffWindow")
     chain.putUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL, SimpleDiffTool.INSTANCE)
-    chain.putUserData(BLANK_KEY, true)
     chain.putUserData(DiffUserDataKeysEx.PREFERRED_FOCUS_SIDE, Side.LEFT)
     chain.putUserData(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, true)
 
@@ -161,7 +155,7 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
       return
     }
 
-    if (helper.chain.getUserData(BLANK_KEY) != true) {
+    if (helper.chain.getUserData(BlankDiffWindowUtil.BLANK_KEY) != true) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -219,7 +213,7 @@ internal class BlankToggleThreeSideModeAction : DumbAwareAction() {
       return
     }
 
-    if (helper.chain.getUserData(BLANK_KEY) != true) {
+    if (helper.chain.getUserData(BlankDiffWindowUtil.BLANK_KEY) != true) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -252,17 +246,19 @@ internal class BlankToggleThreeSideModeAction : DumbAwareAction() {
 class ShowBlankDiffWindowDiffExtension : DiffExtension() {
   override fun onViewerCreated(viewer: DiffViewer, context: DiffContext, request: DiffRequest) {
     val helper = MutableDiffRequestChain.createHelper(context, request) ?: return
-    if (helper.chain.getUserData(BLANK_KEY) != true) return
+    if (helper.chain.getUserData(BlankDiffWindowUtil.BLANK_KEY) != true) return
 
     if (viewer is TwosideTextDiffViewer) {
       DnDHandler2(viewer, helper, Side.LEFT).install()
       DnDHandler2(viewer, helper, Side.RIGHT).install()
-      RecentContentHandler(viewer, helper).install()
     }
     else if (viewer is ThreesideTextDiffViewer) {
       DnDHandler3(viewer, helper, ThreeSide.LEFT).install()
       DnDHandler3(viewer, helper, ThreeSide.BASE).install()
       DnDHandler3(viewer, helper, ThreeSide.RIGHT).install()
+    }
+
+    if (viewer is DiffViewerBase) {
       RecentContentHandler(viewer, helper).install()
     }
   }
@@ -384,7 +380,7 @@ private class RecentContentHandler(val viewer: DiffViewerBase,
     override fun onDispose() {
       for (content in viewer.request.contents) {
         if (content is DocumentContent &&
-            content.getUserData(BLANK_CONTENT_KEY) == true) {
+            content.getUserData(BlankDiffWindowUtil.REMEMBER_CONTENT_KEY) == true) {
           saveRecentContent(content)
         }
       }
@@ -394,9 +390,25 @@ private class RecentContentHandler(val viewer: DiffViewerBase,
 
 private data class RecentBlankContent(val text: @NlsSafe String, val timestamp: Long)
 
+object BlankDiffWindowUtil {
+  val BLANK_KEY = Key.create<Boolean>("Diff.BlankWindow")
+
+  @JvmField
+  val REMEMBER_CONTENT_KEY = Key.create<Boolean>("Diff.BlankWindow.BlankContent")
+
+  @JvmStatic
+  fun createBlankDiffRequestChain(content1: DocumentContent,
+                                  content2: DocumentContent,
+                                  baseContent: DocumentContent? = null): MutableDiffRequestChain {
+    val chain = MutableDiffRequestChain(content1, baseContent, content2)
+    chain.putUserData(BLANK_KEY, true)
+    return chain
+  }
+}
+
 private fun createEditableContent(project: Project?, text: String = ""): DocumentContent {
   val content = DiffContentFactoryEx.getInstanceEx().documentContent(project, false).buildFromText(text, false)
-  content.putUserData(BLANK_CONTENT_KEY, true)
+  content.putUserData(BlankDiffWindowUtil.REMEMBER_CONTENT_KEY, true)
   DiffUtil.addNotification(DiffNotificationProvider { viewer -> createBlankNotificationProvider(viewer, content) }, content)
   return content
 }

@@ -48,13 +48,13 @@ class MutableDiffRequestChain : DiffRequestChainBase {
     title2 = getTitleFor(content2)
   }
 
-  constructor(content1: DiffContent, baseContent: DiffContent, content2: DiffContent) {
+  constructor(content1: DiffContent, baseContent: DiffContent?, content2: DiffContent) {
     this.content1 = content1
     this.content2 = content2
     this.baseContent = baseContent
     title1 = getTitleFor(content1)
     title2 = getTitleFor(content2)
-    baseTitle = getTitleFor(baseContent)
+    baseTitle = if (baseContent != null) getTitleFor(baseContent) else null
   }
 
   fun <T : Any> putRequestUserData(key: Key<T>, value: T) {
