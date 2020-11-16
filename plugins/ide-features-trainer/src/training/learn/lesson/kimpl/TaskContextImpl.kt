@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -86,8 +87,14 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
 
-  override fun type(text: String) {
-    lessonExecutor.type(text)
+  override fun type(text: String) = before {
+    invokeLater(ModalityState.current()) {
+      WriteCommandAction.runWriteCommandAction(project) {
+        val startOffset = editor.caretModel.offset
+        editor.document.insertString(startOffset, text)
+        editor.caretModel.moveToOffset(startOffset + text.length)
+      }
+    }
   }
 
   override fun runtimeText(callback: TaskRuntimeContext.() -> String?) {

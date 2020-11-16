@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -117,18 +116,6 @@ class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
     currentRecorder = null
     currentRestoreRecorder?.let { Disposer.dispose(it) }
     currentRestoreRecorder = null
-  }
-
-  fun type(text: String) {
-    addSimpleTaskAction l@{
-      invokeLater(ModalityState.current()) {
-        WriteCommandAction.runWriteCommandAction(project) {
-          val startOffset = editor.caretModel.offset
-          editor.document.insertString(startOffset, text)
-          editor.caretModel.moveToOffset(startOffset + text.length)
-        }
-      }
-    }
   }
 
   val virtualFile: VirtualFile
@@ -283,14 +270,6 @@ class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
   }
 
   private fun isTaskCompleted(taskContext: TaskContextImpl) = taskContext.steps.all { it.isDone && it.get() }
-
-  private fun addSimpleTaskAction(taskAction: () -> Unit) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    addTaskAction {
-      taskAction()
-      processNextTask(currentTaskIndex + 1)
-    }
-  }
 
   private fun processTestActions(taskContext: TaskContextImpl) {
     if (TaskTestContext.inTestMode) {
