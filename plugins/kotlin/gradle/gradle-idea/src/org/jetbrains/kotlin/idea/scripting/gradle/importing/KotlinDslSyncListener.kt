@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.framework.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.scripting.gradle.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.scripting.gradle.validateGradleSdk
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -29,8 +28,7 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
     companion object {
         val instance: KotlinDslSyncListener
             get() =
-                ExternalSystemTaskNotificationListener.EP_NAME.extensionList.firstIsInstanceOrNull()
-                ?: error("Unable to locate KotlinDslSyncListener")
+                ExternalSystemTaskNotificationListener.EP_NAME.findExtensionOrFail(KotlinDslSyncListener::class.java)
     }
 
     internal val tasks = WeakHashMap<ExternalSystemTaskId, KotlinDslGradleBuildSync>()
