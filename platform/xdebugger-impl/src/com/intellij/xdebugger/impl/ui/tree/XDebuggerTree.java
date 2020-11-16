@@ -9,10 +9,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -126,7 +128,6 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final XValueMarkers<?,?> myValueMarkers;
   private final TreeExpansionListener myTreeExpansionListener;
   private final XDebuggerPinToTopManager myPinToTopManager;
-  XDebuggerTreeSpeedSearch mySpeedSearch;
 
   public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -189,7 +190,12 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       }
     });
 
-    mySpeedSearch = new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+    if (Registry.is("debugger.variablesView.rss")) {
+      new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+    }
+    else {
+      new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+    }
 
     final ActionManager actionManager = ActionManager.getInstance();
     addMouseListener(new PopupHandler() {
