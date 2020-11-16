@@ -133,7 +133,8 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
       FileType.CharsetHint charsetHint = fileType.getCharsetHint();
       if (charsetHint instanceof ForcedCharset) {
         setCharset(((ForcedCharset)charsetHint).getCharset());
-      } else if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary()) {
+      }
+      else if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary() && bytes.length != 0) {
         try {
           // execute in impatient mode to not deadlock when the indexing process waits under write action for the queue to load contents in other threads
           // and that other thread asks JspManager for encoding which requires read action for PSI

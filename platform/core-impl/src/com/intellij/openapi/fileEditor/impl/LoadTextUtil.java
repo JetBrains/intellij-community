@@ -349,6 +349,9 @@ public final class LoadTextUtil {
   private static DetectResult guessFromBytes(byte @NotNull [] content,
                                              int startOffset, int endOffset,
                                              @NotNull Charset defaultCharset) {
+    if (content.length == 0) {
+      return new DetectResult(null, CharsetToolkit.GuessedEncoding.SEVEN_BIT, null);
+    }
     CharsetToolkit toolkit = new CharsetToolkit(content, defaultCharset);
     toolkit.setEnforce8Bit(true);
     Charset charset = toolkit.guessFromBOM();

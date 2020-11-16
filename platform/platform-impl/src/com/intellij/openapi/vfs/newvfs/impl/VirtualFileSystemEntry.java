@@ -453,7 +453,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
           charset = ((ForcedCharset)charsetHint).getCharset();
         }
         else {
-          final byte[] content = VfsUtilCore.loadBytes(this);
+          byte[] content = VfsUtilCore.loadBytes(this);
+          if (isCharsetSet()) {
+            // loadBytes() may have cached the charset (see VirtualFileImpl.contentsToByteArray(boolean))
+            return super.getCharset();
+          }
           charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, fileType);
         }
       }

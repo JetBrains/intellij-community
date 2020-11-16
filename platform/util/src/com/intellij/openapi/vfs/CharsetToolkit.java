@@ -76,8 +76,8 @@ public final class CharsetToolkit {
   public static final byte[] UTF8_BOM = {0xffffffef, 0xffffffbb, 0xffffffbf};
   public static final byte[] UTF16LE_BOM = {-1, -2, };
   public static final byte[] UTF16BE_BOM = {-2, -1, };
-  public static final byte[] UTF32BE_BOM = {0, 0, -2, -1, };
-  public static final byte[] UTF32LE_BOM = {-1, -2, 0, 0 };
+  private static final byte[] UTF32BE_BOM = {0, 0, -2, -1, };
+  private static final byte[] UTF32LE_BOM = {-1, -2, 0, 0 };
   public static final String FILE_ENCODING_PROPERTY = "file.encoding";
 
   private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new HashMap<>(4);
@@ -94,8 +94,7 @@ public final class CharsetToolkit {
    * @param buffer the byte buffer of which we want to know the encoding.
    */
   public CharsetToolkit(byte @NotNull [] buffer) {
-    this.buffer = buffer;
-    defaultCharset = getDefaultSystemCharset();
+    this(buffer, getDefaultSystemCharset());
   }
 
   /**
@@ -107,6 +106,9 @@ public final class CharsetToolkit {
   public CharsetToolkit(byte @NotNull [] buffer, @NotNull Charset defaultCharset) {
     this.buffer = buffer;
     this.defaultCharset = defaultCharset;
+    if (buffer.length == 0){
+      throw new IllegalArgumentException("Can't analyze empty buffer");
+    }
   }
 
   public static @NotNull InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
@@ -266,6 +268,7 @@ public final class CharsetToolkit {
   }
 
   public static @NotNull String bytesToString(byte @NotNull [] bytes, final @NotNull Charset defaultCharset) {
+    if (bytes.length == 0) return "";
     Charset charset = new CharsetToolkit(bytes, defaultCharset).guessEncoding(bytes.length);
     if (charset == null) charset = defaultCharset; // binary content. This is silly but method contract says to return something anyway
     return decodeString(bytes, charset);
@@ -429,6 +432,9 @@ public final class CharsetToolkit {
   }
 
   public static Charset guessEncoding(@NotNull File f, int bufferLength, @NotNull Charset defaultCharset) throws IOException {
+    if (bufferLength == 0) {
+      throw new IllegalArgumentException("Can't analyze empty buffer");
+    }
     byte[] buffer = new byte[bufferLength];
     int read;
     try (FileInputStream fis = new FileInputStream(f)) {

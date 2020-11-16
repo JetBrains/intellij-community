@@ -511,6 +511,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @Nullable
   private static Charset guessCharsetFromContent(byte @NotNull [] content) {
+    if (content.length == 0) return null;
     // can't use CharsetToolkit.guessEncoding here because of false-positive INVALID_UTF8
     CharsetToolkit toolkit = new CharsetToolkit(content);
 
