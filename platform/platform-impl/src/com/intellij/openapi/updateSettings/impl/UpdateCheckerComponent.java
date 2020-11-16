@@ -177,7 +177,7 @@ final class UpdateCheckerComponent {
   }
 
   private static void showWhatsNew(Project project, @Nullable BuildNumber previous, BuildNumber current) {
-    if (!UpdateSettings.getInstance().isShowWhatsNewEditor() || !Experiments.getInstance().isFeatureEnabled("whats.new.notification")) return;
+    if (!WhatsNewAction.isAvailable() || !UpdateSettings.getInstance().isShowWhatsNewEditor()) return;
 
     if (previous != null && previous.getBaselineVersion() > current.getBaselineVersion()) return;  // a downgrade
 
