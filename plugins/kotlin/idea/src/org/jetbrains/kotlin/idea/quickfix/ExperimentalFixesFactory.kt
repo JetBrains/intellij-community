@@ -5,11 +5,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.module.Module
-import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
@@ -77,7 +73,7 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
                 result.add(AddAnnotationFix(containingDeclaration, annotationFqName, kind))
             }
             result.add(
-                HighPriorityAddAnnotationFix(
+                AddAnnotationFix(
                     containingDeclaration, moduleDescriptor.OPT_IN_FQ_NAME, kind, annotationFqName,
                     containingDeclaration.findAnnotation(moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
                 )
@@ -91,7 +87,7 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
                     result.add(AddAnnotationFix(containingClassOrObject, annotationFqName, kind))
                 } else {
                     result.add(
-                        HighPriorityAddAnnotationFix(
+                        AddAnnotationFix(
                             containingClassOrObject, moduleDescriptor.OPT_IN_FQ_NAME, kind, annotationFqName,
                             containingDeclaration.findAnnotation(moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
                         )
@@ -103,7 +99,7 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
         val module = containingFile.module
         if (module != null) {
             result.add(
-                LowPriorityMakeModuleExperimentalFix(containingFile, module, annotationFqName)
+                MakeModuleExperimentalFix(containingFile, module, annotationFqName)
             )
         }
 
@@ -116,18 +112,4 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
 
 
     fun ModuleDescriptor.fqNameIsExisting(fqName: FqName): Boolean = resolveClassByFqName(fqName, NoLookupLocation.FROM_IDE) != null
-
-    private class HighPriorityAddAnnotationFix(
-            element: KtDeclaration,
-            annotationFqName: FqName,
-            kind: Kind = Kind.Self,
-            argumentClassFqName: FqName? = null,
-            existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : AddAnnotationFix(element, annotationFqName, kind, argumentClassFqName, existingAnnotationEntry), HighPriorityAction
-
-    private class LowPriorityMakeModuleExperimentalFix(
-            file: KtFile,
-            module: Module,
-            annotationFqName: FqName
-    ) : MakeModuleExperimentalFix(file, module, annotationFqName), LowPriorityAction
 }
