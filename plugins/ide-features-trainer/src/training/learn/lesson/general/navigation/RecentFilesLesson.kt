@@ -35,6 +35,7 @@ abstract class RecentFilesLesson(module: Module, lang: String)
   abstract fun LessonContext.setInitialPosition()
 
   private val countOfFilesToOpen: Int = 20
+  private val countOfFilesToDelete: Int = 5
 
   override val lessonContent: LessonContext.() -> Unit = {
     setInitialPosition()
@@ -90,17 +91,17 @@ abstract class RecentFilesLesson(module: Module, lang: String)
     }
 
     task {
-      text(LessonsBundle.message("recent.files.delete", LessonUtil.rawKeyStroke(KeyEvent.VK_DELETE)))
+      text(LessonsBundle.message("recent.files.delete", strong(countOfFilesToDelete.toString()), LessonUtil.rawKeyStroke(KeyEvent.VK_DELETE)))
       var initialRecentFilesCount = -1
       stateCheck {
         val focusOwner = focusOwner as? JBListWithOpenInRightSplit<*> ?: return@stateCheck false
         if (initialRecentFilesCount == -1) {
           initialRecentFilesCount = focusOwner.itemsCount
         }
-        initialRecentFilesCount - focusOwner.itemsCount == countOfFilesToOpen
+        initialRecentFilesCount - focusOwner.itemsCount >= countOfFilesToDelete
       }
       test {
-        repeat(countOfFilesToOpen) {
+        repeat(countOfFilesToDelete) {
           GuiTestUtil.shortcut(Key.DELETE)
         }
       }
@@ -136,7 +137,7 @@ abstract class RecentFilesLesson(module: Module, lang: String)
 
   // Should open (countOfFilesToOpen - 1) files
   open fun LessonContext.openManyFiles() {
-    val openedFiles = mutableSetOf(transitionFileName)
+    val openedFiles = mutableSetOf<String>()
     val random = Random(System.currentTimeMillis())
     for (i in 0 until (countOfFilesToOpen - 1)) {
       waitBeforeContinue(200)
