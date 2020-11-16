@@ -24,6 +24,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory;
 import org.jetbrains.kotlin.diagnostics.Errors;
+import org.jetbrains.kotlin.idea.configuration.ui.notifications.LegacyIsResolveModulePerSourceSetNotificationKt;
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.NewCodeStyleNotificationKt;
 import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter;
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs;
@@ -54,6 +55,7 @@ public class PluginStartupActivity implements StartupActivity {
         KotlinReportSubmitter.Companion.setupReportingFromRelease();
 
         NewCodeStyleNotificationKt.notifyKotlinStyleUpdateIfNeeded(project);
+        LegacyIsResolveModulePerSourceSetNotificationKt.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(project);
 
         //todo[Sedunov]: wait for fix in platform to avoid misunderstood from Java newbies (also ConfigureKotlinInTempDirTest)
         //KotlinSdkType.Companion.setUpIfNeeded();
