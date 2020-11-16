@@ -10,6 +10,7 @@ import java.util.Collection;
 /**
  * A Base interface for custom PersistentHashMap implementations
  */
+@ApiStatus.Experimental
 public interface PersistentHashMapBase<Key, Value> extends AppendablePersistentMap<Key, Value> {
   void dropMemoryCaches();
 
