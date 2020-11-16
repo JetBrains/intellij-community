@@ -267,7 +267,9 @@ class Test88 {
   @NeedsIndex.ForStandardLibrary
   void testCollectorsToSet() {
     configureByTestName()
-    selectItem(myItems.find { it.lookupString.contains('toSet') })
+    assert myItems.find { it.lookupString == 'collect(Collectors.joining())' } != null 
+    assert myItems.find { it.lookupString == 'collect(Collectors.toList())' } != null 
+    selectItem(myItems.find { it.lookupString == 'collect(Collectors.toSet())' })
     checkResultByFileName()
   }
 
