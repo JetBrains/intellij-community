@@ -1250,6 +1250,42 @@
         <constraint name="Init" script="&quot;&quot;" minCount="0" maxCount="2147483647" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" description="replace System.arraycopy() and other manual array manipulations with more clear utility methods&#10;" text="$result$ = new $b$[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $a$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$result$ = $a$.clone();">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="result" within="" contains="" />
+        <constraint name="a" within="" contains="" />
+        <constraint name="b" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="$b$[] $result$ = new $b$[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $a$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$b$[] $result$ = $a$.clone();">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="result" within="" contains="" />
+        <constraint name="a" within="" contains="" />
+        <constraint name="b" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="$result$ = new boolean[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $a$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$result$ = $a$.clone();">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="result" within="" contains="" />
+        <constraint name="a" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="$result$ = new int[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $a$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$result$ = $a$.clone();">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="result" within="" contains="" />
+        <constraint name="a" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="int[] $result$ = new int[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $a$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="int[] $result$ = $a$.clone();">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="result" within="" contains="" />
+        <constraint name="a" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="int[] $result$ = new int[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $result$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="int[] $result$ = $a$.clone();">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="result" within="" contains="" />
+        <constraint name="a" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="java.util.Arrays.copyOf($original$, $original$.length)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$original$.clone()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="original" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Storing localized strings in static fields prevents dynamic loading of language bundles" text="$bundle$.$message$(&quot;$s$&quot;, $p$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" script="&quot;import com.intellij.psi.*;&#10;import com.intellij.psi.util.*;&#10;PsiElement member = PsiTreeUtil.getParentOfType(__context__, PsiMember.class, PsiLambdaExpression.class)&#10;return member instanceof PsiField &amp;&amp; member.hasModifierProperty(PsiModifier.STATIC)&quot;" within="" contains="" />
         <constraint name="s" within="" contains="" />
