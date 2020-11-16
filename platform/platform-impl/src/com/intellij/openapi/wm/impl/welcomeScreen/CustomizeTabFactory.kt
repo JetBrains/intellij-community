@@ -207,7 +207,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         fullRow {
           keymapComboBox = comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty).component
           component(focusableLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(null, KeyMapBundle.message("keymap.display.name"))
+            ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject, KeyMapBundle.message("keymap.display.name"))
           }).withLargeLeftGap()
         }
       }
