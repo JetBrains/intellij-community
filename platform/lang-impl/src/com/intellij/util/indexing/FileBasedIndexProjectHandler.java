@@ -99,6 +99,7 @@ public final class FileBasedIndexProjectHandler {
       IndexingJobStatistics statistics;
       IndexUpdateRunner.IndexingInterruptedException interruptedException = null;
       ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project);
+      projectIndexingHistory.getTimes().setTotalStart(Instant.now());
       projectIndexingHistory.getTimes().setIndexingStart(Instant.now());
       String fileSetName = "Refreshed files";
       try {
@@ -109,6 +110,7 @@ public final class FileBasedIndexProjectHandler {
         interruptedException = e;
       } finally {
         projectIndexingHistory.getTimes().setIndexingEnd(Instant.now());
+        projectIndexingHistory.getTimes().setTotalEnd(Instant.now());
       }
       ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
       scanningStatistics.setNumberOfScannedFiles(files.size());

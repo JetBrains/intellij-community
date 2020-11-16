@@ -87,12 +87,13 @@ private fun IndexingJobStatistics.aggregateStatsPerIndexer(): List<JsonFileProvi
 
 fun ProjectIndexingHistory.IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
+    totalUpdatingTime = nullableJsonDuration(totalStart, totalEnd),
     indexingTime = nullableJsonDuration(indexingStart, indexingEnd),
     scanFilesTime = nullableJsonDuration(scanFilesStart, scanFilesEnd),
     pushPropertiesTime = nullableJsonDuration(pushPropertiesStart, pushPropertiesEnd),
     indexExtensionsTime = nullableJsonDuration(indexExtensionsStart, indexExtensionsEnd),
-    indexingStart = JsonDateTime(indexingStart!!),
-    indexingEnd = JsonDateTime(indexingEnd!!),
+    updatingStart = JsonDateTime(totalStart!!),
+    updatingEnd = JsonDateTime(totalEnd!!),
     totalSuspendedTime = suspendedDuration?.let { JsonDuration(it.toNanos()) },
     wasInterrupted = wasInterrupted
   )
