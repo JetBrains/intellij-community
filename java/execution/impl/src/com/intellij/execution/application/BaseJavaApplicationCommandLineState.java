@@ -15,9 +15,15 @@ import com.intellij.execution.target.*;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +52,43 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
 
     JavaRunConfigurationExtensionManager.getInstance()
       .updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor());
+  }
+
+  @Override
+  public TargetEnvironmentFactory createCustomTargetEnvironmentFactory() {
+    try {
+      JavaParameters parameters = getJavaParameters();
+      return checkCreateWslFactory(parameters);
+    }
+    catch (ExecutionException e) {
+      // ignore
+    }
+    return null;
+  }
+
+  @Nullable
+  public static WslTargetEnvironmentFactory checkCreateWslFactory(JavaParameters parameters) {
+    String path;
+    try {
+      path = parameters.getJdkPath();
+    }
+    catch (CantRunException e) {
+      return null;
+    }
+    Pair<String, @Nullable WSLDistribution> pathInWsl = WslDistributionManager.getInstance().parseWslPath(path);
+    Sdk jdk = parameters.getJdk();
+    if (jdk != null && pathInWsl != null && pathInWsl.second != null) {
+      WslTargetEnvironmentConfiguration config = new WslTargetEnvironmentConfiguration(pathInWsl.second);
+      JavaLanguageRuntimeConfiguration javaConfig = new JavaLanguageRuntimeConfiguration();
+      javaConfig.setHomePath(pathInWsl.first);
+      String jdkVersionString = jdk.getVersionString();
+      if (jdkVersionString != null) {
+        javaConfig.setJavaVersionString(jdkVersionString);
+      }
+      config.addLanguageRuntime(javaConfig);
+      return new WslTargetEnvironmentFactory(config);
+    }
+    return null;
   }
 
   @Override

@@ -15,6 +15,7 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.components.BaseState;
@@ -23,6 +24,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -284,6 +286,28 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @Override
   public void setDefaultTargetName(@Nullable String targetName) {
     getOptions().setRemoteTarget(targetName);
+  }
+
+  @Override
+  public boolean needPrepareTarget() {
+    if (getDefaultTargetName() != null) return true;
+    String path = getAlternativeJrePath();
+    if (path != null) {
+      return WslDistributionManager.getInstance().isWslPath(path);
+    }
+    Module module = getConfigurationModule().getModule();
+    if (module != null) {
+      Sdk sdk;
+      try {
+        sdk = JavaParameters.getValidJdkToRunModule(module, false);
+      }
+      catch (CantRunException e) {
+        return false;
+      }
+      String sdkHomePath = sdk.getHomePath();
+      return sdkHomePath != null && WslDistributionManager.getInstance().isWslPath(sdkHomePath);
+    }
+    return false;
   }
 
   @Override

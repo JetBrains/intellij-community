@@ -542,8 +542,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       return resolvedPromise()
     }
 
-    val targetName = (environment.runProfile as TargetEnvironmentAwareRunProfile).defaultTargetName
-    if (targetName == null) {
+    val targetEnvironmentAwareRunProfile = environment.runProfile as TargetEnvironmentAwareRunProfile
+    if (!targetEnvironmentAwareRunProfile.needPrepareTarget()) {
       return resolvedPromise()
     }
 
@@ -554,7 +554,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     val component = TargetPrepareComponent(consoleView)
     val buildContentManager = BuildContentManager.getInstance(environment.project)
-    val contentName = ExecutionBundle.message("tab.title.prepare.environment", targetName, environment.runProfile.name)
+    val contentName = ExecutionBundle.message("tab.title.prepare.environment", targetEnvironmentAwareRunProfile.defaultTargetName ?: "target", environment.runProfile.name)
     val toolWindow = buildContentManager.orCreateToolWindow
     val contentManager: ContentManager = toolWindow.contentManager
     val contentImpl = ContentImpl(component, contentName, true)

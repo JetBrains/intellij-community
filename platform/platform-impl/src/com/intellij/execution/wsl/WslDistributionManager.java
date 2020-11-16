@@ -74,6 +74,7 @@ public final class WslDistributionManager implements Disposable {
   @Nullable
   public Pair<String, @Nullable WSLDistribution> parseWslPath(@NotNull String path) {
     if (!WSLUtil.isSystemCompatible()) return null;
+    path = FileUtil.toSystemDependentName(path);
     if (!path.startsWith(WSLDistribution.UNC_PREFIX)) return null;
 
     path = StringUtil.trimStart(path, WSLDistribution.UNC_PREFIX);
@@ -89,6 +90,11 @@ public final class WslDistributionManager implements Disposable {
                               StringUtil.join(WSLUtil.getAvailableDistributions(), WSLDistribution::getMsId, ", ")));
     }
     return Pair.create(wslPath, distribution);
+  }
+
+  public boolean isWslPath(@NotNull String path) {
+    Pair<String, @Nullable WSLDistribution> pair = parseWslPath(path);
+    return pair != null && pair.second != null;
   }
 
   @NotNull

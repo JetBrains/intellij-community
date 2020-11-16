@@ -32,6 +32,10 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
     });
   }
 
+  default TargetEnvironmentFactory createCustomTargetEnvironmentFactory() {
+    return null;
+  }
+
   interface TargetProgressIndicator {
     TargetProgressIndicator EMPTY = new TargetProgressIndicator() {
       @Override

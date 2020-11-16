@@ -136,7 +136,13 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   public @NotNull TargetEnvironment prepareTargetEnvironment(@NotNull RunProfileState runProfileState,
                                                              TargetEnvironmentAwareRunProfileState.@NotNull TargetProgressIndicator targetProgressIndicator)
     throws ExecutionException {
-    TargetEnvironmentFactory factory = getTargetEnvironmentFactory();
+    TargetEnvironmentFactory factory = null;
+    if (runProfileState instanceof TargetEnvironmentAwareRunProfileState) {
+      factory = ((TargetEnvironmentAwareRunProfileState) runProfileState).createCustomTargetEnvironmentFactory();
+    }
+    if (factory == null) {
+      factory = getTargetEnvironmentFactory();
+    }
     TargetEnvironmentRequest request = factory.createRequest();
     if (runProfileState instanceof TargetEnvironmentAwareRunProfileState) {
       ((TargetEnvironmentAwareRunProfileState)runProfileState)
