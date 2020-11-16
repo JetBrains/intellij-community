@@ -1,44 +1,20 @@
-## InternalIgnoreDependencyViolation
-
-Annotation `InternalIgnoreDependencyViolation` allows class to be used among various plugins.
-By default, classloader of extension class must be equal to classloader of plugin where extension is defined.
-It means that class of extension must be located in a module where corresponding plugin descriptor is located. 
-
-Generally, IJ Platform prohibits referencing extension class belonging to `plugin1` from the `plugin.xml` in `plugin2`.
-However, sometimes this kind of dependency violation is necessary, in which case the corresponding extension must be annotated with this annotation.
-
-For example:
-
-##### `plugin.xml`
-```xml:plugin.xml
-  <findUsageHandler implementation="com.plugin1.MyHandler"/>
-```
-
-##### `MyHandler.java`
-```java
-  @InternalIgnoreDependencyViolation
-  final class MyHandler {
-  }
-```
-
 ## "Plugin" vs "Module"
-
 Currently, plugin it is entity that consists of one or more [IJ IDEA modules](https://www.jetbrains.com/help/idea/creating-and-managing-modules.html).
 Currently, IJ IDEA module is not reflected in any way in a plugin — only as part of build script, where plugin layout is described.
 It is going to be changed — IJ Module will be integral part of plugin subsystem.
 Plugin descriptor will reference all modules that forms its content, and plugin descriptor itself it is a specific form of module descriptor.
 
-So, in the docs below term "plugin" or "module" is used by intention, and it is not sort of error but intended usage.
-
 Every plugin it is a module, but not every module it is a plugin.
+Term "optional descriptor" in a new format is equivalent to module dependency of plugin. 
 
 ## The `package` attribute
-
 The `package` attribute determines JVM package where all module classes are located. Recursively — `com.example` implies `com.example.sub` also.
+
+Required for new format version, optional for old one.
 
 If package is specified:
 
- * All plugin optional descriptors must also specify package, and it must be different. For example, if `com.example` is set for main plugin descriptor, `com.example` cannot be used for any optional descriptor. Classes referenced by optional descriptors, must be in a different package.
+ * All module dependencies of plugin must also specify package, and it must be different. For example, if `com.example` is set for main plugin descriptor, `com.example` cannot be used for any module dependency. Classes in modules specified in [dependencies](#the-dependencies-element), must be in a different package.
  * Icon class generator uses specified package for icon class but not `icons`. If you already have icon class, recommended moving existing icon class before running icon class generator to ensure that all references to icon class are updated by IntelliJ IDEA refactoring. Also, icon class generator uses the same icon class name as before if old one is detected in place.
  * Plugin module cannot have module-level libraries. It is technical limitation for time being.
 
@@ -55,16 +31,6 @@ The `content` element determines content of the plugin. Plugin consists of modul
 |---------|---------|-----------|------------------------------------|
 | module  | 0       | unbounded | A module which should be included. |
 
-The only `package` may be exported by the module, but what if you cannot perform a move refactoring for some reasons? The temporary solution to specify additional package for the current module:
-```xml
-<idea-plugin package="org.jetbrains.plugins.ruby.java">
-  <content>
-    <!-- a way to specify multiple packages for plugin -->
-    <module name="intellij.ruby.java" package="org.jetbrains.plugins.ruby.jruby"/>
-  </content>
-</idea-plugin>
-```
-
 ### The `content.module` element
 | Attribute | Type   | Use      | Description                                                                                                                               |
 |-----------|--------|----------|-------------------------------------------------------------------------------------------------------------------------------------------|
@@ -76,7 +42,6 @@ There is an important difference between content specified for a plugin and for 
  * For a module, the referenced module doesn't have own classloader and is added directly to classpath. In the future `content` will be prohibited for modules, but for now it is way to include some module directly to classpath.
 
 ## The `dependencies` element
-
 The `dependencies` element determines dependencies of the module.
 
 ```xml
@@ -87,11 +52,10 @@ The `dependencies` element determines dependencies of the module.
 
 | Element | Minimum | Maximum   | Description                                       |
 |---------|---------|-----------|---------------------------------------------------|
-| plugin  | 0       | unbounded | A plugin upon which a dependency should be added. |
 | module  | 0       | unbounded | A module upon which a dependency should be added. |
+| plugin  | 0       | unbounded | A plugin upon which a dependency should be added. |
 
 ### The `dependencies.plugin` element
-
 | Attribute | Type   | Use      | Description           |
 |-----------|--------|----------|-----------------------|
 | id        | string | required | The id of the plugin. |
@@ -120,7 +84,30 @@ In this meaning for now module dependency makes sense only for plugins, but not 
 The module added to classpath of dependent module but dependency itself is not able to access the dependent module (as it was earlier). Currently, it is packaged into the same JAR, but packaging it is implementation details that are hidden and maybe changed in any moment or maybe different in a different execution environment. The same classloader configuration is guaranteed, but not packaging, and independence from packaging it is a one of the goal of a new descriptor format.
 
 In the old plugin descriptor format:
- * tag `depends` without `config-file` it is `dependency.module`.
- * tag `depends` with `optional` it is `content.module`.
+ * tag `depends` with `config-file` it is `dependency.module`.
+ * tag `depends` without `optional` it is `dependency.plugin`.
 
 Note: for now you also must specify dependency in an old format.
+
+## InternalIgnoreDependencyViolation
+
+Annotation `InternalIgnoreDependencyViolation` allows class to be used among various plugins.
+By default, classloader of extension class must be equal to classloader of plugin where extension is defined.
+It means that class of extension must be located in a module where corresponding plugin descriptor is located. 
+
+Generally, IJ Platform prohibits referencing extension class belonging to `plugin1` from the `plugin.xml` in `plugin2`.
+However, sometimes this kind of dependency violation is necessary, in which case the corresponding extension must be annotated with this annotation.
+
+For example:
+
+##### `plugin.xml`
+```xml:plugin.xml
+  <findUsageHandler implementation="com.plugin1.MyHandler"/>
+```
+
+##### `MyHandler.java`
+```java
+  @InternalIgnoreDependencyViolation
+  final class MyHandler {
+  }
+```
