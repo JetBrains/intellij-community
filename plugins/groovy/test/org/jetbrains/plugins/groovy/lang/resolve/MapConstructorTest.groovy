@@ -195,4 +195,19 @@ class A {
 }
 """
   }
+
+  @Test
+  void 'immutable'() {
+    doTest """
+import groovy.transform.Immutable
+
+@Immutable
+class P {
+    String a
+    def foo() {
+        return new P(a: '')
+    }
+}
+"""
+  }
 }

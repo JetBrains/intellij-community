@@ -46,7 +46,11 @@ public final class GrAnnotationCollector {
         result.add(annotation);
       }
     }
-
+    for (GrAnnotation annotation : result) {
+      if (annotation instanceof GrLightAnnotation) {
+        ((GrLightAnnotation)annotation).setOwner(modifierList);
+      }
+    }
     return result.toArray(GrAnnotation.EMPTY_ARRAY);
   }
 
