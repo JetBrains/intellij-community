@@ -393,20 +393,22 @@ public class SearchTextField extends JPanel {
   private void reInitPopup() {
     final JList<String> list = new JBList<>(myModel);
     final Runnable chooseRunnable = createItemChosenCallback(list);
-    myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-            .setMovable(false)
-            .setRequestFocus(true)
-            .addListener(new JBPopupListener() {
-              @Override
-              public void onClosed(@NotNull LightweightWindowEvent event) {
-                //because jbpopup can be shown only once
-                reInitPopup();
-              }
-            })
-            .setItemChoosenCallback(chooseRunnable).createPopup();
-    myTextField.putClientProperty("JTextField.Search.FindPopup", myPopup);
-    myTextField.putClientProperty("JTextField.variant", null);
-    myTextField.putClientProperty("JTextField.variant", "searchWithJbPopup");
+    if(ApplicationManager.getApplication() != null && JBPopupFactory.getInstance() != null) {
+      myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+        .setMovable(false)
+        .setRequestFocus(true)
+        .addListener(new JBPopupListener() {
+          @Override
+          public void onClosed(@NotNull LightweightWindowEvent event) {
+            //because jbpopup can be shown only once
+            reInitPopup();
+          }
+        })
+        .setItemChoosenCallback(chooseRunnable).createPopup();
+      myTextField.putClientProperty("JTextField.Search.FindPopup", myPopup);
+      myTextField.putClientProperty("JTextField.variant", null);
+      myTextField.putClientProperty("JTextField.variant", "searchWithJbPopup");
+    }
   }
 
   protected Component getPopupLocationComponent() {

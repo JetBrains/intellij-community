@@ -230,7 +230,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   public static boolean isSearchFieldWithHistoryPopup(Component c) {
-    return isSearchField(c) && ((JTextField)c).getClientProperty(POPUP) instanceof JPopupMenu;
+    return isSearchField(c) && (((JTextField)c).getClientProperty(POPUP) instanceof JPopupMenu ||
+                                ((JTextField)c).getClientProperty(POPUP) instanceof JBPopup);
   }
 
   @Nullable
@@ -564,8 +565,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         }
         JTextComponent component = getComponent();
         Object popup = component.getClientProperty(POPUP);
-        addExtension(new SearchExtension<>(PopupState.forPopupMenu(), (JPopupMenu)popup));
-        addExtension(new ClearExtension());
+        if(popup instanceof JPopupMenu) {
+          addExtension(new SearchExtension<>(PopupState.forPopupMenu(), (JPopupMenu)popup));
+          addExtension(new ClearExtension());
+        }
       }
       else if ("searchWithJbPopup".equals(variant)) {
         Object extension = getComponent().getClientProperty("search.extension");
