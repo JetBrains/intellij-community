@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -44,7 +45,11 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   }
 
   protected BorderLayoutPanel fillMainPanel(BorderLayoutPanel mainPanel, Tree tree) {
-    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree)).addToTop(createToolbar(mainPanel, tree));
+    JComponent toolbar = createToolbar(mainPanel, tree);
+    WindowMoveListener moveListener = new WindowMoveListener(mainPanel);
+    toolbar.addMouseListener(moveListener);
+    toolbar.addMouseMotionListener(moveListener);
+    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree)).addToBottom(toolbar);
   }
 
   private void updateTree() {

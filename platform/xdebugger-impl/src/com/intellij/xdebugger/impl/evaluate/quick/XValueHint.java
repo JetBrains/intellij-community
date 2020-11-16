@@ -278,7 +278,12 @@ public class XValueHint extends AbstractValueHint {
     }
     XValueMarkers<?,?> valueMarkers = myDebugSession == null ? null : ((XDebugSessionImpl)myDebugSession).getValueMarkers();
     XSourcePosition position = myDebugSession == null ? null : myDebugSession.getCurrentPosition();
-    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(getProject(), myEditorsProvider, position, valueMarkers);
+    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(getProject(), myEditorsProvider, position, valueMarkers) {
+      @Override
+      public @NotNull String getTitle(@NotNull Pair<XValue, String> descriptor) {
+        return "";
+      }
+    };
     showTreePopup(creator, Pair.create(value, myValueName));
   }
 
