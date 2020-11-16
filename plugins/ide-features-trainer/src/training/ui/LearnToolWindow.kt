@@ -33,8 +33,7 @@ class LearnToolWindow internal constructor(val project: Project, private val who
     else {
       JBScrollPane(modulesPanel)
     }
-    val currentLesson = LessonManager.instance.currentLesson
-    if (currentLesson != null) {
+    if (LessonManager.instance.lessonIsRunning()) {
       setLearnPanel()
     }
     setContent(scrollPane)
