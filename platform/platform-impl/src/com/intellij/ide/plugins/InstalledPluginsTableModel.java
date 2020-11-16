@@ -208,17 +208,17 @@ public class InstalledPluginsTableModel {
     );
   }
 
-  private static void setNewEnabled(@NotNull Collection<@NotNull ? extends IdeaPluginDescriptor> ideaPluginDescriptors,
+  private static void setNewEnabled(@NotNull Collection<@NotNull ? extends IdeaPluginDescriptor> descriptors,
                                     @NotNull Map<PluginId, PluginEnabledState> enabledMap,
                                     @NotNull PluginEnabledState newState,
                                     @NotNull BiConsumer<@NotNull ? super IdeaPluginDescriptor, @NotNull PluginEnabledState> beforeHandler) {
-    for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
-      beforeHandler.accept(ideaPluginDescriptor, newState);
+    for (IdeaPluginDescriptor descriptor : descriptors) {
+      beforeHandler.accept(descriptor, newState);
 
-      PluginId currentPluginId = ideaPluginDescriptor.getPluginId();
+      PluginId pluginId = descriptor.getPluginId();
       enabledMap.put(
-        currentPluginId,
-        isLoaded(currentPluginId, enabledMap) ? newState : PluginEnabledState.DISABLED
+        pluginId,
+        isLoaded(pluginId, enabledMap) ? newState : PluginEnabledState.DISABLED
       );
     }
   }

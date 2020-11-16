@@ -254,8 +254,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
-    for (Map.Entry<PluginEnabledState, List<IdeaPluginDescriptor>> t : descriptorsByState.entrySet()) {
-      if (!ProjectPluginTrackerManager.updatePluginsState(t.getValue(), t.getKey(), getProject(), parentComponent)) {
+    for (Map.Entry<PluginEnabledState, List<IdeaPluginDescriptor>> entry : descriptorsByState.entrySet()) {
+      if (!ProjectPluginTrackerManager.updatePluginsState(entry.getValue(), entry.getKey(), getProject(), parentComponent)) {
         return false;
       }
     }
