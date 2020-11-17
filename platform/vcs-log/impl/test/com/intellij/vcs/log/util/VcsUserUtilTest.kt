@@ -7,6 +7,22 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class VcsUserUtilTest {
+
+  @Test
+  fun `name with macron`() {
+    assertNull(VcsUserUtil.getFirstAndLastName("Abcūdef"))
+  }
+
+  @Test
+  fun `name with turkish letter I`() {
+    assertNull(VcsUserUtil.getFirstAndLastName("Abcİdef"))
+  }
+
+  @Test
+  fun `name with umlauts`() {
+    assertNull(VcsUserUtil.getFirstAndLastName("Abäcödüef"))
+  }
+
   @Test
   fun `name and surname separated by punctuation`() {
     for (c in "\"#\$%&()*+,-./:;=?@[]^_`{|}~ ") {
