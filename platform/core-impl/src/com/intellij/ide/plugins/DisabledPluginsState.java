@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
 
 public final class DisabledPluginsState {
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
@@ -45,22 +44,8 @@ public final class DisabledPluginsState {
       return disabledPlugins;
     }
 
-    List<String> requiredPlugins = Arrays.asList(System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, "").split(","));
-    String[] suppressedPlugins = System.getProperty("idea.suppressed.plugins.id", "").split(",");
-    List<String> nonEssentialSuppressedPlugins;
-    if (suppressedPlugins.length == 0) {
-      nonEssentialSuppressedPlugins = Collections.emptyList();
-    }
-    else {
-      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      List<String> result = new ArrayList<>(suppressedPlugins.length);
-      for (String t : suppressedPlugins) {
-        if (!appInfo.isEssentialPlugin(t)) {
-          result.add(t);
-        }
-      }
-      nonEssentialSuppressedPlugins = result;
-    }
+    ApplicationInfoEx applicationInfo = ApplicationInfoImpl.getShadowInstance();
+    List<String> requiredPlugins = splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY);
 
     try {
       boolean updateDisablePluginsList = false;
@@ -68,16 +53,20 @@ public final class DisabledPluginsState {
         String id;
         while ((id = reader.readLine()) != null) {
           id = id.trim();
-          if (!requiredPlugins.contains(id) && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(id)) {
-            disabledPlugins.add(PluginId.getId(id));
+          if (id.isEmpty()) {
+            continue;
+          }
+
+          if (!requiredPlugins.contains(id) && !applicationInfo.isEssentialPlugin(id)) {
+            addIdTo(id, disabledPlugins);
           }
           else {
             updateDisablePluginsList = true;
           }
         }
 
-        for (String suppressedId : nonEssentialSuppressedPlugins) {
-          if (disabledPlugins.add(PluginId.getId(suppressedId))) {
+        for (String suppressedId : getNonEssentialSuppressedPlugins(applicationInfo)) {
+          if (addIdTo(suppressedId, disabledPlugins)) {
             updateDisablePluginsList = true;
           }
         }
@@ -203,26 +192,23 @@ public final class DisabledPluginsState {
                       disabled.removeAll(plugins) :
                       disabled.addAll(plugins);
 
-    String message;
+    Collection<PluginId> filteredPlugins;
     if (updateDescriptors) {
-      List<IdeaPluginDescriptor> descriptors = new ArrayList<>(plugins.size());
+      filteredPlugins = new ArrayList<>(plugins.size());
+
       Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
       for (PluginId pluginId : plugins) {
-        IdeaPluginDescriptor o = pluginIdMap.get(pluginId);
-        if (o != null) {
-          descriptors.add(o);
+        IdeaPluginDescriptor descriptor = pluginIdMap.get(pluginId);
+        if (descriptor != null) {
+          descriptor.setEnabled(enabled);
+          filteredPlugins.add(pluginId);
         }
-      }
-
-      message = joinedDescriptors(descriptors, enabled);
-      for (IdeaPluginDescriptor descriptor : descriptors) {
-        descriptor.setEnabled(enabled);
       }
     }
     else {
-      message = joinedPluginIds(plugins, Function.identity(), enabled);
+      filteredPlugins = plugins;
     }
-    getLogger().info(message);
+    getLogger().info(joinedPluginIds(filteredPlugins, enabled));
 
     if (!changed) {
       return;
@@ -268,31 +254,44 @@ public final class DisabledPluginsState {
     ourDisabledPlugins = null;
   }
 
-  private static @NotNull String joinedDescriptors(@NotNull Collection<? extends PluginDescriptor> descriptors, boolean enabled) {
-    return joinedPluginIds(descriptors, PluginDescriptor::getPluginId, enabled);
+  private static boolean addIdTo(@NotNull String id, @NotNull Collection<PluginId> pluginIds) {
+    return pluginIds.add(PluginId.getId(id));
   }
 
-  private static @NotNull <T> String joinedPluginIds(@NotNull Collection<T> pluginIds, @NotNull Function<T, PluginId> pluginIdGetter, boolean enabled) {
+  private static @NotNull List<String> getNonEssentialSuppressedPlugins(@NotNull ApplicationInfoEx applicationInfo) {
+    List<String> suppressedPlugins = splitByComma("idea.suppressed.plugins.id");
+    if (suppressedPlugins.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<String> result = new ArrayList<>(suppressedPlugins.size());
+    for (String suppressedPlugin : suppressedPlugins) {
+      if (!applicationInfo.isEssentialPlugin(suppressedPlugin)) {
+        result.add(suppressedPlugin);
+      }
+    }
+    return result;
+  }
+
+  private static @NotNull List<String> splitByComma(@NotNull String key) {
+    String[] strings = System.getProperty(key, "").split(",");
+    return strings.length == 0 || strings.length == 1 && strings[0].isEmpty() ?
+           Collections.emptyList() :
+           Arrays.asList(strings);
+  }
+
+  private static @NotNull String joinedPluginIds(@NotNull Collection<PluginId> pluginIds, boolean enabled) {
     StringBuilder buffer = new StringBuilder("Plugins to ")
       .append(enabled ? "enable" : "disable")
       .append(": [");
 
-    boolean isFirst = true;
-    for (T item : pluginIds) {
-      PluginId pluginId = pluginIdGetter.apply(item);
-      if (pluginId == null) {
-        continue;
-      }
-
-      CharSequence string = pluginId.getIdString();
-      if (isFirst) {
-        isFirst = false;
-      }
-      else {
+    for (Iterator<PluginId> iterator = pluginIds.iterator(); iterator.hasNext(); ) {
+      buffer.append(iterator.next().getIdString());
+      if (iterator.hasNext()) {
         buffer.append(", ");
       }
-      buffer.append(string);
     }
+
     return buffer.append(']').toString();
   }
 }
