@@ -516,7 +516,7 @@ public class PluginGroups {
   }
 
   public static final class Group {
-    private final String myId;
+    private final @NonNls String myId;
     private final @Nls String myName;
     private final Icon myIcon;
     private final @Nls String myDescription;
@@ -531,7 +531,7 @@ public class PluginGroups {
       this(name, name, icon, description, pluginIdDescription);
 
     }
-    public Group(@NotNull String id,
+    public Group(@NonNls @NotNull String id,
                  @Nls @NotNull String name,
                  @Nullable Icon icon,
                  @Nullable @Nls String description,
@@ -543,7 +543,7 @@ public class PluginGroups {
       myPluginIdDescription = pluginIdDescription;
     }
 
-    public String getId() {
+    public @NonNls String getId() {
       return myId;
     }
 
