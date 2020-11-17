@@ -309,11 +309,11 @@ public final class JUnit4TestRunnerUtil {
       if (clazz == null) {
         clazz = suiteClassName;
       }
-      System.err.print(MessageFormat.format(ResourceBundle.getBundle("RuntimeBundle").getString("junit.class.not.found"), clazz));
+      System.err.print(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.class.not.found"), clazz));
       System.exit(1);
     }
     catch (Exception e) {
-      System.err.println(MessageFormat.format(ResourceBundle.getBundle("RuntimeBundle").getString("junit.cannot.instantiate.tests"),
+      System.err.println(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.cannot.instantiate.tests"),
                                               e.toString()));
       System.exit(1);
     }

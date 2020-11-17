@@ -86,7 +86,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, ApplicationManager.class);
     appendPath(cp, DynamicBundle.class);
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
-    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/RuntimeBundle.properties"));
+    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/RuntimeBundle.properties"));
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/com/intellij/uiDesigner/core/TestProperties.properties"));
     appendPath(cp, GridLayoutManager.class); // intellij.java.guiForms.rt
     appendPath(cp, DataProvider.class);
