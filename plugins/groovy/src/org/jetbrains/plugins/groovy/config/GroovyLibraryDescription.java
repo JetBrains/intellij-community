@@ -1,12 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
-import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
@@ -32,7 +30,6 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   private final String myEnvVariable;
   private final Set<? extends LibraryKind> myLibraryKinds;
   private final String myFrameworkName;
-  private final DownloadableLibraryType myLibraryType;
 
   public GroovyLibraryDescription() {
     this("GROOVY_HOME", getAllGroovyKinds(), GROOVY_FRAMEWORK_NAME);
@@ -56,7 +53,6 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     myEnvVariable = envVariable;
     myLibraryKinds = libraryKinds;
     myFrameworkName = frameworkName;
-    myLibraryType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType.class);
   }
 
   @Nullable
@@ -145,11 +141,6 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   @NotNull
   @Override
   public LibrariesContainer.LibraryLevel getDefaultLevel() {
-    return LibrariesContainer.LibraryLevel.PROJECT;
-  }
-
-  @Override
-  public @Nullable DownloadableLibraryType getDownloadableLibraryType() {
-    return myLibraryType;
+    return LibrariesContainer.LibraryLevel.GLOBAL;
   }
 }
