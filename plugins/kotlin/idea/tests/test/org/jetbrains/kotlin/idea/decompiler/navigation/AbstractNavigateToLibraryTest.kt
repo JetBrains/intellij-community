@@ -25,12 +25,10 @@ abstract class AbstractNavigateToLibraryTest : KotlinLightCodeInsightFixtureTest
         NavigationChecker.checkAnnotatedCode(file, File(pathOfExpect))
     }
 
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { SourceNavigationHelper.setForceResolve(false) },
-            ThrowableRunnable { super.tearDown() }
-        )
-    }
+    override fun tearDown() = runAll(
+        ThrowableRunnable { SourceNavigationHelper.setForceResolve(false) },
+        ThrowableRunnable { super.tearDown() }
+    )
 }
 
 abstract class AbstractNavigateToDecompiledLibraryTest : AbstractNavigateToLibraryTest() {
@@ -46,12 +44,10 @@ abstract class AbstractNavigateToDecompiledLibraryTest : AbstractNavigateToLibra
         mockLibraryFacility.setUp(module)
     }
 
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { mockLibraryFacility.tearDown(module) },
-            ThrowableRunnable { super.tearDown() }
-        )
-    }
+    override fun tearDown() = runAll(
+        ThrowableRunnable { mockLibraryFacility.tearDown(module) },
+        ThrowableRunnable { super.tearDown() }
+    )
 }
 
 abstract class AbstractNavigateToLibrarySourceTest : AbstractNavigateToLibraryTest() {
@@ -66,12 +62,10 @@ abstract class AbstractNavigateToLibrarySourceTest : AbstractNavigateToLibraryTe
         mockLibraryFacility.setUp(module)
     }
 
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { mockLibraryFacility.tearDown(module) },
-            ThrowableRunnable { super.tearDown() }
-        )
-    }
+    override fun tearDown() = runAll(
+        ThrowableRunnable { mockLibraryFacility.tearDown(module) },
+        ThrowableRunnable { super.tearDown() }
+    )
 }
 
 abstract class AbstractNavigateJavaToLibrarySourceTest : AbstractNavigateToLibraryTest() {
@@ -87,22 +81,23 @@ abstract class AbstractNavigateJavaToLibrarySourceTest : AbstractNavigateToLibra
         mockLibraryFacility.setUp(module)
     }
 
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { mockLibraryFacility.tearDown(module) },
-            ThrowableRunnable { super.tearDown() }
-        )
-    }
+    override fun tearDown() = runAll(
+        ThrowableRunnable { mockLibraryFacility.tearDown(module) },
+        ThrowableRunnable { super.tearDown() }
+    )
 }
 
 abstract class AbstractNavigateToLibrarySourceTestWithJS : AbstractNavigateToLibrarySourceTest() {
-    private val PROJECT_DESCRIPTOR = SdkAndMockLibraryProjectDescriptor(
-        IDEA_TEST_DATA_DIR.resolve("decompiler/navigation/fromJavaSource").path, true
+    private val mockLibraryFacility = MockLibraryFacility(IDEA_TEST_DATA_DIR.resolve("decompiler/navigation/fromJavaSource"))
+
+    override fun tearDown() = runAll(
+        ThrowableRunnable { mockLibraryFacility.tearDown(module) },
+        ThrowableRunnable { super.tearDown() }
     )
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor = KotlinMultiModuleProjectDescriptor(
         "AbstractNavigateToLibrarySourceTestWithJS",
-        PROJECT_DESCRIPTOR,
+        mockLibraryFacility.asKotlinLightProjectDescriptor(),
         KotlinStdJSProjectDescriptor
     )
 }

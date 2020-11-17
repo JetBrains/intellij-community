@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.platform.js.JsPlatform
@@ -48,5 +49,11 @@ data class MockLibraryFacility(
 
     fun tearDown(module: Module) {
         ConfigLibraryUtil.removeLibrary(module, MOCK_LIBRARY_NAME)
+    }
+
+    fun asKotlinLightProjectDescriptor(): KotlinLightProjectDescriptor = object : KotlinLightProjectDescriptor() {
+        override fun configureModule(module: Module, model: ModifiableRootModel) {
+            this@MockLibraryFacility.setUp(module)
+        }
     }
 }
