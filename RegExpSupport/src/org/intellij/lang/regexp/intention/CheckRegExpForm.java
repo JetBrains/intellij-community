@@ -503,12 +503,12 @@ public final class CheckRegExpForm {
         setMatches(regExpFile, collectMatches(matcher));
         return RegExpMatchResult.MATCHES;
       }
-      else if (matcher.hitEnd()) {
-        return RegExpMatchResult.INCOMPLETE;
-      }
       else if (matcher.find()) {
         setMatches(regExpFile, collectMatches(matcher));
         return RegExpMatchResult.FOUND;
+      }
+      else if (matcher.hitEnd()) {
+        return RegExpMatchResult.INCOMPLETE;
       }
       else {
         return RegExpMatchResult.NO_MATCH;
