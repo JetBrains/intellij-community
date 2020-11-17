@@ -21,12 +21,15 @@ internal class SpaceDiffFileEditor(project: Project, spaceDiffFile: SpaceDiffFil
 
   init {
     Disposer.register(this, Disposable { editorLifetime.terminate() })
+    Disposer.register(this, diffProcessor)
 
     val diffVm = spaceDiffFile.diffVm
     diffVm.selectedChange.forEach(editorLifetime) {
       diffProcessor.updateRequest()
     }
   }
+
+  override fun isValid(): Boolean = !Disposer.isDisposed(diffProcessor)
 
   override fun getComponent(): JComponent = diffProcessor.component
 
