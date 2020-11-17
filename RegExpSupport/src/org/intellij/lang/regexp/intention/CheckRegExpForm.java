@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -35,7 +36,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollBar;
@@ -473,7 +473,7 @@ public final class CheckRegExpForm {
     final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regExpFileLanguage);
     if (matcherProvider != null) {
       final RegExpMatchResult result = ReadAction.compute(() -> {
-        final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regExpFile);
+        final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(regExpFile.getProject()).getInjectionHost(regExpFile);
         if (host != null) {
           return matcherProvider.matches(regExpText, regExpFile, host, sampleText, 1000L);
         }
@@ -485,7 +485,7 @@ public final class CheckRegExpForm {
     }
 
     final Integer patternFlags = ReadAction.compute(() -> {
-      final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regExpFile);
+      final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(regExpFile.getProject()).getInjectionHost(regExpFile);
       int flags = 0;
       if (host != null) {
         for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
