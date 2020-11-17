@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeSmellInfo;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -153,7 +154,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     });
     final PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(file));
     final Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
-    if (psiFile == null || document == null) {
+    if (psiFile == null || document == null || !ProblemHighlightFilter.shouldProcessFileInBatch(psiFile)) {
       return Collections.emptyList();
     }
 
