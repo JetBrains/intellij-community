@@ -42,7 +42,6 @@ import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.*;
@@ -370,9 +369,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     final File versionFile = IndexInfrastructure.getVersionFile(name);
 
-    IndexingStamp.IndexVersionDiff diff = IndexingStamp.versionDiffers(name, version);
+    IndexVersion.IndexVersionDiff diff = IndexVersion.versionDiffers(name, version);
     registrationStatusSink.setIndexVersionDiff(name, diff);
-    if (diff != IndexingStamp.IndexVersionDiff.UP_TO_DATE) {
+    if (diff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
       final boolean versionFileExisted = versionFile.exists();
 
       if (extension.hasSnapshotMapping() && versionFileExisted) {
@@ -380,7 +379,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
       File rootDir = IndexInfrastructure.getIndexRootDir(name);
       if (versionFileExisted) FileUtil.deleteWithRenaming(rootDir);
-      IndexingStamp.rewriteVersion(name, version);
+      IndexVersion.rewriteVersion(name, version);
 
       try {
         if (versionFileExisted) {
@@ -464,8 +463,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         if (extension.hasSnapshotMapping() && (!contentHashesEnumeratorOk || instantiatedStorage)) {
           FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name)); // todo there is possibility of corruption of storage and content hashes
         }
-        registrationStatusSink.setIndexVersionDiff(name, new IndexingStamp.IndexVersionDiff.CorruptedRebuild(version));
-        IndexingStamp.rewriteVersion(name, version);
+        registrationStatusSink.setIndexVersionDiff(name, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
+        IndexVersion.rewriteVersion(name, version);
       }
     }
   }
@@ -559,7 +558,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         LOG.error("Problems during index shutdown", e);
       }
       finally {
-        IndexingStamp.clearCachedIndexVersions();
+        IndexVersion.clearCachedIndexVersions();
       }
       LOG.info("END INDEX SHUTDOWN");
     }
@@ -890,7 +889,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private void advanceIndexVersion(ID<?, ?> indexId) {
     try {
-      IndexingStamp.rewriteVersion(indexId, myRegisteredIndexes.getState().getIndexVersion(indexId));
+      IndexVersion.rewriteVersion(indexId, myRegisteredIndexes.getState().getIndexVersion(indexId));
     }
     catch (IOException e) {
       LOG.error(e);

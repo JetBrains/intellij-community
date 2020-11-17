@@ -169,12 +169,12 @@ public final class StubIndexImpl extends StubIndexEx {
 
     final File indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
 
-    IndexingStamp.IndexVersionDiff versionDiff = forceClean
-                                                 ? new IndexingStamp.IndexVersionDiff.InitialBuild(version)
-                                                 : IndexingStamp.versionDiffers(indexKey, version);
+    IndexVersion.IndexVersionDiff versionDiff = forceClean
+                                                 ? new IndexVersion.IndexVersionDiff.InitialBuild(version)
+                                                 : IndexVersion.versionDiffers(indexKey, version);
 
     registrationResultSink.setIndexVersionDiff(indexKey, versionDiff);
-    if (versionDiff != IndexingStamp.IndexVersionDiff.UP_TO_DATE) {
+    if (versionDiff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
       final File versionFile = IndexInfrastructure.getVersionFile(indexKey);
       final boolean versionFileExisted = versionFile.exists();
 
@@ -184,7 +184,7 @@ public final class StubIndexImpl extends StubIndexEx {
       boolean needRebuild = !forceClean && (versionFileExisted || indexRootHasChildren);
 
       if (indexRootHasChildren) FileUtil.deleteWithRenaming(indexRootDir);
-      IndexingStamp.rewriteVersion(indexKey, version); // todo snapshots indices
+      IndexVersion.rewriteVersion(indexKey, version); // todo snapshots indices
 
       try {
         if (needRebuild) {
@@ -229,7 +229,7 @@ public final class StubIndexImpl extends StubIndexEx {
         break;
       }
       catch (IOException e) {
-        registrationResultSink.setIndexVersionDiff(indexKey, new IndexingStamp.IndexVersionDiff.CorruptedRebuild(version));
+        registrationResultSink.setIndexVersionDiff(indexKey, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       }
       catch (RuntimeException e) {
@@ -248,7 +248,7 @@ public final class StubIndexImpl extends StubIndexEx {
                                                         @NotNull Exception e) throws IOException {
     LOG.info(e);
     FileUtil.deleteWithRenaming(indexRootDir);
-    IndexingStamp.rewriteVersion(indexKey, version); // todo snapshots indices
+    IndexVersion.rewriteVersion(indexKey, version); // todo snapshots indices
   }
 
   public long getIndexModificationStamp(@NotNull StubIndexKey<?, ?> indexId, @NotNull Project project) {
@@ -591,6 +591,7 @@ public final class StubIndexImpl extends StubIndexEx {
     }
   }
 
+  @SuppressWarnings("unchecked")
   <K> void removeTransientDataForFile(@NotNull StubIndexKey<K, ?> key, int inputId, Map<K, StubIdList> keys) {
     UpdatableIndex<Object, Void, FileContent> index = (UpdatableIndex)getIndex(key);
     index.removeTransientDataForKeys(inputId, new MapInputDataDiffBuilder(inputId, keys));
