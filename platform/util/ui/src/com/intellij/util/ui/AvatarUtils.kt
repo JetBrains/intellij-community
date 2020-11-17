@@ -31,7 +31,7 @@ object AvatarUtils {
     val (color1, color2) = Color(colorInt1) to Color(colorInt2)
 
     val shortName = Avatars.initials(name)
-    val size = 128
+    val size = 64
     val image = ImageUtil.createImage(size, size, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
     applyQualityRenderingHints(g2)
