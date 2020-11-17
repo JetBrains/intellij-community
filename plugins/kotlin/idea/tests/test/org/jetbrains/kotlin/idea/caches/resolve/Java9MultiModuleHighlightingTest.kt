@@ -29,7 +29,7 @@ class Java9MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
     fun testSimpleLibraryExportsPackage() {
         val sources = listOf(File(testDataPath, getTestName(true) + "/library"))
         // -Xallow-kotlin-package to avoid "require kotlin.stdlib" in module-info.java
-        val extraOptions = listOf("-jdk-home", KotlinTestUtils.getJdk9Home().path, "-Xallow-kotlin-package")
+        val extraOptions = listOf("-jdk-home", KotlinTestUtils.getAtLeastJdk9Home().path, "-Xallow-kotlin-package")
         val libraryJar = KotlinCompilerStandalone(
             sources,
             platform = KotlinCompilerStandalone.Platform.Jvm(JvmTarget.JVM_9),

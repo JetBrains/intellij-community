@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +70,7 @@ public class PluginTestCaseBase {
             case MOCK_JDK:
                 return IdeaTestUtil.getMockJdk18();
             case FULL_JDK_9:
-                String jre9 = KotlinTestUtils.getJdk9Home().getPath();
+                String jre9 = KotlinTestUtils.getAtLeastJdk9Home().getPath();
                 return getSdk(jre9, "Full JDK 9");
             case FULL_JDK:
                 return fullJdk();
