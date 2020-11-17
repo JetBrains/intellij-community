@@ -5,9 +5,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -16,7 +13,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.testCompletion
 import org.jetbrains.kotlin.idea.debugger.getContextElement
-import org.jetbrains.kotlin.idea.test.SdkAndMockLibraryProjectDescriptor
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
@@ -27,29 +24,23 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
 
-private val LIBRARY_SRC = File(KotlinRoot.DIR, "completion/testData/codeFragmentInLibrarySource/customLibrary/")
 
 @RunWith(JUnit38ClassRunner::class)
 class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTest() {
-
-    override fun getProjectDescriptor() = object : SdkAndMockLibraryProjectDescriptor(LIBRARY_SRC.path, false) {
-        override fun configureModule(module: Module, model: ModifiableRootModel) {
-            super.configureModule(module, model)
-
-            val library = model.moduleLibraryTable.getLibraryByName(MOCK_LIBRARY_NAME)!!
-            val modifiableModel = library.modifiableModel
-
-            modifiableModel.addRoot(findLibrarySourceDir(), OrderRootType.SOURCES)
-            modifiableModel.commit()
-        }
+    companion object {
+        private val LIBRARY_SRC = File(KotlinRoot.DIR, "completion/testData/codeFragmentInLibrarySource/customLibrary/")
     }
 
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { SdkAndMockLibraryProjectDescriptor.tearDown(module) },
-            ThrowableRunnable { super.tearDown() }
-        )
+    private val mockLibraryFacility = MockLibraryFacility(source = LIBRARY_SRC)
+    override fun setUp() {
+        super.setUp()
+        mockLibraryFacility.setUp(module)
     }
+
+    override fun tearDown() = runAll(
+        ThrowableRunnable { mockLibraryFacility.tearDown(module) },
+        ThrowableRunnable { super.tearDown() }
+    )
 
     fun testCompletionInCustomLibrary() {
         testCompletionInLibraryCodeFragment("<caret>", "EXIST: parameter")
