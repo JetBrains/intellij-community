@@ -77,6 +77,14 @@ public class SearchTextField extends JPanel {
         //noinspection unchecked
         if (ui instanceof Condition && ((Condition)ui).value(e)) return;
 
+        if(e.getX() < JBUIScale.scale(28) && myModel.myFullList.size() > 0) {
+          myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          if (e.getClickCount() == 1) {
+           showPopup();
+          }
+        } else {
+          myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+        }
         super.processMouseEvent(e);
       }
 
@@ -402,16 +410,8 @@ public class SearchTextField extends JPanel {
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
         .setRequestFocus(true)
-        .addListener(new JBPopupListener() {
-          @Override
-          public void onClosed(@NotNull LightweightWindowEvent event) {
-            //because jbpopup can be shown only once
-            reInitPopup();
-          }
-        })
         .setItemChoosenCallback(chooseRunnable).createPopup();
-      myTextField.putClientProperty("JTextField.Search.FindPopup", myPopup);
-      myTextField.putClientProperty("JTextField.variant", "searchWithJbPopup");
+      myTextField.putClientProperty("JTextField.variant", "search");
     }
   }
 
@@ -439,7 +439,7 @@ public class SearchTextField extends JPanel {
   }
 
   protected boolean preprocessEventForTextField(KeyEvent e) {
-    if (SHOW_HISTORY_KEYSTROKE.equals(KeyStroke.getKeyStrokeForEvent(e)) && getClientProperty("JTextField.Search.FindPopup") instanceof JBPopup) {
+    if (SHOW_HISTORY_KEYSTROKE.equals(KeyStroke.getKeyStrokeForEvent(e))) {
       showPopup();
       return true;
     }
