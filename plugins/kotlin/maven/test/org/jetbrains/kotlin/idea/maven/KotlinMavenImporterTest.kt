@@ -2268,8 +2268,8 @@ class KotlinMavenImporterTest : MavenImportingTestCase() {
 
         with(facetSettings("myModule3")) {
             Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals(LanguageVersion.LATEST_STABLE, languageLevel)
-            Assert.assertEquals(LanguageVersion.LATEST_STABLE, apiLevel)
+            Assert.assertEquals(LanguageVersion.KOTLIN_1_1, languageLevel)
+            Assert.assertEquals(LanguageVersion.KOTLIN_1_0, apiLevel)
             Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             Assert.assertEquals(
                 listOf("-kotlin-home", "temp2"),
@@ -2528,7 +2528,7 @@ class KotlinMavenImporterTest : MavenImportingTestCase() {
         val mockJdkPath = "${PathManager.getHomePath()}/community/java/mockJDK-1.8"
         object : WriteAction<Unit>() {
             override fun run(result: Result<Unit>) {
-                val jdk = JavaSdk.getInstance().createJdk("myJDK", mockJdkPath)
+                val jdk = JavaSdk.getInstance().createJdk("java 1.8", mockJdkPath)
                 getProjectJdkTableSafe().addJdk(jdk)
                 ProjectRootManager.getInstance(myProject).projectSdk = jdk
             }
@@ -2582,13 +2582,13 @@ class KotlinMavenImporterTest : MavenImportingTestCase() {
 
             val moduleSDK = ModuleRootManager.getInstance(getModule("project")).sdk!!
             Assert.assertTrue(moduleSDK.sdkType is JavaSdk)
-            Assert.assertEquals("myJDK", moduleSDK.name)
+            Assert.assertEquals("java 1.8", moduleSDK.name)
             Assert.assertEquals(mockJdkPath, moduleSDK.homePath)
         } finally {
             object : WriteAction<Unit>() {
                 override fun run(result: Result<Unit>) {
                     val jdkTable = getProjectJdkTableSafe()
-                    jdkTable.removeJdk(jdkTable.findJdk("myJDK")!!)
+                    jdkTable.removeJdk(jdkTable.findJdk("java 1.8")!!)
                     ProjectRootManager.getInstance(myProject).projectSdk = null
                 }
             }.execute()
