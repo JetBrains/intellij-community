@@ -25,7 +25,6 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.AdvancedSettingsUI;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
@@ -456,7 +455,7 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
     result.setClassName(className);
     final ArrayList<MethodInfo> infos = new ArrayList<>();
     if (classes.length > 0) {
-      final THashSet<String> visitedSignatures = new THashSet<>();
+      final Set<String> visitedSignatures = new HashSet<>();
       final PatternCompiler<PsiElement> compiler = injection.getCompiler();
       for (PsiClass psiClass : classes) {
         for (PsiMethod method : psiClass.getMethods()) {
