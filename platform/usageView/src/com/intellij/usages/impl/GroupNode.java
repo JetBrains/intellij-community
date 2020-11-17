@@ -164,33 +164,30 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     ApplicationManager.getApplication().assertIsDispatchThread();
     int removed = 0;
     synchronized (this) {
-      Set<UsageNode> usagesToPassFurther = new LinkedHashSet<>();
       List<MutableTreeNode> removedNodes = new SmartList<>();
-      for (UsageNode usageNode : usages) {
-        if (myChildren.remove(usageNode)) {
-          removedNodes.add(usageNode);
+      for (UsageNode usage : usages) {
+        if (myChildren.remove(usage)) {
+          removedNodes.add(usage);
           removed++;
         }
-        else {
-          usagesToPassFurther.add(usageNode);
-        }
       }
-      myChildren.removeAll(removedNodes);
 
-      if (!usagesToPassFurther.isEmpty()) {
+      if (removed == 0) {
         for (GroupNode groupNode : getSubGroups()) {
-          int delta = groupNode.removeUsagesBulk(usagesToPassFurther, treeModel);
+          int delta = groupNode.removeUsagesBulk(usages, treeModel);
           if (delta > 0) {
             if (groupNode.getRecursiveUsageCount() == 0) {
               myChildren.remove(groupNode);
               removedNodes.add(groupNode);
             }
             removed += delta;
-            if (removed == usagesToPassFurther.size()) break;
+            if (removed == usages.size()) break;
           }
         }
       }
-      removeNodesFromParent(treeModel, this, removedNodes);
+      if (!myChildren.isEmpty()) {
+        removeNodesFromParent(treeModel, this, removedNodes);
+      }
     }
 
     if (removed > 0) {
@@ -211,10 +208,8 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
    * @param parent    the parent
    * @param nodes     must all be children of parent
    */
-  public static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel, @NotNull GroupNode parent,
-                                           @NotNull List<? extends MutableTreeNode> nodes) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
+  private static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel, @NotNull GroupNode parent,
+                                            @NotNull List<? extends MutableTreeNode> nodes) {
     int count = nodes.size();
     if (count == 0) {
       return;
@@ -230,7 +225,6 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       parent.remove(indices[i]);
     }
     treeModel.nodesWereRemoved(parent, indices, nodes.toArray());
-    treeModel.nodeStructureChanged(parent);
   }
 
   @NotNull
