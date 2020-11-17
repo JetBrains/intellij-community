@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public class PyFunctionTypeAnnotationVisitorFilter implements PythonVisitorFilter {
+public class PyTypeAnnotationVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file) {
     return !(visitorClass == PyIncorrectDocstringInspection.class ||
