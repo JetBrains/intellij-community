@@ -515,8 +515,10 @@
     <!-- PyQt -->
     <typeProvider implementation="com.jetbrains.pyqt.PyQtTypeProvider"/>
 
-    <!-- PyFunctionTypeAnnotation -->
+    <!-- PyFunctionTypeAnnotation and PyTypeHint -->
     <visitorFilter language="PyFunctionTypeComment"
+                   implementationClass="com.jetbrains.python.inspections.PyFunctionTypeAnnotationVisitorFilter"/>
+    <visitorFilter language="PyTypeHint"
                    implementationClass="com.jetbrains.python.inspections.PyFunctionTypeAnnotationVisitorFilter"/>
 
     <!-- PyExpressionCodeFragment -->
