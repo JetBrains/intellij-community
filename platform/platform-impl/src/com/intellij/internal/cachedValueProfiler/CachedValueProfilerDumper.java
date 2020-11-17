@@ -3,7 +3,6 @@ package com.intellij.internal.cachedValueProfiler;
 
 import com.google.gson.stream.JsonWriter;
 import com.intellij.psi.util.CachedValueProfiler;
-import com.intellij.psi.util.ProfilingInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,79 +11,56 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 import static java.time.temporal.ChronoField.*;
 
-public final class CachedValueProfilerDumper {
-  private final MultiMap<StackTraceElement, ProfilingInfo> myStorage;
-
-  private CachedValueProfilerDumper(MultiMap<StackTraceElement, ProfilingInfo> storage) {
-    myStorage = storage;
+final class CachedValueProfilerDumper {
+  private CachedValueProfilerDumper() {
   }
 
   @NotNull
   public static File dumpResults(@Nullable File dir) throws IOException {
-    CachedValueProfiler profiler = CachedValueProfiler.getInstance();
-    CachedValueProfilerDumper dumper = new CachedValueProfilerDumper(profiler.getStorageSnapshot());
-    return dumper.dump(dir);
-  }
-
-  @NotNull
-  private File dump(@Nullable File dir) throws IOException {
     List<TotalInfo> infos = prepareInfo();
 
     String fileName = String.format("dump-%s.cvp", time());
     File file = new File(dir, fileName);
-    try (JsonWriter writer = new JsonWriter(new BufferedWriter(new FileWriter(file)))) {
-      new MyWriter(writer).write(infos);
+    try (JsonWriter writer = new JsonWriter(new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8)))) {
+      writeJson(infos, writer);
     }
     return file;
   }
 
   @NotNull
-  private List<TotalInfo> prepareInfo() {
+  private static List<TotalInfo> prepareInfo() {
+    MultiMap<StackTraceElement, CachedValueProfiler.Info> snapshot = CachedValueProfiler.getInstance().getStorageSnapshot();
     List<TotalInfo> list = new ArrayList<>();
-    myStorage.entrySet().forEach((entry) -> list.add(new TotalInfo(entry.getKey(), entry.getValue())));
+    snapshot.entrySet().forEach((entry) -> list.add(new TotalInfo(entry.getKey(), entry.getValue())));
 
-    list.sort(Comparator.comparing(info -> ((double)info.getTotalUseCount()) / info.getInfos().size()));
+    list.sort(Comparator.comparing(info -> ((double)info.totalUseCount) / info.infos.size()));
     return list;
   }
 
   private static final class TotalInfo {
-    private final StackTraceElement myOrigin;
-    private final long myTotalLifeTime;
-    private final long myTotalUseCount;
+    final StackTraceElement origin;
+    final long totalLifeTime;
+    final long totalUseCount;
 
-    private final List<ProfilingInfo> myInfos;
+    final List<CachedValueProfiler.Info> infos;
 
-    private TotalInfo(@NotNull StackTraceElement origin, @NotNull Collection<ProfilingInfo> infos) {
-      myOrigin = origin;
-      myInfos = Collections.unmodifiableList(new ArrayList<>(infos));
+    TotalInfo(@NotNull StackTraceElement origin, @NotNull Collection<CachedValueProfiler.Info> infos) {
+      this.origin = origin;
+      this.infos = List.copyOf(infos);
 
-      myTotalLifeTime = myInfos.stream().mapToLong(value -> value.getLifetime()).sum();
-      myTotalUseCount = myInfos.stream().mapToLong(value -> value.getUseCount()).sum();
-    }
-
-    @NotNull
-    private StackTraceElement getOrigin() {
-      return myOrigin;
-    }
-
-    private long getTotalLifeTime() {
-      return myTotalLifeTime;
-    }
-
-    private long getTotalUseCount() {
-      return myTotalUseCount;
-    }
-
-    @NotNull
-    private List<ProfilingInfo> getInfos() {
-      return myInfos;
+      totalLifeTime = this.infos.stream().mapToLong(value -> value.getLifetime()).sum();
+      totalUseCount = this.infos.stream().mapToLong(value -> value.getUseCount()).sum();
     }
   }
 
@@ -105,35 +81,23 @@ public final class CachedValueProfilerDumper {
     return LocalDateTime.now().format(formatter);
   }
 
-  private static final class MyWriter {
-    private final JsonWriter myWriter;
+  private static void writeJson(List<TotalInfo> infos, JsonWriter writer) throws IOException {
+    writer.setIndent("  ");
+    writer.beginArray();
+    for (TotalInfo info : infos) {
+      writer.beginObject();
 
-    private MyWriter(@NotNull JsonWriter writer) {
-      myWriter = writer;
+      String origin = info.origin.toString();
+      long totalLifeTime = info.totalLifeTime;
+      long totalUseCount = info.totalUseCount;
+      int createdCount = info.infos.size();
+
+      writer.name("origin").value(origin);
+      writer.name("total lifetime").value(totalLifeTime);
+      writer.name("total use count").value(totalUseCount);
+      writer.name("created").value(createdCount);
+      writer.endObject();
     }
-
-    private void write(@NotNull List<TotalInfo> infos) throws IOException {
-      myWriter.setIndent("  ");
-      myWriter.beginArray();
-      for (TotalInfo info : infos) {
-        writeInfo(info);
-      }
-      myWriter.endArray();
-    }
-
-    private void writeInfo(@NotNull TotalInfo info) throws IOException {
-      myWriter.beginObject();
-
-      String origin = info.getOrigin().toString();
-      long totalLifeTime = info.getTotalLifeTime();
-      long totalUseCount = info.getTotalUseCount();
-      int createdCount = info.getInfos().size();
-
-      myWriter.name("origin").value(origin);
-      myWriter.name("total lifetime").value(totalLifeTime);
-      myWriter.name("total use count").value(totalUseCount);
-      myWriter.name("created").value(createdCount);
-      myWriter.endObject();
-    }
+    writer.endArray();
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ProfilingInfo;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.NotNullList;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Dmitry Avdeev
@@ -32,7 +32,7 @@ public abstract class CachedValueBase<T> {
   @NotNull
   private Data<T> computeData(@Nullable CachedValueProvider.Result<T> result) {
     if (result == null) {
-      return new Data<>(null, ArrayUtilRt.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY);
+      return new Data<>(null, ArrayUtilRt.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY, null);
     }
     T value = result.getValue();
     Object[] inferredDependencies = normalizeDependencies(result);
@@ -41,14 +41,8 @@ public abstract class CachedValueBase<T> {
       inferredTimeStamps[i] = getTimeStamp(inferredDependencies[i]);
     }
 
-    if (CachedValueProfiler.canProfile()) {
-      ProfilingInfo profilingInfo = CachedValueProfiler.getInstance().getTemporaryInfo(result);
-      if (profilingInfo != null) {
-        return new ProfilingData<>(value, inferredDependencies, inferredTimeStamps, profilingInfo);
-      }
-    }
-
-    return new Data<>(value, inferredDependencies, inferredTimeStamps);
+    CachedValueProfiler.Info info = CachedValueProfiler.canProfile() ? CachedValueProfiler.getInstance().getTemporaryInfo(result) : null;
+    return new Data<>(value, inferredDependencies, inferredTimeStamps, info);
   }
 
   @Nullable
@@ -92,8 +86,8 @@ public abstract class CachedValueBase<T> {
       if (isUpToDate(data)) {
         return data;
       }
-      if (data instanceof ProfilingData) {
-        ((ProfilingData<T>)data).myProfilingInfo.valueDisposed();
+      if (data.useCount instanceof CachedValueProfiler.Info) {
+        ((CachedValueProfiler.Info)data.useCount).invalidate();
       }
     }
     return null;
@@ -104,7 +98,7 @@ public abstract class CachedValueBase<T> {
     return SoftReference.dereference(myData);
   }
 
-  protected boolean isUpToDate(@NotNull Data data) {
+  protected boolean isUpToDate(@NotNull Data<T> data) {
     for (int i = 0; i < data.myDependencies.length; i++) {
       Object dependency = data.myDependencies[i];
       if (isDependencyOutOfDate(dependency, data.myTimeStamps[i])) return false;
@@ -115,7 +109,7 @@ public abstract class CachedValueBase<T> {
 
   protected boolean isDependencyOutOfDate(@NotNull Object dependency, long oldTimeStamp) {
     if (dependency instanceof CachedValueBase) {
-      return !((CachedValueBase)dependency).hasUpToDateValue();
+      return !((CachedValueBase<?>)dependency).hasUpToDateValue();
     }
     final long timeStamp = getTimeStamp(dependency);
     return timeStamp < 0 || timeStamp != oldTimeStamp;
@@ -141,12 +135,12 @@ public abstract class CachedValueBase<T> {
       return ((ModificationTracker)dependency).getModificationCount();
     }
     else if (dependency instanceof Reference){
-      final Object original = ((Reference)dependency).get();
+      Object original = ((Reference<?>)dependency).get();
       if(original == null) return -1;
       return getTimeStamp(original);
     }
     else if (dependency instanceof Ref) {
-      final Object original = ((Ref)dependency).get();
+      Object original = ((Ref<?>)dependency).get();
       if(original == null) return -1;
       return getTimeStamp(original);
     }
@@ -177,11 +171,13 @@ public abstract class CachedValueBase<T> {
     private final T myValue;
     private final Object @NotNull [] myDependencies;
     private final long @NotNull [] myTimeStamps;
+    final @Nullable AtomicLong useCount;
 
-    Data(final T value, Object @NotNull [] dependencies, long @NotNull [] timeStamps) {
+    Data(T value, Object @NotNull [] dependencies, long @NotNull [] timeStamps, @Nullable AtomicLong useCount) {
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
+      this.useCount = useCount;
     }
 
     public Object @NotNull [] getDependencies() {
@@ -198,25 +194,8 @@ public abstract class CachedValueBase<T> {
     }
 
     public T getValue() {
+      if (useCount != null) useCount.incrementAndGet();
       return myValue;
-    }
-  }
-
-  private static final class ProfilingData<T> extends Data<T> {
-    @NotNull private final ProfilingInfo myProfilingInfo;
-
-    private ProfilingData(T value,
-                          Object @NotNull [] dependencies,
-                          long @NotNull [] timeStamps,
-                          @NotNull ProfilingInfo profilingInfo) {
-      super(value, dependencies, timeStamps);
-      myProfilingInfo = profilingInfo;
-    }
-
-    @Override
-    public T getValue() {
-      myProfilingInfo.valueUsed();
-      return super.getValue();
     }
   }
 
