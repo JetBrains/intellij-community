@@ -180,4 +180,38 @@ class ProjectPaneTest : AbstractProjectViewTest() {
     state.showLibraryContents = !defaultShowLibraryContents
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Project view
   }
+
+  fun `test node collapse on sibling add`() {
+    with(ProjectViewState.getInstance(project)) {
+      hideEmptyMiddlePackages = false
+    }
+    val test = createTreeTest()
+    val temp = getOrCreateModuleDir(module)
+    val root = createChildDirectory(temp, "module")
+    PsiTestUtil.addSourceRoot(module, root)
+
+    val parent = createChildDirectory(root, "parent")
+    val folder = createChildDirectory(parent, "folder")
+
+    selectFile(folder)
+    test.assertStructure(" -PsiDirectory: module\n" +
+                         "  -PsiDirectory: parent\n" +
+                         "   PsiDirectory: folder\n" +
+                         " +External Libraries\n")
+
+    selectFile(createChildDirectory(folder, "child"))
+    test.assertStructure(" -PsiDirectory: module\n" +
+                         "  -PsiDirectory: parent\n" +
+                         "   -PsiDirectory: folder\n" +
+                         "    PsiDirectory: child\n" +
+                         " +External Libraries\n")
+
+    selectFile(createChildDirectory(parent, "sibling"))
+    test.assertStructure(" -PsiDirectory: module\n" +
+                         "  -PsiDirectory: parent\n" +
+                         "   -PsiDirectory: folder\n" +
+                         "    PsiDirectory: child\n" +
+                         "   PsiDirectory: sibling\n" +
+                         " +External Libraries\n")
+  }
 }
