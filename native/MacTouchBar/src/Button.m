@@ -9,7 +9,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
 @property (nonatomic) NSButtonType btype;
 @property (nonatomic) CGFloat bwidth;
 @property (nonatomic) execute jaction;
-@property (nonatomic) NSString * uid; // for debug only
+@property (nonatomic, assign) NSString * uid; // for debug only
 - (id)init;
 - (void)doAction;
 + (Class)cellClass;
@@ -18,7 +18,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
 @interface NSButtonCellEx : NSButtonCell
 @property (nonatomic) CGFloat myBorder;
 @property (nonatomic) CGFloat myMargin;
-@property (retain) NSImage * myArrowImg;
+@property (atomic, retain) NSImage * myArrowImg;
 @end
 
 @implementation NSButtonJAction
@@ -29,7 +29,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
         self.bwidth = 0;
         NSCell * cell = [self cell];
         [cell setLineBreakMode:NSLineBreakByTruncatingTail];
-        [self setBezelStyle:NSRoundedBezelStyle];
+        [self setBezelStyle:NSBezelStyleRounded];
         [self setMargins:3 border:8];
         // NSLog(@"created button [%@]: cell-class=%@", self, [[self cell] className]);
     }
@@ -38,7 +38,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
 - (void)setMargins:(int)margin border:(int)border {
     NSCell * cell = [self cell];
     if ([cell isKindOfClass:[NSButtonCellEx class]]) {
-        NSButtonCellEx * cellEx = cell;
+        NSButtonCellEx * cellEx = (NSButtonCellEx *)cell;
         cellEx.myBorder = border;
         cellEx.myMargin = margin;
     } else
@@ -47,7 +47,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
 - (void)setArrowImg:(NSImage *)arrowImg {
     NSCell * cell = [self cell];
     if ([cell isKindOfClass:[NSButtonCellEx class]]) {
-        NSButtonCellEx * cellEx = cell;
+        NSButtonCellEx * cellEx = (NSButtonCellEx *)cell;
         cellEx.myArrowImg = arrowImg;
     } else
         nserror(@"setArrowImg mustn't be called because internal cell isn't kind of NSButtonCellEx");
@@ -306,13 +306,13 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int layou
             button.bezelColor = [NSColor colorWithRed:0 green:130/255.f blue:215/255.f alpha:1];
         } else if (buttonFlags & BUTTON_FLAG_SELECTED) {
             if (toggle) {
-                button.state = NSOnState;
+                button.state = NSControlStateValueOn;
             } else {
                 button.bezelColor = NSColor.selectedControlColor;
             }
         } else {
             if (toggle) {
-                button.state = NSOffState;
+                button.state = NSControlStateValueOff;
             } else {
                 button.bezelColor = NSColor.controlColor;
             }
@@ -338,6 +338,8 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int layou
 }
 
 // NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
+__used
+NS_RETURNS_RETAINED
 id createButton(
         const char *uid,
         int layoutBits,
@@ -368,6 +370,7 @@ id createButton(
 }
 
 // NOTE: called from EDT (when update UI)
+__used
 void updateButton(
         id buttObj,
         int updateOptions,
@@ -377,49 +380,48 @@ void updateButton(
         const char *raster4ByteRGBA, int w, int h,
         execute jaction
 ) {
-    NSAutoreleasePool *edtPool = [NSAutoreleasePool new];
-    NSImage *img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
-    NSString *nstext = createStringFromUTF8(text);
+    @autoreleasepool {
+        NSImage *img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
+        NSString *nstext = createStringFromUTF8(text);
 
-    if ([NSThread isMainThread]) {
-        NSButtonJAction *button = ((NSCustomTouchBarItem *)buttObj).view;
-        // NSLog(@"sync update button [%@] (main thread: %@)", container.identifier, [NSThread currentThread]);
-        _setButtonData(button, updateOptions, layoutBits, buttonFlags, nstext, img, jaction);
-    } else {
-        // NSLog(@"async update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSCustomTouchBarItem *container = buttObj;
-            NSButtonJAction *button = (container).view;
-            // NOTE: block is copied, img/text objects is automatically retained
-            // nstrace(@"\tperform update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+        if ([NSThread isMainThread]) {
+            NSButtonJAction *button = ((NSCustomTouchBarItem *) buttObj).view;
+            // NSLog(@"sync update button [%@] (main thread: %@)", container.identifier, [NSThread currentThread]);
             _setButtonData(button, updateOptions, layoutBits, buttonFlags, nstext, img, jaction);
-        });
+        } else {
+            // NSLog(@"async update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSCustomTouchBarItem *container = buttObj;
+                NSButtonJAction *button = (container).view;
+                // NOTE: block is copied, img/text objects is automatically retained
+                // nstrace(@"\tperform update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+                _setButtonData(button, updateOptions, layoutBits, buttonFlags, nstext, img, jaction);
+            });
+        }
     }
-
-    [edtPool release];
 }
 
 // NOTE: now is called from AppKit-thread (creation when TB becomes visible), but can be called from EDT (when update UI)
+__used
 void setArrowImage(id buttObj, const char *raster4ByteRGBA, int w, int h) {
     NSCustomTouchBarItem *container = buttObj;
     NSButtonJAction *button = (container).view;
-    NSAutoreleasePool *edtPool = [NSAutoreleasePool new];
 
-    NSImage *img = nil;
-    if (raster4ByteRGBA != NULL && w > 0)
-        img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
+    @autoreleasepool {
+        NSImage *img = nil;
+        if (raster4ByteRGBA != NULL && w > 0)
+            img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
 
-    if ([NSThread isMainThread]) {
-        [button setArrowImg:img];
-        //NSLog(@"sync set arrow: w=%d h=%d", w, h);
-    } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            // NOTE: block is copied, img/text objects is automatically retained
-            // nstrace(@"\tperform update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+        if ([NSThread isMainThread]) {
             [button setArrowImg:img];
-            //NSLog(@"async set arrow: w=%d h=%d", w, h);
-        });
+            //NSLog(@"sync set arrow: w=%d h=%d", w, h);
+        } else {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                // NOTE: block is copied, img/text objects is automatically retained
+                // nstrace(@"\tperform update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+                [button setArrowImg:img];
+                //NSLog(@"async set arrow: w=%d h=%d", w, h);
+            });
+        }
     }
-
-    [edtPool release];
 }
