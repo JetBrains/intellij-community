@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.projectRoots.impl
 
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.SystemInfo
@@ -53,6 +54,10 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
       registerFinder(this::readRegisteredLocationsOS32J32)
     }
     registerFinder(this::guessPossibleLocations)
+    for (distro in WslDistributionManager.getInstance().installedDistributions) {
+      val wslFinder = JavaHomeFinderWsl(distro, forceEmbeddedJava, *JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS)
+      registerFinder { wslFinder.findExistingJdks() }
+    }
   }
 
   private fun readRegisteredLocationsOS64J64() = readRegisteredLocations(Bitness.x64)

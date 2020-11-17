@@ -55,7 +55,7 @@ public abstract class JavaHomeFinder {
       return new JavaHomeFinderMac(forceEmbeddedJava);
     }
     if (SystemInfo.isLinux) {
-      return new JavaHomeFinderBasic(forceEmbeddedJava, "/usr/java", "/opt/java", "/usr/lib/jvm");
+      return new JavaHomeFinderBasic(forceEmbeddedJava, DEFAULT_JAVA_LINUX_PATHS);
     }
     if (SystemInfo.isSolaris) {
       return new JavaHomeFinderBasic(forceEmbeddedJava, "/usr/jdk");
@@ -83,4 +83,6 @@ public abstract class JavaHomeFinder {
 
     return null;
   }
+
+  public static final String[] DEFAULT_JAVA_LINUX_PATHS = new String[] { "/usr/java", "/opt/java", "/usr/lib/jvm" };
 }

@@ -55,7 +55,7 @@ public class WSLDistribution {
 
   @NotNull private final WslDistributionDescriptor myDescriptor;
   @Nullable private final Path myExecutablePath;
-  private NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(() -> readHostIp());
+  private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(() -> readHostIp());
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -563,5 +563,11 @@ public class WSLDistribution {
       }
     }
     return null;
+  }
+
+  @NonNls
+  @Nullable
+  public String getEnvironmentVariable(String name) {
+    return myDescriptor.getEnvironmentVariable(name);
   }
 }
