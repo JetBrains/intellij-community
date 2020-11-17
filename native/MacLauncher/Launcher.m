@@ -10,16 +10,11 @@
 #import "PropertyFileReader.h"
 #import "utils.h"
 #import <dlfcn.h>
-@class NSAlert;
 
-typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *args);
 NSBundle *vm;
 NSString *const JVMOptions = @"JVMOptions";
 NSString *JVMVersion = NULL;
 NSString* minRequiredJavaVersion = @"1.8";
-NSString* osxVersion = @"10.10";
-BOOL javaUpdateRequired = false;
-
 
 @interface NSString (CustomReplacements)
 - (NSString *)replaceAll:(NSString *)pattern to:(NSString *)replacement;
@@ -70,14 +65,6 @@ BOOL javaUpdateRequired = false;
     return self;
 }
 
-NSString* getOSXVersion(){
-  NSString *versionString;
-  NSDictionary * sv = [NSDictionary dictionaryWithContentsOfFile:@"/System/Library/CoreServices/SystemVersion.plist"];
-  versionString = [sv objectForKey:@"ProductVersion"];
-  //NSLog(@"OS X: %@", versionString);
-  return versionString;
-}
-
 void showWarning(NSString* messageText){
    NSAlert* alert = [[NSAlert alloc] init];
    [alert addButtonWithTitle:@"OK"];
@@ -85,7 +72,7 @@ void showWarning(NSString* messageText){
    NSString* informativeText =[NSString stringWithFormat:@"%@",message_description];
    [alert setMessageText:messageText];
    [alert setInformativeText:informativeText ];
-   [alert setAlertStyle:NSWarningAlertStyle];
+   [alert setAlertStyle:NSAlertStyleWarning];
    [alert runModal];
    [alert release];
 }
@@ -181,7 +168,7 @@ BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
     return [vmVersion hasPrefix:requiredVersion];
 }
 
-NSComparisonResult compareVMVersions(id vm1, id vm2, void *context) {
+NSComparisonResult compareVMVersions(id vm1, id vm2, __unused void *context) {
     return [jvmVersion(vm2) compare:jvmVersion(vm1) options:NSNumericSearch];
 }
 
@@ -317,10 +304,6 @@ NSString *getSelector() {
 
 NSString *getExecutable() {
     return getJVMProperty(@"idea.executable");
-}
-
-NSString *getBundleName() {
-    return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
 }
 
 NSString *getPropertiesFilePath() {
@@ -479,25 +462,6 @@ BOOL validationJavaVersion(){
     return true;
 }
 
-- (void)alert:(NSArray *)values {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    [alert setMessageText:[values objectAtIndex:0]];
-    [alert setInformativeText:[values objectAtIndex:1]];
-
-    if ([values count] > 2) {
-        NSTextView *accessory = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0 , 300 , 15)];
-        [accessory setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
-        NSMutableAttributedString *str = [[NSMutableAttributedString alloc] initWithString: [values objectAtIndex:2]];
-        [str addAttribute: NSLinkAttributeName value: [values objectAtIndex:2] range: NSMakeRange(0, str.length)];
-        [accessory insertText:str];
-        [accessory setEditable:NO];
-        [accessory setDrawsBackground:NO];
-        [alert setAccessoryView:accessory];
-    }
-
-    [alert runModal];
-}
-
 - (void)launch {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
@@ -558,7 +522,7 @@ BOOL validationJavaVersion(){
             create_vm_rc = create_vm(&jvm, &env, &args);
         }
         if (create_vm == NULL || create_vm_rc != JNI_OK) {
-            NSLog(@"JNI_CreateJavaVM (%@) failed: %ld", vm.bundlePath, create_vm_rc);
+            NSLog(@"JNI_CreateJavaVM (%@) failed: %d", vm.bundlePath, create_vm_rc);
             exit(-1);
         }
     }
