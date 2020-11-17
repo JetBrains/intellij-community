@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(fsnotifier C)
+project(restarter OBJC)
 
 if(NOT APPLE)
     message(FATAL_ERROR "macOS only.")
@@ -10,6 +10,6 @@ set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.8)
 
 add_compile_options("-fmodules" "-flto=full" "-Wall" "-Wextra" "-Wpedantic" "-Wno-newline-eof")
-add_executable(fsnotifier fsnotifier.c)
+add_executable(restarter restarter.m)
 
-install(TARGETS fsnotifier DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/mac)
+install(TARGETS restarter DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/mac)
