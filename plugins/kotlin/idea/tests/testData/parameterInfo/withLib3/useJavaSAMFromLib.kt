@@ -6,5 +6,5 @@ fun main() {
 }
 
 /*
-Text: (<highlight>function: (Int, String!) -> Unit</highlight>), Disabled: false, Strikeout: false, Green: true
+Text: (<highlight>function: (number: Int, ss: String!) -> Unit</highlight>), Disabled: false, Strikeout: false, Green: true
 */

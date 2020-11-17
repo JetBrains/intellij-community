@@ -12,13 +12,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.idea.test.SdkAndMockLibraryProjectDescriptor
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -28,20 +25,26 @@ import org.jetbrains.kotlin.test.util.slashedPath
 import org.junit.Assert
 import java.io.File
 
-abstract class AbstractParameterInfoTest : LightJavaCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        val root = KotlinTestUtils.getTestsRoot(this::class.java)
-        if (root.contains("Lib")) {
-            return SdkAndMockLibraryProjectDescriptor("$root/sharedLib", true, true, false, false)
-        }
-
-        return ProjectDescriptorWithStdlibSources.INSTANCE
-    }
+abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase() {
+    private var mockLibraryFacility: MockLibraryFacility? = null
+    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE
 
     override fun setUp() {
         super.setUp()
+
+        val root = KotlinTestUtils.getTestsRoot(this::class.java)
+        if (root.contains("Lib")) {
+            mockLibraryFacility = MockLibraryFacility(source = File("$root/sharedLib"))
+            mockLibraryFacility?.setUp(module)
+        }
+
         myFixture.testDataPath = IDEA_TEST_DATA_DIR.resolve("parameterInfo").slashedPath
     }
+
+    override fun tearDown() = runAll(
+        ThrowableRunnable { mockLibraryFacility?.tearDown(module) },
+        ThrowableRunnable { super.tearDown() },
+    )
 
     protected fun doTest(fileName: String) {
         val prefix = FileUtil.getNameWithoutExtension(PathUtil.getFileName(fileName))
@@ -70,7 +73,7 @@ abstract class AbstractParameterInfoTest : LightJavaCodeInsightFixtureTestCase()
 
             val handlers = ShowParameterInfoHandler.getHandlers(project, KotlinLanguage.INSTANCE)!!
             val handler = handlers.firstOrNull { it.findElementForParameterInfo(context) != null }
-                          ?: error("Could not find parameter info handler")
+                ?: error("Could not find parameter info handler")
 
             val mockCreateParameterInfoContext = MockCreateParameterInfoContext(file, myFixture)
             val parameterOwner = handler.findElementForParameterInfo(mockCreateParameterInfoContext) as PsiElement
