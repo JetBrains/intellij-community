@@ -45,11 +45,14 @@ class GotoWithMultipleLibrariesTest : AbstractMultiModuleTest() {
         val libSrcRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libSrcDir)!!
 
         var i = 0
+        val libraryA = projectLibrary("libA", jarRoot)
         repeat(noSource) {
-            module("m${++i}", srcDir).addDependency(projectLibrary("libA", jarRoot))
+            module("m${++i}", srcDir).addDependency(libraryA)
         }
+
+        val libraryB = projectLibrary("libB", jarRoot, libSrcRoot)
         repeat(withSource) {
-            module("m${++i}", srcDir).addDependency(projectLibrary("libB", jarRoot, libSrcRoot))
+            module("m${++i}", srcDir).addDependency(libraryB)
         }
 
         checkFiles({ project.allKotlinFiles() }) {
