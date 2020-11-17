@@ -75,7 +75,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.WritersKt.writeProjectDescription;
-import static com.intellij.codeInspection.targets.TargetsKt.runAnalysisByTargets;
+import static com.intellij.codeInspection.targets.QodanaKt.runAnalysisByQodana;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class InspectionApplication implements CommandLineInspectionProgressReporter {
@@ -93,7 +93,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   boolean myAnalyzeChanges;
   boolean myPathProfiling;
   boolean myQodanaRun;
-  QodanaConfig myQodanaConfig;
+  public QodanaConfig myQodanaConfig;
   private int myVerboseLevel;
   private final Map<String, List<Range>> diffMap = new ConcurrentHashMap<>();
   private final MultiMap<Pair<String, Integer>, String> originalWarnings = MultiMap.createConcurrent();
@@ -256,8 +256,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     AnalysisScope scope = getAnalysisScope(project);
     if (scope == null) return;
     LOG.info("Used scope: " + scope.toString());
-    if (myTargets != null) {
-      runAnalysisByTargets(this, projectPath, project, myInspectionProfile, scope);
+    if (myQodanaRun) {
+      runAnalysisByQodana(this, projectPath, project, myInspectionProfile, scope);
     } else {
       runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
     }
@@ -341,6 +341,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
   private void subscribeToRootChanges(Project project, InspectionsReportConverter reportConverter) {
     Path rootLogDir = Paths.get(myOutPath).resolve("log/projectStructureChanges");
+    //noinspection ResultOfMethodCallIgnored
     rootLogDir.toFile().mkdirs();
     AtomicInteger counter = new AtomicInteger(0);
     reportConverter.projectData(project, rootLogDir.resolve("state0"));

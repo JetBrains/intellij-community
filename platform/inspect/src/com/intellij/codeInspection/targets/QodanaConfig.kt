@@ -26,9 +26,15 @@ private const val DEFAULT_QODANA_PROFILE = "qodana.recommended"
 private const val CONFIG_VERSION = "1.0"
 private const val CONFIG_ALL_INSPECTIONS = "All"
 
+private const val DEFAULT_FAIL_THRESHOLD = -1
+private const val DEFAULT_FAIL_EXITCODE = 1
+const val DEFAULT_STOP_THRESHOLD = -1
 typealias Excludes = List<Exclusion>
 
-data class QodanaProfile(var path: String = "", var name: String = "")
+data class QodanaProfile(
+  var path: String = "",
+  var name: String = ""
+)
 
 data class Exclusion(var name: String = "", var paths: List<String> = emptyList(), var patterns: List<String> = emptyList()) {
   fun getScope(project: Project): PackageSet? {
@@ -56,7 +62,10 @@ data class Exclusion(var name: String = "", var paths: List<String> = emptyList(
 
 class QodanaConfig(var version: String = CONFIG_VERSION,
                    var profile: QodanaProfile = QodanaProfile(),
-                   var exclude: Excludes = emptyList()) {
+                   var exclude: Excludes = emptyList(),
+                   var failThreshold: Int = DEFAULT_FAIL_THRESHOLD,
+                   var failExitCode: Int = DEFAULT_FAIL_EXITCODE,
+                   var stopThreshold: Int = DEFAULT_STOP_THRESHOLD) {
   companion object {
     @JvmField
     val EMPTY = QodanaConfig()
@@ -75,22 +84,25 @@ class QodanaConfig(var version: String = CONFIG_VERSION,
       }
 
       if (qodanaConfig.profile.name.isEmpty() && qodanaConfig.profile.path.isEmpty()) {
-        qodanaConfig = QodanaConfig(qodanaConfig.version, QodanaProfile(DEFAULT_QODANA_PROFILE, ""))
+        qodanaConfig = QodanaConfig(qodanaConfig.version, QodanaProfile("", DEFAULT_QODANA_PROFILE))
       }
 
       if (application.myProfileName != null || application.myProfilePath != null) {
         if (application.myProfileName != null) {
-          return QodanaConfig(CONFIG_VERSION, QodanaProfile("", application.myProfileName), qodanaConfig.exclude)
+          qodanaConfig.profile = QodanaProfile("", application.myProfileName)
+
         }
         if (application.myProfilePath != null) {
-          return QodanaConfig(CONFIG_VERSION, QodanaProfile(application.myProfilePath, "" ), qodanaConfig.exclude)
+          qodanaConfig.profile = QodanaProfile(application.myProfilePath,"")
         }
-        return QodanaConfig(CONFIG_VERSION, QodanaProfile(DEFAULT_QODANA_PROFILE, ""), qodanaConfig.exclude)
       }
-      else {
-        return qodanaConfig
-      }
+
+      return qodanaConfig
     }
+  }
+
+  fun isAboveStopThreshold(count: Int): Boolean {
+    return stopThreshold in 0 until count
   }
 
   fun copyToLog(projectPath: Path) {
