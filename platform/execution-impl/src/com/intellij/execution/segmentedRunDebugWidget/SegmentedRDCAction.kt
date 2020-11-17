@@ -33,9 +33,7 @@ class SegmentedRDCAction : PillActionComponent(), DumbAware {
     e.presentation.isEnabledAndVisible = isNewRunDebug()
 
     e.presentation.putClientProperty(PILL_SHOWN, e.project?.let {
-      RunDebugConfigManager.getInstance(it)?.let { debugConfigManager ->
-        debugConfigManager.getState() != RunDebugConfigManager.State.DEFAULT
-      } ?: false
+      StateWidgetManager.getInstance(it).getActiveProcessesIDs().isNotEmpty()
     } ?: false)
   }
 }

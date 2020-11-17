@@ -14,25 +14,10 @@ class RDCPillLabelGroup : ActionGroup(), DumbAware {
   fun getActions(project: Project): MutableList<AnAction> {
     val actions = mutableListOf<AnAction>()
     val toolWindowManager = ToolWindowManager.getInstance(project)
-    RunDebugConfigManager.getInstance(project)?.getState()?.let {
-      if (it.running) {
-        executorRegistry.getExecutorById(RunDebugConfigManager.RUN_EXECUTOR_ID)?.let { executor ->
-          actions.add(getLabelAction(executor, toolWindowManager))
-        }
-      }
-
-      if(it.debugging) {
-        executorRegistry.getExecutorById(RunDebugConfigManager.DEBUG_EXECUTOR_ID)?.let { executor ->
-          if(actions.size>0) actions.add(Separator())
-          actions.add(getLabelAction(executor, toolWindowManager))
-        }
-      }
-
-      if(it.profiling) {
-        executorRegistry.getExecutorById(RunDebugConfigManager.PROFILE_EXECUTOR_ID)?.let { executor ->
-          if(actions.size>0) actions.add(Separator())
-          actions.add(getLabelAction(executor, toolWindowManager))
-        }
+    StateWidgetManager.getInstance(project).getActiveProcesses().forEach {
+      executorRegistry.getExecutorById(it.executorId)?.let { executor ->
+        if(actions.size > 0) actions.add(Separator())
+        actions.add(getLabelAction(executor, toolWindowManager))
       }
     }
     return actions
@@ -47,7 +32,6 @@ class RDCPillLabelGroup : ActionGroup(), DumbAware {
 
     return actions.toTypedArray()
   }
-
 
   private fun getLabelAction(executor: Executor, toolWindowManager: ToolWindowManager): AnAction {
     return object : AnAction(executor.actionName) {

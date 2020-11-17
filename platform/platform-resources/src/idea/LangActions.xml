@@ -524,7 +524,6 @@
       <!--<group class="com.intellij.execution.segmentedRunDebugWidget.RDCPillLabelGroup"/>-->
       <action id="RunningRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.RunningRDCLabelAction"/>
       <action id="DebuggingRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.DebuggingRDCLabelAction"/>
-      <action id="ProfilingRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.ProfilingRDCLabelAction"/>
       <action id="RDCBar" class="com.intellij.execution.segmentedRunDebugWidget.RDCBarAction"/>
     </group>
 

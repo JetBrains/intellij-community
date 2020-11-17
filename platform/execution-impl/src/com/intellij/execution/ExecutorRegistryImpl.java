@@ -11,7 +11,7 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.segmentedRunDebugWidget.RunDebugConfigManager;
+import com.intellij.execution.stateExecutionWidget.StateWidgetProcess;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
@@ -108,11 +108,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE)).add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
     }
 
-    AnAction wrappedRDCAction = RunDebugConfigManager.wrapAction(executor, toolbarAction);
-
-    if(wrappedRDCAction != null) {
-      registerActionInGroup(actionManager, RunDebugConfigManager.generateActionID(executor), wrappedRDCAction, RDC_GROUP, myRunDebugIdToAction);
-    }
+    List<StateWidgetProcess> processes = StateWidgetProcess.getProcesses();
+    processes.forEach(it -> {
+      if (it.getExecutorId().equals(executor.getId()) && !(executor instanceof ExecutorGroup)) {
+        ExecutorAction wrappedAction = new StateWidget(executor, it);
+        registerActionInGroup(actionManager, StateWidgetProcess.generateActionID(executor.getId()), wrappedAction, RDC_GROUP,
+                              myRunDebugIdToAction);
+      }
+    });
 
     myContextActionIdSet.add(executor.getContextActionId());
   }
@@ -150,7 +153,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     else {
       unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
     }
-    unregisterAction(RunDebugConfigManager.generateActionID(executor), RDC_GROUP, myRunDebugIdToAction);
+    unregisterAction(StateWidgetProcess.generateActionID(executor.getId()), RDC_GROUP, myRunDebugIdToAction);
   }
 
   private static void unregisterAction(@NotNull String actionId, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
@@ -197,8 +200,28 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  private static final class ExecutorAction extends AnAction implements DumbAware, UpdateInBackground {
-    private final Executor myExecutor;
+  private static final class StateWidget extends ExecutorAction {
+    final StateWidgetProcess myProcess;
+
+    @Override
+    public boolean displayTextInToolbar() {
+      return true;
+    }
+
+    private StateWidget(@NotNull Executor executor, @NotNull StateWidgetProcess process) {
+      super(executor);
+      myProcess = process;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setText(myExecutor.getActionName());
+    }
+  }
+
+  private static class ExecutorAction extends AnAction implements DumbAware, UpdateInBackground {
+    protected final Executor myExecutor;
 
     private ExecutorAction(@NotNull Executor executor) {
       super(executor.getStartActionText(), executor.getDescription(), IconLoader.createLazy(() -> executor.getIcon()));

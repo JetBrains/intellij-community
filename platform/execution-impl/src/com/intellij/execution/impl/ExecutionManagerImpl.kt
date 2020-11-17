@@ -693,20 +693,6 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     })
   }
 
-  fun getRunning(executorIds: List<String>): Map<String, List<RunnerAndConfigurationSettings>> {
-    val result = HashMap<String, MutableList<RunnerAndConfigurationSettings>>()
-    for (entry in runningConfigurations) {
-      val id = entry.executor.id
-      if (executorIds.contains(id)) {
-        val processHandler = entry.descriptor.processHandler
-        if (processHandler != null && !processHandler.isProcessTerminated && entry.settings != null) {
-          result.computeIfAbsent(id, Function { SmartList() }).add(entry.settings)
-        }
-      }
-    }
-    return result
-  }
-
   fun getRunningDescriptors(condition: Condition<in RunnerAndConfigurationSettings>): List<RunContentDescriptor> {
     val result = SmartList<RunContentDescriptor>()
     for (entry in runningConfigurations) {
