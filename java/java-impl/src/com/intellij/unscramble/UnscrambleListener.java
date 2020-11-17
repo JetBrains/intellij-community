@@ -42,6 +42,12 @@ class UnscrambleListener extends ClipboardAnalyzeListener {
   }
 
   @Override
+  public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
+    if (!Registry.is("analyze.exceptions.on.the.fly")) return;
+    super.applicationDeactivated(ideFrame);
+  }
+
+  @Override
   public boolean canHandle(@NotNull String value) {
     value = UnscrambleDialog.normalizeText(value);
     int linesCount = 0;
