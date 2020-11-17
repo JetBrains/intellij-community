@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <options>
-
   <configurable id="preferences.keymap" configurable_name="Keymap">
-
     <option name="keymap">
       <synonym>Mapping</synonym>
       <synonym>Map keys</synonym>
@@ -30,19 +28,23 @@
     <synonym>Edit Quick List</synonym>
     <synonym>Switch to Quick List</synonym>
     <synonym>Delete Quick List</synonym>
-
   </configurable>
 
   <configurable id="project.propCompiler" configurable_name="Compiler">
   </configurable>
+
   <configurable id="preferences.lookFeel" configurable_name="Appearance">
   </configurable>
+
   <configurable id="preferences.sourceCode" configurable_name="Global&#10;Code Style">
   </configurable>
+
   <configurable id="project.propVCSSupport" configurable_name="Version Control">
   </configurable>
+
   <configurable id="preferences.sourceCode" configurable_name="Project&#10;Code Style">
   </configurable>
+
   <configurable id="project.propLocalVCS" configurable_name="Local History">
     <synonym>Recover</synonym>
     <synonym>View project changes</synonym>
@@ -53,11 +55,8 @@
     <synonym>View project history</synonym>
     <synonym>Compare versions</synonym>
     <synonym>View project revisions</synonym>
+  </configurable>
 
-  </configurable>
-  <configurable id="preferences.general" configurable_name="General">
-    <synonym>abracadabra</synonym>
-  </configurable>
   <configurable id="preferences.codeCompletion" configurable_name="Code Completion">
   </configurable>
 
@@ -71,9 +70,7 @@
     <synonym>Manage external resources</synonym>
   </configurable>
 
-
   <configurable id="preferences.customizations" configurable_name="Customizations">
-
     <synonym>Customize interface</synonym>
     <synonym>Customize menu</synonym>
     <synonym>Customize toolbar</synonym>
@@ -95,7 +92,6 @@
     <synonym>Create interface scheme</synonym>
     <synonym>Delete interface scheme</synonym>
     <synonym>Select interface scheme</synonym>
-
   </configurable>
 
   <configurable id="preferences.updates" configurable_name="Updates">
@@ -104,7 +100,6 @@
     <synonym>Check version</synonym>
     <synonym>Update IDEA</synonym>
     <synonym>Manual update</synonym>
-
   </configurable>
 
   <configurable id="errors" configurable_name="Errors">
@@ -121,10 +116,7 @@
     <synonym>Remove todo list filter</synonym>
     <synonym>Task list</synonym>
     <synonym>Task list</synonym>
-
-
   </configurable>
-
 
   <configurable id="editing.templates" configurable_name="Live Templates">
     <synonym>Code template</synonym>
@@ -135,56 +127,35 @@
     <synonym>Remove code template</synonym>
     <synonym>Define new code template</synonym>
     <synonym>Modify code template</synonym>
-
   </configurable>
-
-  <configurable id="preferences.applicationServers" configurable_name="Application Servers">
-    <synonym>J2EE Build Settings</synonym>
-    <synonym>Manage Application Server Validations</synonym>
-    <synonym>J2EE Application settings</synonym>
-    <synonym>Manage JAR, exploded directory and WAR settings</synonym>
-    <synonym>J2EE Application Settings</synonym>
-    <synonym>Set application descriptor</synonym>
-    <synonym>J2EE Application Deployment settings</synonym>
-    <synonym>J2EE Application Settings</synonym>
-    <synonym>J2EE Application Settings</synonym>
-    <synonym>Manage deployment descriptors</synonym>
-    <synonym>Manage modules settings</synonym>
-    <synonym>J2EE Application Settings</synonym>
-
-  </configurable>
-
 
   <configurable id="preferences.colorsFonts" configurable_name="Colors &amp; Fonts">
   </configurable>
+
   <configurable id="preferences.jdkGlobalLibs" configurable_name="JDK &amp;&#10;Global Libraries">
   </configurable>
-  <configurable id="preferences.fileTypes" configurable_name="File Types">
 
+  <configurable id="preferences.fileTypes" configurable_name="File Types">
     <synonym>New file type</synonym>
     <synonym>Remove file type</synonym>
     <synonym>Edit file type</synonym>
     <synonym>Manage file types</synonym>
     <synonym>Edit file extensions</synonym>
     <synonym>Edit file associations</synonym>
-    <synonym></synonym>
-
   </configurable>
+
   <configurable id="project.propGUI" configurable_name="GUI Designer">
-
   </configurable>
-  <configurable id="fileTemplates" configurable_name="File Templates">
 
+  <configurable id="fileTemplates" configurable_name="File Templates">
     <synonym>Code template</synonym>
     <synonym>Custom template</synonym>
     <synonym>Custom include</synonym>
     <synonym>Include template</synonym>
-    <synonym>J2EE template</synonym>
     <synonym>New template</synonym>
     <synonym>Add template</synonym>
     <synonym>File template</synonym>
     <synonym>Manage templates</synonym>
-
   </configurable>
 
   <configurable id="preferences.editor" configurable_name="Editor">
@@ -199,7 +170,6 @@
     <synonym>External tools settings</synonym>
     <synonym>Plug a tool in IDEA</synonym>
     <synonym>Process external resource</synonym>
-
   </configurable>
 
   <configurable id="preferences.intentionPowerPack" configurable_name="Intention Settings">
@@ -208,7 +178,6 @@
     <synonym>On the fly error detection</synonym>
     <synonym>Intention actions</synonym>
     <synonym>Code error highlighting</synonym>
-
   </configurable>
 
   <configurable id="preferences.pathVariables" configurable_name="Path Variables">
@@ -217,7 +186,6 @@
     <synonym>System path</synonym>
     <synonym>Alternative path</synonym>
     <synonym>Search locations</synonym>
-
   </configurable>
 
   <configurable id="preferences.pluginManager" configurable_name="Plugins">
@@ -228,7 +196,7 @@
     <synonym>Update plugins</synonym>
     <synonym>View plugins</synonym>
     <synonym>View plugin statistics</synonym>
-    </configurable>
+  </configurable>
 
   <configurable id="web.server" configurable_name="Deployment">
     <synonym>Server</synonym>
@@ -236,6 +204,4 @@
     <synonym>Remote</synonym>
     <synonym>Web Path</synonym>
   </configurable>
-
 </options>
-
