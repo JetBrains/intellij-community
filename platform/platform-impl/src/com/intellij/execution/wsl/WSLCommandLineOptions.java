@@ -73,8 +73,8 @@ public final class WSLCommandLineOptions {
   }
 
   /**
-   * Enables passing environment variables to WSL process using environmental variable interoperability between Win32/WSL.
-   * See https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/ for details.
+   * Enables passing environment variables to WSL process using environmental variable interoperability between Windows and WSL.
+   * See <a href="https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/">Share Environment</a>.
    * @param passEnvVarsUsingInterop true to pass environment variables using interoperability
    */
   public @NotNull WSLCommandLineOptions setPassEnvVarsUsingInterop(boolean passEnvVarsUsingInterop) {
