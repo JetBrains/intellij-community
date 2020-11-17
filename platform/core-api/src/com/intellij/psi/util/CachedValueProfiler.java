@@ -11,14 +11,15 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class CachedValueProfiler {
   private static final CachedValueProfiler ourInstance = new CachedValueProfiler();
-
-  private volatile MultiMap<StackTraceElement, ProfilingInfo> myStorage = null;
+  private static final boolean ourCanProfile = ApplicationManager.getApplication().isInternal();
 
   private final Object myLock = new Object();
+
+  private volatile MultiMap<StackTraceElement, ProfilingInfo> myStorage;
   private volatile ConcurrentMap<CachedValueProvider.Result<?>, ProfilingInfo> myTemporaryResults;
 
   public static boolean canProfile() {
-    return ApplicationManager.getApplication().isInternal();
+    return ourCanProfile;
   }
 
   public boolean isEnabled() {
@@ -70,26 +71,15 @@ public final class CachedValueProfiler {
   }
 
   private static @Nullable StackTraceElement findOrigin() {
-    StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-    return findFirstStackTraceElementExcluding(stackTrace, CachedValueProfiler.class.getName(), CachedValueProvider.class.getName());
-  }
-
-  private static @Nullable StackTraceElement findFirstStackTraceElementExcluding(StackTraceElement @NotNull [] stackTraceElements,
-                                                                                 String @NotNull ... excludedClasses) {
-    for (StackTraceElement element : stackTraceElements) {
-      if (!matches(element, excludedClasses)) {
-        return element;
-      }
+    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+    for (int i = 3, len = stackTrace.length; i < len; i++) {
+      String className = stackTrace[i].getClassName();
+      if (className.startsWith("com.intellij.util.CachedValue")) continue;
+      if (className.startsWith("com.intellij.psi.util.CachedValue")) continue;
+      if (className.startsWith("com.intellij.psi.impl.PsiCachedValue")) continue;
+      if (className.startsWith("com.intellij.openapi.util.Recursion")) continue;
+      return stackTrace[i];
     }
-
     return null;
   }
-
-  private static boolean matches(@NotNull StackTraceElement element, String @NotNull [] excludedClasses) {
-    for (String aClass : excludedClasses) {
-      if (element.getClassName().startsWith(aClass)) return true;
-    }
-    return false;
-  }
-
 }
