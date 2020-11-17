@@ -9,6 +9,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeId
@@ -24,10 +25,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.io.write
@@ -394,6 +392,31 @@ class ModuleBridgesTest {
     modifiableRootModel.dispose()
 
     assertEquals(1, TestModuleExtension.commitCalled.get())
+  }
+
+  @Test
+  fun `test module extension saves correctly if custom options exist`() {
+    val optionValue = "foo"
+    val module = runWriteActionAndWait {
+      ModuleManager.getInstance(project).newModule(File(project.basePath, "test.iml").path, ModuleType.EMPTY.id)
+    }
+    module.setOption(Module.ELEMENT_TYPE, optionValue)
+
+    val moduleRootManager = ModuleRootManager.getInstance(module)
+    var modifiableModel = moduleRootManager.modifiableModel
+    var moduleExtension = modifiableModel.getModuleExtension(TestModuleExtension::class.java)
+    moduleExtension.languageLevel = LanguageLevel.JDK_1_5
+    runWriteActionAndWait { modifiableModel.commit() }
+
+    assertEquals(LanguageLevel.JDK_1_5, moduleRootManager.getModuleExtension(TestModuleExtension::class.java).languageLevel)
+
+    modifiableModel = moduleRootManager.modifiableModel
+    moduleExtension = modifiableModel.getModuleExtension(TestModuleExtension::class.java)
+    moduleExtension.languageLevel = null
+    runWriteActionAndWait { modifiableModel.commit() }
+
+    assertEquals(optionValue, module.getOptionValue(Module.ELEMENT_TYPE))
+    assertNull(moduleRootManager.getModuleExtension(TestModuleExtension::class.java).languageLevel)
   }
 
   @Test
