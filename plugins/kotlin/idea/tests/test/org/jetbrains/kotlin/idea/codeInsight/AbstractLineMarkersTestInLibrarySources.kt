@@ -5,10 +5,6 @@
 
 package org.jetbrains.kotlin.idea.codeInsight
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.ExpectedHighlightingData
@@ -16,7 +12,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.createFile
 import com.intellij.util.io.write
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.SdkAndMockLibraryProjectDescriptor
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import java.io.File
@@ -26,11 +22,11 @@ abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest
     private var libraryCleanPath: String? = null
     private var libraryClean: File? = null
 
-    private fun getLibraryCleanPath(): String = libraryCleanPath!!
-
     private val libraryOriginal = IDEA_TEST_DATA_DIR.resolve("codeInsightInLibrary/_library")
+    private var mockLibraryFacility: MockLibraryFacility? = null
+    override fun setUp() {
+        super.setUp()
 
-    override fun getProjectDescriptor(): SdkAndMockLibraryProjectDescriptor {
         if (libraryCleanPath == null) {
             val libraryClean = Files.createTempDirectory("lineMarkers_library")
             libraryCleanPath = libraryClean.toString()
@@ -43,17 +39,9 @@ abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest
             }
             this.libraryClean = File(libraryCleanPath)
         }
-        return object : SdkAndMockLibraryProjectDescriptor(getLibraryCleanPath(), false) {
-            override fun configureModule(module: Module, model: ModifiableRootModel) {
-                super.configureModule(module, model)
 
-                val library = model.moduleLibraryTable.getLibraryByName(MOCK_LIBRARY_NAME)!!
-                val modifiableModel = library.modifiableModel
-
-                modifiableModel.addRoot(LocalFileSystem.getInstance().findFileByIoFile(libraryClean!!)!!, OrderRootType.SOURCES)
-                modifiableModel.commit()
-            }
-        }
+        mockLibraryFacility = MockLibraryFacility(source = libraryClean!!)
+        mockLibraryFacility?.setUp(module)
     }
 
     fun doTestWithLibrary(path: String) {
@@ -79,11 +67,9 @@ abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest
         }
     }
 
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { libraryClean?.deleteRecursively() },
-            ThrowableRunnable { SdkAndMockLibraryProjectDescriptor.tearDown(module) },
-            ThrowableRunnable { super.tearDown() }
-        )
-    }
+    override fun tearDown() = runAll(
+        ThrowableRunnable { mockLibraryFacility?.tearDown(module) },
+        ThrowableRunnable { libraryClean?.deleteRecursively() },
+        ThrowableRunnable { super.tearDown() }
+    )
 }
