@@ -225,10 +225,11 @@ internal class SpaceChatItemComponentFactory(
     })
   }
 
-  private fun createSimpleMessageComponent(message: SpaceChatItem): HtmlEditorPane = createSimpleMessageComponent(message.text)
+  private fun createSimpleMessageComponent(message: SpaceChatItem): HtmlEditorPane =
+    createSimpleMessageComponent(message.text, message.isEdited)
 
-  private fun createSimpleMessageComponent(@Nls text: String): HtmlEditorPane = HtmlEditorPane().apply {
-    setBody(processItemText(server, text))
+  private fun createSimpleMessageComponent(@Nls text: String, isEdited: Boolean = false): HtmlEditorPane = HtmlEditorPane().apply {
+    setBody(processItemText(server, text, isEdited))
   }
 
   private class EventMessagePanel(content: JComponent) : BorderLayoutPanel() {

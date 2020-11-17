@@ -17,10 +17,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItemWithThread
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
+import com.intellij.ui.ColorUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitAll
@@ -105,4 +108,15 @@ internal fun TD_MemberProfile.link(server: String): HtmlChunk =
   HtmlChunk.link(Navigator.m.member(username).absoluteHref(server), name.fullName()) // NON-NLS
 
 @NlsSafe
-internal fun processItemText(server: String, @NlsSafe text: String) = MentionConverter.html(text, server)
+internal fun processItemText(server: String, @NlsSafe text: String, isEdited: Boolean) = MentionConverter.html(text, server).let {
+  if (isEdited) {
+    it + " " + getGrayTextHtml(SpaceBundle.message("chat.message.edited.text"))
+  }
+  else {
+    it
+  }
+}
+
+@NlsSafe
+internal fun getGrayTextHtml(@Nls text: String): String =
+  HtmlChunk.span("color: ${ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())}").addRaw(text).toString()

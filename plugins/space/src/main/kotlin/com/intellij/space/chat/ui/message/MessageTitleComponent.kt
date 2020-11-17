@@ -51,18 +51,10 @@ internal class MessageTitleComponent(
       val dateTime = message.created.millis
       setBody(HtmlChunk.text(dateTime.formatPrettyDateTime()).toString()) // NON-NLS
     }
-    val editedPanel = JBLabel(SpaceBundle.message("chat.message.edited.text"), UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-      isOpaque = true
-    }
 
     isOpaque = false
     add(authorPanel)
     add(timePanel)
-    if (message.isEdited) {
-      add(editedPanel)
-    }
     add(actionsPanel)
     launch(lifetime, Ui) {
       delay(2000)

@@ -115,7 +115,7 @@ class SpaceChatCodeDiscussionComponentFactory(
     thread.mvms.forEachWithPrevious(lifetime) { prev, new ->
       val messages = new.messages
       val comment = messages.first()
-      reviewCommentComponent.setBody(processItemText(server, comment.message.text))
+      reviewCommentComponent.setBody(processItemText(server, comment.message.text, comment.message.edited != null))
       reviewCommentComponent.repaint()
       if (!collapseModel.value) {
         updateActionsComponentsVisibility(threadComponent, outerActionsPanel, component, prev?.messages?.size, messages.size)
