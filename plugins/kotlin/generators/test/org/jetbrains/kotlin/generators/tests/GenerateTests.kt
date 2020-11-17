@@ -66,6 +66,9 @@ import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandle
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
 import org.jetbrains.kotlin.idea.filters.AbstractKotlinExceptionFilterTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLazyDeclarationResolveTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLazyResolveTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirMultiModuleLazyResolveTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
@@ -1007,11 +1010,18 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFirLazyResolveTest> {
-            model("fir/lazyResolve", pattern = TEST, filenameStartsLowerCase = true)
+            model("fir/lazyResolve", pattern = TEST, isRecursive = false)
         }
     }
 
-        testGroup("idea/idea-frontend-fir/idea-fir-low-level-api/tests", "idea/idea-frontend-fir/idea-fir-low-level-api/testdata") {
+    testGroup("fir-low-level-api", testDataPath = "testdata") {
+        testClass<AbstractFirMultiModuleLazyResolveTest> {
+            model("multiModuleLazyResolve", pattern = DIRECTORY, isRecursive = false)
+        }
+    }
+
+    /*
+     testGroup("idea/idea-frontend-fir/idea-fir-low-level-api/tests", "idea/idea-frontend-fir/idea-fir-low-level-api/testdata") {
             testClass<AbstractFirMultiModuleLazyResolveTest> {
                 model("multiModuleLazyResolve", recursive = false, extension = null)
             }
@@ -1031,6 +1041,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                 model("sessionInvalidation", recursive = false, extension = null)
             }
         }
+     */
+
+    /*
 
     testGroup("idea/idea-fir/tests", "idea") {
         testClass<AbstractFirHighlightingTest> {
