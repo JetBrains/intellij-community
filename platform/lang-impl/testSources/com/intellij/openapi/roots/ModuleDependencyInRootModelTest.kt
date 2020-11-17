@@ -327,4 +327,20 @@ class ModuleDependencyInRootModelTest {
     }
   }
 
+  @Test
+  fun `edit order entry located after removed entry`() {
+    val foo = projectModel.createModule("foo")
+    ModuleRootModificationUtil.addDependency(mainModule, foo)
+    val bar = projectModel.createModule("bar")
+    ModuleRootModificationUtil.addDependency(mainModule, bar)
+    val model = createModifiableModel(mainModule)
+    val fooEntry = model.findModuleOrderEntry(foo)!!
+    val barEntry = model.findModuleOrderEntry(bar)!!
+    model.removeOrderEntry(fooEntry)
+    barEntry.scope = DependencyScope.TEST
+    commitModifiableRootModel(model)
+    val entry = dropModuleSourceEntry(ModuleRootManager.getInstance(mainModule), 1).single() as ModuleOrderEntry
+    assertThat(entry.module).isEqualTo(bar)
+    assertThat(entry.scope).isEqualTo(DependencyScope.TEST)
+  }
 }

@@ -85,13 +85,8 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
                                   scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
     val libraryId = libraryEntity.persistentId()
 
-    modifiableModel.updateDependencies {
-      it + ModuleDependencyItem.Exportable.LibraryDependency(
-        library = libraryId,
-        exported = exported,
-        scope = scope
-      )
-    }
+    modifiableModel.appendDependency(ModuleDependencyItem.Exportable.LibraryDependency(library = libraryId, exported = exported,
+                                                                                       scope = scope))
 
     val library = LibraryBridgeImpl(
       libraryTable = ModuleRootComponentBridge.getInstance(modifiableModel.module).moduleLibraryTable,
@@ -142,8 +137,8 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     }
 
     val libraryId = libraryEntity.persistentId()
-    modifiableModel.updateDependencies { dependencies ->
-      dependencies.filterNot { it is ModuleDependencyItem.Exportable.LibraryDependency && it.library == libraryId }
+    modifiableModel.removeDependencies {
+      it is ModuleDependencyItem.Exportable.LibraryDependency && it.library == libraryId
     }
 
     modifiableModel.diff.removeEntity(libraryEntity)
