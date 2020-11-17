@@ -265,6 +265,7 @@
 
     <!-- See com.intellij.codeInspection.javaDoc.JavaDocLocalInspection -->
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

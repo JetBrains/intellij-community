@@ -582,7 +582,7 @@
     <extensionPoint name="lang.directNavigationProvider" dynamic="true" interface="com.intellij.navigation.DirectNavigationProvider"/>
     <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
-    <extensionPoint name="build.issueContributor" dynamic="true" interface="com.intellij.compiler.progress.BuildIssueContributor"/>
+    <extensionPoint name="build.issueContributor" dynamic="true" interface="com.intellij.build.progress.BuildIssueContributor"/>
   </extensionPoints>
 </idea-plugin>
 
