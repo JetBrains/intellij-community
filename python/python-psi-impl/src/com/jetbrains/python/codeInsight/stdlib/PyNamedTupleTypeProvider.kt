@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -71,6 +72,13 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return when {
         referenceTarget is PyFunction && anchor is PyCallExpression -> getNamedTupleFunctionType(referenceTarget, context, anchor)
         referenceTarget is PyTargetExpression -> getNamedTupleTypeForTarget(referenceTarget, context)
+        referenceTarget is PyParameter && anchor is PyCallExpression && referenceTarget.isSelf -> {
+          PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
+            ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
+            ?.let { method ->
+              method.containingClass?.let { getNamedTupleTypeForTypingNTInheritorAsCallee(it, context) }
+            }
+        }
         else -> null
       }
     }
