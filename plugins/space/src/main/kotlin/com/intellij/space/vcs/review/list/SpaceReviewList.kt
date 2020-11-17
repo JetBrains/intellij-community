@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
-import circlet.code.api.CodeReviewWithCount
+import circlet.code.api.CodeReviewListItem
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.CompositeShortcutSet
@@ -26,9 +26,9 @@ import javax.swing.JComponent
 import javax.swing.ListSelectionModel
 
 internal class SpaceReviewsList(
-  listModel: CollectionListModel<CodeReviewWithCount>,
+  listModel: CollectionListModel<CodeReviewListItem>,
   lifetime: Lifetime
-) : JBList<CodeReviewWithCount>(listModel),
+) : JBList<CodeReviewListItem>(listModel),
     DataProvider {
 
   private val openButtonViewModel = OpenReviewButtonViewModel()

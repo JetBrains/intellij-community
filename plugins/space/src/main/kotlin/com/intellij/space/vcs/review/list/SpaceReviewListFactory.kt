@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
-import circlet.code.api.CodeReviewWithCount
+import circlet.code.api.CodeReviewListItem
 import circlet.platform.client.BatchResult
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -22,7 +22,7 @@ import javax.swing.JScrollPane
 
 object SpaceReviewListFactory {
   fun create(listVm: SpaceReviewsListVm): JComponent {
-    val listModel: CollectionListModel<CodeReviewWithCount> = CollectionListModel()
+    val listModel: CollectionListModel<CodeReviewListItem> = CollectionListModel()
 
     val reviewsList: SpaceReviewsList = SpaceReviewsList(listModel, listVm.lifetime).apply {
       installPopup(this)
@@ -38,7 +38,7 @@ object SpaceReviewListFactory {
 
     listVm.reviews.forEach(listVm.lifetime) { xList ->
       listModel.removeAll()
-      xList.batches.forEach(listVm.lifetime) { batchResult: BatchResult<CodeReviewWithCount> ->
+      xList.batches.forEach(listVm.lifetime) { batchResult: BatchResult<CodeReviewListItem> ->
         when (batchResult) {
           is BatchResult.More -> listModel.add(batchResult.items)
           is BatchResult.Reset -> listModel.removeAll()

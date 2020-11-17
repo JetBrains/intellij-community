@@ -2,7 +2,7 @@
 package com.intellij.space.vcs.review.details
 
 
-import circlet.code.api.CodeReviewWithCount
+import circlet.code.api.CodeReviewListItem
 import circlet.platform.client.KCircletClient
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -24,7 +24,7 @@ internal class SpaceReviewDetails(project: Project,
                                   private val client: KCircletClient,
                                   private val spaceProjectInfo: SpaceProjectInfo,
                                   private val repoInfo: Set<SpaceRepoInfo>,
-                                  private val currentReview: MutableProperty<CodeReviewWithCount?>) {
+                                  private val currentReview: MutableProperty<CodeReviewListItem?>) {
   private val sequentialLifetimes: SequentialLifetimes = SequentialLifetimes(lifetime)
 
   val view: JPanel = JPanel(BorderLayout()).apply {
@@ -32,7 +32,7 @@ internal class SpaceReviewDetails(project: Project,
   }
 
   init {
-    currentReview.forEach(lifetime) { cr: CodeReviewWithCount? ->
+    currentReview.forEach(lifetime) { cr: CodeReviewListItem? ->
       view.removeAll()
       if (cr == null) return@forEach
       val detailsLifetime = sequentialLifetimes.next()

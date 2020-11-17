@@ -3,8 +3,8 @@ package com.intellij.space.vcs.review.list
 
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.englishFullName
+import circlet.code.api.CodeReviewListItem
 import circlet.code.api.CodeReviewParticipantRole
-import circlet.code.api.CodeReviewWithCount
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.space.messages.SpaceBundle
@@ -32,7 +32,7 @@ import javax.swing.ListCellRenderer
 internal class SpaceReviewListCellRenderer(
   private val avatarProvider: SpaceAvatarProvider,
   private val openButtonViewModel: OpenReviewButtonViewModel
-) : ListCellRenderer<CodeReviewWithCount>,
+) : ListCellRenderer<CodeReviewListItem>,
     JPanel(null) {
 
   private val titleLabel: JLabel = JLabel().apply {
@@ -121,8 +121,8 @@ internal class SpaceReviewListCellRenderer(
     }
   }
 
-  override fun getListCellRendererComponent(list: JList<out CodeReviewWithCount>,
-                                            value: CodeReviewWithCount,
+  override fun getListCellRendererComponent(list: JList<out CodeReviewListItem>,
+                                            value: CodeReviewListItem,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
@@ -130,9 +130,7 @@ internal class SpaceReviewListCellRenderer(
     val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
     val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
 
-    val (reviewRef, messagesCount, _, participantsRef) = value
-
-    val participants = participantsRef.resolve().participants
+    val participants = value.participants.resolve().participants
 
     val reviewers = participants?.filter {
       it.role == CodeReviewParticipantRole.Reviewer
@@ -142,7 +140,7 @@ internal class SpaceReviewListCellRenderer(
       it.role == CodeReviewParticipantRole.Author
     }
 
-    val review = reviewRef.resolve()
+    val review = value.review.resolve()
     val title = review.title
     val author = review.createdBy!!.resolve()
     val key = review.key ?: ""
@@ -184,7 +182,7 @@ internal class SpaceReviewListCellRenderer(
     configureMemberLabel(authorAvatar, author)
 
     commentsLabel.apply {
-      text = messagesCount.toString()
+      text = value.discussionCount.resolve().counter.total.toString() // NON-NLS
     }
 
     firstReviewLabel.apply {

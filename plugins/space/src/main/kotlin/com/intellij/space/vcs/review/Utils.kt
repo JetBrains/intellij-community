@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review
 
-import circlet.code.api.CodeReviewWithCount
+import circlet.code.api.CodeReviewListItem
 import circlet.m2.ChannelsVm
 import circlet.m2.channel.M2DraftsVm
 import circlet.platform.client.property
@@ -37,9 +37,9 @@ internal fun openReviewInEditor(
   project: Project,
   workspace: Workspace,
   projectInfo: SpaceProjectInfo,
-  reviewWithCount: CodeReviewWithCount
+  codeReviewListItem: CodeReviewListItem
 ) {
-  val review = reviewWithCount.review.resolve()
+  val review = codeReviewListItem.review.resolve()
   val reviewProperty = review.property(workspace.client)
   val titleProperty = workspace.lifetime.map(reviewProperty) { it.title }
   val reviewStateProperty = workspace.lifetime.map(reviewProperty) { it.state }

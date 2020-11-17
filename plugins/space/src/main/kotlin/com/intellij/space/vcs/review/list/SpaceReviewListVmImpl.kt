@@ -4,9 +4,9 @@ package com.intellij.space.vcs.review.list
 import circlet.client.api.ProjectKey
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.identifier
+import circlet.code.api.CodeReviewListItem
 import circlet.code.api.CodeReviewService
 import circlet.code.api.CodeReviewStateFilter
-import circlet.code.api.CodeReviewWithCount
 import circlet.code.api.ReviewSorting
 import circlet.code.codeReview
 import circlet.platform.client.KCircletClient
@@ -41,14 +41,14 @@ internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
       refresh.value = refresh.forceNotify()
   }
 
-  override val reviews: Property<XPagedListOnFlux<CodeReviewWithCount>> = lifetime.map(refresh, spaceReviewsFilterSettings) { _, filterSettings ->
+  override val reviews: Property<XPagedListOnFlux<CodeReviewListItem>> = lifetime.map(refresh, spaceReviewsFilterSettings) { _, filterSettings ->
     lifetime.xPagedListOnFlux(
       client = client,
       batchSize = DEFAULT_BATCH_SIZE,
       keyFn = { it.review.id },
       loadImmediately = true
     ) { batch ->
-      codeReviewService.listReviews(
+      codeReviewService.listReviewsV2(
         batchInfo = batch,
         project = spaceProjectInfo.key.identifier,
         state = filterSettings.state,

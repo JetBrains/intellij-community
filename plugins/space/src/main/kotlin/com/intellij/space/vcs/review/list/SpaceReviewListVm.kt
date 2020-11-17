@@ -3,8 +3,8 @@ package com.intellij.space.vcs.review.list
 
 import circlet.client.api.ProjectKey
 import circlet.client.api.TD_MemberProfile
+import circlet.code.api.CodeReviewListItem
 import circlet.code.api.CodeReviewStateFilter
-import circlet.code.api.CodeReviewWithCount
 import circlet.code.api.ReviewSorting
 import circlet.platform.api.ADate
 import circlet.platform.client.XPagedListOnFlux
@@ -27,7 +27,7 @@ interface SpaceReviewsListVm : Lifetimed {
 
   val isLoading: MutableProperty<Boolean>
 
-  val reviews: Property<XPagedListOnFlux<CodeReviewWithCount>>
+  val reviews: Property<XPagedListOnFlux<CodeReviewListItem>>
 
   fun refresh()
 }
