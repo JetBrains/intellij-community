@@ -104,7 +104,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             }
             if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio()) {
                 notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(resolverCtx.projectPath)
-                resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue)
+                resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue())
             }
         }
 

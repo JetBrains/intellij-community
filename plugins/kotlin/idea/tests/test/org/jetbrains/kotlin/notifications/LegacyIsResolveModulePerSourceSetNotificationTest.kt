@@ -5,9 +5,6 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue
-import junit.framework.TestCase
-import junit.framework.TestCase.assertTrue
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.IsResolveModulePerSourceSetSetting
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.KOTLIN_UPDATE_IS_RESOLVE_MODULE_PER_SOURCE_SET_GROUP_ID
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.SuppressResolveModulePerSourceSetNotificationState
@@ -37,7 +34,6 @@ class LegacyIsResolveModulePerSourceSetNotificationTest : LightPlatformTestCase(
                 }
             }
         })
-        dispatchAllInvocationEventsInIdeEventQueue()
         notifications.clear()
     }
 
