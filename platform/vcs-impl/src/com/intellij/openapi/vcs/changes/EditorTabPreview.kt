@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.chains.DiffRequestChain
+import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
@@ -26,6 +29,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import kotlin.streams.toList
 
 abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
   protected val project get() = diffProcessor.project!!
@@ -157,11 +161,21 @@ internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable)
 private class EditorTabDiffPreviewProvider(
   private val diffProcessor: DiffRequestProcessor,
   private val tabNameProvider: () -> String?
-) : DiffPreviewProvider {
-
+) : ChainBackedDiffPreviewProvider {
   override fun createDiffRequestProcessor(): DiffRequestProcessor = diffProcessor
 
   override fun getOwner(): Any = this
 
   override fun getEditorTabName(): @Nls String = tabNameProvider().orEmpty()
+
+  override fun createDiffRequestChain(): DiffRequestChain? {
+    if (diffProcessor is ChangeViewDiffRequestProcessor) {
+      val selection = ListSelection.create(diffProcessor.allChanges.toList(), diffProcessor.currentChange)
+      val producers = selection.map { it!!.createProducer(diffProcessor.project) }
+      val chain = SimpleDiffRequestChain.fromProducers(producers.list)
+      chain.index = producers.selectedIndex
+      return chain
+    }
+    return null
+  }
 }
