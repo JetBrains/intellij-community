@@ -153,13 +153,19 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return addBlockElement(offset, relatesToPrecedingText, showAbove, false, priority, renderer);
   }
 
-  @Override
+  /**
+   * Add block inlay and specify its relationship with collapsed foldings.
+   *
+   * This method may be removed in future.
+   *
+   * @param showWhenFolded if true the returned inlay will be shown even if corresponding offset is in collapsed area
+   */
   public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
-                                                                   boolean relatesToPrecedingText,
-                                                                   boolean showAbove,
-                                                                   boolean showWhenFolded,
-                                                                   int priority,
-                                                                   @NotNull T renderer) {
+                                                                          boolean relatesToPrecedingText,
+                                                                          boolean showAbove,
+                                                                          boolean showWhenFolded,
+                                                                          int priority,
+                                                                          @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     offset = Math.max(0, Math.min(myEditor.getDocument().getTextLength(), offset));
     BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, priority, renderer);
