@@ -14,6 +14,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -46,10 +47,12 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
 
   protected BorderLayoutPanel fillMainPanel(BorderLayoutPanel mainPanel, Tree tree) {
     JComponent toolbar = createToolbar(mainPanel, tree);
+    tree.setBackground(UIUtil.getToolTipBackground());
+    toolbar.setBackground(UIUtil.getToolTipActionBackground());
     WindowMoveListener moveListener = new WindowMoveListener(mainPanel);
     toolbar.addMouseListener(moveListener);
     toolbar.addMouseMotionListener(moveListener);
-    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree)).addToBottom(toolbar);
+    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree, true)).addToBottom(toolbar);
   }
 
   private void updateTree() {
@@ -74,7 +77,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     }
   }
 
-  private JComponent createToolbar(JPanel parent, Tree tree) {
+  protected final JComponent createToolbar(JPanel parent, Tree tree) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new SetAsRootAction(tree));
 
