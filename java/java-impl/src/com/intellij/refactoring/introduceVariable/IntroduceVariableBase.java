@@ -293,14 +293,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
     final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
     final List<PsiExpression> expressions = new ArrayList<>();
-    /*for (PsiElement element : statementsInRange) {
-      if (element instanceof PsiExpressionStatement) {
-        final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
-        if (expression.getType() != PsiType.VOID) {
-          expressions.add(expression);
-        }
-      }
-    }*/
     PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
     while (expression != null) {
       if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) &&
@@ -902,7 +894,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
       if (containerParent instanceof PsiLambdaExpression) {
         PsiParameter[] parameters = ((PsiLambdaExpression)containerParent).getParameterList().getParameters();
-        if (Arrays.stream(parameters).anyMatch(vars::contains)) {
+        if (ContainerUtil.exists(parameters, vars::contains)) {
           break;
         }
       }
