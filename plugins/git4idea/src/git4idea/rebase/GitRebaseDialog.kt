@@ -522,6 +522,9 @@ internal class GitRebaseDialog(private val project: Project,
     else {
       selectedOptions -= option
     }
+    if (option == GitRebaseOption.ONTO) {
+      moveNewBaseValue()
+    }
     if (option in getOptionsToShowInPanel()) {
       updateOptionsPanel()
       rerender()
@@ -537,6 +540,21 @@ internal class GitRebaseDialog(private val project: Project,
     updateOptionsPanel()
     updatePlaceholders()
     rerender()
+  }
+
+  private fun moveNewBaseValue() {
+    val gitRefMapper = { source: ComboBox<PresentableRef> ->
+      findRef(getTextField(source).text)?.let { PresentableRef(it) } ?: source.item
+    }
+
+    if (GitRebaseOption.ONTO in selectedOptions) {
+      ontoField.item = gitRefMapper(upstreamField)
+      upstreamField.item = null
+    }
+    else {
+      upstreamField.item = gitRefMapper(ontoField)
+      ontoField.item = null
+    }
   }
 
   private fun updatePlaceholders() {
