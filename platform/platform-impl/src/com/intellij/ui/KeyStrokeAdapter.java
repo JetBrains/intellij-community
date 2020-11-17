@@ -77,6 +77,9 @@ public class KeyStrokeAdapter implements KeyListener {
       boolean released = id == KeyEvent.KEY_RELEASED;
       if (released || id == KeyEvent.KEY_PRESSED) {
         int code = event.getKeyCode();
+        if (code == KeyEvent.VK_UNDEFINED) {
+          code = event.getExtendedKeyCode();
+        }
         return getKeyStroke(code, event.getModifiers(), released);
       }
     }
