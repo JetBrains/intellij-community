@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -180,7 +179,7 @@ public class PluginManagerTest {
 
     Path configPath = tempDir.getRoot().toPath().resolve("config-link");
     IoTestUtil.createSymbolicLink(configPath, tempDir.newDirectory("config-target").toPath());
-    DisabledPluginsState.saveDisabledPlugins(configPath, List.of(PluginId.getId("a")));
+    DisabledPluginsState.saveDisabledPlugins(configPath, "a");
     assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
   }
 

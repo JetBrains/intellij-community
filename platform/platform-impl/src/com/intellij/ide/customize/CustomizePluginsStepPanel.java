@@ -26,7 +26,6 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.HtmlChunk.*;
@@ -226,10 +225,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
 
   @Override
   public boolean beforeOkAction() {
-    try {
-      DisabledPluginsState.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds());
-    }
-    catch (IOException ignored) { }
+    DisabledPluginsState.trySaveDisabledPlugins(myPluginGroups.getDisabledPluginIds());
     return true;
   }
 
