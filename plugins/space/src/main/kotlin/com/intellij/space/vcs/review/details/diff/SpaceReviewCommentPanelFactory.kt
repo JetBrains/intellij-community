@@ -7,15 +7,18 @@ import circlet.code.api.PropagatedCodeDiscussion
 import circlet.m2.ChannelsVm
 import circlet.m2.channel.M2DraftsVm
 import circlet.platform.client.KCircletClient
+import circlet.platform.client.property
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
 import com.intellij.diff.FrameDiffTool
 import com.intellij.openapi.project.Project
-import com.intellij.space.chat.ui.SpaceChatContentPanel
+import com.intellij.space.chat.ui.discussion.SpaceChatDiscussionActionsFactory
+import com.intellij.space.chat.ui.thread.SpaceChatStandaloneThreadComponent
 import com.intellij.space.vcs.review.details.getFilePath
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.codereview.comment.wrapComponentUsingRoundedPanel
 import libraries.coroutines.extra.Lifetime
+import runtime.reactive.Property
 import javax.swing.JComponent
 
 internal class SpaceReviewCommentPanelFactory(
@@ -38,7 +41,7 @@ internal class SpaceReviewCommentPanelFactory(
 
     if (discussionRecord.archived) return null
 
-    val component = createSpaceChatContentPanel(discussionRecord).apply {
+    val component = createSpaceChatContentPanel(discussionRef.property()).apply {
       isOpaque = false
       border = JBUI.Borders.empty(10)
     }
@@ -47,16 +50,17 @@ internal class SpaceReviewCommentPanelFactory(
     }
   }
 
-  private fun createSpaceChatContentPanel(discussionRecord: CodeDiscussionRecord): SpaceChatContentPanel {
+  private fun createSpaceChatContentPanel(discussionRecord: Property<CodeDiscussionRecord>): JComponent {
     val me = workspace.me
     val completionVm = workspace.completion
     val featureFlags = workspace.featureFlags.featureFlags
-    return SpaceChatContentPanel(
+    return SpaceChatStandaloneThreadComponent(
       project,
       lifetime,
       viewer,
       ChannelsVm(client, me, completionVm, M2DraftsVm(client, completionVm, null), featureFlags),
-      discussionRecord.channel
+      discussionRecord.value.channel,
+      SpaceChatDiscussionActionsFactory(discussionRecord)
     )
   }
 }

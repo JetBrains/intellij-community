@@ -47,7 +47,7 @@ internal fun createThreadComponent(
     commentComponentFactory = itemComponentFactory::createComponent,
     offset = 0
   ).apply {
-    border = JBUI.Borders.empty(10, 0)
+    border = JBUI.Borders.emptyBottom(5)
   }
 
   val replyComponent = BorderLayoutPanel().apply {
