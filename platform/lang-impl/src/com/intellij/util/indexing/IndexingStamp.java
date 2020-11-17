@@ -46,7 +46,8 @@ public final class IndexingStamp {
 
   private IndexingStamp() {}
 
-  public static FileIndexingState isFileIndexedStateCurrent(int fileId, ID<?, ?> indexName) {
+  @NotNull
+  public static FileIndexingState isFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> indexName) {
     try {
       long stamp = getIndexStamp(fileId, indexName);
       if (stamp == HAS_NO_INDEXED_DATA_STAMP) return FileIndexingState.NOT_INDEXED;
@@ -62,15 +63,15 @@ public final class IndexingStamp {
     return FileIndexingState.OUT_DATED;
   }
 
-  public static void setFileIndexedStateCurrent(int fileId, ID<?, ?> id) {
+  public static void setFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> id) {
     update(fileId, id, IndexVersion.getIndexCreationStamp(id));
   }
 
-  public static void setFileIndexedStateOutdated(int fileId, ID<?, ?> id) {
+  public static void setFileIndexedStateOutdated(int fileId, @NotNull ID<?, ?> id) {
     update(fileId, id, INDEX_DATA_OUTDATED_STAMP);
   }
 
-  public static void setFileIndexedStateUnindexed(int fileId, ID<?, ?> id) {
+  public static void setFileIndexedStateUnindexed(int fileId, @NotNull ID<?, ?> id) {
     update(fileId, id, HAS_NO_INDEXED_DATA_STAMP);
   }
 
