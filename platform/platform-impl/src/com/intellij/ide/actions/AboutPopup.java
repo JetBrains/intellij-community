@@ -429,7 +429,8 @@ public final class AboutPopup {
 
     private static @NotNull @Nls String getCopyrightText() {
       ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-      return IdeBundle.message("about.popup.copyright", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR),
+      return IdeBundle.message("about.popup.copyright", appInfo.getCopyrightStart(), 
+                               String.valueOf(Calendar.getInstance(Locale.US).get(Calendar.YEAR)),
                                appInfo.getCompanyName());
     }
 
