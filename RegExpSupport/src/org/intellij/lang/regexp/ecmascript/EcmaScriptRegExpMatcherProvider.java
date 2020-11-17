@@ -47,7 +47,7 @@ public class EcmaScriptRegExpMatcherProvider implements RegExpMatcherProvider {
       @Language("Nashorn JS")
       final String script =
         "var regexp = RegExp(\"" + StringUtil.escapeStringCharacters(regExp) + "\",'g" + modifiers + "');\n" +
-        "var str = '" + StringUtil.escapeStringCharacters(sampleText) + "';\n" +
+        "var str = \"" + StringUtil.escapeStringCharacters(sampleText) + "\";\n" +
         "var match;\n" +
         "\n" +
         "var RegExpMatch = Java.type(\"org.intellij.lang.regexp.RegExpMatch\");\n" +
