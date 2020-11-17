@@ -58,10 +58,10 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommit
   }
 
   @NotNull
-  private static PersistentEnumeratorBase<VcsUser> createUsersEnumerator(@NotNull StorageId storageId,
+  private static PersistentEnumerator<VcsUser> createUsersEnumerator(@NotNull StorageId storageId,
                                                                          @NotNull VcsUserRegistry userRegistry) throws IOException {
     Path storageFile = storageId.getStorageFile(USERS_IDS);
-    return new PersistentBTreeEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), Page.PAGE_SIZE, null,
+    return new PersistentEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), Page.PAGE_SIZE, null,
                                            storageId.getVersion());
   }
 
@@ -108,10 +108,10 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommit
   }
 
   private static class UserIndexer implements DataIndexer<Integer, Void, VcsShortCommitDetails> {
-    @NotNull private final PersistentEnumeratorBase<VcsUser> myUserEnumerator;
+    @NotNull private final PersistentEnumerator<VcsUser> myUserEnumerator;
     @NotNull private Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
-    UserIndexer(@NotNull PersistentEnumeratorBase<VcsUser> userEnumerator) {
+    UserIndexer(@NotNull PersistentEnumerator<VcsUser> userEnumerator) {
       myUserEnumerator = userEnumerator;
     }
 

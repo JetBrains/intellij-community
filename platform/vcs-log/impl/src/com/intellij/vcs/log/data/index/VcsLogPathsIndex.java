@@ -55,11 +55,11 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @NotNull
-  private static PersistentEnumeratorBase<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
+  private static PersistentEnumerator<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
                                                                                @NotNull StorageId storageId) throws IOException {
     Path storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
-    return new PersistentBTreeEnumerator<>(storageFile, new LightFilePathKeyDescriptor(roots),
-                                           Page.PAGE_SIZE, null, storageId.getVersion());
+    return new PersistentEnumerator<>(storageFile, new LightFilePathKeyDescriptor(roots),
+                                      Page.PAGE_SIZE, null, storageId.getVersion());
   }
 
   @NotNull
@@ -149,11 +149,11 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   private static final class PathsIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     @NotNull private final VcsLogStorage myStorage;
-    @NotNull private final PersistentEnumeratorBase<LightFilePath> myPathsEnumerator;
+    @NotNull private final PersistentEnumerator<LightFilePath> myPathsEnumerator;
     @NotNull private final PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> myRenamesMap;
     @NotNull private Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
-    private PathsIndexer(@NotNull VcsLogStorage storage, @NotNull PersistentEnumeratorBase<LightFilePath> enumerator,
+    private PathsIndexer(@NotNull VcsLogStorage storage, @NotNull PersistentEnumerator<LightFilePath> enumerator,
                          @NotNull PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> renamesMap) {
       myStorage = storage;
       myPathsEnumerator = enumerator;
@@ -228,7 +228,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     }
 
     @NotNull
-    public PersistentEnumeratorBase<LightFilePath> getPathsEnumerator() {
+    public PersistentEnumerator<LightFilePath> getPathsEnumerator() {
       return myPathsEnumerator;
     }
   }

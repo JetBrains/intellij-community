@@ -15,9 +15,8 @@
  */
 package com.intellij.vcs.log.util;
 
-import com.intellij.util.Processor;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentBTreeEnumerator;
+import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class PersistentSetImpl<T> extends PersistentBTreeEnumerator<T> implements PersistentSet<T> {
+public class PersistentSetImpl<T> extends PersistentEnumerator<T> implements PersistentSet<T> {
 
   public PersistentSetImpl(@NotNull Path file,
                            @NotNull KeyDescriptor<T> dataDescriptor,
@@ -42,11 +41,6 @@ public class PersistentSetImpl<T> extends PersistentBTreeEnumerator<T> implement
   @Override
   public void put(@NotNull T element) throws IOException {
     enumerate(element);
-  }
-
-  @Override
-  public void process(@NotNull Processor<? super T> processor) throws IOException {
-    processAllDataObject(processor, null);
   }
 
   @Override
