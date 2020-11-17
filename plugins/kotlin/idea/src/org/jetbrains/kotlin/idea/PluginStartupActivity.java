@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.idea;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -44,8 +45,7 @@ public class PluginStartupActivity implements StartupActivity {
         try {
             // API added in 15.0.2
             UpdateChecker.INSTANCE.getExcludedFromUpdateCheckPlugins().add("org.jetbrains.kotlin");
-        }
-        catch (Throwable throwable) {
+        } catch (Throwable throwable) {
             LOG.debug("Excluding Kotlin plugin updates using old API", throwable);
             UpdateChecker.getDisabledToUpdate().add(PluginId.getId("org.jetbrains.kotlin"));
         }
@@ -54,8 +54,10 @@ public class PluginStartupActivity implements StartupActivity {
 
         KotlinReportSubmitter.Companion.setupReportingFromRelease();
 
-        NewCodeStyleNotificationKt.notifyKotlinStyleUpdateIfNeeded(project);
-        LegacyIsResolveModulePerSourceSetNotificationKt.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(project);
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            NewCodeStyleNotificationKt.notifyKotlinStyleUpdateIfNeeded(project);
+            LegacyIsResolveModulePerSourceSetNotificationKt.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(project);
+        }
 
         //todo[Sedunov]: wait for fix in platform to avoid misunderstood from Java newbies (also ConfigureKotlinInTempDirTest)
         //KotlinSdkType.Companion.setUpIfNeeded();
@@ -77,5 +79,4 @@ public class PluginStartupActivity implements StartupActivity {
         //noinspection ResultOfMethodCallIgnored
         factory.getClass();
     }
-
 }

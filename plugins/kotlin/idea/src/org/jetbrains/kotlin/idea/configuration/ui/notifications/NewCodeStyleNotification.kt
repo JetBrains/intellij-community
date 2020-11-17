@@ -22,8 +22,6 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 private const val KOTLIN_UPDATE_CODE_STYLE_GROUP_ID = "Update Kotlin code style"
 
 fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
-
     val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
     if (modulesWithFacet.isEmpty()) return
 

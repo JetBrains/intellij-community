@@ -2,7 +2,6 @@ package org.jetbrains.kotlin.idea.configuration.ui.notifications
 
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -22,15 +21,29 @@ fun notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(projectPath: String) 
 }
 
 fun notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
-    if (project.isResolveModulePerSourceSetNotificationSuppressed) return
-    if (project.gradleProjectSettings.all { it.isResolveModulePerSourceSet }) return
-    if (PlatformVersion.isAndroidStudio()) return
-
-    createNotification().notify(project)
+    notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
+        project = project,
+        notificationSuppressState = SuppressResolveModulePerSourceSetNotificationState.default(project),
+        isResolveModulePerSourceSetSetting = IsResolveModulePerSourceSetSetting.default(project),
+    )
 }
 
-private fun createNotification(): Notification {
+internal fun notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
+    project: Project,
+    notificationSuppressState: SuppressResolveModulePerSourceSetNotificationState,
+    isResolveModulePerSourceSetSetting: IsResolveModulePerSourceSetSetting
+) {
+    if (PlatformVersion.isAndroidStudio()) return
+    if (notificationSuppressState.isSuppressed) return
+    if (isResolveModulePerSourceSetSetting.isResolveModulePerSourceSet) return
+
+    createNotification(notificationSuppressState, isResolveModulePerSourceSetSetting).notify(project)
+}
+
+private fun createNotification(
+    notificationSuppressState: SuppressResolveModulePerSourceSetNotificationState,
+    isResolveModulePerSourceSetSetting: IsResolveModulePerSourceSetSetting
+): Notification {
     NotificationsConfiguration.getNotificationsConfiguration().register(
         KOTLIN_UPDATE_IS_RESOLVE_MODULE_PER_SOURCE_SET_GROUP_ID,
         NotificationDisplayType.STICKY_BALLOON,
@@ -42,12 +55,15 @@ private fun createNotification(): Notification {
         KotlinBundle.htmlMessage("configuration.update.is.resolve.module.per.source.set"),
         NotificationType.WARNING
     ).apply {
-        addActions(listOf(createUpdateGradleProjectSettingsAction(), createSuppressNotificationAction()))
+        addAction(createUpdateGradleProjectSettingsAction(isResolveModulePerSourceSetSetting))
+        addAction(createSuppressNotificationAction(notificationSuppressState))
         isImportant = true
     }
 }
 
-private fun createUpdateGradleProjectSettingsAction() = NotificationAction.create(
+private fun createUpdateGradleProjectSettingsAction(
+    isResolveModulePerSourceSetSetting: IsResolveModulePerSourceSetSetting
+) = NotificationAction.create(
     KotlinBundle.message("configuration.apply.is.resolve.module.per.source.set"),
 ) { event: AnActionEvent, notification: Notification ->
     notification.expire()
@@ -55,45 +71,74 @@ private fun createUpdateGradleProjectSettingsAction() = NotificationAction.creat
     if (project.isDisposed) return@create
 
     runWriteAction {
-        project.gradleProjectSettings.forEach { it.isResolveModulePerSourceSet = true }
+        isResolveModulePerSourceSetSetting.isResolveModulePerSourceSet = true
         ExternalSystemUtil.refreshProjects(ImportSpecBuilder(project, GradleConstants.SYSTEM_ID))
     }
 }
 
-private fun createSuppressNotificationAction() = NotificationAction.create(
+private fun createSuppressNotificationAction(
+    notificationSuppressState: SuppressResolveModulePerSourceSetNotificationState
+) = NotificationAction.create(
     KotlinBundle.message("configuration.do.not.suggest.update.is.resolve.module.per.source.set")
 ) { event: AnActionEvent, notification: Notification ->
     notification.expire()
     val project = event.project ?: return@create
     if (project.isDisposed) return@create
     runWriteAction {
-        project.isResolveModulePerSourceSetNotificationSuppressed = true
+        notificationSuppressState.isSuppressed = true
     }
 }
 
 private val Project.gradleProjectSettings: List<GradleProjectSettings>
     get() = GradleSettings.getInstance(this).linkedProjectsSettings.toList()
 
-private var Project.isResolveModulePerSourceSetNotificationSuppressed: Boolean
-    get() = ResolveModulePerSourceSetComponent.getInstance(this).state.disableForAll
-    set(value) {
-        ResolveModulePerSourceSetComponent.getInstance(this).state.disableForAll = value
-    }
 
-private class SuppressResolveModulePerSourceSetNotificationState : BaseState() {
-    var disableForAll: Boolean by property(false)
+/*
+Accessing "isResolveModulePerSourceSet" setting
+ */
+
+internal interface IsResolveModulePerSourceSetSetting {
+    var isResolveModulePerSourceSet: Boolean
+
+    companion object {
+        fun default(project: Project): IsResolveModulePerSourceSetSetting = ProjectIsResolveModulePerSourceSetSetting(project)
+    }
+}
+
+private class ProjectIsResolveModulePerSourceSetSetting(private val project: Project) : IsResolveModulePerSourceSetSetting {
+    override var isResolveModulePerSourceSet: Boolean
+        get() = project.gradleProjectSettings.all { it.isResolveModulePerSourceSet }
+        set(value) = project.gradleProjectSettings.forEach { it.isResolveModulePerSourceSet = value }
+}
+
+
+/*
+Storing State about Notification Suppress
+ */
+
+internal interface SuppressResolveModulePerSourceSetNotificationState {
+    var isSuppressed: Boolean
+
+    companion object {
+        fun default(project: Project): SuppressResolveModulePerSourceSetNotificationState =
+            IdeResolveModulePerSourceSetComponent.getInstance(project).state
+    }
+}
+
+private class IdeSuppressResolveModulePerSourceSetNotificationState : BaseState(), SuppressResolveModulePerSourceSetNotificationState {
+    override var isSuppressed: Boolean by property(false)
 }
 
 @Service
 @State(name = "SuppressResolveModulePerSourceSetNotification")
-private class ResolveModulePerSourceSetComponent :
-    SimplePersistentStateComponent<SuppressResolveModulePerSourceSetNotificationState>(
-        SuppressResolveModulePerSourceSetNotificationState()
+private class IdeResolveModulePerSourceSetComponent :
+    SimplePersistentStateComponent<IdeSuppressResolveModulePerSourceSetNotificationState>(
+        IdeSuppressResolveModulePerSourceSetNotificationState()
     ) {
     companion object {
-        fun getInstance(project: Project): ResolveModulePerSourceSetComponent = project.service()
+        fun getInstance(project: Project): IdeResolveModulePerSourceSetComponent = project.service()
     }
 }
 
-private const val KOTLIN_UPDATE_IS_RESOLVE_MODULE_PER_SOURCE_SET_GROUP_ID =
+internal const val KOTLIN_UPDATE_IS_RESOLVE_MODULE_PER_SOURCE_SET_GROUP_ID =
     "Update isResolveModulePerSourceSet setting"
