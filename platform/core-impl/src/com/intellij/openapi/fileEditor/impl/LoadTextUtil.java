@@ -352,8 +352,7 @@ public final class LoadTextUtil {
     if (content.length == 0) {
       return new DetectResult(null, CharsetToolkit.GuessedEncoding.SEVEN_BIT, null);
     }
-    CharsetToolkit toolkit = new CharsetToolkit(content, defaultCharset);
-    toolkit.setEnforce8Bit(true);
+    CharsetToolkit toolkit = new CharsetToolkit(content, defaultCharset, true);
     Charset charset = toolkit.guessFromBOM();
     if (charset != null) {
       byte[] bom = ObjectUtils.notNull(CharsetToolkit.getMandatoryBom(charset), CharsetToolkit.UTF8_BOM);

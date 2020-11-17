@@ -72,7 +72,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
         myContent = content;
         myContentLoadFailed = false;
         if (myContent != null && myContent.length !=0) {
-          myCharset = new CharsetToolkit(myContent).guessEncoding(myContent.length);
+          myCharset = new CharsetToolkit(myContent, Charset.defaultCharset(), false).guessEncoding(myContent.length);
         }
       }
     }

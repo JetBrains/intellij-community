@@ -71,7 +71,7 @@ public final class CharsetToolkit {
 
   private final byte[] buffer;
   private final @NotNull Charset defaultCharset;
-  private boolean enforce8Bit;
+  private final boolean enforce8Bit;
 
   public static final byte[] UTF8_BOM = {0xffffffef, 0xffffffbb, 0xffffffbf};
   public static final byte[] UTF16LE_BOM = {-1, -2, };
@@ -90,22 +90,16 @@ public final class CharsetToolkit {
 
   /**
    * Constructor of the {@code CharsetToolkit} utility class.
-   *
-   * @param buffer the byte buffer of which we want to know the encoding.
-   */
-  public CharsetToolkit(byte @NotNull [] buffer) {
-    this(buffer, getDefaultSystemCharset());
-  }
-
-  /**
-   * Constructor of the {@code CharsetToolkit} utility class.
-   *
-   * @param buffer the byte buffer of which we want to know the encoding.
+   *  @param buffer the byte buffer of which we want to know the encoding.
    * @param defaultCharset the default Charset to use in case an 8-bit charset is recognized.
+   * @param enforce8Bit If US-ASCII is recognized, enforce to return the default encoding, rather than US-ASCII.
+   *     It might be a file without any special character in the range 128-255, but that may be or become
+   *     a file encoded with the default {@code charset} rather than US-ASCII.
    */
-  public CharsetToolkit(byte @NotNull [] buffer, @NotNull Charset defaultCharset) {
+  public CharsetToolkit(byte @NotNull [] buffer, @NotNull Charset defaultCharset, boolean enforce8Bit) {
     this.buffer = buffer;
     this.defaultCharset = defaultCharset;
+    this.enforce8Bit = enforce8Bit;
     if (buffer.length == 0){
       throw new IllegalArgumentException("Can't analyze empty buffer");
     }
@@ -205,15 +199,6 @@ public final class CharsetToolkit {
   }
 
   /**
-   * If US-ASCII is recognized, enforce to return the default encoding, rather than US-ASCII.
-   * It might be a file without any special character in the range 128-255, but that may be or become
-   * a file encoded with the default {@code charset} rather than US-ASCII.
-   */
-  public void setEnforce8Bit(boolean enforce) {
-    enforce8Bit = enforce;
-  }
-
-  /**
    * Retrieves the default Charset
    */
   public @NotNull Charset getDefaultCharset() {
@@ -269,7 +254,7 @@ public final class CharsetToolkit {
 
   public static @NotNull String bytesToString(byte @NotNull [] bytes, final @NotNull Charset defaultCharset) {
     if (bytes.length == 0) return "";
-    Charset charset = new CharsetToolkit(bytes, defaultCharset).guessEncoding(bytes.length);
+    Charset charset = new CharsetToolkit(bytes, defaultCharset, false).guessEncoding(bytes.length);
     if (charset == null) charset = defaultCharset; // binary content. This is silly but method contract says to return something anyway
     return decodeString(bytes, charset);
   }
@@ -440,7 +425,7 @@ public final class CharsetToolkit {
     try (FileInputStream fis = new FileInputStream(f)) {
       read = fis.read(buffer);
     }
-    CharsetToolkit toolkit = new CharsetToolkit(buffer, defaultCharset);
+    CharsetToolkit toolkit = new CharsetToolkit(buffer, defaultCharset, false);
     return toolkit.guessEncoding(read);
   }
 

@@ -60,6 +60,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -266,7 +267,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   public void test7BitBinaryIsNotText() throws IOException {
     File d = createTempDirectory();
     byte[] bytes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'x', 'a', 'b'};
-    assertEquals(CharsetToolkit.GuessedEncoding.BINARY, new CharsetToolkit(bytes).guessFromContent(bytes.length));
+    assertEquals(CharsetToolkit.GuessedEncoding.BINARY, new CharsetToolkit(bytes, Charset.defaultCharset(), false).guessFromContent(bytes.length));
     File f = new File(d, "xx.asfdasdfas");
     FileUtil.writeToFile(f, bytes);
 
@@ -278,7 +279,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   public void test7BitIsText() throws IOException {
     File d = createTempDirectory();
     byte[] bytes = {9, 10, 13, 'x', 'a', 'b'};
-    assertEquals(CharsetToolkit.GuessedEncoding.SEVEN_BIT, new CharsetToolkit(bytes).guessFromContent(bytes.length));
+    assertEquals(CharsetToolkit.GuessedEncoding.SEVEN_BIT, new CharsetToolkit(bytes, Charset.defaultCharset(), false).guessFromContent(bytes.length));
     File f = new File(d, "xx.asfdasdfas");
     FileUtil.writeToFile(f, bytes);
     VirtualFile vFile = getVirtualFile(f);
