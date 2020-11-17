@@ -352,7 +352,7 @@ public class PluginGroups {
       if (CORE.equals(group)) continue;
 
       List<IdSet> idSets = new ArrayList<>();
-      StringBuilder description = new StringBuilder();
+      @Nls StringBuilder description = new StringBuilder();
       for (String idDescription : g.getPluginIdDescription()) {
         IdSet idSet = new IdSet(this, idDescription);
         String idSetTitle = idSet.getTitle();
