@@ -36,15 +36,15 @@ static void reportEvent(char *event, char *path) {
     pthread_mutex_unlock(&lock);
 }
 
-static void callback(ConstFSEventStreamRef streamRef,
-                     void *clientCallBackInfo,
+static void callback(__unused ConstFSEventStreamRef streamRef,
+                     __unused void *clientCallBackInfo,
                      size_t numEvents,
                      void *eventPaths,
                      const FSEventStreamEventFlags eventFlags[],
-                     const FSEventStreamEventId eventIds[]) {
+                     __unused const FSEventStreamEventId eventIds[]) {
     char **paths = eventPaths;
 
-    for (int i = 0; i < numEvents; i++) {
+    for (size_t i = 0; i < numEvents; i++) {
         // TODO[max] Lion has much more detailed flags we need accurately process. For now just reduce to SL events range.
         FSEventStreamEventFlags flags = eventFlags[i] & 0xFF;
         if ((flags & kFSEventStreamEventFlagMustScanSubDirs) != 0) {
@@ -142,7 +142,7 @@ static void ParseRoots() {
     CFRelease(roots);
 }
 
-int main(const int argc, const char *argv[]) {
+int main(void) {
     CFStringRef path = CFSTR("/");
     CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
     CFAbsoluteTime latency = 0.3;  // Latency in seconds

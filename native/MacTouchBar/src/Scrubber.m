@@ -13,7 +13,7 @@ static const int g_interItemSpacings = 5;
 @property (retain, nonatomic) NSImage * img;
 @property (nonatomic) int index;
 @property (nonatomic) int positionInsideScrubber;
-@property (nonatomic) int itemWidth;
+@property (nonatomic) CGFloat itemWidth;
 @property (nonatomic) bool visible;
 @property (nonatomic) bool enabled;
 @property (nonatomic) bool needReload;
@@ -105,7 +105,6 @@ static void _fillCache(NSMutableArray * cache, NSMutableArray * visibleItems, vo
     if (cache == NULL || visibleItems == NULL || items == NULL || byteCount <= 0)
         return;
     NSFont * font = [NSFont systemFontOfSize:0]; // Specify a system font size of 0 to automatically use the appropriate size.
-    const int prevCacheSize = cache.count;
     const char * p = items;
     const int itemsCount = *((short*)p);
     p += 2;
@@ -166,11 +165,11 @@ static void _fillCache(NSMutableArray * cache, NSMutableArray * visibleItems, vo
         }
 
         if (updateWidth) {
-            const int imgW = si.img != nil ? si.img.size.width : 0;
+            const CGFloat imgW = si.img != nil ? si.img.size.width : 0;
             NSSize txtSize = si.text != nil ? [si.text sizeWithAttributes:@{ NSFontAttributeName:font }] : NSMakeSize(0, 0);
 
             si.itemWidth = txtSize.width + imgW + 2*g_marginBorders + g_marginImgText + 13/*empiric diff for textfield paddings*/;
-            nstrace(@"cacheIndex %d: txt='%@', iconW=%d, txt size = %1.2f, %1.2f, result width = %1.2f, font = %@", cacheIndex, si.text, imgW, txtSize.width, txtSize.height, si.itemWidth, font);
+            nstrace(@"cacheIndex %d: txt='%@', iconW=%1.2f, txt size = %1.2f, %1.2f, result width = %1.2f, font = %@", cacheIndex, si.text, imgW, txtSize.width, txtSize.height, si.itemWidth, font);
         }
 
         p += w*h*4;
@@ -179,6 +178,8 @@ static void _fillCache(NSMutableArray * cache, NSMutableArray * visibleItems, vo
 }
 
 // NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
+__used
+NS_RETURNS_RETAINED
 id createScrubber(const char* uid, int itemWidth, executeScrubberItem delegate, updateScrubberCache updater, void* packedItems, int byteCount) {
     NSString * nsid = [NSString stringWithUTF8String:uid];
     nstrace(@"create scrubber [%@] (thread: %@)", nsid, [NSThread currentThread]);
@@ -218,6 +219,7 @@ id createScrubber(const char* uid, int itemWidth, executeScrubberItem delegate, 
 void _recalculatePositions(id scrubObj);
 
 // NOTE: called from AppKit (when show last cached item and need update cache with new items)
+__used
 void updateScrubberItems(id scrubObj, void* packedItems, int byteCount, int fromIndex) {
     NSScrubberContainer *container = scrubObj;
     nstrace(@"scrubber [%@]: called updateScrubberItems", container.identifier);
@@ -244,6 +246,7 @@ void updateScrubberItems(id scrubObj, void* packedItems, int byteCount, int from
 }
 
 // NOTE: called from EDT (when update UI)
+__used
 void enableScrubberItems(id scrubObj, void* itemIndices, int count, bool enabled) {
     if (itemIndices == NULL || count <= 0)
         return;
@@ -277,9 +280,9 @@ void enableScrubberItems(id scrubObj, void* itemIndices, int count, bool enabled
 }
 
 // NOTE: called from EDT (when update UI)
+__used
 void showScrubberItems(id scrubObj, void* itemIndices, int count, bool show, bool inverseOthers) {
     NSScrubberContainer * container = scrubObj;
-    NSScrubber *scrubber = container.view;
 
     int * indices = itemIndices;
 

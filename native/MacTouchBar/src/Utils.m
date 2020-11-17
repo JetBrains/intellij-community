@@ -3,7 +3,7 @@
 #define LOGGING_ERRORS_ENABLED
 //#define LOGGING_TRACE_ENABLED
 
-void nserror(NSString *format, ...) {
+void nserror(__unused NSString *format, ...) {
 #ifdef LOGGING_ERRORS_ENABLED
     va_list argList;
     va_start(argList, format);
@@ -14,7 +14,7 @@ void nserror(NSString *format, ...) {
 #endif // LOGGING_ERRORS_ENABLED
 }
 
-void nstrace(NSString *format, ...) {
+void nstrace(__unused NSString *format, ...) {
 #ifdef LOGGING_TRACE_ENABLED
     va_list argList;
     va_start(argList, format);
@@ -40,7 +40,7 @@ NSImage * createImgFrom4ByteRGBA(const unsigned char *bytes, int w, int h) {
         hasAlpha: YES
         isPlanar: NO
         colorSpaceName: NSDeviceRGBColorSpace
-        bitmapFormat: NSAlphaNonpremultipliedBitmapFormat
+        bitmapFormat: NSBitmapFormatAlphaNonpremultiplied
         bytesPerRow: rowBytes
         bitsPerPixel: 0];   // this must agree with bitsPerSample and samplesPerPixel, If you specify 0 for this parameter, the object interprets the number of bits per pixel using the values in the bps and spp parameters
 
