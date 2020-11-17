@@ -20,7 +20,7 @@ import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
 public class PyClassFindUsagesHandler extends PyFindUsagesHandler {
 
