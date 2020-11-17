@@ -129,8 +129,11 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
 
   @Override
   public int getWeight() {
-    var configurable = getConfigurable();
-    return configurable instanceof Weighted ? ((Weighted)configurable).getWeight() : myWeight;
+    var producer = myEp.getProducer();
+    if (producer instanceof Weighted) {
+      return ((Weighted)producer).getWeight();
+    }
+    return myWeight;
   }
 
   @Nls
