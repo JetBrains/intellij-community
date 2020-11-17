@@ -95,7 +95,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     target.indexes.applyExternalMappingChanges(diff, replaceMap)
 
     // Assert consistency
-    target.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, target)
+    target.assertConsistencyInStrictMode("Check after add Diff", { true }, initialStorage, diff, target)
   }
 
   private fun addRestoreParents(sourceEntityId: EntityId, targetEntityId: EntityId) {

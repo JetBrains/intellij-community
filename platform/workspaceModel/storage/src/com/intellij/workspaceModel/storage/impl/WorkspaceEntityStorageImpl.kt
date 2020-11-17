@@ -512,7 +512,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Assert consistency
-    this.assertConsistencyInStrictModeForRbs("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this)
+    this.assertConsistencyInStrictMode("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this)
 
     LOG.debug { "Replace by source finished" }
   }
@@ -938,11 +938,11 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     }
   }
 
-  internal fun assertConsistencyInStrictModeForRbs(message: String,
-                                                   sourceFilter: (EntitySource) -> Boolean,
-                                                   left: WorkspaceEntityStorage,
-                                                   right: WorkspaceEntityStorage,
-                                                   resulting: WorkspaceEntityStorageBuilder) {
+  internal fun assertConsistencyInStrictMode(message: String,
+                                             sourceFilter: (EntitySource) -> Boolean,
+                                             left: WorkspaceEntityStorage,
+                                             right: WorkspaceEntityStorage,
+                                             resulting: WorkspaceEntityStorageBuilder) {
     if (StrictMode.rbsEnabled) {
       try {
         this.assertConsistency()
