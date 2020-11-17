@@ -390,9 +390,11 @@ public class SearchTextField extends JPanel {
 
   private void reInitPopup() {
     if(myPopup != null){
+      myTextField.putClientProperty("JTextField.variant", null);
       myPopup.cancel();
-      Disposer.dispose(myPopup);
+      var popup = myPopup;
       myPopup = null;
+      Disposer.dispose(popup);
     }
     final JList<String> list = new JBList<>(myModel);
     final Runnable chooseRunnable = createItemChosenCallback(list);
@@ -409,7 +411,6 @@ public class SearchTextField extends JPanel {
         })
         .setItemChoosenCallback(chooseRunnable).createPopup();
       myTextField.putClientProperty("JTextField.Search.FindPopup", myPopup);
-      myTextField.putClientProperty("JTextField.variant", null);
       myTextField.putClientProperty("JTextField.variant", "searchWithJbPopup");
     }
   }
