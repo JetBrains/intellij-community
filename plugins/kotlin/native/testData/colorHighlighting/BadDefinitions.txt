@@ -1,4 +1,4 @@
-Definitions file for Kotlin/Native C interop(0,144)
+Definitions file for Kotlin/Native C interoperability(0,144)
   PsiElement(NativeDefinitionsTokenType.<unknown key>)('bad_key')(0,7)
   PsiWhiteSpace('\n')(7,8)
   NativeDefinitionsStringsKeyImpl(STRINGS_KEY)(8,15)

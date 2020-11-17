@@ -1,4 +1,4 @@
-Definitions file for Kotlin/Native C interop(0,1546)
+Definitions file for Kotlin/Native C interoperability(0,1546)
   PsiComment(NativeDefinitionsTokenType.COMMENT)('# In this test case all supported properties are used.')(0,54)
   PsiWhiteSpace('\n')(54,55)
   NativeDefinitionsStringKeyImpl(STRING_KEY)(55,62)
