@@ -212,6 +212,22 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testFinished name='ATest.setUp']\n" +
                                           "##teamcity[testSuiteFinished name='a.ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
+ 
+  @Test
+  public void testComparisonFailure() {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final String className = "a.ATest";
+    AssertionError throwable = new AssertionError("expected [expected\nnewline] but found [actual\nnewline]");
+    MockTestNGResult foo = new MockTestNGResult(className, "testFoo",
+                                                throwable, new Object[0]);
+    listener.onTestFailure(foo);
+    String message = buf.toString();
+    String expectedFailureMessage =
+      "##teamcity[testFailed name='ATest.testFoo' message='java.lang.AssertionError: ' expected='expected|nnewline' actual='actual|nnewline'";
+    Assert.assertTrue(message, message.contains(expectedFailureMessage));
+    
+  }
 
   @Test
   public void testAfterMethodWithInjectedTestResult() {

@@ -247,7 +247,7 @@ public class IDEATestNGRemoteListener {
           notification = null;
         }
       }
-      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
+      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex, "Comparison Failure: ", "expected");
     }
     else {
       attrs.put("message", "");
