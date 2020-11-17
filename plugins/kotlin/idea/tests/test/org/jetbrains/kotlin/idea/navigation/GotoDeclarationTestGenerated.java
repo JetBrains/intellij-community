@@ -31,11 +31,6 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
         runTest("testData/navigation/gotoDeclaration/importAlias.test");
     }
 
-    @TestMetadata("importAliasMultiDeclarations.test")
-    public void testImportAliasMultiDeclarations() throws Exception {
-        runTest("testData/navigation/gotoDeclaration/importAliasMultiDeclarations.test");
-    }
-
     @TestMetadata("itExtensionLambda.test")
     public void testItExtensionLambda() throws Exception {
         runTest("testData/navigation/gotoDeclaration/itExtensionLambda.test");
