@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.space.components.SpaceWorkspaceComponent
 import libraries.coroutines.extra.Lifetime
 
-class SpaceReviewCommentsDiffExtension : DiffExtension() {
+class SpaceReviewCommentDiffExtension : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer,
                                context: DiffContext,
                                request: DiffRequest) {

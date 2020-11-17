@@ -10,7 +10,7 @@ import circlet.platform.client.KCircletClient
 import circlet.platform.client.property
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
-import com.intellij.diff.FrameDiffTool
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.space.chat.ui.discussion.SpaceChatDiscussionActionsFactory
 import com.intellij.space.chat.ui.thread.SpaceChatStandaloneThreadComponent
@@ -23,7 +23,7 @@ import javax.swing.JComponent
 
 internal class SpaceReviewCommentPanelFactory(
   private val project: Project,
-  private val viewer: FrameDiffTool.DiffViewer,
+  private val parent: Disposable,
   private val lifetime: Lifetime,
   private val workspace: Workspace,
   private val client: KCircletClient,
@@ -57,7 +57,7 @@ internal class SpaceReviewCommentPanelFactory(
     return SpaceChatStandaloneThreadComponent(
       project,
       lifetime,
-      viewer,
+      parent,
       ChannelsVm(client, me, completionVm, M2DraftsVm(client, completionVm, null), featureFlags),
       discussionRecord.value.channel,
       SpaceChatDiscussionActionsFactory(discussionRecord)
