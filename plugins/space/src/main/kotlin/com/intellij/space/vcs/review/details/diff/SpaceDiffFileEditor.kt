@@ -92,13 +92,12 @@ internal class DiffProcessor(project: Project,
                                                                    change.repository,
                                                                    change.change, false, selectedCommitHashes)
 
-
             val leftFileText = getFileContent(sideBySideDiff.left)
             val rightFileText = getFileContent(sideBySideDiff.right)
 
             val (oldFilePath, newFilePath) = getChangeFilePathInfo(change)
             val diffContentFactory = DiffContentFactoryImpl.getInstanceEx()
-            val titles = listOf(selectedCommitHashes.first(), selectedCommitHashes.last())
+            val titles = listOf(change.change.old?.commit, change.change.new?.commit)
             val documents = listOf(
               oldFilePath?.let { diffContentFactory.create(project, leftFileText, it) } ?: diffContentFactory.createEmpty(),
               newFilePath?.let { diffContentFactory.create(project, rightFileText, it) } ?: diffContentFactory.createEmpty()

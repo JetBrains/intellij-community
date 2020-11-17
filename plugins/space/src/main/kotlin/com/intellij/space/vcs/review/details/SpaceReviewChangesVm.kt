@@ -4,6 +4,7 @@ package com.intellij.space.vcs.review.details
 import circlet.client.api.ProjectKey
 import circlet.code.api.ChangeInReview
 import circlet.code.api.PropagatedCodeDiscussion
+import circlet.code.api.ReviewIdentifier
 import circlet.platform.api.TID
 import com.intellij.space.SpaceVmWithClient
 import libraries.coroutines.extra.Lifetimed
@@ -18,6 +19,7 @@ data class ChangesWithDiscussion(
 
 interface SpaceReviewChangesVm : SpaceVmWithClient, Lifetimed {
   val projectKey: ProjectKey
+  val reviewIdentifier: ReviewIdentifier
   val reviewId: TID
   val selectedCommits: Property<List<ReviewCommitListItem>>
   val changes: Property<Map<String, ChangesWithDiscussion>?>

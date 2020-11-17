@@ -93,7 +93,8 @@ abstract class CrDetailsVm<R : CodeReviewRecord>(
   val spaceDiffVm: Property<SpaceDiffVm> = mutableProperty(
     SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, selectedChange))
 
-  val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(lifetime, client, projectKey, reviewId, selectedCommits, selectedChange)
+  val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(lifetime, client, projectKey, review.value.identifier,
+                                                                 reviewId, selectedCommits, selectedChange)
 }
 
 internal class MergeRequestDetailsVm(

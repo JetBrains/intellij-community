@@ -27,6 +27,7 @@ class SpaceReviewChangesVmImpl(
   override val lifetime: Lifetime,
   override val client: KCircletClient,
   override val projectKey: ProjectKey,
+  override val reviewIdentifier: ReviewIdentifier,
   override val reviewId: TID,
   override val selectedCommits: Property<List<ReviewCommitListItem>>,
   override val selectedChange: MutableProperty<ChangeInReview?> = mutableProperty(null)
