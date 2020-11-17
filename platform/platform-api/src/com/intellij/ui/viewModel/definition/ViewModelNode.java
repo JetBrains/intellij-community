@@ -1,26 +1,27 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.viewModel;
+package com.intellij.ui.viewModel.definition;
 
 import javax.swing.*;
 import java.util.List;
 
-public class TreeNode {
+public class ViewModelNode {
 
-  private final List<Icon> myIcons;
+  private final Icon[] myIcons;
   private final String myPresentableName;
-  private final List<TreeNode> myChildren;
-  private final String myId;
+  private List<ViewModelNode> myChildren;
   private final Runnable myExecuteNodeRunnable;
 
-  public TreeNode(List<Icon> icons, String name, List<TreeNode> children, String id, Runnable runnable) {
+  public ViewModelNode(String name, Runnable runnable, Icon... icons) {
     myIcons = icons;
     myPresentableName = name;
-    myChildren = children;
-    myId = id;
     myExecuteNodeRunnable = runnable;
   }
 
-  public List<Icon> getIcons() {
+  public void setChildren(List<ViewModelNode> children) {
+    myChildren = children;
+  }
+
+  public Icon[] getIcons() {
     return myIcons;
   }
 
@@ -28,12 +29,8 @@ public class TreeNode {
     return myPresentableName;
   }
 
-  public List<TreeNode> getChildren() {
+  public List<ViewModelNode> getChildren() {
     return myChildren;
-  }
-
-  public String getId() {
-    return myId;
   }
 
   public Runnable executeNode() {

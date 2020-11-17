@@ -67,6 +67,10 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     }
   };
 
+  SimpleTree getTree() {
+    return myTree;
+  }
+
   public MavenProjectsNavigatorPanel(Project project, SimpleTree tree) {
     super(true, true);
     myProject = project;

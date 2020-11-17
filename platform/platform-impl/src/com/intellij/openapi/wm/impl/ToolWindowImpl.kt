@@ -70,6 +70,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun getProject() = toolWindowManager.project
 
+  override fun getDecoration(): ToolWindowEx.ToolWindowDecoration {
+    return ToolWindowEx.ToolWindowDecoration(icon, additionalGearActions)
+  }
+
   var windowInfo: WindowInfo = windowInfo
     private set
 

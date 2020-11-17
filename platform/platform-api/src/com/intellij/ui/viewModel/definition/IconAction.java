@@ -1,17 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.viewModel;
+package com.intellij.ui.viewModel.definition;
 
 import javax.swing.*;
 
-public class IconAction extends ActionBarItem {
+public class IconAction implements ActionViewModel {
 
   private final Icon myIcon;
-  private final String myText;
+  private final String myTooltipText;
   private final Runnable myExecuteAction;
 
-  public IconAction(Icon icon, String text, Runnable action) {
+  public IconAction(Icon icon, String tooltipText, Runnable action) {
     myIcon = icon;
-    myText = text;
+    myTooltipText = tooltipText;
     myExecuteAction = action;
   }
 
@@ -20,7 +20,7 @@ public class IconAction extends ActionBarItem {
   }
 
   public String getTooltipText() {
-    return myText;
+    return myTooltipText;
   }
 
   public Runnable executeAction() {
