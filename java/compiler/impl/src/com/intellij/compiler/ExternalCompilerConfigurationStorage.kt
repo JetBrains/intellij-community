@@ -80,8 +80,8 @@ internal fun getFilteredModuleNameList(project: Project, map: Map<String, String
 }
 
 internal fun writeBytecodeTarget(moduleNames: List<String>, map: Map<String, String>, element: Element) {
-  Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER)
-  for (name in moduleNames) {
+  val sortedModuleNames = moduleNames.sortedWith(String.CASE_INSENSITIVE_ORDER)
+  for (name in sortedModuleNames) {
     val moduleElement = Element(JpsJavaCompilerConfigurationSerializer.MODULE)
     moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name)
     moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, map.get(name) ?: "")
