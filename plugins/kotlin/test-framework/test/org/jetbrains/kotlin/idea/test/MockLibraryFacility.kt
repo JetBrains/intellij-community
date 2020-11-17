@@ -28,6 +28,10 @@ data class MockLibraryFacility(
 
     companion object {
         const val MOCK_LIBRARY_NAME = "kotlinMockLibrary"
+
+        fun tearDown(module: Module) {
+            ConfigLibraryUtil.removeLibrary(module, MOCK_LIBRARY_NAME)
+        }
     }
 
     fun setUp(module: Module) {
@@ -50,9 +54,7 @@ data class MockLibraryFacility(
         }
     }
 
-    fun tearDown(module: Module) {
-        ConfigLibraryUtil.removeLibrary(module, MOCK_LIBRARY_NAME)
-    }
+    fun tearDown(module: Module) = Companion.tearDown(module)
 
     val asKotlinLightProjectDescriptor: KotlinLightProjectDescriptor
         get() = object : KotlinLightProjectDescriptor() {
