@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
-import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.io.IOException;
@@ -45,20 +44,12 @@ public class CVPPanel extends JBPanel {
     table.setFillsViewportHeight(true);
     table.getColumnModel().getColumn(0).setPreferredWidth(1000);
     registerSpeedSearch(table);
-    increaseHeaderFontSize(table, 1.2);
     return table;
   }
 
   private static ColumnInfo[] getColumns(@NotNull Project project) {
-    return new ColumnInfo[]{new OriginColumnInfo(project), TOTAL_LIFE_TIME_COLUMN, TOTAL_USE_COUNT_COLUMN, CREATED_COUNT_COLUMN,
-      RATIO_COLUMN};
-  }
-
-  private static void increaseHeaderFontSize(TableView<CVPInfo> table, double ratio) {
-    JTableHeader header = table.getTableHeader();
-    Font font = header.getFont();
-    Font derivedFont = font.deriveFont((float)(font.getSize() * ratio));
-    header.setFont(derivedFont);
+    return new ColumnInfo[]{new OriginColumnInfo(project),
+      COUNT_COLUMN, TOTAL_USE_COUNT_COLUMN, AVG_USE_COUNT_COLUMN, TOTAL_LIFE_TIME_COLUMN, AVG_LIFETIME_COLUMN};
   }
 
   private static void registerSpeedSearch(TableView<CVPInfo> table) {
@@ -96,8 +87,8 @@ public class CVPPanel extends JBPanel {
       return Comparator.comparing(o -> o.getTotalUseCount());
     }
   };
-  private static final ColumnInfo<CVPInfo, String> CREATED_COUNT_COLUMN = new ColumnInfo<>(
-    DevKitBundle.message("cached.value.profiler.column.created")) {
+  private static final ColumnInfo<CVPInfo, String> COUNT_COLUMN = new ColumnInfo<>(
+    DevKitBundle.message("cached.value.profiler.column.count")) {
     @Override
     public String valueOf(CVPInfo o) {
       return String.valueOf(o.getCreatedCount());
@@ -109,15 +100,33 @@ public class CVPPanel extends JBPanel {
       return Comparator.comparing(o -> o.getCreatedCount());
     }
   };
-  private static final ColumnInfo<CVPInfo, String> RATIO_COLUMN = new ColumnInfo<>(
-    DevKitBundle.message("cached.value.profiler.column.total.use.count.created")) {
+  private static final ColumnInfo<CVPInfo, String> AVG_USE_COUNT_COLUMN = new ColumnInfo<>(
+    DevKitBundle.message("cached.value.profiler.column.avg.use.count")) {
     @Override
     public String valueOf(CVPInfo o) {
-      return String.valueOf(value(o));
+      return String.valueOf(Math.round(value(o)));
     }
 
     private double value(CVPInfo o) {
       return ((double)o.getTotalUseCount()) / o.getCreatedCount();
+    }
+
+    @Nullable
+    @Override
+    public Comparator<CVPInfo> getComparator() {
+      return Comparator.comparing(o -> value(o));
+    }
+  };
+
+  private static final ColumnInfo<CVPInfo, String> AVG_LIFETIME_COLUMN = new ColumnInfo<>(
+    DevKitBundle.message("cached.value.profiler.column.avg.life.time")) {
+    @Override
+    public String valueOf(CVPInfo o) {
+      return String.valueOf(Math.round(value(o)));
+    }
+
+    private double value(CVPInfo o) {
+      return ((double)o.getTotalLifeTime()) / o.getCreatedCount();
     }
 
     @Nullable
