@@ -96,7 +96,7 @@ public final class DisabledPluginsState {
     return Collections.unmodifiableSet(getDisabledIds());
   }
 
-  static @NotNull Set<PluginId> getDisabledIds() {
+  private static @NotNull Set<PluginId> getDisabledIds() {
     Set<PluginId> result = ourDisabledPlugins;
     if (result != null) {
       return result;
@@ -119,6 +119,10 @@ public final class DisabledPluginsState {
       ourDisabledPlugins = result;
     }
     return result;
+  }
+
+  public static boolean isDisabled(@NotNull PluginId pluginId) {
+    return getDisabledIds().contains(pluginId);
   }
 
   /**

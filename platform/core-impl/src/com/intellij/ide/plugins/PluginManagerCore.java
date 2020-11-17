@@ -203,7 +203,7 @@ public final class PluginManagerCore {
   }
 
   public static boolean isDisabled(@NotNull PluginId pluginId) {
-    return DisabledPluginsState.getDisabledIds().contains(pluginId);
+    return DisabledPluginsState.isDisabled(pluginId);
   }
 
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
@@ -450,7 +450,7 @@ public final class PluginManagerCore {
     for (IdeaPluginDescriptor descriptor : plugins) {
       StringBuilder target;
       if (!descriptor.isEnabled()) {
-        if (!DisabledPluginsState.getDisabledIds().contains(descriptor.getPluginId())) {
+        if (!DisabledPluginsState.isDisabled(descriptor.getPluginId())) {
           // plugin will be logged as part of "Problems found loading plugins"
           continue;
         }
@@ -468,7 +468,7 @@ public final class PluginManagerCore {
     }
     for (IdeaPluginDescriptorImpl plugin : incompletePlugins) {
       // log only explicitly disabled plugins
-      if (DisabledPluginsState.getDisabledIds().contains(plugin.getPluginId()) && !disabledPlugins.contains(plugin.getPluginId())) {
+      if (DisabledPluginsState.isDisabled(plugin.getPluginId()) && !disabledPlugins.contains(plugin.getPluginId())) {
         appendPlugin(plugin, disabled);
       }
     }
@@ -1496,7 +1496,7 @@ public final class PluginManagerCore {
   /** @deprecated Use {@link #isDisabled(PluginId)} */
   @Deprecated
   public static boolean isDisabled(@NotNull String pluginId) {
-    return DisabledPluginsState.getDisabledIds().contains(PluginId.getId(pluginId));
+    return isDisabled(PluginId.getId(pluginId));
   }
 
   /** @deprecated Use {@link #disablePlugin(PluginId)} */

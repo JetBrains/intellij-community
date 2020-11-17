@@ -93,7 +93,7 @@ class ProjectPluginTracker(
   internal fun disabledPluginIds(trackers: List<ProjectPluginTracker> = listOf()): Collection<PluginId> {
     return disabledPluginIds
       .filterNot { pluginId ->
-        DisabledPluginsState.disabledPlugins().contains(pluginId) ||
+        DisabledPluginsState.isDisabled(pluginId) ||
         trackers.isNotEmpty() && trackers.all { it.isDisabled(pluginId) }
       }
   }

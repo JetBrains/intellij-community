@@ -182,7 +182,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     return { descriptor ->
       val pluginId = descriptor.pluginId
       trackers.all { !it.isEnabled(pluginId) } &&
-      (DisabledPluginsState.disabledPlugins().contains(pluginId) || trackers.all { it.isDisabled(pluginId) })
+      (DisabledPluginsState.isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
     }
   }
 }
