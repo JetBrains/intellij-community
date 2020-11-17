@@ -458,6 +458,11 @@ class ModifiableRootModelBridgeImpl(
           customImlDataEntity != null && customImlDataEntity.customModuleOptions.isEmpty() && element.isEmpty() ->
             diff.removeEntity(customImlDataEntity)
 
+          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isNotEmpty() && element.isEmpty() ->
+            diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, customImlDataEntity) {
+              rootManagerTagCustomData = null
+            }
+
           customImlDataEntity != null && !element.isEmpty() -> diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java,
             customImlDataEntity) {
             rootManagerTagCustomData = elementAsString
