@@ -10,12 +10,14 @@ import com.intellij.space.chat.ui.thread.SpaceChatThreadActionsFactory
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.codereview.SingleValueModel
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
 import libraries.coroutines.extra.launch
 import runtime.Ui
 import runtime.reactive.Property
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal class SpaceChatDiscussionActionsFactory(private val discussion: Property<CodeDiscussionRecord>) : SpaceChatThreadActionsFactory {
@@ -25,11 +27,29 @@ internal class SpaceChatDiscussionActionsFactory(private val discussion: Propert
       val replyAction = LinkLabel<Any>(SpaceBundle.message("chat.reply.action"), null) { _, _ ->
         newMessageStateModel.value = true
       }
-      val resolveReopenLabel = createResolveReopenLabel(chatVm)
+
+      val resolvingModel = SingleValueModelImpl(ResolvingState.READY)
+      val resolveReopenLabel = createResolveReopenLabel(chatVm, resolvingModel)
       JPanel(HorizontalLayout(JBUI.scale(5))).apply {
         isOpaque = false
         add(replyAction)
         add(resolveReopenLabel)
+        resolvingModel.addValueUpdatedListener { newState ->
+          remove(1)
+          when (newState) {
+            ResolvingState.RESOLVING -> {
+              add(JLabel(SpaceBundle.message("chat.resolving.action.state")))
+            }
+            ResolvingState.REOPENING -> {
+              add(JLabel(SpaceBundle.message("chat.reopening.action.state")))
+            }
+            ResolvingState.READY -> {
+              add(resolveReopenLabel)
+            }
+          }
+          revalidate()
+          repaint()
+        }
       }
     }
 
@@ -42,12 +62,19 @@ internal class SpaceChatDiscussionActionsFactory(private val discussion: Propert
     )
   }
 
-  private fun createResolveReopenLabel(chatVm: M2ChannelVm): JComponent {
+  private fun createResolveReopenLabel(chatVm: M2ChannelVm, resolvingModel: SingleValueModel<ResolvingState>): JComponent {
     val reviewService = chatVm.client.codeReview
     fun resolve() {
       val currentDiscussion = discussion.value
       launch(chatVm.lifetime, Ui) {
+        if (!currentDiscussion.resolved) {
+          resolvingModel.value = ResolvingState.RESOLVING
+        }
+        else {
+          resolvingModel.value = ResolvingState.REOPENING
+        }
         reviewService.resolveCodeDiscussion(currentDiscussion.id, !currentDiscussion.resolved)
+        resolvingModel.value = ResolvingState.READY
       }
     }
 
@@ -64,5 +91,11 @@ internal class SpaceChatDiscussionActionsFactory(private val discussion: Propert
     }
 
     return label
+  }
+
+  private enum class ResolvingState {
+    RESOLVING,
+    REOPENING,
+    READY
   }
 }
