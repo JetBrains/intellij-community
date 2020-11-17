@@ -84,7 +84,7 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
       .setTitle(IdeBundle.message(titleKey))
       .addAction(new UndoPluginsSwitchAction(autoSwitchedPlugins, enabled));
 
-    PluginManager.getInstance().addDisablePluginListener(new Runnable() {
+    DisabledPluginsState.addDisablePluginListener(new Runnable() {
       @Override
       public void run() {
         Stream<PluginId> ids = autoSwitchedPlugins.stream().map(PluginDescriptor::getPluginId);
@@ -95,7 +95,7 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
 
         Balloon balloon = switchNotification.getBalloon();
         if (balloon == null || balloon.isDisposed()) {
-          ApplicationManager.getApplication().invokeLater(() -> PluginManager.getInstance().removeDisablePluginListener(this));
+          ApplicationManager.getApplication().invokeLater(() -> DisabledPluginsState.removeDisablePluginListener(this));
         }
       }
     });

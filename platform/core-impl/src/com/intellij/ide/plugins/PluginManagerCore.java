@@ -1511,10 +1511,12 @@ public final class PluginManagerCore {
     return enablePlugin(PluginId.getId(id));
   }
 
-  /** @deprecated Use {@link PluginManager#addDisablePluginListener} */
+  /** @deprecated Use {@link DisabledPluginsState#addDisablePluginListener} directly
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static void addDisablePluginListener(@NotNull Runnable listener) {
-    PluginManager.getInstance().addDisablePluginListener(listener);
+    DisabledPluginsState.addDisablePluginListener(listener);
   }
   //</editor-fold>
 }

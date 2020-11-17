@@ -8,10 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,21 +16,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class DisabledPluginsState {
-  public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
 
-  private static volatile Set<PluginId> ourDisabledPlugins;
-  private static @Nullable Runnable disabledPluginListener;
+  public static final @NonNls String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
+
+  private static volatile @Nullable Set<PluginId> ourDisabledPlugins;
+  private static final List<Runnable> ourDisabledPluginListeners = new CopyOnWriteArrayList<>();
+  private static volatile boolean ourIgnoreDisabledPlugins;
 
   @ApiStatus.Internal
-  public static void setDisabledPluginListener(@NotNull Runnable value) {
-    disabledPluginListener = value;
+  public static void addDisablePluginListener(@NotNull Runnable listener) {
+    ourDisabledPluginListeners.add(listener);
+  }
+
+  @ApiStatus.Internal
+  public static void removeDisablePluginListener(@NotNull Runnable listener) {
+    ourDisabledPluginListeners.remove(listener);
   }
 
   // For use in headless environment only
-  public static void dontLoadDisabledPlugins() {
-    ourDisabledPlugins = Collections.emptySet();
+  @ApiStatus.Internal
+  public static void setIgnoreDisabledPlugins(boolean ignoreDisabledPlugins) {
+    ourIgnoreDisabledPlugins = ignoreDisabledPlugins;
   }
 
   @ApiStatus.Internal
@@ -92,7 +98,8 @@ public final class DisabledPluginsState {
     }
 
     // to preserve the order of additions and removals
-    if (System.getProperty("idea.ignore.disabled.plugins") != null) {
+    if (ourIgnoreDisabledPlugins ||
+        System.getProperty("idea.ignore.disabled.plugins") != null) {
       // todo should be modifiable as well?
       // see enablePlugin/disablePlugin
       return Collections.emptySet();
@@ -256,12 +263,12 @@ public final class DisabledPluginsState {
     if (invalidate) {
       invalidate();
     }
-    if (disabledPluginListener != null) {
-      disabledPluginListener.run();
+    for (Runnable listener : ourDisabledPluginListeners) {
+      listener.run();
     }
   }
 
-  public static @NotNull Logger getLogger() {
+  private static @NotNull Logger getLogger() {
     // do not use class reference here
     //noinspection SSBasedInspection
     return Logger.getInstance("#com.intellij.ide.plugins.DisabledPluginsState");
