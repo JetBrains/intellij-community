@@ -6,7 +6,6 @@ import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -15,7 +14,6 @@ import icons.PlatformImplIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -84,7 +82,7 @@ public class PluginGroups {
       myTree.add(new Group(entry.getKey(), entry.getKey(), entry.getValue().getFirst(), null, entry.getValue().getSecond()));
     }
     worker.execute();
-    DisabledPluginsState.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
+    myDisabledPluginIds.addAll(DisabledPluginsState.loadDisabledPlugins());
     initCloudPlugins();
   }
 

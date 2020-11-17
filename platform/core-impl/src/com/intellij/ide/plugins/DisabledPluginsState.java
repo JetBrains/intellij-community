@@ -37,10 +37,12 @@ public final class DisabledPluginsState {
   }
 
   @ApiStatus.Internal
-  public static void loadDisabledPlugins(@NotNull String configPath, @NotNull Collection<PluginId> disabledPlugins) {
-    Path file = Paths.get(configPath, DISABLED_PLUGINS_FILENAME);
+  public static @NotNull Set<PluginId> loadDisabledPlugins() {
+    LinkedHashSet<PluginId> disabledPlugins = new LinkedHashSet<>();
+
+    Path file = Paths.get(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
     if (!Files.isRegularFile(file)) {
-      return;
+      return disabledPlugins;
     }
 
     List<String> requiredPlugins = Arrays.asList(System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, "").split(","));
@@ -90,6 +92,8 @@ public final class DisabledPluginsState {
     catch (IOException e) {
       getLogger().info("Unable to load disabled plugins list from " + file, e);
     }
+
+    return disabledPlugins;
   }
 
   public static @NotNull Set<PluginId> disabledPlugins() {
@@ -104,21 +108,19 @@ public final class DisabledPluginsState {
 
     // to preserve the order of additions and removals
     if (System.getProperty("idea.ignore.disabled.plugins") != null) {
+      // todo should be modifiable as well?
+      // see enablePlugin/disablePlugin
       return Collections.emptySet();
     }
 
     //noinspection SynchronizeOnThis
     synchronized (PluginManagerCore.class) {
       result = ourDisabledPlugins;
-      if (result != null) {
-        return result;
+      if (result == null) {
+        ourDisabledPlugins = result = loadDisabledPlugins();
       }
-
-      result = new LinkedHashSet<>();
-      loadDisabledPlugins(PathManager.getConfigPath(), result);
-      ourDisabledPlugins = result;
+      return result;
     }
-    return result;
   }
 
   public static boolean isDisabled(@NotNull PluginId pluginId) {
