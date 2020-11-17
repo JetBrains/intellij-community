@@ -2,9 +2,11 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.*;
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.LineColumn;
+import com.intellij.openapi.util.text.NaturalComparator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -850,14 +852,14 @@ public class StringUtilTest {
   @Test
   public void testFirstLastDontConvertCharSequenceToString() {
     CharSequence s = ByteArrayCharSequence.convertToBytesIfPossible("test");
-    assertTrue(s instanceof ByteArrayCharSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+    assertTrue(s instanceof ByteArrayCharSequence || s.getClass() == String.class);
     CharSequence first = StringUtil.first(s, 1, false);
     assertTrue(String.valueOf(first.getClass()),
-               first instanceof CharSequenceSubSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+               first instanceof CharSequenceSubSequence || s.getClass() == String.class);
     assertEquals("t", first.toString());
     CharSequence last = StringUtil.last(s, 1, false);
     assertTrue(String.valueOf(last.getClass()),
-               last instanceof CharSequenceSubSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+               last instanceof CharSequenceSubSequence || s.getClass() == String.class);
     assertEquals("t", last.toString());
   }
 

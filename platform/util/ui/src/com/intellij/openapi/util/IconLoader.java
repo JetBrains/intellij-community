@@ -4,18 +4,16 @@ package com.intellij.openapi.util;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.Gray;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.*;
-import com.intellij.ui.scale.DerivedScaleType;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.scale.ScaleContextSupport;
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.ui.scale.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.ui.*;
@@ -39,10 +37,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
-import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
-import static com.intellij.ui.scale.ScaleType.*;
 
 /**
  * Provides access to icons used in the UI.
@@ -502,14 +496,14 @@ public final class IconLoader {
       BufferedImage image;
       if (GraphicsEnvironment.isHeadless()) {
         // for testing purpose
-        image = ImageUtil.createImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, ROUND);
+        image = ImageUtil.createImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.ROUND);
       }
       else {
         if (ctx == null) ctx = ScaleContext.create();
         image = GraphicsEnvironment.getLocalGraphicsEnvironment()
           .getDefaultScreenDevice().getDefaultConfiguration()
-          .createCompatibleImage(ROUND.round(ctx.apply(icon.getIconWidth(), DEV_SCALE)),
-                                 ROUND.round(ctx.apply(icon.getIconHeight(), DEV_SCALE)),
+          .createCompatibleImage(PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconWidth(), DerivedScaleType.DEV_SCALE)),
+                                 PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconHeight(), DerivedScaleType.DEV_SCALE)),
                                  Transparency.TRANSLUCENT);
         if (StartupUiUtil.isJreHiDPI(ctx)) {
           image = (BufferedImage)ImageUtil.ensureHiDPI(image, ctx, icon.getIconWidth(), icon.getIconHeight());
@@ -633,7 +627,7 @@ public final class IconLoader {
       scale = JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null) ? JBUIScale.sysScale(ancestor) : 1f;
     }
     else {
-      scale = JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null) ? ctxSupport.getScale(SYS_SCALE) : 1f;
+      scale = JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null) ? ctxSupport.getScale(ScaleType.SYS_SCALE) : 1f;
     }
     @SuppressWarnings("UndesirableClassUsage")
     BufferedImage image =
@@ -952,17 +946,14 @@ public final class IconLoader {
 
     @Override
     public final @NotNull Icon getMenuBarIcon(boolean isDark) {
-      boolean useMRI = MultiResolutionImageProvider.isMultiResolutionImageAvailable() && SystemInfo.isMac;
+      boolean useMRI = SystemInfoRt.isMac;
       ScaleContext ctx = useMRI ? ScaleContext.create() : ScaleContext.createIdentity();
-      ctx.setScale(USR_SCALE.of(1));
+      ctx.setScale(ScaleType.USR_SCALE.of(1));
       Image img = loadImage(ctx, isDark);
       if (useMRI) {
         img = MultiResolutionImageProvider.convertFromJBImage(img);
       }
-      if (img != null) {
-        return new ImageIcon(img);
-      }
-      return this;
+      return img == null ? this : new ImageIcon(img);
     }
 
     @Override
@@ -1059,7 +1050,7 @@ public final class IconLoader {
 
     private static long key(@NotNull ScaleContext context) {
       return ((long)Float.floatToIntBits((float)context.getScale(DerivedScaleType.EFF_USR_SCALE)) << 32) |
-             ((long)Float.floatToIntBits((float)context.getScale(SYS_SCALE)) & 0xffffffffL);
+             ((long)Float.floatToIntBits((float)context.getScale(ScaleType.SYS_SCALE)) & 0xffffffffL);
     }
 
     /**
@@ -1069,7 +1060,7 @@ public final class IconLoader {
       ScaleContext scaleContext = host.getScaleContext();
       if (scale != 1) {
         scaleContext = scaleContext.copy();
-        scaleContext.setScale(OBJ_SCALE.of(scale));
+        scaleContext.setScale(ScaleType.OBJ_SCALE.of(scale));
       }
 
       long cacheKey = key(scaleContext);
@@ -1410,7 +1401,7 @@ public final class IconLoader {
         }
         catch (Throwable e) {
           LOG.error("Cannot compute icon", e);
-          icon = AllIcons.Actions.Stub;
+          icon = IconManager.getInstance().getStubIcon();
         }
 
         myIcon = icon;

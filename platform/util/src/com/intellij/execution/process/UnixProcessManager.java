@@ -56,7 +56,6 @@ public final class UnixProcessManager {
         //noinspection JavaReflectionMemberAccess
         return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
       }
-
       return Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
     catch (Throwable t) {

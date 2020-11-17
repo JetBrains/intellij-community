@@ -53,7 +53,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
   @Test
   public void testJreHiDpi() throws MalformedURLException {
-    assumeTrue(SystemInfoRt.IS_AT_LEAST_JAVA9 || !SystemInfoRt.isLinux);
+    assumeTrue(!SystemInfoRt.isLinux);
 
     overrideJreHiDPIEnabled(true);
     try {

@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconLayerProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,11 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   private static final List<IconLayer> iconLayers = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final int FLAGS_LOCKED = 0x800;
   private static final Logger LOG = Logger.getInstance(CoreIconManager.class);
+
+  @Override
+  public @NotNull Icon getStubIcon() {
+    return AllIcons.Actions.Stub;
+  }
 
   @NotNull
   @Override
