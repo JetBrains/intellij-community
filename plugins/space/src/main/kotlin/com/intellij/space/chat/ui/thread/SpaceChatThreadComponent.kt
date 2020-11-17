@@ -7,12 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.chat.ui.SpaceChatItemComponentFactory
 import com.intellij.space.chat.ui.SpaceChatItemListModel
-import com.intellij.space.chat.ui.createReplyComponent
 import com.intellij.space.chat.ui.getLink
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
+import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.coroutines.extra.Lifetime
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -21,6 +21,7 @@ internal fun createThreadComponent(
   project: Project,
   lifetime: Lifetime,
   thread: M2ChannelVm,
+  threadActionsFactory: SpaceChatThreadActionsFactory,
   withFirst: Boolean = true
 ): JComponent {
   val threadComponent = JPanel(VerticalLayout(0)).apply {
@@ -49,8 +50,10 @@ internal fun createThreadComponent(
     border = JBUI.Borders.empty(10, 0)
   }
 
-  val replyComponent = createReplyComponent(thread).apply {
-    border = JBUI.Borders.empty()
+  val replyComponent = BorderLayoutPanel().apply {
+    isOpaque = false
+    border = JBUI.Borders.emptyLeft(threadAvatarSize.get() + SpaceChatItemComponentFactory.Item.AVATAR_GAP)
+    addToCenter(threadActionsFactory.createActionsComponent(thread))
   }
 
   return threadComponent.apply {

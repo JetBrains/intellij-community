@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.discussion.SpaceChatCodeDiscussionComponentFactory
 import com.intellij.space.chat.ui.message.MessageTitleComponent
+import com.intellij.space.chat.ui.thread.SpaceChatReplyActionFactory
 import com.intellij.space.chat.ui.thread.createThreadComponent
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
@@ -56,6 +57,8 @@ internal class SpaceChatItemComponentFactory(
 
   private val codeDiscussionComponentFactory = SpaceChatCodeDiscussionComponentFactory(project, lifetime, server)
 
+  private val replyActionFactory = SpaceChatReplyActionFactory()
+
   /**
    * Method should return [HoverableJPanel] because it is used to implement hovering properly
    *
@@ -73,7 +76,7 @@ internal class SpaceChatItemComponentFactory(
             messagePanel
           }
           else {
-            val threadComponent = createThreadComponent(project, lifetime, thread)
+            val threadComponent = createThreadComponent(project, lifetime, thread, replyActionFactory)
             JPanel(VerticalLayout(0)).apply {
               isOpaque = false
               add(messagePanel, VerticalLayout.FILL_HORIZONTAL)
