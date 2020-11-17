@@ -12,6 +12,7 @@ import com.intellij.execution.process.mediator.client.MediatedProcess
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 
 class ElevationServiceImpl : ElevationService, Disposable {
@@ -26,6 +27,9 @@ class ElevationServiceImpl : ElevationService, Disposable {
   }
 
   override fun createProcess(processBuilder: ProcessBuilder): MediatedProcess {
+    if (!ElevationSettings.getInstance().askEnableKeepAuthIfNeeded()) {
+      throw ProcessCanceledException()
+    }
     return tryRelaunchingDaemonUntilHaveQuotaPermit { client ->
       object : MediatedProcess(client, processBuilder), SelfKiller {
         init {
