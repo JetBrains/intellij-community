@@ -68,6 +68,7 @@ public class MigrationDialog extends DialogWrapper {
     myDescriptionTextArea.setFont(promptLabel.getFont());
     myDescriptionTextArea.setBackground(myPanel.getBackground());
     myDescriptionTextArea.setLineWrap(true);
+    myDescriptionTextArea.setWrapStyleWord(true);
     updateDescription();
 
     myMapComboBox.addActionListener(
