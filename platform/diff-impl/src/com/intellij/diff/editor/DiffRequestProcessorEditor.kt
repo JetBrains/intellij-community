@@ -31,7 +31,7 @@ import javax.swing.KeyStroke
 
 class DiffRequestProcessorEditor(
   private val file: DiffVirtualFile,
-  private val processor: DiffRequestProcessor
+  val processor: DiffRequestProcessor
 ) : FileEditorBase() {
   init {
     if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, processor.context)) {
