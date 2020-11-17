@@ -187,6 +187,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     });
     myScrollPane.getViewport().setBorder(null);
     myScrollPane.getViewport().setOpaque(false);
+    myScrollPane.getHorizontalScrollBar().putClientProperty(JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, Boolean.TRUE);
     myScrollPane.setOpaque(false);
 
     myHistoryPopupButton = new MyActionButton(new ShowHistoryAction(), false);
