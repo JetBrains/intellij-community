@@ -509,6 +509,16 @@ public abstract class DiffRequestProcessor implements Disposable {
     ActionUtil.recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
   }
 
+  @NotNull
+  public ActionToolbar getToolbar() {
+    return myToolbar;
+  }
+
+  @NotNull
+  public Wrapper getContentPanel() {
+    return myContentPanel;
+  }
+
   protected void buildActionPopup(@Nullable List<? extends AnAction> viewerActions) {
     collectPopupActions(viewerActions);
 
