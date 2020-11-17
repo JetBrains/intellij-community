@@ -295,10 +295,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return super.visitEndOfInitializer(instruction, runner, state);
   }
 
-  private static boolean hasNonTrivialFailingContracts(PsiCallExpression call) {
+  private static boolean hasTrivialFailContract(PsiCallExpression call) {
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
-    return !contracts.isEmpty() &&
-           contracts.stream().anyMatch(contract -> contract.getReturnValue().isFail() && !contract.isTrivial());
+    return contracts.size() == 1 && contracts.get(0).isTrivial() && contracts.get(0).getReturnValue().isFail();
   }
 
   private void reportConstantExpressionValue(DfaValue value, DfaMemoryState memState, PsiExpression expression, TextRange range) {
@@ -385,7 +384,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     public void visitCallExpression(PsiCallExpression call) {
       super.visitCallExpression(call);
       Boolean isFailing = myFailingCalls.get(call);
-      if (isFailing != null || hasNonTrivialFailingContracts(call)) {
+      if (isFailing != null || !hasTrivialFailContract(call)) {
         myFailingCalls.put(call, DfaTypeValue.isContractFail(myValue) && !Boolean.FALSE.equals(isFailing));
       }
     }
