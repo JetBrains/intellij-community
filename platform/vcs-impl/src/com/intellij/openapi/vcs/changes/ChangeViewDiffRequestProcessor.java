@@ -46,10 +46,10 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   //
 
   @NotNull
-  protected abstract Stream<Wrapper> getSelectedChanges();
+  public abstract Stream<Wrapper> getSelectedChanges();
 
   @NotNull
-  protected abstract Stream<Wrapper> getAllChanges();
+  public abstract Stream<Wrapper> getAllChanges();
 
   protected abstract void selectChange(@NotNull Wrapper change);
 
@@ -176,6 +176,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   public void setCurrentChange(@Nullable Wrapper change) {
     myCurrentChange = change;
     updateRequest();
+  }
+
+  @Nullable
+  public Wrapper getCurrentChange() {
+    return myCurrentChange;
   }
 
   @Override
@@ -310,7 +315,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
 
-  protected abstract static class Wrapper {
+  public abstract static class Wrapper {
     @NotNull
     public abstract Object getUserObject();
 
