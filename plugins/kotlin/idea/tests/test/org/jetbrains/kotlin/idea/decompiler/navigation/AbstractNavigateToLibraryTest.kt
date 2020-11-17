@@ -97,7 +97,7 @@ abstract class AbstractNavigateToLibrarySourceTestWithJS : AbstractNavigateToLib
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor = KotlinMultiModuleProjectDescriptor(
         "AbstractNavigateToLibrarySourceTestWithJS",
-        mockLibraryFacility.asKotlinLightProjectDescriptor(),
+        mockLibraryFacility.asKotlinLightProjectDescriptor,
         KotlinStdJSProjectDescriptor
     )
 }

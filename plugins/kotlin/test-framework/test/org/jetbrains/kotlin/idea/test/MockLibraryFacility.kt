@@ -54,12 +54,13 @@ data class MockLibraryFacility(
         ConfigLibraryUtil.removeLibrary(module, MOCK_LIBRARY_NAME)
     }
 
-    fun asKotlinLightProjectDescriptor(): KotlinLightProjectDescriptor = object : KotlinLightProjectDescriptor() {
-        override fun configureModule(module: Module, model: ModifiableRootModel) = this@MockLibraryFacility.setUp(module)
+    val asKotlinLightProjectDescriptor: KotlinLightProjectDescriptor
+        get() = object : KotlinLightProjectDescriptor() {
+            override fun configureModule(module: Module, model: ModifiableRootModel) = this@MockLibraryFacility.setUp(module)
 
-        override fun getSdk(): Sdk = if (this@MockLibraryFacility.platform is JsPlatform)
-            KotlinSdkType.INSTANCE.createSdkWithUniqueName(emptyList())
-        else
-            IdeaTestUtil.getMockJdk18()
-    }
+            override fun getSdk(): Sdk = if (this@MockLibraryFacility.platform is JsPlatform)
+                KotlinSdkType.INSTANCE.createSdkWithUniqueName(emptyList())
+            else
+                IdeaTestUtil.getMockJdk18()
+        }
 }
