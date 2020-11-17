@@ -2,7 +2,6 @@
 package com.intellij.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -50,7 +49,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class JavadocGeneratorRunProfile implements ModuleRunProfile {
+public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
   private final Project myProject;
   private final AnalysisScope myGenerationScope;
   private final JavadocConfiguration myConfiguration;
@@ -81,7 +80,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     return null;
   }
 
-  private static class MyJavaCommandLineState extends CommandLineState {
+  private static final class MyJavaCommandLineState extends CommandLineState {
     private static final String INDEX_HTML = "index.html";
 
     private final AnalysisScope myGenerationOptions;
@@ -226,11 +225,13 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
         throw new CantRunException(JavaBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
       }
 
-      Set<Module> modulesWithoutDescriptor = new SmartHashSet<>(modules);
-      Map<Module, VirtualFile> moduleDescriptors = new SmartHashMap<>();
+      Set<Module> modulesWithoutDescriptor = new HashSet<>(modules);
+      Map<Module, VirtualFile> moduleDescriptors = new HashMap<>();
       boolean hasJavaModules = false;
       for (VirtualFile source : sources) {
-        if (!PsiJavaModule.MODULE_INFO_FILE.equals(source.getName())) continue;
+        if (!PsiJavaModule.MODULE_INFO_FILE.equals(source.getName())) {
+          continue;
+        }
         hasJavaModules = true;
         Module module = ModuleUtilCore.findModuleForFile(source, myProject);
         if (module != null) {
