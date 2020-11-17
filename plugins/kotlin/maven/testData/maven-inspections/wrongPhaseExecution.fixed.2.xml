@@ -40,14 +40,6 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>default-compile</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <id>default-testCompile</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
                         <id>compile</id>
                         <phase>compile</phase>
                         <goals>
