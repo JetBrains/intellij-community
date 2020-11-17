@@ -36,7 +36,7 @@ import javax.swing.KeyStroke
 
 class DiffRequestProcessorEditor(
   private val file: DiffVirtualFile,
-  private val processor: DiffRequestProcessor
+  val processor: DiffRequestProcessor
 ) : FileEditorBase() {
   companion object {
     private val LOG = logger<DiffRequestProcessorEditor>()
