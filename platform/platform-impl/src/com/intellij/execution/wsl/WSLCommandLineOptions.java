@@ -86,6 +86,14 @@ public final class WSLCommandLineOptions {
     return myInitShellCommands;
   }
 
+  /**
+   * Adds an initialize command that is applied only when executing in shell ({@link #isExecuteCommandInShell()} is true).
+   * The initialize command is a linux command that runs before the main command.
+   * If the initialize command fails (exit code != 0), the main command won't run.
+   * For example, it can be used to setup environment before running the app.
+   * 
+   * @param initCommand a linux shell command (may contain shell builtin commands)
+   */
   public @NotNull WSLCommandLineOptions addInitCommand(@NotNull String initCommand) {
     myInitShellCommands.add(initCommand);
     return this;
