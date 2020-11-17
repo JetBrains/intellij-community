@@ -27,7 +27,7 @@ private const val CONFIG_VERSION = "1.0"
 private const val CONFIG_ALL_INSPECTIONS = "All"
 
 private const val DEFAULT_FAIL_THRESHOLD = -1
-private const val DEFAULT_FAIL_EXITCODE = 1
+const val DEFAULT_FAIL_EXIT_CODE = 255
 const val DEFAULT_STOP_THRESHOLD = -1
 typealias Excludes = List<Exclusion>
 
@@ -64,7 +64,6 @@ class QodanaConfig(var version: String = CONFIG_VERSION,
                    var profile: QodanaProfile = QodanaProfile(),
                    var exclude: Excludes = emptyList(),
                    var failThreshold: Int = DEFAULT_FAIL_THRESHOLD,
-                   var failExitCode: Int = DEFAULT_FAIL_EXITCODE,
                    var stopThreshold: Int = DEFAULT_STOP_THRESHOLD) {
   companion object {
     @JvmField

@@ -49,8 +49,8 @@ class QodanaRunner(val application: InspectionApplication,
 
     if (config.failThreshold in 0 until inspectionCounter.get()) {
       application.reportMessage(1,
-                                "Inspection run is terminating with exit code ${config.failExitCode} cause it's reached fail threshold: ${config.failThreshold}. Problems count: ${inspectionCounter.get()}")
-      exitProcess(config.failExitCode)
+                                "Inspection run is terminating with exit code ${DEFAULT_FAIL_EXIT_CODE} cause it's reached fail threshold: ${config.failThreshold}. Problems count: ${inspectionCounter.get()}")
+      exitProcess(DEFAULT_FAIL_EXIT_CODE)
     }
   }
 
