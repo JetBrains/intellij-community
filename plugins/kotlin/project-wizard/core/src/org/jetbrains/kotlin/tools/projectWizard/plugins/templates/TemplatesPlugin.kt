@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.Interc
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.TemplateInterceptionApplicationState
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.applyAll
 import java.nio.file.Path
+import java.util.*
 
 class TemplatesPlugin(context: Context) : Plugin(context) {
     override val path = pluginPath
@@ -178,7 +179,7 @@ class TemplatesPlugin(context: Context) : Plugin(context) {
                         is SrcFilePath -> moduleConfigurator.kotlinDirectoryName
                         is ResourcesFilePath -> moduleConfigurator.resourcesDirectoryName
                     }
-                    SRC_DIR / "${module.name}${filePath.sourcesetType.name.capitalize()}" / directory
+                    SRC_DIR / "${module.name}${filePath.sourcesetType.name.capitalize(Locale.US)}" / directory
                 }
                 else -> error("Not supported for ${module.javaClass}")
             }

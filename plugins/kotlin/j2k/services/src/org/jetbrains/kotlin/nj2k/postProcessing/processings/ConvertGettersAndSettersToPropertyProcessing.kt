@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isUnit
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.util.isJavaDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
@@ -366,7 +367,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
         return declarations
             .asSequence()
             .mapNotNull { it.asPropertyAccessor() }
-            .groupBy { it.name.removePrefix("is").decapitalize() }
+            .groupBy { it.name.removePrefix("is").decapitalizeAsciiOnly() }
             .values
             .mapNotNull { group ->
                 val realGetter = group.firstIsInstanceOrNull<RealGetter>()

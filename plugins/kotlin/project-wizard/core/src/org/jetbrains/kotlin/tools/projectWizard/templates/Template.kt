@@ -4,10 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard.templates
 import org.jetbrains.kotlin.tools.projectWizard.Identificator
 import org.jetbrains.kotlin.tools.projectWizard.SettingsOwner
 import org.jetbrains.kotlin.tools.projectWizard.WizardRunConfiguration
-
-
 import org.jetbrains.kotlin.tools.projectWizard.core.*
-
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.*
 import org.jetbrains.kotlin.tools.projectWizard.enumSettingImpl
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
@@ -24,6 +21,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.InterceptionPoint
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.TemplateInterceptor
 import java.nio.file.Path
+import java.util.*
 import kotlin.properties.ReadOnlyProperty
 
 interface TemplateEnvironment {
@@ -164,7 +162,7 @@ abstract class Template : SettingsOwner, EntitiesOwnerDescriptor, DisplayableSet
 
 
     private fun Reader.createDefaultSettings() = mapOf(
-        "projectName" to StructurePlugin.name.settingValue.capitalize()
+        "projectName" to StructurePlugin.name.settingValue.capitalize(Locale.US)
     )
 
     override fun equals(other: Any?): Boolean =
