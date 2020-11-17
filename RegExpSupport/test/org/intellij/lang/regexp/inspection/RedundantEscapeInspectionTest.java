@@ -1,17 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.lang.regexp;
+package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.intellij.lang.regexp.RegExpFileType;
 import org.intellij.lang.regexp.ecmascript.EcmaScriptRegexpLanguage;
-import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
-import org.intellij.lang.regexp.inspection.RegExpInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("RegExpRedundantEscape")
+@SuppressWarnings({"RegExpRedundantEscape", "RegExpDuplicateCharacterInClass"})
 public class RedundantEscapeInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {
