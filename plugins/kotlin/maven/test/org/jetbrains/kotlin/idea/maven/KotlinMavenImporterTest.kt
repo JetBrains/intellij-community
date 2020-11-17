@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import junit.framework.TestCase
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -2268,8 +2270,8 @@ class KotlinMavenImporterTest : MavenImportingTestCase() {
 
         with(facetSettings("myModule3")) {
             Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-            Assert.assertEquals(LanguageVersion.KOTLIN_1_1, languageLevel)
-            Assert.assertEquals(LanguageVersion.KOTLIN_1_0, apiLevel)
+            Assert.assertEquals(LanguageVersion.LATEST_STABLE, languageLevel)
+            Assert.assertEquals(LanguageVersion.KOTLIN_1_1, apiLevel)
             Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             Assert.assertEquals(
                 listOf("-kotlin-home", "temp2"),
@@ -2525,18 +2527,15 @@ class KotlinMavenImporterTest : MavenImportingTestCase() {
     }
 
     fun testJDKImport() {
-        val mockJdkPath = "${PathManager.getHomePath()}/community/java/mockJDK-1.8"
-        object : WriteAction<Unit>() {
-            override fun run(result: Result<Unit>) {
-                val jdk = JavaSdk.getInstance().createJdk("java 1.8", mockJdkPath)
-                getProjectJdkTableSafe().addJdk(jdk)
-                ProjectRootManager.getInstance(myProject).projectSdk = jdk
-            }
-        }.execute()
+        val mockJdk = IdeaTestUtil.getMockJdk18()
+        runWriteAction {
+            ProjectRootManager.getInstance(myProject).projectSdk = mockJdk
+        }
 
         try {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
+            val jdkHomePath = mockJdk.homePath
             importProject(
                 """
                 <groupId>test</groupId>
@@ -2569,7 +2568,7 @@ class KotlinMavenImporterTest : MavenImportingTestCase() {
                                 </execution>
                             </executions>
                             <configuration>
-                                <jdkHome>${mockJdkPath}</jdkHome>
+                                <jdkHome>$jdkHomePath</jdkHome>
                             </configuration>
                         </plugin>
                     </plugins>
@@ -2583,15 +2582,9 @@ class KotlinMavenImporterTest : MavenImportingTestCase() {
             val moduleSDK = ModuleRootManager.getInstance(getModule("project")).sdk!!
             Assert.assertTrue(moduleSDK.sdkType is JavaSdk)
             Assert.assertEquals("java 1.8", moduleSDK.name)
-            Assert.assertEquals(mockJdkPath, moduleSDK.homePath)
+            Assert.assertEquals(jdkHomePath, moduleSDK.homePath)
         } finally {
-            object : WriteAction<Unit>() {
-                override fun run(result: Result<Unit>) {
-                    val jdkTable = getProjectJdkTableSafe()
-                    jdkTable.removeJdk(jdkTable.findJdk("java 1.8")!!)
-                    ProjectRootManager.getInstance(myProject).projectSdk = null
-                }
-            }.execute()
+            runWriteAction { ProjectRootManager.getInstance(myProject).projectSdk = null }
         }
     }
 
