@@ -285,9 +285,6 @@
 
     <iconProvider implementation="com.jetbrains.python.PyDirectoryIconProvider" id="pyDirectoryDefault"/>
 
-    <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
-                    serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
-
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
     <applicationService serviceImplementation="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache"/>

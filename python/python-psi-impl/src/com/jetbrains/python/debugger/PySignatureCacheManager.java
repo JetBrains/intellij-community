@@ -44,5 +44,5 @@ public abstract class PySignatureCacheManager {
   @Nullable
   public abstract PySignature findSignature(@NotNull PyFunction function);
 
-  public abstract void clearCache();
+  public abstract boolean clearCache();
 }

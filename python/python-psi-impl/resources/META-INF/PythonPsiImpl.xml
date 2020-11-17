@@ -10,6 +10,9 @@
     <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
 
+    <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
+                    serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
+
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>

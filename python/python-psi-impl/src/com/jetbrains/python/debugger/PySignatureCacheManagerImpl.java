@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -18,7 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.ArrayUtilRt;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -257,7 +256,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
 
 
   @Override
-  public void clearCache() {
+  public boolean clearCache() {
     final Ref<Boolean> deleted = Ref.create(false);
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       (Runnable)() -> ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(fileOrDir -> {
@@ -269,16 +268,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
           return false;
         }
         return true;
-      }), PyBundle.message("debugger.cleaning.signature.cache"), true, myProject);
-
-
-    String message;
-    if (deleted.get()) {
-      message = PyBundle.message("python.debugger.collection.signatures.deleted");
-    }
-    else {
-      message = PyBundle.message("python.debugger.nothing.to.delete");
-    }
-    Messages.showInfoMessage(myProject, message, PyBundle.message("debugger.delete.signature.cache"));
+      }), PyPsiBundle.message("debugger.cleaning.signature.cache"), true, myProject);
+    return deleted.get();
   }
 }
