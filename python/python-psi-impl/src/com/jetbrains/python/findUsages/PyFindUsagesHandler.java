@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Yuli Fiterman
+ * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
 public abstract class PyFindUsagesHandler extends FindUsagesHandlerBase {
   protected PyFindUsagesHandler(@NotNull PsiElement psiElement) {
