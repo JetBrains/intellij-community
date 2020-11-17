@@ -18,15 +18,44 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
 
   private val options = ElevationOptions()
 
-  var quotaOptions = QuotaOptions(options.quotaTimeLimitMs)
-    set(newValue) {
-      val oldValue = field
-      field = newValue
-      if (oldValue != newValue) {
-        options.quotaTimeLimitMs = newValue.timeLimitMs
-        ApplicationManager.getApplication().messageBus.syncPublisher(Listener.TOPIC).onDaemonQuotaOptionsChanged(oldValue, newValue)
+  var quotaOptions: QuotaOptions
+    get() = QuotaOptions(timeLimitMs = if (options.isKeepAuth) options.gracePeriodMs else 0L,
+                         isRefreshable = options.isKeepAuth && options.isRefreshable)
+    set(newValue) = updateQuotaOptions {
+      val isKeepAuth = newValue.timeLimitMs != 0L
+      options.isKeepAuth = isKeepAuth
+      if (isKeepAuth) {
+        options.gracePeriodMs = newValue.timeLimitMs
       }
     }
+
+  var isKeepAuth: Boolean
+    get() = options.isKeepAuth
+    set(value) = updateQuotaOptions {
+      options.isKeepAuth = value
+    }
+
+  var isRefreshable: Boolean
+    get() = options.isRefreshable
+    set(value) = updateQuotaOptions {
+      options.isRefreshable = value
+    }
+
+  var quotaTimeLimitMs: Long
+    get() = options.gracePeriodMs
+    set(value) = updateQuotaOptions {
+      options.gracePeriodMs = value
+    }
+
+
+  private fun updateQuotaOptions(block: () -> Unit) {
+    val oldValue = quotaOptions
+    block()
+    val newValue = quotaOptions
+    if (oldValue != newValue) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(Listener.TOPIC).onDaemonQuotaOptionsChanged(oldValue, newValue)
+    }
+  }
 
   override fun getState() = options
   override fun loadState(state: ElevationOptions) = options.copyFrom(state)
@@ -45,6 +74,8 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
   @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
   @OptIn(ExperimentalTime::class)
   class ElevationOptions : BaseState() {
-    var quotaTimeLimitMs by property(15.minutes.toLongMilliseconds())
+    var isKeepAuth by property(false)
+    var isRefreshable by property(true)
+    var gracePeriodMs by property(15.minutes.toLongMilliseconds())
   }
 }
