@@ -11,6 +11,8 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.messages.Topic
 
 @Service
 @State(name = "EditorDiffPreview.Settings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
@@ -23,10 +25,13 @@ class EditorDiffPreviewFilesManager(private val project: Project) :
   }
 
   init {
-    project.messageBus.connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+    val messageBus = project.messageBus
+    messageBus.connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
         if (file is PreviewDiffVirtualFile && source is FileEditorManagerEx) {
-          shouldOpenInNewWindow = source.findFloatingWindowForFile(file) != null
+          val isOpenInNewWindow = source.findFloatingWindowForFile(file) != null
+          shouldOpenInNewWindow = isOpenInNewWindow
+          messageBus.syncPublisher(EditorDiffPreviewFilesListener.TOPIC).shouldOpenInNewWindowChanged(isOpenInNewWindow)
         }
       }
     })
@@ -86,5 +91,16 @@ class EditorDiffPreviewFilesManager(private val project: Project) :
     fun FileEditorManagerEx.findFloatingWindowForFile(file: VirtualFile): EditorWindow? {
       return windows.find { it.owner.isFloating && it.isFileOpen(file) }
     }
+  }
+}
+
+interface EditorDiffPreviewFilesListener {
+  @RequiresEdt
+  fun shouldOpenInNewWindowChanged(shouldOpenInNewWindow: Boolean)
+
+  companion object {
+    @JvmField
+    val TOPIC: Topic<EditorDiffPreviewFilesListener> =
+      Topic(EditorDiffPreviewFilesListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
 }
