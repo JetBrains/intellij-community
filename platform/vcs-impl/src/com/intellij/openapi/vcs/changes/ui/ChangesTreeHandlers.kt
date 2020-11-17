@@ -47,6 +47,7 @@ private class ChangesTreeHandlers(private val tree: ChangesTree) {
         val clickPath = if (isWideSelection(tree)) tree.getClosestPathForLocation(e.x, e.y) else tree.getPathForLocation(e.x, e.y)
         if (clickPath == null) return false
 
+        if (!tree.isPathSelected(clickPath)) return false
         if (tree.getPathIfCheckBoxClicked(e.point) != null) return false
 
         return doubleClickHandler?.process(e) == true
