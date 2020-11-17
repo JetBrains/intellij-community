@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
@@ -595,17 +596,24 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   @RequiresEdt
   @ApiStatus.Internal
   fun offerTrackerContent(document: Document, text: CharSequence) {
-    val tracker: LocalLineStatusTracker<*>
-    synchronized(LOCK) {
-      val data = trackers[document]
-      if (data == null || data.contentInfo != null) return
+    try {
+      val tracker: LocalLineStatusTracker<*>
+      synchronized(LOCK) {
+        val data = trackers[document]
+        if (data == null || data.contentInfo != null) return
 
-      tracker = data.tracker
+        tracker = data.tracker
+      }
+
+      if (tracker is LocalLineStatusTrackerImpl<*>) {
+        ClientId.withClientId(ClientId.localId) {
+          tracker.setBaseRevision(text)
+          log("Offered content", tracker.virtualFile)
+        }
+      }
     }
-
-    if (tracker is LocalLineStatusTrackerImpl<*>) {
-      tracker.setBaseRevision(text)
-      log("Offered content", tracker.virtualFile)
+    catch (e: Throwable) {
+      LOG.error(e)
     }
   }
 
@@ -1165,9 +1173,11 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
 
       isScheduled = true
       lastFuture = ApplicationManager.getApplication().executeOnPooledThread {
-        BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
-          handleRequests()
-        })
+        ClientId.withClientId(ClientId.localId) {
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
+            handleRequests()
+          })
+        }
       }
     }
   }
