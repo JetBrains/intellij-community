@@ -98,6 +98,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
           
           Existing entity data: $existingEntityData
           New entity data: $pEntityData
+          
+          Broken consistency: $brokenConsistency
         """.trimIndent(), PersistentIdAlreadyExistsException(persistentId))
       }
     }
@@ -144,6 +146,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
             modifyEntity: persistent id already exists. Replacing entity with the new one.
             Old entity: $existingEntityData
             Persistent id: $copiedData
+            
+            Broken consistency: $brokenConsistency
           """.trimIndent(), PersistentIdAlreadyExistsException(newPersistentId))
         }
       }
@@ -512,7 +516,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Assert consistency
-    this.assertConsistencyInStrictMode("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this)
+    if (!this.brokenConsistency && !replaceWith.brokenConsistency) {
+      this.assertConsistencyInStrictMode("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this)
+    }
+    else {
+      this.brokenConsistency = true
+    }
 
     LOG.debug { "Replace by source finished" }
   }
@@ -759,6 +768,8 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   internal abstract val refs: AbstractRefsTable
   internal abstract val indexes: StorageIndexes
 
+  internal var brokenConsistency: Boolean = false
+
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
     return entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
   }
@@ -788,6 +799,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
         "\n") { (k, v) -> "$k : $v : EntitySource: ${v?.entitySource}" }
       LOG.error("""Cannot resolve persistent id $id. The store contains ${entityIds.size} associated entities:
         |$entities
+        |Broken consistency: $brokenConsistency
       """.trimMargin())
       return entityDataById(entityIds.first())?.createEntity(this) as E?
     }
@@ -948,6 +960,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
         this.assertConsistency()
       }
       catch (e: Throwable) {
+        brokenConsistency = true
         reportConsistencyIssue(message, e, sourceFilter, left, right, resulting)
       }
     }

@@ -68,13 +68,15 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToManyChi
   return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map {
     val entityData = entitiesList[it]
     if (entityData == null) {
-      thisLogger().error(
-        """Cannot resolve entity.
-        |Connection id: $connectionId
-        |Unresolved array id: $it
-        |All child array ids: ${refs.getOneToManyChildren(connectionId, parentId.arrayId)?.toArray()}
-      """.trimMargin()
-      )
+      if (!brokenConsistency) {
+        thisLogger().error(
+          """Cannot resolve entity.
+          |Connection id: $connectionId
+          |Unresolved array id: $it
+          |All child array ids: ${refs.getOneToManyChildren(connectionId, parentId.arrayId)?.toArray()}
+        """.trimMargin()
+        )
+      }
       null
     } else entityData.createEntity(this)
   }?.filterNotNull() as? Sequence<Child> ?: emptySequence()
@@ -104,12 +106,14 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChil
   return refs.getOneToOneChild(connectionId, parentId.arrayId) {
     val childEntityData = entitiesList[it]
     if (childEntityData == null) {
-      logger<AbstractEntityStorage>().error("""
-        Consistency issue. Cannot get a child in one to one connection.
-        Connection id: $connectionId
-        Parent id: $parentId
-        Child array id: $it
-      """.trimIndent())
+      if (!brokenConsistency) {
+        logger<AbstractEntityStorage>().error("""
+          Consistency issue. Cannot get a child in one to one connection.
+          Connection id: $connectionId
+          Parent id: $parentId
+          Child array id: $it
+        """.trimIndent())
+      }
       null
     }
     else childEntityData.createEntity(this) as Child
@@ -122,12 +126,14 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToOnePar
   return refs.getOneToOneParent(connectionId, childId.arrayId) {
     val parentEntityData = entitiesList[it]
     if (parentEntityData == null) {
-      logger<AbstractEntityStorage>().error("""
-        Consistency issue. Cannot get a parent in one to one connection.
-        Connection id: $connectionId
-        Child id: $childId
-        Parent array id: $it
-      """.trimIndent())
+      if (!brokenConsistency) {
+        logger<AbstractEntityStorage>().error("""
+          Consistency issue. Cannot get a parent in one to one connection.
+          Connection id: $connectionId
+          Child id: $childId
+          Parent array id: $it
+        """.trimIndent())
+      }
       null
     }
     else parentEntityData.createEntity(this) as Parent
@@ -139,12 +145,14 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToManyPa
   return refs.getOneToManyParent(connectionId, childId.arrayId) {
     val parentEntityData = entitiesList[it]
     if (parentEntityData == null) {
-      logger<AbstractEntityStorage>().error("""
-        Consistency issue. Cannot get a parent in one to many connection.
-        Connection id: $connectionId
-        Child id: $childId
-        Parent array id: $it
-      """.trimIndent())
+      if (!brokenConsistency) {
+        logger<AbstractEntityStorage>().error("""
+          Consistency issue. Cannot get a parent in one to many connection.
+          Connection id: $connectionId
+          Child id: $childId
+          Parent array id: $it
+        """.trimIndent())
+      }
       null
     }
     else parentEntityData.createEntity(this) as Parent
