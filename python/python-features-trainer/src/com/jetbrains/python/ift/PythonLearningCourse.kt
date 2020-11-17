@@ -3,6 +3,7 @@ package com.jetbrains.python.ift
 
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.ift.lesson.assistance.PythonEditorCodingAssistanceLesson
+import com.jetbrains.python.ift.lesson.basic.PythonContextActionsLesson
 import com.jetbrains.python.ift.lesson.basic.PythonSurroundAndUnwrapLesson
 import com.jetbrains.python.ift.lesson.completion.*
 import com.jetbrains.python.ift.lesson.essensial.PythonOnboardingTour
@@ -51,7 +52,8 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    moduleType = LessonType.SCRATCH) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
       listOf(
-        GotoActionLesson(it, lang, ls("Actions.py.sample"), firstLesson = true),
+        PythonContextActionsLesson(it),
+        GotoActionLesson(it, lang, ls("Actions.py.sample")),
         SelectLesson(it, lang, ls("Selection.py.sample")),
         SingleLineCommentLesson(it, lang, ls("Comment.py.sample")),
         DuplicateLesson(it, lang, ls("Duplicate.py.sample")),
