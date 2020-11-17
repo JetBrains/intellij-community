@@ -61,7 +61,6 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.rethrow
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCaseBase() {
     private val exceptions = ArrayList<Throwable>()
@@ -182,7 +181,8 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
             val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "MIN_JAVA_VERSION:")?.toInt()
 
             if (minJavaVersion != null && !(InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME") ||
-                        InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_RUNTIME"))) {
+                        InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_RUNTIME"))
+            ) {
                 error("MIN_JAVA_VERSION so far is supported for RUNTIME/WITH_RUNTIME only")
             }
             return when {
@@ -211,7 +211,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                         InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_RUNTIME") ->
                     if (minJavaVersion != null) {
                         val sdk = sdk(minJavaVersion)
-                        object: KotlinWithJdkAndRuntimeLightProjectDescriptor(INSTANCE.libraryFiles, INSTANCE.librarySourceFiles) {
+                        object : KotlinWithJdkAndRuntimeLightProjectDescriptor(INSTANCE.libraryFiles, INSTANCE.librarySourceFiles) {
                             override fun getSdk(): Sdk? = sdk
                         }
                     } else {

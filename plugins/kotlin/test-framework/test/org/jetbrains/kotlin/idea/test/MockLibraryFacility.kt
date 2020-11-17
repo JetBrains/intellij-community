@@ -1,9 +1,12 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.platform.js.JsPlatform
 import org.jetbrains.kotlin.test.KotlinCompilerStandalone
 import java.io.File
@@ -52,8 +55,11 @@ data class MockLibraryFacility(
     }
 
     fun asKotlinLightProjectDescriptor(): KotlinLightProjectDescriptor = object : KotlinLightProjectDescriptor() {
-        override fun configureModule(module: Module, model: ModifiableRootModel) {
-            this@MockLibraryFacility.setUp(module)
-        }
+        override fun configureModule(module: Module, model: ModifiableRootModel) = this@MockLibraryFacility.setUp(module)
+
+        override fun getSdk(): Sdk = if (this@MockLibraryFacility.platform is JsPlatform)
+            KotlinSdkType.INSTANCE.createSdkWithUniqueName(emptyList())
+        else
+            IdeaTestUtil.getMockJdk18()
     }
 }
