@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PairProcessor;
@@ -15,10 +13,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public abstract class TemplateManager {
-  public static final Topic<TemplateManagerListener> TEMPLATE_STARTED_TOPIC = Topic.create("TEMPLATE_STARTED", TemplateManagerListener.class);
+  @Topic.ProjectLevel
+  public static final Topic<TemplateManagerListener> TEMPLATE_STARTED_TOPIC = new Topic<>("TEMPLATE_STARTED", TemplateManagerListener.class, Topic.BroadcastDirection.NONE);
 
   public static TemplateManager getInstance(Project project) {
-    return ServiceManager.getService(project, TemplateManager.class);
+    return project.getService(TemplateManager.class);
   }
 
   /**
