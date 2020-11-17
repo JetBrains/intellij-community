@@ -195,14 +195,19 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   protected DefaultActionGroup createActionGroup() {
     registerTreeActionShortcut("FileChooser.Delete");
     registerTreeActionShortcut("FileChooser.Refresh");
+    registerTreeActionShortcut("FileChooser.GotoDesktop");
 
     return (DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserToolbar");
   }
 
   private void registerTreeActionShortcut(@NonNls final String actionId) {
     final JTree tree = myFileSystemTree.getTree();
+    registerActionShortcut(actionId, tree);
+  }
+
+  private void registerActionShortcut(@NonNls final String actionId, @Nullable JComponent component) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
-    action.registerCustomShortcutSet(action.getShortcutSet(), tree, myDisposable);
+    action.registerCustomShortcutSet(action.getShortcutSet(), component, myDisposable);
   }
 
   @Override
@@ -268,6 +273,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       }
     };
     Disposer.register(myDisposable, myPathTextField);
+    registerActionShortcut("FileChooser.GotoDesktop", myPathTextField.getField());
 
     myNorthPanel = new JPanel(new BorderLayout());
     myNorthPanel.add(toolbarPanel, BorderLayout.NORTH);
