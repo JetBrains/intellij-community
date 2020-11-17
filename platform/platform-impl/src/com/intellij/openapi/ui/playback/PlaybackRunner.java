@@ -201,7 +201,7 @@ public class PlaybackRunner {
         .onError(error -> {
           myCallback.message(null, "Stopped: " + error, StatusCallback.Type.message);
           LOG.warn("Callback step stopped with error: " + error, error);
-          myActionCallback.setRejected();
+          myActionCallback.reject(error.getMessage());
         });
     }
     else {
