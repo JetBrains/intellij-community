@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -42,7 +41,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -378,10 +376,9 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       else {
         fileNames = FilenameIndex.getAllFilenames(myProject);
       }
-      final Set<String> array = new THashSet<>();
+      Set<String> array = new HashSet<>(fileNames.length);
       Collections.addAll(array, fileNames);
-
-      final String[] result = ArrayUtilRt.toStringArray(array);
+      String[] result = ArrayUtilRt.toStringArray(array);
       Arrays.sort(result);
       return result;
     }

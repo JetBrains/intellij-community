@@ -23,6 +23,7 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -38,7 +39,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.Matcher;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -180,13 +180,14 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     List<Object> options = new ArrayList<>();
     final Set<String> words = registrar.getProcessedWords(pattern);
     Set<OptionDescription> optionDescriptions = null;
-    String actionManagerName = myActionManager.getComponentName();
     boolean filterOutInspections = Registry.is("go.to.action.filter.out.inspections", true);
     for (String word : words) {
       final Set<OptionDescription> descriptions = registrar.getAcceptableDescriptions(word);
       if (descriptions != null) {
-        descriptions.removeIf(description -> actionManagerName.equals(description.getPath()) ||
-                                             filterOutInspections && "Inspections".equals(description.getGroupName()));
+        descriptions.removeIf(description -> {
+          return "ActionManager".equals(description.getPath()) ||
+                 filterOutInspections && "Inspections".equals(description.getGroupName());
+        });
         if (!descriptions.isEmpty()) {
           if (optionDescriptions == null) {
             optionDescriptions = descriptions;
@@ -201,9 +202,11 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         break;
       }
     }
-    if (!StringUtil.isEmptyOrSpaces(pattern)) {
+    if (!Strings.isEmptyOrSpaces(pattern)) {
       Matcher matcher = buildMatcher(pattern);
-      if (optionDescriptions == null) optionDescriptions = new THashSet<>();
+      if (optionDescriptions == null) {
+        optionDescriptions = new HashSet<>();
+      }
       for (Map.Entry<@NonNls String, @NlsContexts.ConfigurableName String> entry : map.entrySet()) {
         if (matcher.matches(entry.getValue())) {
           optionDescriptions.add(new OptionDescription(null, entry.getKey(), entry.getValue(), null, entry.getValue()));

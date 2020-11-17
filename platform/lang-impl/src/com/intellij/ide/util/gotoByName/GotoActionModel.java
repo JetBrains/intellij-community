@@ -13,6 +13,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.internal.statistic.local.ActionGlobalUsageInfo;
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -49,7 +50,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
@@ -63,14 +63,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.lang.LangBundle.message;
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
-import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-
-public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
+public final class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Logger LOG = Logger.getInstance(GotoActionModel.class);
   private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
 
@@ -91,7 +84,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         LOG.error("Configurable names must not be loaded on EDT");
       }
 
-      Map<@NonNls String, @NlsContexts.ConfigurableName String> map = new THashMap<>();
+      Map<@NonNls String, @NlsContexts.ConfigurableName String> map = new HashMap<>();
       for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
         if (configurable instanceof SearchableConfigurable) {
           map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
@@ -118,10 +111,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     ActionGroup keymapOthers = (ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup");
     assert mainMenu != null && keymapOthers != null;
-    collectActions(myActionGroups, mainMenu, emptyList(), false);
+    collectActions(myActionGroups, mainMenu, Collections.emptyList(), false);
 
     Map<AnAction, GroupMapping> keymapActionGroups = new HashMap<>();
-    collectActions(keymapActionGroups, keymapOthers, emptyList(), true);
+    collectActions(keymapActionGroups, keymapOthers, Collections.emptyList(), true);
     // Let menu groups have priority over keymap (and do not introduce ambiguity)
     keymapActionGroups.forEach(myActionGroups::putIfAbsent);
   }
@@ -376,9 +369,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Nls
   @NotNull
   public String getGroupName(@NotNull OptionDescription description) {
-    if (description instanceof RegistryTextOptionDescriptor) return message("group.registry");
+    if (description instanceof RegistryTextOptionDescriptor) return LangBundle.message("group.registry");
     String groupName = description.getGroupName();
-    String settings = SystemInfo.isMac ? message("group.preferences") : message("group.settings");
+    String settings = SystemInfo.isMac ? LangBundle.message("group.preferences") : LangBundle.message("group.settings");
     if (groupName == null || groupName.equals(description.getHit())) return settings;
     return settings + " > " + groupName;
   }
@@ -544,7 +537,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @NotNull
     public static GroupMapping createFromText(@ActionText String text, boolean showGroupText) {
       GroupMapping mapping = new GroupMapping(showGroupText);
-      mapping.addPath(singletonList(new DefaultActionGroup(text, false)));
+      mapping.addPath(Collections.singletonList(new DefaultActionGroup(text, false)));
       return mapping;
     }
 
@@ -814,7 +807,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
           panel.add(new JBLabel(EMPTY_ICON), BorderLayout.WEST);
         }
         String str = cutName((String)matchedValue, null, list, panel, nameComponent);
-        nameComponent.append(str, new SimpleTextAttributes(STYLE_PLAIN, defaultActionForeground(isSelected, cellHasFocus, null)));
+        nameComponent.append(str, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, defaultActionForeground(isSelected, cellHasFocus, null)));
         return panel;
       }
 
@@ -859,7 +852,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
         panel.setToolTipText(presentation.getDescription());
         @NlsSafe String actionId = ActionManager.getInstance().getId(anAction);
-        Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
+        Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
         String shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts);
         String name = getName(presentation.getText(), groupName, toggle);
         name = cutName(name, shortcutText, list, panel, nameComponent);
@@ -992,8 +985,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
                                                  @NotNull @NlsSafe String pattern,
                                                  Color fg,
                                                  boolean selected) {
-      SimpleTextAttributes plain = new SimpleTextAttributes(STYLE_PLAIN, fg);
-      SimpleTextAttributes highlighted = new SimpleTextAttributes(null, fg, null, STYLE_SEARCH_MATCH);
+      SimpleTextAttributes plain = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fg);
+      SimpleTextAttributes highlighted = new SimpleTextAttributes(null, fg, null, SimpleTextAttributes.STYLE_SEARCH_MATCH);
       List<TextRange> fragments = new ArrayList<>();
       nameComponent.setDynamicSearchMatchHighlighting(false);
       if (selected) {
