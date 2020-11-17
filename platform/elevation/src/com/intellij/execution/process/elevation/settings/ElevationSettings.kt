@@ -6,6 +6,7 @@ import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages.CANCEL
@@ -63,8 +64,8 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
     }
 
   private var isSettingsUpdateDone: Boolean
-    get() = options.isSettingsUpdateDone
-    set(value) {
+    get() = synchronized(this) { options.isSettingsUpdateDone }
+    set(value) = synchronized(this) {
       options.isSettingsUpdateDone = value
     }
 
@@ -82,6 +83,12 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
   override fun getStateModificationCount() = options.modificationCount
 
   fun askEnableKeepAuthIfNeeded(): Boolean {
+    return isSettingsUpdateDone || invokeAndWaitIfNeeded { doAskEnableKeepAuthIfNeeded() }
+  }
+
+  private fun doAskEnableKeepAuthIfNeeded(): Boolean {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
     if (isSettingsUpdateDone) return true
 
     val productName = ApplicationNamesInfo.getInstance().fullProductName
