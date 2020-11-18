@@ -40,6 +40,7 @@ import training.learn.lesson.LessonManager
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.lesson.kimpl.LessonUtil.checkPositionOfEditor
+import training.learn.lesson.kimpl.LessonUtil.highlightBreakpointGutter
 import training.learn.lesson.kimpl.LessonUtil.sampleRestoreNotification
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
@@ -466,13 +467,7 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample,
                                        logicalPosition: () -> LogicalPosition,
                                        checkLine: Boolean = true,
                                        @Nls message: TaskContext.() -> String) {
-  task {
-    triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
-      if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
-      val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
-      return@l Rectangle(20, y, ui.width - 26, editor.lineHeight)
-    }
-  }
+  highlightBreakpointGutter(logicalPosition())
 
   prepareRuntimeTask {
     runWriteAction {
