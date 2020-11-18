@@ -2,6 +2,7 @@
 package com.intellij.space.vcs.review.details.diff
 
 import circlet.code.api.CodeDiscussionAnchor
+import circlet.code.api.InterpolatedLineState
 import circlet.code.api.PropagatedCodeDiscussion
 import circlet.platform.client.property
 import com.intellij.diff.DiffContext
@@ -64,10 +65,12 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
                                propagatedCodeDiscussion: PropagatedCodeDiscussion,
                                lifetime: Lifetime,
                                handler: SpaceDiffCommentsHandler) {
+    val anchor = propagatedCodeDiscussion.anchor
+    if (anchor.interpolatedLineState == InterpolatedLineState.Deleted) return
+
     val chatPanel = commentPanelFactory.createForDiscussion(propagatedCodeDiscussion)
 
     chatPanel?.let { panel ->
-      val anchor = propagatedCodeDiscussion.anchor
       val (diffSide, line) = anchor.getCommentSideAndLine()
       val disposable = when (diffSide) {
         Side.LEFT -> handler.insertLeft(line, panel)
