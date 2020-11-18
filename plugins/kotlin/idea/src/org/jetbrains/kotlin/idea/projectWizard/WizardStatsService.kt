@@ -137,8 +137,9 @@ class WizardStatsService : CounterUsagesCollector() {
             }
         }
 
-        fun logWizardOpenByHyperlink(templateId: String?) {
+        fun logWizardOpenByHyperlink(project: Project?, templateId: String?) {
             projectOpenedByHyperlinkEvent.log(
+                project,
                 projectTemplateField.with(templateId ?: "none"),
                 pluginInfoField
             )
