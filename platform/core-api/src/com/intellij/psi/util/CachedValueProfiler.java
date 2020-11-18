@@ -2,12 +2,12 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,7 +19,7 @@ public final class CachedValueProfiler {
   private final Object myLock = new Object();
 
   private volatile MultiMap<StackTraceElement, Info> myStorage;
-  private volatile ConcurrentMap<CachedValueProvider.Result<?>, Info> myTemporaryResults;
+  private volatile ConcurrentMap<CachedValueProvider.Result<?>, Info> myTmpInfos;
 
   public static boolean canProfile() {
     return ourCanProfile;
@@ -35,12 +35,12 @@ public final class CachedValueProfiler {
         MultiMap<StackTraceElement, Info> storage = myStorage;
         if (storage == null) {
           myStorage = MultiMap.createConcurrent();
+          myTmpInfos = CollectionFactory.createConcurrentWeakMap();
         }
-        myTemporaryResults = new ConcurrentHashMap<>();
       }
       else {
         myStorage = null;
-        myTemporaryResults = null;
+        myTmpInfos = null;
       }
     }
   }
@@ -50,23 +50,26 @@ public final class CachedValueProfiler {
   }
 
   public void createInfo(@NotNull CachedValueProvider.Result<?> result) {
-    MultiMap<StackTraceElement, Info> storage = myStorage;
-    if (storage == null) return;
+    if (myStorage == null) return;
 
-    ConcurrentMap<CachedValueProvider.Result<?>, Info> temporaryResults = myTemporaryResults;
-    if (temporaryResults == null) return;
+    ConcurrentMap<CachedValueProvider.Result<?>, Info> map = myTmpInfos;
+    if (map == null) return;
 
     StackTraceElement origin = findOrigin();
     if (origin == null) return;
 
-    Info info = new Info(origin);
-    storage.putValue(origin, info);
-    temporaryResults.put(result, info);
+    map.put(result, new Info(origin));
   }
 
-  public @Nullable <T> Info getTemporaryInfo(@NotNull CachedValueProvider.Result<T> result) {
-    ConcurrentMap<CachedValueProvider.Result<?>, Info> map = myTemporaryResults;
-    return map != null ? map.remove(result) : null;
+  public @Nullable Info storeInfo(@NotNull CachedValueProvider.Result<?> result) {
+    ConcurrentMap<CachedValueProvider.Result<?>, Info> map = myTmpInfos;
+    Info info = map != null ? map.remove(result) : null;
+
+    MultiMap<StackTraceElement, Info> storage = myStorage;
+    if (storage != null && info != null) {
+      storage.putValue(info.getOrigin(), info);
+    }
+    return info;
   }
 
   public MultiMap<StackTraceElement, Info> getStorageSnapshot() {
@@ -75,7 +78,19 @@ public final class CachedValueProfiler {
 
   private static @Nullable StackTraceElement findOrigin() {
     StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-    for (int i = 3, len = stackTrace.length; i < len; i++) {
+    int idx = 0;
+    for (StackTraceElement e : stackTrace) {
+      String method = e.getMethodName();
+      String className = e.getClassName();
+      if ("doCompute".equals(method) &&
+          (className.endsWith("CachedValueImpl") || className.endsWith("CachedValue")) &&
+          (className.startsWith("com.intellij.util.") || className.startsWith("com.intellij.psi."))) {
+        break;
+      }
+      idx ++;
+    }
+    if (idx >= stackTrace.length) return null;
+    for (int i = idx + 1; i >= 0; i --) {
       String className = stackTrace[i].getClassName();
       if (className.startsWith("com.intellij.util.CachedValue")) continue;
       if (className.startsWith("com.intellij.psi.util.CachedValue")) continue;

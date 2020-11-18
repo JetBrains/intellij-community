@@ -41,7 +41,7 @@ public abstract class CachedValueBase<T> {
       inferredTimeStamps[i] = getTimeStamp(inferredDependencies[i]);
     }
 
-    CachedValueProfiler.Info info = CachedValueProfiler.canProfile() ? CachedValueProfiler.getInstance().getTemporaryInfo(result) : null;
+    CachedValueProfiler.Info info = CachedValueProfiler.canProfile() ? CachedValueProfiler.getInstance().storeInfo(result) : null;
     return new Data<>(value, inferredDependencies, inferredTimeStamps, info);
   }
 
