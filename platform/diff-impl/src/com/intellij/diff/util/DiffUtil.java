@@ -12,6 +12,7 @@ import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
@@ -72,10 +73,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -143,6 +141,12 @@ public final class DiffUtil {
 
   public static boolean isDiffEditor(@NotNull Editor editor) {
     return editor.getEditorKind() == EditorKind.DIFF;
+  }
+
+  public static boolean isFileWithoutContent(@NotNull VirtualFile file) {
+    if (file instanceof VirtualFileWithoutContent) return true;
+    if (file instanceof DiffVirtualFile) return true;
+    return false;
   }
 
   @Nullable

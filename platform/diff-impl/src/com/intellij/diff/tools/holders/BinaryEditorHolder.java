@@ -5,6 +5,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
+import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.FileEditorBase;
@@ -130,7 +131,7 @@ public class BinaryEditorHolder extends EditorHolder {
       if (content instanceof FileContent) {
         VirtualFile file = ((FileContent)content).getFile();
         if (!file.isValid()) return false;
-        if (file instanceof VirtualFileWithoutContent) return false;
+        if (DiffUtil.isFileWithoutContent(file)) return false;
         return true;
       }
       return false;

@@ -6,6 +6,7 @@ import com.intellij.diff.contents.*;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.ThreesideMergeRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.execution.ExecutionException;
@@ -50,7 +51,7 @@ public final class ExternalDiffToolUtil {
     if (content instanceof DocumentContent) return true;
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
-      if (file instanceof VirtualFileWithoutContent) return false;
+      if (DiffUtil.isFileWithoutContent(file)) return false;
       return true;
     }
     if (content instanceof DirectoryContent) return ((DirectoryContent)content).getFile().isInLocalFileSystem();
