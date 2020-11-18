@@ -278,7 +278,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     }
 
     public void testJava9WithModuleInfo() {
-        checkAddStdlibModule();
+        configureFacetAndCheckJvm(JvmTarget.JVM_9);
     }
 
     public void testJava9WithModuleInfoWithStdlibAlready() {
