@@ -121,8 +121,6 @@ BOOL appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
 }
 
 NSArray *allVms() {
-    NSMutableArray *jvmBundlePaths = [NSMutableArray array];
-
     // search java info in user's idea.properties
     NSString* ideaProperty = getPropertiesFilePath();
     if ([[NSFileManager defaultManager] fileExistsAtPath:ideaProperty]) {
@@ -133,19 +131,16 @@ NSArray *allVms() {
             NSLog(@"user JavaVersion from custom configs, which mentioned in idea.properties %@", userJavaVersion);
         }
     }
+
     NSString *required = requiredJvmVersions();
     NSLog(@"allVms required %@", required);
 
-    if (! jvmBundlePaths.count > 0 ) {
-        NSBundle *bundle = [NSBundle mainBundle];
-        NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
+    NSMutableArray *jvmBundlePaths = [NSMutableArray array];
 
-        if (!appendBundle([appDir stringByAppendingPathComponent:@"/jbr"], jvmBundlePaths)) {
-            if (!appendBundle([appDir stringByAppendingPathComponent:@"/jdk"], jvmBundlePaths)) {
-                appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths);
-            }
-        }
-        if ((jvmBundlePaths.count > 0) && (satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required))) return jvmBundlePaths;
+    NSBundle *bundle = [NSBundle mainBundle];
+    appendBundle([bundle.bundlePath stringByAppendingPathComponent:@"Contents/jbr"], jvmBundlePaths);
+
+    if (jvmBundlePaths.count == 0 || !satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required)) {
         NSLog(@"Can't get bundled java version. It is probably corrupted.");
 
         appendJvmBundlesAt([NSHomeDirectory() stringByAppendingPathComponent:@"Library/Java/JavaVirtualMachines"], jvmBundlePaths);
