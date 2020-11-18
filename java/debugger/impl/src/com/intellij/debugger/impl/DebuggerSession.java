@@ -41,6 +41,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
@@ -513,10 +514,10 @@ public final class DebuggerSession implements AbstractDebuggerSession {
           }
           else {
             // heuristics: try to pre-select EventDispatchThread
-            currentThread = allThreads.stream().filter(thread -> ThreadState.isEDT(thread.name())).findFirst().orElse(null);
+            currentThread = ContainerUtil.find(allThreads, thread -> ThreadState.isEDT(thread.name()));
             if (currentThread == null) {
               // heuristics: try to pre-select main thread
-              currentThread = allThreads.stream().filter(thread -> "main".equals(thread.name())).findFirst().orElse(null);
+              currentThread = ContainerUtil.find(allThreads, thread -> "main".equals(thread.name()));
             }
             if (currentThread == null) {
               // heuristics: display the first thread with RUNNABLE status

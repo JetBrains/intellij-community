@@ -116,7 +116,7 @@ public class MethodEvaluator implements Evaluator {
           jdiMethod = matchingMethods.get(0);
         }
         else if (matchingMethods.size() > 1) {
-          jdiMethod = matchingMethods.stream().filter(m -> matchArgs(m, args)).findFirst().orElse(null);
+          jdiMethod = ContainerUtil.find(matchingMethods, m -> matchArgs(m, args));
         }
       }
       if (jdiMethod == null) {
