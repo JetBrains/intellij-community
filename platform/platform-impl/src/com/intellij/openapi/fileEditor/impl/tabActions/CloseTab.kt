@@ -43,7 +43,7 @@ class CloseTab(c: JComponent,
     }
     else {
       if (pinned) {
-        shortcutSet = ObjectUtils.notNull(KeymapUtil.getActiveKeymapShortcuts("PinActiveEditorTab"), CustomShortcutSet.EMPTY)
+        shortcutSet = CustomShortcutSet.EMPTY;
         e.presentation.text = TextWithMnemonic.parse(IdeBundle.message("action.unpin.tab")).dropMnemonic(true).text
       }
       else {
