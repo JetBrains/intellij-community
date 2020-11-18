@@ -58,18 +58,20 @@ public final class CachedValueProfiler {
     StackTraceElement origin = findOrigin();
     if (origin == null) return;
 
-    map.put(result, new Info(origin));
+    map.put(result, new Info(origin, -1, currentTime()));
   }
 
-  public @Nullable Info storeInfo(@NotNull CachedValueProvider.Result<?> result) {
-    ConcurrentMap<CachedValueProvider.Result<?>, Info> map = myTmpInfos;
-    Info info = map != null ? map.remove(result) : null;
-
+  public @Nullable Info storeInfo(@NotNull CachedValueProvider.Result<?> result, long startTime) {
     MultiMap<StackTraceElement, Info> storage = myStorage;
-    if (storage != null && info != null) {
-      storage.putValue(info.getOrigin(), info);
-    }
-    return info;
+    if (storage == null) return null;
+
+    ConcurrentMap<CachedValueProvider.Result<?>, Info> map = myTmpInfos;
+    Info tmp = map != null ? map.remove(result) : null;
+    if (tmp == null) return null;
+
+    Info stored = new Info(tmp.origin, startTime, tmp.endTime);
+    storage.putValue(tmp.getOrigin(), stored);
+    return stored;
   }
 
   public MultiMap<StackTraceElement, Info> getStorageSnapshot() {
@@ -101,20 +103,26 @@ public final class CachedValueProfiler {
     return null;
   }
 
-  public static class Info extends AtomicLong {
-    private final long myCreatedTimeStamp;
-    private volatile long myInvalidatedTimeStamp = -1;
+  public static long currentTime() {
+    return System.currentTimeMillis();
+  }
 
-    private final StackTraceElement myOrigin;
+  public static final class Info extends AtomicLong {
+    public final StackTraceElement origin;
+    public final long startTime;
+    public final long endTime;
 
-    public Info(@NotNull StackTraceElement origin) {
-      myCreatedTimeStamp = currentTime();
-      myOrigin = origin;
+    private volatile long myInvalidatedTime = -1;
+
+    Info(@NotNull StackTraceElement origin, long startTime, long endTime) {
+      this.origin = origin;
+      this.startTime = startTime;
+      this.endTime = endTime;
     }
 
     public void invalidate() {
-      long cur = myInvalidatedTimeStamp;
-      myInvalidatedTimeStamp = cur == -1 ? currentTime() : cur;
+      long cur = myInvalidatedTime;
+      myInvalidatedTime = cur == -1 ? currentTime() : cur;
     }
 
     public void valueUsed() {
@@ -126,19 +134,19 @@ public final class CachedValueProfiler {
     }
 
     public long getLifetime() {
-      long disposedTime = myInvalidatedTimeStamp;
+      long disposedTime = myInvalidatedTime;
       if (disposedTime == -1) disposedTime = currentTime();
 
-      return disposedTime - myCreatedTimeStamp;
+      return disposedTime - endTime;
+    }
+
+    public long getComputeTime() {
+      return endTime - startTime;
     }
 
     @NotNull
     public StackTraceElement getOrigin() {
-      return myOrigin;
-    }
-
-    private static long currentTime() {
-      return System.currentTimeMillis();
+      return origin;
     }
   }
 }

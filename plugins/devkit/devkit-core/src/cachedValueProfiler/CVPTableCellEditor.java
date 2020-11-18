@@ -10,12 +10,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,17 +36,17 @@ class CVPTableCellEditor extends AbstractCellEditor implements TableCellEditor {
     Document document = EditorFactory.getInstance().createDocument((String)value);
     EditorTextField textField = new EditorTextField(document, myProject, FileTypes.PLAIN_TEXT, true, true) {
       @Override
-      protected boolean shouldHaveBorder() {
-        return false;
-      }
-
-      @Override
-      public void addNotify() {
-        super.addNotify();
-        Editor editor = getEditor();
-        if (editor != null) {
-          addHyperLinks(editor, editor.getDocument().getText());
-        }
+      protected EditorEx createEditor() {
+        EditorEx editor = super.createEditor();
+        Color bg = UIUtil.getTableSelectionBackground(true);
+        Color fg = UIUtil.getTableSelectionForeground(true);
+        editor.getCaretModel().getTextAttributes().setBackgroundColor(bg);
+        editor.getCaretModel().getTextAttributes().setForegroundColor(fg);
+        editor.setBackgroundColor(bg);
+        addHyperLinks(editor, editor.getDocument().getText());
+        editor.getCaretModel().moveToOffset(0);
+        editor.setBorder(JBUI.Borders.empty(3, 6));
+        return editor;
       }
     };
     myDocument = textField.getDocument();

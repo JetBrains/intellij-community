@@ -12,56 +12,65 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class CVPReader {
-  @NotNull private final JsonReader myReader;
-
-  private CVPReader(@NotNull JsonReader reader) {
-    myReader = reader;
+  private CVPReader() {
   }
 
   @NotNull
   public static List<CVPInfo> deserialize(@NotNull InputStream stream) throws IOException {
     try (JsonReader reader = new JsonReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-      return new CVPReader(reader).read();
+      return readJson(reader);
+    }
+  }
+
+  public static class CVPInfo {
+    public final String origin;
+    public final long count;
+    public final long cost;
+    public final long used;
+    public final long lifetime;
+
+    public CVPInfo(@NotNull String origin, long count, long cost, long used, long lifetime) {
+      this.origin = origin;
+      this.count = count;
+      this.cost = cost;
+      this.used = used;
+      this.lifetime = lifetime;
     }
   }
 
   @NotNull
-  private List<CVPInfo> read() throws IOException {
+  private static List<CVPInfo> readJson(JsonReader reader) throws IOException {
     ArrayList<CVPInfo> list = new ArrayList<>();
-    myReader.beginArray();
-    while (myReader.hasNext()) {
-      list.add(readInfo());
+    reader.beginArray();
+    while (reader.hasNext()) {
+      list.add(readInfo(reader));
     }
-    myReader.endArray();
+    reader.endArray();
 
     return list;
   }
 
   @NotNull
-  private CVPInfo readInfo() throws IOException {
+  private static CVPInfo readInfo(@NotNull JsonReader reader) throws IOException {
     String origin = null;
-    long totalLifeTime = 0;
-    long totalUseCount = 0;
-    long createdCount = 0;
+    long count = 0;
+    long cost = 0;
+    long used = 0;
+    long lifetime = 0;
 
-    myReader.beginObject();
-    while (myReader.hasNext()) {
-      String name = myReader.nextName();
-      if ("origin".equals(name)) {
-        origin = myReader.nextString();
-      }
-      else if ("total lifetime".equals(name)) {
-        totalLifeTime = myReader.nextLong();
-      }
-      else if ("total use count".equals(name)) {
-        totalUseCount = myReader.nextLong();
-      }
-      else if ("created".equals(name)) {
-        createdCount = myReader.nextLong();
-      }
+    reader.beginObject();
+    while (reader.hasNext()) {
+      String name = reader.nextName();
+      if ("origin".equals(name)) origin = reader.nextString();
+      else if ("count".equals(name)) count = reader.nextLong();
+      else if ("cost".equals(name)) cost = reader.nextLong();
+      else if ("used".equals(name)) used = reader.nextLong();
+      else if ("lifetime".equals(name)) lifetime = reader.nextLong();
+      else throw new IOException("unexpected: " + name);
     }
-    myReader.endObject();
+    reader.endObject();
+    if (origin == null) throw new IOException("origin is null");
 
-    return new CVPInfo(origin, totalLifeTime, totalUseCount, createdCount);
+    return new CVPInfo(origin, count, cost, used, lifetime);
   }
 }

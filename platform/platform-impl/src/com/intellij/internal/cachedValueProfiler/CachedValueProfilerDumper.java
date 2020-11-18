@@ -44,23 +44,25 @@ final class CachedValueProfilerDumper {
     List<TotalInfo> list = new ArrayList<>();
     snapshot.entrySet().forEach((entry) -> list.add(new TotalInfo(entry.getKey(), entry.getValue())));
 
-    list.sort(Comparator.comparing(info -> ((double)info.totalUseCount) / info.infos.size()));
+    list.sort(Comparator.comparing(info -> ((double)info.used) / info.infos.size()));
     return list;
   }
 
   private static final class TotalInfo {
-    final StackTraceElement origin;
-    final long totalLifeTime;
-    final long totalUseCount;
+    final String origin;
+    final long lifetime;
+    final long used;
+    final long cost;
 
     final List<CachedValueProfiler.Info> infos;
 
     TotalInfo(@NotNull StackTraceElement origin, @NotNull Collection<CachedValueProfiler.Info> infos) {
-      this.origin = origin;
+      this.origin = origin.toString();
       this.infos = List.copyOf(infos);
 
-      totalLifeTime = this.infos.stream().mapToLong(value -> value.getLifetime()).sum();
-      totalUseCount = this.infos.stream().mapToLong(value -> value.getUseCount()).sum();
+      lifetime = this.infos.stream().mapToLong(value -> value.getLifetime()).sum();
+      used = this.infos.stream().mapToLong(value -> value.getUseCount()).sum();
+      cost = this.infos.stream().mapToLong(value -> value.getComputeTime()).sum();
     }
   }
 
@@ -86,16 +88,11 @@ final class CachedValueProfilerDumper {
     writer.beginArray();
     for (TotalInfo info : infos) {
       writer.beginObject();
-
-      String origin = info.origin.toString();
-      long totalLifeTime = info.totalLifeTime;
-      long totalUseCount = info.totalUseCount;
-      int createdCount = info.infos.size();
-
-      writer.name("origin").value(origin);
-      writer.name("total lifetime").value(totalLifeTime);
-      writer.name("total use count").value(totalUseCount);
-      writer.name("created").value(createdCount);
+      writer.name("origin").value(info.origin);
+      writer.name("count").value(info.infos.size());
+      writer.name("cost").value(info.cost);
+      writer.name("used").value(info.used);
+      writer.name("lifetime").value(info.lifetime);
       writer.endObject();
     }
     writer.endArray();

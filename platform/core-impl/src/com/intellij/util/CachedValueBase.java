@@ -30,7 +30,9 @@ public abstract class CachedValueBase<T> {
   }
 
   @NotNull
-  private Data<T> computeData(@Nullable CachedValueProvider.Result<T> result) {
+  private Data<T> computeData(Computable<? extends CachedValueProvider.Result<T>> doCompute) {
+    long stamp = CachedValueProfiler.currentTime();
+    CachedValueProvider.Result<T> result = doCompute.compute();
     if (result == null) {
       return new Data<>(null, ArrayUtilRt.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY, null);
     }
@@ -41,7 +43,7 @@ public abstract class CachedValueBase<T> {
       inferredTimeStamps[i] = getTimeStamp(inferredDependencies[i]);
     }
 
-    CachedValueProfiler.Info info = CachedValueProfiler.canProfile() ? CachedValueProfiler.getInstance().storeInfo(result) : null;
+    CachedValueProfiler.Info info = CachedValueProfiler.canProfile() ? CachedValueProfiler.getInstance().storeInfo(result, stamp) : null;
     return new Data<>(value, inferredDependencies, inferredTimeStamps, info);
   }
 
@@ -159,7 +161,7 @@ public abstract class CachedValueBase<T> {
   }
 
   public T setValue(@NotNull CachedValueProvider.Result<T> result) {
-    Data<T> data = computeData(result);
+    Data<T> data = computeData(() -> result);
     setData(data);
     return data.getValue();
   }
@@ -205,14 +207,14 @@ public abstract class CachedValueBase<T> {
     Data<T> data = getUpToDateOrNull();
     if (data != null) {
       if (IdempotenceChecker.areRandomChecksEnabled()) {
-        IdempotenceChecker.applyForRandomCheck(data, getValueProvider(), () -> computeData(doCompute(param)));
+        IdempotenceChecker.applyForRandomCheck(data, getValueProvider(), () -> computeData(() -> doCompute(param)));
       }
       return data.getValue();
     }
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
-    Computable<Data<T>> calcData = () -> computeData(doCompute(param));
+    Computable<Data<T>> calcData = () -> computeData(() -> doCompute(param));
     data = RecursionManager.doPreventingRecursion(this, true, calcData);
     if (data == null) {
       data = calcData.compute();

@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.cachedValueProfiler;
 
-import com.intellij.internal.cachedValueProfiler.CVPInfo;
 import com.intellij.internal.cachedValueProfiler.CVPReader;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.components.JBLabel;
@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -22,6 +23,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 public class CVPPanel extends JBPanel {
 
@@ -29,8 +32,8 @@ public class CVPPanel extends JBPanel {
     super(new BorderLayout());
 
     try {
-      List<CVPInfo> infos = CVPReader.deserialize(file.getInputStream());
-      TableView<CVPInfo> table = createTable(infos, project);
+      List<CVPReader.CVPInfo> infos = CVPReader.deserialize(file.getInputStream());
+      TableView<CVPReader.CVPInfo> table = createTable(infos, project);
       add(ScrollPaneFactory.createScrollPane(table), BorderLayout.CENTER);
     }
     catch (IOException e) {
@@ -39,104 +42,89 @@ public class CVPPanel extends JBPanel {
   }
 
   @NotNull
-  private static TableView<CVPInfo> createTable(@NotNull List<CVPInfo> infos, @NotNull Project project) {
-    TableView<CVPInfo> table = new TableView<>(new ListTableModel<>(getColumns(project), infos, 4, SortOrder.ASCENDING));
+  private static TableView<CVPReader.CVPInfo> createTable(@NotNull List<CVPReader.CVPInfo> infos, @NotNull Project project) {
+    TableView<CVPReader.CVPInfo> table = new TableView<>(new ListTableModel<>(getColumns(project), infos, 1, SortOrder.DESCENDING));
+    table.setDefaultRenderer(Object.class, new ColoredTableCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JTable table,
+                                           @Nullable Object value,
+                                           boolean selected,
+                                           boolean hasFocus,
+                                           int row,
+                                           int column) {
+        append(String.valueOf(value));
+      }
+    });
     table.setFillsViewportHeight(true);
-    table.getColumnModel().getColumn(0).setPreferredWidth(1000);
+    table.getColumnModel().getColumn(0).setPreferredWidth(700);
     registerSpeedSearch(table);
     return table;
   }
 
-  private static ColumnInfo[] getColumns(@NotNull Project project) {
-    return new ColumnInfo[]{new OriginColumnInfo(project),
-      COUNT_COLUMN, TOTAL_USE_COUNT_COLUMN, AVG_USE_COUNT_COLUMN, TOTAL_LIFE_TIME_COLUMN, AVG_LIFETIME_COLUMN};
+  private static ColumnInfo<?, ?>[] getColumns(@NotNull Project project) {
+    return new ColumnInfo[]{
+      new OriginColumnInfo(project),
+      columnInfoL(DevKitBundle.message("cached.value.profiler.column.count"), o -> o.count),
+      columnInfoL(DevKitBundle.message("cached.value.profiler.column.total.cost"), o1 -> o1.cost),
+      columnInfoD(DevKitBundle.message("cached.value.profiler.column.avg.cost"), o2 -> ((double)o2.cost) / o2.count),
+      columnInfoL(DevKitBundle.message("cached.value.profiler.column.total.use.count"), o1 -> o1.used),
+      columnInfoD(DevKitBundle.message("cached.value.profiler.column.avg.use.count"), o2 -> ((double)o2.used) / o2.count),
+      columnInfoL(DevKitBundle.message("cached.value.profiler.column.total.life.time"), o3 -> o3.lifetime),
+      columnInfoD(DevKitBundle.message("cached.value.profiler.column.avg.life.time"), o4 -> ((double)o4.lifetime) / o4.count),
+    };
   }
 
-  private static void registerSpeedSearch(TableView<CVPInfo> table) {
+  private static void registerSpeedSearch(TableView<CVPReader.CVPInfo> table) {
     new TableViewSpeedSearch<>(table) {
       @Override
-      protected String getItemText(@NotNull CVPInfo element) {
-        return element.getOrigin();
+      protected String getItemText(@NotNull CVPReader.CVPInfo element) {
+        return element.origin;
       }
     };
   }
 
-  private static final ColumnInfo<CVPInfo, String> TOTAL_LIFE_TIME_COLUMN = new ColumnInfo<>(
-    DevKitBundle.message("cached.value.profiler.column.total.life.time")) {
-    @Override
-    public String valueOf(CVPInfo o) {
-      return String.valueOf(o.getTotalLifeTime());
-    }
+  @NotNull
+  private static ColumnInfo<CVPReader.CVPInfo, String> columnInfoD(@Nls String name, ToDoubleFunction<CVPReader.CVPInfo> value) {
+    return new ColumnInfo<>(name) {
+      @Override
+      public String valueOf(CVPReader.CVPInfo o) {
+        return String.valueOf(Math.round(value(o)));
+      }
 
-    @Nullable
-    @Override
-    public Comparator<CVPInfo> getComparator() {
-      return Comparator.comparing(o -> o.getTotalLifeTime());
-    }
-  };
-  private static final ColumnInfo<CVPInfo, String> TOTAL_USE_COUNT_COLUMN = new ColumnInfo<>(
-    DevKitBundle.message("cached.value.profiler.column.total.use.count")) {
-    @Override
-    public String valueOf(CVPInfo o) {
-      return String.valueOf(o.getTotalUseCount());
-    }
+      private double value(CVPReader.CVPInfo o) {
+        return value.applyAsDouble(o);
+      }
 
-    @Nullable
-    @Override
-    public Comparator<CVPInfo> getComparator() {
-      return Comparator.comparing(o -> o.getTotalUseCount());
-    }
-  };
-  private static final ColumnInfo<CVPInfo, String> COUNT_COLUMN = new ColumnInfo<>(
-    DevKitBundle.message("cached.value.profiler.column.count")) {
-    @Override
-    public String valueOf(CVPInfo o) {
-      return String.valueOf(o.getCreatedCount());
-    }
+      @Nullable
+      @Override
+      public Comparator<CVPReader.CVPInfo> getComparator() {
+        return Comparator.comparingDouble(o -> value(o));
+      }
+    };
+  }
 
-    @Nullable
-    @Override
-    public Comparator<CVPInfo> getComparator() {
-      return Comparator.comparing(o -> o.getCreatedCount());
-    }
-  };
-  private static final ColumnInfo<CVPInfo, String> AVG_USE_COUNT_COLUMN = new ColumnInfo<>(
-    DevKitBundle.message("cached.value.profiler.column.avg.use.count")) {
-    @Override
-    public String valueOf(CVPInfo o) {
-      return String.valueOf(Math.round(value(o)));
-    }
+  @NotNull
+  private static ColumnInfo<CVPReader.CVPInfo, String> columnInfoL(@Nls String name, ToLongFunction<CVPReader.CVPInfo> value) {
+    return new ColumnInfo<>(name) {
+      @Override
+      public String valueOf(CVPReader.CVPInfo o) {
+        return String.valueOf(Math.round(value(o)));
+      }
 
-    private double value(CVPInfo o) {
-      return ((double)o.getTotalUseCount()) / o.getCreatedCount();
-    }
+      private long value(CVPReader.CVPInfo o) {
+        return value.applyAsLong(o);
+      }
 
-    @Nullable
-    @Override
-    public Comparator<CVPInfo> getComparator() {
-      return Comparator.comparing(o -> value(o));
-    }
-  };
+      @Nullable
+      @Override
+      public Comparator<CVPReader.CVPInfo> getComparator() {
+        return Comparator.comparingLong(o -> value(o));
+      }
+    };
+  }
 
-  private static final ColumnInfo<CVPInfo, String> AVG_LIFETIME_COLUMN = new ColumnInfo<>(
-    DevKitBundle.message("cached.value.profiler.column.avg.life.time")) {
-    @Override
-    public String valueOf(CVPInfo o) {
-      return String.valueOf(Math.round(value(o)));
-    }
 
-    private double value(CVPInfo o) {
-      return ((double)o.getTotalLifeTime()) / o.getCreatedCount();
-    }
-
-    @Nullable
-    @Override
-    public Comparator<CVPInfo> getComparator() {
-      return Comparator.comparing(o -> value(o));
-    }
-  };
-
-  private static final class OriginColumnInfo extends ColumnInfo<CVPInfo, String> {
+  private static final class OriginColumnInfo extends ColumnInfo<CVPReader.CVPInfo, String> {
     private final Project myProject;
 
     private OriginColumnInfo(Project project) {
@@ -145,24 +133,23 @@ public class CVPPanel extends JBPanel {
     }
 
     @Override
-    public String valueOf(CVPInfo o) {
-      return o.getOrigin();
+    public String valueOf(CVPReader.CVPInfo o) {
+      return o.origin;
     }
 
     @Nullable
     @Override
-    public Comparator<CVPInfo> getComparator() {
-      return Comparator.comparing(o -> o.getOrigin());
+    public Comparator<CVPReader.CVPInfo> getComparator() {
+      return Comparator.comparing(o -> o.origin);
     }
 
     @Override
-    public boolean isCellEditable(CVPInfo info) {
+    public boolean isCellEditable(CVPReader.CVPInfo info) {
       return true;
     }
 
-    @Nullable
     @Override
-    public TableCellEditor getEditor(CVPInfo info) {
+    public TableCellEditor getEditor(CVPReader.CVPInfo info) {
       return new CVPTableCellEditor(myProject);
     }
   }
