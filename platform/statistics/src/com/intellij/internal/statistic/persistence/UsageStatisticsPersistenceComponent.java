@@ -13,7 +13,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-@State(name = "UsagesStatistic", storages = @Storage(StoragePathMacros.CACHE_FILE))
+@State(
+  name = "UsagesStatistic",
+  storages = {
+  @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+  @Storage(value = StoragePathMacros.CACHE_FILE, deprecated = true)
+})
 @Service
 public final class UsageStatisticsPersistenceComponent implements PersistentStateComponent<Element>, StatisticsSystemEventIdProvider {
   public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
