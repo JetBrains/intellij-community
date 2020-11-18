@@ -990,8 +990,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     final CharSequence contentText = content.getText();
     getFileTypeManager().freezeFileTypeTemporarilyIn(vFile, () -> {
-      if (getAffectedIndexCandidates(vFile).contains(requestedIndexId) &&
-          acceptsInput(requestedIndexId, new IndexedFileImpl(vFile, project))) {
+      IndexedFileImpl indexedFile = new IndexedFileImpl(vFile, project);
+      if (getAffectedIndexCandidates(indexedFile).contains(requestedIndexId) &&
+          acceptsInput(requestedIndexId, indexedFile)) {
         final int inputId = Math.abs(getFileId(vFile));
 
         if (!isTooLarge(vFile, (long)contentText.length())) {
@@ -1319,6 +1320,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Set<ID<?,?>> indexesProvidedByExtensions = new HashSet<>();
     Ref<Boolean> wasFullyIndexedByInfrastructureExtensions = Ref.create(true);
     Ref<FileType> fileTypeRef = Ref.create();
+    Project guessedProject = project != null ? project : ProjectUtil.guessProjectForFile(file);
+    IndexedFileImpl indexedFile = new IndexedFileImpl(file, guessedProject);
 
     getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
       ProgressManager.checkCanceled();
@@ -1328,7 +1331,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       int inputId = Math.abs(getFileId(file));
       Set<ID<?, ?>> currentIndexedStates = new HashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
-      List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
+      List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(indexedFile);
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
         try {
@@ -1336,11 +1339,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
           if (fc == null) {
             fc = (FileContentImpl)FileContentImpl.createByContent(file, () -> getBytesOrNull(content));
-
+            fc.setSubstituteFileType(indexedFile.getFileType());
             ProgressManager.checkCanceled();
 
             psiFile = content.getUserData(IndexingDataKeys.PSI_FILE);
-            initFileContent(fc, project == null ? ProjectUtil.guessProjectForFile(file) : project, psiFile);
+            initFileContent(fc, guessedProject, psiFile);
 
             fileTypeRef.set(fc.getFileType());
 
@@ -1412,12 +1415,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  List<ID<?, ?>> getAffectedIndexCandidates(@NotNull VirtualFile file) {
-    if (file.isDirectory()) {
-      return isProjectOrWorkspaceFile(file, null) ? Collections.emptyList() : myRegisteredIndexes.getIndicesForDirectories();
+  List<ID<?, ?>> getAffectedIndexCandidates(@NotNull IndexedFile indexedFile) {
+    if (indexedFile.getFile().isDirectory()) {
+      return isProjectOrWorkspaceFile(indexedFile.getFile(), null) ? Collections.emptyList() : myRegisteredIndexes.getIndicesForDirectories();
     }
-    FileType fileType = file.getFileType();
-    if(isProjectOrWorkspaceFile(file, fileType)) return Collections.emptyList();
+    FileType fileType = indexedFile.getFileType();
+    if (fileType instanceof SubstitutedFileType) {
+      fileType = ((SubstitutedFileType)fileType).getFileType();
+    }
+    if(isProjectOrWorkspaceFile(indexedFile.getFile(), fileType)) return Collections.emptyList();
 
     return getState().getFileTypesForIndex(fileType);
   }
@@ -1662,7 +1668,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     // handle 'content-less' indices separately
     boolean fileIsDirectory = file.isDirectory();
-    IndexedFileImpl indexedFile = new IndexedFileImpl(file);
+    IndexedFileImpl indexedFile = new IndexedFileImpl(file, ProjectUtil.guessProjectForFile(file));
 
     if (!contentChange) {
       FileContent fileContent = null;
@@ -1688,7 +1694,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         ourFileToBeIndexed.set(file);
         try {
           getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
-            final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
+            List<ID<?, ?>> candidates = getAffectedIndexCandidates(indexedFile);
 
             boolean scheduleForUpdate = false;
 
@@ -1808,8 +1814,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (virtualFile instanceof VirtualFileWithId) {
       int fileId = ((VirtualFileWithId)virtualFile).getId();
       boolean wasIndexed = false;
-      List<ID<?, ?>> candidates = getAffectedIndexCandidates(virtualFile);
-      IndexedFileImpl indexedFile = new IndexedFileImpl(virtualFile);
+      IndexedFileImpl indexedFile = new IndexedFileImpl(virtualFile, ProjectUtil.guessProjectForFile(virtualFile));
+      List<ID<?, ?>> candidates = getAffectedIndexCandidates(indexedFile);
       for (ID<?, ?> candidate : candidates) {
         if (myRegisteredIndexes.isContentDependentIndex(candidate)) {
           if(acceptsInput(candidate, indexedFile)) {
