@@ -34,7 +34,7 @@ internal class GitStageManager {
   internal class GitStageStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
       if (isStagingAreaAvailable(project)) {
-        GitStageTracker.getInstance(project).scheduleUpdateAll()
+        GitStageTracker.getInstance(project) // initialize tracker
       }
     }
   }

@@ -99,6 +99,8 @@ class GitStageTracker(val project: Project) : Disposable {
         }
       }
     }, this)
+
+    scheduleUpdateAll()
   }
 
   fun scheduleUpdateAll() {
