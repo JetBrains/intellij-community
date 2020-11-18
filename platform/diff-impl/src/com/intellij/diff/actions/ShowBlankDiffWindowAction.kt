@@ -120,6 +120,21 @@ internal class SwitchToFileEditorAction : BlankSwitchContentActionBase() {
 }
 
 internal class SwitchToRecentEditorActionGroup : ActionGroup(), DumbAware {
+  override fun update(e: AnActionEvent) {
+    val helper = MutableDiffRequestChain.createHelper(e.dataContext)
+    if (helper == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    if (helper.chain.getUserData(BlankDiffWindowUtil.BLANK_KEY) != true) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    e.presentation.isEnabledAndVisible = true
+  }
+
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     return BlankDiffWindowUtil.getRecentFiles().map2Array { MySwitchAction(it) }
   }
