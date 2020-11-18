@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author Dmitry Avdeev
- */
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
@@ -129,8 +126,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
 
   @Override
   public int getWeight() {
-    var configurable = getConfigurable();
-    return configurable instanceof Weighted ? ((Weighted)configurable).getWeight() : myWeight;
+    return myWeight;
   }
 
   @Nls
