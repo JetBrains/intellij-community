@@ -173,7 +173,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             SettingsEditorFragment<?, ?> fragment = ((ToggleFragmentAction)action).myFragment;
-            fragment.toggle(true); // show or set focus
+            fragment.toggle(true, e); // show or set focus
             IdeFocusManager.getGlobalInstance().requestFocus(fragment.getEditorComponent(), false);
           }
         }.registerCustomShortcutSet(shortcutSet, myPanel.getRootPane(), myDisposable);
@@ -302,7 +302,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myFragment.toggle(state);
+      myFragment.toggle(state, e);
       if (state) {
         myLastSelected.set(myFragment.getEditorComponent());
       }
