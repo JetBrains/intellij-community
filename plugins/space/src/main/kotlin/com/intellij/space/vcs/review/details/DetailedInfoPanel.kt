@@ -9,8 +9,7 @@ import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.utils.formatAbsolute
-import com.intellij.space.utils.toLocalDateTime
+import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleColoredComponent
@@ -42,7 +41,9 @@ internal class DetailedInfoPanel(detailsVm: CrDetailsVm<out CodeReviewRecord>) {
     }
 
     detailsVm.createdBy.forEach(detailsVm.lifetime) {
-      infoLabel.text = SpaceBundle.message("review.label.created.by.user.at.time", it!!.englishFullName(), detailsVm.createdAt.value.toLocalDateTime().formatAbsolute())
+      infoLabel.text = SpaceBundle.message("review.label.created.by.user.at.time",
+                                           it!!.englishFullName(),
+                                           detailsVm.createdAt.value.formatPrettyDateTime())
     }
 
     detailsVm.title.forEach(detailsVm.lifetime) {

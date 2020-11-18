@@ -9,8 +9,7 @@ import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
-import com.intellij.space.utils.formatAbsolute
-import com.intellij.space.utils.toLocalDateTime
+import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.ReviewUiSpec.avatarSizeIntValue
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.util.ui.EmptyIcon
@@ -158,8 +157,8 @@ internal class SpaceReviewListCellRenderer(
     val title = review.title
     val author = review.createdBy!!.resolve()
     val key = review.key ?: ""
-    val localDateTime = review.createdAt.toLocalDateTime()
-    val info = SpaceBundle.message("review.by.author.at.time", key, author.englishFullName(), localDateTime.formatAbsolute())
+    val createdAt = review.createdAt.formatPrettyDateTime()
+    val info = SpaceBundle.message("review.by.author.at.time", key, author.englishFullName(), createdAt)
 
     val fullToolTipText = StringBuilder().apply {
       append(title).append(BR)

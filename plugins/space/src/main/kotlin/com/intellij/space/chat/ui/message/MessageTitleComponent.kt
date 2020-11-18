@@ -5,7 +5,7 @@ import circlet.client.api.CExternalServicePrincipalDetails
 import circlet.client.api.CPrincipal
 import circlet.client.api.CUserPrincipalDetails
 import circlet.client.api.Navigator
-import circlet.platform.api.format
+import circlet.platform.api.millis
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.link
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
@@ -25,7 +26,6 @@ import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.delay
 import libraries.coroutines.extra.launch
 import runtime.Ui
-import runtime.date.DateFormat
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -48,7 +48,8 @@ internal class MessageTitleComponent(
     }
     val timePanel = HtmlEditorPane().apply {
       foreground = UIUtil.getContextHelpForeground()
-      setBody(HtmlChunk.text(message.created.format(DateFormat.HOURS_AND_MINUTES)).toString()) // NON-NLS
+      val dateTime = message.created.millis
+      setBody(HtmlChunk.text(dateTime.formatPrettyDateTime()).toString()) // NON-NLS
     }
     val editedPanel = JBLabel(SpaceBundle.message("chat.message.edited.text"), UIUtil.ComponentStyle.SMALL).apply {
       foreground = UIUtil.getContextHelpForeground()
