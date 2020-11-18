@@ -10,8 +10,11 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
 public final class NioFileUtil {
+  private NioFileUtil() { }
+
   /**
-   * A drop-in replacement for {@link Files#createDirectories} that doesn't stumble upon symlinks.
+   * A drop-in replacement for {@link Files#createDirectories} that doesn't stumble upon symlinks - unlike the original.
+   * I.e. this method accepts "/path/.../dir_link" (where "dir_link" is a symlink to a directory), while the original fails.
    */
   public static @NotNull Path createDirectories(@NotNull Path path) throws IOException {
     if (!Files.isDirectory(path)) {
@@ -19,7 +22,10 @@ public final class NioFileUtil {
         throw new FileAlreadyExistsException(path.toString(), null, "already exists");
       }
       else {
-        createDirectories(path.getParent());
+        Path parent = path.getParent();
+        if (parent != null) {
+          createDirectories(parent);
+        }
         Files.createDirectory(path);
       }
     }
