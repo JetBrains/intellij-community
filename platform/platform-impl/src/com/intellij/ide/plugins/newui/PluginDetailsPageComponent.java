@@ -41,6 +41,7 @@ import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
+import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
@@ -370,35 +371,53 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   public static JEditorPane createDescriptionComponent(@Nullable Consumer<? super View> imageViewHandler) {
-    JEditorPane editorPane = new JEditorPane();
-
-    HTMLEditorKit kit;
-    if (imageViewHandler == null) {
-      kit = UIUtil.getHTMLEditorKit();
-    }
-    else {
-      kit = new JBHtmlEditorKit() {
-        private final ViewFactory myFactory = new JBHtmlFactory() {
-          @Override
-          public View create(Element e) {
-            View view = super.create(e);
-            if (view instanceof ImageView) {
-              imageViewHandler.accept(view);
-            }
-            return view;
-          }
-        };
-
+    HTMLEditorKit kit = new JBHtmlEditorKit() {
+      private final ViewFactory myFactory = new JBHtmlFactory() {
         @Override
-        public ViewFactory getViewFactory() {
-          return myFactory;
+        public View create(Element e) {
+          View view = super.create(e);
+          if (view instanceof ParagraphView) {
+            return new ParagraphView(e) {
+              {
+                super.setLineSpacing(0.3f);
+              }
+
+              @Override
+              protected void setLineSpacing(float ls) {
+              }
+            };
+          }
+          if (imageViewHandler != null && view instanceof ImageView) {
+            imageViewHandler.accept(view);
+          }
+          return view;
         }
       };
-    }
-    StyleSheet sheet = kit.getStyleSheet();
-    sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
-    sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
 
+      @Override
+      public ViewFactory getViewFactory() {
+        return myFactory;
+      }
+    };
+
+    StyleSheet sheet = kit.getStyleSheet();
+    sheet.addRule("ul { margin-left-ltr: 30; margin-right-rtl: 30; }");
+    sheet.addRule("a { color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "; }");
+    sheet.addRule("h4 { font-weight: bold; }");
+    sheet.addRule("strong { font-weight: bold; }");
+    sheet.addRule("p { margin-bottom: 6px; }");
+
+    Font font = UIUtil.getLabelFont();
+
+    if (font != null) {
+      int size = font.getSize();
+      sheet.addRule("h3 { font-size: " + (size + 3) + "; font-weight: bold; }");
+      sheet.addRule("h2 { font-size: " + (size + 5) + "; font-weight: bold; }");
+      sheet.addRule("h1 { font-size: " + (size + 9) + "; font-weight: bold; }");
+      sheet.addRule("h0 { font-size: " + (size + 12) + "; font-weight: bold; }");
+    }
+
+    JEditorPane editorPane = new JEditorPane();
     editorPane.setEditable(false);
     editorPane.setOpaque(false);
     editorPane.setBorder(null);
