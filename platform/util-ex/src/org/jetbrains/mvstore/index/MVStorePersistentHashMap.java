@@ -57,7 +57,7 @@ public class MVStorePersistentHashMap<Key, Value> implements PersistentHashMapBa
   }
 
   @Override
-  public void deleteMap() {
+  public void closeAndClean() {
     myStore.removeMap(myMap);
   }
 

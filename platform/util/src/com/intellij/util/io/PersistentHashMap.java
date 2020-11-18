@@ -42,14 +42,14 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   @Override
-  public boolean isCorrupted() {
+  public final boolean isCorrupted() {
     //note: this method used in Scala plugin
     return myImpl.isCorrupted();
   }
 
   @Override
-  public void deleteMap() {
-    myImpl.deleteMap();
+  public final void closeAndClean() throws IOException {
+    myImpl.closeAndClean();
   }
 
   public PersistentHashMap(@NotNull File file,
@@ -92,6 +92,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    * @deprecated Please use {@link PersistentHashMapBuilder} instead
    */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected boolean inlineValues() {
     return false;
   }
@@ -100,6 +101,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    * @deprecated Please use {@link PersistentHashMapBuilder} instead
    */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected boolean isReadOnly() {
     return false;
   }
@@ -108,15 +110,25 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl.dropMemoryCaches();
   }
 
+  /**
+   * @deprecated Please use an utility function directly, not this method
+   */
+  @Deprecated
   public static void deleteFilesStartingWith(@NotNull File prefixFile) {
     IOUtil.deleteAllFilesStartingWith(prefixFile);
   }
 
   /**
    * Deletes {@param map} files and trying to close it before.
+   * @deprecated use {@link #closeAndClean()}
    */
+  @Deprecated
   public static void deleteMap(@NotNull PersistentHashMap<?, ?> map) {
-    map.myImpl.deleteMap();
+    try {
+      map.closeAndClean();
+    } catch (IOException e) {
+      //NOP
+    }
   }
 
   @Override
@@ -198,6 +210,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     return myImpl.containsMapping(key);
   }
 
+  @Override
   public final void remove(Key key) throws IOException {
     myImpl.remove(key);
   }

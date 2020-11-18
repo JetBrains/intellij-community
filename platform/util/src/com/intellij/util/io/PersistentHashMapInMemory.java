@@ -32,7 +32,7 @@ public final class PersistentHashMapInMemory<Key, Value> implements PersistentHa
   }
 
   @Override
-  public void deleteMap() {
+  public void closeAndClean() {
     myMap.clear();
   }
 

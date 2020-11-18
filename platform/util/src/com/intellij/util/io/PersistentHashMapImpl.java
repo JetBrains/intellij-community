@@ -318,7 +318,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
   }
 
   @Override
-  public void deleteMap() {
+  public void closeAndClean() {
     Path baseFile = getBaseFile();
     try {
       this.close(true);

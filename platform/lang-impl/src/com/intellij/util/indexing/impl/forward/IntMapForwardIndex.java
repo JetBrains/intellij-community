@@ -48,7 +48,7 @@ public class IntMapForwardIndex implements IntForwardIndex {
 
   @Override
   public void clear() throws IOException {
-    myPersistentMap.deleteMap();
+    myPersistentMap.closeAndClean();
     myPersistentMap = createMap(myStorageFile, myHasChunks);
   }
 

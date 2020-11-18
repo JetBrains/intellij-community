@@ -26,7 +26,11 @@ public interface PersistentMap<K, V> extends KeyValueStore<K, V> {
 
   boolean isCorrupted();
 
-  //TODO should not be a part of PersistentMap interface
-  @ApiStatus.Internal
-  default void deleteMap() {}
+  /**
+   * Closes the map removing all entries
+   */
+  @ApiStatus.Experimental
+  default void closeAndClean() throws IOException {
+    close();
+  }
 }

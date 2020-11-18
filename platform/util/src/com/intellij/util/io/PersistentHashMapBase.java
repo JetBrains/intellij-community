@@ -43,10 +43,6 @@ public interface PersistentHashMapBase<Key, Value> {
 
   boolean isCorrupted();
 
-  //TODO should not be a part of PersistentMap interface
-  @ApiStatus.Internal
-  default void deleteMap() {}
-
   Value get(Key key) throws IOException;
 
   void put(Key key, Value value) throws IOException;
@@ -54,6 +50,11 @@ public interface PersistentHashMapBase<Key, Value> {
   void force();
 
   void close() throws IOException;
+
+  /**
+   * Closes the map removing all entries
+   */
+  void closeAndClean() throws IOException;
 
   void dropMemoryCaches();
 
