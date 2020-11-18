@@ -1,9 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
@@ -35,6 +39,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private @Nullable @Nls String myHint;
   private @Nullable JComponent myHintComponent;
   private @Nullable @Nls String myActionHint;
+  private @Nullable String myConfigId; // for FUS
   private @Nullable Function<? super C, ? extends JComponent> myEditorGetter;
   private boolean myRemovable = true;
   private boolean myCanBeHidden;
@@ -172,11 +177,19 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     fireEditorStateChanged();
   }
 
-  public void toggle(boolean selected) {
+  public void toggle(boolean selected, @Nullable AnActionEvent e) {
     setSelected(selected);
     if (selected) {
       myComponent.scrollRectToVisible(new Rectangle(new Point(0, 50), myComponent.getPreferredSize()));
+      FragmentStatisticsService.getInstance().logOptionModified(getProject(), getId(), myConfigId, e);
     }
+    else {
+      FragmentStatisticsService.getInstance().logOptionRemoved(getProject(), getId(), myConfigId, e);
+    }
+  }
+
+  private Project getProject() {
+    return DataManager.getInstance().getDataContext(myComponent).getData(PlatformDataKeys.PROJECT_CONTEXT);
   }
 
   public void setEditorGetter(@Nullable Function<? super C, ? extends JComponent> editorGetter) {
@@ -239,6 +252,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public void setHint(@Nullable @Nls String hint) {
     myHint = hint;
+  }
+
+  public void setConfigId(@Nullable String configId) {
+    myConfigId = configId;
   }
 
   public @Nullable JComponent getHintComponent() {
