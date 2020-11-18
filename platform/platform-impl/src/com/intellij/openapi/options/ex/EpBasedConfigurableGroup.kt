@@ -10,7 +10,6 @@ import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.Weighted
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project

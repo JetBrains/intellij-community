@@ -16,7 +16,6 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.xmlb.annotations.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -338,18 +337,13 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
 
   @Nullable
   public T createConfigurable() {
-    ObjectProducer producer = getProducer();
+    ObjectProducer producer = myProducer.getValue();
     if (producer.canCreateElement()) {
       @SuppressWarnings("unchecked")
       T configurable = (T)producer.createElement();
       return configurable;
     }
     return null;
-  }
-
-  @ApiStatus.Internal
-  public final @NotNull ObjectProducer getProducer() {
-    return myProducer.getValue();
   }
 
   @Nullable
@@ -379,7 +373,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   }
 
   public boolean canCreateConfigurable() {
-    return getProducer().canCreateElement();
+    return myProducer.getValue().canCreateElement();
   }
 
   /**
@@ -390,7 +384,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
    */
   @Nullable
   public Class<?> getConfigurableType() {
-    return getProducer().getType();
+    return myProducer.getValue().getType();
   }
 
   protected static class ObjectProducer {
@@ -407,10 +401,10 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     }
   }
 
-  private static final class ProviderProducer extends ObjectProducer implements Weighted {
+  private static final class ProviderProducer extends ObjectProducer {
     private final ConfigurableProvider myProvider;
 
-    private ProviderProducer(@Nullable ConfigurableProvider provider) {
+    private ProviderProducer(ConfigurableProvider provider) {
       myProvider = provider;
     }
 
@@ -422,11 +416,6 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     @Override
     protected boolean canCreateElement() {
       return myProvider != null && myProvider.canCreateConfigurable();
-    }
-
-    @Override
-    public int getWeight() {
-      return myProvider instanceof Weighted ? ((Weighted)myProvider).getWeight() : 0;
     }
   }
 
