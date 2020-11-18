@@ -17,6 +17,8 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
+import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
@@ -89,21 +91,24 @@ internal val appearanceOptionDescriptors: List<OptionDescription>
 internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
   private var shouldUpdateLaF = false
 
+  private val propertyGraph = PropertyGraph()
+  private val lafProperty = propertyGraph.graphProperty { lafManager.lookAndFeelReference }
+  private val syncThemeProperty = propertyGraph.graphProperty { lafManager.autodetect }
+
   override fun createPanel(): DialogPanel {
+    lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) }, disposable!!)
+    syncThemeProperty.afterChange ({ lafManager.autodetect = it }, disposable!!)
+
     return panel {
       blockRow {
         fullRow {
           label(message("combobox.look.and.feel"))
-          val theme = comboBox(lafManager.lafComboBoxModel,
-                   { lafManager.lookAndFeelReference },
-                   { QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) },
-                   lafManager.lookAndFeelCellRenderer).shouldUpdateLaF()
+          val theme = comboBox(lafManager.lafComboBoxModel, lafProperty, lafManager.lookAndFeelCellRenderer)
           theme.component.accessibleContext.accessibleName = message("combobox.look.and.feel")
 
           val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"),
-                                      { lafManager.autodetect },
-                                      { lafManager.autodetect = it }).withLargeLeftGap().shouldUpdateLaF().
-                              apply { component.isVisible = lafManager.autodetectSupported }
+                                      syncThemeProperty).withLargeLeftGap().
+                          apply { component.isVisible = lafManager.autodetectSupported }
 
           theme.enableIf(syncCheckBox.selected.not())
           component(lafManager.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
