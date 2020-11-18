@@ -6,6 +6,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ObjectUtils
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
@@ -517,7 +518,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     // Assert consistency
     if (!this.brokenConsistency && !replaceWith.brokenConsistency) {
-      this.assertConsistencyInStrictMode("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this)
+      this.assertConsistencyInStrictMode("Check after replaceBySource", sourceFilter, initialStore, replaceWith)
     }
     else {
       this.brokenConsistency = true
@@ -953,15 +954,17 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   internal fun assertConsistencyInStrictMode(message: String,
                                              sourceFilter: (EntitySource) -> Boolean,
                                              left: WorkspaceEntityStorage,
-                                             right: WorkspaceEntityStorage,
-                                             resulting: WorkspaceEntityStorageBuilder) {
+                                             right: WorkspaceEntityStorage) {
     if (StrictMode.rbsEnabled) {
-      try {
-        this.assertConsistency()
-      }
-      catch (e: Throwable) {
-        brokenConsistency = true
-        reportConsistencyIssue(message, e, sourceFilter, left, right, resulting)
+      val storage = if (this is WorkspaceEntityStorageBuilder) this.toStorage() as AbstractEntityStorage else this
+      consistencyChecker.execute {
+        try {
+          storage.assertConsistency()
+        }
+        catch (e: Throwable) {
+          brokenConsistency = true
+          reportConsistencyIssue(message, e, sourceFilter, left, right, storage)
+        }
       }
     }
   }
@@ -971,7 +974,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
                                       sourceFilter: ((EntitySource) -> Boolean)?,
                                       left: WorkspaceEntityStorage,
                                       right: WorkspaceEntityStorage,
-                                      resulting: WorkspaceEntityStorageBuilder) {
+                                      resulting: WorkspaceEntityStorage) {
     val entitySourceFilter = if (sourceFilter != null) {
       val allEntitySources = (left as AbstractEntityStorage).indexes.entitySourceIndex.entries().toHashSet()
       allEntitySources.addAll((right as AbstractEntityStorage).indexes.entitySourceIndex.entries())
@@ -1015,6 +1018,8 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
   companion object {
     val LOG = logger<AbstractEntityStorage>()
+
+    private val consistencyChecker = AppExecutorUtil.createBoundedApplicationPoolExecutor("Check workspace model consistency", 1)
   }
 }
 
