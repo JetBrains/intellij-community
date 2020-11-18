@@ -5,10 +5,6 @@
 
 package org.jetbrains.uast
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 
 /*
@@ -59,16 +55,6 @@ abstract class UClassAdapter(psiClass: PsiClass) : UClass, PsiClass by psiClass 
   override fun getOriginalElement(): PsiElement? = javaPsi
 
   override fun getSourceElement(): PsiElement? = sourcePsi
-
-  // added to catch EA-239759
-  override fun <T : Any?> getUserData(key: Key<T>): T? {
-    if (Registry.`is`("uast.adapter.check.dataHolder")
-        && ApplicationManager.getApplication().run { isUnitTestMode || isInternal || isEAP }) {
-      logger<UClassAdapter>().error("Uast should not be used as dataHolder")
-    }
-    return javaPsi.getUserData(key)
-  }
-
 }
 
 
@@ -106,15 +92,6 @@ abstract class UAnonymousClassAdapter(psiAnonymousClass: PsiAnonymousClass)
   override fun getOriginalElement(): PsiElement? = javaPsi
 
   override fun getSourceElement(): PsiElement? = sourcePsi
-
-  // added to catch EA-239759
-  override fun <T : Any?> getUserData(key: Key<T>): T? {
-    if (Registry.`is`("uast.adapter.check.dataHolder")
-        && ApplicationManager.getApplication().run { isUnitTestMode || isInternal || isEAP }) {
-      logger<UAnonymousClassAdapter>().error("Uast should not be used as dataHolder")
-    }
-    return javaPsi.getUserData(key)
-  }
 }
 
 abstract class UClassInitializerAdapter(psiClassInitializer: PsiClassInitializer)
@@ -123,15 +100,6 @@ abstract class UClassInitializerAdapter(psiClassInitializer: PsiClassInitializer
   override fun getOriginalElement(): PsiElement? = javaPsi
 
   override fun getSourceElement(): PsiElement? = sourcePsi
-
-  // added to catch EA-239759
-  override fun <T : Any?> getUserData(key: Key<T>): T? {
-    if (Registry.`is`("uast.adapter.check.dataHolder")
-        && ApplicationManager.getApplication().run { isUnitTestMode || isInternal || isEAP }) {
-      logger<UClassInitializerAdapter>().error("Uast should not be used as dataHolder")
-    }
-    return javaPsi?.getUserData(key)
-  }
 }
 
 abstract class UDeclarationAdapter(psiJvmModifiersOwner: PsiJvmModifiersOwner)
@@ -140,15 +108,6 @@ abstract class UDeclarationAdapter(psiJvmModifiersOwner: PsiJvmModifiersOwner)
   override fun getOriginalElement(): PsiElement? = javaPsi
 
   override fun getSourceElement(): PsiElement? = sourcePsi
-
-  // added to catch EA-239759
-  override fun <T : Any?> getUserData(key: Key<T>): T? {
-    if (Registry.`is`("uast.adapter.check.dataHolder")
-        && ApplicationManager.getApplication().run { isUnitTestMode || isInternal || isEAP }) {
-      logger<UDeclarationAdapter>().error("Uast should not be used as dataHolder")
-    }
-    return javaPsi?.getUserData(key)
-  }
 }
 
 abstract class UAnchorOwnerAdapter : UAnchorOwner
@@ -162,15 +121,6 @@ abstract class UMethodAdapter(private val psiMethod: PsiMethod) : UMethod, PsiMe
   override fun getOriginalElement(): PsiElement? = sourcePsi?.originalElement
 
   override fun getSourceElement(): PsiElement? = psiMethod.sourceElement
-
-  // added to catch EA-239759
-  override fun <T : Any?> getUserData(key: Key<T>): T? {
-    if (Registry.`is`("uast.adapter.check.dataHolder")
-        && ApplicationManager.getApplication().run { isUnitTestMode || isInternal || isEAP }) {
-      logger<UMethodAdapter>().error("Uast should not be used as dataHolder")
-    }
-    return javaPsi.getUserData(key)
-  }
 }
 
 abstract class UAnnotationMethodAdapter(private val psiAnnotationMethod: PsiAnnotationMethod)
@@ -203,16 +153,6 @@ abstract class UFieldAdapter(private val psiField: PsiField)
   override fun getOriginalElement(): PsiElement? = sourcePsi?.originalElement
 
   override fun getSourceElement(): PsiElement? = psiField.sourceElement
-
-  // added to catch EA-239759
-  override fun <T : Any?> getUserData(key: Key<T>): T? {
-    if (Registry.`is`("uast.adapter.check.dataHolder")
-        && ApplicationManager.getApplication().run { isUnitTestMode || isInternal || isEAP }) {
-      logger<UFieldAdapter>().error("Uast should not be used as dataHolder")
-    }
-    return psiField.getUserData(key)
-  }
-
 }
 
 abstract class ULocalVariableAdapter(psiLocalVariable: PsiLocalVariable)
