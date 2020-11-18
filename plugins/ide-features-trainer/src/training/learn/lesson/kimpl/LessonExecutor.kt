@@ -21,11 +21,12 @@ import training.learn.ActionsRecorder
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
 import training.ui.LearnToolWindowFactory
+import training.util.WeakReferenceDelegator
 import training.util.useNewLearningUi
 import java.awt.Component
 import kotlin.math.max
 
-class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
+class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?) : Disposable {
   private data class TaskInfo(val content: () -> Unit,
                               var restoreIndex: Int,
                               var messagesNumber: Int,
@@ -34,8 +35,10 @@ class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
                               var rehighlightComponent: (() -> Component)? = null,
                               var userVisibleInfo: PreviousTaskInfo? = null)
 
+  private val predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
+
   private val selectedEditor
-    get() = FileEditorManager.getInstance(project).selectedTextEditor
+    get() = FileEditorManager.getInstance(project).selectedTextEditor ?: predefinedEditor?.takeIf { !it.isDisposed }
 
   val editor: Editor
     get() = selectedEditor ?: throw NoTextEditor()
