@@ -2,6 +2,8 @@
 package training.learn
 
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.util.TipDialog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
@@ -18,6 +20,7 @@ object NewLearnProjectUtil {
     val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
 
     ProjectUtils.importOrOpenProject(langSupport, projectToClose) { newProject ->
+      TipDialog.DISABLE_TIPS_FOR_PROJECT.set(newProject, true)
       try {
         val sdkForProject = langSupport.getSdkForProject(newProject)
         if (sdkForProject != null) {
