@@ -22,6 +22,12 @@ public class BoxingInliner implements CallInliner {
     CallMatcher.staticCall(JAVA_LANG_FLOAT, "valueOf").parameterTypes("float"),
     CallMatcher.staticCall(JAVA_LANG_DOUBLE, "valueOf").parameterTypes("double")
   );
+  private static final CallMatcher UNBOXING_AND_CONVERSION_CALL = CallMatcher.anyOf(
+    CallMatcher.exactInstanceCall(JAVA_LANG_INTEGER, "longValue", "shortValue", "byteValue").parameterCount(0),
+    CallMatcher.exactInstanceCall(JAVA_LANG_LONG, "intValue", "shortValue", "byteValue").parameterCount(0),
+    CallMatcher.exactInstanceCall(JAVA_LANG_SHORT, "intValue", "longValue", "byteValue").parameterCount(0),
+    CallMatcher.exactInstanceCall(JAVA_LANG_BYTE, "intValue", "longValue", "shortValue").parameterCount(0)
+  );
 
   @Override
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
@@ -32,6 +38,13 @@ public class BoxingInliner implements CallInliner {
         .boxUnbox(arg, arg.getType(), type)
         .boxUnbox(call, type, call.getType());
       return true;
+    }
+    if (UNBOXING_AND_CONVERSION_CALL.test(call)) {
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      if (qualifier != null) {
+        builder.pushExpression(qualifier).boxUnbox(qualifier, call.getType());
+        return true;
+      }
     }
     return false;
   }
