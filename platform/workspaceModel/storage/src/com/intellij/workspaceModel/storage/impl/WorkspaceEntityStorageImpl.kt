@@ -1018,6 +1018,10 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 }
 
+/** This function exposes [brokenConsistency] property to the outside and should be removed along with the property itself */
+val WorkspaceEntityStorage.isBroken: Boolean
+  get() = (this as AbstractEntityStorage).brokenConsistency
+
 internal object ClassConversion {
 
   private val modifiableToEntityCache = HashMap<KClass<*>, KClass<*>>()
