@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.impl.BlockingProgressIndicator;
@@ -232,13 +231,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         });
         return null;
       });
-    }
-    catch (Throwable t) {
-      if (isRunning()) {
-        LOG.warn("Exception while pumping messages in ProgressWindow#startBlocking. " +
-                 "The dialog modality state message processing is finished. " + t.getMessage(), new RuntimeException(t));
-      }
-      throw t;
     }
     finally {
       exitModality();
