@@ -815,7 +815,7 @@ public final class PyCallExpressionHelper {
 
   @NotNull
   public static Collection<? extends PsiElement> resolveConstructors(@NotNull PyClass cls,
-                                                                     @NotNull PyExpression location,
+                                                                     @Nullable PyExpression location,
                                                                      @NotNull TypeEvalContext context,
                                                                      boolean inherited) {
     final List<PsiElement> result = new ArrayList<>();
