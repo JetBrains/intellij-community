@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.json.formatter.JsonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -19,7 +19,7 @@ public abstract class JsonTestCase extends BasePlatformTestCase {
 
   @NotNull
   protected CodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject());
+    return CodeStyle.getSettings(getProject());
   }
 
   @NotNull
