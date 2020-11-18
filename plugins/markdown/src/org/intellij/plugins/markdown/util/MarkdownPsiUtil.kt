@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.util
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -13,6 +14,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.*
+import org.intellij.plugins.markdown.util.MarkdownPsiUtil.isTransparentInPartial
 
 internal object MarkdownPsiUtil {
   /** Check if node is on a top-level -- meaning its parent is root of file   */
@@ -41,6 +43,7 @@ internal object MarkdownPsiUtil {
     MarkdownElementTypes.MARKDOWN_FILE,
     MarkdownElementTypes.UNORDERED_LIST,
     MarkdownElementTypes.ORDERED_LIST,
+    MarkdownElementTypes.LIST_ITEM,
     MarkdownElementTypes.BLOCK_QUOTE)
 
   private val PRESENTABLE_CONTAINERS = TokenSet.create(
@@ -98,10 +101,11 @@ internal object MarkdownPsiUtil {
     else getParentOfType(myElement, TRANSPARENT_CONTAINERS))
                              ?: return
 
-    when (myElement) {
-      is MarkdownHeaderImpl -> processHeader(structureContainer, myElement, myElement, consumer, nextHeaderConsumer)
-      is MarkdownListImpl -> processList(myElement, consumer)
-      is MarkdownListItemImpl -> {
+    val isListsVisible = Registry.`is`("markdown.structure.view.list.visibility")
+    when {
+      myElement is MarkdownHeaderImpl -> processHeader(structureContainer, myElement, myElement, consumer, nextHeaderConsumer)
+      myElement is MarkdownListImpl && isListsVisible -> processList(myElement, consumer)
+      myElement is MarkdownListItemImpl && isListsVisible -> {
         if (!myElement.hasTrivialChildren()) {
           processListItem(myElement, consumer)
         }
@@ -123,26 +127,34 @@ internal object MarkdownPsiUtil {
     var maxContentLevel: PsiElement? = null
 
     while (nextSibling != null) {
-      if (TRANSPARENT_CONTAINERS.contains(PsiUtilCore.getElementType(nextSibling)) && maxContentLevel == null) {
-        if (!IGNORED_CONTAINERS.contains(PsiUtilCore.getElementType(container)) &&
-            PRESENTABLE_CONTAINERS.contains(PsiUtilCore.getElementType(nextSibling))) {
-          resultConsumer.consume(nextSibling)
+
+      when {
+        nextSibling.isTransparentInPartial() && maxContentLevel == null -> {
+          processHeader(nextSibling, null, null, resultConsumer, nextHeaderConsumer)
         }
-        processHeader(nextSibling, null, null, resultConsumer, nextHeaderConsumer)
-      }
-      else if (nextSibling is MarkdownHeaderImpl) {
-        if (sameLevelRestriction != null && isSameLevelOrHigher(nextSibling, sameLevelRestriction)) {
-          nextHeaderConsumer.consume(nextSibling)
-          break
-        }
-        if (maxContentLevel == null || isSameLevelOrHigher(nextSibling, maxContentLevel)) {
-          maxContentLevel = nextSibling
-          val type = nextSibling.node.elementType
-          if (PRESENTABLE_TYPES.contains(type)) {
+        nextSibling.isTransparentInFull() && maxContentLevel == null -> {
+          if (!IGNORED_CONTAINERS.contains(PsiUtilCore.getElementType(container)) &&
+              PRESENTABLE_CONTAINERS.contains(PsiUtilCore.getElementType(nextSibling))) {
             resultConsumer.consume(nextSibling)
           }
+          processHeader(nextSibling, null, null, resultConsumer, nextHeaderConsumer)
+        }
+        nextSibling is MarkdownHeaderImpl -> {
+          if (sameLevelRestriction != null && isSameLevelOrHigher(nextSibling, sameLevelRestriction)) {
+            nextHeaderConsumer.consume(nextSibling)
+            break
+          }
+          if (maxContentLevel == null || isSameLevelOrHigher(nextSibling, maxContentLevel)) {
+            maxContentLevel = nextSibling
+            val type = nextSibling.node.elementType
+            if (PRESENTABLE_TYPES.contains(type)) {
+              resultConsumer.consume(nextSibling)
+            }
+          }
+
         }
       }
+
       nextSibling = nextSibling.nextSibling
       if (nextSibling == null) nextHeaderConsumer.consume(null)
     }
@@ -183,6 +195,26 @@ internal object MarkdownPsiUtil {
       itemChild = itemChild.nextSibling
     }
   }
+
+  /**
+   * Returns true if the key of the lists representation in the structure is true
+   * and the processed element is a transparent container, but not a list item.
+   * Returns false otherwise.
+   */
+  private fun PsiElement.isTransparentInFull() =
+    Registry.`is`("markdown.structure.view.list.visibility") &&
+    TRANSPARENT_CONTAINERS.contains(PsiUtilCore.getElementType(this)) &&
+    this !is MarkdownListItemImpl
+
+  /**
+   * Returns true if the key of the lists representation in the structure is false (this means that only headers are shown in the structure view)
+   * and the processed element is a transparent container.
+   * Returns false otherwise.
+   */
+  private fun PsiElement.isTransparentInPartial() =
+    !Registry.`is`("markdown.structure.view.list.visibility") &&
+    TRANSPARENT_CONTAINERS.contains(PsiUtilCore.getElementType(this))
+
 
   private fun isSameLevelOrHigher(psiA: PsiElement, psiB: PsiElement): Boolean {
     val typeA = psiA.node.elementType

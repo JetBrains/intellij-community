@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.structureView;
 
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -17,6 +18,7 @@ public class MarkdownStructureViewTest extends BasePlatformTestCase {
   }
 
   public void doTest() {
+    Registry.get("markdown.structure.view.list.visibility").setValue(true);
     myFixture.configureByFile(getTestName(true) + ".md");
     myFixture.testStructureView(svc -> {
       JTree tree = svc.getTree();

@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -54,7 +55,7 @@ public class MarkdownHeaderImpl extends MarkdownStubBasedPsiElementBase<Markdown
       @Override
       public String getPresentableText() {
         PsiElement prevSibling = getPrevSibling();
-        if (LIST_MARKERS.contains(PsiUtilCore.getElementType(prevSibling))) {
+        if (Registry.is("markdown.structure.view.list.visibility") && LIST_MARKERS.contains(PsiUtilCore.getElementType(prevSibling))) {
           return prevSibling.getText() + text;
         }
 
