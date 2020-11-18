@@ -47,11 +47,14 @@ public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
       .autoCommitDelay(5_000)
       .compressHigh()
       .openOrNewOnIoError(myTempDirectory.resolve("mvstore"), true, e -> LOG.error(e));
-    MVStorePersistentHashMap<Integer, String> map =
-      new MVStorePersistentHashMap<>("test-map",
-                                     mvStore,
-                                     EnumeratorIntegerDescriptor.INSTANCE,
-                                     EnumeratorStringDescriptor.INSTANCE);
+
+    PersistentHashMap<Integer, String> map =
+      new PersistentHashMap<>(
+        new MVStorePersistentHashMap<>("test-map",
+                                       mvStore,
+                                       EnumeratorIntegerDescriptor.INSTANCE,
+                                       EnumeratorStringDescriptor.INSTANCE));
+
     try {
       PlatformTestUtil.startPerformanceTest("put/get MVStore", 2000, () -> {
         doPutGetTest(map);
@@ -76,7 +79,7 @@ public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
     }
   }
 
-  private static void doPutGetTest(@NotNull AppendablePersistentMap<Integer, String> mapBase) throws IOException {
+  private static void doPutGetTest(@NotNull PersistentMap<Integer, String> mapBase) throws IOException {
     for (Pair<Integer, String> datum : getData()) {
       mapBase.put(datum.getFirst(), datum.getSecond());
     }

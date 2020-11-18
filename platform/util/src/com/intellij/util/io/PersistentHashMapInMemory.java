@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.Processor;
+import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

@@ -2,6 +2,7 @@
 package org.jetbrains.mvstore.index;
 
 import com.intellij.util.Processor;
+import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMapBase;
