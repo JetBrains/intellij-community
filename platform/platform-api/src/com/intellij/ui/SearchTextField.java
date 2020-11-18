@@ -141,9 +141,6 @@ public class SearchTextField extends JPanel {
       myTextField.getInputMap().put(SHOW_HISTORY_KEYSTROKE, "showNextHistoryItem");
     }
 
-    if(historyPopupEnabled) {
-      reInitPopup();
-    }
     myTextField.putClientProperty("JTextField.variant", "search");
     myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
     myTextField.putClientProperty("JTextField.Search.CancelAction", (ActionListener)e -> {
