@@ -8,6 +8,7 @@ enum class DefaultSortWeight(val weight: Int) {
   PROJECT(-90),
   MODULE_GROUP(-80),
   MODULE_ROOT(-70),
+  PACKAGE(-30),
   FOLDER(-20),
   FILE(20),
   SCRATCH_ROOT(9_000);

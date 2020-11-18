@@ -769,14 +769,19 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
     @Override
     public int getTypeSortWeight(boolean sortByType) {
-      if (sortByType && getVirtualFile().isDirectory()) return DefaultSortWeight.FOLDER.getWeight();
-      return DefaultSortWeight.FILE.getWeight();
+      return getTypeSortKey(sortByType).getWeight();
     }
 
     @Override
     public @Nullable Comparable<?> getTypeSortKey() {
-      if (getVirtualFile().isDirectory()) return DefaultSortWeight.FOLDER;
+      DefaultSortWeight key = getTypeSortKey(true);
+      if (key != DefaultSortWeight.FILE) return key;
       return new PsiFileNode.ExtensionSortKey(getVirtualFile().getFileType().getDefaultExtension());
+    }
+
+    private @NotNull DefaultSortWeight getTypeSortKey(boolean sortByType) {
+      if (!sortByType || !getVirtualFile().isDirectory()) return DefaultSortWeight.FILE;
+      return isPackage(getIcon()) ? DefaultSortWeight.PACKAGE : DefaultSortWeight.FOLDER;
     }
 
     @NotNull
