@@ -22,14 +22,16 @@ import runtime.reactive.mapInit
 @Service
 internal class SpaceCodeReviewTabManager(private val project: Project) {
 
-  private lateinit var myReviewTabContentManager: SpaceCodeReviewTabContentManager
+  private var myReviewTabContentManager: SpaceCodeReviewTabContentManager? = null
 
   companion object {
     fun getInstance(project: Project): SpaceCodeReviewTabManager = project.service()
   }
 
   internal fun showReviews(contentManager: ContentManager) {
-    myReviewTabContentManager = SpaceCodeReviewTabContentManager(project, contentManager)
+    if (myReviewTabContentManager == null) {
+      myReviewTabContentManager = SpaceCodeReviewTabContentManager(project, contentManager)
+    }
   }
 }
 
