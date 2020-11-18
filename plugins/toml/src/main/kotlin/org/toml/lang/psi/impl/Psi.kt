@@ -5,9 +5,12 @@
 
 package org.toml.lang.psi.impl
 
+import com.intellij.ide.projectView.PresentationData
 import com.intellij.lang.ASTFactory
 import com.intellij.lang.psi.SimpleMultiLineTextEscaper
+import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.LiteralTextEscaper
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
@@ -29,6 +32,14 @@ class TomlKeyValueImpl(type: IElementType) : CompositePsiElement(type), TomlKeyV
 class TomlKeyImpl(type: IElementType) : CompositePsiElement(type), TomlKey {
     override fun getReferences(): Array<PsiReference>
         = ReferenceProvidersRegistry.getReferencesFromProviders(this)
+
+    override fun getName(): String = text
+
+    override fun setName(name: String): PsiElement {
+        return replace(TomlPsiFactory(project).createKey(name))
+    }
+
+    override fun getPresentation(): ItemPresentation = PresentationData(name, null, null, null)
 
     override fun toString(): String = "TomlKey"
 }

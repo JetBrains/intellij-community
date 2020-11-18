@@ -5,10 +5,7 @@
 
 package org.toml.lang.psi
 
-import com.intellij.psi.ContributedReferenceHost
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiLanguageInjectionHost
-import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.*
 
 interface TomlElement : PsiElement
 
@@ -35,7 +32,7 @@ interface TomlKeyValue : TomlElement {
  * It's possible to use [PsiReferenceContributor] to inject references
  * into [TomlKey] from third-party plugins.
  */
-interface TomlKey : TomlElement, ContributedReferenceHost
+interface TomlKey : TomlElement, ContributedReferenceHost, PsiNamedElement, NavigatablePsiElement
 
 /**
  * It's possible to use [PsiReferenceContributor] to inject references
