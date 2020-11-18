@@ -7,8 +7,11 @@ import com.intellij.ide.actions.HelpTopicsAction
 import com.intellij.ide.actions.JetBrainsTvAction
 import com.intellij.ide.actions.OnlineDocAction
 import com.intellij.ide.actions.WhatsNewAction
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.HeaderColor
@@ -21,9 +24,11 @@ import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.event.AncestorEvent
 
-class LearnIdeContentPanel : JPanel() {
+class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() {
 
   private val interactiveCoursesPanel: JPanel = JPanel()
+  private val interactiveCoursesPanelBottomGap = rigid(1, 32)
+
   private val helpAndResourcesPanel: JPanel = JPanel()
 
   private val viewComponent: JPanel = JPanel().apply { layout = BorderLayout(); background = WelcomeScreenUIManager.getProjectsBackground() }
@@ -46,7 +51,7 @@ class LearnIdeContentPanel : JPanel() {
     contentPanel.layout = BoxLayout(contentPanel, BoxLayout.PAGE_AXIS)
 
     //get all Interactive Courses
-    contentPanel.addInteractiveCoursesPanel()
+    contentPanel.initInteractiveCoursesPanel()
     contentPanel.addHelpAndResourcesPanel()
     contentPanel.add(Box.createVerticalGlue())
 
@@ -72,15 +77,33 @@ class LearnIdeContentPanel : JPanel() {
     this.add(helpAndResourcesPanel)
   }
 
-  private fun Container.addInteractiveCoursesPanel() {
-    val interactiveCourses = InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.extensions.map {it.getInteractiveCourseData()}
+  private fun Container.initInteractiveCoursesPanel() {
+    this.updateInteractiveCoursesPanel()
+    InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.addExtensionPointListener(object: ExtensionPointListener<InteractiveCourseFactory> {
+      override fun extensionAdded(extension: InteractiveCourseFactory, pluginDescriptor: PluginDescriptor) {
+        this@initInteractiveCoursesPanel.updateInteractiveCoursesPanel()
+      }
+
+      override fun extensionRemoved(extension: InteractiveCourseFactory, pluginDescriptor: PluginDescriptor) {
+        this@initInteractiveCoursesPanel.updateInteractiveCoursesPanel()
+      }
+    }, parentDisposable)
+  }
+
+  private fun Container.updateInteractiveCoursesPanel() {
+    val interactiveCoursesExtensions: Array<InteractiveCourseFactory> = InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.extensions
+    //clear before
+    interactiveCoursesPanel.removeAll()
+    this.remove(interactiveCoursesPanel)
+    this.remove(interactiveCoursesPanelBottomGap)
+
     interactiveCoursesPanel.layout = BoxLayout(interactiveCoursesPanel, BoxLayout.PAGE_AXIS)
     interactiveCoursesPanel.isOpaque = false
 
-    if (interactiveCourses.isNotEmpty()) {
+    if (interactiveCoursesExtensions.isNotEmpty()) {
       interactiveCoursesPanel.add(interactiveCoursesHeader)
       var actionButton: JButton? = null
-      for (interactiveCourse in interactiveCourses) {
+      for (interactiveCourse in interactiveCoursesExtensions.map { it.getInteractiveCourseData() }) {
         interactiveCoursesPanel.add(rigid(0, 12))
         val interactiveCoursePanel = InteractiveCoursePanel(interactiveCourse)
         interactiveCoursesPanel.add(interactiveCoursePanel)
@@ -92,8 +115,11 @@ class LearnIdeContentPanel : JPanel() {
         }
       })
       this.add(interactiveCoursesPanel)
-      this.add(rigid(1, 32))
+      this.add(interactiveCoursesPanelBottomGap)
     }
+    this.revalidate()
+    this.repaint()
+
   }
 
 
