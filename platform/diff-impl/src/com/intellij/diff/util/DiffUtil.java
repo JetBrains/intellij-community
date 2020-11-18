@@ -1826,43 +1826,4 @@ public final class DiffUtil {
     }
     return null;
   }
-
-  //
-  // Helpers
-  //
-
-  private static class SyncHeightComponent extends JPanel {
-    @NotNull private final List<? extends JComponent> myComponents;
-
-    SyncHeightComponent(@NotNull List<? extends JComponent> components, int index) {
-      super(new BorderLayout());
-      myComponents = components;
-      JComponent delegate = components.get(index);
-      if (delegate != null) add(delegate, BorderLayout.CENTER);
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      Dimension size = super.getMinimumSize();
-      size.height = getMaximumHeight(JComponent::getPreferredSize);
-      return size;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      size.height = getMaximumHeight(JComponent::getPreferredSize);
-      return size;
-    }
-
-    private int getMaximumHeight(@NotNull Function<? super JComponent, ? extends Dimension> getter) {
-      int height = 0;
-      for (JComponent component : myComponents) {
-        if (component != null) {
-          height = Math.max(height, getter.fun(component).height);
-        }
-      }
-      return height;
-    }
-  }
 }
