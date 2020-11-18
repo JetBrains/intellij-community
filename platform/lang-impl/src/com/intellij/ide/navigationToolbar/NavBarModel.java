@@ -85,7 +85,7 @@ public class NavBarModel {
     return index;
   }
 
-  protected void updateModel(DataContext dataContext) {
+  public void updateModel(DataContext dataContext) {
     if (LaterInvocator.isInModalContext() || (updated && !isFixedComponent)) return;
 
     if (PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
