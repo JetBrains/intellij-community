@@ -5,13 +5,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
@@ -61,15 +61,16 @@ internal class GithubLoginPanel(
     tokenAcquisitionError = null
   }
 
-  fun createSwitchUiLink(): LinkLabel<*> {
-    @NlsContexts.LinkLabel
-    fun switchUiText(): String = if (currentUi == passwordUi) message("login.use.token") else message("login.use.credentials")
-    fun nextUi(): GHCredentialsUi = if (currentUi == passwordUi) tokenUi else passwordUi
+  @Nls
+  private fun switchUiText(): String {
+    return if (currentUi == passwordUi) message("login.use.token") else message("login.use.credentials")
+  }
 
-    return LinkLabel<Any?>(switchUiText(), null) { link, _ ->
-      applyUi(nextUi())
-      link.text = switchUiText()
-    }
+  private fun nextUi(): GHCredentialsUi = if (currentUi == passwordUi) tokenUi else passwordUi
+
+  fun createSwitchUiLink() = LinkLabel<Any?>(switchUiText(), null) { link, _ ->
+    applyUi(nextUi())
+    link.text = switchUiText()
   }
 
   fun getPreferredFocusableComponent(): JComponent? =
