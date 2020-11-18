@@ -192,6 +192,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_SOURCES") ->
                     ProjectDescriptorWithStdlibSources.INSTANCE
 
+                InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITHOUT_SOURCES") ->
+                    ProjectDescriptorWithStdlibSources.INSTANCE_NO_SOURCES
+
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_KOTLIN_TEST") ->
                     KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_KOTLIN_TEST
 
