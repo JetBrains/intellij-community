@@ -848,6 +848,8 @@
     <notificationGroup id="JDK Update" displayType="BALLOON"/>
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" />
 
+    <notificationGroup id="Cached value profiling" displayType="BALLOON" />
+
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterStartup" />
 
     <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
