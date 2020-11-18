@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog.events
 
 import com.google.gson.GsonBuilder
-import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
@@ -16,7 +15,11 @@ import kotlin.system.exitProcess
 object EventsSchemeBuilder {
   data class FieldDescriptor(val path: String, val value: Set<String>)
   data class EventDescriptor(val event: String, val fields: Set<FieldDescriptor>)
-  data class GroupDescriptor(val id: String, val type: String, val version: Int, val schema: Set<EventDescriptor>)
+  data class GroupDescriptor(val id: String,
+                             val type: String,
+                             val version: Int,
+                             val schema: Set<EventDescriptor>,
+                             val className: String)
 
   private fun fieldSchema(field: EventField<*>, fieldName: String): Set<FieldDescriptor> {
     if (field == EventFields.PluginInfo || field == EventFields.PluginInfoFromInstance) {
@@ -55,11 +58,12 @@ object EventsSchemeBuilder {
                                   collectors: Collection<FeatureUsagesCollector>): MutableList<GroupDescriptor> {
     val result = mutableListOf<GroupDescriptor>()
     for (collector in collectors) {
+      val collectorClass = if (collector.javaClass.enclosingClass != null) collector.javaClass.enclosingClass else collector.javaClass
       val group = collector.group ?: continue
       val eventsDescriptors = group.events.groupBy { it.eventId }
         .map { (name, events) -> EventDescriptor(name, buildFields(events)) }
         .toHashSet()
-      val groupDescriptor = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors)
+      val groupDescriptor = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name)
       result.add(groupDescriptor)
     }
     return result
