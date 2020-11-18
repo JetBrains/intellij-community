@@ -15,28 +15,28 @@ data class IndexedFilePath(
   val indexedFileHash: String
 ) {
   override fun toString(): String = buildString {
-    appendln("File URL = $originalFileUrl")
-    appendln("File ID = $originalFileSystemId")
+    appendLine("File URL = $originalFileUrl")
+    appendLine("File ID = $originalFileSystemId")
     if (fileSize == null) {
-      appendln("This is a directory")
+      appendLine("This is a directory")
     } else {
-      appendln("File size = $fileSize")
+      appendLine("File size = $fileSize")
     }
     if (fileType != null) {
-      appendln("File type = $fileType")
+      appendLine("File type = $fileType")
     }
     if (substitutedFileType != null) {
-      appendln("Substituted file type = $substitutedFileType")
+      appendLine("Substituted file type = $substitutedFileType")
     }
-    appendln("Portable path = ${portableFilePath.presentablePath}")
+    appendLine("Portable path = ${portableFilePath.presentablePath}")
     append("File property pusher values: ")
     if (filePropertyPusherValues.isNotEmpty()) {
-      appendln()
+      appendLine()
       for ((key, value) in filePropertyPusherValues) {
-        appendln("  $key -> $value")
+        appendLine("  $key -> $value")
       }
     } else {
-      appendln("<empty>")
+      appendLine("<empty>")
     }
   }
 }
