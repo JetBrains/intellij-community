@@ -102,12 +102,12 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
       item: ModuleDependencyItem,
       index: Int,
       rootModelBridge: ModuleRootModelBridge,
-      function: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
+      updater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
     ): OrderEntryBridge {
       return when (item) {
-        is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryBridge(rootModelBridge, index, item, function)
+        is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryBridge(rootModelBridge, index, item, updater)
         is ModuleDependencyItem.Exportable.LibraryDependency -> {
-          LibraryOrderEntryBridge(rootModelBridge, index, item, function)
+          LibraryOrderEntryBridge(rootModelBridge, index, item, updater)
         }
         is ModuleDependencyItem.SdkDependency -> SdkOrderEntryBridge(rootModelBridge, index, item)
         is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryBridge(rootModelBridge, index, item)
