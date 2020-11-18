@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.messages;
 
 import com.intellij.openapi.application.ModalityState;
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.openapi.ui.Messages.wrapToScrollPaneIfNeeded;
 
 public class MessageDialog extends DialogWrapper {
-  protected @NlsContexts.DialogMessage String myMessage;
+  protected @NlsContexts.DialogMessage @Nullable String myMessage;
   protected String[] myOptions;
   protected int myDefaultOptionIndex;
   protected int myFocusedOptionIndex;
@@ -32,7 +32,7 @@ public class MessageDialog extends DialogWrapper {
   private MessagesBorderLayout myLayout;
 
   public MessageDialog(@Nullable Project project,
-                       @NlsContexts.DialogMessage String message,
+                       @NlsContexts.DialogMessage @Nullable String message,
                        @NlsContexts.DialogTitle String title,
                        String @NotNull [] options,
                        int defaultOptionIndex,
@@ -44,7 +44,7 @@ public class MessageDialog extends DialogWrapper {
 
   public MessageDialog(@Nullable Project project,
                        @Nullable Component parentComponent,
-                       @NlsContexts.DialogMessage String message,
+                       @NlsContexts.DialogMessage @Nullable String message,
                        @NlsContexts.DialogTitle String title,
                        String @NotNull [] options,
                        int defaultOptionIndex,
@@ -56,7 +56,7 @@ public class MessageDialog extends DialogWrapper {
     _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
   }
 
-  public MessageDialog(@NlsContexts.DialogMessage String message,
+  public MessageDialog(@NlsContexts.DialogMessage @Nullable String message,
                        @NlsContexts.DialogTitle String title,
                        String @NotNull [] options,
                        int defaultOptionIndex,
@@ -77,7 +77,7 @@ public class MessageDialog extends DialogWrapper {
   }
 
   protected void _init(@NlsContexts.DialogTitle String title,
-                       @NlsContexts.DialogMessage String message,
+                       @NlsContexts.DialogMessage @Nullable String message,
                        String @NotNull [] options,
                        int defaultOptionIndex,
                        int focusedOptionIndex,
