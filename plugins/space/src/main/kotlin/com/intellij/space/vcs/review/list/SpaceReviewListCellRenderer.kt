@@ -12,6 +12,7 @@ import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.utils.formatAbsolute
 import com.intellij.space.utils.toLocalDateTime
 import com.intellij.space.vcs.review.ReviewUiSpec.avatarSizeIntValue
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
@@ -24,10 +25,11 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
-import javax.swing.JLabel
+import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
+
 
 internal class SpaceReviewListCellRenderer(
   private val avatarProvider: SpaceAvatarProvider,
@@ -35,22 +37,34 @@ internal class SpaceReviewListCellRenderer(
 ) : ListCellRenderer<CodeReviewListItem>,
     JPanel(null) {
 
-  private val titleLabel: JLabel = JLabel().apply {
+  private val commentIcon: Icon
+    get() = AllIcons.Ide.Notification.NoEvents
+
+  private val titleLabel: SimpleColoredComponent = SimpleColoredComponent().apply {
     isOpaque = false
   }
 
-  private val infoLabel: JLabel = JLabel().apply {
+  private val infoLabel: SimpleColoredComponent = SimpleColoredComponent().apply {
     font = JBUI.Fonts.smallFont()
     isOpaque = false
   }
 
   private val emptyAvatar = EmptyIcon.create(JBUI.scale(avatarSizeIntValue.get()))
 
-  private val authorAvatar: JLabel = JLabel(emptyAvatar)
-  private val commentsLabel: JLabel = JLabel(AllIcons.Ide.Notification.NoEvents) // TODO: add new icon for comments
+  private val authorAvatar: SimpleColoredComponent = SimpleColoredComponent().apply {
+    icon = emptyAvatar
+  }
 
-  private val firstReviewLabel: JLabel = JLabel(emptyAvatar)
-  private val secondReviewLabel: JLabel = JLabel(emptyAvatar)
+  private val commentsLabel: SimpleColoredComponent = SimpleColoredComponent().apply {
+    icon = commentIcon
+  }
+
+  private val firstReviewLabel: SimpleColoredComponent = SimpleColoredComponent().apply {
+    icon = emptyAvatar
+  }
+  private val secondReviewLabel: SimpleColoredComponent = SimpleColoredComponent().apply {
+    icon = emptyAvatar
+  }
 
   private val openCodeReviewButton = OpenReviewButton.createOpenReviewButton()
 
@@ -168,13 +182,15 @@ internal class SpaceReviewListCellRenderer(
     }.toString().let { XmlStringUtil.wrapInHtml(it) } // NON-NLS
 
     titleLabel.apply {
-      text = title
+      clear()
+      append(title)
       foreground = primaryTextColor
       toolTipText = fullToolTipText
     }
 
     infoLabel.apply {
-      text = info
+      clear()
+      append(info)
       foreground = secondaryTextColor
       toolTipText = fullToolTipText
     }
@@ -182,7 +198,9 @@ internal class SpaceReviewListCellRenderer(
     configureMemberLabel(authorAvatar, author)
 
     commentsLabel.apply {
-      text = value.discussionCount.resolve().counter.total.toString() // NON-NLS
+      clear()
+      icon = commentIcon
+      append(value.discussionCount.resolve().counter.total.toString())// NON-NLS
     }
 
     firstReviewLabel.apply {
@@ -201,7 +219,7 @@ internal class SpaceReviewListCellRenderer(
   }
 
 
-  private fun configureMemberLabel(label: JLabel, profile: TD_MemberProfile?) {
+  private fun configureMemberLabel(label: SimpleColoredComponent, profile: TD_MemberProfile?) {
     if (profile != null) {
       label.icon = avatarProvider.getIcon(profile)
       label.toolTipText = profile.englishFullName() // NON-NLS
