@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
@@ -10,7 +10,7 @@ import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -347,7 +347,7 @@ public final class MainProcessor extends EventProcessor{
     myInsertFeedbackEnabled = enabled;
   }
 
-  public void startPasteProcessor(final ArrayList<RadComponent> componentsToPaste, final TIntArrayList xs, final TIntArrayList ys) {
+  public void startPasteProcessor(final ArrayList<RadComponent> componentsToPaste, final IntList xs, final IntList ys) {
     removeDragger();
     myEditor.hideIntentionHint();
     myCurrentProcessor = new PasteProcessor(myEditor, componentsToPaste, xs, ys);

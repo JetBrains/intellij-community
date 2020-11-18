@@ -26,7 +26,7 @@ import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import com.sun.tools.javac.Main;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import kotlin.reflect.KDeclarationContainer;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
@@ -78,7 +78,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     List<URL> cp = new ArrayList<>();
     appendPath(cp, JBTabbedPane.class);
     appendPath(cp, TitledSeparator.class);
-    appendPath(cp, TIntObjectHashMap.class);
+    appendPath(cp, Int2ObjectOpenHashMap.class);
     appendPath(cp, Object2LongMap.class);
     appendPath(cp, UIUtil.class);
     appendPath(cp, UIUtilities.class);

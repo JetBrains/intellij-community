@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.codereview
 
-import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BrowserHyperlinkListener
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
@@ -32,8 +33,7 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
     isOpaque = false
     addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
     margin = JBUI.emptyInsets()
-    UISettings.setupComponentAntialiasing(this)
-
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
 
     val caret = caret as DefaultCaret
     caret.updatePolicy = DefaultCaret.NEVER_UPDATE

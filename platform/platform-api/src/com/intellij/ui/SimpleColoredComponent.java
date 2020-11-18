@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -111,7 +112,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @Override
   public void updateUI() {
-    UISettings.setupComponentAntialiasing(this);
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
     if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);

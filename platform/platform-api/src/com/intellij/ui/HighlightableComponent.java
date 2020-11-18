@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +42,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
   }
 
   @Override public void updateUI() {
-    UISettings.setupComponentAntialiasing(this);
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
   }
 
   public void setText(@Nullable @Nls String text) {

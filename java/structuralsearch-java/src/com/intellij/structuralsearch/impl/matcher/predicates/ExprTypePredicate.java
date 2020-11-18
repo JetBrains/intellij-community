@@ -1,18 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
@@ -76,7 +72,7 @@ public class ExprTypePredicate extends MatchPredicate {
     }
     if (myWithinHierarchy) {
       if (visited == null) {
-        visited = new THashSet<>();
+        visited = new HashSet<>();
         visited.add(type);
       }
       for (PsiType superType : type.getSuperTypes()) {

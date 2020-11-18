@@ -2,7 +2,6 @@
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -45,7 +44,14 @@ public final class JBUIScale {
 
   private JBUIScale() {}
 
-  private static final NotNullLazyValue<Pair<String, Integer>> systemFontData = NotNullLazyValue.createAtomic(() -> {
+  private static volatile Pair<String, Integer> systemFontData;
+
+  private synchronized static @NotNull Pair<String, Integer> computeSystemFontData() {
+    Pair<String, Integer> result = systemFontData;
+    if (result != null) {
+      return result;
+    }
+
     // with JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = UIManager.getFont("Label.font");
     if (SystemInfoRt.isMac) {
@@ -96,12 +102,13 @@ public final class JBUIScale {
       }
     }
 
-    Pair<String, Integer> result = new Pair<>(font.getName(), font.getSize());
+    result = new Pair<>(font.getName(), font.getSize());
+    systemFontData = result;
     if (isScaleVerbose) {
       log.info(String.format("ourSystemFontData: %s, %d", result.first, result.second));
     }
     return result;
-  });
+  }
 
   @ApiStatus.Internal
   public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<>() {
@@ -151,7 +158,7 @@ public final class JBUIScale {
       return 1f;
     }
 
-    float result = getFontScale(systemFontData.getValue().getSecond());
+    float result = getFontScale(getSystemFontData().getSecond());
     getLogger().info("System scale factor: " + result + " (" + (JreHiDpiUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     return result;
   });
@@ -315,9 +322,9 @@ public final class JBUIScale {
     return discreteScale(dpi / 96f);
   }
 
-  @NotNull
-  public static Pair<String, Integer> getSystemFontData() {
-    return systemFontData.getValue();
+  public static @NotNull Pair<String, Integer> getSystemFontData() {
+    Pair<String, Integer> result = systemFontData;
+    return result == null ? computeSystemFontData() : result;
   }
 
   /**
