@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.indices
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import org.jetbrains.annotations.TestOnly
@@ -50,6 +50,7 @@ open class VirtualFileIndex internal constructor(
 
     private var freezed = true
 
+    @Synchronized
     internal fun index(id: EntityId, propertyName: String, virtualFileUrls: MutableSet<VirtualFileUrl>) {
       startWrite()
       val existingVfuSet = entityId2VirtualFileUrl[id]?.get(propertyName)
@@ -64,6 +65,7 @@ open class VirtualFileIndex internal constructor(
       entityId2VirtualFileUrl[id]?.let { if (it.isEmpty()) entityId2VirtualFileUrl.remove(id) }
     }
 
+    @Synchronized
     internal fun index(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl? = null) {
       startWrite()
       removeByPropertyFromIndexes(id, propertyName)
@@ -71,6 +73,7 @@ open class VirtualFileIndex internal constructor(
       indexVirtualFileUrl(id, propertyName, virtualFileUrl)
     }
 
+    @Synchronized
     internal fun removeRecordsByEntityId(id: EntityId) {
       startWrite()
       entityId2VirtualFileUrl.remove(id)?.forEach { (property, vfuSet) ->
@@ -125,7 +128,11 @@ open class VirtualFileIndex internal constructor(
     }
 
     private fun removeFromVfu2EntityIdMap(id: EntityId, propertyName: String, vfu: VirtualFileUrl) {
-      val property2EntityId = vfu2EntityId[vfu] ?: error("The record for $id <=> ${vfu} should be available in both maps")
+      val property2EntityId = vfu2EntityId[vfu]
+      if (property2EntityId == null) {
+        LOG.error("The record for $id <=> ${vfu} should be available in both maps")
+        return
+      }
       property2EntityId.remove(getCompositeKey(id,propertyName))
       if (property2EntityId.isEmpty()) vfu2EntityId.remove(vfu)
     }
@@ -149,6 +156,7 @@ open class VirtualFileIndex internal constructor(
     private fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId}_$propertyName"
 
     companion object {
+      private val LOG = logger<MutableVirtualFileIndex>()
       const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
       fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.entityId2VirtualFileUrl, other.vfu2EntityId)
     }
