@@ -20,24 +20,19 @@ import java.nio.file.Paths
 class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
   fun `test load project`() {
     val projectPath = FileUtilRt.toSystemIndependentName(File(PathManagerEx.getTestDataPath(), "moduleRootManager/unloadedModules").absolutePath)
-    val project = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath))
-    try {
-      val moduleManager = ModuleManager.getInstance(project)
-      assertEquals(3, moduleManager.allModuleDescriptions.size)
-      assertEquals(2, moduleManager.unloadedModuleDescriptions.size)
+    val project = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath), testRootDisposable)
+    val moduleManager = ModuleManager.getInstance(project)
+    assertEquals(3, moduleManager.allModuleDescriptions.size)
+    assertEquals(2, moduleManager.unloadedModuleDescriptions.size)
 
-      val util = moduleManager.unloadedModuleDescriptions.find { it.name == "util" }!!
-      val projectDirUrl = VfsUtilCore.pathToUrl(projectPath)
-      assertEquals("$projectDirUrl/util", assertOneElement(util.contentRoots).url)
-      assertEmpty(util.dependencyModuleNames)
+    val util = moduleManager.unloadedModuleDescriptions.find { it.name == "util" }!!
+    val projectDirUrl = VfsUtilCore.pathToUrl(projectPath)
+    assertEquals("$projectDirUrl/util", assertOneElement(util.contentRoots).url)
+    assertEmpty(util.dependencyModuleNames)
 
-      val dep = moduleManager.unloadedModuleDescriptions.find { it.name == "dep" }!!
-      assertEquals("$projectDirUrl/dep", assertOneElement(dep.contentRoots).url)
-      assertEquals("util", assertOneElement(dep.dependencyModuleNames))
-    }
-    finally {
-      getProjectManager().forceCloseProject(project)
-    }
+    val dep = moduleManager.unloadedModuleDescriptions.find { it.name == "dep" }!!
+    assertEquals("$projectDirUrl/dep", assertOneElement(dep.contentRoots).url)
+    assertEquals("util", assertOneElement(dep.dependencyModuleNames))
   }
 
   fun `test set unloaded modules`() {

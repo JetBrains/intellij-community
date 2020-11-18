@@ -21,7 +21,7 @@ public class LanguageLevelComboTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(PathManagerEx.getTestDataPath("/ide/project")));
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(PathManagerEx.getTestDataPath("/ide/project")), getTestRootDisposable());
     myCombo = new LanguageLevelCombo("default") {
       @Override
       protected LanguageLevel getDefaultLevel() {

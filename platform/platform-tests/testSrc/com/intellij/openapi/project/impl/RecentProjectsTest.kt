@@ -5,10 +5,7 @@ import com.intellij.ide.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.project.stateStore
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.EdtRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
@@ -28,6 +25,10 @@ class RecentProjectsTest {
     @JvmField
     val edtRule = EdtRule()
   }
+
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
 
   @Rule
   @JvmField
@@ -77,10 +78,10 @@ class RecentProjectsTest {
   @Test
   fun timestampForOpenProjectUpdatesWhenGetStateCalled() {
     val path = tempDir.newPath("z1")
-    var project = PlatformTestUtil.loadAndOpenProject(path)
+    var project = PlatformTestUtil.loadAndOpenProject(path, disposableRule.disposable)
     try {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      project = PlatformTestUtil.loadAndOpenProject(path)
+      project = PlatformTestUtil.loadAndOpenProject(path, disposableRule.disposable)
       val timestamp = getProjectOpenTimestamp("z1")
       RecentProjectsManagerBase.instanceEx.updateLastProjectPath()
       // "Timestamp for opened project has not been updated"
@@ -102,13 +103,13 @@ class RecentProjectsTest {
   }
 
   private fun doReopenCloseAndCheck(projectPath: Path, vararg results: String) {
-    val project = PlatformTestUtil.loadAndOpenProject(projectPath)
+    val project = PlatformTestUtil.loadAndOpenProject(projectPath, disposableRule.disposable)
     PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     checkRecents(*results)
   }
 
   private fun doReopenCloseAndCheckGroups(projectPath: Path, results: List<String>) {
-    val project = PlatformTestUtil.loadAndOpenProject(projectPath)
+    val project = PlatformTestUtil.loadAndOpenProject(projectPath, disposableRule.disposable)
     PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     checkGroups(results)
   }
@@ -133,11 +134,11 @@ class RecentProjectsTest {
 
   private fun createAndOpenProject(name: String): Path {
     val path = tempDir.newPath(name)
-    var project = PlatformTestUtil.loadAndOpenProject(path)
+    var project = PlatformTestUtil.loadAndOpenProject(path, disposableRule.disposable)
     try {
       project.stateStore.saveComponent(RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      project = PlatformTestUtil.loadAndOpenProject(path)
+      project = PlatformTestUtil.loadAndOpenProject(path, disposableRule.disposable)
       return path
     }
     finally {

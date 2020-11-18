@@ -40,7 +40,7 @@ public class ModuleLoadingStressTest extends HeavyPlatformTestCase {
     String moduleName = myModule.getName();
     PlatformTestUtil.forceCloseProjectWithoutSaving(myProject);
 
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectFilePath));
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectFilePath), getTestRootDisposable());
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     assertThat(modules).hasSize(count * 2 + 1);
 

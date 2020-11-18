@@ -640,9 +640,9 @@ public final class PlatformTestUtil {
   }
 
   public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
-    });
+    if (!project.isDisposed()) {
+      ApplicationManager.getApplication().invokeAndWait(() -> ProjectManagerEx.getInstanceEx().forceCloseProject(project));
+    }
   }
 
   public static void saveProject(@NotNull Project project) {
@@ -1151,8 +1151,10 @@ public final class PlatformTestUtil {
     }
   }
 
-  public static @NotNull Project loadAndOpenProject(@NotNull Path path) {
-    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(path, new OpenProjectTaskBuilder().build()));
+  public static @NotNull Project loadAndOpenProject(@NotNull Path path, @NotNull Disposable parent) {
+    Project project = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(path, new OpenProjectTaskBuilder().build()));
+    Disposer.register(parent, () -> forceCloseProjectWithoutSaving(project));
+    return project;
   }
 
   public static void openProject(@NotNull Project project) {

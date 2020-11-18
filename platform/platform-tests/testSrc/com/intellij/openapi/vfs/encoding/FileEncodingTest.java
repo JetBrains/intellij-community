@@ -823,13 +823,9 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertNotNull(document.getText());
     UIUtil.dispatchAllInvocationEvents();
 
-    Project newEncodingProject = Objects.requireNonNull(PlatformTestUtil.loadAndOpenProject(dir.toNioPath()));
-    try {
-      assertEquals(US_ASCII, file.getCharset());
-    }
-    finally {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(newEncodingProject);
-    }
+    Project newEncodingProject = PlatformTestUtil.loadAndOpenProject(dir.toNioPath(), getTestRootDisposable());
+    assertEquals(US_ASCII, file.getCharset());
+    assertTrue(newEncodingProject.isOpen());
   }
 
   public void testFileInsideJarCorrectlyHandlesBOM() throws IOException {

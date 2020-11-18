@@ -46,7 +46,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
   }
 
   private void loadAndSetupProject(@NotNull Path path) {
-    myProject = PlatformTestUtil.loadAndOpenProject(path);
+    myProject = PlatformTestUtil.loadAndOpenProject(path, getTestRootDisposable());
 
     setUpModule();
 
@@ -136,7 +136,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     LocalFileSystem.getInstance().refresh(false);
 
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectLocation));
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectLocation), getTestRootDisposable());
     InjectedLanguageManagerImpl.pushInjectors(getProject());
 
     setUpModule();

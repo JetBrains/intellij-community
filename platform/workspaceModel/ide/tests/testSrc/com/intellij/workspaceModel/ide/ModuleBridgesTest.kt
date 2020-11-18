@@ -443,10 +443,7 @@ class ModuleBridgesTest {
     }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = PlatformTestUtil.loadAndOpenProject(iprFile)
-      Disposer.register(disposableRule.disposable, Disposable {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      })
+      val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
 
@@ -479,10 +476,7 @@ class ModuleBridgesTest {
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = PlatformTestUtil.loadAndOpenProject(iprFile)
-      Disposer.register(disposableRule.disposable, Disposable {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      })
+      val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
 
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
       invokeAndWaitIfNeeded { UIUtil.dispatchAllInvocationEvents() }
@@ -752,8 +746,7 @@ class ModuleBridgesTest {
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
   val projectDir = temporaryDirectory.newPath("project")
   val project = WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
-    PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"))
+    PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"), disposableRule.disposable)
   }
-  disposableRule.disposable.attach { PlatformTestUtil.forceCloseProjectWithoutSaving(project) }
   return project
 }

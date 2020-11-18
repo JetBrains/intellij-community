@@ -220,10 +220,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
   private fun loadTestProject(projectDir: Path, disposableRule: DisposableRule): Project {
     val project = logExecutionTimeInMillis<Project>("Project load") {
-      PlatformTestUtil.loadAndOpenProject(projectDir)
-    }
-    disposableRule.register {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable)
     }
     return project
   }

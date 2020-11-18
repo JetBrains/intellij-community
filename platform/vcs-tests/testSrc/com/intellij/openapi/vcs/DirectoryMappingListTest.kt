@@ -48,7 +48,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     val root = FileUtil.toSystemIndependentName(VcsTestUtil.getTestDataPath() + BASE_PATH)
     projectRoot = createTestProjectStructure(null, root, false, tempDir)
 
-    myProject = PlatformTestUtil.loadAndOpenProject(projectRoot.toNioPath().resolve("directoryMappings.ipr"))
+    myProject = PlatformTestUtil.loadAndOpenProject(projectRoot.toNioPath().resolve("directoryMappings.ipr"), testRootDisposable)
 
     vcsMock = MockAbstractVcs(myProject, MOCK)
     vcsMock2 = MockAbstractVcs(myProject, MOCK2)
