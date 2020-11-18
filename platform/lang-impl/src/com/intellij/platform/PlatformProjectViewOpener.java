@@ -23,7 +23,7 @@ import java.util.List;
 
 final class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
   PlatformProjectViewOpener() {
-    if (PlatformUtils.isPyCharmEducational() || PlatformUtils.isDataGrip()) {
+    if (PlatformUtils.isPyCharmEducational()) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
   }
@@ -33,9 +33,16 @@ final class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
                                @NotNull VirtualFile baseDir,
                                @NotNull Ref<Module> moduleRef,
                                boolean isProjectCreatedWithWizard) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    openToolWindow(project, ToolWindowId.PROJECT_VIEW);
+    if (PlatformUtils.isDataGrip()) {
+      openToolWindow(project, ToolWindowId.DATABASE_VIEW);
+    }
+  }
+
+  private static void openToolWindow(@NotNull Project project, @NotNull String toolWindowId) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
     if (toolWindow == null) {
-      MyListener listener = new MyListener(project);
+      MyListener listener = new MyListener(project, toolWindowId);
       Disposer.register(project, listener);
       project.getMessageBus().connect(listener).subscribe(ToolWindowManagerListener.TOPIC, listener);
     }
@@ -57,16 +64,18 @@ final class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
 
   private static final class MyListener implements ToolWindowManagerListener, Disposable {
     private final Project myProject;
+    private final String myToolWindowId;
 
-    MyListener(@NotNull Project project) {
+    MyListener(@NotNull Project project, @NotNull String toolWindowId) {
       myProject = project;
+      myToolWindowId = toolWindowId;
     }
 
     @Override
     public void toolWindowsRegistered(@NotNull List<String> id, @NotNull ToolWindowManager toolWindowManager) {
-      if (id.contains(ToolWindowId.PROJECT_VIEW)) {
+      if (id.contains(myToolWindowId)) {
         Disposer.dispose(this);
-        activateProjectToolWindow(myProject, toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW));
+        activateProjectToolWindow(myProject, toolWindowManager.getToolWindow(myToolWindowId));
       }
     }
 
