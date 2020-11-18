@@ -214,6 +214,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   }
 
+  protected void processArrayCreation(PsiExpression expression, boolean alwaysNegative) {
+
+  }
+
   @Override
   public DfaInstructionState[] visitMethodReference(MethodReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiMethodReferenceExpression expression = instruction.getExpression();
@@ -283,6 +287,42 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     return new DfaCallArguments(qualifier, arguments, MutationSignature.fromMethod(method));
+  }
+
+  @Override
+  public DfaInstructionState[] visitArraySizeCheck(ArraySizeCheckInstruction instruction,
+                                                   DataFlowRunner runner, DfaMemoryState memState) {
+    DfaValue arraySize = memState.peek();
+    DfaControlTransferValue transfer = instruction.getNegativeSizeExceptionTransfer();
+    DfaCondition cond = arraySize.cond(RelationType.GE, runner.getFactory().getInt(0));
+    Instruction nextInstruction = runner.getInstruction(instruction.getIndex() + 1);
+    DfaInstructionState nextState = new DfaInstructionState(nextInstruction, memState);
+    if (cond.equals(DfaCondition.getTrue())) {
+      return new DfaInstructionState[]{nextState};
+    }
+    if (transfer == null) {
+      boolean hasNonNegative = memState.applyCondition(cond);
+      processArrayCreation(instruction.getExpression(), !hasNonNegative);
+      if (!hasNonNegative) {
+        return DfaInstructionState.EMPTY_ARRAY;
+      }
+      return new DfaInstructionState[]{nextState};
+    }
+    DfaMemoryState negativeSize = memState.createCopy();
+    boolean hasNonNegative = memState.applyCondition(cond);
+    boolean hasNegative = negativeSize.applyCondition(cond.negate());
+    List<DfaInstructionState> result = new ArrayList<>();
+    if (hasNonNegative) {
+      result.add(nextState);
+    }
+    if (hasNegative) {
+      List<DfaInstructionState> states = transfer.dispatch(negativeSize, runner);
+      for (DfaInstructionState negState : states) {
+        negState.getMemoryState().markEphemeral();
+      }
+      result.addAll(states);
+    }
+    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   @Override

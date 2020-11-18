@@ -1734,14 +1734,20 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PushInstruction(length, null, true));
       // stack: ... var.length
       final PsiExpression[] dimensions = expression.getArrayDimensions();
-      if (dimensions.length > 0) {
-        boolean sizeOnStack = false;
+      int dims = dimensions.length;
+      if (dims > 0) {
         for (final PsiExpression dimension : dimensions) {
           dimension.accept(this);
-          if (sizeOnStack) {
+          generateBoxingUnboxingInstructionFor(dimension, PsiType.INT);
+        }
+        DfaControlTransferValue transfer =
+          shouldHandleException() ?
+          myFactory.controlTransfer(myExceptionCache.get("java.lang.NegativeArraySizeException"), myTrapStack) : null;
+        for (int i = dims - 1; i >= 0; i--) {
+          addInstruction(new ArraySizeCheckInstruction(dimensions[i], transfer));
+          if (i != 0) {
             addInstruction(new PopInstruction());
           }
-          sizeOnStack = true;
         }
       }
       else {

@@ -43,6 +43,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
   private final Map<PsiMethodReferenceExpression, ConstantResult> myMethodReferenceResults = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
+  private final Map<PsiExpression, ThreeState> myNegativeArraySizes = new HashMap<>();
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
@@ -193,6 +194,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return StreamEx.ofKeys(myOutOfBoundsArrayAccesses, ThreeState.YES::equals);
   }
 
+  Stream<PsiExpression> negativeArraySizes() {
+    return StreamEx.ofKeys(myNegativeArraySizes, ThreeState.YES::equals);
+  }
+
   StreamEx<PsiCallExpression> alwaysFailingCalls() {
     return StreamEx.ofKeys(myFailingCalls, v -> v);
   }
@@ -278,6 +283,11 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   @Override
   protected void processArrayAccess(PsiArrayAccessExpression expression, boolean alwaysOutOfBounds) {
     myOutOfBoundsArrayAccesses.merge(expression, ThreeState.fromBoolean(alwaysOutOfBounds), ThreeState::merge);
+  }
+
+  @Override
+  protected void processArrayCreation(PsiExpression expression, boolean alwaysNegative) {
+    myNegativeArraySizes.merge(expression, ThreeState.fromBoolean(alwaysNegative), ThreeState::merge);
   }
 
   @Override
