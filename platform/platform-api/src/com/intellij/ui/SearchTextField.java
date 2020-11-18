@@ -144,6 +144,7 @@ public class SearchTextField extends JPanel {
     if(historyPopupEnabled) {
       reInitPopup();
     }
+    myTextField.putClientProperty("JTextField.variant", "search");
     myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
     myTextField.putClientProperty("JTextField.Search.CancelAction", (ActionListener)e -> {
       myTextField.setText("");
@@ -382,7 +383,6 @@ public class SearchTextField extends JPanel {
       getTextEditor().setText(value != null ? value : "");
       addCurrentTextToHistory();
       reInitPopup();
-
     };
   }
 
@@ -397,13 +397,7 @@ public class SearchTextField extends JPanel {
   }
 
   private void reInitPopup() {
-    if(myPopup != null){
-      myTextField.putClientProperty("JTextField.variant", null);
-      myPopup.cancel();
-      var popup = myPopup;
-      myPopup = null;
-      Disposer.dispose(popup);
-    }
+    hidePopup();
     final JList<String> list = new JBList<>(myModel);
     final Runnable chooseRunnable = createItemChosenCallback(list);
     if(ApplicationManager.getApplication() != null && JBPopupFactory.getInstance() != null) {
@@ -411,7 +405,6 @@ public class SearchTextField extends JPanel {
         .setMovable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback(chooseRunnable).createPopup();
-      myTextField.putClientProperty("JTextField.variant", "search");
     }
   }
 
