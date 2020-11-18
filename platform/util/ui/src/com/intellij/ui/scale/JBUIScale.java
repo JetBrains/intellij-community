@@ -9,7 +9,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBScalableIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +133,7 @@ public final class JBUIScale {
    * The system scale factor, corresponding to the default monitor device.
    */
   private static final MutableNotNullValue<Float> SYSTEM_SCALE_FACTOR = new MutableNotNullValue<>(() -> {
-    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+    if (!Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
       return 1f;
     }
 
@@ -224,7 +223,7 @@ public final class JBUIScale {
   }
 
   private static float computeUserScaleFactor(float scale) {
-    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+    if (!Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
       return 1f;
     }
 
@@ -259,11 +258,8 @@ public final class JBUIScale {
    * Returns the system scale factor, corresponding to the device the component is tied to.
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
-  public static float sysScale(@Nullable Component comp) {
-    if (comp != null) {
-      return sysScale(comp.getGraphicsConfiguration());
-    }
-    return sysScale();
+  public static float sysScale(@Nullable Component component) {
+    return component == null ? sysScale() : sysScale(component.getGraphicsConfiguration());
   }
 
   /**

@@ -3,17 +3,19 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
+import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.Predicate;
 
 public abstract class ToolWindowManagerEx extends ToolWindowManager {
   /**
@@ -53,8 +55,8 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   /**
    * @return {@code ID} of tool window which was last activated among tool windows satisfying the current condition
    */
-  public @Nullable String getLastActiveToolWindowId(@Nullable Condition<? super JComponent> condition) {
-    ToolWindow window = getLastActiveToolWindow(component -> condition == null || condition.value(component));
+  public @Nullable String getLastActiveToolWindowId(@Nullable Predicate<? super JComponent> condition) {
+    ToolWindow window = getLastActiveToolWindow(component -> condition == null || condition.test(component));
     return window == null ? null : window.getId();
   }
 
@@ -77,4 +79,13 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   public abstract void hideToolWindow(@NotNull String id, boolean hideSide);
 
   public abstract @NotNull List<String> getIdsOn(@NotNull ToolWindowAnchor anchor);
+
+  public static void hideToolWindowBalloon(@NotNull String id, @NotNull Project project) {
+    AppUIUtil.invokeLaterIfProjectAlive(project, () -> {
+      Balloon balloon = ToolWindowManager.getInstance(project).getToolWindowBalloon(id);
+      if (balloon != null) {
+        balloon.hide();
+      }
+    });
+  }
 }

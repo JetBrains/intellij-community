@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale;
 
 import com.intellij.ui.JreHiDpiUtil;
@@ -144,8 +144,10 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
   public boolean update() {
     boolean updated = setScale(USR_SCALE.of(JBUIScale.scale(1f)));
     if (compRef != null) {
-      Component comp = compRef.get();
-      if (comp != null) updated = setScale(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(comp))) || updated;
+      Component component = compRef.get();
+      if (component != null) {
+        updated = setScale(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(component.getGraphicsConfiguration()))) || updated;
+      }
     }
     return onUpdated(updated);
   }
@@ -156,7 +158,9 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
    */
   @Override
   public boolean setScale(@NotNull Scale scale) {
-    if (isScaleOverridden(scale)) return false;
+    if (isScaleOverridden(scale)) {
+      return false;
+    }
 
     if (scale.type == ScaleType.SYS_SCALE) {
       boolean updated = !sysScale.equals(scale);
@@ -167,12 +171,16 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
   }
 
   @Override
-  protected <T extends UserScaleContext> boolean updateAll(@NotNull T ctx) {
-    boolean updated = super.updateAll(ctx);
-    if (!(ctx instanceof ScaleContext)) return updated;
-    ScaleContext context = (ScaleContext)ctx;
+  protected <T extends UserScaleContext> boolean updateAll(@NotNull T scaleContext) {
+    boolean updated = super.updateAll(scaleContext);
+    if (!(scaleContext instanceof ScaleContext)) {
+      return updated;
+    }
+    ScaleContext context = (ScaleContext)scaleContext;
 
-    if (compRef != null) compRef.clear();
+    if (compRef != null) {
+      compRef.clear();
+    }
     compRef = context.compRef;
 
     return setScale(context.sysScale) || updated;
