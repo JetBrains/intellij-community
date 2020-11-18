@@ -454,8 +454,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   @NotNull
   @Override
   public ListCellRenderer<Object> getElementsRenderer() {
-    //noinspection unchecked
-    return new SERenderer();
+    return new SearchEverywherePsiRenderer();
   }
 
   @Override
@@ -509,18 +508,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   protected static boolean openInCurrentWindow(int modifiers) {
     return (modifiers & InputEvent.SHIFT_MASK) == 0;
-  }
-
-  protected static class SERenderer extends SearchEverywherePsiRenderer {
-    @Override
-    public String getElementText(PsiElement element) {
-      if (element instanceof NavigationItem) {
-        return Optional.ofNullable(((NavigationItem)element).getPresentation())
-          .map(presentation -> presentation.getPresentableText())
-          .orElseGet(() -> super.getElementText(element));
-      }
-      return super.getElementText(element);
-    }
   }
 
   abstract static class ScopeChooserAction extends ActionGroup
