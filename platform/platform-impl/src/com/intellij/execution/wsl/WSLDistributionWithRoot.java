@@ -74,7 +74,7 @@ public class WSLDistributionWithRoot extends WSLDistribution {
   @Nullable
   @Override
   public String getWindowsPath(@NotNull String wslPath) {
-    String windowsPath = super.getWindowsPath(wslPath);
+    String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
     if (windowsPath != null) {
       return windowsPath;
     }
