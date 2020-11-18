@@ -30,22 +30,18 @@ public final class StdArrangementTokens {
    * Forces nested classes initialization - otherwise it's possible that, say, {@link #byId(String)} returns null for valid
    * id just because corresponding nested class hasn't been initialized yet.
    */
-  private static final NotNullLazyValue<Integer> NESTED_CLASSES_INITIALIZER = new NotNullLazyValue<>() {
-    @NotNull
-    @Override
-    protected Integer compute() {
-      int dummy = 0;
-      for (Class<?> clazz : StdArrangementTokens.class.getClasses()) {
-        try {
-          dummy += clazz.getDeclaredFields()[0].get(null).hashCode();
-        }
-        catch (IllegalAccessException e) {
-          assert false;
-        }
+  private static final NotNullLazyValue<Integer> NESTED_CLASSES_INITIALIZER = NotNullLazyValue.createValue(() -> {
+    int dummy = 0;
+    for (Class<?> clazz : StdArrangementTokens.class.getClasses()) {
+      try {
+        dummy += clazz.getDeclaredFields()[0].get(null).hashCode();
       }
-      return dummy;
+      catch (IllegalAccessException e) {
+        assert false;
+      }
     }
-  };
+    return dummy;
+  });
 
   private StdArrangementTokens() {
   }
@@ -57,24 +53,20 @@ public final class StdArrangementTokens {
   }
 
   private static NotNullLazyValue<Set<ArrangementSettingsToken>> collectFields(@NotNull final Class<?> clazz) {
-    return new NotNullLazyValue<>() {
-      @NotNull
-      @Override
-      protected Set<ArrangementSettingsToken> compute() {
-        Set<ArrangementSettingsToken> result = new HashSet<>();
-        for (Field field : clazz.getFields()) {
-          if (ArrangementSettingsToken.class.isAssignableFrom(field.getType())) {
-            try {
-              result.add((ArrangementSettingsToken)field.get(null));
-            }
-            catch (IllegalAccessException e) {
-              assert false : e;
-            }
+    return NotNullLazyValue.createValue(() -> {
+      Set<ArrangementSettingsToken> result = new HashSet<>();
+      for (Field field : clazz.getFields()) {
+        if (ArrangementSettingsToken.class.isAssignableFrom(field.getType())) {
+          try {
+            result.add((ArrangementSettingsToken)field.get(null));
+          }
+          catch (IllegalAccessException e) {
+            assert false : e;
           }
         }
-        return result;
       }
-    };
+      return result;
+    });
   }
 
   private static StdArrangementSettingsToken invertible(@NotNull String id,

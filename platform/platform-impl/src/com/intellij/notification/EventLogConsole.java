@@ -54,13 +54,9 @@ final class EventLogConsole {
 
   private final EditorEx myLogEditor;
 
-  private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = new NotNullLazyValue<>() {
-    @NotNull
-    @Override
-    protected EditorHyperlinkSupport compute() {
-      return EditorHyperlinkSupport.get(getConsoleEditor());
-    }
-  };
+  private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = NotNullLazyValue.createValue(() -> {
+    return EditorHyperlinkSupport.get(getConsoleEditor());
+  });
 
   private final LogModel myProjectModel;
 

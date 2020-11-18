@@ -49,7 +49,7 @@ public final class SystemInfo {
   public static final boolean isJetBrainsJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "JetBrains", 0) >= 0;
 
   /**
-   * @deprecated Doesn't make sence - Java 11+ is only supported.
+   * @deprecated Doesn't make sense - Java 11+ is only supported.
    */
   @Deprecated
   public static final boolean IS_AT_LEAST_JAVA9 = SystemInfoRt.IS_AT_LEAST_JAVA9;
@@ -96,12 +96,12 @@ public final class SystemInfo {
   public static final boolean isArm64 = "aarch64".equals(OS_ARCH) || "arm64".equals(OS_ARCH);
   public static final boolean isMacIntel64 = isMac && isIntel64;
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new PathExecLazyValue("xdg-open");
+  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = PathExecLazyValue.create("xdg-open");
   public static boolean hasXdgOpen() {
     return isXWindow && ourHasXdgOpen.getValue();
   }
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgMime = new PathExecLazyValue("xdg-mime");
+  private static final NotNullLazyValue<Boolean> ourHasXdgMime = PathExecLazyValue.create("xdg-mime");
   public static boolean hasXdgMime() {
     return isXWindow && ourHasXdgMime.getValue();
   }

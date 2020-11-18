@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.util.AtomicNotNullLazyValue
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileLoadUtil
 import com.intellij.profile.codeInspection.InspectionProfileManager
@@ -41,7 +40,7 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
       fireProfileChanged(scheme)
     }
   })
-  protected val profilesAreInitialized = AtomicNotNullLazyValue.createValue {
+  protected val profilesAreInitialized by lazy {
     val app = ApplicationManager.getApplication()
     if (!(app.isUnitTestMode || app.isHeadlessEnvironment)) {
       BUNDLED_EP_NAME.processWithPluginDescriptor(BiConsumer { ep, pluginDescriptor ->
@@ -67,7 +66,7 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
 
   fun initProfiles() {
     if (LOAD_PROFILES) {
-      profilesAreInitialized.value
+      profilesAreInitialized
     }
   }
 

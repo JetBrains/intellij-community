@@ -33,30 +33,22 @@ public class InspectionManagerEx extends InspectionManagerBase {
   public InspectionManagerEx(final Project project) {
     super(project);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myContentManager = new NotNullLazyValue<>() {
-        @NotNull
-        @Override
-        protected ContentManager compute() {
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-          toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
-          return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
-        }
-      };
+      myContentManager = NotNullLazyValue.createValue(() -> {
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+        toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
+        return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
+      });
     }
     else {
-      myContentManager = new NotNullLazyValue<>() {
-        @NotNull
-        @Override
-        protected ContentManager compute() {
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-          ToolWindow toolWindow = toolWindowManager.registerToolWindow(
-            RegisterToolWindowTask.closable(ToolWindowId.INSPECTION, UIBundle.messagePointer("tool.window.name.inspection"),
-                                            AllIcons.Toolwindows.ToolWindowInspection, ToolWindowAnchor.BOTTOM));
-          ContentManager contentManager = toolWindow.getContentManager();
-          ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
-          return contentManager;
-        }
-      };
+      myContentManager = NotNullLazyValue.createValue(() -> {
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+        ToolWindow toolWindow = toolWindowManager.registerToolWindow(
+          RegisterToolWindowTask.closable(ToolWindowId.INSPECTION, UIBundle.messagePointer("tool.window.name.inspection"),
+                                          AllIcons.Toolwindows.ToolWindowInspection, ToolWindowAnchor.BOTTOM));
+        ContentManager contentManager = toolWindow.getContentManager();
+        ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
+        return contentManager;
+      });
     }
   }
 

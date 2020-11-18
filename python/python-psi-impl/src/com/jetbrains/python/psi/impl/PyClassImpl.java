@@ -618,7 +618,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public PyFunction findInitOrNew(boolean inherited, final @Nullable TypeEvalContext context) {
     NameFinder<PyFunction> proc;
     if (isNewStyleClass(context)) {
-      proc = new NameFinder<PyFunction>(notNullizeContext(context), PyNames.INIT, PyNames.NEW) {
+      proc = new NameFinder<>(notNullizeContext(context), PyNames.INIT, PyNames.NEW) {
         @Nullable
         @Override
         protected PyClass getContainingClass(@NotNull PyFunction element) {
@@ -1180,15 +1180,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public boolean isNewStyleClass(@Nullable TypeEvalContext context) {
-    return new NotNullLazyValue<ParameterizedCachedValue<Boolean, TypeEvalContext>>() {
-      @NotNull
-      @Override
-      protected ParameterizedCachedValue<Boolean, TypeEvalContext> compute() {
-        return CachedValuesManager.getManager(getProject())
-          .createParameterizedCachedValue(
-            param -> new Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT), false);
-      }
-    }.getValue().getValue(context);
+    return NotNullLazyValue.<ParameterizedCachedValue<Boolean, TypeEvalContext>>create(() -> {
+      return CachedValuesManager.getManager(getProject())
+        .createParameterizedCachedValue(param -> new Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT), false);
+    }).getValue().getValue(context);
   }
 
   private boolean calculateNewStyleClass(@Nullable TypeEvalContext context) {
@@ -1508,10 +1503,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             if (Objects.equals(t1, t2)) {
               return 0;
             }
-            else if (t2 == null || t1 != null && t1.getAncestorTypes(context).contains(t2)) {
+            else if (t2 == null || t1.getAncestorTypes(context).contains(t2)) {
               return 1;
             }
-            else if (t1 == null || t2.getAncestorTypes(context).contains(t1)) {
+            else if (t2.getAncestorTypes(context).contains(t1)) {
               return -1;
             }
             else {

@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -42,57 +41,73 @@ public final class Restarter {
     return ourRestartSupported.getValue();
   }
 
-  private static final NotNullLazyValue<Boolean> ourRestartSupported = new AtomicNotNullLazyValue<>() {
-    @Override
-    protected @NotNull Boolean compute() {
-      String problem;
+  private static final NullableLazyValue<File> ourStarter = NullableLazyValue.createValue(() -> {
+    if (SystemInfo.isWindows && JnaLoader.isLoaded()) {
+      Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
+      char[] buffer = new char[32767];  // using 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260)
+      int result = kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue();
+      if (result != 0) return new File(Native.toString(buffer));
+    }
+    else if (SystemInfo.isMac) {
+      File appDir = new File(PathManager.getHomePath()).getParentFile();
+      if (appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory()) return appDir;
+    }
+    else if (SystemInfo.isUnix) {
+      File starter = new File(PathManager.getBinPath(), ApplicationNamesInfo.getInstance().getScriptName() + ".sh");
+      if (starter.canExecute()) return starter;
+    }
 
-      if (SystemInfo.isWindows) {
-        if (!JnaLoader.isLoaded()) {
-          problem = "JNA not loaded";
-        }
-        else if (ourStarter.getValue() == null) {
-          problem = "GetModuleFileName() failed";
-        }
-        else {
-          problem = checkRestarter("restarter.exe");
-        }
+    return null;
+  });
+
+  private static final NotNullLazyValue<Boolean> ourRestartSupported = NotNullLazyValue.createAtomic(() -> {
+    String problem;
+
+    if (SystemInfo.isWindows) {
+      if (!JnaLoader.isLoaded()) {
+        problem = "JNA not loaded";
       }
-      else if (SystemInfo.isMac) {
-        if (ourStarter.getValue() == null) {
-          problem = "not a bundle: " + PathManager.getHomePath();
-        }
-        else {
-          problem = checkRestarter("restarter");
-        }
-      }
-      else if (SystemInfo.isUnix) {
-        if (UnixProcessManager.getCurrentProcessId() <= 0) {
-          problem = "cannot detect process ID";
-        }
-        else if (ourStarter.getValue() == null) {
-          problem = "cannot find launcher script in " + PathManager.getBinPath();
-        }
-        else if (PathEnvironmentVariableUtil.findInPath("python") == null && PathEnvironmentVariableUtil.findInPath("python3") == null) {
-          problem = "cannot find neither 'python' nor 'python3' in 'PATH'";
-        }
-        else {
-          problem = checkRestarter("restart.py");
-        }
+      else if (ourStarter.getValue() == null) {
+        problem = "GetModuleFileName() failed";
       }
       else {
-        problem = "Platform unsupported: " + SystemInfo.OS_NAME;
-      }
-
-      if (problem == null) {
-        return true;
-      }
-      else {
-        Logger.getInstance(Restarter.class).info("not supported: " + problem);
-        return false;
+        problem = checkRestarter("restarter.exe");
       }
     }
-  };
+    else if (SystemInfo.isMac) {
+      if (ourStarter.getValue() == null) {
+        problem = "not a bundle: " + PathManager.getHomePath();
+      }
+      else {
+        problem = checkRestarter("restarter");
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      if (UnixProcessManager.getCurrentProcessId() <= 0) {
+        problem = "cannot detect process ID";
+      }
+      else if (ourStarter.getValue() == null) {
+        problem = "cannot find launcher script in " + PathManager.getBinPath();
+      }
+      else if (PathEnvironmentVariableUtil.findInPath("python") == null && PathEnvironmentVariableUtil.findInPath("python3") == null) {
+        problem = "cannot find neither 'python' nor 'python3' in 'PATH'";
+      }
+      else {
+        problem = checkRestarter("restart.py");
+      }
+    }
+    else {
+      problem = "Platform unsupported: " + SystemInfo.OS_NAME;
+    }
+
+    if (problem == null) {
+      return true;
+    }
+    else {
+      Logger.getInstance(Restarter.class).info("not supported: " + problem);
+      return false;
+    }
+  });
 
   private static String checkRestarter(String restarterName) {
     Path restarter = PathManager.findBinFile(restarterName);
@@ -117,28 +132,6 @@ public final class Restarter {
   public static @Nullable File getIdeStarter() {
     return ourStarter.getValue();
   }
-
-  private static final NullableLazyValue<File> ourStarter = new NullableLazyValue<>() {
-    @Override
-    protected File compute() {
-      if (SystemInfo.isWindows && JnaLoader.isLoaded()) {
-        Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
-        char[] buffer = new char[32767];  // using 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260)
-        int result = kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue();
-        if (result != 0) return new File(Native.toString(buffer));
-      }
-      else if (SystemInfo.isMac) {
-        File appDir = new File(PathManager.getHomePath()).getParentFile();
-        if (appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory()) return appDir;
-      }
-      else if (SystemInfo.isUnix) {
-        File starter = new File(PathManager.getBinPath(), ApplicationNamesInfo.getInstance().getScriptName() + ".sh");
-        if (starter.canExecute()) return starter;
-      }
-
-      return null;
-    }
-  };
 
   private static void restartOnWindows(boolean elevate, String... beforeRestart) throws IOException {
     Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
@@ -201,8 +194,7 @@ public final class Restarter {
       }
     }
 
-    String[] restartArg = Arrays.copyOf(argv, countArgs);
-    return restartArg;
+    return Arrays.copyOf(argv, countArgs);
   }
 
   private static void restartOnMac(String... beforeRestart) throws IOException {

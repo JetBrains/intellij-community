@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,15 +71,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   private final WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
-  private final AtomicNotNullLazyValue<InspectionToolWrapper> myDummyWrapper = new AtomicNotNullLazyValue<>() {
-    @NotNull
-    @Override
-    protected InspectionToolWrapper compute() {
-      InspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
-      toolWrapper.initialize(myContext);
-      return toolWrapper;
-    }
-  };
+  private final NotNullLazyValue<InspectionToolWrapper> myDummyWrapper = NotNullLazyValue.createAtomic(() -> {
+    InspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
+    toolWrapper.initialize(myContext);
+    return toolWrapper;
+  });
 
   @NonNls private static final String DELETE = "delete";
   @NonNls private static final String COMMENT = "comment";

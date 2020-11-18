@@ -2,7 +2,7 @@
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -45,7 +45,7 @@ public final class JBUIScale {
 
   private JBUIScale() {}
 
-  private static final AtomicNotNullLazyValue<Pair<String, Integer>> systemFontData = AtomicNotNullLazyValue.createValue(() -> {
+  private static final NotNullLazyValue<Pair<String, Integer>> systemFontData = NotNullLazyValue.createAtomic(() -> {
     // with JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = UIManager.getFont("Label.font");
     if (SystemInfoRt.isMac) {
@@ -95,7 +95,8 @@ public final class JBUIScale {
         }
       }
     }
-    Pair<String, Integer> result = Pair.create(font.getName(), font.getSize());
+
+    Pair<String, Integer> result = new Pair<>(font.getName(), font.getSize());
     if (isScaleVerbose) {
       log.info(String.format("ourSystemFontData: %s, %d", result.first, result.second));
     }

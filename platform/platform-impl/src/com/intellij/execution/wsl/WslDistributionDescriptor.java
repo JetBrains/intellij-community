@@ -1,18 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -37,8 +37,8 @@ final class WslDistributionDescriptor {
   @Tag("presentable-name")
   private @NlsSafe String myPresentableName;
 
-  private final AtomicNotNullLazyValue<String> myMntRootProvider = AtomicNotNullLazyValue.createValue(this::computeMntRoot);
-  private final AtomicNullableLazyValue<String> myUserHomeProvider = AtomicNullableLazyValue.createValue(this::computeUserHome);
+  private final NotNullLazyValue<String> myMntRootProvider = NotNullLazyValue.createAtomic(this::computeMntRoot);
+  private final NullableLazyValue<String> myUserHomeProvider = AtomicNullableLazyValue.createValue(this::computeUserHome);
 
   /**
    * Necessary for serializer

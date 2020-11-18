@@ -12,8 +12,8 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.Nls;
@@ -264,7 +264,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   @Attribute("treeRenderer")
   public String treeRendererClass;
 
-  private final AtomicNotNullLazyValue<ObjectProducer> myProducer = AtomicNotNullLazyValue.createValue(this::createProducer);
+  private final NotNullLazyValue<ObjectProducer> myProducer = NotNullLazyValue.createAtomic(this::createProducer);
   private ComponentManager componentManager;
   private Project myProject;
 
