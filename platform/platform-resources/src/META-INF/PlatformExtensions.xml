@@ -848,8 +848,6 @@
     <notificationGroup id="JDK Update" displayType="BALLOON"/>
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" />
 
-    <notificationGroup id="Cached value profiling" displayType="BALLOON" />
-
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterStartup" />
 
     <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
@@ -1085,7 +1083,7 @@
     <notificationGroup id="Collect Zipped Logs" displayType="BALLOON"/>
     <notificationGroup id="Dump Threads Group" displayType="BALLOON" isLogByDefault="false"/>
     <notificationGroup id="Plugins AutoSwitch" displayType="BALLOON"/>
-    <notificationGroup id="Cached value profiling" displayType="BALLOON" isLogByDefault="false"/>
+    <notificationGroup id="Cached value profiling" displayType="BALLOON"/>
     <notificationGroup id="Plugins Suggestion" displayType="STICKY_BALLOON"/>
     <notificationGroup id="File Watcher Messages" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Memory" displayType="BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.memory"/>
