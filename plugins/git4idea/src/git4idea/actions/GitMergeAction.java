@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.intellij.notification.NotificationType.INFORMATION;
+import static git4idea.GitNotificationIdsHolder.LOCAL_CHANGES_DETECTED;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
 import static git4idea.update.GitUpdateSessionKt.getBodyForUpdateNotification;
 import static git4idea.update.GitUpdateSessionKt.getTitleForUpdateNotification;
@@ -222,7 +223,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       }
     }
     else if (localChangesDetector.wasMessageDetected()) {
-      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, "git.merge.local.changes.detected", repository.getRoot(), getActionName(),
+      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, LOCAL_CHANGES_DETECTED, repository.getRoot(), getActionName(),
                                                                  localChangesDetector.getRelativeFilePaths());
     }
     else if (untrackedFilesDetector.wasMessageDetected()) {

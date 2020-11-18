@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.*
 import com.intellij.util.containers.toArray
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitNotificationIdsHolder.Companion.UPDATE_NOTHING_TO_UPDATE
 import git4idea.branch.GitBranchPair
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -30,7 +31,7 @@ internal class GitUpdateExecutionProcess(private val project: Project,
 
   fun execute() {
     if (updateConfig.isEmpty()) {
-      project.service<VcsNotifier>().notifyMinorWarning("git.update.nothing.to.update",
+      project.service<VcsNotifier>().notifyMinorWarning(UPDATE_NOTHING_TO_UPDATE,
                                                         "",
                                                         GitBundle.message("update.process.nothing.to.update"))
       return

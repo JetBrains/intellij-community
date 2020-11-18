@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+import static git4idea.GitNotificationIdsHolder.COULD_NOT_LOAD_CHANGES_OF_COMMIT;
 import static git4idea.reset.GitResetMode.SOFT;
 import static java.util.Collections.singletonMap;
 
@@ -105,7 +106,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         catch (VcsException e) {
           String message = GitBundle.message("git.undo.action.could.not.load.changes.of.commit", commit.getId().asString());
           LOG.warn(message, e);
-          VcsNotifier.getInstance(project).notifyError("git.could.not.load.changes.of.commit",
+          VcsNotifier.getInstance(project).notifyError(COULD_NOT_LOAD_CHANGES_OF_COMMIT,
                                                        "",
                                                        message);
           return;

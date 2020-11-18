@@ -16,6 +16,8 @@ import com.intellij.util.Consumer
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitCommit
+import git4idea.GitNotificationIdsHolder.Companion.STASH_LOCAL_CHANGES_DETECTED
+import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_FAILED
 import git4idea.GitUtil
 import git4idea.commands.*
 import git4idea.config.GitConfigUtil
@@ -68,13 +70,13 @@ fun unstash(project: Project,
         return
       }
       else if (localChangesDetector.wasMessageDetected()) {
-        LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, "git.stash.local.changes.detected", root,
+        LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, STASH_LOCAL_CHANGES_DETECTED, root,
                                                                    GitBundle.message("unstash.operation.name"),
                                                                    localChangesDetector.relativeFilePaths)
         return
       }
       else if (!result.success()) {
-        VcsNotifier.getInstance(project).notifyError("git.unstash.failed", GitBundle.message("notification.title.unstash.failed"),
+        VcsNotifier.getInstance(project).notifyError(UNSTASH_FAILED, GitBundle.message("notification.title.unstash.failed"),
                                                      result.errorOutputAsHtmlString, true)
         return
       }

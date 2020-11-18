@@ -437,6 +437,7 @@
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitToggleAnnotationOptionsActionProvider" />
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
+    <statistics.notificationIdsHolder implementation="git4idea.GitNotificationIdsHolder"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
         implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>

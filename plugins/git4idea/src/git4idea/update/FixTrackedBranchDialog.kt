@@ -19,6 +19,7 @@ import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import git4idea.GitNotificationIdsHolder.Companion.FIX_TRACKED_NOT_ON_BRANCH
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitBranchPair
 import git4idea.config.GitVcsSettings
@@ -81,7 +82,7 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
         .append(HtmlChunk.br())
         .append(reposNotOnBranch)
         .toString()
-      vcsNotifier.notifyImportantWarning("git.fix.tracked.not.on.branch",
+      vcsNotifier.notifyImportantWarning(FIX_TRACKED_NOT_ON_BRANCH,
                                          GitBundle.message("tracked.branch.fix.dialog.not.on.branch.title"), message)
     }
 

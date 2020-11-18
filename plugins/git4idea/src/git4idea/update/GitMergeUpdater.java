@@ -35,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.*;
 
+import static git4idea.GitNotificationIdsHolder.MERGE_ERROR;
+import static git4idea.GitNotificationIdsHolder.MERGE_RESET_ERROR;
 import static java.util.Arrays.asList;
 
 /**
@@ -117,7 +119,7 @@ public class GitMergeUpdater extends GitUpdater {
     else {
       LOG.info("Unknown error: " + errorMessage);
       VcsNotifier.getInstance(myProject)
-        .notifyError("git.merge.error", GitBundle.message("notification.title.error.merging"), errorMessage);
+        .notifyError(MERGE_ERROR, GitBundle.message("notification.title.error.merging"), errorMessage);
       return GitUpdateResult.ERROR;
     }
   }
@@ -166,7 +168,7 @@ public class GitMergeUpdater extends GitUpdater {
     if (!result.success()) {
       LOG.info("cancel git reset --merge: " + result.getErrorOutputAsJoinedString());
       VcsNotifier.getInstance(myProject)
-        .notifyError("git.merge.reset.error", GitBundle.message("notification.title.couldn.t.reset.merge"),
+        .notifyError(MERGE_RESET_ERROR, GitBundle.message("notification.title.couldn.t.reset.merge"),
                                      result.getErrorOutputAsHtmlString());
     }
   }

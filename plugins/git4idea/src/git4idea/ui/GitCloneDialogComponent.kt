@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
@@ -133,7 +134,7 @@ class GitCloneDialogComponent(project: Project,
   override fun isOkActionEnabled(): Boolean = super.isOkActionEnabled() && versionCheckState == VersionCheckState.SUCCESS
 
   private fun notifyCloneError(project: Project) {
-    VcsNotifier.getInstance(project).notifyError("git.clone.unable.to.create.destination.dir",
+    VcsNotifier.getInstance(project).notifyError(CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR,
                                                  VcsBundle.message("clone.dialog.clone.button"),
                                                  VcsBundle.message("clone.dialog.unable.create.destination.error"))
   }
