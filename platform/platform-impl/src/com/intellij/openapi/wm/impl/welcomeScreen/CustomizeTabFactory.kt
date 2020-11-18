@@ -82,7 +82,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   init {
     lafProperty.afterChange({
                               val newLaf = laf.findLaf(it)
-                              if (laf == newLaf) return@afterChange
+                              if (laf.currentLookAndFeel == newLaf) return@afterChange
                               QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, newLaf, true)
                               WelcomeScreenEventCollector.logLafChanged(newLaf, laf.autodetect)
                             }, parentDisposable)
