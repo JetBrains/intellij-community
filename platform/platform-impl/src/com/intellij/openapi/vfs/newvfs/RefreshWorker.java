@@ -144,7 +144,7 @@ final class RefreshWorker {
     List<String> persistedNames = snapshot.getFirst();
     List<VirtualFile> children = snapshot.getSecond();
 
-    Map<String, FileAttributes> childrenWithAttributes = fs instanceof BatchingFileSystem ? ((BatchingFileSystem)fs).listWithAttributes(dir, null) : null;
+    Map<String, FileAttributes> childrenWithAttributes = fs instanceof BatchingFileSystem ? ((BatchingFileSystem)fs).listWithAttributes(dir) : null;
     String[] listDir = childrenWithAttributes != null ? ArrayUtil.toStringArray(childrenWithAttributes.keySet()) : fs.list(dir);
     String[] upToDateNames = VfsUtil.filterNames(listDir);
     Set<String> newNames = new HashSet<>(upToDateNames.length);
