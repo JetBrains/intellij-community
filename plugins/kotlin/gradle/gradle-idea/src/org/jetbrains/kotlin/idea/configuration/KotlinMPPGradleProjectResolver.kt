@@ -701,6 +701,10 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                                 addAll(propagatedNativeDependencies(compilations))
                             }
                         }
+
+                        if (mppModel.extraFeatures.isHMPPEnabled) {
+                            addAll(propagatedPlatformDependencies(mppModel, sourceSet))
+                        }
                     }
                     buildDependencies(
                         resolverCtx,
@@ -755,6 +759,46 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     else -> null
                 }
             }
+        }
+
+
+        /**
+         * Source sets sharing code between JVM and Android are the only intermediate source sets that
+         * can effectively consume a dependency's platform artifact.
+         * When a library only offers a JVM variant, then Android and JVM consume this variant of the library.
+         *
+         * This will be replaced later on by [KT-43450](https://youtrack.jetbrains.com/issue/KT-43450)
+         *
+         * @return all dependencies being present across given JVM and Android compilations that this [sourceSet] can also participates in.
+         */
+        private fun propagatedPlatformDependencies(
+            mppModel: KotlinMPPGradleModel,
+            sourceSet: KotlinSourceSet,
+        ): Set<ExternalDependency> {
+            if (
+                sourceSet.actualPlatforms.platforms.sorted() == listOf(KotlinPlatform.JVM, KotlinPlatform.ANDROID).sorted()
+            ) {
+                return mppModel.targets
+                    .filter { target -> target.platform == KotlinPlatform.JVM || target.platform == KotlinPlatform.ANDROID }
+                    .flatMap { target -> target.compilations }
+                    .filter { compilation -> compilation.dependsOnSourceSet(mppModel, sourceSet) }
+                    .map { targetCompilations -> targetCompilations.dependencies.mapNotNull(mppModel.dependencyMap::get).toSet() }
+                    .reduceOrNull { acc, dependencies -> acc.intersect(dependencies) }.orEmpty()
+
+            }
+
+            return emptySet()
+        }
+
+        private fun KotlinCompilation.dependsOnSourceSet(mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet): Boolean {
+            return sourceSets.any { containedSourceSet -> sourceSet.isOrDependsOnSourceSet(mppModel, containedSourceSet) }
+        }
+
+        private fun KotlinSourceSet.isOrDependsOnSourceSet(mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet): Boolean {
+            if (this == sourceSet) return true
+            return this.dependsOnSourceSets
+                .map { dependencySourceSetName -> mppModel.sourceSets.getValue(dependencySourceSetName) }
+                .any { dependencySourceSet -> dependencySourceSet.isOrDependsOnSourceSet(mppModel, sourceSet) }
         }
 
         private val CompilationWithDependencies.isAppleCompilation: Boolean
