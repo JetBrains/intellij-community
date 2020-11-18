@@ -7,8 +7,10 @@ import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarksListener;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.CompoundIconProvider;
+import com.intellij.ide.projectView.impl.DefaultSortWeight;
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
@@ -322,7 +324,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     model.onValidThread(() -> {
       AreaInstance area = ProjectFileNode.findArea(file, root.getProject());
       if (area != null) {
-        TreeVisitor visitor = new TreeVisitor.ByComponent<VirtualFile, AbstractTreeNode>(file, AbstractTreeNode.class) {
+        TreeVisitor visitor = new TreeVisitor.ByComponent<>(file, AbstractTreeNode.class) {
           @Override
           protected boolean matches(@NotNull AbstractTreeNode pathComponent, @NotNull VirtualFile thisComponent) {
             if (pathComponent.canRepresent(thisComponent)) return true;
@@ -343,7 +345,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
             return true;
           }
         };
-        AbstractTreeWalker<AbstractTreeNode<?>> walker = new AbstractTreeWalker<AbstractTreeNode<?>>(visitor) {
+        AbstractTreeWalker<AbstractTreeNode<?>> walker = new AbstractTreeWalker<>(visitor) {
           @Override
           protected Collection<AbstractTreeNode<?>> getChildren(@NotNull AbstractTreeNode pathComponent) {
             Node node = pathComponent instanceof Node ? (Node)pathComponent : null;
@@ -442,11 +444,6 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     Node(@NotNull Node parent, @NotNull Object value) {
       super(parent.getProject(), value, parent.getSettings());
       setParent(parent);
-    }
-
-    @Override
-    public int getWeight() {
-      return 0;
     }
 
     @Override
@@ -671,8 +668,18 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     @Override
+    public int getWeight() {
+      return getTypeSortKey().getWeight();
+    }
+
+    @Override
     public int getTypeSortWeight(boolean sortByType) {
-      return 1;
+      return getWeight();
+    }
+
+    @Override
+    public @NotNull DefaultSortWeight getTypeSortKey() {
+      return DefaultSortWeight.PROJECT;
     }
 
     @NotNull
@@ -757,16 +764,19 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
     @Override
     public int getWeight() {
-      if (getVirtualFile().isDirectory()) {
-        ViewSettings settings = getSettings();
-        if (settings == null || settings.isFoldersAlwaysOnTop()) return 0;
-      }
-      return 20;
+      return DefaultSortWeight.FILE.getWeight();
     }
 
     @Override
     public int getTypeSortWeight(boolean sortByType) {
-      return getVirtualFile().isDirectory() ? 3 : 5;
+      if (sortByType && getVirtualFile().isDirectory()) return DefaultSortWeight.FOLDER.getWeight();
+      return DefaultSortWeight.FILE.getWeight();
+    }
+
+    @Override
+    public @Nullable Comparable<?> getTypeSortKey() {
+      if (getVirtualFile().isDirectory()) return DefaultSortWeight.FOLDER;
+      return new PsiFileNode.ExtensionSortKey(getVirtualFile().getFileType().getDefaultExtension());
     }
 
     @NotNull
@@ -824,12 +834,24 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
     @Override
     public int getWeight() {
-      return node.getRootID() instanceof Project ? 0 : super.getWeight();
+      if (isScratchFile()) return DefaultSortWeight.SCRATCH_ROOT.getWeight();
+      return super.getWeight();
     }
 
     @Override
     public int getTypeSortWeight(boolean sortByType) {
-      return node.getRootID() instanceof Project ? 1 : super.getTypeSortWeight(sortByType);
+      if (isScratchFile()) return DefaultSortWeight.SCRATCH_ROOT.getWeight();
+      return super.getTypeSortWeight(sortByType);
+    }
+
+    @Override
+    public @Nullable Comparable<?> getTypeSortKey() {
+      if (isScratchFile()) return DefaultSortWeight.SCRATCH_ROOT;
+      return super.getTypeSortKey();
+    }
+
+    private boolean isScratchFile() {
+      return null != ScratchFileService.getInstance().getRootType(getVirtualFile());
     }
 
     @NotNull
@@ -979,8 +1001,21 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     @Override
+    public int getWeight() {
+      return DefaultSortWeight.MODULE_GROUP.getWeight();
+    }
+
+    @Override
     public int getTypeSortWeight(boolean sortByType) {
-      return 2;
+      return sortByType ? getTypeSortKey().getWeight() : getWeight();
+    }
+
+    @Override
+    public @NotNull DefaultSortWeight getTypeSortKey() {
+      Group group = this.group;
+      return group == null || null == group.getCommonRootID()
+             ? DefaultSortWeight.MODULE_GROUP
+             : DefaultSortWeight.MODULE_ROOT;
     }
 
     @Override
@@ -1060,14 +1095,17 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       }
     }
 
+    @Nullable Object getCommonRootID() {
+      if (!groups.isEmpty() || roots.isEmpty()) return null;
+      Object id = roots.get(0).node.getRootID();
+      return roots.stream().allMatch(root -> root.node.getRootID().equals(id)) ? id : null;
+    }
+
     @NotNull
     Icon getIcon() {
-      if (!groups.isEmpty() || roots.isEmpty()) return AllIcons.Nodes.ModuleGroup;
-      Object id = roots.get(0).node.getRootID();
-      if (roots.stream().anyMatch(root -> !root.node.getRootID().equals(id))) return AllIcons.Nodes.ModuleGroup;
-      if (id instanceof Module) {
-        return ModuleType.get((Module)id).getIcon();
-      }
+      Object id = getCommonRootID();
+      if (id == null) return AllIcons.Nodes.ModuleGroup;
+      if (id instanceof Module) return ModuleType.get((Module)id).getIcon();
       return AllIcons.Nodes.Module;
     }
 
