@@ -62,6 +62,8 @@
       implementation="com.intellij.space.vcs.review.details.diff.SpaceReviewOpenDiffActionProvider"
       order="first"
     />
+
+    <statistics.notificationIdsHolder implementation="com.intellij.space.notification.SpaceNotificationIdsHolder"/>
   </extensions>
 
   <actions>
