@@ -35,3 +35,7 @@ internal abstract class MoveDiffPreviewAction(private val openInNewWindow: Boole
 internal class MoveDiffPreviewToEditorAction : MoveDiffPreviewAction(false) {
   override fun isEnabledAndVisible(project: Project): Boolean = EditorDiffPreviewFilesManager.getInstance(project).shouldOpenInNewWindow
 }
+
+internal class MoveDiffPreviewToNewWindowAction : MoveDiffPreviewAction(true) {
+  override fun isEnabledAndVisible(project: Project): Boolean = !EditorDiffPreviewFilesManager.getInstance(project).shouldOpenInNewWindow
+}

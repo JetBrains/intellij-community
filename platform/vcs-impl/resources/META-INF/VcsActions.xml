@@ -377,6 +377,14 @@
     <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
     </action>
+    <group>
+      <action id="Vcs.Diff.ShowDiffInNewWindow"
+              icon="AllIcons.Actions.MoveToWindow"
+              class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToNewWindowAction">
+      </action>
+      <separator/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>
+    </group>
 
     <reference ref="Vcs.VcsClone">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
