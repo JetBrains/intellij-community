@@ -9,6 +9,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -225,7 +226,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
         parent instanceof PsiSynchronizedStatement) {
       return fieldAccessNPE.problem(context, expression);
     }
-    if (parent instanceof PsiNewExpression) {
+    if (parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() == context) {
       return innerClassNPE.problem((PsiNewExpression)parent, expression);
     }
     if (parent instanceof PsiPolyadicExpression) {
@@ -233,7 +234,8 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       IElementType type = polyadic.getOperationTokenType();
       boolean noUnboxing = (type == JavaTokenType.PLUS && TypeUtils.isJavaLangString(polyadic.getType())) ||
                            ((type == JavaTokenType.EQEQ || type == JavaTokenType.NE) &&
-                            StreamEx.of(polyadic.getOperands()).noneMatch(op -> TypeConversionUtil.isPrimitiveAndNotNull(op.getType())));
+                            !ContainerUtil.exists(polyadic.getOperands(), 
+                                                  op -> TypeConversionUtil.isPrimitiveAndNotNull(op.getType())));
       if (!noUnboxing) {
         return createUnboxingProblem(context, expression);
       }
