@@ -9,7 +9,7 @@ import java.io.File;
 
 public interface IdePerformanceListener {
   @Topic.AppLevel
-  Topic<IdePerformanceListener> TOPIC = new Topic<>(IdePerformanceListener.class, Topic.BroadcastDirection.NONE);
+  Topic<IdePerformanceListener> TOPIC = new Topic<>(IdePerformanceListener.class, Topic.BroadcastDirection.NONE, true);
 
   /**
    * Invoked after thread state has been dumped to a file.
