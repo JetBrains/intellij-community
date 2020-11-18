@@ -20,6 +20,7 @@ object EventsSchemeBuilder {
                              val version: Int,
                              val schema: Set<EventDescriptor>,
                              val className: String)
+  data class EventsScheme(val commitHash: String?, val scheme: List<GroupDescriptor>)
 
   private fun fieldSchema(field: EventField<*>, fieldName: String): Set<FieldDescriptor> {
     if (field == EventFields.PluginInfo || field == EventFields.PluginInfoFromInstance) {
@@ -84,8 +85,9 @@ class EventsSchemeBuilderAppStarter : ApplicationStarter {
   override fun main(args: List<String>) {
     val outputFile = args.getOrNull(1)
     val pluginsFile = args.getOrNull(2)
-    val groups = EventsSchemeBuilder.buildEventsScheme()
-    val text = GsonBuilder().setPrettyPrinting().create().toJson(groups)
+    val eventsScheme = EventsSchemeBuilder.EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
+                                                        EventsSchemeBuilder.buildEventsScheme())
+    val text = GsonBuilder().setPrettyPrinting().create().toJson(eventsScheme)
     logEnabledPlugins(pluginsFile)
     if (outputFile != null) {
       FileUtil.writeToFile(File(outputFile), text)
