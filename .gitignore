@@ -16,4 +16,5 @@ build/dependencies/build
 edu/dependencies/.gradle
 edu/dependencies/build
 stale_outputs_checked
+native/**/build/
 /android
