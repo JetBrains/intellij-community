@@ -50,8 +50,9 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.icons.RowIcon;
+import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.stripe.ErrorStripe;
 import com.intellij.ui.tree.AbstractTreeWalker;
 import com.intellij.ui.tree.BaseTreeModel;
@@ -1254,9 +1255,15 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
   private static boolean is(@Nullable Icon icon, @NotNull Icon expected) {
     if (expected.equals(icon)) return true;
-    if (icon instanceof RowIcon) {
-      RowIcon rowIcon = (RowIcon)icon;
-      return expected.equals(rowIcon.getIcon(0));
+    if (icon instanceof CompositeIcon) {
+      CompositeIcon composite = (CompositeIcon)icon;
+      for (int i = 0; i < composite.getIconCount(); i++) {
+        if (is(composite.getIcon(i), expected)) return true;
+      }
+    }
+    if (icon instanceof RetrievableIcon) {
+      RetrievableIcon retrievable = (RetrievableIcon)icon;
+      if (is(retrievable.retrieveIcon(), expected)) return true;
     }
     return false;
   }
