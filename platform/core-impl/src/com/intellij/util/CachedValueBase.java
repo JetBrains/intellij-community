@@ -81,16 +81,17 @@ public abstract class CachedValueBase<T> {
   @Nullable
   public final Data<T> getUpToDateOrNull() {
     Data<T> data = getRawData();
+    return data != null && checkUpToDate(data) ? data : null;
+  }
 
-    if (data != null) {
-      if (isUpToDate(data)) {
-        return data;
-      }
-      if (data.useCount instanceof CachedValueProfiler.Info) {
-        ((CachedValueProfiler.Info)data.useCount).invalidate();
-      }
+  private boolean checkUpToDate(@NotNull Data<T> data) {
+    if (isUpToDate(data)) {
+      return true;
     }
-    return null;
+    if (data.useCount instanceof CachedValueProfiler.Info) {
+      ((CachedValueProfiler.Info)data.useCount).invalidate();
+    }
+    return false;
   }
 
   @Nullable
@@ -219,7 +220,7 @@ public abstract class CachedValueBase<T> {
     else if (stamp.mayCacheNow()) {
       while (true) {
         Data<T> alreadyComputed = getRawData();
-        boolean reuse = alreadyComputed != null && isUpToDate(alreadyComputed);
+        boolean reuse = alreadyComputed != null && checkUpToDate(alreadyComputed);
         if (reuse) {
           IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass(), calcData);
         }

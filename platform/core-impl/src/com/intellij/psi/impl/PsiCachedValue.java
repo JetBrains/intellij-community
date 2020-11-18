@@ -93,7 +93,7 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   }
 
   @Override
-  protected boolean isUpToDate(@NotNull Data data) {
+  protected boolean isUpToDate(@NotNull Data<T> data) {
     if (myManager.isDisposed()) return false;
 
     Object[] dependencies = data.getDependencies();
