@@ -13,6 +13,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.codereview.SingleValueModel
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
+import libraries.coroutines.extra.delay
 import libraries.coroutines.extra.launch
 import runtime.Ui
 import runtime.reactive.Property
@@ -74,6 +75,7 @@ internal class SpaceChatDiscussionActionsFactory(private val discussion: Propert
           resolvingModel.value = ResolvingState.REOPENING
         }
         reviewService.resolveCodeDiscussion(currentDiscussion.id, !currentDiscussion.resolved)
+        delay(200) // reduce status label blinking
         resolvingModel.value = ResolvingState.READY
       }
     }
