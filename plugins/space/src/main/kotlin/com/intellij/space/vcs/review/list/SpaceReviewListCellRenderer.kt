@@ -71,7 +71,7 @@ internal class SpaceReviewListCellRenderer(
 
   init {
     val zero = "0"
-    val gap = "${JBUI.scale(10)}px"
+    val gap = "${JBUI.scale(8)}px"
     val gapTop = "${JBUI.scale(5)}px"
 
     layout = MigLayout(LC().gridGap(zero, zero)
@@ -79,7 +79,7 @@ internal class SpaceReviewListCellRenderer(
                          .fillX())
 
     add(authorAvatar, CC()
-      .gapAfter(gap)
+      .gapAfter(zero)
       .gapBefore(gap)
       .gapBottom(gap)
       .gapTop(gap)
