@@ -22,7 +22,7 @@ internal class GitStageManager {
       ApplicationManager.getApplication().assertIsDispatchThread()
 
       if (isStagingAreaAvailable(project)) {
-        GitStageTracker.getInstance(project).scheduleUpdateAll()
+        GitStageTracker.getInstance(project).updateTrackerState()
       }
       project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
       ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()

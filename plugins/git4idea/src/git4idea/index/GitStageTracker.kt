@@ -100,12 +100,17 @@ class GitStageTracker(val project: Project) : Disposable {
       }
     }, this)
 
-    scheduleUpdateAll()
+    updateTrackerState()
   }
 
-  fun scheduleUpdateAll() {
-    LOG.debug("Mark everything dirty")
-    dirtyScopeManager.markEverythingDirty()
+  fun updateTrackerState() {
+    LOG.debug("Update tracker state")
+    ChangeListManagerImpl.getInstanceImpl(project).executeOnUpdaterThread {
+      for (root in gitRoots()) {
+        val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(root) ?: continue
+        doUpdateState(repository)
+      }
+    }
   }
 
   /**
