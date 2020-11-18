@@ -11,7 +11,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import com.intellij.util.PlatformUtils
 
-class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable(LangBundle.message("configurable.reader.mode"), "READER_MODE_HELP") {
+internal class ReaderModeConfigurable(private val project: Project) : BoundSearchableConfigurable(LangBundle.message("configurable.reader.mode"), "READER_MODE_HELP") {
   private val settings get() = ReaderModeSettings.instance(project)
 
   private val cdBreadcrumbs get() = CheckboxDescriptor(LangBundle.message("checkbox.breadcrumbs"), settings::showBreadcrumbs)
@@ -55,6 +55,6 @@ class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable
 
   override fun apply() {
     super.apply()
-    project.messageBus.syncPublisher(READER_MODE_TOPIC).modeChanged(project)
+    project.messageBus.syncPublisher(ReaderModeSettingsListener.TOPIC).modeChanged(project)
   }
 }
