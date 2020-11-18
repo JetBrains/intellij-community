@@ -90,7 +90,7 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
   }
 
   public void clear() throws IOException {
-    PersistentHashMap.deleteMap(myMap);
+    myMap.closeAndClean();
     init();
   }
 
