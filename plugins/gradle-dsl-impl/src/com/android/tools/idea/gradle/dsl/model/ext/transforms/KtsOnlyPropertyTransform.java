@@ -17,7 +17,6 @@ package com.android.tools.idea.gradle.dsl.model.ext.transforms;
 
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpression;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslWriter;
 import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,7 @@ public class KtsOnlyPropertyTransform extends PropertyTransform {
 
   @Override
   public boolean test(@Nullable GradleDslElement e, @NotNull GradleDslElement holder) {
-    if (holder.getDslFile().getWriter() instanceof KotlinDslWriter) {
+    if (holder.getDslFile().isKotlin()) {
       return myTransform.test(e, holder);
     }
     return false;
