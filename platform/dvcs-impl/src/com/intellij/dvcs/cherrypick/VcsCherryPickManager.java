@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.CHERRY_PICK_ERROR;
+
 public final class VcsCherryPickManager {
   private static final Logger LOG = Logger.getInstance(VcsCherryPickManager.class);
   @NotNull private final Project myProject;
@@ -96,7 +98,7 @@ public final class VcsCherryPickManager {
     }
 
     public void showError(@Nls @NotNull String message) {
-      VcsNotifier.getInstance(myProject).notifyWeakError("vcs.cherry.pick.error", message);
+      VcsNotifier.getInstance(myProject).notifyWeakError(CHERRY_PICK_ERROR, message);
       LOG.warn(message);
     }
 

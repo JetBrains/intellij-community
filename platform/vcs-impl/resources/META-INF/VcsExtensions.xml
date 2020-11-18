@@ -256,8 +256,7 @@
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
     <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control"/>
     <notificationGroup id="Common Version Control Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control"/>
-    <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON" notificationIds="ignored.to.exclude.synchronization.notification;
-    externally.added.files.notification;project.configuration.files.added.notification;manage.ignore.files.notification"/>
+    <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Vcs Notifications" displayType="BALLOON"/>
     <notificationGroup id="Vcs Silent Notifications" displayType="NONE"/>
     <projectService serviceInterface="com.intellij.execution.configurations.RunConfigurationVcsSupport"

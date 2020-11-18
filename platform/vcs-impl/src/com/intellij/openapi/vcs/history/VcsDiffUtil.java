@@ -36,6 +36,7 @@ import java.util.*;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE;
 import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.COMPARE_FAILED;
 import static com.intellij.vcsUtil.VcsUtil.getShortRevisionString;
 
 public final class VcsDiffUtil {
@@ -163,7 +164,7 @@ public final class VcsDiffUtil {
           String title = VcsBundle.message("history.notification.title.compare.with.failed", getShortRevisionString(targetRevNumber));
           String message =
             VcsBundle.message("history.notification.content.couldn.t.compare.with.revision", file,getShortRevisionString(targetRevNumber));
-          VcsNotifier.getInstance(project).notifyError("vcs.compare.failed", title, message + "\n " + e.getMessage());
+          VcsNotifier.getInstance(project).notifyError(COMPARE_FAILED, title, message + "\n " + e.getMessage());
         }
       }
 

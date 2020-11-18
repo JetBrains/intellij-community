@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NEW_FILES_ERROR;
 import static com.intellij.util.Functions.identity;
 import static com.intellij.vcsUtil.VcsUtil.groupByRoots;
 import static java.util.Objects.requireNonNull;
@@ -114,7 +115,7 @@ public class TriggerAdditionOrDeletion {
   private void notifyAndLogFiles(@NotNull List<FilePath> incorrectFilePath) {
     String message = VcsBundle.message("patch.apply.incorrectly.processed.warning", incorrectFilePath.size(), incorrectFilePath);
     LOG.warn(message);
-    VcsNotifier.getInstance(myProject).notifyImportantWarning("vcs.patch.apply.new.files.error",
+    VcsNotifier.getInstance(myProject).notifyImportantWarning(PATCH_APPLY_NEW_FILES_ERROR,
                                                               VcsBundle.message("patch.apply.new.files.warning"),
                                                               message);
   }
