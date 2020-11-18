@@ -29,6 +29,7 @@ public class MatchOptions implements JDOMExternalizable {
   private SearchScope scope;
   private Scopes.Type scopeType;
   private String scopeDescriptor;
+  private boolean searchInjectedCode;
   @NotNull
   private String pattern;
 
@@ -44,6 +45,7 @@ public class MatchOptions implements JDOMExternalizable {
   @NonNls private static final String PATTERN_CONTEXT_ATTR_NAME = "pattern_context";
   @NonNls private static final String SCOPE_TYPE = "scope_type";
   @NonNls private static final String SCOPE_DESCRIPTOR = "scope_descriptor";
+  @NonNls private static final String SEARCH_INJECTED_CODE = "search_injected";
 
   @NonNls public static final String INSTANCE_MODIFIER_NAME = "Instance";
   @NonNls public static final String MODIFIER_ANNOTATION_NAME = "Modifier";
@@ -51,6 +53,7 @@ public class MatchOptions implements JDOMExternalizable {
   public MatchOptions() {
     variableConstraints = new LinkedHashMap<>();
     looseMatching = true;
+    searchInjectedCode = true;
     pattern = "";
   }
 
@@ -65,6 +68,7 @@ public class MatchOptions implements JDOMExternalizable {
     scope = options.scope;
     scopeType = options.scopeType;
     scopeDescriptor = options.scopeDescriptor;
+    searchInjectedCode = options.searchInjectedCode;
     pattern = options.pattern;
     myPatternContextId = options.myPatternContextId;
   }
@@ -116,7 +120,6 @@ public class MatchOptions implements JDOMExternalizable {
     return caseSensitiveMatch;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "match options:\n" +
            "pattern:\n" + pattern +
@@ -166,11 +169,19 @@ public class MatchOptions implements JDOMExternalizable {
     this.scope = scope;
   }
 
+  public boolean isSearchInjectedCode() {
+    return searchInjectedCode;
+  }
+
+  public void setSearchInjectedCode(boolean injectedCode) {
+    searchInjectedCode = injectedCode;
+  }
+
   @Override
   public void writeExternal(Element element) {
     element.setAttribute(TEXT_ATTRIBUTE_NAME, pattern);
     if (!looseMatching) {
-      element.setAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME, String.valueOf(false));
+      element.setAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME, "false");
     }
     element.setAttribute(RECURSIVE_ATTRIBUTE_NAME,String.valueOf(recursiveSearch));
     element.setAttribute(CASESENSITIVE_ATTRIBUTE_NAME,String.valueOf(caseSensitiveMatch));
@@ -187,6 +198,9 @@ public class MatchOptions implements JDOMExternalizable {
 
     if (scope != null) {
       element.setAttribute(SCOPE_TYPE, Scopes.getType(scope).toString()).setAttribute(SCOPE_DESCRIPTOR, Scopes.getDescriptor(scope));
+    }
+    if (!searchInjectedCode) {
+      element.setAttribute(SEARCH_INJECTED_CODE, "false");
     }
 
     final Set<String> constraintNames = getUsedVariableNames();
@@ -216,6 +230,7 @@ public class MatchOptions implements JDOMExternalizable {
     final String value = element.getAttributeValue(SCOPE_TYPE);
     scopeType = (value == null) ? null : Scopes.Type.valueOf(value);
     scopeDescriptor = element.getAttributeValue(SCOPE_DESCRIPTOR);
+    searchInjectedCode = MatchVariableConstraint.getBooleanValue(element, SEARCH_INJECTED_CODE, true);
 
     for (final Element element1 : element.getChildren(CONSTRAINT_TAG_NAME)) {
       final MatchVariableConstraint constraint = new MatchVariableConstraint();
@@ -246,6 +261,7 @@ public class MatchOptions implements JDOMExternalizable {
     if (looseMatching != matchOptions.looseMatching) return false;
     if (recursiveSearch != matchOptions.recursiveSearch) return false;
     if (!Objects.equals(scope, matchOptions.scope)) return false;
+    if (searchInjectedCode != matchOptions.searchInjectedCode) return false;
     if (!pattern.equals(matchOptions.pattern)) return false;
     if (!variableConstraints.equals(matchOptions.variableConstraints)) return false;
     if (myFileType != matchOptions.myFileType) return false;
@@ -262,6 +278,7 @@ public class MatchOptions implements JDOMExternalizable {
     result = 29 * result + pattern.hashCode();
     result = 29 * result + variableConstraints.hashCode();
     if (scope != null) result = 29 * result + scope.hashCode();
+    result = 29 * result + (searchInjectedCode ? 1 : 0);
     if (myFileType != null) result = 29 * result + myFileType.hashCode();
     if (myDialect != null) result = 29 * result + myDialect.hashCode();
     if (myPatternContextId != null) result = 29 * result + myPatternContextId.hashCode();

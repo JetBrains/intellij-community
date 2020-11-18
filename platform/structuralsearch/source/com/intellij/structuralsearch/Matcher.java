@@ -390,18 +390,21 @@ public class Matcher {
    * @param element the current search tree element
    */
   private void match(@NotNull PsiElement element) {
-    final MatchingStrategy strategy = getMatchContext().getPattern().getStrategy();
+    final MatchContext context = getMatchContext();
+    final MatchingStrategy strategy = context.getPattern().getStrategy();
 
     if (strategy.continueMatching(element)) {
       visitor.matchContext(newSingleNodeIterator(element));
       return;
     }
-    for(PsiElement el = element.getFirstChild(); el != null; el = el.getNextSibling()) {
-      match(el);
-    }
-    if (element instanceof PsiLanguageInjectionHost) {
-      InjectedLanguageManager.getInstance(project).enumerateEx(element, element.getContainingFile(), false,
-                                                               (injectedPsi, places) -> match(injectedPsi));
+    if (context.getOptions().isSearchInjectedCode()) {
+      for (PsiElement el = element.getFirstChild(); el != null; el = el.getNextSibling()) {
+        match(el);
+      }
+      if (element instanceof PsiLanguageInjectionHost) {
+        InjectedLanguageManager.getInstance(project).enumerateEx(element, element.getContainingFile(), false,
+                                                                 (injectedPsi, places) -> match(injectedPsi));
+      }
     }
   }
 
