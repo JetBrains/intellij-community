@@ -267,9 +267,9 @@ public final class PluginManagerCore {
     }
   }
 
-  public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file, boolean append) throws IOException {
+  public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file) throws IOException {
     NioFileUtil.createDirectories(file.getParent());
-    try (BufferedWriter writer = (append ? Files.newBufferedWriter(file, StandardOpenOption.APPEND, StandardOpenOption.CREATE) : Files.newBufferedWriter(file))) {
+    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
       writePluginsList(ids, writer);
     }
   }

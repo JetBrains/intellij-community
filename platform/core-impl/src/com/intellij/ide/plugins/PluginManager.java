@@ -15,7 +15,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.GraphGenerator;
@@ -136,14 +135,6 @@ public final class PluginManager {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static @NotNull List<String> getDisabledPlugins() {
     return DisabledPluginsState.getDisabledPlugins();
-  }
-
-  /**
-   * @deprecated Use {@link DisabledPluginsState#saveDisabledPlugins(Collection, boolean)}
-   */
-  @Deprecated
-  public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
-    DisabledPluginsState.saveDisabledPlugins(ContainerUtil.map(ids, PluginId::getId), append);
   }
 
   public static boolean disablePlugin(@NotNull String id) {

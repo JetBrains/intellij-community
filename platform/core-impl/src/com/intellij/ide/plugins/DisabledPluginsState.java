@@ -82,7 +82,7 @@ public final class DisabledPluginsState {
       }
       finally {
         if (updateDisablePluginsList) {
-          PluginManagerCore.savePluginsList(disabledPlugins, file, false);
+          PluginManagerCore.savePluginsList(disabledPlugins, file);
           fireEditDisablePlugins();
         }
       }
@@ -227,7 +227,7 @@ public final class DisabledPluginsState {
 
   static boolean trySaveDisabledPlugins(@NotNull Collection<PluginId> disabledPlugins) {
     try {
-      saveDisabledPlugins(disabledPlugins, false);
+      saveDisabledPlugins(disabledPlugins);
       return true;
     }
     catch (IOException e) {
@@ -236,13 +236,12 @@ public final class DisabledPluginsState {
     }
   }
 
-  public static void saveDisabledPlugins(@NotNull Collection<PluginId> ids, boolean append) throws IOException {
-    saveDisabledPlugins(PathManager.getConfigDir(), ids, append);
+  public static void saveDisabledPlugins(@NotNull Collection<PluginId> ids) throws IOException {
+    saveDisabledPlugins(PathManager.getConfigDir(), ids);
   }
 
-  public static void saveDisabledPlugins(@NotNull Path configPath, @NotNull Collection<PluginId> ids, boolean append) throws IOException {
-    Path plugins = configPath.resolve(DISABLED_PLUGINS_FILENAME);
-    PluginManagerCore.savePluginsList(ids, plugins, append);
+  public static void saveDisabledPlugins(@NotNull Path configPath, @NotNull Collection<PluginId> ids) throws IOException {
+    PluginManagerCore.savePluginsList(ids, configPath.resolve(DISABLED_PLUGINS_FILENAME));
     ourDisabledPlugins = null;
     fireEditDisablePlugins();
   }

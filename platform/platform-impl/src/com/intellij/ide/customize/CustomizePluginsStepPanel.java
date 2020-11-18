@@ -227,10 +227,9 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   @Override
   public boolean beforeOkAction() {
     try {
-      DisabledPluginsState.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
+      DisabledPluginsState.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds());
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
     return true;
   }
 
