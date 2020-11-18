@@ -33,6 +33,8 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 import java.io.File;
 import java.util.*;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.STATUS_CMD_ERROR;
+
 public final class HgStatusCommand {
 
   private static final Logger LOG = Logger.getInstance(HgStatusCommand.class.getName());
@@ -208,7 +210,7 @@ public final class HgStatusCommand {
         String title = HgBundle.message("action.hg4idea.status.error");
         LOG.warn(title + errors.toString());
         String message = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errors, HtmlChunk::text)).toString();
-        VcsNotifier.getInstance(myProject).logInfo("hg.status.command.error", title, message);
+        VcsNotifier.getInstance(myProject).logInfo(STATUS_CMD_ERROR, title, message);
         return changes;
       }
       LOG.debug(errors.toString());

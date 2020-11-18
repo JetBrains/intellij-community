@@ -55,6 +55,7 @@ import java.util.List;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.BRANCH_CREATION_ERROR;
 import static org.zmlx.hg4idea.util.HgUtil.getNewBranchNameFromUser;
 import static org.zmlx.hg4idea.util.HgUtil.getSortedNamesWithoutHashes;
 
@@ -144,7 +145,7 @@ public class HgBranchPopupActions {
           repository.update();
           if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
             new HgCommandResultNotifier(myProject)
-              .notifyError("hg.branch.creation.error",
+              .notifyError(BRANCH_CREATION_ERROR,
                            result,
                            HgBundle.message("hg4idea.branch.creation.error"),
                            HgBundle.message("hg4idea.branch.creation.error.msg", name));
@@ -152,7 +153,7 @@ public class HgBranchPopupActions {
         }
         catch (HgCommandException exception) {
           HgErrorUtil.handleException(myProject,
-                                      "hg.branch.creation.error",
+                                      BRANCH_CREATION_ERROR,
                                       HgBundle.message("hg4idea.branch.cannot.create"),
                                       exception);
         }

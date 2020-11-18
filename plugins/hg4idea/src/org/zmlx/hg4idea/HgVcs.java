@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
@@ -384,13 +385,13 @@ public class HgVcs extends AbstractVcs {
       if (!myVersion.isSupported()) {
         LOG.info("Unsupported Hg version: " + myVersion);
         String message = HgBundle.message("hg4idea.version.update", SETTINGS_LINK, myVersion, HgVersion.MIN, UPDATE_LINK);
-        vcsNotifier.notifyError("hg.unsupported.version", HgBundle.message("hg4idea.version.unsupported"), message, linkAdapter);
+        vcsNotifier.notifyError(UNSUPPORTED_VERSION, HgBundle.message("hg4idea.version.unsupported"), message, linkAdapter);
       }
       else if (myVersion.hasUnsupportedExtensions()) {
         String unsupportedExtensionsAsString = myVersion.getUnsupportedExtensions().toString();
         LOG.warn("Unsupported Hg extensions: " + unsupportedExtensionsAsString);
         String message = HgBundle.message("hg4idea.version.unsupported.ext", unsupportedExtensionsAsString);
-        vcsNotifier.notifyWarning("hg.unsupported.extensions", HgBundle.message("hg4idea.version.unsupported"), message);
+        vcsNotifier.notifyWarning(UNSUPPORTED_EXT, HgBundle.message("hg4idea.version.unsupported"), message);
       }
     }
     catch (Exception e) {
@@ -399,7 +400,7 @@ public class HgVcs extends AbstractVcs {
         // so parse(output) throw ParseException, but hg and git executable seems to be valid in this case
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
         String message = HgBundle.message("hg4idea.unable.to.run.hg", executable);
-        vcsNotifier.notifyError("hg.unable.to.run.executable", message,
+        vcsNotifier.notifyError(UNABLE_TO_RUN_EXEC, message,
                                 HgBundle.message("hg4idea.exec.not.found", reason, SETTINGS_LINK),
                                 linkAdapter
         );

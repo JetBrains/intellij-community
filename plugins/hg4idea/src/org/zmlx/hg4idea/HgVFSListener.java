@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.map2List;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.RENAME_FAILED;
 
 /**
  * Listens to VFS events (such as adding or deleting bunch of files) and performs necessary operations with the VCS.
@@ -338,7 +339,7 @@ public final class HgVFSListener extends VcsVFSListener {
         });
         NotificationAction retryAction = NotificationAction.createSimpleExpiring(HgBundle.message("retry"), () -> performMoveRename(failedToMove));
         VcsNotifier.getInstance(myProject)
-          .notifyError("hg.rename.failed",
+          .notifyError(RENAME_FAILED,
                        HgBundle.message("hg4idea.rename.error"),
                        HgBundle.message("hg4idea.rename.error.msg"),
                        viewFilesAction, retryAction);

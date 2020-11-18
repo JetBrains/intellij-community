@@ -40,6 +40,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.GRAFT_CONTINUE_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.GRAFT_ERROR;
+
 public class HgCherryPicker extends VcsCherryPicker {
 
   @NotNull private final Project myProject;
@@ -78,7 +81,7 @@ public class HgCherryPicker extends VcsCherryPicker {
     HgCommandResult result = command.startGrafting(hashes);
     boolean hasConflicts = HgConflictResolver.hasConflicts(project, root);
     if (!hasConflicts && HgErrorUtil.isCommandExecutionFailed(result)) {
-      new HgCommandResultNotifier(project).notifyError("hg.graft.error",
+      new HgCommandResultNotifier(project).notifyError(GRAFT_ERROR,
                                                        result,
                                                        HgBundle.message("hg4idea.hg.error"),
                                                        HgBundle.message("action.hg4idea.Graft.error"));
@@ -93,7 +96,7 @@ public class HgCherryPicker extends VcsCherryPicker {
         hasConflicts = HgConflictResolver.hasConflicts(project, root);
       }
       else {
-        new HgCommandResultNotifier(project).notifyError("hg.graft.continue.error",
+        new HgCommandResultNotifier(project).notifyError(GRAFT_CONTINUE_ERROR,
                                                          result,
                                                          HgBundle.message("hg4idea.hg.error"),
                                                          HgBundle.message("action.hg4idea.Graft.continue.error"));
