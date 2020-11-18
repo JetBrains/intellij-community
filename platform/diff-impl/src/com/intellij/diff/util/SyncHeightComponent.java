@@ -41,4 +41,10 @@ public class SyncHeightComponent extends JPanel {
     }
     return height;
   }
+
+  public void revalidateAll() {
+    for (JComponent component : myComponents) {
+      if (component != null) component.revalidate();
+    }
+  }
 }

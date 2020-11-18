@@ -11,6 +11,7 @@ import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.tools.util.DiffDataKeys
+import com.intellij.diff.tools.util.DiffNotifications
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
@@ -487,7 +488,7 @@ private fun createBlankNotificationProvider(viewer: DiffViewer?, content: Docume
   editor.document.addDocumentListener(object : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
       editor.document.removeDocumentListener(this)
-      panel.isVisible = false
+      DiffNotifications.hideNotification(panel)
     }
   }, viewer)
   return panel
