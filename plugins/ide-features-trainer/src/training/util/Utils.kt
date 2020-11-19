@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nls
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.CourseManager
-import training.learn.NewLearnProjectUtil
 import training.learn.interfaces.Lesson
 import training.learn.lesson.LessonManager
 import training.learn.lesson.LessonStateManager
@@ -94,10 +93,14 @@ fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
 
 fun findLanguageSupport(project: Project): LangSupport? {
   val langSupport = LangManager.getInstance().getLangSupport() ?: return null
-  if (FileUtil.pathsEqual(project.basePath, NewLearnProjectUtil.projectFilePath(langSupport))) {
+  if (isLearningProject(project, langSupport)) {
     return langSupport
   }
   return null
+}
+
+fun isLearningProject(project: Project, langSupport: LangSupport): Boolean {
+  return FileUtil.pathsEqual(project.basePath, LangManager.getInstance().getLearningProjectPath(langSupport))
 }
 
 val useNewLearningUi: Boolean
