@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
@@ -499,12 +497,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     if (thisTableId is LibraryTableId.ModuleLibraryTableId) {
       val moduleId = thisTableId.moduleId
       assert(storage.resolve(moduleId) != null) { "Module isn't found.\nPersistent id: $moduleId\nLibrary: $this" }
-    }
-
-    val libraries = storage.getExternalMapping<Disposable>("libraryBridge")
-    val data = libraries.getDataByEntity(this.createEntity(storage))
-    if (data != null) {
-      assert(!Disposer.isDisposed(data)) { "Data is disposed. $this. Library: $data" }
     }
   }
 }
