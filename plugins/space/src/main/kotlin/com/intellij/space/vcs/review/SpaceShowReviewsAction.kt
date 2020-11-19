@@ -10,7 +10,7 @@ import com.intellij.space.vcs.SpaceProjectContext
 class SpaceShowReviewsAction : DumbAwareAction(SpaceBundle.messagePointer("action.show.code.reviews.text")) {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = isSpaceCodeReviewEnabled() && isAssociatedWithSpaceRepository(e)
+    e.presentation.isEnabledAndVisible = isAssociatedWithSpaceRepository(e)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

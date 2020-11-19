@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.space.components.SpaceWorkspaceComponent
+import com.intellij.space.vcs.SpaceProjectContext
 import libraries.coroutines.extra.LifetimeSource
 
 internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware {
@@ -34,7 +35,8 @@ internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware {
     spaceCodeReviewTabManager.showReviews(toolWindow.contentManager)
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean = isSpaceCodeReviewEnabled()
+  override fun shouldBeAvailable(project: Project): Boolean =
+    SpaceProjectContext.getInstance(project).context.value.isAssociatedWithSpaceRepository
 
   override fun isDoNotActivateOnStart(): Boolean = true
 
