@@ -757,11 +757,7 @@ public final class IconLoader {
     // ImageIcon (if small icon) or SoftReference<ImageIcon> (if large icon)
     private volatile @Nullable Object realIcon;
 
-    public CachedImageIcon(@NotNull URL url) {
-      this(url, true);
-    }
-
-    CachedImageIcon(@NotNull URL url, boolean useCacheOnLoad) {
+    public CachedImageIcon(@NotNull URL url, boolean useCacheOnLoad) {
       this(null, new ImageDataResolverImpl(url, null, useCacheOnLoad), null, null);
 
       // if url is explicitly specified, it means that path should be not transformed
@@ -847,25 +843,26 @@ public final class IconLoader {
     }
 
     private @NotNull ImageIcon getRealIcon(@Nullable ScaleContext context) {
-      Object realIcon = this.realIcon;
       ImageDataLoader resolver = this.resolver;
-      if (resolver == null) {
+      if (resolver == null || !ourIsActivated) {
         return EMPTY_ICON;
       }
 
-      if (pathTransformGlobalModCount.get() != pathTransformModCount) {
-        if (isLoaderDisabled()) {
-          return EMPTY_ICON;
-        }
-
+      Object realIcon;
+      if (pathTransformGlobalModCount.get() == pathTransformModCount) {
+        realIcon = this.realIcon;
+      }
+      else {
         synchronized (lock) {
           resolver = this.resolver;
           if (resolver == null) {
             return EMPTY_ICON;
           }
 
-          realIcon = this.realIcon;
-          if (pathTransformGlobalModCount.get() != pathTransformModCount) {
+          if (pathTransformGlobalModCount.get() == pathTransformModCount) {
+            realIcon = this.realIcon;
+          }
+          else {
             pathTransformModCount = pathTransformGlobalModCount.get();
             realIcon = null;
             this.realIcon = null;
@@ -881,8 +878,8 @@ public final class IconLoader {
       }
 
       synchronized (lock) {
-        if (!updateScaleContext(context)) {
-          // try returning the current icon as the context is up-to-date
+        // try returning the current icon as the context is up-to-date
+        if (!updateScaleContext(context) && realIcon != null) {
           ImageIcon icon = unwrapIcon(realIcon);
           if (icon != null) {
             return icon;
@@ -893,7 +890,8 @@ public final class IconLoader {
         if (icon != null) {
           if (!SVGLoader.isSelectionContext()) {
             this.realIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
-          } else {
+          }
+          else {
             scaledIconCache.clear();
           }
           return icon;

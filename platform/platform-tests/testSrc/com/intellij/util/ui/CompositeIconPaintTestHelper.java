@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader;
@@ -56,7 +56,7 @@ public abstract class CompositeIconPaintTestHelper {
     IconLoader.CachedImageIcon[] cellIcons = new IconLoader.CachedImageIcon[count];
     for (int i = 0; i < count; i++) {
       try {
-        cellIcons[i] = new IconLoader.CachedImageIcon(new File(cellIconsPaths[i]).toURI().toURL());
+        cellIcons[i] = new IconLoader.CachedImageIcon(new File(cellIconsPaths[i]).toURI().toURL(), false);
       }
       catch (MalformedURLException e) {
         throw new RuntimeException(e);

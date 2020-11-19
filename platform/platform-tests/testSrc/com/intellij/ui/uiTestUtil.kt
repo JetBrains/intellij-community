@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
@@ -59,10 +60,12 @@ open class RequireHeadlessMode : ExternalResource() {
 
 open class RestoreScaleRule : ExternalResource() {
   override fun before() {
+    IconLoader.activate()
     TestScaleHelper.setState()
   }
 
   override fun after() {
+    IconLoader.deactivate()
     TestScaleHelper.restoreState()
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
@@ -41,7 +41,7 @@ public class SvgIconPaintTest {
     JBUIScale.setUserScaleFactor((float)2);
     overrideJreHiDPIEnabled(false);
 
-    CachedImageIcon icon = new CachedImageIcon(new File(getSvgIconPath()).toURI().toURL());
+    CachedImageIcon icon = new CachedImageIcon(new File(getSvgIconPath()).toURI().toURL(), false);
     icon.updateScaleContext(ScaleContext.create(SYS_SCALE.of(1)));
     BufferedImage iconImage = ImageUtil.toBufferedImage(IconUtil.toImage(icon));
 
