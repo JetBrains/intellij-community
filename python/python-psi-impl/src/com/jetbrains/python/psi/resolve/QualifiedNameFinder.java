@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -20,10 +21,13 @@ import com.jetbrains.python.codeInsight.typing.PyStubPackages;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -125,17 +129,19 @@ public class QualifiedNameFinder {
       }
       PsiDirectory dir = ((PsiFile)srcfile).getContainingDirectory();
       while (dir != null) {
-        PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
+        PyFile initPy = as(dir.findFile(PyNames.INIT_DOT_PY), PyFile.class);
         if (initPy == null) {
           break;
         }
-        if (initPy instanceof PyFile) {
-          //noinspection ConstantConditions
-          final List<RatedResolveResult> resolved = ((PyFile)initPy).multiResolveName(((PsiNamedElement)toplevel).getName());
-          final PsiElement finalTopLevel = toplevel;
-          if (resolved.stream().anyMatch(r -> r.getElement() == finalTopLevel)) {
-            virtualFile = dir.getVirtualFile();
-          }
+        if (initPy.getImportTargets().isEmpty() && initPy.getFromImports().isEmpty()) {
+          initPy = jumpFromBinarySkeletonsToRealInitPy(initPy);
+        }
+
+        //noinspection ConstantConditions
+        final List<RatedResolveResult> resolved = initPy.multiResolveName(((PsiNamedElement)toplevel).getName());
+        final PsiElement finalTopLevel = toplevel;
+        if (resolved.stream().anyMatch(r -> r.getElement() == finalTopLevel)) {
+          virtualFile = dir.getVirtualFile();
         }
         dir = dir.getParentDirectory();
       }
@@ -146,6 +152,25 @@ public class QualifiedNameFinder {
       if (restored != null) return restored;
     }
     return qname;
+  }
+
+  @NotNull
+  private static PyFile jumpFromBinarySkeletonsToRealInitPy(@NotNull PyFile initPy) {
+    if (PythonSdkUtil.isElementInSkeletons(initPy)) {
+      QualifiedName packageName = findShortestImportableQName(initPy);
+      if (packageName != null) {
+        List<PsiElement> namesakeResults = PyResolveImportUtil.resolveQualifiedName(packageName, PyResolveImportUtil.fromFoothold(initPy));
+        PsiElement nonSkeletonResult = ContainerUtil.find(namesakeResults, e -> !PythonSdkUtil.isElementInSkeletons(e));
+        PsiDirectory libPackage = as(nonSkeletonResult, PsiDirectory.class);
+        if (libPackage != null) {
+          PyFile libInitPy = as(libPackage.findFile(PyNames.INIT_DOT_PY), PyFile.class);
+          if (libInitPy != null && libInitPy != initPy) {
+            return libInitPy;
+          }
+        }
+      }
+    }
+    return initPy;
   }
 
   @Nullable
