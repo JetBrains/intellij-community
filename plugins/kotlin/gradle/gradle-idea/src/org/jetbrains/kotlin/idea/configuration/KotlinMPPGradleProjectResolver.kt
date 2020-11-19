@@ -65,7 +65,6 @@ import java.io.File
 import java.lang.reflect.Proxy
 import java.util.*
 import java.util.stream.Collectors
-import kotlin.collections.HashMap
 
 @Order(ExternalSystemConstants.UNORDERED + 1)
 open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
@@ -689,6 +688,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                             excludeInheritedNativeDependencies = false
                         }
                         addAll(substitutor.substituteDependencies(sourceSet))
+
                         dependeeSourceSets.flatMapTo(this) { dependeeSourceSet ->
                             substitutor.substituteDependencies(dependeeSourceSet).run {
                                 if (excludeInheritedNativeDependencies)
@@ -696,6 +696,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                                 else this
                             }
                         }
+
                         if (forceNativeDependencyPropagation) {
                             sourceSetToCompilations[sourceSet.name]?.let { compilations ->
                                 addAll(propagatedNativeDependencies(compilations))
@@ -706,6 +707,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                             addAll(propagatedPlatformDependencies(mppModel, sourceSet))
                         }
                     }
+
                     buildDependencies(
                         resolverCtx,
                         sourceSetMap,
@@ -714,6 +716,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                         preprocessDependencies(mergedSubstitutedDependencies),
                         ideProject
                     )
+
                     @Suppress("UNCHECKED_CAST")
                     KotlinNativeLibrariesFixer.applyTo(fromDataNode as DataNode<GradleSourceSetData>, ideProject)
                 }
@@ -834,7 +837,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             if (fromModule.data == toModule.data) return
             val fromData = fromModule.data as? ModuleData ?: return
             val toData = toModule.data as? ModuleData ?: return
-            val existing = fromModule.children.mapNotNull { it.data as? ModuleDependencyData }.filter { it.target.id == (toModule.data as? ModuleData)?.id }
+            val existing = fromModule.children.mapNotNull { it.data as? ModuleDependencyData }
+                .filter { it.target.id == (toModule.data as? ModuleData)?.id }
             val nodeToModify =
                 existing.singleOrNull() ?: existing.firstOrNull { it.scope == DependencyScope.COMPILE } ?: existing.firstOrNull()
             if (nodeToModify != null) {
@@ -930,9 +934,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             rootName: String,
             gradlePath: String
         ): String = ((if (gradlePath.startsWith(":")) "$rootName." else "")
-                    + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
-                .filter { s: String -> s.isNotEmpty() }
-                .collect(Collectors.joining(".")))
+                + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
+            .filter { s: String -> s.isNotEmpty() }
+            .collect(Collectors.joining(".")))
 
         private fun getInternalModuleName(
             gradleModule: IdeaModule,
