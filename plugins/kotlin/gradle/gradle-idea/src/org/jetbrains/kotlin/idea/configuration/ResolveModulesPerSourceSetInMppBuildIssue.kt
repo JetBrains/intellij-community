@@ -37,7 +37,6 @@ internal class ResolveModulesPerSourceSetInMppBuildIssue(
         }
     }
 
-    @Suppress("DialogTitleCapitalization")
     override val title: String
         get() = KotlinBundle.message("configuration.is.resolve.module.per.source.set")
 
