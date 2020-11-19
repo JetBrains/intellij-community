@@ -2,11 +2,11 @@
 package com.intellij.internal.statistic.collectors.fus.project
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newCounterMetric
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
@@ -17,9 +17,8 @@ import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
 
 class IndexableFilesCollector : ProjectUsagesCollector() {
-  val log = logger<IndexableFilesCollector>()
-  override fun getGroupId(): String {
-    return "project.indexable.files"
+  override fun getGroup(): EventLogGroup {
+    return GROUP
   }
 
   override fun getMetrics(project: Project, indicator: ProgressIndicator): CancellablePromise<out Set<MetricEvent>> {
@@ -39,13 +38,18 @@ class IndexableFilesCollector : ProjectUsagesCollector() {
           true
         }, project, indicator)
         hashSetOf(
-          newCounterMetric("all.indexable.files", getNextPowerOfTwo(allIndexableFiles)),
-          newCounterMetric("content.indexable.files", getNextPowerOfTwo(inContentIndexableFiles))
+          ALL_INDEXABLE_FILES.metric(getNextPowerOfTwo(allIndexableFiles)),
+          CONTENT_INDEXABLE_FILES.metric(getNextPowerOfTwo(inContentIndexableFiles))
         )
       })
       .inSmartMode(project)
-      .cancelWith(indicator)
+      .wrapProgress(indicator)
       .submit(NonUrgentExecutor.getInstance())
   }
 
+  companion object {
+    private val GROUP = EventLogGroup("project.indexable.files", 2)
+    private val ALL_INDEXABLE_FILES = GROUP.registerEvent("all.indexable.files", EventFields.Int("count"))
+    private val CONTENT_INDEXABLE_FILES = GROUP.registerEvent("content.indexable.files", EventFields.Int("count"))
+  }
 }
