@@ -64,7 +64,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
   private val projectHomeOnTarget = VolumeDescriptor(VolumeType(JdkCommandLineSetup::class.java.simpleName + ":projectHomeOnTarget"),
                                                      "", "", "",
-                                                     target?.projectRootOnTarget ?: "")
+                                                     request.projectPathOnTarget ?: "")
 
   /**
    * @param uploadPathIsFile

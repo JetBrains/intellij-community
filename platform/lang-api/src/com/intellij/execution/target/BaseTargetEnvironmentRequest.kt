@@ -5,5 +5,6 @@ abstract class BaseTargetEnvironmentRequest @JvmOverloads constructor(
   override val uploadVolumes: MutableSet<TargetEnvironment.UploadRoot> = HashSet(),
   override val downloadVolumes: MutableSet<TargetEnvironment.DownloadRoot> = HashSet(),
   override val targetPortBindings: MutableSet<TargetEnvironment.TargetPortBinding> = HashSet(),
-  override val localPortBindings: MutableSet<TargetEnvironment.LocalPortBinding> = HashSet()
+  override val localPortBindings: MutableSet<TargetEnvironment.LocalPortBinding> = HashSet(),
+  override var projectPathOnTarget: String = ""
 ) : TargetEnvironmentRequest
