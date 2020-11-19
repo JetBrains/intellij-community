@@ -17,7 +17,7 @@ class PyConsoleRunAnythingProvider : RunAnythingAnActionProvider<RunPythonOrDebu
 
   override fun getHelpCommand() = "python"
 
-  override fun getHelpGroupTitle(): String? = "Python"
+  override fun getHelpGroupTitle(): String? = "Python" // NON-NLS
 
   override fun getValues(dataContext: DataContext, pattern: String): Collection<RunPythonOrDebugConsoleAction> {
     val action = ActionManager.getInstance().getAction("com.jetbrains.python.console.RunPythonConsoleAction")
