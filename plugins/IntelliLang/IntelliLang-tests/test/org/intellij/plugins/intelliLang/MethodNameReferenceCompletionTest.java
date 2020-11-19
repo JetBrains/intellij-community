@@ -16,7 +16,7 @@ public class MethodNameReferenceCompletionTest extends LightJavaCodeInsightFixtu
     String input = "import org.intellij.lang.annotations.Language;\n" +
                   "\n" +
                   "class Scratch {\n" +
-                  "  @Language(\"java-method-name\")\n" +
+                  "  @Language(\"jvm-method-name\")\n" +
                   "  @interface MethodName {}\n" +
                   "\n" +
                   "  public @interface ComponentProperties {\n" +
@@ -44,7 +44,7 @@ public class MethodNameReferenceCompletionTest extends LightJavaCodeInsightFixtu
     String result = "import org.intellij.lang.annotations.Language;\n" +
                   "\n" +
                   "class Scratch {\n" +
-                  "  @Language(\"java-method-name\")\n" +
+                  "  @Language(\"jvm-method-name\")\n" +
                   "  @interface MethodName {}\n" +
                   "\n" +
                   "  public @interface ComponentProperties {\n" +

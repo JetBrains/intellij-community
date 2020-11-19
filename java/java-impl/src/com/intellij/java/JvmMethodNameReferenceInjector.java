@@ -8,40 +8,46 @@ import com.intellij.psi.*;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UElementKt;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import javax.swing.*;
 
-public class JavaMethodNameReferenceInjector extends ReferenceInjector {
+public class JvmMethodNameReferenceInjector extends ReferenceInjector {
   @Override
   public @NotNull String getId() {
-    return "java-method-name";
+    return "jvm-method-name";
   }
 
   @Override
   public @NotNull @NlsContexts.Label String getDisplayName() {
-    return JavaBundle.message("label.java.method.name");
+    return JavaBundle.message("label.jvm.method.name");
   }
 
   @Override
   public PsiReference @NotNull [] getReferences(@NotNull PsiElement element,
                                                 @NotNull ProcessingContext context,
                                                 @NotNull TextRange range) {
-    if (!(element instanceof PsiLiteralExpression)) return PsiReference.EMPTY_ARRAY;
+    UInjectionHost host = UastContextKt.toUElement(element, UInjectionHost.class);
+    if (host == null) return PsiReference.EMPTY_ARRAY;
     String text = range.substring(element.getText());
     if (text.isEmpty()) return PsiReference.EMPTY_ARRAY;
-    PsiClass containingClass = ClassUtils.getContainingClass(element);
+    UClass uClass = UastContextKt.getUastParentOfType(element, UClass.class);
+    if (uClass == null) return PsiReference.EMPTY_ARRAY;
+    PsiClass containingClass = UElementKt.getAsJavaPsiElement(uClass, PsiClass.class);
     if (containingClass == null) return PsiReference.EMPTY_ARRAY;
     PsiMethod[] methods = containingClass.findMethodsByName(text, true);
-    PsiMethod[] allMethods = StreamEx.of(containingClass.getAllMethods()).distinct(PsiMethod::getName).toArray(PsiMethod.EMPTY_ARRAY);
     if (methods.length == 0) {
-      return new JavaMethodReference[]{new JavaMethodReference((PsiLiteralExpression)element, range, null, allMethods)};
+      return new JavaMethodReference[]{new JavaMethodReference(element, range, null, uClass)};
     }
     return ContainerUtil.map2Array(methods, JavaMethodReference.class, 
-                                   m -> new JavaMethodReference((PsiLiteralExpression)element, range, m, allMethods));
+                                   m -> new JavaMethodReference(element, range, m, uClass));
   }
 
   @Override
@@ -49,25 +55,26 @@ public class JavaMethodNameReferenceInjector extends ReferenceInjector {
     return AllIcons.Nodes.Method;
   }
 
-  private static final class JavaMethodReference extends PsiReferenceBase<PsiLiteralExpression> {
+  private static final class JavaMethodReference extends PsiReferenceBase<PsiElement> {
     private final @Nullable PsiMethod myMethod;
-    private final @NotNull PsiMethod @NotNull [] myVariants;
+    private final @NotNull UClass myContainingClass;
 
-    JavaMethodReference(@NotNull PsiLiteralExpression literal, @NotNull TextRange range,
-                        @Nullable PsiMethod method, @NotNull PsiMethod @NotNull [] variants) {
+    JavaMethodReference(@NotNull PsiElement literal, @NotNull TextRange range,
+                        @Nullable PsiMethod method, @NotNull UClass containingClass) {
       super(literal, range, method == null);
       myMethod = method;
-      myVariants = variants;
+      myContainingClass = containingClass;
     }
 
     @Override
     public Object @NotNull [] getVariants() {
-      return myVariants;
+      return StreamEx.of(myContainingClass.getMethods()).distinct(PsiMethod::getName).toArray(PsiMethod.EMPTY_ARRAY);
     }
 
     @Override
     public @Nullable PsiMethod resolve() {
-      return myMethod;
+      UMethod uMethod = UastContextKt.toUElement(myMethod, UMethod.class);
+      return uMethod == null ? null : uMethod.getPsi();
     }
   }
 }
