@@ -11,6 +11,7 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.segmentedRunDebugWidget.StateWidgetManager;
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
@@ -112,7 +113,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     processes.forEach(it -> {
       if (it.getExecutorId().equals(executor.getId()) && !(executor instanceof ExecutorGroup)) {
         ExecutorAction wrappedAction = new StateWidget(executor, it);
-        registerActionInGroup(actionManager, StateWidgetProcess.generateActionID(executor.getId()), wrappedAction, RDC_GROUP,
+        registerActionInGroup(actionManager, it.getActionId(), wrappedAction, RDC_GROUP,
                               myRunDebugIdToAction);
       }
     });
@@ -215,8 +216,16 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setText(myExecutor.getActionName());
+      Project project = e.getProject();
+      if (project != null) {
+        if (StateWidgetManager.getInstance(project).getActiveCount() == 0) {
+          e.getPresentation().setEnabledAndVisible(true);
+          super.update(e);
+          e.getPresentation().setText(myExecutor.getActionName());
+          return;
+        }
+      }
+      e.getPresentation().setEnabledAndVisible(false);
     }
   }
 
@@ -229,27 +238,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     private boolean canRun(@NotNull Project project, @NotNull List<SettingsAndEffectiveTarget> pairs) {
-      if (pairs.isEmpty()) {
-        return false;
-      }
-
-      for (SettingsAndEffectiveTarget pair : pairs) {
-        RunConfiguration configuration = pair.getConfiguration();
-        if (configuration instanceof CompoundRunConfiguration) {
-          if (!canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets())) {
-            return false;
-          }
-          continue;
-        }
-
-        ProgramRunner<?> runner = ProgramRunner.getRunner(myExecutor.getId(), configuration);
-        if (runner == null
-            || !ExecutionTargetManager.canRun(configuration, pair.getTarget())
-            || ExecutionManager.getInstance(project).isStarting(myExecutor.getId(), runner.getRunnerId())) {
-          return false;
-        }
-      }
-      return true;
+      return RunnerHelper.canRun(project, pairs, myExecutor);
     }
 
     @Override
@@ -343,20 +332,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     private void run(@NotNull Project project, @Nullable RunConfiguration configuration, @Nullable RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
-      if (configuration instanceof CompoundRunConfiguration) {
-        RunManager runManager = RunManager.getInstance(project);
-        for (SettingsAndEffectiveTarget settingsAndEffectiveTarget : ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets()) {
-          RunConfiguration subConfiguration = settingsAndEffectiveTarget.getConfiguration();
-          run(project, subConfiguration, runManager.findSettings(subConfiguration), dataContext);
-        }
-      }
-      else {
-        ExecutionEnvironmentBuilder builder = settings == null ? null : ExecutionEnvironmentBuilder.createOrNull(myExecutor, settings);
-        if (builder == null) {
-          return;
-        }
-        ExecutionManager.getInstance(project).restartRunProfile(builder.activeTarget().dataContext(dataContext).build());
-      }
+      RunnerHelper.run(project, configuration, settings, dataContext, myExecutor);
     }
 
     @Override
@@ -403,6 +379,54 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
       e.getPresentation().setEnabledAndVisible(myExecutorGroup.isApplicable(project));
+    }
+  }
+
+  public static final class RunnerHelper {
+    public static void run(@NotNull Project project,
+                            @Nullable RunConfiguration configuration,
+                            @Nullable RunnerAndConfigurationSettings settings,
+                            @NotNull DataContext dataContext,
+                            @NotNull Executor executor) {
+      if (configuration instanceof CompoundRunConfiguration) {
+        RunManager runManager = RunManager.getInstance(project);
+        for (SettingsAndEffectiveTarget settingsAndEffectiveTarget : ((CompoundRunConfiguration)configuration)
+          .getConfigurationsWithEffectiveRunTargets()) {
+          RunConfiguration subConfiguration = settingsAndEffectiveTarget.getConfiguration();
+          run(project, subConfiguration, runManager.findSettings(subConfiguration), dataContext, executor);
+        }
+      }
+      else {
+        ExecutionEnvironmentBuilder builder = settings == null ? null : ExecutionEnvironmentBuilder.createOrNull(executor, settings);
+        if (builder == null) {
+          return;
+        }
+        ExecutionManager.getInstance(project).restartRunProfile(builder.activeTarget().dataContext(dataContext).build());
+      }
+    }
+
+    public static boolean canRun(@NotNull Project project, @NotNull List<SettingsAndEffectiveTarget> pairs, @NotNull Executor executor) {
+      if (pairs.isEmpty()) {
+        return false;
+      }
+
+      for (SettingsAndEffectiveTarget pair : pairs) {
+        RunConfiguration configuration = pair.getConfiguration();
+        if (configuration instanceof CompoundRunConfiguration) {
+          if (!canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets(), executor)) {
+            return false;
+          }
+          continue;
+        }
+
+        ProgramRunner<?> runner = ProgramRunner.getRunner(executor.getId(), configuration);
+        if (runner == null
+            || !ExecutionTargetManager.canRun(configuration, pair.getTarget())
+            || ExecutionManager.getInstance(project).isStarting(executor.getId(), runner.getRunnerId())) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 }

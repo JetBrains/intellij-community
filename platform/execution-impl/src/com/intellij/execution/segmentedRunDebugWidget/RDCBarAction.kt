@@ -3,10 +3,11 @@ package com.intellij.execution.segmentedRunDebugWidget
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
 import javax.swing.SwingUtilities
 
-class RDCBarAction : SegmentedBarActionComponent() {
+class RDCBarAction : SegmentedBarActionComponent(ActionPlaces.STATE_WIDGET_ACTION_BAR) {
   init {
     ActionManager.getInstance().getAction("RunDebugConfigActionBarGroup")?.let {
       if(it is ActionGroup) {

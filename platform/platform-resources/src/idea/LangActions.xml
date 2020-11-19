@@ -528,9 +528,9 @@
     </group>
 
     <group id="RunDebugConfigActionBarGroup" popup="false">
-      <reference ref="RunConfiguration"/>
+      <action id="StateWidgetRunConfigurationsAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetRunConfigurationsAction"/>
       <group id="RunDebugConfigRunnerActions"/>
-      <reference ref="Stop"/>
+      <action id="StateWidgetStop" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetStopAction" icon="AllIcons.Actions.Suspend"/>
     </group>
 
     <group id="Bookmarks">

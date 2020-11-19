@@ -4,20 +4,21 @@ package com.intellij.execution.segmentedRunDebugWidget
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 
-internal abstract class RDCLabelAction(private val processID: String, @NlsActions.ActionText text: String) : AnAction(text) {
-  fun isActive(project: Project): Boolean {
-    return StateWidgetManager.getInstance(project).getActiveProcessesIDs().contains(processID)
-  }
+internal abstract class RDCLabelAction(private val processID: String) : AnAction() {
 
   override fun displayTextInToolbar() = true
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project?.let { isActive(it) } ?: false
+    e.presentation.isEnabledAndVisible = e.project?.let {
+      val stateWidgetManager = StateWidgetManager.getInstance(it)
+      stateWidgetManager.getProcessById(processID)?.name?.let {
+        e.presentation.text = it
+        stateWidgetManager.getActiveProcessesIDs().contains(processID)
+      } ?: false
+    } ?: false
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -32,6 +33,6 @@ internal abstract class RDCLabelAction(private val processID: String, @NlsAction
   }
 }
 
-private class RunningRDCLabelAction : RDCLabelAction(ToolWindowId.RUN, "Running")
+private class RunningRDCLabelAction : RDCLabelAction(ToolWindowId.RUN)
 
-private class DebuggingRDCLabelAction : RDCLabelAction(ToolWindowId.DEBUG, "Debugging")
+private class DebuggingRDCLabelAction : RDCLabelAction(ToolWindowId.DEBUG)

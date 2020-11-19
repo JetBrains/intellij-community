@@ -15,7 +15,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.Border
 
-open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, DumbAware {
+open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOLBAR) : AnAction(), CustomComponentAction, DumbAware {
   enum class ControlBarProperty {
     FIRST,
     LAST,
@@ -83,12 +83,11 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
   }
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
     e.presentation.isVisible = actionGroup != null
   }
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-      val bar = object : ActionToolbarImpl(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true) {
+  override fun createCustomComponent(presentation: Presentation, place_: String): JComponent {
+      val bar = object : ActionToolbarImpl(place, group, true) {
         private var isActive = false
 
         override fun getInsets(): Insets {
@@ -97,6 +96,10 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
 
         override fun setBorder(border: Border?) {
 
+        }
+
+        override fun isInsideNavBar(): Boolean {
+          return true
         }
 
         override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {

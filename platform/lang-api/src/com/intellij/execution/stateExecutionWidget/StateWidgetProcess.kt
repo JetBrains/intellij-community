@@ -2,6 +2,8 @@
 package com.intellij.execution.stateExecutionWidget
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.Nls
+
 
 interface StateWidgetProcess {
   companion object {
@@ -12,9 +14,11 @@ interface StateWidgetProcess {
     fun getProcesses(): List<StateWidgetProcess> = EP_NAME.extensionList
 
     @JvmStatic
-    fun generateActionID(actionId: String) = "${ACTION_PREFIX}_$actionId"
+    fun generateActionID(executorId: String) = "${ACTION_PREFIX}_$executorId"
   }
 
   val ID: String
   val executorId: String
+  val name: @Nls String
+  val actionId: String
 }

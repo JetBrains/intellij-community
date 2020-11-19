@@ -3,12 +3,13 @@ package com.intellij.execution.segmentedVcsWidget // Copyright 2000-2020 JetBrai
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
 import org.jetbrains.annotations.NotNull
 import javax.swing.SwingUtilities
 
-class SegmentedVcsControlAction : SegmentedBarActionComponent() {
+class SegmentedVcsControlAction : SegmentedBarActionComponent(ActionPlaces.NEW_TOOLBAR) {
   init {
     ActionManager.getInstance().getAction("SegmentedVcsActionsBarGroup")?.let {
       if(it is ActionGroup) {
