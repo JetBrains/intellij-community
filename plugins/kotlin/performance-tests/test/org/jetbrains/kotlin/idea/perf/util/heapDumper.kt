@@ -7,16 +7,15 @@ package org.jetbrains.kotlin.idea.perf.util
 
 import com.intellij.openapi.util.io.FileUtilRt
 import com.sun.management.HotSpotDiagnosticMXBean
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.lang.management.ManagementFactory
-import java.nio.file.Files
-import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.io.path.*
 
-@OptIn(ExperimentalPathApi::class)
 object HeapDumper {
     private const val HOTSPOT_BEAN_NAME = "com.sun.management:type=HotSpotDiagnostic"
 
@@ -31,15 +30,15 @@ object HeapDumper {
     fun dumpHeap(fileNamePrefix: String, live: Boolean = true) {
         val format = SimpleDateFormat("yyyyMMdd-HHmmss")
         val timestamp = format.format(Date())
-        val tempFile = createTempFile(fileNamePrefix, ".hprof")
-        tempFile.deleteIfExists()
+        val tempFile = File.createTempFile(fileNamePrefix, ".hprof")
+        tempFile.delete()
         val fileName = "build/$fileNamePrefix-$timestamp.hprof.zip"
         logMessage { "Dumping a heap into $tempFile ..." }
         try {
             hotspotMBean.dumpHeap(tempFile.toString(), live)
             logMessage { "Heap dump is $tempFile ready." }
 
-            zipFile(tempFile, Path(fileName))
+            zipFile(tempFile, File(fileName))
 
             val testName = "Heap dump $timestamp"
             TeamCity.test(testName) {
@@ -51,9 +50,9 @@ object HeapDumper {
         }
     }
 
-    private fun zipFile(srcFile: Path, targetFile: Path) {
-        srcFile.inputStream().use { fis ->
-            ZipOutputStream(targetFile.outputStream()).use { os ->
+    private fun zipFile(srcFile: File, targetFile: File) {
+        FileInputStream(srcFile).use { fis ->
+            ZipOutputStream(FileOutputStream(targetFile)).use { os ->
                 os.putNextEntry(ZipEntry(srcFile.name))
                 FileUtilRt.copy(fis, os)
                 os.closeEntry()
