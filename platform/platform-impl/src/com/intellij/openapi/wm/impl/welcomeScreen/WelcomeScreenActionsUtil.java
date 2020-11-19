@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Couple;
@@ -94,7 +95,8 @@ public class WelcomeScreenActionsUtil {
   static void performAnActionForComponent(@NotNull AnAction action, @NotNull Component component) {
     ActionToolbar toolbar = ComponentUtil.getParentOfType(ActionToolbar.class, component);
     DataContext context = toolbar != null ? toolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(component);
-    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, context));
+    AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, context);
+    ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent, context);
   }
 
   static class LargeIconWithTextWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
