@@ -72,7 +72,7 @@ public class CompileQrcAction extends AnAction {
       ProcessHandler process = new OSProcessHandler(cmdLine);
       ProcessTerminatedListener.attach(process);
       new RunContentExecutor(project, process)
-        .withTitle("Compile .qrc")
+        .withTitle(PyBundle.message("qt.run.tab.title.compile.qrc"))
         .run();
     }
     catch (ExecutionException ex) {
