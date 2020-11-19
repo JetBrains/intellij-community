@@ -72,7 +72,6 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
-import com.intellij.util.io.PathKt;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
@@ -145,8 +144,8 @@ public final class BuildManager implements Disposable {
     s -> !(s.contains(IDEA_PROJECT_DIR_PATTERN) || s.endsWith(IWS_EXTENSION) || s.endsWith(IPR_EXTENSION)) :
     s -> !(StringUtil.endsWithIgnoreCase(s, IWS_EXTENSION) || StringUtil.endsWithIgnoreCase(s, IPR_EXTENSION) || StringUtil.containsIgnoreCase(s, IDEA_PROJECT_DIR_PATTERN));
 
-  private String myFallbackSdkHome;
-  private String myFallbackSdkVersion;
+  private final String myFallbackSdkHome;
+  private final String myFallbackSdkVersion;
 
   private final Map<TaskFuture<?>, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, RequestFuture<?>> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
@@ -257,12 +256,16 @@ public final class BuildManager implements Disposable {
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
 
-    myFallbackSdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
-    myFallbackSdkVersion = System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null);
-    if (myFallbackSdkHome == null || myFallbackSdkVersion == null) {
+    String fallbackSdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
+    String fallbackSdkVersion = System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null);
+    if (fallbackSdkHome == null || fallbackSdkVersion == null) {
       // default to the IDE's runtime
       myFallbackSdkHome = getFallbackSdkHome();
       myFallbackSdkVersion = SystemInfo.JAVA_VERSION;
+    }
+    else {
+      myFallbackSdkHome = fallbackSdkHome;
+      myFallbackSdkVersion = fallbackSdkVersion;
     }
 
     MessageBusConnection connection = application.getMessageBus().connect(this);
@@ -1491,6 +1494,7 @@ public final class BuildManager implements Disposable {
     listeningConnection.myChannelRegistrar.setServerChannel(serverChannel, false);
     int port = ((InetSocketAddress)serverChannel.localAddress()).getPort();
     listeningConnection.myListenPort = port;
+    myListeningConnections.add(listeningConnection);
     return port;
   }
 
