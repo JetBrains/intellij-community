@@ -1023,9 +1023,20 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 }
 
-/** This function exposes [brokenConsistency] property to the outside and should be removed along with the property itself */
+/** It exposes [assertConsistency] function to the outside and can be used for checking if the current store is consistent */
 val WorkspaceEntityStorage.isBroken: Boolean
-  get() = (this as AbstractEntityStorage).brokenConsistency
+  get() {
+    this as AbstractEntityStorage
+    if (brokenConsistency) return true
+    try {
+      assertConsistency()
+    }
+    catch (e: Throwable) {
+      brokenConsistency = true
+      return true
+    }
+    return false
+  }
 
 internal object ClassConversion {
 
