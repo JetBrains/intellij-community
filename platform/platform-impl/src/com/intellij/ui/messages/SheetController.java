@@ -342,6 +342,7 @@ public final class SheetController implements Disposable {
 
     messageTextPane.setSize(widestWordWidth, Short.MAX_VALUE);
     messageTextPane.setText(handleBreaks(message));
+    widestWordWidth = Math.max(widestWordWidth, messageTextPane.getMinimumSize().width);
     messageArea.setSize(widestWordWidth, messageTextPane.getPreferredSize().height);
 
     SHEET_WIDTH = Math.max(LEFT_SHEET_OFFSET + widestWordWidth + RIGHT_OFFSET, SHEET_WIDTH);
