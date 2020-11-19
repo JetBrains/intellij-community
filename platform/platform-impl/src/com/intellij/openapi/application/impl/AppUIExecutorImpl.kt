@@ -207,7 +207,7 @@ internal class WithDocumentsCommitted(private val project: Project, private val 
   }
 
   override fun schedule(runnable: Runnable) {
-    PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, modality)
+    PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(modality, runnable)
   }
 
   override fun toString(): String {

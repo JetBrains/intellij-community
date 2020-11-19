@@ -1096,7 +1096,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       LOG.debug("Documentation fetched successfully:\n", text);
 
       String finalText = text;
-      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(modality, () -> {
         if (!element.isValid()) {
           LOG.debug("Element for which documentation was requested is not valid");
           callback.setDone();
@@ -1116,7 +1116,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           component.clearHistory();
         }
         callback.setDone();
-      }, modality);
+      });
     }, 10);
     return callback;
   }
