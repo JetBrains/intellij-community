@@ -35,7 +35,9 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
   @Override
   protected void tearDown() throws Exception {
     try {
-      myMap.close();
+      if (myMap != null) {
+        myMap.close();
+      }
       myDirTestFixture.tearDown();
     }
     catch (Exception e) {
