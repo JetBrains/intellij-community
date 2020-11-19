@@ -23,6 +23,9 @@ import training.project.ProjectUtils
 import java.nio.file.Path
 
 class JavaLangSupport : AbstractLangSupport() {
+  override val defaultProjectName = "IdeaLearningProject"
+  override val projectResourcePath = "/learnProjects/java/LearnProject"
+
   override val primaryLanguage: String = "JAVA"
 
   override val defaultProductName: String = "IDEA"
