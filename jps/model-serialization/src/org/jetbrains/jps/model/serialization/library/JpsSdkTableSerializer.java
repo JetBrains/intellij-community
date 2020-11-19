@@ -3,8 +3,6 @@ package org.jetbrains.jps.model.serialization.library;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +19,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
 import java.io.File;
 import java.util.List;
@@ -52,15 +51,16 @@ public final class JpsSdkTableSerializer {
   private static final String SIMPLE_TYPE = "simple";
   private static final String URL_ATTRIBUTE = "url";
   private static final String ADDITIONAL_TAG = "additional";
-  public static final String WSL_PREFIX = "//wsl$/";
 
-  public static void loadSdks(@Nullable Element sdkListElement, JpsLibraryCollection result) {
+  public static void loadSdks(@Nullable Element sdkListElement,
+                              JpsLibraryCollection result,
+                              @NotNull JpsPathMapper pathMapper) {
     for (Element sdkElement : JDOMUtil.getChildren(sdkListElement, JDK_TAG)) {
-      result.addLibrary(loadSdk(sdkElement));
+      result.addLibrary(loadSdk(sdkElement, pathMapper));
     }
   }
 
-  private static JpsLibrary loadSdk(Element sdkElement) {
+  private static JpsLibrary loadSdk(Element sdkElement, @NotNull JpsPathMapper pathMapper) {
     String name = getAttributeValue(sdkElement, NAME_TAG);
     String typeId = getAttributeValue(sdkElement, TYPE_TAG);
     LOG.debug("Loading " + typeId + " SDK '" + name + "'");
@@ -71,7 +71,7 @@ public final class JpsSdkTableSerializer {
       JpsLibraryRootTypeSerializer rootTypeSerializer = getRootTypeSerializer(rootTypeElement.getName());
       if (rootTypeSerializer != null) {
         for (Element rootElement : rootTypeElement.getChildren()) {
-          loadRoots(rootElement, library, rootTypeSerializer.getType());
+          loadRoots(rootElement, library, rootTypeSerializer.getType(), pathMapper);
         }
       }
       else {
@@ -88,24 +88,17 @@ public final class JpsSdkTableSerializer {
     return library;
   }
 
-  private static void loadRoots(Element rootElement, JpsLibrary library, JpsOrderRootType rootType) {
+  private static void loadRoots(Element rootElement, JpsLibrary library, JpsOrderRootType rootType, @NotNull JpsPathMapper pathMapper) {
     final String type = rootElement.getAttributeValue(TYPE_ATTRIBUTE);
     if (type.equals(COMPOSITE_TYPE)) {
       for (Element element : rootElement.getChildren()) {
-        loadRoots(element, library, rootType);
+        loadRoots(element, library, rootType, pathMapper);
       }
     }
     else if (type.equals(SIMPLE_TYPE)) {
       String url = rootElement.getAttributeValue(URL_ATTRIBUTE);
       if (url == null) return;
-      if (SystemInfoRt.isLinux && url.contains(WSL_PREFIX)) {
-        int startPos = url.indexOf(WSL_PREFIX);
-        int endPos = url.indexOf('/', startPos + WSL_PREFIX.length());
-        if (endPos >= 0) {
-          url = url.substring(0, startPos) + url.substring(endPos);
-        }
-      }
-      library.addRoot(url, rootType);
+      library.addRoot(pathMapper.mapUrl(url), rootType);
     }
   }
 

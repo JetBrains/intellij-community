@@ -1200,6 +1200,8 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter(option);
     }
 
+    cmdLine.setupAdditionalVMOptions();
+
     Path hostWorkingDirectory = cmdLine.getHostWorkingDirectory();
     if (!FileUtil.createDirectory(hostWorkingDirectory.toFile())) {
       LOG.warn("Failed to create build working directory " + hostWorkingDirectory);

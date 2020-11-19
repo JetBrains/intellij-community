@@ -37,4 +37,7 @@ interface BuildCommandLineBuilder {
   void setCharset(Charset charset);
 
   GeneralCommandLine buildCommandLine() throws ExecutionException;
+
+  default void setupAdditionalVMOptions() {
+  }
 }

@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.GlobalOptions;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -144,6 +145,11 @@ class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   @Override
   public void setCharset(Charset charset) {
     myCommandLine.setCharset(charset);
+  }
+
+  @Override
+  public void setupAdditionalVMOptions() {
+    addParameter("-D" + GlobalOptions.JPS_IN_WSL_OPTION + "=true");
   }
 
   @Override
