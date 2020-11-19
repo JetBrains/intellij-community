@@ -16,12 +16,16 @@
 
 package org.jetbrains.kotlin.idea;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-public class PluginStartupApplicationService {
+public class PluginStartupApplicationService implements Disposable {
 
     public static PluginStartupApplicationService getInstance() {
         return ApplicationManager.getApplication().getService(PluginStartupApplicationService.class);
@@ -32,9 +36,16 @@ public class PluginStartupApplicationService {
     public synchronized String getAliveFlagPath() {
         if (this.aliveFlagPath == null) {
             try {
-                File flagFile = File.createTempFile("kotlin-idea-", "-is-running");
-                flagFile.deleteOnExit();
-                this.aliveFlagPath = flagFile.getAbsolutePath();
+                Path flagFile = Files.createTempFile("kotlin-idea-", "-is-running");
+                File file = flagFile.toFile();
+                file.deleteOnExit();
+                Disposer.register(this, new Disposable() {
+                    @Override
+                    public void dispose() {
+                        file.delete();
+                    }
+                });
+                this.aliveFlagPath = flagFile.toAbsolutePath().toString();
             }
             catch (IOException e) {
                 this.aliveFlagPath = "";
@@ -44,13 +55,16 @@ public class PluginStartupApplicationService {
     }
 
     public synchronized void resetAliveFlag() {
-        if (this.aliveFlagPath != null) {
-            File flagFile = new File(this.aliveFlagPath);
-            if (flagFile.exists()) {
-                if (flagFile.delete()) {
-                    this.aliveFlagPath = null;
-                }
+        if (aliveFlagPath != null && !aliveFlagPath.isEmpty()) {
+            File flagFile = new File(aliveFlagPath);
+            if (flagFile.isFile() && flagFile.exists() && flagFile.delete()) {
+                this.aliveFlagPath = null;
             }
         }
+    }
+
+    @Override
+    public void dispose() {
+
     }
 }
