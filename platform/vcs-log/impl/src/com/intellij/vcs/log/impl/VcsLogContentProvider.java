@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
@@ -160,6 +161,14 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     @Override
     public Boolean fun(@NotNull Project project) {
       return !VcsProjectLog.getLogProviders(project).isEmpty();
+    }
+  }
+
+  public static class VcsLogContentPreloader implements ChangesViewContentProvider.Preloader {
+    @Override
+    public void preloadTabContent(@NotNull Content content) {
+      content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
+                          ChangesViewContentManager.TabOrderWeight.BRANCHES.getWeight());
     }
   }
 
