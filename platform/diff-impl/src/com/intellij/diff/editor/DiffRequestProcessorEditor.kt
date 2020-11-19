@@ -29,7 +29,7 @@ import javax.swing.JComponent
 import javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW
 import javax.swing.KeyStroke
 
-class DiffRequestProcessorEditor(
+open class DiffRequestProcessorEditor(
   private val file: DiffVirtualFile,
   val processor: DiffRequestProcessor
 ) : FileEditorBase() {
