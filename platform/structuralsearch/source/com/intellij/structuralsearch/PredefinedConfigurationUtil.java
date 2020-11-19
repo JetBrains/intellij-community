@@ -79,8 +79,9 @@ public final class PredefinedConfigurationUtil {
 
   /**
    * This creates a predefined search configuration.
+   * The language name will be added to the provided refName.
    * @param name localizable name of the template
-   * @param refName unique identifier of the template used by the reference filter
+   * @param refName unique template identifier (within the configurations of its language) used by the reference filter
    */
   @NotNull
   public static Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
