@@ -1,13 +1,12 @@
 package org.intellij.plugins.markdown.settings;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider;
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider;
-import org.intellij.plugins.markdown.ui.split.SplitFileEditor.SplitEditorLayout;
+import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
 
 public final class MarkdownPreviewSettings {
@@ -15,7 +14,7 @@ public final class MarkdownPreviewSettings {
 
   @Attribute("DefaultSplitLayout")
   @NotNull
-  private SplitEditorLayout mySplitEditorLayout = SystemInfo.isLinux ? SplitEditorLayout.FIRST : SplitEditorLayout.SPLIT;
+  private SplitFileEditor.SplitEditorLayout mySplitEditorLayout = SplitFileEditor.SplitEditorLayout.SPLIT;
 
   @Tag("HtmlPanelProviderInfo")
   @Property(surroundWithTag = false)
@@ -32,7 +31,7 @@ public final class MarkdownPreviewSettings {
   public MarkdownPreviewSettings() {
   }
 
-  public MarkdownPreviewSettings(@NotNull SplitEditorLayout splitEditorLayout,
+  public MarkdownPreviewSettings(@NotNull SplitFileEditor.SplitEditorLayout splitEditorLayout,
                                  @NotNull MarkdownHtmlPanelProvider.ProviderInfo htmlPanelProviderInfo,
                                  boolean isAutoScrollPreview,
                                  boolean isVerticalSplit) {
@@ -43,7 +42,7 @@ public final class MarkdownPreviewSettings {
   }
 
   @NotNull
-  public SplitEditorLayout getSplitEditorLayout() {
+  public SplitFileEditor.SplitEditorLayout getSplitEditorLayout() {
     return mySplitEditorLayout;
   }
 
