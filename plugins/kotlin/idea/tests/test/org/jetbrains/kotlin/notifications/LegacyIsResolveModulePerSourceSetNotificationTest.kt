@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.configuration.ui.notifications.SuppressResolveM
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.junit.AssumptionViolatedException
 import java.util.*
 
 class LegacyIsResolveModulePerSourceSetNotificationTest : LightPlatformTestCase() {
@@ -100,7 +101,7 @@ class LegacyIsResolveModulePerSourceSetNotificationTest : LightPlatformTestCase(
         )
 
         val notification = notifications.single()
-        val firstAction = notification.actions.firstOrNull() ?: return  /* Covered by other test */
+        val firstAction = notification.actions.firstOrNull() ?: throw AssumptionViolatedException("No notification actions present")
 
         assertFalse(
             "Expected 'isResolveModulePerSourceSet still being false before action",
