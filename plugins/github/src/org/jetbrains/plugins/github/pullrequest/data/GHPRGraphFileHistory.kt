@@ -4,14 +4,17 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.github.api.data.GHCommit
+import java.util.concurrent.ConcurrentHashMap
 
 class GHPRGraphFileHistory(private val commitsMap: Map<String, GHCommitWithPatches>,
                            private val lastCommit: GHCommit,
                            private val finalFilePath: String) : GHPRFileHistory {
 
-  override fun contains(commitSha: String, filePath: String): Boolean {
-    val lastCommitWithPatches = commitsMap[lastCommit.oid] ?: return false
-    return isSameFile(lastCommitWithPatches, finalFilePath, commitSha, filePath)
+  private val containsCache = ConcurrentHashMap<Pair<String, String>, Boolean>()
+
+  override fun contains(commitSha: String, filePath: String): Boolean = containsCache.getOrPut(commitSha to filePath) {
+    val lastCommitWithPatches = commitsMap[lastCommit.oid] ?: return@getOrPut false
+    isSameFile(lastCommitWithPatches, finalFilePath, commitSha, filePath)
   }
 
   private fun isSameFile(knownCommit: GHCommitWithPatches, knownFilePath: String, commitSha: String, filePath: String): Boolean {
