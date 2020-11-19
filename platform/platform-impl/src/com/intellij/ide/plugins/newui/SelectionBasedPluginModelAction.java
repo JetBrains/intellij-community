@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginEnabledState;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -20,6 +21,8 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.util.text.StringUtil.split;
 
 abstract class SelectionBasedPluginModelAction<C extends JComponent> extends DumbAwareAction {
 
@@ -63,8 +66,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       Project project = e.getProject();
 
       getAllDescriptors()
-        .map(myPluginModel::getState)
-        .forEach(state -> update(state, presentation, project));
+        .map(IdeaPluginDescriptor::getPluginId)
+        .forEach(pluginId -> update(pluginId, presentation, project));
     }
 
     @Override
@@ -75,18 +78,21 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       );
     }
 
-    protected boolean isInvisible(@NotNull PluginEnabledState oldState,
-                                  @Nullable Project project) {
+    protected boolean isInvisible(@NotNull PluginEnabledState oldState) {
       return myNewState == oldState ||
-             oldState == PluginEnabledState.DISABLED && myNewState == PluginEnabledState.DISABLED_FOR_PROJECT ||
-             myNewState.isPerProject() && (!isPerProjectEnabled() || project == null);
+             oldState == PluginEnabledState.DISABLED && myNewState == PluginEnabledState.DISABLED_FOR_PROJECT;
     }
 
-    private void update(@NotNull PluginEnabledState oldState,
+    private void update(@NotNull PluginId pluginId,
                         @NotNull Presentation presentation,
                         @Nullable Project project) {
-      boolean enabled = !isInvisible(oldState, project);
-      presentation.setEnabledAndVisible(enabled);
+      PluginEnabledState oldState = myPluginModel.getState(pluginId);
+
+      boolean disabled = isInvisible(oldState) ||
+                         myNewState.isPerProject() && (project == null ||
+                                                       !isPerProjectEnabled() ||
+                                                       isPluginExcluded(pluginId.getIdString()));
+      presentation.setEnabledAndVisible(!disabled);
 
       if (oldState == PluginEnabledState.ENABLED && myNewState == PluginEnabledState.ENABLED_FOR_PROJECT) {
         presentation.setText(IdeBundle.message("plugins.configurable.enable.for.current.project.only"));
@@ -117,6 +123,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     private static boolean isPerProjectEnabled() {
       return Registry.is("ide.plugins.per.project", false);
+    }
+
+    private static boolean isPluginExcluded(@NotNull @NonNls String pluginIdString) {
+      return split(Registry.stringValue("ide.plugins.per.project.exclusion.list"), ",").contains(pluginIdString);
     }
   }
 
