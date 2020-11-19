@@ -981,7 +981,7 @@ class NewMultiplatformProjectImportingTest : MultiplePluginVersionGradleImportin
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.3.30+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
-    fun testCommonTestTargetPlatform() {
+    fun testCommonTestOnetargetPlatform() {
         configureByFiles()
         importProject(true)
         checkProjectStructure(true, false, false) {
@@ -1000,6 +1000,35 @@ class NewMultiplatformProjectImportingTest : MultiplePluginVersionGradleImportin
             }
         }
     }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.3.60+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    fun testCommonTestMultitargetPlatform() {
+        configureByFiles()
+        importProject(true)
+        checkProjectStructure(true, false, false) {
+            module("KotlinMPPL") {}
+            module("KotlinMPPL.commonMain") {
+                platform(CommonPlatforms.defaultCommonPlatform)
+            }
+            module("KotlinMPPL.commonTest") {
+                platform(CommonPlatforms.defaultCommonPlatform)
+            }
+            module("KotlinMPPL.jsMain") {
+                platform(JsPlatforms.defaultJsPlatform)
+            }
+            module("KotlinMPPL.jsTest") {
+                platform(JsPlatforms.defaultJsPlatform)
+            }
+            module("KotlinMPPL.jvmMain") {
+                platform(JvmPlatforms.defaultJvmPlatform)
+            }
+            module("KotlinMPPL.jvmTest") {
+                platform(JvmPlatforms.defaultJvmPlatform)
+            }
+        }
+    }
+
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.3.60+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
