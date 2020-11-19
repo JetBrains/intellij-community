@@ -11,5 +11,6 @@ enum class DefaultSortWeight(val weight: Int) {
   PACKAGE(-30),
   FOLDER(-20),
   FILE(20),
-  SCRATCH_ROOT(9_000);
+  LIBRARY_ROOT(60),
+  SCRATCH_ROOT(90);
 }
