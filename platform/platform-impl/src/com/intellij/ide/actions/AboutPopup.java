@@ -429,9 +429,11 @@ public final class AboutPopup {
 
     private static @NotNull @Nls String getCopyrightText() {
       ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-      return IdeBundle.message("about.popup.copyright", appInfo.getCopyrightStart(), 
-                               String.valueOf(Calendar.getInstance(Locale.US).get(Calendar.YEAR)),
-                               appInfo.getCompanyName());
+      // Copyright message should not be translated
+      @NlsSafe
+      String copyrightText = String.format(Locale.ROOT,
+        "Copyright © %s–%d %s", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR), appInfo.getCompanyName());
+      return copyrightText;
     }
 
     private @NotNull TextRenderer createTextRenderer(Graphics2D g) {
