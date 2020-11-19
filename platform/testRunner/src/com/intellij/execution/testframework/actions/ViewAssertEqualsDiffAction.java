@@ -55,13 +55,13 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   public static boolean openDiff(DataContext context, @Nullable DiffHyperlink currentHyperlink) {
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(context);
     final Project project = CommonDataKeys.PROJECT.getData(context);
-    if (testProxy != null && currentHyperlink == null) {
-      ListSelection<DiffHyperlink> hyperlinks = showDiff(testProxy, TestTreeView.MODEL_DATA_KEY.getData(context));
-      new MyDiffWindow(project, hyperlinks.getList(), hyperlinks.getSelectedIndex()).show();
-      return true;
-    }
     if (currentHyperlink != null) {
       new MyDiffWindow(project, currentHyperlink).show();
+      return true;
+    }
+    if (testProxy != null) {
+      ListSelection<DiffHyperlink> hyperlinks = showDiff(testProxy, TestTreeView.MODEL_DATA_KEY.getData(context));
+      new MyDiffWindow(project, hyperlinks.getList(), hyperlinks.getSelectedIndex()).show();
       return true;
     }
     return false;
