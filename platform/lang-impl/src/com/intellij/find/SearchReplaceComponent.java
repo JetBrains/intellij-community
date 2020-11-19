@@ -213,7 +213,11 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       add(leftPanel, BorderLayout.CENTER);
     }
     else {
-      mySplitter = new OnePixelSplitter(false, initialProportion);
+      if (maximizeLeftPanelOnResize){
+        mySplitter = new OnePixelSplitter(false, initialProportion, initialProportion, initialProportion);
+      } else {
+        mySplitter = new OnePixelSplitter(false, initialProportion);
+      }
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
       mySplitter.setOpaque(false);
@@ -248,10 +252,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
         mySplitter.setHonorComponentsMinimumSize(true);
         mySplitter.setHonorComponentsPreferredSize(true);
+        mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
       }
-
-      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
-
     }
 
     update("", "", false, false);
