@@ -65,7 +65,7 @@ import java.io.IOException
 abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCaseBase() {
     private val exceptions = ArrayList<Throwable>()
 
-    protected open val captureExceptions = true
+    protected open val captureExceptions = false
 
     protected fun testDataFile(fileName: String): File = File(testDataPath, fileName)
 
