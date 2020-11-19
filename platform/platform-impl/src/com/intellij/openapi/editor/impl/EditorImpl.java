@@ -107,7 +107,6 @@ import java.awt.font.TextHitInfo;
 import java.awt.geom.Point2D;
 import java.awt.im.InputMethodRequests;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
@@ -535,12 +534,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
     myScrollingModel.addVisibleAreaListener(myMarkupModel);
 
-    PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent e) {
-        if (Document.PROP_WRITABLE.equals(e.getPropertyName())) {
-          myEditorComponent.repaint();
-        }
+    PropertyChangeListener propertyChangeListener = e -> {
+      if (Document.PROP_WRITABLE.equals(e.getPropertyName())) {
+        myEditorComponent.repaint();
       }
     };
     myDocument.addPropertyChangeListener(propertyChangeListener);
