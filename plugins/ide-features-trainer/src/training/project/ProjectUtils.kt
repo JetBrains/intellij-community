@@ -49,7 +49,7 @@ object ProjectUtils {
    */
   fun importOrOpenProject(langSupport: LangSupport, projectToClose: Project?, postInitCallback: (learnProject: Project) -> Unit) {
     runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = projectToClose) {
-      val path = LangManager.getInstance().state.languageToProjectMap[langSupport.primaryLanguage]
+      val path = LangManager.getInstance().getLearningProjectPath(langSupport)
       val canonicalPlace = File(ideProjectsBasePath, langSupport.defaultProjectName).toPath()
       var dest = if (path == null) canonicalPlace else Paths.get(path)
       if (!isSameVersion(dest)) {
@@ -105,7 +105,7 @@ object ProjectUtils {
         error("Cannot create learning demo project. See LOG files for details.")
       }
     }
-    LangManager.getInstance().state.languageToProjectMap[langSupport.primaryLanguage] = targetDirectory.toAbsolutePath().toString()
+    LangManager.getInstance().setLearningProjectPath(langSupport, targetDirectory.toAbsolutePath().toString())
   }
 
   private fun copyLearnProjectIcon(projectDir: File) {
