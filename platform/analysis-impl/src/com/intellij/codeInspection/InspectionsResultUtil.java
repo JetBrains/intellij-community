@@ -3,7 +3,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,8 +67,8 @@ public final class InspectionsResultUtil {
           xmlWriter.addAttribute("shortName", shortName);
           xmlWriter.addAttribute("defaultSeverity", toolWrapper.getDefaultLevel().getSeverity().getName());
           xmlWriter.addAttribute("displayName", toolWrapper.getDisplayName());
-          final boolean toolEnabled = profile.isToolEnabled(HighlightDisplayKey.find(shortName));
-          xmlWriter.addAttribute("enabled", Boolean.toString(toolEnabled));
+          xmlWriter.addAttribute("enabled", Boolean.toString(isToolEnabled(profile, shortName)));
+
           final String description = toolWrapper.loadDescription();
           if (description != null) {
             xmlWriter.setValue(description);
@@ -84,6 +86,16 @@ public final class InspectionsResultUtil {
         LOG.error("Descriptions are missed for tools: " + StringUtil.join(inspectionsWithoutDescriptions, ", "));
       }
     }
+  }
+
+  private static boolean isToolEnabled(@NotNull InspectionProfile profile, String shortName) {
+    if (profile instanceof InspectionProfileImpl) {
+      ToolsImpl tools = ((InspectionProfileImpl)profile).getToolsOrNull(shortName, null);
+      if (tools != null)  {
+        return tools.isEnabled();
+      }
+    }
+    return profile.isToolEnabled(HighlightDisplayKey.find(shortName));
   }
 
   public static @NotNull Path getInspectionResultPath(@NotNull Path outputDir, String name) {
