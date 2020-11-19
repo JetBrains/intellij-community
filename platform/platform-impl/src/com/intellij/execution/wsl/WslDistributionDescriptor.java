@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -146,7 +147,7 @@ final class WslDistributionDescriptor {
   }
 
   @Nullable
-  private String readWslOutputLine(WSLCommandLineOptions options, List<String> command) {
+  private String readWslOutputLine(WSLCommandLineOptions options, List<@NonNls String> command) {
     List<String> pwdOutputLines = readWSLOutput(options, command);
     if (pwdOutputLines == null) return null;
     if (pwdOutputLines.size() != 1) {
@@ -160,7 +161,7 @@ final class WslDistributionDescriptor {
   }
 
   @Nullable
-  private List<String> readWSLOutput(WSLCommandLineOptions options, List<String> command) {
+  private List<String> readWSLOutput(WSLCommandLineOptions options, List<@NonNls String> command) {
     WSLDistribution distribution = WSLUtil.getDistributionById(getId());
     if (distribution == null) {
       return null;
@@ -193,13 +194,6 @@ final class WslDistributionDescriptor {
 
   @NonNls @Nullable
   String getEnvironmentVariable(String name) {
-    List<String> env = readWSLOutput(new WSLCommandLineOptions().setLaunchWithWslExe(false).setExecuteCommandInShell(false), Collections.singletonList("env"));
-    if (env == null) return null;
-    for (String s : env) {
-      if (s.startsWith(name + "=")) {
-        return s.substring(name.length() + 1);
-      }
-    }
-    return null;
+    return readWslOutputLine(new WSLCommandLineOptions(), Arrays.asList("printenv", name));
   }
 }
