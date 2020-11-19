@@ -42,10 +42,14 @@ class GitStashContentProvider(private val project: Project) : ChangesViewContent
   }
 }
 
-class GitStashContentPreloader : ChangesViewContentProvider.Preloader {
+class GitStashContentPreloader(val project: Project) : ChangesViewContentProvider.Preloader {
   override fun preloadTabContent(content: Content) {
-    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
-                        ChangesViewContentManager.TabOrderWeight.SHELF.weight + 1)
+    val weight = if (ChangesViewContentManager.isCommitToolWindow(project))
+      ChangesViewContentManager.TabOrderWeight.OTHER.weight
+    else
+      ChangesViewContentManager.TabOrderWeight.SHELF.weight + 1
+
+    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, weight)
   }
 }
 

@@ -218,6 +218,9 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       getInstance(project) as? ChangesViewContentManager
 
     @JvmStatic
+    fun isCommitToolWindow(project: Project): Boolean = getInstanceImpl(project)?.isCommitToolWindow == true
+
+    @JvmStatic
     fun getToolWindowIdFor(project: Project, contentName: String): String? =
       getInstanceImpl(project)?.getToolWindowIdFor(contentName)
 
