@@ -7,7 +7,7 @@ public class TestClass {
 }
 
 class Xxx {
-    private Xxx(String x) {
+    Xxx(String x) {
     }
 
     static class Yyy {
