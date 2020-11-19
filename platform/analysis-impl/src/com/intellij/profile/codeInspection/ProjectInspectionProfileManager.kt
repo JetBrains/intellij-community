@@ -96,14 +96,20 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
     StartupManager.getInstance(project).runAfterOpened {
       project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profilesInitialized()
 
-      val scopeListener = NamedScopesHolder.ScopeListener {
+      val projectScopeListener = NamedScopesHolder.ScopeListener {
         for (profile in schemeManager.allSchemes) {
           profile.scopesChanged()
         }
       }
 
-      scopesManager.addScopeListener(scopeListener, project)
-      NamedScopeManager.getInstance(project).addScopeListener(scopeListener, project)
+      scopesManager.addScopeListener(projectScopeListener, project)
+      NamedScopeManager.getInstance(project).addScopeListener(projectScopeListener, project)
+
+      val appScopeListener = NamedScopesHolder.ScopeListener {
+        InspectionProfileManager.getInstance().currentProfile.scopesChanged()
+      }
+
+      NamedScopeManager.getInstance(project).addScopeListener(appScopeListener, project)
     }
   }
 
