@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +35,7 @@ public final class WslDistributionManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(WslDistributionManager.class);
   // Distributions created by tools, e.g. Docker. Not suitable for running users apps.
   private static final Set<String> INTERNAL_DISTRIBUTIONS = Set.of("docker-desktop-data");
+  private long myLastExternalChangesCount = -1L;
 
   public static @NotNull WslDistributionManager getInstance() {
     return ApplicationManager.getApplication().getService(WslDistributionManager.class);
@@ -42,20 +43,16 @@ public final class WslDistributionManager implements Disposable {
 
   private final ClearableLazyValue<List<WSLDistribution>> myInstalledDistributions = ClearableLazyValue.createAtomic(() -> loadInstalledDistributions());
 
-  public WslDistributionManager() {
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
-      @Override
-      public void onFrameActivated() {
-        myInstalledDistributions.drop();
-      }
-    });
-  }
-
   @Override
   public void dispose() {
-
   }
+
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
+    long externalChangesCount = SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
+    if (externalChangesCount != myLastExternalChangesCount) {
+      myLastExternalChangesCount = externalChangesCount;
+      myInstalledDistributions.drop();
+    }
     return myInstalledDistributions.getValue();
   }
 
@@ -87,7 +84,7 @@ public final class WslDistributionManager implements Disposable {
     WSLDistribution distribution = getDistributionByMsId(distName);
     if (distribution == null) {
       LOG.debug(String.format("Unknown WSL distribution: %s, known distributions: %s", distName,
-                              StringUtil.join(WSLUtil.getAvailableDistributions(), WSLDistribution::getMsId, ", ")));
+                              StringUtil.join(getInstalledDistributions(), WSLDistribution::getMsId, ", ")));
     }
     return Pair.create(wslPath, distribution);
   }

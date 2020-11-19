@@ -13,8 +13,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,13 +76,9 @@ public class JavaHomeFinderBasic {
 
   private @NotNull Set<String> findInPATH() {
     try {
-      String pathVarString = EnvironmentUtil.getValue("PATH");
-      if (pathVarString == null || pathVarString.isEmpty()) {
-        return emptySet();
-      }
 
       Set<Path> dirsToCheck = new HashSet<>();
-      for (String p : pathVarString.split(File.pathSeparator)) {
+      for (String p : getPath()) {
         Path dir = Paths.get(p);
         if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", SystemInfoRt.isFileSystemCaseSensitive)) {
           continue;
@@ -102,8 +100,22 @@ public class JavaHomeFinderBasic {
     }
   }
 
+  protected String[] getPath() {
+    String pathVarString = getEnvironmentVariable("PATH");
+    if (pathVarString == null || pathVarString.isEmpty()) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+    return pathVarString.split(File.pathSeparator);
+  }
+
+  @Nullable
+  @NonNls
+  protected String getEnvironmentVariable(@NotNull String name) {
+    return EnvironmentUtil.getValue(name);
+  }
+
   @NotNull
-  private Set<String> checkDefaultLocations() {
+  protected Set<String> checkDefaultLocations() {
     if (ApplicationManager.getApplication() == null) {
       return emptySet();
     }
@@ -143,7 +155,7 @@ public class JavaHomeFinderBasic {
     return result;
   }
 
-  private void scanFolder(@NotNull File folder, boolean includeNestDirs, @NotNull Collection<? super String> result) {
+  protected void scanFolder(@NotNull File folder, boolean includeNestDirs, @NotNull Collection<? super String> result) {
     if (JdkUtil.checkForJdk(folder)) {
       result.add(folder.getAbsolutePath());
       return;
@@ -212,16 +224,16 @@ public class JavaHomeFinderBasic {
   }
 
   @Nullable
-  private static Path findSdkManCandidatesDir() {
+  private Path findSdkManCandidatesDir() {
     // first, try the special environment variable
-    String candidatesPath = EnvironmentUtil.getValue("SDKMAN_CANDIDATES_DIR");
+    String candidatesPath = getEnvironmentVariable("SDKMAN_CANDIDATES_DIR");
     if (candidatesPath != null) {
       Path candidatesDir = Path.of(candidatesPath);
       if (isDirectory(candidatesDir)) return candidatesDir;
     }
 
     // then, try to use its 'primary' variable
-    String primaryPath = EnvironmentUtil.getValue("SDKMAN_DIR");
+    String primaryPath = getEnvironmentVariable("SDKMAN_DIR");
     if (primaryPath != null) {
       Path primaryDir = Path.of(primaryPath);
       if (isDirectory(primaryDir)) {

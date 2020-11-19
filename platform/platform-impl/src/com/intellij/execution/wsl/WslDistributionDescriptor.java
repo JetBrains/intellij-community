@@ -124,7 +124,6 @@ final class WslDistributionDescriptor {
    * @see #getMntRoot()
    */
   private @NotNull @NlsSafe String computeMntRoot() {
-    computeUserHome();
     String windowsCurrentDirectory = System.getProperty("user.dir");
 
     if (StringUtil.isEmpty(windowsCurrentDirectory) || windowsCurrentDirectory.length() < 3) {
@@ -187,12 +186,18 @@ final class WslDistributionDescriptor {
     return pwdOutput.getStdoutLines();
   }
 
-  private @NonNls @Nullable String computeUserHome() {
+  @NonNls @Nullable
+  private String computeUserHome() {
+    return getEnvironmentVariable("HOME");
+  }
+
+  @NonNls @Nullable
+  String getEnvironmentVariable(String name) {
     List<String> env = readWSLOutput(new WSLCommandLineOptions().setLaunchWithWslExe(false).setExecuteCommandInShell(false), Collections.singletonList("env"));
     if (env == null) return null;
     for (String s : env) {
-      if (s.startsWith("HOME=")) {
-        return s.substring(5);
+      if (s.startsWith(name + "=")) {
+        return s.substring(name.length() + 1);
       }
     }
     return null;

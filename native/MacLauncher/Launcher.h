@@ -19,3 +19,12 @@ BOOL validationJavaVersion();
 
 - (void) launch;
 @end
+
+NSString *getExecutable();
+NSString *jvmVersion(NSBundle *bundle);
+NSString *requiredJvmVersions();
+NSString *getPropertiesFilePath();
+NSString *getPreferencesFolderPath();
+BOOL meetMinRequirements(NSString *vmVersion);
+BOOL satisfies(NSString *vmVersion, NSString *requiredVersion);
+typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, JNIEnv **env, void *args);

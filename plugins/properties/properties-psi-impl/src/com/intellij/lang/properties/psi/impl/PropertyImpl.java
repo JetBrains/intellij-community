@@ -128,8 +128,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   @Override
   public @Nullable PsiElement getNameIdentifier() {
     final ASTNode node = getKeyNode();
-    if (node == null) return null;
-    return node.getPsi();
+    return node == null ? null : node.getPsi();
   }
 
 
@@ -396,12 +395,12 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
    */
   static PsiElement getEdgeOfProperty(@NotNull final Property property) {
     PsiElement prev = property;
-    for (PsiElement e = property.getPrevSibling(); e != null; e = e.getPrevSibling()) {
-      if (e instanceof Property) break;
-      if (e instanceof PsiWhiteSpace) {
-        if (PROPERTIES_SEPARATOR.matcher(e.getText()).find()) break;
+    for (PsiElement node = property.getPrevSibling(); node != null; node = node.getPrevSibling()) {
+      if (node instanceof Property) break;
+      if (node instanceof PsiWhiteSpace) {
+        if (PROPERTIES_SEPARATOR.matcher(node.getText()).find()) break;
       }
-      prev = e;
+      prev = node;
     }
     return prev;
   }

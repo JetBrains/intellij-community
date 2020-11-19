@@ -42,7 +42,6 @@ import static com.intellij.execution.wsl.WSLUtil.LOG;
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
  *
  * @see WSLUtil
- * @see WSLDistributionWithRoot
  */
 public class WSLDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
@@ -55,7 +54,7 @@ public class WSLDistribution {
 
   @NotNull private final WslDistributionDescriptor myDescriptor;
   @Nullable private final Path myExecutablePath;
-  private NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(() -> readHostIp());
+  private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(() -> readHostIp());
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -563,5 +562,11 @@ public class WSLDistribution {
       }
     }
     return null;
+  }
+
+  @NonNls
+  @Nullable
+  public String getEnvironmentVariable(String name) {
+    return myDescriptor.getEnvironmentVariable(name);
   }
 }

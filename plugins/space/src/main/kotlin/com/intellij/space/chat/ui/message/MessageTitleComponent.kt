@@ -5,7 +5,6 @@ import circlet.client.api.CExternalServicePrincipalDetails
 import circlet.client.api.CPrincipal
 import circlet.client.api.CUserPrincipalDetails
 import circlet.client.api.Navigator
-import circlet.platform.api.millis
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
@@ -48,8 +47,7 @@ internal class MessageTitleComponent(
     }
     val timePanel = HtmlEditorPane().apply {
       foreground = UIUtil.getContextHelpForeground()
-      val dateTime = message.created.millis
-      setBody(HtmlChunk.text(dateTime.formatPrettyDateTime()).toString()) // NON-NLS
+      setBody(HtmlChunk.text(message.created.formatPrettyDateTime()).toString()) // NON-NLS
     }
 
     isOpaque = false

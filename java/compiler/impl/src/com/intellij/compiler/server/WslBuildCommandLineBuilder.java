@@ -9,6 +9,7 @@ import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -130,7 +131,7 @@ class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   public @NotNull String getHostIp() throws ExecutionException {
     String hostIp = myDistribution.getHostIp();
     if (hostIp == null) {
-      throw new ExecutionException("Failed to determine host IP for WSL JDK");
+      throw new ExecutionException(JavaCompilerBundle.message("dialog.message.failed.to.determine.host.ip.for.wsl.jdk"));
     }
     return hostIp;
   }

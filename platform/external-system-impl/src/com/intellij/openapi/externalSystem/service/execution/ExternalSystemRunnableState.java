@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -329,18 +328,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   }
 
   private BuildView createBuildView(DefaultBuildDescriptor buildDescriptor, ExecutionConsole executionConsole) {
-    return new BuildView(myProject, executionConsole, buildDescriptor, "build.toolwindow.run.selection.state",
-                         new ViewManager() {
-                           @Override
-                           public boolean isConsoleEnabledByDefault() {
-                             return true;
-                           }
-
-                           @Override
-                           public boolean isBuildContentView() {
-                             return false;
-                           }
-                         });
+    ExternalSystemRunConfigurationViewManager viewManager = myProject.getService(ExternalSystemRunConfigurationViewManager.class);
+    return new BuildView(myProject, executionConsole, buildDescriptor, "build.toolwindow.run.selection.state", viewManager) {
+      @Override
+      public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+        super.onEvent(buildId, event);
+        viewManager.onEvent(buildId, event);
+      }
+    };
   }
 
   public void setContentDescriptor(@Nullable RunContentDescriptor contentDescriptor) {

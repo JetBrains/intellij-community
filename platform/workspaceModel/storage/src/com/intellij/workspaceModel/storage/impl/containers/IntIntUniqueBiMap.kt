@@ -28,16 +28,23 @@ class MutableIntIntUniqueBiMap private constructor(
 
   fun putForce(key: Int, value: Int) {
     startWrite()
-    // Don't convert to links[key] = ... because it *may* became autoboxing
-    @Suppress("ReplacePutWithAssignment")
-    value2Key.put(value, key)
-    // Don't convert to links[key] = ... because it *may* became autoboxing
-    @Suppress("ReplacePutWithAssignment")
-    key2Value.put(key, value)
+
+    if (key2Value.containsKey(key)) {
+      val existingValue = key2Value[key]
+      key2Value.remove(key)
+      value2Key.remove(existingValue)
+    }
+    if (value2Key.containsKey(value)) {
+      val existingKey = value2Key[value]
+      value2Key.remove(value)
+      key2Value.remove(existingKey)
+    }
+    put(key, value)
   }
 
   fun put(key: Int, value: Int) {
-    if (key2Value.containsKey(key) && key2Value.get(key) == value) error("$key to $value already exists in the map")
+    if (key2Value.containsKey(key)) error("Key $key already exists in the map")
+    if (value2Key.containsKey(value)) error("Value $value already exists in the map")
     startWrite()
     // Don't convert to links[key] = ... because it *may* became autoboxing
     @Suppress("ReplacePutWithAssignment")

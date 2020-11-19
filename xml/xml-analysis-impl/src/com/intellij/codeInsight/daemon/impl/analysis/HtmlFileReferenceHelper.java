@@ -43,7 +43,7 @@ import java.util.Collections;
 public class HtmlFileReferenceHelper extends FileReferenceHelper {
   @NotNull
   @Override
-  public Collection<PsiFileSystemItem> getContexts(Project project, @NotNull VirtualFile vFile) {
+  public Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile vFile) {
     final PsiFile file = PsiManager.getInstance(project).findFile(vFile);
     final Module module = file != null ? ModuleUtilCore.findModuleForPsiElement(file) : null;
     if (module == null || !(file instanceof XmlFile)) return Collections.emptyList();
@@ -65,7 +65,7 @@ public class HtmlFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  public boolean isMine(Project project, @NotNull VirtualFile file) {
+  public boolean isMine(@NotNull Project project, @NotNull VirtualFile file) {
     if (!ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) return false;
 
     final FileType fileType = file.getFileType();
