@@ -221,6 +221,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testChainedConstructorWithSpacesInvalidation() {
+    doTest();
+  }
+
   public void testChainedConstructor1() {
     doTest();
   }

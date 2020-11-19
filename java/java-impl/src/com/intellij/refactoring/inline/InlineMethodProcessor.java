@@ -604,35 +604,30 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static void replaceParameterReferences(final PsiElement element,
                                                  final PsiMethod oldConstructor,
                                                  final PsiExpression[] instanceCreationArguments) {
-    boolean isParameterReference = false;
-    if (element instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression expression = (PsiReferenceExpression)element;
-      PsiElement resolved = expression.resolve();
-      if (resolved instanceof PsiParameter &&
-          element.getManager().areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(), oldConstructor)) {
-        isParameterReference = true;
-        PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
-        PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
-        for (int j = 0; j < declarationParameters.length; j++) {
-          if (declarationParameters[j] == resolved) {
-            try {
-              expression.replace(instanceCreationArguments[j]);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
+    Map<PsiReferenceExpression, PsiExpression> replacement = new LinkedHashMap<>();
+    element.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiParameter &&
+            element.getManager().areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(), oldConstructor)) {
+          PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
+          PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
+          for (int j = 0; j < declarationParameters.length; j++) {
+            if (declarationParameters[j] == resolved) {
+              try {
+                replacement.put(expression, instanceCreationArguments[j]);
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
             }
           }
-        }
+        }  
       }
-    }
-    if (!isParameterReference) {
-      PsiElement child = element.getFirstChild();
-      while (child != null) {
-        PsiElement next = child.getNextSibling();
-        replaceParameterReferences(child, oldConstructor, instanceCreationArguments);
-        child = next;
-      }
-    }
+    });
+    replacement.forEach(PsiElement::replace);
   }
 
   public void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
