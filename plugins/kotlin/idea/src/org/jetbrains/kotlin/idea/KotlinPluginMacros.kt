@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.application.PathMacroContributor
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 /**
  * Some actions have to be performed before loading and opening any project.
@@ -19,7 +20,9 @@ class KotlinPluginMacros : PathMacroContributor {
     }
 
     override fun forceRegisterPathMacros(macros: MutableMap<String, String>) {
-        macros[KOTLIN_BUNDLED_PATH_VARIABLE] = KotlinArtifacts.instance.kotlincDirectory.path
+        if (!isUnitTestMode()) {
+            macros[KOTLIN_BUNDLED_PATH_VARIABLE] = KotlinArtifacts.instance.kotlincDirectory.path
+        }
     }
 
     companion object {
