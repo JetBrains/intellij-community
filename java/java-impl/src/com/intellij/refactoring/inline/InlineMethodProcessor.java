@@ -1151,8 +1151,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
     return checkUnableToInsertCodeBlock(methodBody, element,
                                         expr -> {
-                                          PsiElement parent = expr.getParent();
-                                          return parent instanceof PsiLoopStatement && PsiUtil.isCondition(expr, parent);
+                                          PsiConditionalLoopStatement loopStatement = PsiTreeUtil.getParentOfType(expr, PsiConditionalLoopStatement.class);
+                                          return loopStatement != null && PsiTreeUtil.isAncestor(loopStatement.getCondition(), expr, false);
                                         })
            ? JavaRefactoringBundle.message("inline.method.multiline.method.in.loop.condition")
            : null;
@@ -1162,7 +1162,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                                       final PsiElement element,
                                                       final Predicate<? super PsiMethodCallExpression> errorCondition) {
     PsiStatement[] statements = methodBody.getStatements();
-    if (statements.length > 1 || statements.length == 1 && !(statements[0] instanceof PsiExpressionStatement)) {
+    if (statements.length > 1 || statements.length == 1 && 
+                                 !(statements[0] instanceof PsiExpressionStatement) && 
+                                 !(statements[0] instanceof PsiReturnStatement)) {
       PsiMethodCallExpression expr = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, true, PsiStatement.class);
       while (expr != null) {
         if (errorCondition.test(expr)) {

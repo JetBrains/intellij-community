@@ -237,6 +237,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used reflectively");
   }
 
+  public void testInlineOnelinerToCondition() {
+    doTest();
+  }
+
   public void testNotAStatement() {
     doTest();
   }
