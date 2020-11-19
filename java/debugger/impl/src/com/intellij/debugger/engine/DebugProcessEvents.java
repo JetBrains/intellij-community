@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -13,6 +13,7 @@ import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.agent.MemoryAgentUtil;
+import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -52,8 +53,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -206,6 +206,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   suspendContext = getSuspendManager().pushSuspendContext(eventSet);
                 }
 
+                Set<ClassPrepareRequestor> notifiedClassPrepareEventRequestors = null;
+
                 for (Event event : eventSet) {
                   if (getEventRequestHandler(event) != null) { // handled before
                     getSuspendManager().voteResume(suspendContext);
@@ -224,7 +226,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       processVMDeathEvent(suspendContext, event);
                     }
                     else if (event instanceof ClassPrepareEvent) {
-                      processClassPrepareEvent(suspendContext, (ClassPrepareEvent)event);
+                      if (notifiedClassPrepareEventRequestors == null) {
+                        notifiedClassPrepareEventRequestors = new HashSet<>(eventSet.size());
+                      }
+                      processClassPrepareEvent(suspendContext, (ClassPrepareEvent)event, notifiedClassPrepareEventRequestors);
                     }
                     //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
                     //ModificationWatchpointEvent, StepEvent, WatchpointEvent
@@ -436,13 +441,15 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
   }
 
-  private void processClassPrepareEvent(SuspendContextImpl suspendContext, ClassPrepareEvent event) {
+  private void processClassPrepareEvent(SuspendContextImpl suspendContext,
+                                        ClassPrepareEvent event,
+                                        Set<ClassPrepareRequestor> notifiedRequestors) {
     preprocessEvent(suspendContext, event.thread());
     if (LOG.isDebugEnabled()) {
       LOG.debug("Class prepared: " + event.referenceType().name());
     }
     try {
-      suspendContext.getDebugProcess().getRequestsManager().processClassPrepared(event);
+      suspendContext.getDebugProcess().getRequestsManager().processClassPrepared(event, notifiedRequestors);
     }
     finally {
       getSuspendManager().voteResume(suspendContext);
