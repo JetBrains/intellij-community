@@ -42,6 +42,7 @@ import training.project.ProjectUtils
 import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
 import training.util.findLanguageByID
+import training.util.isLearningProject
 import java.awt.FontFormatException
 import java.io.IOException
 import java.util.concurrent.ExecutionException
@@ -82,7 +83,7 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       val langSupport = LangManager.getInstance().getLangSupport() ?: throw Exception("Language for learning plugin is not defined")
 
       var learnProject = LearningUiManager.learnProject
-      if (learnProject != null && langSupport.defaultProjectName != learnProject.name) {
+      if (learnProject != null && !isLearningProject(learnProject, langSupport)) {
         learnProject = null // We are in the project from another course
       }
       LOG.debug("${projectWhereToStartLesson.name}: trying to get cached LearnProject ${learnProject != null}")
@@ -96,7 +97,8 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
           getScratchFile(projectWhereToStartLesson, lesson, langSupport.filename)
         }
         learnProject == null || learnProject.isDisposed -> {
-          if (projectWhereToStartLesson.name != langSupport.defaultProjectName) { //1. learnProject == null and current project has different name then initLearnProject and register post startup open lesson
+          if (!isLearningProject(projectWhereToStartLesson, langSupport)) {
+            //1. learnProject == null and current project has different name then initLearnProject and register post startup open lesson
             LOG.debug("${projectWhereToStartLesson.name}: 1. learnProject is null or disposed")
             initLearnProject(projectWhereToStartLesson) {
               LOG.debug("${projectWhereToStartLesson.name}: 1. ... LearnProject has been started")
@@ -381,7 +383,7 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
 
   private fun findLearnProjectInOpenedProjects(langSupport: LangSupport): Project? {
     val openProjects = ProjectManager.getInstance().openProjects
-    return openProjects.firstOrNull { it.name == langSupport.defaultProjectName }
+    return openProjects.firstOrNull { isLearningProject(it, langSupport) }
   }
 
   companion object {
