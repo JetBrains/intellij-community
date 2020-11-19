@@ -10,20 +10,20 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.*;
 
 public class JUnitReferenceContributor extends PsiReferenceContributor {
-  private static PsiElementPattern.Capture<PsiLiteral> getElementPattern(String annotation, String paramName) {
-    return PlatformPatterns.psiElement(PsiLiteral.class).and(new FilterPattern(new TestAnnotationFilter(annotation, paramName)));
+  private static PsiElementPattern.Capture<PsiLanguageInjectionHost> getElementPattern(String annotation, String paramName) {
+    return PlatformPatterns.psiElement(PsiLanguageInjectionHost.class).and(new FilterPattern(new TestAnnotationFilter(annotation, paramName)));
   }
 
-  private static PsiElementPattern.Capture<PsiLiteral> getEnumSourceNamesPattern() {
+  private static PsiElementPattern.Capture<PsiLanguageInjectionHost> getEnumSourceNamesPattern() {
     return getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE, "names")
       .withAncestor(4, PlatformPatterns.psiElement(PsiAnnotation.class).and(new PsiJavaElementPattern<>(new InitialPatternCondition<PsiAnnotation>(PsiAnnotation.class) {
         @Override
@@ -45,7 +45,7 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, "value"), new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new MethodSourceReference[]{new MethodSourceReference((PsiLiteral)element)};
+        return new MethodSourceReference[]{new MethodSourceReference((PsiLanguageInjectionHost)element)};
       }
     });
     registrar.registerReferenceProvider(getEnumSourceNamesPattern(), new PsiReferenceProvider() {
@@ -74,18 +74,23 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
 
     @Override
     public boolean isAcceptable(Object element, PsiElement context) {
-      PsiNameValuePair pair = PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class, false, PsiMember.class, PsiStatement.class, PsiCall.class);
-      if (pair == null) return false;
-      String name = ObjectUtils.notNull(pair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+      if (context != null && context.getParent() instanceof PsiArrayInitializerMemberValue) {
+        context = context.getParent();
+      }
+      UElement type = UastContextKt.toUElement(context, UElement.class);
+      if (type == null) return false;
+      if (!(type.getUastParent() instanceof UNamedExpression)) return false;
+      UNamedExpression uPair = (UNamedExpression)type.getUastParent();
+      if (!(uPair.getUastParent() instanceof UAnnotation)) return false;
+      String name = ObjectUtils.notNull(uPair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (!myParameterName.equals(name)) return false;
-      PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
-      if (annotation == null) return false;
-      return myAnnotation.equals(annotation.getQualifiedName());
+      UAnnotation uAnnotation = (UAnnotation)uPair.getUastParent();
+      return myAnnotation.equals(uAnnotation.getQualifiedName());
     }
 
     @Override
     public boolean isClassAcceptable(Class hintClass) {
-      return PsiLiteral.class.isAssignableFrom(hintClass);
+      return PsiLanguageInjectionHost.class.isAssignableFrom(hintClass);
     }
   }
 }
