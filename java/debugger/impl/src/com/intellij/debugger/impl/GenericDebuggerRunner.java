@@ -31,7 +31,6 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.Objects;
@@ -86,17 +85,9 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
                                                                    @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    AsyncPromise<@Nullable RunContentDescriptor> promise = new AsyncPromise<>();
-    state.prepareTargetToCommandExecution(env, () -> {
-      try {
-        promise.setResult(doExecute(state, env));
-      }
-      catch (Throwable e) {
-        LOG.warn("Failed to execute debug configuration async", e);
-        promise.setError(e.getLocalizedMessage());
-      }
+    return state.prepareTargetToCommandExecution(env, LOG,"Failed to execute debug configuration async", () -> {
+      return doExecute(state, env);
     });
-    return promise;
   }
 
   @Nullable

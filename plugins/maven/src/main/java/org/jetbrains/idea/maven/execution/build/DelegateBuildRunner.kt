@@ -9,7 +9,6 @@ import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.diagnostic.logger
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 
 internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
@@ -32,18 +31,7 @@ internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
   }
 
   override fun doExecuteAsync(state: TargetEnvironmentAwareRunProfileState, env: ExecutionEnvironment): Promise<RunContentDescriptor?> {
-    val promise: AsyncPromise<RunContentDescriptor?> = AsyncPromise()
-    state.prepareTargetToCommandExecution(env) {
-      try {
-        val descriptor = doExecute(state, env)
-        promise.setResult(descriptor)
-      }
-      catch (e: Throwable) {
-        LOG.warn("Failed to execute delegate run configuration async", e)
-        promise.setError(e.localizedMessage)
-      }
-    }
-    return promise
+    return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute delegate run configuration async") { doExecute(state, env) }
   }
 
   companion object {
