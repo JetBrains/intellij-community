@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.vcs.SpaceProjectContext
 import libraries.coroutines.extra.LifetimeSource
+import runtime.reactive.mapInit
 
 internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware {
   private val lifetime: LifetimeSource = LifetimeSource()
@@ -19,13 +20,19 @@ internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware {
 
     val project = (toolWindow as ToolWindowEx).project
 
-    SpaceWorkspaceComponent.getInstance().workspace.forEach(lifetime) { ws ->
-      val available = ws != null && shouldBeAvailable(project)
-      if (available && !toolWindow.isAvailable) {
+    val workspace = SpaceWorkspaceComponent.getInstance().workspace
+    val spaceProjectContext = SpaceProjectContext.getInstance(project).context
+    val isToolwindowAvailable = lifetime.mapInit(workspace, spaceProjectContext, false) { ws, context->
+      ws ?: return@mapInit false
+      return@mapInit context.isAssociatedWithSpaceRepository
+    }
+
+    isToolwindowAvailable.forEach(lifetime) { isAvailable ->
+      if (isAvailable && !toolWindow.isAvailable) {
         toolWindow.isShowStripeButton = true
       }
 
-      toolWindow.isAvailable = available
+      toolWindow.isAvailable = isAvailable
     }
   }
 
