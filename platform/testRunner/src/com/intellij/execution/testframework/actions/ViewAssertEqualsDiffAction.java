@@ -17,10 +17,8 @@
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.impl.DiffRequestProcessor;
-import com.intellij.diff.impl.DiffWindowBase;
-import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.ListSelection;
@@ -34,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeViewAction, DumbAware {
@@ -55,16 +52,18 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   public static boolean openDiff(DataContext context, @Nullable DiffHyperlink currentHyperlink) {
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(context);
     final Project project = CommonDataKeys.PROJECT.getData(context);
+    ListSelection<DiffHyperlink> hyperlinks = null;
     if (currentHyperlink != null) {
-      new MyDiffWindow(project, currentHyperlink).show();
-      return true;
+      hyperlinks = ListSelection.createSingleton(currentHyperlink);
     }
-    if (testProxy != null) {
-      ListSelection<DiffHyperlink> hyperlinks = showDiff(testProxy, TestTreeView.MODEL_DATA_KEY.getData(context));
-      new MyDiffWindow(project, hyperlinks.getList(), hyperlinks.getSelectedIndex()).show();
-      return true;
+    else if (testProxy != null) {
+      hyperlinks = showDiff(testProxy, TestTreeView.MODEL_DATA_KEY.getData(context));
     }
-    return false;
+    if (hyperlinks == null) return false;
+
+    DiffRequestChain chain = TestDiffRequestProcessor.createRequestChain(project, hyperlinks);
+    DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
+    return true;
   }
 
   @NotNull
@@ -104,44 +103,5 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
 
     presentation.setEnabled(test != null);
     presentation.setVisible(visible);
-  }
-
-  private static class MyDiffWindow extends DiffWindowBase {
-    @NotNull private final List<? extends DiffHyperlink> myRequests;
-    private final int myIndex;
-
-    MyDiffWindow(@Nullable Project project, @NotNull DiffHyperlink request) {
-      this(project, Collections.singletonList(request), 0);
-    }
-
-    MyDiffWindow(@Nullable Project project, @NotNull List<? extends DiffHyperlink> requests, int index) {
-      super(project, DiffDialogHints.DEFAULT);
-      myRequests = requests;
-      myIndex = index;
-    }
-
-    @NotNull
-    @Override
-    protected DiffRequestProcessor createProcessor() {
-      return new MyTestDiffRequestProcessor(myProject, myRequests, myIndex);
-    }
-
-    private class MyTestDiffRequestProcessor extends TestDiffRequestProcessor {
-      MyTestDiffRequestProcessor(@Nullable Project project, @NotNull List<? extends DiffHyperlink> requests, int index) {
-        super(project, requests, index);
-        putContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY,
-                           "#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog");  // NON-NLS
-      }
-
-      @Override
-      protected void setWindowTitle(@NotNull String title) {
-        getWrapper().setTitle(title);
-      }
-
-      @Override
-      protected void onAfterNavigate() {
-        DiffUtil.closeWindow(getWrapper().getWindow(), true, true);
-      }
-    }
   }
 }
