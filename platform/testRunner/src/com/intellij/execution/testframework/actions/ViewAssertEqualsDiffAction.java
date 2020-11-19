@@ -23,6 +23,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeViewAction, DumbAware {
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
@@ -56,9 +56,8 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(context);
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (testProxy != null && currentHyperlink == null) {
-      showDiff(testProxy,
-               TestTreeView.MODEL_DATA_KEY.getData(context),
-               (providers, index) -> new MyDiffWindow(project, providers, index).show());
+      ListSelection<DiffHyperlink> hyperlinks = showDiff(testProxy, TestTreeView.MODEL_DATA_KEY.getData(context));
+      new MyDiffWindow(project, hyperlinks.getList(), hyperlinks.getSelectedIndex()).show();
       return true;
     }
     if (currentHyperlink != null) {
@@ -68,15 +67,15 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     return false;
   }
 
-  public static void showDiff(AbstractTestProxy testProxy,
-                              TestFrameworkRunningModel model,
-                              BiConsumer<? super List<DiffHyperlink>, ? super Integer> showFunction) {
+  @NotNull
+  public static ListSelection<DiffHyperlink> showDiff(@NotNull AbstractTestProxy testProxy,
+                                                      @Nullable TestFrameworkRunningModel model) {
     final List<DiffHyperlink> providers = collectAvailableProviders(model);
 
     DiffHyperlink diffViewerProvider = testProxy.getLeafDiffViewerProvider();
     int index = diffViewerProvider != null ? providers.indexOf(diffViewerProvider) : -1;
 
-    showFunction.accept(providers, Math.max(0, index));
+    return ListSelection.createAt(providers, index);
   }
 
   private static List<DiffHyperlink> collectAvailableProviders(TestFrameworkRunningModel model) {
