@@ -181,6 +181,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   @Override
   @Nullable
   public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
+    if (virtualFile != null) {
+      Charset fileEncoding = FileEncodingProvider.getFileEncoding(myProject, virtualFile);
+      if (fileEncoding != null) return fileEncoding;
+    }
     VirtualFile parent = virtualFile;
     while (parent != null) {
       Charset charset = myMapping.get(new LightFilePointer(parent.getUrl()));
