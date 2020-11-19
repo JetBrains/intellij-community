@@ -559,7 +559,7 @@
     <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.index.actions.GitStageChangesViewRefresher"/>
 
-    <backgroundPostStartupActivity implementation="git4idea.index.GitStageManager$GitStageStartupActivity"/>
+    <backgroundPostStartupActivity implementation="git4idea.index.GitStageStartupActivity"/>
 
     <projectService serviceImplementation="git4idea.index.vfs.GitIndexFileSystemRefresher"/>
     <virtualFileSystem implementationClass="git4idea.index.vfs.GitIndexFileSystem" key="gitIndexFs" physical="true"/>
@@ -611,9 +611,9 @@
     <listener class="git4idea.ui.branch.GitBranchWidget$Listener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="git4idea.index.GitStageManager$StagingSettingsListener" topic="git4idea.index.GitStagingAreaSettingsListener"
+    <listener class="git4idea.index.StagingSettingsListener" topic="git4idea.index.GitStagingAreaSettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="git4idea.index.GitStageManager$CommitSettingsListener" topic="com.intellij.vcs.commit.CommitWorkflowManager$SettingsListener"
+    <listener class="git4idea.index.CommitSettingsListener" topic="com.intellij.vcs.commit.CommitWorkflowManager$SettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
   </projectListeners>
 </idea-plugin>
