@@ -340,9 +340,9 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
     }
 
     /**
-     * If a project contains multiple jpms modules then we have to form --module-source-path.
+     * If a project contains multiple jpms modules then we have to form {@code --module-source-path}.
      *
-     * https://docs.oracle.com/javase/9/tools/javadoc.htm
+     * See <a href="https://docs.oracle.com/javase/9/tools/javadoc.htm">javadoc tool guide</a>.
      */
     @Nullable
     private static String computeModuleSourcePath(@NotNull Map<Module, VirtualFile> moduleDescriptors) {
