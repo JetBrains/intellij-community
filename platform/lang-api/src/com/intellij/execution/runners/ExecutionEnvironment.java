@@ -2,10 +2,7 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -137,7 +134,8 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
                                                              TargetEnvironmentAwareRunProfileState.@NotNull TargetProgressIndicator targetProgressIndicator)
     throws ExecutionException {
     TargetEnvironmentFactory factory = null;
-    if (runProfileState instanceof TargetEnvironmentAwareRunProfileState) {
+    if (runProfileState instanceof TargetEnvironmentAwareRunProfileState &&
+        myRunProfile instanceof TargetEnvironmentAwareRunProfile && ((TargetEnvironmentAwareRunProfile) myRunProfile).getDefaultTargetName() == null) {
       factory = ((TargetEnvironmentAwareRunProfileState) runProfileState).createCustomTargetEnvironmentFactory();
     }
     if (factory == null) {
