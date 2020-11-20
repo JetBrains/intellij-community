@@ -61,7 +61,10 @@ public interface PluginDescriptor {
 
   @NlsSafe String getVendor();
 
-  @NlsSafe String getOrganization();
+  //TODO: remove default implementation in 2021.3
+  @NlsSafe default String getOrganization() {
+    return "";
+  }
 
   @NlsSafe String getVersion();
 

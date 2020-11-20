@@ -559,10 +559,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
       if (StringUtil.isEmptyOrSpaces(organization)) {
         myAuthor.show(vendor, null);
       } else {
-        myAuthor.show(organization, () -> mySearchListener
-          .linkSelected(null,
-                        SearchWords.ORGANIZATION.getValue() +
-                        (organization.indexOf(' ') == -1 ? organization : StringUtil.wrapWithDoubleQuote(organization))));
+        myAuthor.show(organization, () -> mySearchListener.linkSelected(
+          null,
+          SearchWords.ORGANIZATION.getValue() +
+          (organization.indexOf(' ') == -1 ? organization : StringUtil.wrapWithDoubleQuote(organization))
+        ));
       }
     }
 
