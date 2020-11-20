@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-@ApiStatus.Experimental
 public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> implements ForwardIndexAccessor<Key, Value> {
   @NotNull
   private final DataExternalizer<DataType> myDataTypeExternalizer;

@@ -63,8 +63,13 @@ public interface PersistentHashMapBase<Key, Value> {
 
   /**
    * Process all keys registered in the map.
-   * Note that keys which were removed at some point might be returned as well.
-   * @see #processKeysWithExistingMapping
+   * <br>
+   * Note that:
+   * <ul><li>
+   *  keys which were removed at some point might be returned as well.
+   * </li><li>
+   *  some implementations might not support it.
+   * </li></ul>
    */
   boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException;
 
@@ -81,15 +86,30 @@ public interface PersistentHashMapBase<Key, Value> {
 
 
 
+  /**
+   * Returns true if storage is dirty. See {@link PersistentHashMapBase#markDirty()} for details.
+   */
   boolean isDirty();
 
+  /**
+   * Marks storage as dirty, e.g. it has some in memory changes which are not yet written to disk
+   * or write in progress.
+   */
   void markDirty() throws IOException;
 
+  /**
+   * Returns true if storage data was corrupted and can't be used anymore.
+   * <br>
+   * If client tries to access corrupted storage the only result can be an exception.
+   */
   boolean isCorrupted();
 
 
   void dropMemoryCaches();
 
+  /**
+   * Force all transient changes to disk.
+   */
   void force();
 
 
