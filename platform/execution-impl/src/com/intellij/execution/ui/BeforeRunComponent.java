@@ -6,6 +6,7 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.impl.UnknownBeforeRunTaskProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
@@ -149,7 +150,12 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     myTags.clear();
     List<BeforeRunTask<?>> tasks = s.getManager().getBeforeRunTasks(s.getConfiguration());
     for (BeforeRunTask<?> task : tasks) {
-      createTag(ContainerUtil.find(getProviders(), provider -> task.getProviderId() == provider.getId())).setTask(task);
+      BeforeRunTaskProvider taskProvider =
+        ContainerUtil.find(getProviders(), provider -> task.getProviderId() == provider.getId());
+      if (taskProvider == null) {
+        taskProvider = new UnknownBeforeRunTaskProvider(task.getProviderId().toString());
+      }
+      createTag(taskProvider).setTask(task);
     }
     buildPanel();
   }
