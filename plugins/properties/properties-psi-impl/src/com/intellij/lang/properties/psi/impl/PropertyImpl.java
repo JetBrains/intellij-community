@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost, PsiNameIdentifierOwner {
   private static final Logger LOG = Logger.getInstance(PropertyImpl.class);
 
-  private static final Pattern PROPERTIES_SEPARATOR = Pattern.compile("^\\s*" + System.lineSeparator() + "\\s*" + System.lineSeparator() + "\\s*$");
+  private static final Pattern PROPERTIES_SEPARATOR = Pattern.compile("^\\s*\\n\\s*\\n\\s*$");
 
   public PropertyImpl(@NotNull ASTNode node) {
     super(node);
