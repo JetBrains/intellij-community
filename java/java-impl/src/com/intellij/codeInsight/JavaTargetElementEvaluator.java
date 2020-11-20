@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordMember;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -148,6 +149,13 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
           String qualifiedName = ((PsiClass)refElement).getQualifiedName();
           if (qualifiedName == null) return null;
           return JavaPsiFacade.getInstance(refElement.getProject()).findClass(qualifiedName, refElement.getResolveScope());
+        }
+      }
+
+      if (refElement instanceof PsiMethod) {
+        PsiMethod extensionMethod = PsiAugmentProvider.resolveExtensionMethod((PsiMethod)refElement);
+        if (extensionMethod != null) {
+          return extensionMethod;
         }
       }
 
