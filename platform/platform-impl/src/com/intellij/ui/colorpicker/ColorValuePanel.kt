@@ -177,12 +177,12 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
   private fun updateAlphaFormat() {
     when (currentAlphaFormat) {
       AlphaFormat.BYTE -> {
-        alphaLabel.text = "A"
+        alphaLabel.text = IdeBundle.message("colorpanel.label.alpha")
         alphaField.document = alphaHexDocument
         alphaField.text = model.alpha.toString()
       }
       AlphaFormat.PERCENTAGE -> {
-        alphaLabel.text = "A%"
+        alphaLabel.text = IdeBundle.message("colorpanel.label.alpha.percent")
         alphaField.document = alphaPercentageDocument
         alphaField.text = (model.alpha * 100f / 0xFF).roundToInt().toString()
       }
