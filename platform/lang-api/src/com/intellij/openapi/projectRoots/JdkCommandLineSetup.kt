@@ -95,7 +95,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       try {
         val relativePath = if (isDir) "." else uploadPath.fileName.toString()
         val resolvedTargetPath = volume.resolveTargetPath(relativePath)
-        uploads.add(Upload(volume, relativePath = relativePath, resolvedTargetPath = resolvedTargetPath))
+        uploads.add(Upload(volume, relativePath))
         result.resolve(resolvedTargetPath)
       }
       catch (t: Throwable) {
@@ -108,7 +108,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     return result
   }
 
-  private class Upload(val volume: TargetEnvironment.UploadableVolume, val relativePath: String, val resolvedTargetPath: String)
+  private class Upload(val volume: TargetEnvironment.UploadableVolume, val relativePath: String)
 
   private fun createUploadRoot(volumeDescriptor: VolumeDescriptor, localRootPath: Path): TargetEnvironment.UploadRoot {
     return languageRuntime?.createUploadRoot(volumeDescriptor, localRootPath)
@@ -128,7 +128,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
                          targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
     environmentPromise.setResult(environment to targetProgressIndicator)
     for (upload in uploads) {
-      upload.volume.upload(upload.relativePath, targetProgressIndicator, upload.resolvedTargetPath)
+      upload.volume.upload(upload.relativePath, targetProgressIndicator)
     }
     for (promise in dependingOnEnvironmentPromise) {
       promise.blockingGet(0)  // Just rethrows errors.
