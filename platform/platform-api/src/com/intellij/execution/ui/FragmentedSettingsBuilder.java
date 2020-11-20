@@ -193,7 +193,9 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
         }
       });
     };
-    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
+    String title = myMain != null ? IdeBundle.message("popup.title.add.group.options", myMain.getGroup()) :
+                   IdeBundle.message("popup.title.add.run.options");
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(title,
                                                                           group,
                                                                           dataContext,
                                                                           JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
@@ -248,7 +250,12 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   }
 
   private DefaultActionGroup buildGroup(Ref<JComponent> lastSelected) {
-    return buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null), lastSelected);
+    DefaultActionGroup group = buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null), lastSelected);
+    if (myMain != null) {
+      group.add(Separator.create(), Constraints.FIRST);
+      group.add(new ToggleFragmentAction(myMain, lastSelected), Constraints.FIRST);
+    }
+    return group;
   }
 
   private List<SettingsEditorFragment<Settings, ?>> restoreGroups(List<SettingsEditorFragment<Settings, ?>> fragments) {
