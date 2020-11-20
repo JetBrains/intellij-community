@@ -2,6 +2,7 @@
 package org.jetbrains.mvstore.index;
 
 import com.intellij.util.Processor;
+import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentMapBase;
@@ -10,6 +11,7 @@ import org.jetbrains.mvstore.MVMap;
 import org.jetbrains.mvstore.MVStore;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import static org.jetbrains.mvstore.index.DataExternalizerDataTypeConverter.*;
 
@@ -34,6 +36,11 @@ public class MVStorePersistentMap<Key, Value> implements PersistentMapBase<Key, 
   @Override
   public @NotNull DataExternalizer<Value> getValuesExternalizer() {
     return myValueExternalizer;
+  }
+
+  @Override
+  public void appendData(Key key, AppendablePersistentMap.@NotNull ValueDataAppender appender) throws IOException {
+    throw new UnsupportedEncodingException();
   }
 
   @Override
@@ -88,7 +95,6 @@ public class MVStorePersistentMap<Key, Value> implements PersistentMapBase<Key, 
 
   @Override
   public boolean isDirty() {
-    //TODO
     return myStore.hasUnsavedChanges();
   }
 
