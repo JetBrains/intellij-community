@@ -481,7 +481,6 @@ class ModifiableRootModelBridgeImpl(
     }
 
     disposeWithoutLibraries()
-    moduleLibraryTable.disposeOriginalLibraries()
     return diff
   }
 
@@ -503,10 +502,15 @@ class ModifiableRootModelBridgeImpl(
         it.addDiff(diff)
       }
     }
+    postCommit()
   }
 
   override fun prepareForCommit() {
     collectChangesAndDispose()
+  }
+
+  override fun postCommit() {
+    moduleLibraryTable.disposeOriginalLibraries()
   }
 
   override fun dispose() {

@@ -169,6 +169,10 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         builder.addDiff(getActualStorageBuilder());
         return null;
       });
+
+      for (ModifiableRootModel model : rootModels1) {
+        ((ModifiableRootModelBridge)model).postCommit();
+      }
     });
     myUserData.clear();
   }
