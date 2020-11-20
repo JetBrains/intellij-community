@@ -28,6 +28,8 @@ cd intellij-kotlin
 git clone https://github.com/JetBrains/intellij-community.git intellij
 ```
 
+NOTE. You should not try symlinks unless [IDEA-255777](https://youtrack.jetbrains.com/issue/IDEA-255777) is fixed.
+
 ### 1.3. Follow IntelliJ set up instructions
 
 Follow the [set up instructions in IntelliJ Community](https://github.com/JetBrains/intellij-community/blob/master/README.md).
