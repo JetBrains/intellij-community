@@ -36,7 +36,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       builder.withReadonly(isReadOnly());
       builder.inlineValues(inlineValues());
     }
-    myImpl = builder.buildImplementation();
+    myImpl = builder.build().myImpl;
   }
 
   public PersistentHashMap(@NotNull PersistentMapBase<Key, Value> impl) {
