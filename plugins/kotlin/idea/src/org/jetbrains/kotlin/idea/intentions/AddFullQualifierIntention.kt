@@ -44,6 +44,8 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
 
     companion object {
         fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextDescriptor: DeclarationDescriptor?): Boolean {
+            if (referenceExpression.parent is KtInstanceExpressionWithLabel) return false
+
             val prevElement = referenceExpression.prevElementWithoutSpacesAndComments() ?: return false
             if (prevElement.elementType == KtTokens.DOT) return false
             val resultDescriptor = contextDescriptor ?: referenceExpression.findSingleDescriptor() ?: return false

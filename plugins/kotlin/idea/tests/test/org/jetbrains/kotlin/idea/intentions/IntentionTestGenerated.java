@@ -904,6 +904,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             public void testSimpleClassWithFullQualifier() throws Exception {
                 runTest("testData/intentions/addFullQualifier/callExpressions/SimpleClassWithFullQualifier.kt");
             }
+
+            @TestMetadata("This.kt")
+            public void testThis() throws Exception {
+                runTest("testData/intentions/addFullQualifier/callExpressions/This.kt");
+            }
+
+            @TestMetadata("ThisWithQualifier.kt")
+            public void testThisWithQualifier() throws Exception {
+                runTest("testData/intentions/addFullQualifier/callExpressions/ThisWithQualifier.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -973,6 +983,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/addFullQualifier/methodReferences/SimpleClassWithFullQualifier.kt");
             }
 
+            @TestMetadata("This.kt")
+            public void testThis() throws Exception {
+                runTest("testData/intentions/addFullQualifier/methodReferences/This.kt");
+            }
+
             @TestMetadata("TopLevelFunction.kt")
             public void testTopLevelFunction() throws Exception {
                 runTest("testData/intentions/addFullQualifier/methodReferences/TopLevelFunction.kt");
@@ -1039,6 +1054,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("SimpleClassWithFullQualifier.kt")
             public void testSimpleClassWithFullQualifier() throws Exception {
                 runTest("testData/intentions/addFullQualifier/references/SimpleClassWithFullQualifier.kt");
+            }
+
+            @TestMetadata("Super.kt")
+            public void testSuper() throws Exception {
+                runTest("testData/intentions/addFullQualifier/references/Super.kt");
+            }
+
+            @TestMetadata("This.kt")
+            public void testThis() throws Exception {
+                runTest("testData/intentions/addFullQualifier/references/This.kt");
+            }
+
+            @TestMetadata("ThisInQualifier.kt")
+            public void testThisInQualifier() throws Exception {
+                runTest("testData/intentions/addFullQualifier/references/ThisInQualifier.kt");
             }
         }
 
