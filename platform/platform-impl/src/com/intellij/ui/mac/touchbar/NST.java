@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -90,9 +89,7 @@ public final class NST {
   }
 
   static NSTLibrary loadLibrary() {
-    NativeLibraryLoader.loadPlatformLibrary("nst");
-
-    return ourNSTLibrary = Native.load("nst", NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    return ourNSTLibrary = Native.load("nst64", NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
   public static boolean isAvailable() {
