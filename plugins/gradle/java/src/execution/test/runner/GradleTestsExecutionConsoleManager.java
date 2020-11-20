@@ -15,6 +15,15 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
+import com.intellij.build.BuildDescriptor;
+import com.intellij.build.BuildProgressListener;
+import com.intellij.build.BuildViewManager;
+import com.intellij.build.DefaultBuildDescriptor;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.events.StartEvent;
+import com.intellij.build.events.impl.ProgressBuildEventImpl;
+import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -40,6 +49,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
@@ -91,18 +101,20 @@ public class GradleTestsExecutionConsoleManager
       else {
         return null;
       }
-    } else {
+    }
+    else {
       configuration = settings.getConfiguration();
     }
     if (!(configuration instanceof ExternalSystemRunConfiguration)) return null;
     ExternalSystemRunConfiguration externalSystemRunConfiguration = (ExternalSystemRunConfiguration)configuration;
 
-    if(consoleProperties == null) {
+    if (consoleProperties == null) {
       consoleProperties = new GradleConsoleProperties(externalSystemRunConfiguration, env.getExecutor());
     }
     String testFrameworkName = externalSystemRunConfiguration.getSettings().getExternalSystemId().getReadableName();
     String splitterPropertyName = SMTestRunnerConnectionUtil.getSplitterPropertyName(testFrameworkName);
-    final GradleTestsExecutionConsole consoleView = new GradleTestsExecutionConsole(consoleProperties, splitterPropertyName);
+    GradleTestsExecutionConsole consoleView =
+      new GradleTestsExecutionConsole(project, task.getId(), consoleProperties, splitterPropertyName);
     SMTestRunnerConnectionUtil.initConsoleView(consoleView, testFrameworkName);
 
     SMTestRunnerResultsForm resultsViewer = consoleView.getResultsViewer();
@@ -156,6 +168,29 @@ public class GradleTestsExecutionConsoleManager
       consoleView.addMessageFilter(new ReRunTaskFilter((ExternalSystemExecuteTaskTask)task, env));
     }
 
+    BuildViewManager buildViewManager = project.getService(BuildViewManager.class);
+    project.getService(ExternalSystemRunConfigurationViewManager.class).addListener(new BuildProgressListener() {
+      @Override
+      public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+        if (buildId != task.getId()) return;
+        boolean isStartBuildEvent = event instanceof StartBuildEvent;
+        if (isStartBuildEvent) {
+          // override start build event to use different execution console, toolbar actions etc.
+          BuildDescriptor buildDescriptor = ((StartBuildEvent)event).getBuildDescriptor();
+          DefaultBuildDescriptor defaultBuildDescriptor =
+            new DefaultBuildDescriptor(buildDescriptor.getId(), buildDescriptor.getTitle(),
+                                       buildDescriptor.getWorkingDir(), buildDescriptor.getStartTime());
+          event = new StartBuildEventImpl(defaultBuildDescriptor, event.getMessage());
+        }
+        buildViewManager.onEvent(buildId, event);
+        if (event instanceof StartEvent) {
+          ProgressBuildEventImpl progressBuildEvent =
+            new ProgressBuildEventImpl(event.getId(), event.getParentId(), event.getEventTime(), event.getMessage(), -1, -1, "");
+          progressBuildEvent.setHint("- " + GradleBundle.message("gradle.test.runner.build.tw.link.title"));
+          buildViewManager.onEvent(buildId, progressBuildEvent);
+        }
+      }
+    }, consoleView);
     return consoleView;
   }
 
