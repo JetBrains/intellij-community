@@ -51,4 +51,10 @@ public interface ListPopup extends JBPopup {
   void setHandleAutoSelectionBeforeShow(boolean autoHandle);
 
   void addListSelectionListener(ListSelectionListener listSelectionListener);
+
+  /**
+   * If enabled then all items with submenus will be expanded on mouse hover.
+   * If disabled then mouse click needed to expand submenu
+   */
+  default void setShowSubmenuOnHover(boolean showSubmenuOnHover) {}
 }
