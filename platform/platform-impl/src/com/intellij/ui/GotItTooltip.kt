@@ -199,13 +199,13 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
   fun canShow() : Boolean = canShow("$PROPERTY_PREFIX.$id")
 
   /**
-   * Show tooltip for the given component and point on the component.
-   * If the component is showing (see <code>Component.isShowing</code>) and has non empty bounds then
-   * the tooltip is show right away.
-   * If the component is showing by has empty bounds (technically not visible) then tooltip is shown asynchronously
-   * when component gets resized to non empty bounds.
+   * Show tooltip for the given component and point to the component.
+   * If the component is showing (see <code>Component.isShowing</code>) and has not empty bounds then
+   * the tooltip is shown right away.
+   * If the component is showing but has empty bounds (technically not visible) then tooltip is shown asynchronously
+   * when component gets resized to not empty bounds.
    * If the component is not showing then tooltip is shown asynchronously when component is added to the hierarchy and
-   * gets non empty bounds.
+   * gets not empty bounds.
    */
   fun show(component: JComponent, pointProvider: (Component) -> Point) {
     if (canShow()) {
@@ -254,8 +254,8 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
 
   /**
    * Bind the tooltip to action's presentation. Then <code>ActionToolbar</code> starts following ActionButton with
-   * the tooltip if it can be shown. Term "follow" is used because ActionToolbar updates it's content and ActionButton's
-   * JComponent showing status / location may change in time.
+   * the tooltip if it can be shown. Term "follow" is used because ActionToolbar updates its content and ActionButton's
+   * showing status / location may change in time.
    */
   fun assignTo(presentation: Presentation, pointProvider: (Component) -> Point) {
     presentation.putClientProperty(PRESENTATION_KEY, ActionContext(this, pointProvider))
