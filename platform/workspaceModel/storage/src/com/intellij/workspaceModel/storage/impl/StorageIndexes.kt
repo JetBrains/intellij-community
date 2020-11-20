@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalInd
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 internal open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id
@@ -143,10 +144,13 @@ internal open class StorageIndexes(
   }
 
   private fun assertVirtualFileIndex(storage: AbstractEntityStorage) {
-    storage.indexes.virtualFileIndex.entityId2VirtualFileUrl.forEach { (entityId, property2Vfu) ->
+    val existingVfuInFirstMap = HashSet<VirtualFileUrl>()
+    val vfuIndex = storage.indexes.virtualFileIndex
+    vfuIndex.entityId2VirtualFileUrl.forEach { (entityId, property2Vfu) ->
       property2Vfu.forEach { (property, vfuSet) ->
         vfuSet.forEach { vfu ->
-          val property2EntityId = storage.indexes.virtualFileIndex.vfu2EntityId[vfu]
+          existingVfuInFirstMap.add(vfu)
+          val property2EntityId = vfuIndex.vfu2EntityId[vfu]
           assert(property2EntityId != null) { "VirtualFileUrl: $vfu exists in the first collection by EntityId: $entityId with Property: $property but absent at other" }
 
           val compositeKey = "${entityId}_$property"
@@ -155,6 +159,10 @@ internal open class StorageIndexes(
         }
       }
     }
+    val existingVfuISecondMap = vfuIndex.vfu2EntityId.keys
+    assert(existingVfuInFirstMap.size == existingVfuISecondMap.size) { "Different count of VirtualFileUrls EntityId2VirtualFileUrl: ${existingVfuInFirstMap.size} Vfu2EntityId: ${existingVfuISecondMap.size}" }
+    existingVfuInFirstMap.removeAll(existingVfuISecondMap)
+    assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
   }
 }
 
