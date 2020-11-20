@@ -36,26 +36,26 @@ interface ExternalSystemSetupProjectTestCase {
 
   fun getSystemId(): ProjectSystemId
 
-  fun assertDefaultProjectSettings(project: Project)
+  fun assertDefaultProjectSettings(project: Project) {}
 
-  fun attachProject(project: Project, projectFile: VirtualFile) {
-    doAttachProject(project, projectFile)
-    waitForImportCompletion(project)
-  }
+  fun assertDefaultProjectState(project: Project) {}
 
-  fun attachProjectFromScript(project: Project, projectFile: VirtualFile) {
-    doAttachProjectFromScript(project, projectFile)
-    waitForImportCompletion(project)
-  }
+  fun attachProject(project: Project, projectFile: VirtualFile)
 
-  fun doAttachProject(project: Project, projectFile: VirtualFile)
-  fun doAttachProjectFromScript(project: Project, projectFile: VirtualFile)
-  fun waitForImportCompletion(project: Project)
+  fun attachProjectFromScript(project: Project, projectFile: VirtualFile)
+
+  fun <R> waitForImport(action: () -> R): R
 
   fun openPlatformProjectFrom(projectDirectory: VirtualFile): Project {
-    return ProjectManagerEx.getInstanceEx().openProject(projectDirectory.toNioPath(), OpenProjectTask(forceOpenInNewFrame = true,
-                                                                                                      useDefaultProjectAsTemplate = false,
-                                                                                                      isRefreshVfsNeeded = false))!!
+    return ProjectManagerEx.getInstanceEx()
+      .openProject(
+        projectDirectory.toNioPath(),
+        OpenProjectTask(
+          forceOpenInNewFrame = true,
+          useDefaultProjectAsTemplate = false,
+          isRefreshVfsNeeded = false
+        )
+      )!!
   }
 
   fun openProjectFrom(projectFile: VirtualFile): Project {

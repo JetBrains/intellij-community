@@ -57,7 +57,12 @@ class ProjectAware(
 
       val task = ApplicationManager.getApplication().getService(ExternalSystemProcessingManager::class.java).findTask(id)
       if (task is ExternalSystemResolveProjectTask) {
-        if (!autoImportAware.isApplicable(task.resolverPolicy)) return
+        if (task.isPreviewMode) {
+          return
+        }
+        if (!autoImportAware.isApplicable(task.resolverPolicy)) {
+          return
+        }
       }
       externalSystemTaskId.set(id)
       delegate.beforeProjectRefresh()

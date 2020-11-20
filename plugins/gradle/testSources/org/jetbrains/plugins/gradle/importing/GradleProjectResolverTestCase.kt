@@ -24,6 +24,7 @@ import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.setRegistryPropertyForTest
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
 import org.jetbrains.plugins.gradle.util.isSupported
+import org.jetbrains.plugins.gradle.util.waitForProjectReload
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
@@ -48,12 +49,16 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
   }
 
   fun loadProject() {
-    linkAndRefreshGradleProject(projectPath, myProject)
+    waitForProjectReload {
+      linkAndRefreshGradleProject(projectPath, myProject)
+    }
   }
 
   fun reloadProject() {
-    val importSpec = ImportSpecBuilder(myProject, externalSystemId)
-    ExternalSystemUtil.refreshProject(projectPath, importSpec)
+    waitForProjectReload {
+      val importSpec = ImportSpecBuilder(myProject, externalSystemId)
+      ExternalSystemUtil.refreshProject(projectPath, importSpec)
+    }
   }
 
   fun findRealTestSdk(): TestSdk? {
