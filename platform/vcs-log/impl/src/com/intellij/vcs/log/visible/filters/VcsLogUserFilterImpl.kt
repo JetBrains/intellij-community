@@ -1,11 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible.filters
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
@@ -35,13 +34,7 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
     }
   }
 
-  override fun getUsers(root: VirtualFile): Collection<VcsUser> {
-    val result = mutableSetOf<VcsUser>()
-    for (user in users) {
-      result.addAll(getUsers(root, user))
-    }
-    return result
-  }
+  override fun getUsers(root: VirtualFile) = users.flatMapTo(mutableSetOf()) { getUsers(root, it) }
 
   private fun getUsers(root: VirtualFile, name: String): Set<VcsUser> {
     val users = mutableSetOf<VcsUser>()
@@ -51,7 +44,7 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
         users.addAll(getUsers(vcsUser.name)) // do not just add vcsUser, also add synonyms
         val emailNamePart = VcsUserUtil.getNameFromEmail(vcsUser.email)
         if (emailNamePart != null) {
-          val emails = ContainerUtil.map2Set(users) { user: VcsUser -> VcsUserUtil.emailToLowerCase(user.email) }
+          val emails = users.map { user -> VcsUserUtil.emailToLowerCase(user.email) }.toSet()
           for (candidateUser in getUsers(emailNamePart)) {
             if (emails.contains(VcsUserUtil.emailToLowerCase(candidateUser.email))) {
               users.add(candidateUser)
@@ -69,53 +62,51 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
     return users
   }
 
-  override fun getValuesAsText(): Collection<String> {
-    return users
-  }
+  override fun getValuesAsText(): Collection<String> = users
 
   override fun getDisplayText(): String {
-    val users = ContainerUtil.map(users) { user: String ->
-      val me = VcsLogBundle.message("vcs.log.user.filter.me")
-      if (user == VcsLogFilterObject.ME) me else user
+    val users = users.map { user: String ->
+      if (user == VcsLogFilterObject.ME) VcsLogBundle.message("vcs.log.user.filter.me") else user
     }
     return StringUtil.join(users, ", ")
   }
 
   override fun matches(commit: VcsCommitMetadata): Boolean {
-    return ContainerUtil.exists(users) { name: String ->
+    return users.any { name ->
       val users = getUsers(commit.root, name)
-      if (users.isNotEmpty()) {
-        return@exists users.contains(commit.author)
-      }
-      else if (name != VcsLogFilterObject.ME) {
-        val lowerUser = VcsUserUtil.nameToLowerCase(name)
-        val result = VcsUserUtil.nameToLowerCase(commit.author.name) == lowerUser ||
-                     VcsUserUtil.emailToLowerCase(commit.author.email).startsWith("$lowerUser@")
-        if (result) {
-          LOG.warn("Unregistered author " + commit.author + " for commit " + commit.id.asString() + "; search pattern " + name)
+      when {
+        users.isNotEmpty() -> {
+          users.contains(commit.author)
         }
-        return@exists result
+        name != VcsLogFilterObject.ME -> {
+          val lowerUser = VcsUserUtil.nameToLowerCase(name)
+          val result = VcsUserUtil.nameToLowerCase(commit.author.name) == lowerUser ||
+                       VcsUserUtil.emailToLowerCase(commit.author.email).startsWith("$lowerUser@")
+          if (result) {
+            LOG.warn("Unregistered author " + commit.author + " for commit " + commit.id.asString() + "; search pattern " + name)
+          }
+          result
+        }
+        else -> {
+          false
+        }
       }
-      false
     }
   }
 
   private fun getUsers(name: String): Set<VcsUser> {
     val standardName = VcsUserUtil.getNameInStandardForm(name)
-    val result = mutableSetOf<VcsUser>()
-    result.addAll(allUsersByNames[standardName])
-    result.addAll(allUsersByEmails[standardName])
-    return result
+    return allUsersByNames[standardName].union(allUsersByEmails[standardName])
   }
 
   override fun toString(): String {
     return "author: " + StringUtil.join(users, ", ")
   }
 
-  override fun equals(o: Any?): Boolean {
-    if (this === o) return true
-    if (o == null || javaClass != o.javaClass) return false
-    val filter = o as VcsLogUserFilterImpl
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+    val filter = other as VcsLogUserFilterImpl
     return Comparing.haveEqualElements(users, filter.users)
   }
 
@@ -124,6 +115,6 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
   }
 
   companion object {
-    private val LOG = Logger.getInstance(VcsLogUserFilterImpl::class.java)
+    private val LOG = logger<VcsLogUserFilterImpl>()
   }
 }
