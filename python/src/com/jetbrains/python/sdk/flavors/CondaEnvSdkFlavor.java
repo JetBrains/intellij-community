@@ -45,7 +45,8 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
     final List<String> results = new ArrayList<>();
     final Sdk sdk = ReadAction.compute(() -> PythonSdkUtil.findPythonSdk(module));
     try {
-      final List<String> environments = PyCondaRunKt.listCondaEnvironments(sdk);
+      final List<String> environments =
+        PyCondaRunKt.listCondaEnvironments(sdk, PyCondaSdkCustomizer.Companion.getInstance().getDisableEnvsSorting());
       for (String environment : environments) {
         results.addAll(ReadAction.compute(() -> findInRootDirectory(StandardFileSystems.local().findFileByPath(environment))));
       }
