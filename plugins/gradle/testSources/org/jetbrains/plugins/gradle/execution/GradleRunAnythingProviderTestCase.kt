@@ -17,8 +17,8 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
-import com.intellij.testFramework.PlatformTestUtil.waitWhileBusy
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.TimeoutUtil
@@ -124,7 +124,7 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
     val tree = eventView!!.tree
     runInEdtAndWait {
       dispatchAllEventsInIdeEventQueue()
-      waitWhileBusy(tree)
+      PlatformTestUtil.waitWhileBusy(tree)
     }
 
     val buildNode = Ref<ExecutionNode>()
@@ -140,7 +140,7 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
       TimeoutUtil.sleep(5)
       runInEdtAndWait {
         dispatchAllEventsInIdeEventQueue()
-        waitWhileBusy(tree)
+        PlatformTestUtil.waitWhileBusy(tree)
       }
     }
     Assert.assertFalse(buildNode.get().isRunning)
