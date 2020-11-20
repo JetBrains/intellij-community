@@ -16,6 +16,16 @@ public final class PersistentHashMapInMemory<Key, Value> implements PersistentHa
   private final ConcurrentHashMap<Key, Value> myMap = new ConcurrentHashMap<>();
   private final AtomicBoolean myIsClosed = new AtomicBoolean(false);
   private final AtomicBoolean myIsDirty = new AtomicBoolean(false);
+  private final DataExternalizer<Value> myValueExternalizer;
+
+  public PersistentHashMapInMemory(@NotNull PersistentHashMapBuilder<Key,Value> builder) {
+    myValueExternalizer = builder.getValueExternalizer();
+  }
+
+  @Override
+  public @NotNull DataExternalizer<Value> getValuesExternalizer() {
+    return myValueExternalizer;
+  }
 
   @Override
   public boolean isCorrupted() {
@@ -39,11 +49,6 @@ public final class PersistentHashMapInMemory<Key, Value> implements PersistentHa
   @Override
   public void put(Key key, Value value) throws IOException {
     myMap.put(key, value);
-  }
-
-  @Override
-  public void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
-    //TODO: how could we append data? Why binary only?
   }
 
   @Override

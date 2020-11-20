@@ -215,6 +215,11 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     }
   }
 
+  @Override
+  public @NotNull DataExternalizer<Value> getValuesExternalizer() {
+    return myValueExternalizer;
+  }
+
   private static int modifyVersionDependingOnOptions(int version, @NotNull PersistentHashMapValueStorage.CreationTimeOptions options) {
     return version + options.getVersion();
   }

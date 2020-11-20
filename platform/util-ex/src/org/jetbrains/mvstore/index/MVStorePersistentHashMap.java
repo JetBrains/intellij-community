@@ -17,6 +17,7 @@ import static org.jetbrains.mvstore.index.DataExternalizerDataTypeConverter.*;
 
 public class MVStorePersistentHashMap<Key, Value> implements PersistentHashMapBase<Key, Value> {
   private final MVStore myStore;
+  private final DataExternalizer<Value> myValueExternalizer;
   private final MVMap<Key, Value> myMap;
 
   public MVStorePersistentHashMap(@NotNull String mapName,
@@ -24,6 +25,7 @@ public class MVStorePersistentHashMap<Key, Value> implements PersistentHashMapBa
                                   @NotNull KeyDescriptor<Key> keyDescriptor,
                                   @NotNull DataExternalizer<Value> valueExternalizer) {
     myStore = store;
+    myValueExternalizer = valueExternalizer;
     MVMap.Builder<Key, Value> builder = new MVMap
       .Builder<Key, Value>()
       .keyType(convert(keyDescriptor))
@@ -32,8 +34,8 @@ public class MVStorePersistentHashMap<Key, Value> implements PersistentHashMapBa
   }
 
   @Override
-  public void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
-    // TODO
+  public @NotNull DataExternalizer<Value> getValuesExternalizer() {
+    return myValueExternalizer;
   }
 
   @Override

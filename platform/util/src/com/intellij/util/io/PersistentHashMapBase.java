@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.Processor;
 import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
 import org.jetbrains.annotations.*;
 
-import java.io.IOException;
+import java.io.*;
+import java.io.DataOutputStream;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * A Base interface for custom PersistentHashMap implementations.
@@ -16,6 +19,9 @@ import java.util.Collection;
  */
 @ApiStatus.Experimental
 public interface PersistentHashMapBase<Key, Value> {
+  @NotNull
+  DataExternalizer<Value> getValuesExternalizer();
+
   /**
    * Appends value chunk from specified appender to key's value.
    * Important use note: value externalizer used by this map should process all bytes from DataInput during deserialization and make sure
@@ -23,7 +29,24 @@ public interface PersistentHashMapBase<Key, Value> {
    * E.g. Value can be Set of String and individual Strings can be appended with this method for particular key, when {@link #get(Object)} will
    * be eventually called for the key, deserializer will read all bytes retrieving Strings and collecting them into Set
    */
-  void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException;
+  default void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
+    BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
+    DataOutputStream dos = new DataOutputStream(bos);
+    DataExternalizer<Value> dataExternalizer = getValuesExternalizer();
+
+    Value oldValue = get(key);
+    if (oldValue != null) {
+      dataExternalizer.save(dos, oldValue);
+    }
+    appender.append(dos);
+    dos.close();
+
+    DataInputStream dis = new DataInputStream(bos.toInputStream());
+    Value newValue = dataExternalizer.read(dis);
+    dis.close();
+
+    put(key, newValue);
+  }
 
   /**
    * Process all keys registered in the map.
