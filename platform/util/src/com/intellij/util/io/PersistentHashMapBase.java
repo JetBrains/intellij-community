@@ -9,13 +9,13 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.io.DataOutputStream;
 import java.util.Collection;
-import java.util.Objects;
 
 /**
  * A Base interface for custom PersistentHashMap implementations.
  * It is intentionally made not to extend other interfaces.
  * Wrap this class with {@link PersistentHashMap} if you need it to implement other interfaces
  * @see PersistentHashMap
+ * @see PersistentHashMapBuilder
  */
 @ApiStatus.Experimental
 public interface PersistentHashMapBase<Key, Value> {
@@ -48,17 +48,34 @@ public interface PersistentHashMapBase<Key, Value> {
     put(key, newValue);
   }
 
+
+
+
+
+
+  @NotNull
+  Collection<Key> getAllKeysWithExistingMapping() throws IOException;
+
+  boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException;
+
   /**
    * Process all keys registered in the map.
    * Note that keys which were removed at some point might be returned as well.
    */
   boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException;
 
-  void remove(Key key) throws IOException;
+
+
 
   boolean containsMapping(Key key) throws IOException;
 
-  boolean isClosed();
+  Value get(Key key) throws IOException;
+
+  void put(Key key, Value value) throws IOException;
+
+  void remove(Key key) throws IOException;
+
+
 
   boolean isDirty();
 
@@ -66,11 +83,13 @@ public interface PersistentHashMapBase<Key, Value> {
 
   boolean isCorrupted();
 
-  Value get(Key key) throws IOException;
 
-  void put(Key key, Value value) throws IOException;
+  void dropMemoryCaches();
 
   void force();
+
+
+  boolean isClosed();
 
   void close() throws IOException;
 
@@ -78,11 +97,4 @@ public interface PersistentHashMapBase<Key, Value> {
    * Closes the map removing all entries
    */
   void closeAndClean() throws IOException;
-
-  void dropMemoryCaches();
-
-  @NotNull
-  Collection<Key> getAllKeysWithExistingMapping() throws IOException;
-
-  boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException;
 }
