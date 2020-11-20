@@ -2,6 +2,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.model.BranchableUsageInfo;
 import com.intellij.model.ModelBranch;
@@ -49,6 +50,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +73,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private final ModuleInfoUsageDetector myModuleInfoUsageDetector;
   protected NonCodeUsageInfo[] myNonCodeUsages;
   private boolean myOpenInEditor;
-  private MultiMap<PsiElement, String> myConflicts;
+  private MultiMap<PsiElement, @Nls String> myConflicts;
 
   public MoveClassesOrPackagesProcessor(Project project,
                                         PsiElement[] elements,
@@ -189,8 +191,28 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     detectPackageLocalsMoved(usageInfos, myConflicts);
     detectPackageLocalsUsed(myConflicts, myElementsToMove, myTargetPackage);
     myModuleInfoUsageDetector.detectModuleStatementsUsed(allUsages, myConflicts);
+    detectMoveToDefaultPackage(usageInfos, myConflicts, myTargetPackage);
     allUsages.removeAll(usagesToSkip);
     return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(UsageInfo.EMPTY_ARRAY));
+  }
+
+  private static void detectMoveToDefaultPackage(UsageInfo[] infos,
+                                                 MultiMap<PsiElement, @Nls String> conflicts, 
+                                                 PackageWrapper aPackage) {
+    if (!aPackage.getQualifiedName().isEmpty()) return;
+    
+    Set<PsiFile> filesWithImports = new HashSet<>();
+    for (UsageInfo info : infos) {
+      PsiElement element = info.getElement();
+      if (element == null) continue;
+      PsiReference reference = info.getReference();
+      if (reference == null) continue;
+      PsiElement target = reference.resolve();
+      PsiFile file = element.getContainingFile();
+      if (file instanceof PsiJavaFile && target != null && filesWithImports.add(file) && !((PsiJavaFile)file).getPackageName().isEmpty()) {
+        conflicts.putValue(element, JavaBundle.message("move.class.import.from.default.package.conflict", RefactoringUIUtil.getDescription(target, false)));
+      }
+    }
   }
 
   public List<PsiElement> getElements() {
@@ -418,7 +440,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   @Nullable
-  private String getOldQName(PsiElement element) {
+  private static String getOldQName(PsiElement element) {
     if (element instanceof PsiClass) {
       return ((PsiClass)element).getQualifiedName();
     }
@@ -429,7 +451,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       return ((PsiClassOwner)element).getName();
     }
     else {
-      LOG.assertTrue(false);
+      LOG.error("unknown element: " + element);
       return null;
     }
   }
