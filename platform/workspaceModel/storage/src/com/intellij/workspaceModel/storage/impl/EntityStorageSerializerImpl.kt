@@ -509,6 +509,6 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   companion object {
     val logger = logger<EntityStorageSerializerImpl>()
 
-    const val SERIALIZER_VERSION = "v6"
+    const val SERIALIZER_VERSION = "v7"
   }
 }
