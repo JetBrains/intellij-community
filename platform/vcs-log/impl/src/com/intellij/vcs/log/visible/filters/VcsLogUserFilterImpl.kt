@@ -1,147 +1,129 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.visible.filters;
+package com.intellij.vcs.log.visible.filters
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.VcsLogUserFilter;
-import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.util.VcsUserUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MultiMap
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogUserFilter
+import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.util.VcsUserUtil
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class VcsLogUserFilterImpl implements VcsLogUserFilter {
-  private static final Logger LOG = Logger.getInstance(VcsLogUserFilterImpl.class);
+internal class VcsLogUserFilterImpl(private val users: Collection<String>,
+                                    private val data: Map<VirtualFile, VcsUser>,
+                                    allUsers: Set<VcsUser>) : VcsLogUserFilter {
+  private val allUsersByNames: MultiMap<String, VcsUser> = MultiMap.create()
+  private val allUsersByEmails: MultiMap<String, VcsUser> = MultiMap.create()
 
-  @NotNull private final Collection<String> myUsers;
-  @NotNull private final Map<VirtualFile, VcsUser> myData;
-  @NotNull private final MultiMap<String, VcsUser> myAllUsersByNames = MultiMap.create();
-  @NotNull private final MultiMap<String, VcsUser> myAllUsersByEmails = MultiMap.create();
-
-  VcsLogUserFilterImpl(@NotNull Collection<String> users,
-                       @NotNull Map<VirtualFile, VcsUser> meData,
-                       @NotNull Set<? extends VcsUser> allUsers) {
-    myUsers = users;
-    myData = meData;
-
-    for (VcsUser user : allUsers) {
-      String name = user.getName();
-      if (!name.isEmpty()) {
-        myAllUsersByNames.putValue(VcsUserUtil.getNameInStandardForm(name), user);
+  init {
+    for (user in allUsers) {
+      val name = user.name
+      if (name.isNotEmpty()) {
+        allUsersByNames.putValue(VcsUserUtil.getNameInStandardForm(name), user)
       }
-      String email = user.getEmail();
-      String nameFromEmail = VcsUserUtil.getNameFromEmail(email);
+      val email = user.email
+      val nameFromEmail = VcsUserUtil.getNameFromEmail(email)
       if (nameFromEmail != null) {
-        myAllUsersByEmails.putValue(VcsUserUtil.getNameInStandardForm(nameFromEmail), user);
+        allUsersByEmails.putValue(VcsUserUtil.getNameInStandardForm(nameFromEmail), user)
       }
     }
   }
 
-  @Override
-  @NotNull
-  public Collection<VcsUser> getUsers(@NotNull VirtualFile root) {
-    Set<VcsUser> result = new HashSet<>();
-    for (String user : myUsers) {
-      result.addAll(getUsers(root, user));
+  override fun getUsers(root: VirtualFile): Collection<VcsUser> {
+    val result = mutableSetOf<VcsUser>()
+    for (user in users) {
+      result.addAll(getUsers(root, user))
     }
-    return result;
+    return result
   }
 
-  @NotNull
-  private Set<VcsUser> getUsers(@NotNull VirtualFile root, @NotNull String name) {
-    Set<VcsUser> users = new HashSet<>();
-    if (VcsLogFilterObject.ME.equals(name)) {
-      VcsUser vcsUser = myData.get(root);
+  private fun getUsers(root: VirtualFile, name: String): Set<VcsUser> {
+    val users = mutableSetOf<VcsUser>()
+    if (VcsLogFilterObject.ME == name) {
+      val vcsUser = data[root]
       if (vcsUser != null) {
-        users.addAll(getUsers(vcsUser.getName())); // do not just add vcsUser, also add synonyms
-        String emailNamePart = VcsUserUtil.getNameFromEmail(vcsUser.getEmail());
+        users.addAll(getUsers(vcsUser.name)) // do not just add vcsUser, also add synonyms
+        val emailNamePart = VcsUserUtil.getNameFromEmail(vcsUser.email)
         if (emailNamePart != null) {
-          Set<String> emails = ContainerUtil.map2Set(users, user -> VcsUserUtil.emailToLowerCase(user.getEmail()));
-          for (VcsUser candidateUser : getUsers(emailNamePart)) {
-            if (emails.contains(VcsUserUtil.emailToLowerCase(candidateUser.getEmail()))) {
-              users.add(candidateUser);
+          val emails = ContainerUtil.map2Set(users) { user: VcsUser -> VcsUserUtil.emailToLowerCase(user.email) }
+          for (candidateUser in getUsers(emailNamePart)) {
+            if (emails.contains(VcsUserUtil.emailToLowerCase(candidateUser.email))) {
+              users.add(candidateUser)
             }
           }
         }
       }
       else {
-        LOG.warn("Can not resolve user name for root " + root);
+        LOG.warn("Can not resolve user name for root $root")
       }
     }
     else {
-      users.addAll(getUsers(name));
+      users.addAll(getUsers(name))
     }
-    return users;
+    return users
   }
 
-  @NotNull
-  @Override
-  public Collection<String> getValuesAsText() {
-    return myUsers;
+  override fun getValuesAsText(): Collection<String> {
+    return users
   }
 
-  @Override
-  public @NotNull String getDisplayText() {
-    List<String> users = ContainerUtil.map(myUsers, user -> {
-      String me = VcsLogBundle.message("vcs.log.user.filter.me");
-      return user.equals(VcsLogFilterObject.ME) ? me : user;
-    });
-    return StringUtil.join(users, ", ");
+  override fun getDisplayText(): String {
+    val users = ContainerUtil.map(users) { user: String ->
+      val me = VcsLogBundle.message("vcs.log.user.filter.me")
+      if (user == VcsLogFilterObject.ME) me else user
+    }
+    return StringUtil.join(users, ", ")
   }
 
-  @Override
-  public boolean matches(@NotNull final VcsCommitMetadata commit) {
-    return ContainerUtil.exists(myUsers, name -> {
-      Set<VcsUser> users = getUsers(commit.getRoot(), name);
-      if (!users.isEmpty()) {
-        return users.contains(commit.getAuthor());
+  override fun matches(commit: VcsCommitMetadata): Boolean {
+    return ContainerUtil.exists(users) { name: String ->
+      val users = getUsers(commit.root, name)
+      if (users.isNotEmpty()) {
+        return@exists users.contains(commit.author)
       }
-      else if (!name.equals(VcsLogFilterObject.ME)) {
-        String lowerUser = VcsUserUtil.nameToLowerCase(name);
-        boolean result = VcsUserUtil.nameToLowerCase(commit.getAuthor().getName()).equals(lowerUser) ||
-                         VcsUserUtil.emailToLowerCase(commit.getAuthor().getEmail()).startsWith(lowerUser + "@");
+      else if (name != VcsLogFilterObject.ME) {
+        val lowerUser = VcsUserUtil.nameToLowerCase(name)
+        val result = VcsUserUtil.nameToLowerCase(commit.author.name) == lowerUser ||
+                     VcsUserUtil.emailToLowerCase(commit.author.email).startsWith("$lowerUser@")
         if (result) {
-          LOG.warn("Unregistered author " + commit.getAuthor() + " for commit " + commit.getId().asString() + "; search pattern " + name);
+          LOG.warn("Unregistered author " + commit.author + " for commit " + commit.id.asString() + "; search pattern " + name)
         }
-        return result;
+        return@exists result
       }
-      return false;
-    });
+      false
+    }
   }
 
-  @NotNull
-  private Set<VcsUser> getUsers(@NotNull String name) {
-    String standardName = VcsUserUtil.getNameInStandardForm(name);
-
-    Set<VcsUser> result = new HashSet<>();
-    result.addAll(myAllUsersByNames.get(standardName));
-    result.addAll(myAllUsersByEmails.get(standardName));
-    return result;
+  private fun getUsers(name: String): Set<VcsUser> {
+    val standardName = VcsUserUtil.getNameInStandardForm(name)
+    val result = mutableSetOf<VcsUser>()
+    result.addAll(allUsersByNames[standardName])
+    result.addAll(allUsersByEmails[standardName])
+    return result
   }
 
-  @Override
-  public String toString() {
-    return "author: " + StringUtil.join(myUsers, ", ");
+  override fun toString(): String {
+    return "author: " + StringUtil.join(users, ", ")
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    VcsLogUserFilterImpl filter = (VcsLogUserFilterImpl)o;
-    return Comparing.haveEqualElements(myUsers, filter.myUsers);
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || javaClass != o.javaClass) return false
+    val filter = o as VcsLogUserFilterImpl
+    return Comparing.haveEqualElements(users, filter.users)
   }
 
-  @Override
-  public int hashCode() {
-    return Comparing.unorderedHashcode(myUsers);
+  override fun hashCode(): Int {
+    return Comparing.unorderedHashcode(users)
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(VcsLogUserFilterImpl::class.java)
   }
 }
