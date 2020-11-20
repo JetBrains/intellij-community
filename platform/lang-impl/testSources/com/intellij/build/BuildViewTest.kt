@@ -6,6 +6,7 @@ import com.intellij.build.events.MessageEvent.Kind.*
 import com.intellij.build.events.PresentableBuildEvent
 import com.intellij.build.events.impl.*
 import com.intellij.build.progress.BuildProgressDescriptor
+import com.intellij.execution.Platform
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -18,7 +19,6 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.io.File
@@ -141,7 +141,7 @@ class BuildViewTest : LightPlatformTestCase() {
         TreeUtil.visitVisibleRows(tree, it)
       }
     }
-    Assertions.assertThat(visitor.userObjects)
+    assertThat(visitor.userObjects)
       .extracting(Function<Any?, String?> { node ->
         val presentation = (node as ExecutionNode).presentation
         if (presentation.coloredText.isEmpty()) {
@@ -162,7 +162,7 @@ class BuildViewTest : LightPlatformTestCase() {
         "message 3 => :1",
         "aFile3.java => anotherDir2 1 error",
         "message 3.1 => :1",
-        "aFile4.java => ~/foo",
+        "aFile4.java => ~${Platform.current().fileSeparator}foo",
         "message 4 => :1"
       )
   }
