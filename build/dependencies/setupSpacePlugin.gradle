@@ -15,5 +15,14 @@ task setupSpaceAutomationDefinitions {
   }
 }
 
+task setupSpaceAutomationDefinitionsLocal(type: Copy) {
+  def version = "1.0-dev"
+  from("${System.properties['user.home']}/.m2/repository/com/jetbrains/space-idea-script-definition/$version")
+  into(file("$buildDir/space"))
+}
+
 task setupSpaceAutomation(dependsOn: [setupKotlinPlugin, setupSpaceAutomationDefinitions]) {
+}
+
+task setupSpaceAutomationWithLocalDefinition(dependsOn: [setupKotlinPlugin, setupSpaceAutomationDefinitionsLocal]) {
 }
