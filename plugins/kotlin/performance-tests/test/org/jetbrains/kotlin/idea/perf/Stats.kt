@@ -141,6 +141,9 @@ class Stats(
                         TeamCity.test(stabilityName, errorDetails = error, includeStats = false) {
                             metricChildren.add(Metric("stability", metricValue = stabilityPercentage.toLong()))
                         }
+
+                        TeamCity.test("$name: $testName geomMean", durationMs = calcMean.geomMean.toLong()) {}
+                        TeamCity.test("$name: $testName stdDev", durationMs = calcMean.stdDev.toLong()){}
                     }
 
                     processTimings(testName, statInfoArray, metricChildren)
