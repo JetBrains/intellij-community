@@ -401,7 +401,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
     myMap.put("AAA", "AAA_VALUE");
 
     myMap.close();
-    myMap = PersistentHashMapBuilder.newBuilder(myFile.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE).readonly().build();
+    myMap = PersistentMapBuilder.newBuilder(myFile.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE).readonly().build();
 
     try {
       compactMap();

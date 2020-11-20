@@ -66,7 +66,7 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
 
   @NotNull
   private static PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file, boolean useChunks, boolean isReadOnly) throws IOException {
-    return PersistentHashMapBuilder
+    return PersistentMapBuilder
       .newBuilder(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE)
       .hasChunks(useChunks)
       .withReadonly(isReadOnly)

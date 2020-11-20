@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.util.io.PersistentHashMapBuilder.newBuilder;
+import static com.intellij.util.io.PersistentMapBuilder.newBuilder;
 
 /**
  * A delegate for a Persistent Hash Map (PHM) implementation
@@ -19,11 +19,11 @@ import static com.intellij.util.io.PersistentHashMapBuilder.newBuilder;
  * <ul>
  *   <li>base interface for {@link PersistentHashMap}, so please use that one in any public or open API</li>
  *   <li>it delegates all calls to {@link PersistentMapBase} implementation</li>
- *   <li>factory adapter for backward compatibility - constructors delegates to {@link PersistentHashMapBuilder} to create the best implementation</li>
+ *   <li>factory adapter for backward compatibility - constructors delegates to {@link PersistentMapBuilder} to create the best implementation</li>
  * </ul>
  *
  * @implNote Please to not override this class, it is not final to preserve backward compatibility.
- * @see PersistentHashMapBuilder
+ * @see PersistentMapBuilder
  **/
 public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value> {
   @NonNls
@@ -31,7 +31,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
   @NotNull private final PersistentMapBase<Key, Value> myImpl;
 
-  PersistentHashMap(@NotNull PersistentHashMapBuilder<Key, Value> builder, boolean checkInheritedMembers) throws IOException {
+  PersistentHashMap(@NotNull PersistentMapBuilder<Key, Value> builder, boolean checkInheritedMembers) throws IOException {
     if (checkInheritedMembers) {
       builder.withReadonly(isReadOnly());
       builder.inlineValues(inlineValues());
@@ -91,7 +91,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   /**
-   * @deprecated Please use {@link PersistentHashMapBuilder} instead
+   * @deprecated Please use {@link PersistentMapBuilder} instead
    */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
@@ -100,7 +100,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   /**
-   * @deprecated Please use {@link PersistentHashMapBuilder} instead
+   * @deprecated Please use {@link PersistentMapBuilder} instead
    */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")

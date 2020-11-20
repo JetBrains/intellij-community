@@ -186,7 +186,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     PersistentHashMap<Integer, Integer> map = null;
 
     try {
-      map = PersistentHashMapBuilder
+      map = PersistentMapBuilder
         .newBuilder(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
         .inlineValues()
         .build();
@@ -205,7 +205,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       map.close();
       LOG.debug("Done:" + (System.currentTimeMillis() - started));
       started = System.currentTimeMillis();
-      map = PersistentHashMapBuilder.newBuilder(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
+      map = PersistentMapBuilder.newBuilder(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
         .inlineValues()
         .build();
 

@@ -15,7 +15,7 @@ public final class PersistentMapInMemory<Key, Value> implements PersistentMapBas
   private final AtomicBoolean myIsClosed = new AtomicBoolean(false);
   private final DataExternalizer<Value> myValueExternalizer;
 
-  public PersistentMapInMemory(@NotNull PersistentHashMapBuilder<Key,Value> builder) {
+  public PersistentMapInMemory(@NotNull PersistentMapBuilder<Key,Value> builder) {
     myValueExternalizer = builder.getValueExternalizer();
   }
 

@@ -114,7 +114,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     return myCanReEnumerate && size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE;
   }
 
-  public PersistentMapImpl(@NotNull PersistentHashMapBuilder<Key, Value> builder) throws IOException {
+  public PersistentMapImpl(@NotNull PersistentMapBuilder<Key, Value> builder) throws IOException {
     @NotNull Path file = builder.getFile();
     @NotNull KeyDescriptor<Key> keyDescriptor = builder.getKeyDescriptor();
     @NotNull DataExternalizer<Value> valueExternalizer = builder.getValueExternalizer();

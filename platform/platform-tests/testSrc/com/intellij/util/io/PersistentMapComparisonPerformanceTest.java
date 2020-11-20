@@ -67,7 +67,7 @@ public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
   }
 
   public void testPersistentHashMap() throws IOException {
-    PersistentHashMap<Integer, String> phm = PersistentHashMapBuilder
+    PersistentHashMap<Integer, String> phm = PersistentMapBuilder
       .newBuilder(myTempDirectory.resolve("phm"), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE).build();
     try {
       PlatformTestUtil.startPerformanceTest("put/get PHM", 2000, () -> {

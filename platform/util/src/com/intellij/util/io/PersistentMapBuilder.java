@@ -13,7 +13,7 @@ import java.nio.file.Path;
  * @see PersistentHashMap
  */
 @ApiStatus.Experimental
-public final class PersistentHashMapBuilder<Key, Value> {
+public final class PersistentMapBuilder<Key, Value> {
   @NotNull private final Path myFile;
   @NotNull private final KeyDescriptor<Key> myKeyDescriptor;
   @NotNull private final DataExternalizer<Value> myValueExternalizer;
@@ -27,9 +27,9 @@ public final class PersistentHashMapBuilder<Key, Value> {
   private IOCancellationCallback myCancellationCallback;
   private Boolean myCompactOnClose = null;
 
-  private PersistentHashMapBuilder(@NotNull Path file,
-                                   @NotNull KeyDescriptor<Key> keyDescriptor,
-                                   @NotNull DataExternalizer<Value> valueExternalizer) {
+  private PersistentMapBuilder(@NotNull Path file,
+                               @NotNull KeyDescriptor<Key> keyDescriptor,
+                               @NotNull DataExternalizer<Value> valueExternalizer) {
     myFile = file;
     myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
@@ -85,37 +85,37 @@ public final class PersistentHashMapBuilder<Key, Value> {
   }
 
   @NotNull
-  public static <Key, Value> PersistentHashMapBuilder<Key, Value> newBuilder(@NotNull Path file,
-                                                                             @NotNull KeyDescriptor<Key> keyDescriptor,
-                                                                             @NotNull DataExternalizer<Value> valueExternalizer) {
-    return new PersistentHashMapBuilder<>(file, keyDescriptor, valueExternalizer);
+  public static <Key, Value> PersistentMapBuilder<Key, Value> newBuilder(@NotNull Path file,
+                                                                         @NotNull KeyDescriptor<Key> keyDescriptor,
+                                                                         @NotNull DataExternalizer<Value> valueExternalizer) {
+    return new PersistentMapBuilder<>(file, keyDescriptor, valueExternalizer);
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> withInitialSize(int initialSize) {
+  public PersistentMapBuilder<Key, Value> withInitialSize(int initialSize) {
     myInitialSize = initialSize;
     return this;
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> withVersion(int version) {
+  public PersistentMapBuilder<Key, Value> withVersion(int version) {
     myVersion = version;
     return this;
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> withReadonly(boolean readonly) {
+  public PersistentMapBuilder<Key, Value> withReadonly(boolean readonly) {
     myIsReadOnly = readonly;
     return this;
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> readonly() {
+  public PersistentMapBuilder<Key, Value> readonly() {
     return withReadonly(true);
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> inlineValues(boolean inlineValues) {
+  public PersistentMapBuilder<Key, Value> inlineValues(boolean inlineValues) {
     if (inlineValues && !(myValueExternalizer instanceof IntInlineKeyDescriptor)) {
       throw new IllegalStateException("can't inline values for externalizer " + myValueExternalizer.getClass());
     }
@@ -124,41 +124,41 @@ public final class PersistentHashMapBuilder<Key, Value> {
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> inlineValues() {
+  public PersistentMapBuilder<Key, Value> inlineValues() {
     return inlineValues(true);
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> withStorageLockContext(@Nullable StorageLockContext context) {
+  public PersistentMapBuilder<Key, Value> withStorageLockContext(@Nullable StorageLockContext context) {
     myLockContext = context;
     return this;
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> hasChunks(boolean hasChunks) {
+  public PersistentMapBuilder<Key, Value> hasChunks(boolean hasChunks) {
     myHasChunks = hasChunks;
     return this;
   }
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> hasNoChunks() {
+  public PersistentMapBuilder<Key, Value> hasNoChunks() {
     myHasChunks = false;
     return this;
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> withIoCancellationCallback(@NotNull IOCancellationCallback ioCancellationCallback) {
+  public PersistentMapBuilder<Key, Value> withIoCancellationCallback(@NotNull IOCancellationCallback ioCancellationCallback) {
     myCancellationCallback = ioCancellationCallback;
     return this;
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> withCompactOnClose(boolean compactOnClose) {
+  public PersistentMapBuilder<Key, Value> withCompactOnClose(boolean compactOnClose) {
     myCompactOnClose = compactOnClose;
     return this;
   }
 
   @NotNull
-  public PersistentHashMapBuilder<Key, Value> compactOnClose() {
+  public PersistentMapBuilder<Key, Value> compactOnClose() {
     return withCompactOnClose(true);
   }
 

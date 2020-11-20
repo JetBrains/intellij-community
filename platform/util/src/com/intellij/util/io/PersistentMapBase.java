@@ -14,7 +14,7 @@ import java.io.DataOutputStream;
  * It is intentionally made not to extend other interfaces.
  * Wrap this class with {@link PersistentHashMap} if you need it to implement other interfaces
  * @see PersistentHashMap
- * @see PersistentHashMapBuilder
+ * @see PersistentMapBuilder
  */
 @ApiStatus.Experimental
 public interface PersistentMapBase<Key, Value> {

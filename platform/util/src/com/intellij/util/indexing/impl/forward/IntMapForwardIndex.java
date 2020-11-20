@@ -24,7 +24,7 @@ public class IntMapForwardIndex implements IntForwardIndex {
   @NotNull
   private static PersistentMap<Integer, Integer> createMap(@NotNull Path storageFile,
                                                            boolean hasChunks) throws IOException {
-    return PersistentHashMapBuilder
+    return PersistentMapBuilder
       .newBuilder(storageFile, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
       .inlineValues()
       .hasChunks(hasChunks)
