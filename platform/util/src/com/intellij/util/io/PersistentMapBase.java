@@ -8,17 +8,17 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.io.DataOutputStream;
-import java.util.Collection;
 
 /**
- * A Base interface for custom PersistentHashMap implementations.
+ * A base interface for custom persistent map implementations.
  * It is intentionally made not to extend other interfaces.
  * Wrap this class with {@link PersistentHashMap} if you need it to implement other interfaces
  * @see PersistentHashMap
  * @see PersistentHashMapBuilder
  */
 @ApiStatus.Experimental
-public interface PersistentHashMapBase<Key, Value> {
+public interface PersistentMapBase<Key, Value> {
+  @ApiStatus.OverrideOnly
   @NotNull
   DataExternalizer<Value> getValuesExternalizer();
 
@@ -48,21 +48,15 @@ public interface PersistentHashMapBase<Key, Value> {
     put(key, newValue);
   }
 
-
-
-
-
-
-  @NotNull
-  Collection<Key> getAllKeysWithExistingMapping() throws IOException;
-
   /**
-   * Process only keys with existing mappings
+   * Process only existing keys in a map.
    */
-  boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException;
+  boolean processExistingKeys(@NotNull Processor<? super Key> processor) throws IOException;
 
   /**
    * Process all keys registered in the map.
+   * It several implementations it might work significantly faster then {@link PersistentMapBase#processExistingKeys(Processor)}
+   * and it makes sense to prefer this method in performance critical code: completion, navigation.
    * <br>
    * Note that:
    * <ul><li>
@@ -73,10 +67,7 @@ public interface PersistentHashMapBase<Key, Value> {
    */
   boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException;
 
-
-
-
-  boolean containsMapping(Key key) throws IOException;
+  boolean containsKey(Key key) throws IOException;
 
   Value get(Key key) throws IOException;
 
@@ -84,10 +75,8 @@ public interface PersistentHashMapBase<Key, Value> {
 
   void remove(Key key) throws IOException;
 
-
-
   /**
-   * Returns true if storage is dirty. See {@link PersistentHashMapBase#markDirty()} for details.
+   * Returns true if storage is dirty. See {@link PersistentMapBase#markDirty()} for details.
    */
   boolean isDirty();
 

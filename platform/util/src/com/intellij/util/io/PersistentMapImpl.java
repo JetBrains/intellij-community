@@ -17,7 +17,6 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -39,8 +38,8 @@ import java.util.stream.Stream;
  Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
  directly in storage used for offset and in case of btree enumerator directly in btree leaf.
  **/
-public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<Key, Value> {
-  private static final Logger LOG = Logger.getInstance(PersistentHashMapImpl.class);
+public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Value> {
+  private static final Logger LOG = Logger.getInstance(PersistentMapImpl.class);
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
   private static final int DEAD_KEY_NUMBER_MASK = 0xFFFFFFFF;
 
@@ -115,7 +114,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     return myCanReEnumerate && size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE;
   }
 
-  public PersistentHashMapImpl(@NotNull PersistentHashMapBuilder<Key, Value> builder) throws IOException {
+  public PersistentMapImpl(@NotNull PersistentHashMapBuilder<Key, Value> builder) throws IOException {
     @NotNull Path file = builder.getFile();
     @NotNull KeyDescriptor<Key> keyDescriptor = builder.getKeyDescriptor();
     @NotNull DataExternalizer<Value> valueExternalizer = builder.getValueExternalizer();
@@ -486,7 +485,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
 
   /**
    * Process all keys registered in the map. Note that keys which were removed after {@link #compact()} call will be processed as well. Use
-   * {@link #processKeysWithExistingMapping(Processor)} to process only keys with existing mappings
+   * {@link #processExistingKeys(Processor)} to process only keys with existing mappings
    */
   @Override
   public final boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
@@ -519,16 +518,8 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
     myEnumerator.markDirty(true);
   }
 
-  @NotNull
   @Override
-  public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
-    final List<Key> values = new ArrayList<>();
-    processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(values));
-    return values;
-  }
-
-  @Override
-  public final boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException {
+  public final boolean processExistingKeys(@NotNull Processor<? super Key> processor) throws IOException {
     synchronized (getDataAccessLock()) {
       try {
         if (myAppendCache != null) {
@@ -641,7 +632,7 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
   }
 
   @Override
-  public final boolean containsMapping(Key key) throws IOException {
+  public final boolean containsKey(Key key) throws IOException {
     synchronized (getDataAccessLock()) {
       return doContainsMapping(key);
     }
@@ -1040,13 +1031,13 @@ public class PersistentHashMapImpl<Key, Value> implements PersistentHashMapBase<
 
   @NotNull
   @TestOnly
-  public static <Key, Value> PersistentHashMapImpl<Key, Value> unwrap(@NotNull PersistentHashMap<Key, Value> map) {
+  public static <Key, Value> PersistentMapImpl<Key, Value> unwrap(@NotNull PersistentHashMap<Key, Value> map) {
     //NOTE: on production, it can be another implementation behind the PersistentHashMap
     try {
       Field field = PersistentHashMap.class.getDeclaredField("myImpl");
       field.setAccessible(true);
       //noinspection unchecked
-      return (PersistentHashMapImpl<Key, Value>)field.get(map);
+      return (PersistentMapImpl<Key, Value>)field.get(map);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

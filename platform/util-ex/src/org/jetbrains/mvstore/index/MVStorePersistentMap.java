@@ -2,28 +2,26 @@
 package org.jetbrains.mvstore.index;
 
 import com.intellij.util.Processor;
-import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMapBase;
+import com.intellij.util.io.PersistentMapBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.mvstore.MVMap;
 import org.jetbrains.mvstore.MVStore;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import static org.jetbrains.mvstore.index.DataExternalizerDataTypeConverter.*;
 
-public class MVStorePersistentHashMap<Key, Value> implements PersistentHashMapBase<Key, Value> {
+public class MVStorePersistentMap<Key, Value> implements PersistentMapBase<Key, Value> {
   private final MVStore myStore;
   private final DataExternalizer<Value> myValueExternalizer;
   private final MVMap<Key, Value> myMap;
 
-  public MVStorePersistentHashMap(@NotNull String mapName,
-                                  @NotNull MVStore store,
-                                  @NotNull KeyDescriptor<Key> keyDescriptor,
-                                  @NotNull DataExternalizer<Value> valueExternalizer) {
+  public MVStorePersistentMap(@NotNull String mapName,
+                              @NotNull MVStore store,
+                              @NotNull KeyDescriptor<Key> keyDescriptor,
+                              @NotNull DataExternalizer<Value> valueExternalizer) {
     myStore = store;
     myValueExternalizer = valueExternalizer;
     MVMap.Builder<Key, Value> builder = new MVMap
@@ -64,13 +62,8 @@ public class MVStorePersistentHashMap<Key, Value> implements PersistentHashMapBa
   }
 
   @Override
-  public @NotNull Collection<Key> getAllKeysWithExistingMapping() throws IOException {
-    return myMap.keySet();
-  }
-
-  @Override
-  public boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException {
-    for (Key key : getAllKeysWithExistingMapping()) {
+  public boolean processExistingKeys(@NotNull Processor<? super Key> processor) throws IOException {
+    for (Key key : myMap.keySet()) {
       if (!processor.process(key)) {
         return false;
       }
@@ -80,7 +73,7 @@ public class MVStorePersistentHashMap<Key, Value> implements PersistentHashMapBa
 
   @Override
   public boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
-    return processKeysWithExistingMapping(processor);
+    return processExistingKeys(processor);
   }
 
   @Override
@@ -89,7 +82,7 @@ public class MVStorePersistentHashMap<Key, Value> implements PersistentHashMapBa
   }
 
   @Override
-  public boolean containsMapping(Key key) throws IOException {
+  public boolean containsKey(Key key) throws IOException {
     return myMap.containsKey(key);
   }
 

@@ -62,9 +62,9 @@ public class PersistentMapTest extends PersistentMapTestBase {
       }
 
       map.close();
-      assertTrue(PersistentHashMapImpl.unwrap(map).getValueStorage().getSize() > 2 * PersistentHashMapValueStorage.SOFT_MAX_RETAINED_LIMIT);
+      assertTrue(PersistentMapImpl.unwrap(map).getValueStorage().getSize() > 2 * PersistentHashMapValueStorage.SOFT_MAX_RETAINED_LIMIT);
       map = mapConstructor.createMap(myFile);
-      PersistentHashMapImpl.unwrap(map).compact();
+      PersistentMapImpl.unwrap(map).compact();
 
       for (int i = 0; i < keys; ++i) {
         Collection<String> strings = map.get(i);
@@ -381,7 +381,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
           assertEquals(testMapping.get(key), val);
         }
       }
-      PersistentHashMapImpl.unwrap(map).compact();
+      PersistentMapImpl.unwrap(map).compact();
 
       { // after compact
         final Collection<Integer> allKeys = new HashSet<>(map.getAllKeysWithExistingMapping());
@@ -437,7 +437,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       myMap.put("Foo", "Bar");
       assertTrue(myMap.containsMapping("Foo"));
       myMap.close();
-      assertEquals(55,PersistentHashMapImpl.getDataFile(myFile.toPath()).toFile().length());
+      assertEquals(55, PersistentMapImpl.getDataFile(myFile.toPath()).toFile().length());
     }
     finally {
       PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(compressionFlag);

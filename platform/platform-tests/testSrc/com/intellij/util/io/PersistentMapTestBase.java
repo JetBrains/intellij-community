@@ -29,8 +29,8 @@ abstract class PersistentMapTestBase extends UsefulTestCase {
   }
 
   @NotNull
-  protected PersistentHashMapImpl<String, String> unwrapMap() {
-    return PersistentHashMapImpl.unwrap(myMap);
+  protected PersistentMapImpl<String, String> unwrapMap() {
+    return PersistentMapImpl.unwrap(myMap);
   }
 
   protected int getMapSize() {

@@ -14,7 +14,7 @@ import java.nio.file.Path;
 /**
  * @author Dmitry Avdeev
  */
-class ValueContainerMap<Key, Value> extends PersistentHashMapImpl<Key, UpdatableValueContainer<Value>> {
+class ValueContainerMap<Key, Value> extends PersistentMapImpl<Key, UpdatableValueContainer<Value>> {
   @NotNull private final DataExternalizer<Value> myValueExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
 

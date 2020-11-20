@@ -6,7 +6,9 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.util.io.PersistentHashMapBuilder.newBuilder;
 
@@ -16,7 +18,7 @@ import static com.intellij.util.io.PersistentHashMapBuilder.newBuilder;
  * This class plays several roles to preserve backward API compatibility:
  * <ul>
  *   <li>base interface for {@link PersistentHashMap}, so please use that one in any public or open API</li>
- *   <li>it delegates all calls to {@link PersistentHashMapBase} implementation</li>
+ *   <li>it delegates all calls to {@link PersistentMapBase} implementation</li>
  *   <li>factory adapter for backward compatibility - constructors delegates to {@link PersistentHashMapBuilder} to create the best implementation</li>
  * </ul>
  *
@@ -27,7 +29,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   @NonNls
   static String DATA_FILE_EXTENSION = ".values";
 
-  @NotNull private final PersistentHashMapBase<Key, Value> myImpl;
+  @NotNull private final PersistentMapBase<Key, Value> myImpl;
 
   PersistentHashMap(@NotNull PersistentHashMapBuilder<Key, Value> builder, boolean checkInheritedMembers) throws IOException {
     if (checkInheritedMembers) {
@@ -37,7 +39,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl = builder.buildImplementation();
   }
 
-  public PersistentHashMap(@NotNull PersistentHashMapBase<Key, Value> impl) {
+  public PersistentHashMap(@NotNull PersistentMapBase<Key, Value> impl) {
     myImpl = impl;
   }
 
@@ -168,7 +170,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
   /**
    * Process all keys registered in the map. Note that keys which were removed after
-   * {@link PersistentHashMapImpl#compact()} call will be processed as well. Use
+   * {@link PersistentMapImpl#compact()} call will be processed as well. Use
    * {@link #processKeysWithExistingMapping(Processor)} to process only keys with existing mappings
    */
   @Override
@@ -191,13 +193,16 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl.markDirty();
   }
 
+  @Deprecated
   @NotNull
   public final Collection<Key> getAllKeysWithExistingMapping() throws IOException {
-    return myImpl.getAllKeysWithExistingMapping();
+    List<Key> result = new ArrayList<>();
+    myImpl.processExistingKeys(new CommonProcessors.CollectProcessor<>(result));
+    return result;
   }
 
   public final boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException {
-    return myImpl.processKeysWithExistingMapping(processor);
+    return myImpl.processExistingKeys(processor);
   }
 
   @Override
@@ -207,7 +212,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
   @Override
   public final boolean containsMapping(Key key) throws IOException {
-    return myImpl.containsMapping(key);
+    return myImpl.containsKey(key);
   }
 
   @Override

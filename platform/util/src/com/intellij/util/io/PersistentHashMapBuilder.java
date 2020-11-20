@@ -40,7 +40,7 @@ public final class PersistentHashMapBuilder<Key, Value> {
     return new PersistentHashMap<>(buildImplementation());
   }
 
-  PersistentHashMapBase<Key, Value> buildImplementation() throws IOException {
+  PersistentMapBase<Key, Value> buildImplementation() throws IOException {
     Boolean oldHasNoChunksValue = null;
     if (myHasChunks != null) {
       oldHasNoChunksValue = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
@@ -55,7 +55,7 @@ public final class PersistentHashMapBuilder<Key, Value> {
       PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(myCancellationCallback);
     }
     try {
-      return new PersistentHashMapImpl<>(this);
+      return new PersistentMapImpl<>(this);
     }
     finally {
       if (myHasChunks != null) {

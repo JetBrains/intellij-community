@@ -2,23 +2,20 @@
 package com.intellij.util.io;
 
 import com.intellij.util.Processor;
-import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public final class PersistentHashMapInMemory<Key, Value> implements PersistentHashMapBase<Key, Value> {
+public final class PersistentMapInMemory<Key, Value> implements PersistentMapBase<Key, Value> {
   private final Object myLock = new Object();
 
   private final ConcurrentHashMap<Key, Value> myMap = new ConcurrentHashMap<>();
   private final AtomicBoolean myIsClosed = new AtomicBoolean(false);
-  private final AtomicBoolean myIsDirty = new AtomicBoolean(false);
   private final DataExternalizer<Value> myValueExternalizer;
 
-  public PersistentHashMapInMemory(@NotNull PersistentHashMapBuilder<Key,Value> builder) {
+  public PersistentMapInMemory(@NotNull PersistentHashMapBuilder<Key,Value> builder) {
     myValueExternalizer = builder.getValueExternalizer();
   }
 
@@ -53,27 +50,21 @@ public final class PersistentHashMapInMemory<Key, Value> implements PersistentHa
 
   @Override
   public boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
-    return processKeysWithExistingMapping(processor);
+    return processExistingKeys(processor);
   }
 
   @Override
   public boolean isDirty() {
-    return myIsDirty.get();
+    return false;
   }
 
   @Override
   public void markDirty() throws IOException {
-    myIsDirty.set(true);
   }
 
   @Override
-  public @NotNull Collection<Key> getAllKeysWithExistingMapping() throws IOException {
-    return myMap.keySet();
-  }
-
-  @Override
-  public boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException {
-    for (Key key : getAllKeysWithExistingMapping()) {
+  public boolean processExistingKeys(@NotNull Processor<? super Key> processor) throws IOException {
+    for (Key key : myMap.keySet()) {
       if (!processor.process(key)) return false;
     }
     return true;
@@ -85,7 +76,7 @@ public final class PersistentHashMapInMemory<Key, Value> implements PersistentHa
   }
 
   @Override
-  public boolean containsMapping(Key key) throws IOException {
+  public boolean containsKey(Key key) throws IOException {
     return myMap.containsKey(key);
   }
 

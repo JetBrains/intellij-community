@@ -8,7 +8,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.mvstore.MVStore;
-import org.jetbrains.mvstore.index.MVStorePersistentHashMap;
+import org.jetbrains.mvstore.index.MVStorePersistentMap;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -50,10 +50,10 @@ public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
 
     PersistentHashMap<Integer, String> map =
       new PersistentHashMap<>(
-        new MVStorePersistentHashMap<>("test-map",
-                                       mvStore,
-                                       EnumeratorIntegerDescriptor.INSTANCE,
-                                       EnumeratorStringDescriptor.INSTANCE));
+        new MVStorePersistentMap<>("test-map",
+                                   mvStore,
+                                   EnumeratorIntegerDescriptor.INSTANCE,
+                                   EnumeratorStringDescriptor.INSTANCE));
 
     try {
       PlatformTestUtil.startPerformanceTest("put/get MVStore", 2000, () -> {
