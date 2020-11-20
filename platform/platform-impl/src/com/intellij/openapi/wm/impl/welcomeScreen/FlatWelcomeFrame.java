@@ -102,10 +102,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     updateComponentsAndResize();
 
-    setTitle(getWelcomeFrameTitle());
-    AppUIUtil.updateWindowIcon(this);
-
-
     setAutoRequestFocus(false);
 
     // at this point a window insets may be unavailable,
@@ -136,7 +132,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       @Override
       public void lookAndFeelChanged(@NotNull LafManager source) {
         myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
-        myScreen = USE_TABBED_WELCOME_SCREEN ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
+        if(USE_TABBED_WELCOME_SCREEN){
+          var selectedIndex = ((TabbedWelcomeScreen)myScreen).getSelectedIndex();
+          myScreen = new TabbedWelcomeScreen();
+          ((TabbedWelcomeScreen)myScreen).setSelectedIndex(selectedIndex);
+        } else{
+          myScreen = new FlatWelcomeScreen();
+        }
         updateComponentsAndResize();
         repaint();
       }
@@ -188,6 +190,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       size.height
     );
     UIUtil.decorateWindowHeader(getRootPane());
+    setTitle("");
+    setTitle(getWelcomeFrameTitle());
+    AppUIUtil.updateWindowIcon(this);
 
   }
 

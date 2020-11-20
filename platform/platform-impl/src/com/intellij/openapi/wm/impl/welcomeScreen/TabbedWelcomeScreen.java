@@ -30,6 +30,8 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.
 import static com.intellij.ui.UIBundle.message;
 
 public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
+
+  private final JBList<WelcomeScreenTab> tabList;
   TabbedWelcomeScreen() {
     setBackground(getMainTabListBackground());
 
@@ -38,7 +40,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     DefaultListModel<WelcomeScreenTab> mainListModel = new DefaultListModel<>();
     WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList().forEach(it -> mainListModel.addElement(it.createWelcomeTab(this)));
 
-    JBList<WelcomeScreenTab> tabList = createListWithTabs(mainListModel);
+    tabList = createListWithTabs(mainListModel);
     tabList.addListSelectionListener(e -> {
       centralPanel.select(tabList.getSelectedValue(), true);
       WelcomeScreenEventCollector.logTabSelected(tabList.getSelectedValue());
@@ -184,5 +186,13 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     }
 
     protected abstract JComponent buildComponent();
+  }
+
+  public int getSelectedIndex(){
+    return tabList.getSelectedIndex();
+  }
+
+  public void setSelectedIndex(int idx){
+    tabList.setSelectedIndex(idx);
   }
 }
