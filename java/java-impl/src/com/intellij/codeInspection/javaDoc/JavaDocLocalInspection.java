@@ -326,7 +326,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
         }
 
         if (!myIgnoreEmptyDescriptions) {
-          JavadocHighlightUtil.checkEmptyMethodTagsDescription(tags, holder);
+          JavadocHighlightUtil.checkEmptyMethodTagsDescription(tags, method, holder);
         }
 
         checkBasics(docComment, tags, method, false, METHOD_OPTIONS, holder);

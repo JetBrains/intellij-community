@@ -74,6 +74,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testSeeConstants() { doTest(); }
   public void testSeeNonRefs() { doTest(); }
   public void testReturn0() { doTest(); }
+  public void testReturn1() { doTest(); }
   public void testException0() { doTest(); }
   public void testException1() { doTest(); }
   public void testException2() { doTest(); }

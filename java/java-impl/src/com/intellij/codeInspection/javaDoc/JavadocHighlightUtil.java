@@ -438,14 +438,16 @@ public final class JavadocHighlightUtil {
     }
   }
 
-  static void checkEmptyMethodTagsDescription(PsiDocTag @NotNull [] tags, @NotNull ProblemHolder holder) {
+  static void checkEmptyMethodTagsDescription(PsiDocTag @NotNull [] tags,
+                                              @NotNull PsiMethod psiMethod,
+                                              @NotNull ProblemHolder holder) {
     for (PsiDocTag tag : tags) {
       if (ContainerUtil
         .exists(tag.getChildren(), e -> e instanceof PsiInlineDocTag && ((PsiInlineDocTag)e).getName().equals("inheritDoc"))) {
         continue;
       }
       if ("return".equals(tag.getName())) {
-        if (emptyTag(tag)) {
+        if (!PsiType.VOID.equals(psiMethod.getReturnType()) && emptyTag(tag)) {
           String tagText = "<code>@return</code>";
           LocalQuickFix fix = holder.removeTagWithoutDescriptionFix("return");
           holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), fix);
