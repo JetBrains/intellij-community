@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -134,8 +135,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       else{
         g.setColor(jmenuitem.getForeground());
       }
-      if (useCheckAndArrow()){
-        icon2.paintIcon(comp, g, h.x, h.y);
+      if (useCheckAndArrow()) {
+        IconUtil.paintSelectionAwareIcon(icon2, jmenuitem, g, h.x, h.y, isSelected(jmenuitem));
       }
       g.setColor(color2);
       if (menuItem.isArmed()){
@@ -153,8 +154,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
             icon1 = jmenuitem.getIcon();
           }
         }
-      if (icon1 != null){
-        icon1.paintIcon(comp, g, l.x, l.y);
+      if (icon1 != null) {
+        IconUtil.paintSelectionAwareIcon(icon1, jmenuitem, g, l.x, l.y, isSelected(jmenuitem));
       }
     }
     if (s1 != null && s1.length() > 0){
