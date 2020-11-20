@@ -182,7 +182,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       myValueExternalizer = valueExternalizer;
       myValueStorage = myIntMapping ? null : new PersistentHashMapValueStorage(getDataFile(file), options);
       myAppendCache = myIntMapping ? null : createAppendCache(keyDescriptor);
-      myAppendCacheFlusher = myIntMapping ? null : LowMemoryWatcher.register(this::dropMemoryCaches);
+      myAppendCacheFlusher = myIntMapping ? null : LowMemoryWatcher.register(this::force);
       myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
       long data2 = myEnumerator.getMetaData2();
       myLargeIndexWatermarkId = (int)(data2 & DEAD_KEY_NUMBER_MASK);
@@ -289,14 +289,6 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   private boolean forceNewCompact() {
     return System.getProperty("idea.persistent.hash.map.newcompact") != null &&
            (int)(myLiveAndGarbageKeysCounter & DEAD_KEY_NUMBER_MASK) > 0;
-  }
-
-  @Override
-  public final void dropMemoryCaches() {
-    if (myDoTrace) LOG.info("Drop memory caches " + myStorageFile);
-    synchronized (getDataAccessLock()) {
-      doDropMemoryCaches();
-    }
   }
 
   protected void doDropMemoryCaches() {

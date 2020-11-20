@@ -52,11 +52,6 @@ public class MVStorePersistentMap<Key, Value> implements PersistentMapBase<Key, 
   }
 
   @Override
-  public void dropMemoryCaches() {
-    //TODO
-  }
-
-  @Override
   public void closeAndClean() {
     myStore.removeMap(myMap);
   }

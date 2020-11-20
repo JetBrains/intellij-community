@@ -93,14 +93,10 @@ public interface PersistentMapBase<Key, Value> {
    */
   boolean isCorrupted();
 
-
-  void dropMemoryCaches();
-
   /**
    * Force all transient changes to disk.
    */
   void force();
-
 
   boolean isClosed();
 

@@ -109,7 +109,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   public final void dropMemoryCaches() {
-    myImpl.dropMemoryCaches();
+    force();
   }
 
   /**

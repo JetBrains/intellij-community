@@ -34,11 +34,6 @@ public final class PersistentMapInMemory<Key, Value> implements PersistentMapBas
   }
 
   @Override
-  public void dropMemoryCaches() {
-
-  }
-
-  @Override
   public void closeAndClean() {
     myMap.clear();
   }
