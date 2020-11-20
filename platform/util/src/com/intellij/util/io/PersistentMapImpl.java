@@ -314,7 +314,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   }
 
   @Override
-  public void closeAndClean() {
+  public void closeAndDelete() {
     Path baseFile = getBaseFile();
     try {
       this.close(true);

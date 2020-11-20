@@ -51,7 +51,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
   @Override
   public final void closeAndClean() throws IOException {
-    myImpl.closeAndClean();
+    myImpl.closeAndDelete();
   }
 
   public PersistentHashMap(@NotNull File file,

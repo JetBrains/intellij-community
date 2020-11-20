@@ -103,7 +103,8 @@ public interface PersistentMapBase<Key, Value> {
   void close() throws IOException;
 
   /**
-   * Closes the map removing all entries
+   * Closes the map removing all data storages.
+   * Note, that map should not be used after this method has been called.
    */
-  void closeAndClean() throws IOException;
+  void closeAndDelete() throws IOException;
 }

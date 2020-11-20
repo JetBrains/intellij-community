@@ -34,7 +34,7 @@ public final class PersistentMapInMemory<Key, Value> implements PersistentMapBas
   }
 
   @Override
-  public void closeAndClean() {
+  public void closeAndDelete() {
     myMap.clear();
   }
 

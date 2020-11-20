@@ -52,7 +52,7 @@ public class MVStorePersistentMap<Key, Value> implements PersistentMapBase<Key, 
   }
 
   @Override
-  public void closeAndClean() {
+  public void closeAndDelete() {
     myStore.removeMap(myMap);
   }
 
