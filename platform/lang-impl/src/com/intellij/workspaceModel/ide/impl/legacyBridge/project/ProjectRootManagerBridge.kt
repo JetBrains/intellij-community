@@ -91,7 +91,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     jdkChangeListener.unsubscribeListeners()
   }
 
-  private fun addTrackedLibraryAndJdkFromEntity(moduleEntity: ModuleEntity) {
+  fun addTrackedLibraryAndJdkFromEntity(moduleEntity: ModuleEntity) {
     LOG.debug { "Add tracked global libraries and JDK from ${moduleEntity.name}" }
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     moduleEntity.dependencies.forEach {
