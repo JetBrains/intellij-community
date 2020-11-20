@@ -3,11 +3,11 @@ package com.intellij.ide.plugins.auth
 
 import com.intellij.ide.plugins.CustomPluginRepositoryService
 import com.intellij.ide.plugins.RepositoryHelper.getPluginHosts
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import java.net.URLConnection
+import kotlin.streams.toList
 
 interface PluginAuthSubscriber {
   fun pluginAuthCallback()
@@ -15,18 +15,12 @@ interface PluginAuthSubscriber {
 
 object PluginAuthService {
   private val subscribers = HashSet<PluginAuthSubscriber>()
-  private val authServices = HashSet<AuthService>()
-  private val authServicesStatus = HashMap<AuthService, AuthStatus>()
+  private val authServicesStatus = HashMap<PluginsAuthExtension, AuthStatus>()
   private val hostsAuthHeaders = HashMap<String, Map<String, String>?>()
 
   init {
     getPluginHosts().filterNotNull().forEach { hostsAuthHeaders[it] = null }
     subscribe(ServiceManager.getService(CustomPluginRepositoryService::class.java))
-  }
-
-  @Synchronized
-  fun register(authService: AuthService) {
-    authServices.add(authService)
   }
 
   @Synchronized
@@ -40,8 +34,8 @@ object PluginAuthService {
   }
 
   @Synchronized
-  fun setAuthStatus(authService: AuthService, status: AuthStatus) {
-    if (authServices.contains(authService) && authServicesStatus[authService] != status) {
+  fun setAuthStatus(authService: PluginsAuthExtension, status: AuthStatus) {
+    if (authServicesStatus[authService] != status) {
       authServicesStatus[authService] = status
       if (changeHostsState()) {
         subscribers.forEach { it.pluginAuthCallback() }
@@ -62,24 +56,21 @@ object PluginAuthService {
   }
 
   fun getUrlAuthHeaders(url: String): Map<String, String>? {
-    val services = authServices.filter { it.isUrlSupported(url) }
+    val services = PluginsAuthExtension.getAuthServices().filter { it.isUrlSupported(url) }.toList()
     if (services.size > 1) {
-      Notifications.Bus.notify(Notification("Custom plugin repository auth",
-                                            "",
-                                            "There are too many authorization services supporting $url: ${services.map { it.name }.joinToString(",")}",
-                                            NotificationType.WARNING))
+      UpdateChecker.getNotificationGroup().createNotification(
+        "Custom plugin repository auth",
+        "There are too many authorization services supporting '$url': ${services.map { it.name }.joinToString(",")}",
+        NotificationType.WARNING).notify(null)
       return null
     }
     return if (services.size == 1) {
       val service = services.first()
-      val headers = service.generateAuthHeaders(url)
-      if (headers == null) {
-        Notifications.Bus.notify(Notification("Custom plugin repository auth",
-                                              "",
-                                              "To download plugins from $url you need to authorize in ${service.name}",
-                                              NotificationType.WARNING))
+      if (service.initAuthIfNeeded("Custom plugin repository '$url'")) {
+        service.generateAuthHeaders(url)
+      } else {
+        null
       }
-      headers
     }
     else null
   }
