@@ -266,7 +266,14 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
       val balloonProperty = UIUtil.getClientProperty(component, BALLOON_PROPERTY)
       if (balloonProperty == null) {
         val tracker = object : PositionTracker<Balloon> (component) {
-          override fun recalculateLocation(balloon: Balloon): RelativePoint = RelativePoint(component, pointProvider(component))
+          override fun recalculateLocation(balloon: Balloon): RelativePoint? =
+            if (getComponent().isShowing)
+              RelativePoint(component, pointProvider(component))
+            else {
+              balloon.hide(true)
+              GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+              null
+            }
         }
         balloon = createAndShow(tracker).also { UIUtil.putClientProperty(component, BALLOON_PROPERTY, it) }
       }
