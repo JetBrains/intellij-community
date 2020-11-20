@@ -151,7 +151,7 @@ public final class PlatformTestUtil {
    */
   public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName,
                                         @NotNull Project project,
-                                        @NotNull List<T> newExtensions,
+                                        @NotNull List<? extends T> newExtensions,
                                         @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable, true);
   }
@@ -756,7 +756,7 @@ public final class PlatformTestUtil {
     }
   }
 
-  private static String fileText(VirtualFile file) throws IOException {
+  private static String fileText(@NotNull VirtualFile file) throws IOException {
     Document doc = FileDocumentManager.getInstance().getDocument(file);
     if (doc != null) {
       return doc.getText();
@@ -768,19 +768,16 @@ public final class PlatformTestUtil {
   }
 
   private static void assertJarFilesEqual(File file1, File file2) throws IOException {
-    final File tempDir = FileUtilRt.createTempDirectory("assert_jar_tmp", null, false);
-    try {
+    File tempDir = null;
+    try (JarFile jarFile1 = new JarFile(file1); JarFile jarFile2 = new JarFile(file2)) {
+      tempDir = FileUtilRt.createTempDirectory("assert_jar_tmp", null, false);
       final File tempDirectory1 = new File(tempDir, "tmp1");
       final File tempDirectory2 = new File(tempDir, "tmp2");
       FileUtilRt.createDirectory(tempDirectory1);
       FileUtilRt.createDirectory(tempDirectory2);
 
-      try (JarFile jarFile1 = new JarFile(file1)) {
-        try (JarFile jarFile2 = new JarFile(file2)) {
-          new Decompressor.Zip(new File(jarFile1.getName())).extract(tempDirectory1);
-          new Decompressor.Zip(new File(jarFile2.getName())).extract(tempDirectory2);
-        }
-      }
+      new Decompressor.Zip(new File(jarFile1.getName())).extract(tempDirectory1);
+      new Decompressor.Zip(new File(jarFile2.getName())).extract(tempDirectory2);
 
       final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
       assertNotNull(tempDirectory1.toString(), dirAfter);
@@ -793,7 +790,9 @@ public final class PlatformTestUtil {
       assertDirectoriesEqual(dirAfter, dirBefore);
     }
     finally {
-      FileUtilRt.delete(tempDir);
+      if (tempDir != null) {
+        FileUtilRt.delete(tempDir);
+      }
     }
   }
 
@@ -1082,31 +1081,28 @@ public final class PlatformTestUtil {
     Ref<RunContentDescriptor> refRunContentDescriptor = new Ref<>();
     ExecutionEnvironment executionEnvironment = new ExecutionEnvironment(executor, runner, runnerAndConfigurationSettings, project);
     CountDownLatch latch = new CountDownLatch(1);
-    ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
-      @Override
-      public void processStarted(RunContentDescriptor descriptor) {
-        LOG.debug("Process started");
-        ProcessHandler processHandler = descriptor.getProcessHandler();
-        assertNotNull(processHandler);
-        processHandler.addProcessListener(new ProcessAdapter() {
-          @Override
-          public void startNotified(@NotNull ProcessEvent event) {
-            LOG.debug("Process notified");
-          }
+    ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, descriptor -> {
+      LOG.debug("Process started");
+      ProcessHandler processHandler = descriptor.getProcessHandler();
+      assertNotNull(processHandler);
+      processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void startNotified(@NotNull ProcessEvent event) {
+          LOG.debug("Process notified");
+        }
 
-          @Override
-          public void processTerminated(@NotNull ProcessEvent event) {
-            LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
-          }
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
+        }
 
-          @Override
-          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-            LOG.debug(outputType + ": " + event.getText());
-          }
-        });
-        refRunContentDescriptor.set(descriptor);
-        latch.countDown();
-      }
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+          LOG.debug(outputType + ": " + event.getText());
+        }
+      });
+      refRunContentDescriptor.set(descriptor);
+      latch.countDown();
     });
     LOG.debug("Waiting for process to start");
     if (!latch.await(60, TimeUnit.SECONDS)) {
