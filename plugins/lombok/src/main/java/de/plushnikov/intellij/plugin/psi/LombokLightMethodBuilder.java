@@ -48,7 +48,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     return this;
   }
 
-  public LombokLightMethodBuilder withModifier(@PsiModifier.ModifierConstant @NotNull @NonNls String... modifiers) {
+  public LombokLightMethodBuilder withModifier(@PsiModifier.ModifierConstant @NonNls String @NotNull ... modifiers) {
     for (String modifier : modifiers) {
       addModifier(modifier);
     }
@@ -232,9 +232,8 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     return myMethod;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     final PsiElement myPsiMethod = getOrCreateMyPsiMethod();
     return null == myPsiMethod ? PsiElement.EMPTY_ARRAY : myPsiMethod.getChildren();
   }
@@ -279,7 +278,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     }
     final PsiClass containingClass = getContainingClass();
     final PsiClass thatContainingClass = that.getContainingClass();
-    if (containingClass != null ? !containingClass.equals(thatContainingClass) : thatContainingClass != null) {
+    if (!Objects.equals(containingClass, thatContainingClass)) {
       return false;
     }
     if (!getModifierList().equals(that.getModifierList())) {
