@@ -69,18 +69,14 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static String shorten(String pathStr) {
-    try {
-      Path path = Paths.get(pathStr).toAbsolutePath(), userHome = Paths.get(SystemProperties.getUserHome());
-      if (path.startsWith(userHome)) {
-        Path relative = userHome.relativize(path);
-        return SystemInfo.isWindows ? "%USERPROFILE%\\" + relative : "~/" + relative;
-      }
+    Path path = Paths.get(pathStr).toAbsolutePath(), userHome = Paths.get(SystemProperties.getUserHome());
+    if (path.startsWith(userHome)) {
+      Path relative = userHome.relativize(path);
+      return SystemInfo.isWindows ? "%USERPROFILE%\\" + relative : "~/" + relative;
     }
-    catch (RuntimeException e) {
-      LOG.debug(pathStr, e);
+    else {
+      return pathStr;
     }
-
-    return pathStr;
   }
 
   private static void checkRuntime() {
