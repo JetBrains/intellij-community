@@ -22,8 +22,7 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP;
 
-public class GrLightModifierList extends LightElement implements GrModifierList {
-
+public final class GrLightModifierList extends LightElement implements GrModifierList {
   private int myModifiers;
   private final List<GrAnnotation> myAnnotations = new ArrayList<>();
 
@@ -45,7 +44,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   }
 
   public void addModifier(String modifier) {
-    int code = NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+    int code = NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier);
     assert code != 0;
     myModifiers |= code;
   }
@@ -210,7 +209,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     else if (modifierList != null) {
       for (String modifier : PsiModifier.MODIFIERS) {
         if (modifierList.hasExplicitModifier(modifier)) {
-          mod |= NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+          mod |= NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier);
         }
       }
     }

@@ -25,9 +25,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   private JBRadioButton myReplaceAllFieldsRadioButton;
   private JPanel myGetterPanel;
   private final IntroduceParameterInfo myInfo;
-  private final TObjectIntHashMap<JCheckBox> toRemoveCBs;
+  private final Object2IntOpenHashMap<JCheckBox> toRemoveCBs;
 
   private GrMethodSignatureComponent mySignature;
   private GrParameterTablePanel myTable;
@@ -93,11 +94,11 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
                                     GroovyIntroduceParameterUtil.findVar(myInfo) != null ||
                                     findStringPart() != null;
 
-    TObjectIntHashMap<GrParameter> parametersToRemove = GroovyIntroduceParameterUtil.findParametersToRemove(info);
-    toRemoveCBs = new TObjectIntHashMap<>(parametersToRemove.size());
-    for (Object p : parametersToRemove.keys()) {
-      JCheckBox cb = new JCheckBox(GroovyRefactoringBundle.message("remove.parameter.0.no.longer.used", ((GrParameter)p).getName()));
-      toRemoveCBs.put(cb, parametersToRemove.get((GrParameter)p));
+    Object2IntMap<GrParameter> parametersToRemove = GroovyIntroduceParameterUtil.findParametersToRemove(info);
+    toRemoveCBs = new Object2IntOpenHashMap<>(parametersToRemove.size());
+    for (GrParameter p : parametersToRemove.keySet()) {
+      JCheckBox cb = new JCheckBox(GroovyRefactoringBundle.message("remove.parameter.0.no.longer.used", p.getName()));
+      toRemoveCBs.put(cb, parametersToRemove.getInt(p));
       cb.setSelected(true);
     }
 
@@ -120,19 +121,15 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     myTable.init(myInfo);
 
     final GrParameter[] parameters = myInfo.getToReplaceIn().getParameters();
-    toRemoveCBs.forEachEntry(new TObjectIntProcedure<JCheckBox>() {
-      @Override
-      public boolean execute(JCheckBox checkbox, int index) {
-        checkbox.setSelected(true);
+    for (Object2IntMap.Entry<JCheckBox> entry : toRemoveCBs.object2IntEntrySet()) {
+      entry.getKey().setSelected(true);
 
-        final GrParameter param = parameters[index];
-        final ParameterInfo pinfo = findParamByOldName(param.getName());
-        if (pinfo != null) {
-          pinfo.passAsParameter = false;
-        }
-        return true;
+      final GrParameter param = parameters[entry.getIntValue()];
+      final ParameterInfo pinfo = findParamByOldName(param.getName());
+      if (pinfo != null) {
+        pinfo.passAsParameter = false;
       }
-    });
+    }
 
     updateSignature();
 
@@ -305,8 +302,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     myDelegateViaOverloadingMethodCheckBox.setFocusable(false);
     panel.add(myDelegateViaOverloadingMethodCheckBox);
 
-    for (Object o : toRemoveCBs.keys()) {
-      final JCheckBox cb = (JCheckBox)o;
+    for (JCheckBox cb : toRemoveCBs.keySet()) {
       cb.setFocusable(false);
       panel.add(cb);
     }
@@ -337,7 +333,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   @Nullable
   private PsiType inferClosureReturnType() {
     final ExtractClosureHelperImpl mockHelper =
-      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false,
+      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new IntArrayList(), false,
                                    IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
     return WriteAction.compute(() -> ExtractClosureProcessorBase.generateClosure(mockHelper).getReturnType());
   }
@@ -392,21 +388,23 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
 
     if (myTypeComboBox.isClosureSelected()) {
       final Ref<ValidationInfo> info = new Ref<>();
-      toRemoveCBs.forEachEntry(new TObjectIntProcedure<JCheckBox>() {
-        @Override
-        public boolean execute(JCheckBox checkbox, int index) {
-          if (!checkbox.isSelected()) return true;
-
-          final GrParameter param = myInfo.getToReplaceIn().getParameters()[index];
-          final ParameterInfo pinfo = findParamByOldName(param.getName());
-          if (pinfo == null || !pinfo.passAsParameter) return true;
-
-          final String message = GroovyRefactoringBundle
-            .message("you.cannot.pass.as.parameter.0.because.you.remove.1.from.base.method", pinfo.getName(), param.getName());
-          info.set(new ValidationInfo(message));
-          return false;
+      for (Object2IntMap.Entry<JCheckBox> entry : toRemoveCBs.object2IntEntrySet()) {
+        if (!entry.getKey().isSelected()) {
+          continue;
         }
-      });
+
+        final GrParameter param = myInfo.getToReplaceIn().getParameters()[entry.getIntValue()];
+        final ParameterInfo pinfo = findParamByOldName(param.getName());
+        if (pinfo == null || !pinfo.passAsParameter) {
+          continue;
+        }
+
+        final String message = GroovyRefactoringBundle
+          .message("you.cannot.pass.as.parameter.0.because.you.remove.1.from.base.method", pinfo.getName(), param.getName());
+        info.set(new ValidationInfo(message));
+        break;
+      }
+
       if (info.get() != null) {
         return info.get();
       }
@@ -538,11 +536,11 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     return HelpID.GROOVY_INTRODUCE_PARAMETER;
   }
 
-  private TIntArrayList getParametersToRemove() {
-    TIntArrayList list = new TIntArrayList();
-    for (Object o : toRemoveCBs.keys()) {
-      if (((JCheckBox)o).isSelected()) {
-        list.add(toRemoveCBs.get((JCheckBox)o));
+  private IntList getParametersToRemove() {
+    IntArrayList list = new IntArrayList();
+    for (JCheckBox o : toRemoveCBs.keySet()) {
+      if (o.isSelected()) {
+        list.add(toRemoveCBs.getInt(o));
       }
     }
     return list;

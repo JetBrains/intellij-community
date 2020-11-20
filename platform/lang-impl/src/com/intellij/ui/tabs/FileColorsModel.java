@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -15,13 +15,13 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,8 +34,8 @@ public final class FileColorsModel implements Cloneable {
 
   private final List<FileColorConfiguration> myApplicationLevelConfigurations = new ArrayList<>();
   private final List<FileColorConfiguration> myProjectLevelConfigurations = new ArrayList<>();
-  private final Map<String, String> myPredefinedScopeNameToPropertyKey = new THashMap<>();
-  private final Map<String, String> myPredefinedScopeNameToColor = new THashMap<>();
+  private final Map<String, String> myPredefinedScopeNameToPropertyKey = new HashMap<>();
+  private final Map<String, String> myPredefinedScopeNameToColor = new HashMap<>();
 
   @NotNull
   private final Project myProject;
@@ -128,7 +128,7 @@ public final class FileColorsModel implements Cloneable {
 
     configurations.clear();
 
-    Map<String, String> predefinedScopeNameToPropertyKey = new THashMap<>(myPredefinedScopeNameToPropertyKey);
+    Map<String, String> predefinedScopeNameToPropertyKey = new HashMap<>(myPredefinedScopeNameToPropertyKey);
     for (Element child : e.getChildren(FILE_COLOR)) {
       FileColorConfiguration configuration = FileColorConfiguration.load(child);
       if (configuration != null) {
@@ -260,7 +260,7 @@ public final class FileColorsModel implements Cloneable {
     }
     else {
       myApplicationLevelConfigurations.clear();
-      Map<String, String> predefinedScopeNameToPropertyKey = new THashMap<>(myPredefinedScopeNameToPropertyKey);
+      Map<String, String> predefinedScopeNameToPropertyKey = new HashMap<>(myPredefinedScopeNameToPropertyKey);
       PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
       for (FileColorConfiguration configuration : configurations) {
         myApplicationLevelConfigurations.add(configuration);

@@ -25,7 +25,6 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
 import com.intellij.util.indexing.snapshot.UpdatableSnapshotInputMappingIndex;
 import com.intellij.util.io.IOUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,10 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -510,7 +506,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
     LOG.error("Input data diff builder must be an instance of DirectInputDataDiffBuilder for index " + myIndexId.getName());
 
-    Set<Key> keys = new THashSet<>();
+    Set<Key> keys = new HashSet<>();
     builder.differentiate(
       Collections.emptyMap(),
       (key, value, inputId) -> { },

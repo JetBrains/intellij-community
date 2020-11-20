@@ -95,7 +95,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -115,10 +115,10 @@ public final class ExternalSystemUtil {
 
   @NotNull private static final Map<String, String> RUNNER_IDS = new HashMap<>();
 
-  public static final TObjectHashingStrategy<Pair<ProjectSystemId, File>> HASHING_STRATEGY =
-    new TObjectHashingStrategy<Pair<ProjectSystemId, File>>() {
+  public static final HashingStrategy<Pair<ProjectSystemId, File>> HASHING_STRATEGY =
+    new HashingStrategy<>() {
       @Override
-      public int computeHashCode(Pair<ProjectSystemId, File> object) {
+      public int hashCode(Pair<ProjectSystemId, File> object) {
         return object.first.hashCode() + FileUtil.fileHashCode(object.second);
       }
 

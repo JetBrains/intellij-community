@@ -4,8 +4,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -48,11 +48,12 @@ public final class DuplicatesUtil {
     }
   }
 
-  public static <D extends PsiElement> Map<D, List<D>> factorDuplicates(D[] elements, TObjectHashingStrategy<D> strategy) {
-    if (elements == null || elements.length == 0) return Collections.emptyMap();
+  public static <D extends PsiElement> Map<D, List<D>> factorDuplicates(D[] elements, Hash.Strategy<D> strategy) {
+    if (elements == null || elements.length == 0) {
+      return Collections.emptyMap();
+    }
 
-    THashMap<D, List<D>> map = new THashMap<>(strategy);
-
+    Map<D, List<D>> map = new Object2ObjectOpenCustomHashMap<>(strategy);
     for (D element : elements) {
       List<D> list = map.get(element);
       if (list == null) {

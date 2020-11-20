@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate.language;
 
 import com.intellij.util.containers.Interner;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -40,7 +39,7 @@ public final class PreferencesReadUtil {
       return null;
     }
 
-    THashSet<TextMateBracePair> result = new THashSet<>();
+    Set<TextMateBracePair> result = new HashSet<>();
     List<PListValue> pairs = pairsValue.getArray();
     for (PListValue pair : pairs) {
       List<PListValue> chars = pair.getArray();
@@ -52,11 +51,7 @@ public final class PreferencesReadUtil {
         }
       }
     }
-    if (result.size() == 0) {
-      return Collections.emptySet();
-    }
-    result.trimToSize();
-    return result;
+    return result.isEmpty() ? Collections.emptySet() : result;
   }
 
   @Nullable

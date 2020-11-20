@@ -75,5 +75,6 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
   </component>
 </module>

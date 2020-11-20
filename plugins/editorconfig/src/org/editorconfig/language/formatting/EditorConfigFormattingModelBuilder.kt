@@ -8,7 +8,7 @@ import org.editorconfig.language.psi.EditorConfigElementTypes
 
 class EditorConfigFormattingModelBuilder : FormattingModelBuilder {
   override fun createModel(formattingContext: FormattingContext): FormattingModel {
-    val settings = formattingContext.codeStyleSettings;
+    val settings = formattingContext.codeStyleSettings
     val spacingBuilder = createSpacingBuilder(settings)
     val commonSettings = settings.getCommonSettings(EditorConfigLanguage)
     val shouldAlignSeparators = commonSettings.ALIGN_GROUP_FIELD_DECLARATIONS

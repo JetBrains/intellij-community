@@ -13,9 +13,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +87,7 @@ public final class TypesUtil implements TypeConstants {
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBYTE, CommonClassNames.JAVA_LANG_BYTE);
   }
 
-  static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<>();
+  static final Object2IntMap<String> TYPE_TO_RANK = new Object2IntOpenHashMap<>();
 
   static {
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_BYTE, BYTE_RANK);
@@ -101,13 +102,13 @@ public final class TypesUtil implements TypeConstants {
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_NUMBER, 10);
   }
 
-  static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<>();
+  static final Int2ObjectMap<String> RANK_TO_TYPE;
 
   static {
-    TYPE_TO_RANK.forEachEntry((fqn, rank) -> {
-      RANK_TO_TYPE.put(rank, fqn);
-      return true;
-    });
+    RANK_TO_TYPE = new Int2ObjectOpenHashMap<>(TYPE_TO_RANK.size());
+    for (Object2IntMap.Entry<String> entry : TYPE_TO_RANK.object2IntEntrySet()) {
+      RANK_TO_TYPE.put(entry.getIntValue(), entry.getKey());
+    }
   }
 
   private static final List<PsiType> LUB_NUMERIC_TYPES = ContainerUtil.newArrayList(
@@ -251,7 +252,7 @@ public final class TypesUtil implements TypeConstants {
 
   public static boolean isNumericType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
-      return TYPE_TO_RANK.contains(getQualifiedName(type));
+      return TYPE_TO_RANK.containsKey(getQualifiedName(type));
     }
 
     return type instanceof PsiPrimitiveType && TypeConversionUtil.isNumericType(type);
@@ -259,7 +260,7 @@ public final class TypesUtil implements TypeConstants {
 
   public static boolean isIntegralNumberType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
-      int rank = TYPE_TO_RANK.get(getQualifiedName(type));
+      int rank = TYPE_TO_RANK.getInt(getQualifiedName(type));
       return rank > 0 && rank <= BIG_INTEGER_RANK;
     }
 
@@ -512,7 +513,7 @@ public final class TypesUtil implements TypeConstants {
 
   public static PsiSubstitutor composeSubstitutors(PsiSubstitutor s1, PsiSubstitutor s2) {
     final Map<PsiTypeParameter, PsiType> map = s1.getSubstitutionMap();
-    Map<PsiTypeParameter, PsiType> result = new THashMap<>(map.size());
+    Map<PsiTypeParameter, PsiType> result = new HashMap<>(map.size());
     for (PsiTypeParameter parameter : map.keySet()) {
       result.put(parameter, s2.substitute(map.get(parameter)));
     }
@@ -699,11 +700,11 @@ public final class TypesUtil implements TypeConstants {
       if (parameter == null) continue;
 
       final Ref<PsiType> newParam = new Ref<>();
-      parameter.accept(new PsiTypeVisitorEx<Object>() {
+      parameter.accept(new PsiTypeVisitorEx<>() {
         @Nullable
         @Override
         public Object visitClassType(@NotNull PsiClassType classType) {
-            newParam.set(classType.rawType());
+          newParam.set(classType.rawType());
           return null;
         }
 

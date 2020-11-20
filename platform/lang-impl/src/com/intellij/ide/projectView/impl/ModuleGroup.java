@@ -10,15 +10,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class ModuleGroup {
+public final class ModuleGroup {
   public static final DataKey<ModuleGroup[]> ARRAY_DATA_KEY = DataKey.create("moduleGroup.array");
   private final List<String> myGroupPath;
 
@@ -88,7 +84,7 @@ public class ModuleGroup {
 
   @NotNull
   public Collection<ModuleGroup> childGroups(@NotNull ModuleGrouper grouper) {
-    Set<ModuleGroup> result = new THashSet<>();
+    Set<ModuleGroup> result = new HashSet<>();
     Set<List<String>> moduleAsGroupsPaths = ContainerUtil.map2Set(grouper.getAllModules(), module -> grouper.getModuleAsGroupPath(module));
     for (Module module : grouper.getAllModules()) {
       List<String> group = grouper.getGroupPath(module);

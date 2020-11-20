@@ -10,7 +10,6 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,9 +19,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
-import static java.util.Collections.emptyMap;
 
 /**
  * @author Eugene Zhuravlev
@@ -41,15 +37,15 @@ public final class MavenProjectConfiguration {
 
   @Tag("resource-processing")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "maven-module", keyAttributeName = "name")
-  public Map<String, MavenModuleResourceConfiguration> moduleConfigurations = new THashMap<>();
+  public Map<String, MavenModuleResourceConfiguration> moduleConfigurations = new HashMap<>();
 
   @Tag("web-artifact-cfg")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "artifact", keyAttributeName = "name")
-  public Map<String, MavenWebArtifactConfiguration> webArtifactConfigs = new THashMap<>();
+  public Map<String, MavenWebArtifactConfiguration> webArtifactConfigs = new HashMap<>();
 
   @Tag("ejb-client-artifact-cfg")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "artifact", keyAttributeName = "name")
-  public Map<String, MavenEjbClientConfiguration> ejbClientArtifactConfigs = new THashMap<>();
+  public Map<String, MavenEjbClientConfiguration> ejbClientArtifactConfigs = new HashMap<>();
 
   @Nullable
   public MavenModuleResourceConfiguration findProject(MavenIdBean id) {
@@ -63,7 +59,7 @@ public final class MavenProjectConfiguration {
   private Map<MavenIdBean, MavenModuleResourceConfiguration> getModuleConfigurationMap() {
     Map<MavenIdBean, MavenModuleResourceConfiguration> map = myIdToModuleMap;
     if (map == null) {
-      map = new THashMap<>();
+      map = new HashMap<>();
       for (MavenModuleResourceConfiguration configuration : moduleConfigurations.values()) {
         if (configuration != null) {
           map.put(configuration.id, configuration);
@@ -163,7 +159,7 @@ public final class MavenProjectConfiguration {
         }
       }
       else {
-        res = emptyMap();
+        res = Collections.emptyMap();
       }
 
       ourPropertiesFromMvnOpts = res;
@@ -216,7 +212,7 @@ public final class MavenProjectConfiguration {
     Map<String, String> result = new HashMap<>();
     readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result, "");
     readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result, "true");
-    return result.isEmpty() ? emptyMap() : result;
+    return result.isEmpty() ? Collections.emptyMap() : result;
   }
 
   private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result, String valueIfMissing) {
@@ -237,7 +233,7 @@ public final class MavenProjectConfiguration {
   }
 
   private static File getBaseDir(String path) {
-    File workingDir = new File(toSystemDependentName(path));
+    File workingDir = new File(FileUtil.toSystemDependentName(path));
 
     File baseDir = workingDir;
     File dir = workingDir;

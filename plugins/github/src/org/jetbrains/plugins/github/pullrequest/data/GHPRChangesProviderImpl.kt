@@ -12,11 +12,10 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
 import git4idea.repo.GitRepository
-import gnu.trove.THashMap
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.plugins.github.api.data.GHCommit
 import java.util.*
-import kotlin.collections.LinkedHashMap
 
 class GHPRChangesProviderImpl(private val repository: GitRepository,
                               private val mergeBaseRef: String,
@@ -29,12 +28,14 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
   override val changesByCommits = mutableMapOf<GHCommit, List<Change>>()
   override val linearHistory: Boolean
 
-  private val diffDataByChange = THashMap<Change, GHPRChangeDiffData>(object : TObjectHashingStrategy<Change> {
-    override fun equals(o1: Change?, o2: Change?) = o1 == o2 &&
-                                                    o1?.beforeRevision == o2?.beforeRevision &&
-                                                    o1?.afterRevision == o2?.afterRevision
+  private val diffDataByChange = Object2ObjectOpenCustomHashMap<Change, GHPRChangeDiffData>(object : Hash.Strategy<Change> {
+    override fun equals(o1: Change?, o2: Change?): Boolean {
+      return o1 == o2 &&
+             o1?.beforeRevision == o2?.beforeRevision &&
+             o1?.afterRevision == o2?.afterRevision
+    }
 
-    override fun computeHashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
+    override fun hashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
   })
 
   override fun findChangeDiffData(change: Change) = diffDataByChange[change]

@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +34,9 @@ import static java.util.stream.Collectors.toList;
 public final class ChangesUtil {
   private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.create("internal vcs operation");
 
-  public static final TObjectHashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new TObjectHashingStrategy<FilePath>() {
+  public static final Hash.Strategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new Hash.Strategy<>() {
     @Override
-    public int computeHashCode(@Nullable FilePath path) {
+    public int hashCode(@Nullable FilePath path) {
       return path != null ? hash(path.getPath(), path.isDirectory()) : 0;
     }
 

@@ -28,7 +28,6 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -289,7 +288,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     else {
       UIUtil.setEnabled(myJavaVisibilityPanel, true, true);
       // exclude all modifiers not visible from all occurrences
-      final Set<String> visible = new THashSet<>();
+      final Set<String> visible = new HashSet<>();
       visible.add(PsiModifier.PRIVATE);
       visible.add(PsiModifier.PROTECTED);
       visible.add(PsiModifier.PACKAGE_LOCAL);

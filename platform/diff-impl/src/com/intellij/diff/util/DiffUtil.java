@@ -97,7 +97,6 @@ import com.intellij.util.ui.SingleComponentCenteringLayout;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.Equality;
-import gnu.trove.TIntFunction;
 import icons.PlatformDiffImplIcons;
 import org.jetbrains.annotations.*;
 
@@ -112,6 +111,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
@@ -285,37 +285,37 @@ public final class DiffUtil {
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
     assert foldingSupport.getCount() == 1;
-    TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(0);
+    IntUnaryOperator foldingLineConvertor = foldingSupport.getLineConvertor(0);
     editor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(foldingLineConvertor));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content) {
-    TIntFunction contentLineConvertor = getContentLineConvertor(content);
+    IntUnaryOperator contentLineConvertor = getContentLineConvertor(content);
     editor.getGutter().setLineNumberConverter(contentLineConvertor == null ? LineNumberConverter.DEFAULT
                                                                            : new LineNumberConverterAdapter(contentLineConvertor));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @Nullable DocumentContent content,
                                           @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
-    TIntFunction contentLineConvertor = content != null ? getContentLineConvertor(content) : null;
-    TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
-    TIntFunction merged = mergeLineConverters(contentLineConvertor, foldingLineConvertor);
+    IntUnaryOperator contentLineConvertor = content != null ? getContentLineConvertor(content) : null;
+    IntUnaryOperator foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
+    IntUnaryOperator merged = mergeLineConverters(contentLineConvertor, foldingLineConvertor);
     editor.getGutter().setLineNumberConverter(merged == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged));
   }
 
   @Nullable
-  public static TIntFunction getContentLineConvertor(@NotNull DocumentContent content) {
+  public static IntUnaryOperator getContentLineConvertor(@NotNull DocumentContent content) {
     return content.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
   }
 
   @Nullable
-  public static TIntFunction mergeLineConverters(@Nullable TIntFunction convertor1, @Nullable TIntFunction convertor2) {
+  public static IntUnaryOperator mergeLineConverters(@Nullable IntUnaryOperator convertor1, @Nullable IntUnaryOperator convertor2) {
     if (convertor1 == null && convertor2 == null) return null;
     if (convertor1 == null) return convertor2;
     if (convertor2 == null) return convertor1;
     return value -> {
-      int value2 = convertor2.execute(value);
-      return value2 >= 0 ? convertor1.execute(value2) : value2;
+      int value2 = convertor2.applyAsInt(value);
+      return value2 >= 0 ? convertor1.applyAsInt(value2) : value2;
     };
   }
 

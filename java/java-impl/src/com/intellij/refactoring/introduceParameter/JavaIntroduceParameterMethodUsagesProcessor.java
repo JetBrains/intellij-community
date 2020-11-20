@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -40,15 +26,17 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.IntConsumer;
+
 /**
  * @author Maxim.Medvedev
  */
-public class JavaIntroduceParameterMethodUsagesProcessor implements IntroduceParameterMethodUsagesProcessor {
+public final class JavaIntroduceParameterMethodUsagesProcessor implements IntroduceParameterMethodUsagesProcessor {
   private static final Logger LOG =
     Logger.getInstance(JavaIntroduceParameterMethodUsagesProcessor.class);
 
@@ -130,7 +118,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
     final PsiExpressionList argumentList = callExpression.getArgumentList();
     LOG.assertTrue(argumentList != null, callExpression.getText());
-    removeParametersFromCall(argumentList, data.getParametersToRemove(), methodToSearchFor);
+    removeParametersFromCall(argumentList, data.getParameterListToRemove(), methodToSearchFor);
     return false;
   }
 
@@ -143,15 +131,16 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
                                                      JavaPsiFacade.getElementFactory(project));
   }
 
-  private static void removeParametersFromCall(@NotNull final PsiExpressionList argList, TIntArrayList parametersToRemove, PsiMethod method) {
+  private static void removeParametersFromCall(@NotNull final PsiExpressionList argList, IntList parametersToRemove, PsiMethod method) {
     final int parametersCount = method.getParameterList().getParametersCount();
     final PsiExpression[] exprs = argList.getExpressions();
-    parametersToRemove.forEachDescending(paramNum -> {
+    for (int i = parametersToRemove.size() - 1; i >= 0; i--) {
+      int paramNum = parametersToRemove.getInt(i);
       try {
         //parameter was introduced before varargs
         if (method.isVarArgs() && paramNum == parametersCount - 1) {
-          for (int i = paramNum + 1; i < exprs.length; i++) {
-            exprs[i].delete();
+          for (int j = paramNum + 1; j < exprs.length; j++) {
+            exprs[j].delete();
           }
         }
         else if (paramNum < exprs.length) {
@@ -161,8 +150,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      return true;
-    });
+    }
   }
 
   @Nullable
@@ -197,12 +185,11 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
           conflicts.putValue(call, RefactoringBundle.message("refactoring.introduce.parameter.incomplete.call.less.params",
                                                              call.getText(), parametersCount, actualParamLength));
         }
-        data.getParametersToRemove().forEach(paramNum -> {
+        data.getParameterListToRemove().forEach((IntConsumer)paramNum -> {
           if (paramNum >= actualParamLength) {
             conflicts.putValue(call, RefactoringBundle.message("refactoring.introduce.parameter.incomplete.call.param.not.found",
                                                                    call.getText(), paramNum, actualParamLength));
           }
-          return true;
         });
       }
     }
@@ -226,7 +213,9 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
     final PsiParameterList parameterList = method.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
-    data.getParametersToRemove().forEachDescending(paramNum -> {
+    IntList parametersToRemove = data.getParameterListToRemove();
+    for (int i = parametersToRemove.size() - 1; i >= 0; i--) {
+      int paramNum = parametersToRemove.getInt(i);
       try {
         PsiParameter param = parameters[paramNum];
         PsiDocTag tag = javaDocHelper.getTagForParameter(param);
@@ -238,8 +227,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      return true;
-    });
+    }
 
     final PsiParameter anchorParameter = getAnchorParameter(method);
     parameter = (PsiParameter)parameterList.addAfter(parameter, anchorParameter);

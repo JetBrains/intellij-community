@@ -9,14 +9,15 @@ import com.intellij.openapi.vcs.history.FileHistoryRefresherI
 import com.intellij.openapi.vcs.history.VcsAppendableHistoryPartnerAdapter
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.ui.JBColor
-import gnu.trove.TLongArrayList
+import it.unimi.dsi.fastutil.longs.LongArrayList
 import org.jetbrains.idea.svn.SvnRevisionNumber
 import org.jetbrains.idea.svn.SvnVcs
 import org.jetbrains.idea.svn.api.Revision
 import javax.swing.BorderFactory.createLineBorder
 import javax.swing.JPanel
 
-private val VcsFileRevision.svnRevision: Revision get() = (revisionNumber as SvnRevisionNumber).revision
+private val VcsFileRevision.svnRevision: Revision
+  get() = (revisionNumber as SvnRevisionNumber).revision
 
 private const val HISTORY_LIMIT = 10
 
@@ -30,7 +31,7 @@ internal class HistoryConflictSide(
   private val sessionAdapter = VcsAppendableHistoryPartnerAdapter()
   private val provider = vcs.vcsHistoryProvider
 
-  var listToReportLoaded: TLongArrayList? = null
+  var listToReportLoaded: LongArrayList? = null
 
   @Throws(VcsException::class)
   override fun load() {
@@ -56,7 +57,7 @@ internal class HistoryConflictSide(
         null
       }
 
-    return FileHistoryPanelImpl(
+    val panel = FileHistoryPanelImpl(
       vcs, path, session, provider,
       object : FileHistoryRefresherI {
         override fun isInRefresh(): Boolean = false
@@ -64,12 +65,12 @@ internal class HistoryConflictSide(
         override fun selectContent() = Unit
       },
       true
-    ).apply {
-      setBottomRevisionForShowDiff(lastRevision)
-      border = createLineBorder(JBColor.border())
+    )
+    panel.setBottomRevisionForShowDiff(lastRevision)
+    panel.border = createLineBorder(JBColor.border())
 
-      Disposer.register(this@HistoryConflictSide, this)
-    }
+    Disposer.register(this, panel)
+    return panel
   }
 
   override fun dispose() = Unit

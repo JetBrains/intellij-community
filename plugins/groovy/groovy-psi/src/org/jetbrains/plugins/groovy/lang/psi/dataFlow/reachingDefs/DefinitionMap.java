@@ -1,85 +1,73 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
-import gnu.trove.TObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+
+import java.util.function.Consumer;
 
 /**
  * @author peter
  */
-public class DefinitionMap {
-  private final TIntObjectHashMap<TIntHashSet> myMap = new TIntObjectHashMap<>();
+public final class DefinitionMap {
+  private final Int2ObjectMap<IntSet> myMap = new Int2ObjectOpenHashMap<>();
 
   public void registerDef(Instruction varInsn, int varId) {
-    TIntHashSet defs = myMap.get(varId);
+    IntSet defs = myMap.get(varId);
     if (defs == null) {
-      myMap.put(varId, defs = new TIntHashSet());
-    } else {
+      myMap.put(varId, defs = new IntOpenHashSet());
+    }
+    else {
       defs.clear();
     }
     defs.add(varInsn.num());
   }
 
   public void merge(DefinitionMap map2) {
-    map2.myMap.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-      @Override
-      public boolean execute(int num, TIntHashSet defs) {
-        TIntHashSet defs2 = myMap.get(num);
-        if (defs2 == null) {
-          defs2 = new TIntHashSet(defs.toArray());
-          myMap.put(num, defs2);
-        }
-        else {
-          defs2.addAll(defs.toArray());
-        }
-
-        return true;
+    for (Int2ObjectMap.Entry<IntSet> entry : map2.myMap.int2ObjectEntrySet()) {
+      IntSet defs2 = myMap.get(entry.getIntKey());
+      if (defs2 == null) {
+        defs2 = new IntOpenHashSet(entry.getValue());
+        myMap.put(entry.getIntKey(), defs2);
       }
-    });
+      else {
+        defs2.addAll(entry.getValue());
+      }
+    }
   }
 
-  public boolean eq(final DefinitionMap m2) {
-    if (myMap.size() != m2.myMap.size()) return false;
+  public boolean eq(DefinitionMap m2) {
+    if (myMap.size() != m2.myMap.size()) {
+      return false;
+    }
 
-    return myMap.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-      @Override
-      public boolean execute(int num, TIntHashSet defs1) {
-        final TIntHashSet defs2 = m2.myMap.get(num);
-        return defs2 != null && defs2.equals(defs1);
+    for (Int2ObjectMap.Entry<IntSet> entry : myMap.int2ObjectEntrySet()) {
+      IntSet defs2 = m2.myMap.get(entry.getIntKey());
+      if (defs2 == null || !defs2.equals(entry.getValue())) {
+        return false;
       }
-    });
+    }
+    return true;
   }
 
   public void copyFrom(DefinitionMap map, int fromIndex, int toIndex) {
-    TIntHashSet defs = map.myMap.get(fromIndex);
-    if (defs == null) defs = new TIntHashSet();
+    IntSet defs = map.myMap.get(fromIndex);
+    if (defs == null) {
+      defs = new IntOpenHashSet();
+    }
     myMap.put(toIndex, defs);
   }
 
   public int @Nullable [] getDefinitions(int varId) {
-    TIntHashSet set = myMap.get(varId);
-    return set == null ? null : set.toArray();
+    IntSet set = myMap.get(varId);
+    return set == null ? null : set.toIntArray();
   }
 
-  public void forEachValue(TObjectProcedure<TIntHashSet> procedure) {
-    myMap.forEachValue(procedure);
+  public void forEachValue(Consumer<IntSet> procedure) {
+    myMap.values().forEach(procedure);
   }
 }

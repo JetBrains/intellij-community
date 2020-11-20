@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.HashingStrategy;
 import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +15,6 @@ import java.util.Set;
 
 /**
  * Common {@link Processor} collect/find implementations.
- * .
- * @author max
  */
 public final class CommonProcessors {
   public static class CollectProcessor<T> implements Processor<T> {
@@ -85,12 +84,37 @@ public final class CommonProcessors {
     private final Processor<? super T> myDelegate;
 
     public UniqueProcessor(@NotNull Processor<? super T> delegate) {
-      this(delegate, ContainerUtil.canonicalStrategy());
+      myDelegate = delegate;
+      processed = new HashSet<>();
     }
 
-    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {
+    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull TObjectHashingStrategy strategy) {
+      this(delegate, new HashingStrategy<T>() {
+        @Override
+        public int hashCode(@Nullable T object) {
+          return strategy.computeHashCode(object);
+        }
+
+        @Override
+        public boolean equals(@Nullable T o1, @Nullable T o2) {
+          return strategy.equals(o1, o2);
+        }
+      });
+    }
+
+    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull HashingStrategy<T> strategy) {
       myDelegate = delegate;
-      processed = new THashSet<>(strategy);
+      processed = new ObjectOpenCustomHashSet<>(new Hash.Strategy<T>() {
+        @Override
+        public int hashCode(T o) {
+          return strategy.hashCode(o);
+        }
+
+        @Override
+        public boolean equals(T a, T b) {
+          return strategy.equals(a, b);
+        }
+      });
     }
 
     @Override

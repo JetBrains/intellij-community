@@ -13,11 +13,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.tree.injected.FoldingRegionWindow;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -27,7 +27,7 @@ public class EditorFoldingInfo {
   private static final Key<EditorFoldingInfo> KEY = Key.create("EditorFoldingInfo.KEY");
   private static final Object ourLock = ObjectUtils.sentinel("lock");
 
-  private final Map<FoldRegion, SmartPsiElementPointer<?>> myFoldRegionToSmartPointerMap = Collections.synchronizedMap(new THashMap<>());
+  private final Map<FoldRegion, SmartPsiElementPointer<?>> myFoldRegionToSmartPointerMap = Collections.synchronizedMap(new HashMap<>());
 
   @NotNull
   public static EditorFoldingInfo get(@NotNull Editor editor) {

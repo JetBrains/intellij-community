@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -21,7 +21,6 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.FunctionUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
@@ -186,7 +185,7 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   private static void collectOverridingMethods(final @NotNull Set<? extends PsiMethod> methods, @NotNull Collection<? super LineMarkerInfo<?>> result) {
     final Set<PsiElement> overridden = new HashSet<>();
 
-    Set<PsiClass> classes = new THashSet<>();
+    Set<PsiClass> classes = new HashSet<>();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       final PsiClass parentClass = method.getContainingClass();

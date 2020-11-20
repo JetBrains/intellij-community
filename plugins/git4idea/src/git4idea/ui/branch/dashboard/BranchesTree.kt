@@ -386,6 +386,7 @@ private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
 }
 
 @State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
+@Service(Service.Level.PROJECT)
 internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
   private lateinit var branchesTree: FilteringBranchesTree
   private lateinit var treeState: TreeState

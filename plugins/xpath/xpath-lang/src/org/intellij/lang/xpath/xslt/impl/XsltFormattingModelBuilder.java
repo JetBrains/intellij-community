@@ -31,7 +31,7 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
+final class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
   private final FormattingModelBuilder myBuilder;
 
   XsltFormattingModelBuilder() {

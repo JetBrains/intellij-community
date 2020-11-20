@@ -15,20 +15,16 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class InspectionViewSuppressActionHolder {
+public final class InspectionViewSuppressActionHolder {
   private final Map<String, Map<ContextDescriptor, SuppressIntentionAction[]>> mySuppressActions =
-    FactoryMap.create(__ -> new THashMap<>());
+    FactoryMap.create(__ -> new HashMap<>());
   private final Interner<Set<SuppressIntentionAction>> myActionSetInterner = new HashSetInterner<>();
 
   public synchronized SuppressIntentionAction @NotNull [] getSuppressActions(@NotNull InspectionToolWrapper wrapper, @NotNull PsiElement context) {

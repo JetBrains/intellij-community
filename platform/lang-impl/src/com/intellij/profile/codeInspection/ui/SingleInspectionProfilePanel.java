@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -56,8 +55,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -86,7 +83,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
 
-  private final Map<String, ToolDescriptors> myInitialToolDescriptors = new THashMap<>();
+  private final Map<String, ToolDescriptors> myInitialToolDescriptors = new HashMap<>();
   private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group(InspectionsBundle.message("inspection.root.node.title"));
   private final Alarm myAlarm = new Alarm();
   private final ProjectInspectionProfileManager myProjectProfileManager;
@@ -749,7 +746,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       final JPanel severityPanel = new JPanel(new GridBagLayout());
       final JPanel configPanelAnchor = new JPanel(new GridLayout());
 
-      final Set<String> scopesNames = new THashSet<>();
+      final Set<String> scopesNames = new HashSet<>();
       for (final InspectionConfigTreeNode.Tool node : nodes) {
         final List<ScopeToolState> nonDefaultTools = myProfile.getNonDefaultTools(node.getDefaultDescriptor().getKey().toString(), project);
         for (final ScopeToolState tool : nonDefaultTools) {

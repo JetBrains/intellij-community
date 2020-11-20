@@ -11,13 +11,14 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -25,7 +26,7 @@ import java.util.List;
 @State(
     name = "TemplateDataLanguagePatterns",
     storages = @Storage("templateLanguages.xml") )
-public class TemplateDataLanguagePatterns implements PersistentStateComponent<Element> {
+public final class TemplateDataLanguagePatterns implements PersistentStateComponent<Element> {
   private FileTypeAssocTable<Language> myAssocTable = new FileTypeAssocTable<>();
   @NonNls private static final String SEPARATOR = ";";
 
@@ -50,7 +51,7 @@ public class TemplateDataLanguagePatterns implements PersistentStateComponent<El
   public void loadState(@NotNull Element state) {
     myAssocTable = new FileTypeAssocTable<>();
 
-    final THashMap<String, Language> dialectMap = new THashMap<>();
+    final Map<String, Language> dialectMap = new HashMap<>();
     for (Language dialect : TemplateDataLanguageMappings.getTemplateableLanguages()) {
       dialectMap.put(dialect.getID(), dialect);
     }

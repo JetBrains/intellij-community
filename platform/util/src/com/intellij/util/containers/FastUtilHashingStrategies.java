@@ -30,7 +30,7 @@ public final class FastUtilHashingStrategies implements Hash.Strategy<CharSequen
     return FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE;
   }
 
-  private static @NotNull <T> Hash.Strategy<T> getCanonicalStrategy() {
+  public static @NotNull <T> Hash.Strategy<T> getCanonicalStrategy() {
     //noinspection unchecked
     return (Hash.Strategy<T>)CanonicalObjectStrategy.INSTANCE;
   }

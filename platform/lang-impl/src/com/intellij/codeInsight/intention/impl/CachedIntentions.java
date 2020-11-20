@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -21,18 +21,23 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
-public class CachedIntentions {
+public final class CachedIntentions {
   private static final Logger LOG = Logger.getInstance(CachedIntentions.class);
 
   private final Set<IntentionActionWithTextCaching> myIntentions = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
@@ -112,21 +117,8 @@ public class CachedIntentions {
     return res;
   }
 
-  private static final TObjectHashingStrategy<IntentionActionWithTextCaching> ACTION_TEXT_AND_CLASS_EQUALS = new TObjectHashingStrategy<IntentionActionWithTextCaching>() {
-    @Override
-    public int computeHashCode(final IntentionActionWithTextCaching object) {
-      return object.getText().hashCode();
-    }
-
-    @Override
-    public boolean equals(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
-      return getActionClass(o1) == getActionClass(o2) && o1.getText().equals(o2.getText());
-    }
-
-    private Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
-      return IntentionActionDelegate.unwrap(o1.getAction()).getClass();
-    }
-  };
+  private static final IntentionActionWithTextCachingHashingStrategy ACTION_TEXT_AND_CLASS_EQUALS =
+    new IntentionActionWithTextCachingHashingStrategy();
 
   public boolean wrapAndUpdateActions(@NotNull ShowIntentionsPass.IntentionsInfo newInfo, boolean callUpdate) {
     myOffset = newInfo.getOffset();
@@ -182,7 +174,7 @@ public class CachedIntentions {
     }
     else {
       hostElement = myFile.getViewProvider().findElementAt(fileOffset, myFile.getLanguage());
-      element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
+      element = InjectedLanguageUtilBase.findElementAtNoCommit(myFile, fileOffset);
     }
     PsiFile injectedFile;
     Editor injectedEditor;
@@ -208,7 +200,7 @@ public class CachedIntentions {
       }
     }
 
-    Set<IntentionActionWithTextCaching> wrappedNew = new THashSet<>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
+    Set<IntentionActionWithTextCaching> wrappedNew = new ObjectOpenCustomHashSet<>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
     for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
       final IntentionAction action = descriptor.getAction();
       if (element != null &&
@@ -405,5 +397,21 @@ public class CachedIntentions {
            ", myGutters=" + myGutters +
            ", myNotifications=" + myNotifications +
            '}';
+  }
+
+  private static class IntentionActionWithTextCachingHashingStrategy implements HashingStrategy<IntentionActionWithTextCaching>, Hash.Strategy<IntentionActionWithTextCaching> {
+    @Override
+    public int hashCode(final IntentionActionWithTextCaching object) {
+      return object == null ? 0 : object.getText().hashCode();
+    }
+
+    @Override
+    public boolean equals(IntentionActionWithTextCaching o1, IntentionActionWithTextCaching o2) {
+      return o1 == o2 || (o1 != null && o2 != null && getActionClass(o1) == getActionClass(o2) && o1.getText().equals(o2.getText()));
+    }
+
+    private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
+      return IntentionActionDelegate.unwrap(o1.getAction()).getClass();
+    }
   }
 }

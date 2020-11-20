@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
@@ -9,7 +9,8 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,18 +32,14 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
 import java.util.*;
 
-/**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
- */
-@SuppressWarnings({"StaticFieldReferencedViaSubclass"})
-public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
+@SuppressWarnings("StaticFieldReferencedViaSubclass")
+public final class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
   implements GrModifierList, StubBasedPsiElement<GrModifierListStub>, PsiListLikeElement {
 
-  public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
+  public static final Object2IntMap<String> NAME_TO_MODIFIER_FLAG_MAP = new Object2IntOpenHashMap<>();
   public static final Map<String, IElementType> NAME_TO_MODIFIER_ELEMENT_TYPE = new HashMap<>();
 
-  private static final TObjectIntHashMap<String> PRIORITY = new TObjectIntHashMap<>(16);
+  private static final Object2IntMap<String> PRIORITY = new Object2IntOpenHashMap<>(16);
 
   static {
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.PUBLIC, GrModifierFlags.PUBLIC_MASK);
@@ -123,7 +120,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
       return CachedValuesManager.getCachedValue(this, () -> {
         int flags = 0;
         for (PsiElement modifier : findChildrenByType(TokenSets.MODIFIERS)) {
-          flags |= NAME_TO_MODIFIER_FLAG_MAP.get(modifier.getText());
+          flags |= NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier.getText());
         }
         return Result.create(flags, this);
       });
@@ -242,11 +239,11 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
 
   @Nullable
   private PsiElement findAnchor(String name) {
-    final int myPriority = PRIORITY.get(name);
+    final int myPriority = PRIORITY.getInt(name);
     PsiElement anchor = null;
 
     for (PsiElement modifier : getModifiers()) {
-      final int otherPriority = PRIORITY.get(modifier.getText());
+      final int otherPriority = PRIORITY.getInt(modifier.getText());
       if (otherPriority <= myPriority) {
         anchor = modifier;
       }

@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.textmate.regex.TextMateRange;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TextMateLexer {
+public final class TextMateLexer {
   /**
    * Count of {@link this#lastSuccessState} that can be occurred again without offset changing.
    * If {@link this#lastSuccessStateOccursCount} reaches {@link this#MAX_LOOPS_COUNT}
@@ -97,7 +97,7 @@ public class TextMateLexer {
     int lineByteOffset = 0;
     String line = lineCharSequence.length() > 0 && lineCharSequence.charAt(lineCharSequence.length() - 1) == '\n'
                   ? lineCharSequence.toString()
-                  : lineCharSequence.toString() + "\n";
+                  : lineCharSequence + "\n";
 
     StringWithId string = new StringWithId(line);
     while (true) {
@@ -113,7 +113,7 @@ public class TextMateLexer {
       }
     }
 
-    final TObjectIntHashMap<List<TextMateLexerState>> localStates = new TObjectIntHashMap<>();
+    final Object2IntOpenHashMap<List<TextMateLexerState>> localStates = new Object2IntOpenHashMap<>();
     while (true) {
       TextMateLexerState lastState = myStates.element();
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
@@ -180,7 +180,7 @@ public class TextMateLexer {
       }
 
       // local looping protection
-      final int currentStateLocalOccurrencesCount = localStates.get(currentStateSnapshot);
+      final int currentStateLocalOccurrencesCount = localStates.getInt(currentStateSnapshot);
       if (currentStateLocalOccurrencesCount <= MAX_LOOPS_COUNT) {
         localStates.put(currentStateSnapshot, currentStateLocalOccurrencesCount + 1);
       }
@@ -214,7 +214,7 @@ public class TextMateLexer {
                                 StringWithId string,
                                 String line,
                                 int startLineOffset) {
-    TIntObjectHashMap<CharSequence> captures = rule.getCaptures(capturesKey);
+    Int2ObjectMap<CharSequence> captures = rule.getCaptures(capturesKey);
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string, line);
       //noinspection SSBasedInspection

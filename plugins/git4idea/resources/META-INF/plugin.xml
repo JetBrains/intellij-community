@@ -445,15 +445,6 @@
     <projectConfigurable id="vcs.Git" key="settings.git.option.group" instance="git4idea.config.GitVcsPanel"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
 
-    <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
-    <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
-    <projectService serviceImplementation="git4idea.branch.GitBranchIncomingOutgoingManager"/>
-    <projectService serviceImplementation="git4idea.checkin.GitCheckinEnvironment"/>
-    <projectService serviceImplementation="git4idea.status.GitChangeProvider"/>
-    <projectService serviceImplementation="git4idea.checkin.GitCommitAndPushExecutor"/>
-    <projectService serviceImplementation="git4idea.changes.GitOutgoingChangesProvider"/>
-    <projectService serviceImplementation="git4idea.changes.GitCommittedChangeListProvider"/>
-    <projectService serviceImplementation="git4idea.update.GitUpdateEnvironment"/>
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>
@@ -462,19 +453,12 @@
     <projectService serviceImplementation="git4idea.rebase.interactive.GitRewordedCommitMessageProvider"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
-    <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
-    <projectService serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
-    <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
-    <projectService serviceImplementation="git4idea.branch.GitCompareBranchesTopLogProperties"/>
-    <projectService serviceImplementation="git4idea.branch.GitCompareBranchesBottomLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
-    <projectService serviceImplementation="git4idea.ui.branch.dashboard.BranchesTreeStateHolder"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl" />
-    <applicationService serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
     <applicationService serviceImplementation="git4idea.config.SSHConnectionSettings"/>
     <applicationService serviceImplementation="git4idea.remote.GitRememberedInputs"/>
     <applicationService serviceInterface="git4idea.commands.Git"

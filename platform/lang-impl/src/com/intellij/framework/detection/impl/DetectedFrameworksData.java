@@ -12,7 +12,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +32,7 @@ public final class DetectedFrameworksData {
   public DetectedFrameworksData(@NotNull Project project) {
     myDetectedFrameworks = new MultiMap<>();
     Path file = ProjectUtil.getProjectCachePath(project, getDetectionDirPath(), true).resolve("files");
-    myNewFiles = new THashMap<>();
+    myNewFiles = new HashMap<>();
     try {
       myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, new TIntHashSetExternalizer());
     }

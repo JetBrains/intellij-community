@@ -9,11 +9,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -86,9 +86,9 @@ public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockW
 
   private void registerChildSpacing(@Nullable Block block1, @NotNull Block block2, Spacing spacing) {
     if (myChildDataBorderSpacings == null) {
-      myChildDataBorderSpacings = new THashMap<>();
+      myChildDataBorderSpacings = new HashMap<>();
     }
-    myChildDataBorderSpacings.put(Pair.create(block1, block2), spacing);
+    myChildDataBorderSpacings.put(new Pair<>(block1, block2), spacing);
   }
 
   @Nullable

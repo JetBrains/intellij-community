@@ -39,7 +39,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
-import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
@@ -449,7 +449,7 @@ public class FoldingModelSupport {
   }
 
   @NotNull
-  public TIntFunction getLineConvertor(final int index) {
+  public IntUnaryOperator getLineConvertor(final int index) {
     return value -> {
       updateLineNumbers(false);
       for (FoldedBlock folding : getFoldedBlocks()) { // TODO: avoid full scan - it could slowdown painting

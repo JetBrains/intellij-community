@@ -7,12 +7,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.tree.AstBufferUtil;
-import gnu.trove.TObjectHashingStrategy;
 import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SliceLeafEquality implements Hash.Strategy<PsiElement>, TObjectHashingStrategy<PsiElement> {
+public class SliceLeafEquality implements Hash.Strategy<PsiElement> {
   @NotNull
   protected PsiElement substituteElement(@NotNull PsiElement element) {
     return element;
@@ -27,11 +26,6 @@ public class SliceLeafEquality implements Hash.Strategy<PsiElement>, TObjectHash
                                                          : AstBufferUtil.getTextSkippingWhitespaceComments(elementToCompare.getNode());
     });
     return Comparing.hashcode(text);
-  }
-
-  @Override
-  public int computeHashCode(PsiElement object) {
-    return hashCode(object);
   }
 
   @Override

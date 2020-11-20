@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.diff.DiffEditorTitleCustomizer;
@@ -16,13 +16,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.IntUnaryOperator;
 
 public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   //
@@ -32,7 +32,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   /**
    * Override line numbers in editor gutter (function "document line -> user-visible line number")
    */
-  Key<TIntFunction> LINE_NUMBER_CONVERTOR = Key.create("Diff.LineNumberConvertor");
+  Key<IntUnaryOperator> LINE_NUMBER_CONVERTOR = Key.create("Diff.LineNumberConvertor");
   Key<String> FILE_NAME = Key.create("Diff.FileName");
 
   //

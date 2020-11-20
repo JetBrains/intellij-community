@@ -18,7 +18,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TIntStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -342,7 +342,7 @@ public final class PsiUtil {
       @Override
       public Iterator<PsiClass> iterator() {
         return new Iterator<PsiClass>() {
-          final TIntStack indices = new TIntStack();
+          final IntArrayList indices = new IntArrayList();
           final Stack<PsiClassType[]> superTypesStack = new Stack<>();
           final Set<PsiClass> visited = new HashSet<>();
           PsiClass current;

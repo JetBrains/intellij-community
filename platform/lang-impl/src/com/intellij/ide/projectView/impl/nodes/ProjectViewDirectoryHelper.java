@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
@@ -28,7 +29,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FontUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -36,8 +36,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
 
 public class ProjectViewDirectoryHelper {
   protected static final Logger LOG = Logger.getInstance(ProjectViewDirectoryHelper.class);
@@ -317,7 +315,7 @@ public class ProjectViewDirectoryHelper {
     }
 
     PsiManager manager = psiDirectory.getManager();
-    Set<PsiElement> directoriesOnTheWayToContentRoots = new THashSet<>();
+    Set<PsiElement> directoriesOnTheWayToContentRoots = new HashSet<>();
     for (VirtualFile root : getTopLevelRoots()) {
       VirtualFile current = root;
       while (current != null) {
@@ -340,7 +338,7 @@ public class ProjectViewDirectoryHelper {
     if (!dir.isValid()) return false;
     DirectoryInfo directoryInfo = myIndex.getInfoForFile(dir);
     return directoryInfo.isInProject(dir)
-           ? shouldShowExcludedFiles(settings) || !isProjectOrWorkspaceFile(dir)
+           ? shouldShowExcludedFiles(settings) || !ProjectUtil.isProjectOrWorkspaceFile(dir)
            : shouldShowExcludedFiles(settings) && directoryInfo.isExcluded(dir);
   }
 

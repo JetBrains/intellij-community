@@ -22,7 +22,7 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
   private static final String FILE_ELEMENT = "file";
   private static final String PATH_ATTR = "url";
 
-  private final Set<VirtualFile> myFiles = new THashSet<>();
+  private final Set<VirtualFile> myFiles = new HashSet<>();
 
   protected boolean addFile(@NotNull VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;

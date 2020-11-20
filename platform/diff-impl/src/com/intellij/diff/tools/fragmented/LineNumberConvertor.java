@@ -2,12 +2,12 @@
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.util.SmartList;
-import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.IntUnaryOperator;
 
 public final class LineNumberConvertor {
   // Master -> Slave
@@ -45,7 +45,7 @@ public final class LineNumberConvertor {
   //
 
   @NotNull
-  public TIntFunction createConvertor() {
+  public IntUnaryOperator createConvertor() {
     return this::convert;
   }
 

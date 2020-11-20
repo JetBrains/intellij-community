@@ -13,9 +13,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import gnu.trove.THashMap;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 public class MacroManagerTest extends CodeInsightFixtureTestCase {
@@ -27,7 +27,7 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
 
   public DataContext getContext(VirtualFile file) {
     Project project = myFixture.getProject();
-    Map<String, Object> dataId2data = new THashMap<>();
+    Map<String, Object> dataId2data = new HashMap<>();
     dataId2data.put(CommonDataKeys.PROJECT.getName(), project);
     dataId2data.put(CommonDataKeys.VIRTUAL_FILE.getName(), file);
     dataId2data.put(PlatformDataKeys.PROJECT_FILE_DIRECTORY.getName(), PlatformTestUtil.getOrCreateProjectBaseDir(project));

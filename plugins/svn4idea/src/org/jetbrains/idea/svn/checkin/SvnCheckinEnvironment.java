@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -37,10 +37,7 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 
-import static org.jetbrains.idea.svn.SvnBundle.message;
-
-public class SvnCheckinEnvironment implements CheckinEnvironment {
-
+public final class SvnCheckinEnvironment implements CheckinEnvironment {
   private static final Logger LOG = Logger.getInstance(SvnCheckinEnvironment.class);
   @NotNull private final SvnVcs mySvnVcs;
 
@@ -99,20 +96,18 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (committedRevisions.length() > 0) {
-      feedback.add(SvnVcs.VCS_DISPLAY_NAME + ": " + message("status.text.committed.revision", committedRevisions));
+      feedback.add(SvnVcs.VCS_DISPLAY_NAME + ": " + SvnBundle.message("status.text.committed.revision", committedRevisions));
     }
   }
 
   @NotNull
   private Collection<FilePath> getCommitables(@NotNull List<? extends Change> changes) {
-    THashSet<FilePath> result = new THashSet<>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
-
+    Set<FilePath> result = new ObjectOpenCustomHashSet<>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
     ChangesUtil.getPaths(changes.stream()).forEach(path -> {
       if (result.add(path)) {
         addParents(result, path);
       }
     });
-
     return result;
   }
 
@@ -146,7 +141,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   @Override
   public String getCheckinOperationName() {
-    return message("checkin.operation.name");
+    return SvnBundle.message("checkin.operation.name");
   }
 
   @NotNull
@@ -165,7 +160,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     else if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> doCommit(committables, commitMessage, exception, feedback),
-        message("progress.title.commit"), false, mySvnVcs.getProject()
+        SvnBundle.message("progress.title.commit"), false, mySvnVcs.getProject()
       );
     }
     else {
@@ -212,7 +207,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         File file = event.getFile();
 
         if (indicator != null && file != null) {
-          indicator.setText(message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
+          indicator.setText(SvnBundle.message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
         }
       }
     };
@@ -247,9 +242,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     KeepLocksComponent() {
       myPanel = new JPanel(new BorderLayout());
-      myKeepLocksBox = new JCheckBox(message("checkbox.checkin.keep.files.locked"));
+      myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.checkin.keep.files.locked"));
       myKeepLocksBox.setSelected(myIsKeepLocks);
-      myAutoUpdate = new JCheckBox(message("checkbox.checkin.auto.update.after.commit"));
+      myAutoUpdate = new JCheckBox(SvnBundle.message("checkbox.checkin.auto.update.after.commit"));
 
       myPanel.add(myAutoUpdate, BorderLayout.NORTH);
       myPanel.add(myKeepLocksBox, BorderLayout.CENTER);

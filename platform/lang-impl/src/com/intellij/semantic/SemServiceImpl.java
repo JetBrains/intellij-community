@@ -18,7 +18,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +94,7 @@ public final class SemServiceImpl extends SemService {
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
     LinkedHashSet<T> result = new LinkedHashSet<>();
-    Map<SemKey<?>, List<SemElement>> map = new THashMap<>();
+    Map<SemKey<?>, List<SemElement>> map = new HashMap<>();
 
     ProcessingContext processingContext = new ProcessingContext();
     for (SemKey<?> each : key.getInheritors()) {

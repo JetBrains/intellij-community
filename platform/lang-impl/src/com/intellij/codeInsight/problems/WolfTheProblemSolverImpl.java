@@ -39,7 +39,6 @@ import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +93,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         boolean dirChanged = false;
-        Set<VirtualFile> toRemove = new THashSet<>();
+        Set<VirtualFile> toRemove = new HashSet<>();
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
             VirtualFile file = event.getFile();

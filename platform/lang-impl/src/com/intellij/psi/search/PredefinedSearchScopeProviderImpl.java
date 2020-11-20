@@ -278,10 +278,9 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     return files;
   }
 
-  static class SelectedFilesScope extends GlobalSearchScope {
-
-    private final Set<VirtualFile> myFiles = new THashSet<>();
-    private final Set<VirtualFile> myDirectories = new THashSet<>();
+  static final class SelectedFilesScope extends GlobalSearchScope {
+    private final Set<VirtualFile> myFiles = new HashSet<>();
+    private final Set<VirtualFile> myDirectories = new HashSet<>();
 
     SelectedFilesScope(Project project, VirtualFile... filesOrDirs) {
       super(project);
