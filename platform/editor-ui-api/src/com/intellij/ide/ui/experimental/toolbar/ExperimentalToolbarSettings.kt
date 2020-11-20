@@ -9,7 +9,6 @@ import com.intellij.openapi.util.registry.Registry
 @State(name = "ToolbarSettingsService", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
 class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
                                                           PersistentStateComponent<ExperimentalToolbarStateWrapper> {
-
   val newToolbarEnabled: Boolean
     get() = Registry.`is`("ide.new.navbar", false)
 
@@ -21,6 +20,9 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
 
   private var toolbarState = ExperimentalToolbarStateWrapper()
 
+  init {
+    updateSettingsState()
+  }
 
   override fun getState(): ExperimentalToolbarStateWrapper {
     return toolbarState
@@ -97,7 +99,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   }
 
   override fun getShowToolbarInNavigationBar(): Boolean {
-    return toolbarState.equals(ExperimentalToolbarStateEnum.OLD_NAVBAR)
+    return toolbarState.state == ExperimentalToolbarStateEnum.OLD_NAVBAR
   }
 
   var showNewToolbar: Boolean
