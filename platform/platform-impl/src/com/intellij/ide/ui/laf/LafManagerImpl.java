@@ -1088,6 +1088,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return lafDetector.getDetectionSupported();
   }
 
+  @Override
+  public void setPreferredDarkLaf(UIManager.@NotNull LookAndFeelInfo myPreferredDarkLaf) {
+    this.myPreferredDarkLaf = myPreferredDarkLaf;
+  }
+
+  @Override
+  public void setPreferredLightLaf(UIManager.@NotNull LookAndFeelInfo myPreferredLightLaf) {
+    this.myPreferredLightLaf = myPreferredLightLaf;
+  }
+
   private static void repaintUI(Window window) {
     if (!window.isDisplayable()) {
       return;

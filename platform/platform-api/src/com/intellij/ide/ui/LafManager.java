@@ -53,6 +53,10 @@ public abstract class LafManager {
 
   public abstract boolean getAutodetectSupported();
 
+  public abstract void setPreferredDarkLaf(@NotNull UIManager.LookAndFeelInfo myPreferredDarkLaf);
+
+  public abstract void setPreferredLightLaf(@NotNull UIManager.LookAndFeelInfo myPreferredLightLaf);
+
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */

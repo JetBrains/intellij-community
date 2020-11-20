@@ -20,10 +20,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 public class PluginGroups {
-  static final String CORE = "Core";
+  public static final String CORE = "Core";
   private static final int MAX_DESCR_LENGTH = 55;
 
-  static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
+  public static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
   private static final @NlsSafe String CLOUD_DESCRIPTION = "#Cloud:#Cloud:";
 
   private final List<Group> myTree = new ArrayList<>();
@@ -86,7 +86,7 @@ public class PluginGroups {
     initCloudPlugins();
   }
 
-  void setLoadingCallback(Runnable loadingCallback) {
+  public void setLoadingCallback(Runnable loadingCallback) {
     myLoadingCallback = loadingCallback;
     if (!myPluginsFromRepository.isEmpty()) {
       myLoadingCallback.run();
@@ -280,7 +280,7 @@ public class PluginGroups {
     addTrainingPlugin(featuredPlugins);
   }
 
-  static String parsePluginId(String string) {
+  public static String parsePluginId(String string) {
     int i = string.indexOf(':');
     int j = string.indexOf(':', i + 1);
     return string.substring(j + 1);
@@ -377,12 +377,12 @@ public class PluginGroups {
   }
 
   @NotNull
-  List<Group> getTree() {
+  public List<Group> getTree() {
     initIfNeeded();
     return myTree;
   }
 
-  Map<String, @Nls String> getFeaturedPlugins() {
+  public Map<String, @Nls String> getFeaturedPlugins() {
     return myFeaturedPlugins;
   }
 
@@ -396,7 +396,7 @@ public class PluginGroups {
     return myGroups.get(group);
   }
 
-  final @Nullable IdeaPluginDescriptor findPlugin(@NotNull PluginId id) {
+  public final @Nullable IdeaPluginDescriptor findPlugin(@NotNull PluginId id) {
     for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
       if (pluginDescriptor.getPluginId() == id) {
         return pluginDescriptor;
@@ -405,7 +405,7 @@ public class PluginGroups {
     return null;
   }
 
-  boolean isIdSetAllEnabled(IdSet set) {
+  public boolean isIdSetAllEnabled(IdSet set) {
     for (PluginId id : set.getIds()) {
       if (!isPluginEnabled(id)) {
         return false;
@@ -414,22 +414,22 @@ public class PluginGroups {
     return true;
   }
 
-  void setIdSetEnabled(@NotNull IdSet set, boolean enabled) {
+  public void setIdSetEnabled(@NotNull IdSet set, boolean enabled) {
     for (PluginId id : set.getIds()) {
       setPluginEnabledWithDependencies(id, enabled);
     }
   }
 
   @NotNull
-  Collection<PluginId> getDisabledPluginIds() {
+  public Collection<PluginId> getDisabledPluginIds() {
     return Collections.unmodifiableCollection(myDisabledPluginIds);
   }
 
-  List<PluginNode> getPluginsFromRepository() {
+  public List<PluginNode> getPluginsFromRepository() {
     return myPluginsFromRepository;
   }
 
-  boolean isPluginEnabled(@NotNull PluginId pluginId) {
+  public boolean isPluginEnabled(@NotNull PluginId pluginId) {
     initIfNeeded();
     return !myDisabledPluginIds.contains(pluginId);
   }
@@ -458,7 +458,7 @@ public class PluginGroups {
     WelcomeWizardUtil.setFeaturedPluginsToInstall(myFeaturedIds);
   }
 
-  void setPluginEnabledWithDependencies(@NotNull PluginId pluginId, boolean enabled) {
+  public void setPluginEnabledWithDependencies(@NotNull PluginId pluginId, boolean enabled) {
     initIfNeeded();
     Set<PluginId> ids = new HashSet<>();
     Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptor = new HashMap<>(myAllPlugins.size());

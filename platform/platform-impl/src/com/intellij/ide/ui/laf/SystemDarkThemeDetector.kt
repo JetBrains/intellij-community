@@ -16,7 +16,7 @@ import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
 import java.util.function.Consumer
 
-internal sealed class SystemDarkThemeDetector {
+sealed class SystemDarkThemeDetector {
   companion object {
     @JvmStatic
     fun createDetector(syncFunction: Consumer<Boolean>): SystemDarkThemeDetector {
@@ -33,7 +33,7 @@ internal sealed class SystemDarkThemeDetector {
   /**
    * The following method is executed on a polled thread. Maybe computationally intense.
    */
-  protected abstract fun isDark(): Boolean
+  abstract fun isDark(): Boolean
 
   abstract val detectionSupported: Boolean
 }

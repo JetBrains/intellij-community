@@ -79,6 +79,12 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
+  public void setPreferredDarkLaf(UIManager.@NotNull LookAndFeelInfo myPreferredDarkLaf) { }
+
+  @Override
+  public void setPreferredLightLaf(UIManager.@NotNull LookAndFeelInfo myPreferredLightLaf) { }
+
+  @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) { }
 
   @Override

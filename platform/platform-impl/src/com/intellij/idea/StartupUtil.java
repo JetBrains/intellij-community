@@ -723,11 +723,14 @@ public final class StartupUtil {
     appStarter.beforeStartupWizard();
 
     String stepsDialogName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardDialog();
+    if (System.getProperty("idea.temp.change.ide.wizard") != null) { // temporary until 211 release
+      stepsDialogName = System.getProperty("idea.temp.change.ide.wizard");
+    }
     if (stepsDialogName != null) {
       try {
         Class<?> dialogClass = Class.forName(stepsDialogName);
-        Constructor<?> constr = dialogClass.getConstructor(CustomizeIDEWizardStepsProvider.class, AppStarter.class, boolean.class, boolean.class);
-        ((CommonCustomizeIDEWizardDialog) constr.newInstance(provider, appStarter, true, false)).showIfNeeded();
+        Constructor<?> constr = dialogClass.getConstructor(AppStarter.class);
+        ((CommonCustomizeIDEWizardDialog) constr.newInstance(appStarter)).showIfNeeded();
       } catch (Throwable e) {
         Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
         return;

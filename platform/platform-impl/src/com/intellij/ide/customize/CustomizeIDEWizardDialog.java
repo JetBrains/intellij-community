@@ -45,6 +45,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
   protected final JPanel myButtonWrapper = new JPanel(myButtonWrapperLayout);
   protected JPanel myContentPanel;
   protected final boolean myHideSkipButton;
+  protected Runnable myRunAfterOKAction;
 
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
     this(stepsProvider, null, true, true);
@@ -206,6 +207,11 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
       }
     }
     super.doOKAction();
+  }
+
+  @Override
+  public void setRunAfterOKAction(Runnable runnable) {
+    myRunAfterOKAction = runnable;
   }
 
   @Override

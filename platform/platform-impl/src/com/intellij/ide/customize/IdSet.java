@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-final class IdSet {
+public final class IdSet {
   private static final List<@NonNls String> BLACK_LIST = Arrays.asList("Support", "support", "Integration", "integration");
 
   @Nls String myTitle;
