@@ -102,7 +102,7 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     }
 
     @Throws(IOException::class)
-    override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator, resolvedTargetPath: String) {
+    override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator) {
     }
   }
 }

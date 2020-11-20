@@ -104,8 +104,7 @@ abstract class TargetEnvironment(
      */
     @Throws(IOException::class)
     fun upload(relativePath: String,
-               targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator,
-               resolvedTargetPath: String)
+               targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator)
   }
 
   interface DownloadableVolume {  // TODO Would it be better if there is no inheritance from the upload Volume?

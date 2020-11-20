@@ -192,10 +192,9 @@ public class LocalTargetEnvironment extends TargetEnvironment {
 
     @Override
     public void upload(@NotNull String relativePath,
-                       @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator targetProgressIndicator,
-                       @NotNull String resolvedTargetPath) throws IOException {
+                       @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator targetProgressIndicator) throws IOException {
       if (myReal) {
-        File targetFile = new File(resolvedTargetPath);
+        File targetFile = myTargetRoot.resolve(relativePath).toFile().getCanonicalFile();
         FileUtil.copyFileOrDir(myLocalRoot.resolve(relativePath).toFile().getCanonicalFile(), targetFile);
       }
     }
