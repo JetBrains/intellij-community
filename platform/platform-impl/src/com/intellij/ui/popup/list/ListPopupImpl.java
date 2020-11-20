@@ -56,6 +56,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private int myIndexForShowingChild = -1;
   private int myMaxRowCount = 30;
   private boolean myAutoHandleBeforeShow;
+  private boolean myShowSubmenuOnHover;
 
   /**
    * @deprecated use {@link #ListPopupImpl(Project, ListPopupStep)} + {@link #setMaxRowCount(int)}
@@ -478,6 +479,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private class MyMouseMotionListener extends MouseMotionAdapter {
     private int myLastSelectedIndex = -2;
     private Point myLastMouseLocation;
+    private Timer myShowSubmenuTimer;
 
     /**
      * this method should be changed only in par with
@@ -537,14 +539,27 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     private void showSubMenu(int forIndex) {
+      if (!myShowSubmenuOnHover) return;
+
       disposeChildren();
+
+      if (myShowSubmenuTimer != null && myShowSubmenuTimer.isRunning()) {
+        myShowSubmenuTimer.stop();
+        myShowSubmenuTimer = null;
+      }
 
       ListPopupStep<Object> listStep = getListStep();
       Object selectedValue = myListModel.getElementAt(forIndex);
       if (!listStep.hasSubstep(selectedValue)) return;
 
       PopupStep<?> step = listStep.onChosen(selectedValue, true);
-      if (step != PopupStep.FINAL_CHOICE) showNextStepPopup(step, selectedValue);
+      if (step != PopupStep.FINAL_CHOICE) {
+        myShowSubmenuTimer = new Timer(250, e -> {
+          showNextStepPopup(step, selectedValue);
+        });
+        myShowSubmenuTimer.setRepeats(false);
+        myShowSubmenuTimer.start();
+      }
     }
   }
 
@@ -732,6 +747,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   @Override
   public boolean isModalContext() {
     return true;
+  }
+
+  @Override
+  public void setShowSubmenuOnHover(boolean showSubmenuOnHover) {
+    myShowSubmenuOnHover = showSubmenuOnHover;
   }
 
   @Override
