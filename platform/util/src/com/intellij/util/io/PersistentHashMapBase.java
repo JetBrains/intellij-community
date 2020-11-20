@@ -56,11 +56,15 @@ public interface PersistentHashMapBase<Key, Value> {
   @NotNull
   Collection<Key> getAllKeysWithExistingMapping() throws IOException;
 
+  /**
+   * Process only keys with existing mappings
+   */
   boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException;
 
   /**
    * Process all keys registered in the map.
    * Note that keys which were removed at some point might be returned as well.
+   * @see #processKeysWithExistingMapping
    */
   boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException;
 
