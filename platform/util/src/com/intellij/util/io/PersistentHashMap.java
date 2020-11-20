@@ -222,7 +222,12 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
   @Override
   public final void force() {
-    myImpl.force();
+    try {
+      myImpl.force();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

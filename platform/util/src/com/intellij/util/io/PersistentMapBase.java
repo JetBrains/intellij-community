@@ -96,7 +96,7 @@ public interface PersistentMapBase<Key, Value> {
   /**
    * Force all transient changes to disk.
    */
-  void force();
+  void force() throws IOException;
 
   boolean isClosed();
 
