@@ -328,7 +328,7 @@ class JdkInstaller {
       val localRoots = run {
         val defaultInstallDir = defaultInstallDir()
         if (!defaultInstallDir.isDirectory()) return@run listOf()
-        Files.list(defaultInstallDir).toList()
+        Files.list(defaultInstallDir).use{ it.toList() }
       }
 
       val historyRoots = service<JdkInstallerStore>().findInstallations(feedItem)
