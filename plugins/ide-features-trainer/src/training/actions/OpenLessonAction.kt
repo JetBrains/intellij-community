@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
@@ -254,7 +255,9 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       if (learnToolWindow != null) {
         val runnable = if (lesson.properties.showLearnToolwindowAtStart) null else Runnable { learnToolWindow.hide() }
         learnToolWindow.show(runnable)
-        openLesson(myLearnProject, lesson)
+        DumbService.getInstance(myLearnProject).runWhenSmart {
+          openLesson(myLearnProject, lesson)
+        }
       }
     }
 
