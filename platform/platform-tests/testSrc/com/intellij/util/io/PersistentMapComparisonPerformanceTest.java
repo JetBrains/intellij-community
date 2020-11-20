@@ -70,7 +70,7 @@ public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
     PersistentHashMap<Integer, String> phm = PersistentMapBuilder
       .newBuilder(myTempDirectory.resolve("phm"), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE).build();
     try {
-      PlatformTestUtil.startPerformanceTest("put/get PHM", 2000, () -> {
+      PlatformTestUtil.startPerformanceTest("put/get PHM", 4000, () -> {
         doPutGetTest(phm);
       }).ioBound().assertTiming();
     }
