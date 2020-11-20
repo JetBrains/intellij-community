@@ -46,6 +46,9 @@ import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibrariesDepende
 import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibrariesFixer
 import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
+import org.jetbrains.kotlin.idea.configuration.utils.createSourceSetDependsOnGraph
+import org.jetbrains.kotlin.idea.configuration.utils.createSourceSetVisibilityGraph
+import org.jetbrains.kotlin.idea.configuration.utils.transitiveClosure
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
@@ -418,6 +421,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     it.group = externalProject.group
                     it.version = externalProject.version
 
+                    // TODO NOW: Use TestSourceSetUtil instead!
                     val name = sourceSet.name
                     val baseName = name.removeSuffix("Test")
                     if (baseName != name) {
@@ -618,38 +622,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     }
                 }
             }
-            val sourceSetGraph = GraphBuilder.directed().build<KotlinSourceSet>()
-            processSourceSets(gradleModule, mppModel, ideModule, resolverCtx) { dataNode, sourceSet ->
-                sourceSetGraph.addNode(sourceSet)
-                val productionSourceSet = dataNode
-                    ?.data
-                    ?.productionModuleId
-                    ?.let { ideModule.findChildModuleByInternalName(it) }
-                    ?.kotlinSourceSet
-                    ?.kotlinModule
-                    ?.toSourceSet(mppModel)
-                if (productionSourceSet != null) {
-                    sourceSetGraph.putEdge(sourceSet, productionSourceSet)
-                }
-                for (targetSourceSetName in sourceSet.dependsOnSourceSets) {
-                    val targetSourceSet = mppModel.sourceSets[targetSourceSetName] ?: continue
-                    sourceSetGraph.putEdge(sourceSet, targetSourceSet)
-                }
-                // Workaround: Non-android source sets have commonMain/commonTest in their dependsOn
-                // Remove when the same is implemented for Android modules as well
-                if (sourceSet.actualPlatforms.supports(KotlinPlatform.ANDROID)) {
-                    val commonSourceSetName = if (sourceSet.isTestModule) {
-                        KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME
-                    } else {
-                        KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME
-                    }
-                    val commonSourceSet = mppModel.sourceSets[commonSourceSetName]
-                    if (commonSourceSet != null && commonSourceSet != sourceSet) {
-                        sourceSetGraph.putEdge(sourceSet, commonSourceSet)
-                    }
-                }
-            }
-            val closedSourceSetGraph = Graphs.transitiveClosure(sourceSetGraph)
+
+            val closedSourceSetGraph = createSourceSetVisibilityGraph(mppModel).transitiveClosure
             for (sourceSet in closedSourceSetGraph.nodes()) {
                 val isAndroid = delegateToAndroidPlugin(sourceSet)
                 val fromDataNode = if (isAndroid) {
