@@ -6,7 +6,10 @@
 package org.toml.ide.icons
 
 import com.intellij.openapi.util.IconLoader
+import javax.swing.Icon
 
 object TomlIcons {
-    val TOML_FILE = IconLoader.getIcon("/icons/toml-file.svg")
+    val TOML_FILE = load("/icons/toml-file.svg")
+
+    private fun load(path: String): Icon = IconLoader.getIcon(path, TomlIcons::class.java)
 }
