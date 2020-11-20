@@ -45,5 +45,5 @@ public abstract class ToolWindowSynchronizer {
     }
   }
 
-  abstract void passViewModel(ToolWindowViewModel toolWindowViewModel);
+  public abstract void passViewModel(ToolWindowViewModel toolWindowViewModel);
 }
