@@ -14,39 +14,26 @@ import com.intellij.vcs.log.util.VcsUserUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal class VcsLogUserFilterImpl(private val users: Collection<String>,
-                                    private val data: Map<VirtualFile, VcsUser>,
-                                    allUsers: Set<VcsUser>) : VcsLogUserFilter {
-  private val allUsersByNames: MultiMap<String, VcsUser> = MultiMap.create()
-  private val allUsersByEmails: MultiMap<String, VcsUser> = MultiMap.create()
+internal class VcsLogUserFilterImpl(private val userNames: Collection<String>,
+                                    private val resolver: VcsLogUserResolver) : VcsLogUserFilter {
 
-  init {
-    for (user in allUsers) {
-      val name = user.name
-      if (name.isNotEmpty()) {
-        allUsersByNames.putValue(VcsUserUtil.getNameInStandardForm(name), user)
-      }
-      val email = user.email
-      val nameFromEmail = VcsUserUtil.getNameFromEmail(email)
-      if (nameFromEmail != null) {
-        allUsersByEmails.putValue(VcsUserUtil.getNameInStandardForm(nameFromEmail), user)
-      }
-    }
-  }
+  constructor(users: Collection<String>,
+              currentUsers: Map<VirtualFile, VcsUser>,
+              allUsers: Set<VcsUser>) : this(users, SimpleVcsLogUserResolver(currentUsers, allUsers))
 
-  override fun getUsers(root: VirtualFile) = users.flatMapTo(mutableSetOf()) { resolveUserName(root, it) }
+  override fun getUsers(root: VirtualFile) = userNames.flatMapTo(mutableSetOf()) { resolveUserName(root, it) }
 
-  override fun getValuesAsText(): Collection<String> = users
+  override fun getValuesAsText(): Collection<String> = userNames
 
   override fun getDisplayText(): String {
-    val users = users.map { user: String ->
+    val users = userNames.map { user: String ->
       if (user == VcsLogFilterObject.ME) VcsLogBundle.message("vcs.log.user.filter.me") else user
     }
     return StringUtil.join(users, ", ")
   }
 
   override fun matches(commit: VcsCommitMetadata): Boolean {
-    return users.any { name ->
+    return userNames.any { name ->
       val users = resolveUserName(commit.root, name)
       when {
         users.isNotEmpty() -> {
@@ -69,9 +56,61 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
   }
 
   private fun resolveUserName(root: VirtualFile, name: String): Set<VcsUser> {
-    if (VcsLogFilterObject.ME != name) return resolveUserName(name)
+    if (VcsLogFilterObject.ME != name) return resolver.resolveUserName(name)
+    return resolver.resolveCurrentUser(root)
+  }
 
-    val vcsUser = data[root]
+  override fun toString(): String {
+    return "author: " + StringUtil.join(userNames, ", ")
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+    val filter = other as VcsLogUserFilterImpl
+    return Comparing.haveEqualElements(userNames, filter.userNames)
+  }
+
+  override fun hashCode(): Int {
+    return Comparing.unorderedHashcode(userNames)
+  }
+
+  companion object {
+    private val LOG = logger<VcsLogUserFilterImpl>()
+  }
+}
+
+interface VcsLogUserResolver {
+  fun resolveUserName(name: String): Set<VcsUser>
+  fun resolveCurrentUser(root: VirtualFile): Set<VcsUser>
+}
+
+class SimpleVcsLogUserResolver(private val currentUsers: Map<VirtualFile, VcsUser>,
+                               allUsers: Set<VcsUser>) : VcsLogUserResolver {
+  private val allUsersByNames: MultiMap<String, VcsUser> = MultiMap.create()
+  private val allUsersByEmails: MultiMap<String, VcsUser> = MultiMap.create()
+
+  init {
+    for (user in allUsers) {
+      val name = user.name
+      if (name.isNotEmpty()) {
+        allUsersByNames.putValue(VcsUserUtil.getNameInStandardForm(name), user)
+      }
+      val email = user.email
+      val nameFromEmail = VcsUserUtil.getNameFromEmail(email)
+      if (nameFromEmail != null) {
+        allUsersByEmails.putValue(VcsUserUtil.getNameInStandardForm(nameFromEmail), user)
+      }
+    }
+  }
+
+  override fun resolveUserName(name: String): Set<VcsUser> {
+    val standardName = VcsUserUtil.getNameInStandardForm(name)
+    return allUsersByNames[standardName].union(allUsersByEmails[standardName])
+  }
+
+  override fun resolveCurrentUser(root: VirtualFile): Set<VcsUser> {
+    val vcsUser = currentUsers[root]
     if (vcsUser == null) {
       LOG.warn("Can not resolve user name for root $root")
       return emptySet()
@@ -91,27 +130,7 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
     return usersByName + usersByEmail
   }
 
-  private fun resolveUserName(name: String): Set<VcsUser> {
-    val standardName = VcsUserUtil.getNameInStandardForm(name)
-    return allUsersByNames[standardName].union(allUsersByEmails[standardName])
-  }
-
-  override fun toString(): String {
-    return "author: " + StringUtil.join(users, ", ")
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other == null || javaClass != other.javaClass) return false
-    val filter = other as VcsLogUserFilterImpl
-    return Comparing.haveEqualElements(users, filter.users)
-  }
-
-  override fun hashCode(): Int {
-    return Comparing.unorderedHashcode(users)
-  }
-
   companion object {
-    private val LOG = logger<VcsLogUserFilterImpl>()
+    private val LOG = logger<SimpleVcsLogUserResolver>()
   }
 }
