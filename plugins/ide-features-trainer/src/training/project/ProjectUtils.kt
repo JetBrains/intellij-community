@@ -4,6 +4,8 @@ package training.project
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationGroup
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -136,6 +138,13 @@ object ProjectUtils {
   }
 
   private fun versionFile(dest: Path) = dest.resolve("feature-trainer-version.txt")
+
+  fun createSdkDownloadingNotification(): Notification {
+    val notificationGroup = NotificationGroup.findRegisteredGroup("IDE Features Trainer")
+                            ?: error("Not found notificationGroup for IDE Features Trainer")
+    return notificationGroup.createNotification(LearnBundle.message("learn.project.initializing.jdk.download.notification.title"),
+                                                LearnBundle.message("learn.project.initializing.jdk.download.notification.message"))
+  }
 
   fun closeAllEditorsInProject(project: Project) {
     FileEditorManagerEx.getInstanceEx(project).windows.forEach {
