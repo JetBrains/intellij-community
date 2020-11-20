@@ -6,6 +6,7 @@ import circlet.code.api.CodeDiscussionRecord
 import circlet.code.api.PropagatedCodeDiscussion
 import circlet.m2.ChannelsVm
 import circlet.m2.channel.M2DraftsVm
+import circlet.m2.contacts2.ContactListVm
 import circlet.platform.client.KCircletClient
 import circlet.platform.client.property
 import circlet.platform.client.resolve
@@ -54,11 +55,12 @@ internal class SpaceReviewCommentPanelFactory(
     val me = workspace.me
     val completionVm = workspace.completion
     val featureFlags = workspace.featureFlags.featureFlags
+    val contactList = ContactListVm(lifetime, client, me, workspace.preferredLanguage, null)
     return SpaceChatStandaloneThreadComponent(
       project,
       lifetime,
       parent,
-      ChannelsVm(client, me, completionVm, M2DraftsVm(client, completionVm, null), featureFlags),
+      ChannelsVm(client, me, completionVm, M2DraftsVm(client, completionVm, null), featureFlags, contactList),
       discussionRecord.value.channel,
       SpaceChatDiscussionActionsFactory(discussionRecord)
     )

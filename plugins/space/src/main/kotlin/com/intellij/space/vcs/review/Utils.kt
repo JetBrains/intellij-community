@@ -4,6 +4,7 @@ package com.intellij.space.vcs.review
 import circlet.code.api.CodeReviewListItem
 import circlet.m2.ChannelsVm
 import circlet.m2.channel.M2DraftsVm
+import circlet.m2.contacts2.ContactListVm
 import circlet.platform.client.property
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
@@ -46,10 +47,12 @@ internal fun openReviewInEditor(
   val chatRef = review.feedChannel ?: return
   val client = workspace.client
   val completionVm = workspace.completion
+  val me = workspace.me
+  val contactList = ContactListVm(workspace.lifetime, client, me, workspace.preferredLanguage, null)
   val chatFile = SpaceChatFile(
     "space-review/${review.key}",
     SpaceBundle.message("review.chat.editor.tab.name", review.key, review.title),
-    ChannelsVm(client, workspace.me, completionVm, M2DraftsVm(client, completionVm, null), workspace.featureFlags.featureFlags),
+    ChannelsVm(client, me, completionVm, M2DraftsVm(client, completionVm, null), workspace.featureFlags.featureFlags, contactList),
     chatRef,
     SpaceChatReviewHeaderDetails(projectInfo, reviewStateProperty, titleProperty, review.key) // NON-NLS
   )
