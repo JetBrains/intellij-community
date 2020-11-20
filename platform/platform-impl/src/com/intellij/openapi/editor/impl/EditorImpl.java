@@ -369,19 +369,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMarkupModelListener = new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+        TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
         onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
-                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme())));
+                             EditorUtil.attributesImpactFontStyle(attributes),
+                             EditorUtil.attributesImpactForegroundColor(attributes));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
         onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
-                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme())));
+                             EditorUtil.attributesImpactFontStyle(attributes),
+                             EditorUtil.attributesImpactForegroundColor(attributes));
       }
 
       @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
-        onHighlighterChanged(highlighter, renderersChanged, fontStyleOrColorChanged);
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter,
+                                    boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
+        onHighlighterChanged(highlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
       }
     };
 
@@ -618,7 +623,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter, boolean canImpactGutterSize, boolean fontStyleOrColorChanged) {
+  private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter,
+                                    boolean canImpactGutterSize, boolean fontStyleChanged, boolean foregroundColorChanged) {
     if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
 
     if (canImpactGutterSize) {
@@ -638,8 +644,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
     int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
-    if (start != end && fontStyleOrColorChanged) {
-      myView.invalidateRange(start, end);
+    if (start != end && (fontStyleChanged || foregroundColorChanged)) {
+      myView.invalidateRange(start, end, fontStyleChanged);
     }
     if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
       repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
@@ -1564,7 +1570,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     endOffset = Math.min(endOffset, myDocument.getTextLength());
 
     if (invalidateTextLayout) {
-      myView.invalidateRange(startOffset, endOffset);
+      myView.invalidateRange(startOffset, endOffset, true);
     }
 
     if (!isShowing()) {
@@ -3464,8 +3470,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       boolean oldAvailable = oldFilter == null || oldFilter.test(highlighter);
       boolean newAvailable = filter == null || filter.test(highlighter);
       if (oldAvailable != newAvailable) {
-        boolean styleOrColorChanged = EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme()));
-        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true, styleOrColorChanged);
+        TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
+        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
+                                                EditorUtil.attributesImpactFontStyle(attributes),
+                                                EditorUtil.attributesImpactForegroundColor(attributes));
         myMarkupModel.getErrorStripeMarkersModel().attributesChanged((RangeHighlighterEx)highlighter, true);
       }
     }
