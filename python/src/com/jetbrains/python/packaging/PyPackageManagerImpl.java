@@ -17,12 +17,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
@@ -59,7 +57,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   private static final String SETUPTOOLS_WHEEL_NAME = "setuptools-" + SETUPTOOLS_VERSION + "-py2.py3-none-any.whl";
   private static final String PIP_WHEEL_NAME = "pip-" + PIP_VERSION + "-py2.py3-none-any.whl";
-  private static final String VIRTUALENV_WHEEL_NAME = "virtualenv-16.7.10-py2.py3-none-any.whl";
+  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv.pyz";
 
   private static final int ERROR_NO_SETUPTOOLS = 3;
 
@@ -320,64 +318,22 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                                        languageLevel, LanguageLevel.PYTHON27));
     }
 
-    final boolean usePyVenv = languageLevel.isAtLeast(LanguageLevel.PYTHON33);
-    if (usePyVenv) {
-      args.add("pyvenv");
-      if (useGlobalSite) {
-        args.add("--system-site-packages");
-      }
-      args.add(destinationDir);
-      getHelperResult(args, false, true);
+    if (useGlobalSite) {
+      args.add("--system-site-packages");
     }
-    else {
-      if (useGlobalSite) {
-        args.add("--system-site-packages");
-      }
-      args.add(destinationDir);
-      createVirtualEnvForPython2UsingVirtualenvLibrary(args);
+    args.add(destinationDir);
+
+    try {
+      getPythonProcessResult(Objects.requireNonNull(getHelperPath(VIRTUALENV_ZIPAPP_NAME)), args, false, true, null, List.of("-S"));
+    }
+    catch (ExecutionException e) {
+      throw new ExecutionException(PySdkBundle.message("python.creating.venv.failed.sentence"), e);
     }
 
     final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
     final String binaryFallback = destinationDir + mySeparator + "bin" + mySeparator + "python";
-    final String path = (binary != null) ? binary : binaryFallback;
 
-    if (usePyVenv) {
-      // Still no 'packaging' and 'pysetup3' for Python 3.3rc1, see PEP 405
-      final VirtualFile binaryFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      if (binaryFile != null) {
-        final ProjectJdkImpl tmpSdk = new ProjectJdkImpl("", PythonSdkType.getInstance());
-        tmpSdk.setHomePath(path);
-        // Don't save such one-shot SDK with empty name in the cache of PyPackageManagers
-        final PyPackageManager manager = new PyPackageManagerImpl(tmpSdk);
-        try {
-          manager.installManagement();
-        }
-        finally {
-          Disposer.dispose(manager);
-        }
-      }
-    }
-    return path;
-  }
-
-  private void createVirtualEnvForPython2UsingVirtualenvLibrary(List<String> args) throws ExecutionException {
-    File workingDirectory = null;
-    try {
-      workingDirectory = FileUtil.createTempDirectory("tmp", "pycharm-management");
-      final String workingDirectoryPath = workingDirectory.getPath();
-      getPythonProcessResult("-mzipfile", Arrays.asList("-e", getHelperPath(VIRTUALENV_WHEEL_NAME), workingDirectoryPath),
-                             false, true, workingDirectoryPath);
-      getPythonProcessResult(workingDirectoryPath + "/virtualenv.py", args,
-                             false, true, workingDirectoryPath);
-    }
-    catch (IOException e) {
-      throw new ExecutionException(PySdkBundle.message("python.sdk.packaging.cannot.create.temporary.build.directory"), e);
-    }
-    finally {
-      if (workingDirectory != null) {
-        FileUtil.delete(workingDirectory);
-      }
-    }
+    return (binary != null) ? binary : binaryFallback;
   }
 
   @NotNull
@@ -487,7 +443,14 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @NotNull
   private String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
                                         boolean showProgress, @Nullable String workingDir) throws ExecutionException {
-    final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, showProgress, workingDir);
+    return getPythonProcessResult(path, args, askForSudo, showProgress, workingDir, null);
+  }
+
+  @NotNull
+  private String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
+                                        boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
+    throws ExecutionException {
+    final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, showProgress, workingDir, pyArgs);
     final int exitCode = output.getExitCode();
     if (output.isTimeout()) {
       throw new PyExecutionException(PySdkBundle.message("python.sdk.packaging.timed.out"), path, args, output);
@@ -501,6 +464,13 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @NotNull
   protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
                                                  boolean showProgress, @Nullable String workingDir) throws ExecutionException {
+    return getPythonProcessOutput(helperPath, args, askForSudo, showProgress, workingDir, null);
+  }
+
+  @NotNull
+  protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
+                                                 boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
+    throws ExecutionException {
     final String homePath = getSdk().getHomePath();
     if (homePath == null) {
       throw new ExecutionException(PySdkBundle.message("python.sdk.packaging.cannot.find.python.interpreter", mySdk.getName()));
@@ -510,6 +480,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     final List<String> cmdline = new ArrayList<>();
     cmdline.add(homePath);
+    if (pyArgs != null) cmdline.addAll(pyArgs);
     cmdline.add(helperPath);
     cmdline.addAll(args);
     LOG.info("Running packaging tool: " + StringUtil.join(makeSafeToDisplayCommand(cmdline), " "));
