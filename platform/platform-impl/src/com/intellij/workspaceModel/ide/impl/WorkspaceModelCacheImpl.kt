@@ -28,7 +28,7 @@ import com.intellij.workspaceModel.storage.EntityTypesResolver
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.impl.isBroken
+import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -75,7 +75,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
   private val saveAlarm = pooledThreadSingleAlarm(1000, this) {
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
 
-    if (storage.isBroken) invalidateCaches()
+    if (!storage.isConsistent) invalidateCaches()
 
     if (!cachesInvalidated.get()) {
       LOG.debug("Saving project model cache to $cacheFile")

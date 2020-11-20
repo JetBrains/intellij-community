@@ -1024,18 +1024,18 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 }
 
 /** It exposes [assertConsistency] function to the outside and can be used for checking if the current store is consistent */
-val WorkspaceEntityStorage.isBroken: Boolean
+val WorkspaceEntityStorage.isConsistent: Boolean
   get() {
     this as AbstractEntityStorage
-    if (brokenConsistency) return true
+    if (brokenConsistency) return false
     try {
       assertConsistency()
     }
     catch (e: Throwable) {
       brokenConsistency = true
-      return true
+      return false
     }
-    return false
+    return true
   }
 
 internal object ClassConversion {
