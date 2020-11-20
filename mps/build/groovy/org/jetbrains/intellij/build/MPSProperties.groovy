@@ -38,13 +38,19 @@ class MPSProperties extends JetBrainsProductProperties {
         productLayout.bundledPluginModules += [
                 "intellij.java.plugin",
                 "intellij.java.ide.customization",
+                "intellij.copyright",
                 "intellij.terminal",
+                "intellij.emojipicker",
                 "intellij.settingsRepository",
                 "intellij.tasks.core",
                 "intellij.vcs.git",
                 "intellij.vcs.svn",
                 "intellij.vcs.github",
-                "intellij.vcs.changeReminder"
+                "intellij.ant",
+                "intellij.sh",
+                "intellij.vcs.changeReminder",
+                "intellij.markdown",
+                "intellij.grazie"
         ]
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.buildAllCompatiblePlugins = false
