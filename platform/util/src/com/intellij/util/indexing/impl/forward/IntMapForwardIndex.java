@@ -32,12 +32,12 @@ public class IntMapForwardIndex implements IntForwardIndex {
   }
 
   @Override
-  public int getInt(@NotNull Integer key) throws IOException {
+  public int getInt(int key) throws IOException {
     return myPersistentMap.get(key);
   }
 
   @Override
-  public void putInt(@NotNull Integer key, int value) throws IOException {
+  public void putInt(int key, int value) throws IOException {
     myPersistentMap.put(key, value);
   }
 
