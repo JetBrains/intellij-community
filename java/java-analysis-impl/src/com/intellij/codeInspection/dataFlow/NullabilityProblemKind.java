@@ -170,6 +170,10 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       }
       PsiElement grandParent = parent.getParent();
       if (grandParent instanceof PsiMethodCallExpression) {
+        PsiParameter parameter = MethodCallUtils.getParameterForArgument(context);
+        if (parameter != null) {
+          return getParameterProblem(parameter, expression, context);
+        }
         return callNPE.problem((PsiMethodCallExpression)grandParent, expression);
       }
       return fieldAccessNPE.problem(context, expression);
@@ -260,27 +264,38 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     PsiParameter parameter = MethodCallUtils.getParameterForArgument(context);
     PsiElement grandParent = expressionList.getParent();
     if (parameter != null) {
-      if (parameter.getType() instanceof PsiPrimitiveType) {
-        return createUnboxingProblem(context, expression);
-      }
-      if (grandParent instanceof PsiAnonymousClass) {
-        grandParent = grandParent.getParent();
-      }
-      if (grandParent instanceof PsiCall) {
-        PsiSubstitutor substitutor = ((PsiCall)grandParent).resolveMethodGenerics().getSubstitutor();
-        Nullability nullability = DfaPsiUtil.getElementNullability(substitutor.substitute(parameter.getType()), parameter);
-        if (nullability == Nullability.NOT_NULL) {
-          return passingToNotNullParameter.problem(context, expression);
-        }
-        if (nullability == Nullability.UNKNOWN) {
-          return passingToNonAnnotatedParameter.problem(context, expression);
-        }
-      }
+      return getParameterProblem(parameter, expression, context);
     }
     else if (grandParent instanceof PsiCall && MethodCallUtils.isVarArgCall((PsiCall)grandParent)) {
       Nullability nullability = DfaPsiUtil.getVarArgComponentNullability(((PsiCall)grandParent).resolveMethod());
       if (nullability == Nullability.NOT_NULL) {
         return passingToNotNullParameter.problem(context, expression);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static NullabilityProblem<? extends PsiElement> getParameterProblem(@NotNull PsiParameter parameter,
+                                                                              @NotNull PsiExpression expression,
+                                                                              @NotNull PsiExpression context) {
+    if (parameter.getType() instanceof PsiPrimitiveType) {
+      return createUnboxingProblem(context, expression);
+    }
+    // Either context -> expressionList -> call (if context is argument)
+    // or context -> referenceExpression -> call (if context is qualifier)
+    PsiElement grandParent = context.getParent().getParent();
+    if (grandParent instanceof PsiAnonymousClass) {
+      grandParent = grandParent.getParent();
+    }
+    if (grandParent instanceof PsiCall) {
+      PsiSubstitutor substitutor = ((PsiCall)grandParent).resolveMethodGenerics().getSubstitutor();
+      Nullability nullability = DfaPsiUtil.getElementNullability(substitutor.substitute(parameter.getType()), parameter);
+      if (nullability == Nullability.NOT_NULL) {
+        return passingToNotNullParameter.problem(context, expression);
+      }
+      if (nullability == Nullability.UNKNOWN) {
+        return passingToNonAnnotatedParameter.problem(context, expression);
       }
     }
     return null;

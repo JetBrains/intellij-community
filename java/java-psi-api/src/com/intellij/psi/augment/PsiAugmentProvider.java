@@ -76,6 +76,15 @@ public abstract class PsiAugmentProvider {
   protected List<PsiMethod> getExtensionMethods(@NotNull PsiClass aClass, @NotNull String nameHint, @NotNull PsiElement context) {
     return Collections.emptyList();
   }
+
+  /**
+   * @param method a method to resolve
+   * @return target static method, or null if the supplied method is not an extension method
+   */
+  @ApiStatus.Experimental
+  protected @Nullable PsiMethod getTargetMethod(@NotNull PsiMethod method) {
+    return null;
+  }
   
   /**
    * @deprecated invoke and override {@link #getAugments(PsiElement, Class, String)}.
@@ -175,6 +184,24 @@ public abstract class PsiAugmentProvider {
     return extensionMethods;
   }
 
+  /**
+   * @param method a method to resolve
+   * @return target static method, or null if the supplied method is not an extension method
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  public static PsiMethod resolveExtensionMethod(PsiMethod method) {
+    Ref<PsiMethod> result = Ref.create();
+    forEach(method.getProject(), provider -> {
+      PsiMethod target = provider.getTargetMethod(method);
+      if (target != null) {
+        result.set(target);
+        return false;
+      }
+      return true;
+    });
+    return result.get();
+  }
 
   @Nullable
   public static PsiType getInferredType(@NotNull PsiTypeElement typeElement) {

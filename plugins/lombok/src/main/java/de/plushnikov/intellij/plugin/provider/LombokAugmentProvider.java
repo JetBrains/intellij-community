@@ -170,4 +170,9 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
     return ExtensionMethodsHelper.getExtensionMethods(aClass, nameHint, context);
   }
+
+  @Override
+  protected @Nullable PsiMethod getTargetMethod(@NotNull PsiMethod method) {
+    return ExtensionMethodsHelper.resolve(method);
+  }
 }

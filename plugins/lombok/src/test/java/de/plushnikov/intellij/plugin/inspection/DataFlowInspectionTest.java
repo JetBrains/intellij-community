@@ -19,4 +19,8 @@ public class DataFlowInspectionTest extends LombokInspectionTest {
     doTest();
   }
 
+  public void testExtensionMethodDfa() {
+    doTest();
+  }
+
 }

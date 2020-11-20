@@ -121,10 +121,7 @@ public class ExtensionMethodsHelper {
     if (!method.equals(staticMethod) || !((MethodCandidateInfo)result).isApplicable()) return null;
     PsiSubstitutor substitutor = result.getSubstitutor();
 
-    final LombokLightMethodBuilder lightMethod = new LombokLightMethodBuilder(staticMethod.getManager(), staticMethod.getName()) {
-      @Override
-      public boolean isEquivalentTo(final PsiElement another) { return staticMethod.isEquivalentTo(another); }
-    };
+    final LombokLightMethodBuilder lightMethod = new LombokExtensionMethod(staticMethod);
     lightMethod
       .addModifiers(PsiModifier.PUBLIC);
     PsiParameter @NotNull [] parameters = staticMethod.getParameterList().getParameters();
@@ -154,5 +151,24 @@ public class ExtensionMethodsHelper {
     lightMethod.setNavigationElement(staticMethod);
     lightMethod.setContainingClass(targetClass);
     return lightMethod;
+  }
+
+  public static @Nullable PsiMethod resolve(@NotNull PsiMethod method) {
+    if (method instanceof LombokExtensionMethod) {
+      return ((LombokExtensionMethod)method).myStaticMethod;
+    }
+    return null;
+  }
+
+  private static class LombokExtensionMethod extends LombokLightMethodBuilder {
+    private final @NotNull PsiMethod myStaticMethod;
+
+    LombokExtensionMethod(@NotNull PsiMethod staticMethod) {
+      super(staticMethod.getManager(), staticMethod.getName());
+      myStaticMethod = staticMethod;
+    }
+
+    @Override
+    public boolean isEquivalentTo(final PsiElement another) { return myStaticMethod.isEquivalentTo(another); }
   }
 }
