@@ -13,8 +13,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
@@ -1047,11 +1047,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     //noinspection UnnecessaryLocalVariable
     int x = offset;
     int y = area.y + (area.height - icon.getIconHeight() + 1) / 2;
-    if (isSelection()) {
-      SVGLoader.paintIconWithSelection(icon, this, g, x, y);
-    } else {
-      icon.paintIcon(this, g, x, y);
-    }
+    IconUtil.paintSelectionAwareIcon(icon, this, g, x, y, isSelection());
   }
 
   private boolean isSelection() {
