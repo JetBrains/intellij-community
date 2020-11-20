@@ -2,8 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.execution.process.UnixProcessManager;
-import com.intellij.execution.process.WinProcessManager;
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -83,7 +82,7 @@ public final class Restarter {
       }
     }
     else if (SystemInfo.isUnix) {
-      if (UnixProcessManager.getCurrentProcessId() <= 0) {
+      if (OSProcessUtil.getCurrentProcessId() <= 0) {
         problem = "cannot detect process ID";
       }
       else if (ourStarter.getValue() == null) {
@@ -137,7 +136,7 @@ public final class Restarter {
     Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
     Shell32 shell32 = Native.load("shell32", Shell32.class);
 
-    int pid = WinProcessManager.getCurrentProcessId();
+    int pid = OSProcessUtil.getCurrentProcessId();
     IntByReference argc = new IntByReference();
     Pointer argvPtr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
     String[] argv = getRestartArgv(argvPtr.getWideStringArray(0, argc.getValue()));
@@ -210,7 +209,7 @@ public final class Restarter {
     File starterScript = ourStarter.getValue();
     if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinPath());
 
-    int pid = UnixProcessManager.getCurrentProcessId();
+    int pid = OSProcessUtil.getCurrentProcessId();
     if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
 
     File python = PathEnvironmentVariableUtil.findInPath("python");
