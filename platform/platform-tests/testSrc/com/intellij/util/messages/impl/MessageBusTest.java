@@ -284,13 +284,13 @@ public class MessageBusTest implements MessageBusOwner {
       public void t12() {
       }
     });
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 1_000; i++) {
       new MessageBusImpl(this, childBus);
     }
 
-    PlatformTestUtil.assertTiming("Too long", 3000, () -> {
+    PlatformTestUtil.assertTiming("Too long", 3_000, () -> {
       T1Listener publisher = myBus.syncPublisher(TOPIC1);
-      for (int i = 0; i < 1000000; i++) {
+      for (int i = 0; i < 1_000_000; i++) {
         publisher.t11();
       }
     });

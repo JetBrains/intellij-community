@@ -12,11 +12,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface MessageBusConnection extends SimpleMessageBusConnection, Disposable {
   /**
-   * Subscribes to the target topic within the current connection using {@link #setDefaultHandler(MessageHandler) default handler}.
+   * Subscribes to the target topic within the current connection using {@link #setDefaultHandler(Runnable) default handler}.
    *
    * @param topic  target endpoint
    * @param <L>    interface for working with the target topic
-   * @throws IllegalStateException    if {@link #setDefaultHandler(MessageHandler) default handler} hasn't been defined or
+   * @throws IllegalStateException    if {@link #setDefaultHandler(Runnable) default handler} hasn't been defined or
    *                                  has incompatible type with the {@link Topic#getListenerClass() topic's business interface}
    *                                  or if target topic is already subscribed within the current connection
    */
@@ -28,6 +28,10 @@ public interface MessageBusConnection extends SimpleMessageBusConnection, Dispos
    * @param handler  handler to use
    */
   void setDefaultHandler(@Nullable MessageHandler handler);
+
+  default void setDefaultHandler(@NotNull Runnable runnable) {
+    setDefaultHandler((event, params) -> runnable.run());
+  }
 
   /**
    * Forces to process any queued but not delivered events.

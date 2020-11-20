@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -127,13 +128,10 @@ public class MessageBusImpl implements MessageBus {
   public final @NotNull <L> L syncPublisher(@NotNull Topic<L> topic) {
     checkNotDisposed();
     //noinspection unchecked
-    return (L)publisherCache.computeIfAbsent(topic, this::createPublisherInvocationHandler);
-  }
-
-  private @NotNull <L> L createPublisherInvocationHandler(@NotNull Topic<L> topic) {
-    Class<L> listenerClass = topic.getListenerClass();
-    //noinspection unchecked
-    return (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createPublisher(topic, topic.getBroadcastDirection()));
+    return (L)publisherCache.computeIfAbsent(topic, topic1 -> {
+      Class<?> listenerClass = topic1.getListenerClass();
+      return Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createPublisher(topic1, topic1.getBroadcastDirection()));
+    });
   }
 
   @NotNull
@@ -163,7 +161,7 @@ public class MessageBusImpl implements MessageBus {
 
     @Override
     public final Object invoke(Object proxy, Method method, Object[] args) {
-      if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
+      if (method.getDeclaringClass() == Object.class) {
         return EventDispatcher.handleObjectMethod(proxy, args, method.getName());
       }
 
@@ -213,14 +211,14 @@ public class MessageBusImpl implements MessageBus {
                                                   @Nullable JobQueue jobQueue,
                                                   @Nullable MessageDeliveryListener messageDeliveryListener,
                                                   @Nullable List<Throwable> exceptions) {
+      MethodHandle methodHandle = MethodHandleCache.compute(method, args);
       if (jobQueue == null) {
         for (L handler : handlers) {
-          exceptions = invokeListener(method, args, topic, handler, messageDeliveryListener, exceptions);
+          exceptions = invokeListener(methodHandle, method.getName(), args, topic, handler, messageDeliveryListener, exceptions);
         }
       }
       else {
-        Message<L> message = new Message<>(topic, method, args, handlers);
-        jobQueue.queue.offerLast(message);
+        jobQueue.queue.offerLast(new Message<>(topic, methodHandle, method.getName(), args, handlers));
       }
       return exceptions;
     }
@@ -423,7 +421,7 @@ public class MessageBusImpl implements MessageBus {
         }
 
         job.currentHandlerIndex++;
-        exceptions = invokeListener(job.listenerMethod, job.args, job.topic, handlers.get(index), messageDeliveryListener, exceptions);
+        exceptions = invokeListener(job.method, job.methodName, job.args, job.topic, handlers.get(index), messageDeliveryListener, exceptions);
         if (++index != job.currentHandlerIndex) {
           // handler published some event and message queue including current job was processed as result, so, stop processing
           return exceptions;
@@ -620,7 +618,7 @@ public class MessageBusImpl implements MessageBus {
         job.handlers.addAll(connectionHandlers);
       }
       else {
-        filteredJob = new Message<>(job.topic, job.listenerMethod, job.args, connectionHandlers);
+        filteredJob = new Message<>(job.topic, job.method, job.methodName, job.args, connectionHandlers);
       }
       if (newJobs == null) {
         newJobs = new SmartList<>();
@@ -638,7 +636,8 @@ public class MessageBusImpl implements MessageBus {
   }
 
   // args is not null
-  private static @Nullable <L> List<Throwable> invokeListener(@NotNull Method method,
+  private static @Nullable <L> List<Throwable> invokeListener(@NotNull MethodHandle methodHandle,
+                                                              @NotNull String methodName,
                                                               Object[] args,
                                                               @NotNull Topic<L> topic,
                                                               @NotNull L handler,
@@ -646,21 +645,36 @@ public class MessageBusImpl implements MessageBus {
                                                               @Nullable List<Throwable> exceptions) {
     try {
       if (handler instanceof MessageHandler) {
-        ((MessageHandler)handler).handle(method, args);
+        ((MessageHandler)handler).handle(methodHandle, args);
       }
       else if (messageDeliveryListener == null) {
-        method.invoke(handler, args);
+        invokeMethod(handler, args, methodHandle);
       }
       else {
         long startTime = System.nanoTime();
-        method.invoke(handler, args);
-        messageDeliveryListener.messageDelivered(topic, method.getName(), handler, System.nanoTime() - startTime);
+        invokeMethod(handler, args, methodHandle);
+        messageDeliveryListener.messageDelivered(topic, methodName, handler, System.nanoTime() - startTime);
       }
     }
+    catch (AbstractMethodError e) {
+      // do nothing for AbstractMethodError. This listener just does not implement something newly added yet.
+    }
     catch (Throwable e) {
-      exceptions = EventDispatcher.handleException(e, exceptions);
+      if (exceptions == null) {
+        exceptions = new ArrayList<>();
+      }
+      exceptions.add(e);
     }
     return exceptions;
+  }
+
+  private static void invokeMethod(@NotNull Object handler, Object[] args, MethodHandle methodHandle) throws Throwable {
+    if (args == null) {
+      methodHandle.invoke(handler);
+    }
+    else {
+      methodHandle.bindTo(handler).invokeExact(args);
+    }
   }
 
   protected void disconnectPluginConnections(@NotNull Predicate<? super Class<?>> predicate) {
