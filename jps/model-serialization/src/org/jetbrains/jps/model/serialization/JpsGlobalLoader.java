@@ -113,7 +113,7 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
 
     @Override
     public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      JpsLibraryTableSerializer.loadLibraries(componentTag, global.getLibraryCollection());
+      JpsLibraryTableSerializer.loadLibraries(componentTag, global.getPathMapper(), global.getLibraryCollection());
     }
   }
 
