@@ -297,14 +297,21 @@ public class InstalledPluginsTableModel {
                                                                                int updatedDescriptorsCount,
                                                                                @NotNull List<String> dependencies) {
 
-    return MessageDialogBuilder.okCancel(
-      IdeBundle.message(enabled ? "dialog.title.enable.required.plugins" : "dialog.title.disable.dependent.plugins"),
-      IdeBundle.message(
+    String message;
+    if (updatedDescriptorsCount == 1 && dependencies.size() == 1) {
+      message = IdeBundle.message(enabled ? "dialog.message.enable.required.plugin" : "dialog.message.disable.dependent.plugin",
+                                  dependencies.get(0));
+    }
+    else {
+      message = IdeBundle.message(
         enabled ? "dialog.message.enable.required.plugins" : "dialog.message.disable.dependent.plugins",
         enabled ? updatedDescriptorsCount : dependencies.size(),
         enabled ? dependencies.size() : updatedDescriptorsCount,
         StringUtil.join(dependencies, id -> "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + id, "<br>")
-      )
+      );
+    }
+    return MessageDialogBuilder.okCancel(
+      IdeBundle.message(enabled ? "dialog.title.enable.required.plugins" : "dialog.title.disable.dependent.plugins"), message
     ).yesText(IdeBundle.message(enabled ? "button.enable" : "button.disable"))
       .noText(Messages.getCancelButton());
   }
