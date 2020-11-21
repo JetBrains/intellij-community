@@ -10,11 +10,18 @@ public class SimpleToolWindowViewModel implements ToolWindowViewModel {
   private final ActionBarViewModel myActionBarViewModel;
   private final TreeViewModel myTreeModel;
   private final Icon myIcon;
+  private String myId;
 
-  public SimpleToolWindowViewModel(ActionBarViewModel bar, TreeViewModel model, Icon icon) {
+  public SimpleToolWindowViewModel(ActionBarViewModel bar, TreeViewModel model, Icon icon, String id) {
     myActionBarViewModel = bar;
     myTreeModel = model;
     myIcon = icon;
+    myId = id;
+  }
+
+  @Override
+  public String getId() {
+    return myId;
   }
 
   @Override

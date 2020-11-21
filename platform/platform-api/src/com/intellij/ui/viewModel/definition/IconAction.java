@@ -23,7 +23,7 @@ public class IconAction implements ActionViewModel {
     return myTooltipText;
   }
 
-  public Runnable executeAction() {
+  public Runnable getExecuteAction() {
     return myExecuteAction;
   }
 }

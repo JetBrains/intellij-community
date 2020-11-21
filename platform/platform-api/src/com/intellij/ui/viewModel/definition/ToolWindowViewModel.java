@@ -7,6 +7,8 @@ import javax.swing.*;
 
 public interface ToolWindowViewModel {
 
+  String getId();
+
   @NotNull
   ActionBarViewModel getActions();
 
@@ -15,4 +17,6 @@ public interface ToolWindowViewModel {
 
   @NotNull
   Icon getIcon();
+
+  ToolWindowPosition getPosition();
 }

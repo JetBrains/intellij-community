@@ -36,7 +36,7 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
 
     DataContext context = DataManager.getInstance().getDataContext(mavenPanel);
     ActionBarViewModel actionBarViewModel = getFromDecoration(decoration, context);
-    return new SimpleToolWindowViewModel(actionBarViewModel, treeModel, decoration.getIcon());
+    return new SimpleToolWindowViewModel(actionBarViewModel, treeModel, decoration.getIcon(), toolWindow.getId());
   }
 
   private static ActionBarViewModel getFromDecoration(ToolWindowEx.ToolWindowDecoration decoration,

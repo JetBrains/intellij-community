@@ -13,11 +13,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 //override this class and work with the view model in your protocol-specific code
-public abstract class ToolWindowSynchronizer {
+public abstract class BackendToolWindowSynchronizer {
 
-  private static final Logger myLogger = Logger.getInstance(ToolWindowSynchronizer.class);
+  private static final Logger myLogger = Logger.getInstance(BackendToolWindowSynchronizer.class);
 
-  public ToolWindowSynchronizer(Project project) {
+  public BackendToolWindowSynchronizer(Project project) {
     project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener(){
       @Override
       public void toolWindowsRegistered(@NotNull List<String> ids,
