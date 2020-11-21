@@ -219,12 +219,9 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   fun addMessage(@Language("HTML") text: String, state: LessonMessagePane.MessageState = LessonMessagePane.MessageState.NORMAL) {
-    val paragraphs = text.split("\n").filter { it.isNotEmpty() }
-    for (p in paragraphs) {
-      val messages = MessageFactory.convert(p)
-      MessageFactory.setLinksHandlers(learnToolWindow.project, messages)
-      addMessages(messages, state)
-    }
+    val messages = MessageFactory.convert(text)
+    MessageFactory.setLinksHandlers(learnToolWindow.project, messages)
+    addMessages(messages, state)
   }
 
   fun addMessages(messageParts: List<MessagePart>, state: LessonMessagePane.MessageState = LessonMessagePane.MessageState.NORMAL) {
