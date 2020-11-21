@@ -17,7 +17,9 @@ import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.interfaces.Lesson
 import training.learn.interfaces.LessonType
+import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonExecutor
+import training.learn.lesson.kimpl.OpenPassedContext
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.ui.LessonMessagePane
@@ -57,6 +59,16 @@ class LessonManager {
     })
   }
 
+  internal fun clearCurrentLesson() {
+    currentLesson = null
+  }
+
+  internal fun openLessonPassed(lesson: KLesson, project: Project) {
+    initLesson(null, lesson, project)
+    OpenPassedContext(project).apply(lesson.lessonContent)
+    learnPanel?.learnToolWindow?.showGotItAboutRestart()
+  }
+
   internal fun initDslLesson(editor: Editor?, cLesson: Lesson, lessonExecutor: LessonExecutor) {
     initLesson(editor, cLesson, lessonExecutor.project)
     currentLessonExecutor = lessonExecutor
@@ -69,6 +81,7 @@ class LessonManager {
     currentLessonExecutor?.takeIf { !it.hasBeenStopped }?.let {
       it.lesson.onStop()
       it.stopLesson()
+      currentLessonExecutor = null
     }
     LearningUiHighlightingManager.clearHighlights()
   }

@@ -32,7 +32,7 @@ import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.border.MatteBorder
 
-class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
+class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private val lessonPanel = JPanel()
 
   private val moduleNameLabel: JLabel = if (!useNewLearningUi) JLabel()
