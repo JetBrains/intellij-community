@@ -265,6 +265,8 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   fun setPreviousMessagesPassed() {
     lessonMessagePane.passPreviousMessages()
+    lessonMessagePane.revalidate()
+    lessonMessagePane.repaint()
   }
 
   fun setLessonPassed() {
