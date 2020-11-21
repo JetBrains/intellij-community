@@ -75,12 +75,11 @@ public final class SystemProperties {
    * Returns the value of given property as a boolean, or {@code defaultValue} if the property is not specified or malformed.
    */
   public static boolean getBooleanProperty(@NotNull String key, boolean defaultValue) {
-    String value = System.getProperty(key);
-    return value != null ? Boolean.parseBoolean(value) : defaultValue;
+    return Boolean.getBoolean(key) || defaultValue;
   }
 
   public static boolean is(String key) {
-    return getBooleanProperty(key, false);
+    return Boolean.getBoolean(key);
   }
 
   public static boolean has(String key) {
@@ -88,6 +87,6 @@ public final class SystemProperties {
   }
 
   public static boolean isTrueSmoothScrollingEnabled() {
-    return getBooleanProperty("idea.true.smooth.scrolling", false);
+    return Boolean.getBoolean("idea.true.smooth.scrolling");
   }
 }
