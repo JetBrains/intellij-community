@@ -197,28 +197,40 @@ public class GradleTestsExecutionConsoleManager
           buildViewManager.onEvent(buildId, progressBuildEvent);
         }
 
-        maybeOpenBuildToolWindow(event, project);
+        maybeOpenBuildToolWindow(event, project, testsRootNode);
       }
     }, disposable);
     return consoleView;
   }
 
-  private static void maybeOpenBuildToolWindow(@NotNull BuildEvent event, @NotNull Project project) {
-    boolean openBuildTw = false;
+  private static void maybeOpenBuildToolWindow(@NotNull BuildEvent event,
+                                               @NotNull Project project,
+                                               @NotNull SMTestProxy.SMRootTestProxy testsRootNode) {
     // open Build tw for file error, as it usually comes from compilation
     if ((event instanceof FileMessageEvent) && ((FileMessageEvent)event).getKind() == MessageEvent.Kind.ERROR) {
-      openBuildTw = true;
+      openBuildToolWindow(project);
+      return;
     }
 
     // open Build tw for recognized build failures like startup errors
-    if (!openBuildTw && event instanceof FinishBuildEvent) {
+    if (event instanceof FinishBuildEvent) {
       EventResult buildResult = ((FinishBuildEvent)event).getResult();
       if (buildResult instanceof FailureResult) {
-        openBuildTw = !((FailureResult)buildResult).getFailures().isEmpty();
+        if (!((FailureResult)buildResult).getFailures().isEmpty()) {
+          openBuildToolWindow(project);
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!testsRootNode.isInProgress() && testsRootNode.isEmptySuite()) {
+              openBuildToolWindow(project);
+            }
+          });
+        }
       }
     }
-    if (!openBuildTw) return;
+  }
 
+  private static void openBuildToolWindow(@NotNull Project project) {
     ApplicationManager.getApplication().invokeLater(() -> {
       ToolWindow toolWindow = BuildContentManager.getInstance(project).getOrCreateToolWindow();
       if (toolWindow.isAvailable() && !toolWindow.isVisible()) {
