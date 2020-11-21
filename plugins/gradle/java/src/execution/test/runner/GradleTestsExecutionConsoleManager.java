@@ -35,6 +35,7 @@ import com.intellij.execution.testframework.sm.runner.history.actions.AbstractIm
 import com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -49,6 +50,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
@@ -165,13 +167,17 @@ public class GradleTestsExecutionConsoleManager
       consoleView.addMessageFilter(new ReRunTaskFilter((ExternalSystemExecuteTaskTask)task, env));
     }
 
+    Disposable disposable = Disposer.newDisposable(consoleView, "Gradle test runner build event listener disposable");
     BuildViewManager buildViewManager = project.getService(BuildViewManager.class);
     project.getService(ExternalSystemRunConfigurationViewManager.class).addListener(new BuildProgressListener() {
       @Override
       public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
         if (buildId != task.getId()) return;
-        boolean isStartBuildEvent = event instanceof StartBuildEvent;
-        if (isStartBuildEvent) {
+
+        if (event instanceof FinishBuildEvent) {
+          Disposer.dispose(disposable);
+        }
+        else if (event instanceof StartBuildEvent) {
           // override start build event to use different execution console, toolbar actions etc.
           BuildDescriptor buildDescriptor = ((StartBuildEvent)event).getBuildDescriptor();
           DefaultBuildDescriptor defaultBuildDescriptor =
@@ -183,6 +189,7 @@ public class GradleTestsExecutionConsoleManager
           event = new StartBuildEventImpl(defaultBuildDescriptor, event.getMessage());
         }
         buildViewManager.onEvent(buildId, event);
+
         if (event instanceof StartEvent) {
           ProgressBuildEventImpl progressBuildEvent =
             new ProgressBuildEventImpl(event.getId(), event.getParentId(), event.getEventTime(), event.getMessage(), -1, -1, "");
@@ -192,7 +199,7 @@ public class GradleTestsExecutionConsoleManager
 
         maybeOpenBuildToolWindow(event, project);
       }
-    }, consoleView);
+    }, disposable);
     return consoleView;
   }
 
