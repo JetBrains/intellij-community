@@ -2,6 +2,8 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
@@ -82,6 +84,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     myBuildsList = new JBList<>();
     myBuildsList.setModel(new DefaultListModel<>());
     myBuildsList.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT * 2);
+    AnsiEscapeDecoder ansiEscapeDecoder = new AnsiEscapeDecoder();
     myBuildsList.installCellRenderer(obj -> {
       JPanel panel = new JPanel(new BorderLayout());
       SimpleColoredComponent mainComponent = new SimpleColoredComponent();
@@ -92,7 +95,9 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
       if (obj.statusMessage != null) {
         SimpleColoredComponent statusComponent = new SimpleColoredComponent();
         statusComponent.setIcon(EmptyIcon.ICON_16);
-        statusComponent.append(obj.statusMessage, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        ansiEscapeDecoder.escapeText(obj.statusMessage, ProcessOutputTypes.STDOUT, (text, attributes) -> {
+          statusComponent.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES); //NON-NLS
+        });
         panel.add(statusComponent, BorderLayout.SOUTH);
       }
       return panel;
