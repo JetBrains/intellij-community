@@ -147,7 +147,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       }
       if (window != null && dropSide != -1 && dropSide != CENTER) {
         window.split(dropSide == BOTTOM || dropSide == TOP ? JSplitPane.VERTICAL_SPLIT : JSplitPane.HORIZONTAL_SPLIT,
-                     true, file, false, dropSide != LEFT && dropSide != TOP);
+                     true, file, true, dropSide != LEFT && dropSide != TOP);
         recordDragStats(dropSide, false);
         return;
       }
