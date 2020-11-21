@@ -4,12 +4,13 @@ package org.jetbrains.plugins.github.extensions
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IconProvider
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import javax.swing.Icon
 
-class GithubYamlIconProvider : IconProvider() {
+class GithubYamlIconProvider : DumbAware, IconProvider() {
 
   companion object {
     private val GITHUB_SCHEMA_NAMES = setOf("github-workflow", "github-action")
