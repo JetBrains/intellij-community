@@ -6,6 +6,8 @@ import circlet.platform.client.BatchResult
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.util.Disposer
 import com.intellij.space.ui.LoadableListVmImpl
 import com.intellij.space.ui.bindScroll
 import com.intellij.space.ui.toLoadable
@@ -16,6 +18,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.ui.frame.ProgressStripe
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JScrollPane
@@ -46,17 +49,33 @@ object SpaceReviewListFactory {
       }
     }
 
-    listVm.isLoading.forEach(listVm.lifetime) {
-      reviewsList.setPaintBusy(it)
-    }
-
     bindScroll(listVm.lifetime, scrollableList, LoadableListVmImpl(listVm.isLoading, listVm.reviews.toLoadable()), reviewsList)
 
     DataManager.registerDataProvider(scrollableList) { dataId ->
       if (SpaceReviewListDataKeys.REVIEWS_LIST_VM.`is`(dataId)) listVm else null
     }
 
-    return scrollableList
+    val disposable = Disposer.newDisposable()
+    listVm.lifetime.add {
+      Disposer.dispose(disposable)
+    }
+
+    val progressStripe = ProgressStripe(
+      scrollableList,
+      disposable,
+      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+    )
+
+    listVm.isLoading.forEach(listVm.lifetime) { isLoading ->
+      if (isLoading) {
+        progressStripe.startLoading()
+      }
+      else {
+        progressStripe.stopLoading()
+      }
+    }
+
+    return progressStripe
   }
 
   private fun installPopup(list: SpaceReviewsList) {
