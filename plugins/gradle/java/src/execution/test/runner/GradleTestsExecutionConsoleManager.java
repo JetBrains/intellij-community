@@ -15,13 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
-import com.intellij.build.BuildDescriptor;
-import com.intellij.build.BuildProgressListener;
-import com.intellij.build.BuildViewManager;
-import com.intellij.build.DefaultBuildDescriptor;
-import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.StartBuildEvent;
-import com.intellij.build.events.StartEvent;
+import com.intellij.build.*;
+import com.intellij.build.events.*;
 import com.intellij.build.events.impl.ProgressBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -42,6 +37,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -55,6 +51,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -180,6 +177,9 @@ public class GradleTestsExecutionConsoleManager
           DefaultBuildDescriptor defaultBuildDescriptor =
             new DefaultBuildDescriptor(buildDescriptor.getId(), buildDescriptor.getTitle(),
                                        buildDescriptor.getWorkingDir(), buildDescriptor.getStartTime());
+
+          // do not open Build tw for any error messages as it can be tests failure events
+          defaultBuildDescriptor.setActivateToolWindowWhenFailed(false);
           event = new StartBuildEventImpl(defaultBuildDescriptor, event.getMessage());
         }
         buildViewManager.onEvent(buildId, event);
@@ -189,9 +189,35 @@ public class GradleTestsExecutionConsoleManager
           progressBuildEvent.setHint("- " + GradleBundle.message("gradle.test.runner.build.tw.link.title"));
           buildViewManager.onEvent(buildId, progressBuildEvent);
         }
+
+        maybeOpenBuildToolWindow(event, project);
       }
     }, consoleView);
     return consoleView;
+  }
+
+  private static void maybeOpenBuildToolWindow(@NotNull BuildEvent event, @NotNull Project project) {
+    boolean openBuildTw = false;
+    // open Build tw for file error, as it usually comes from compilation
+    if ((event instanceof FileMessageEvent) && ((FileMessageEvent)event).getKind() == MessageEvent.Kind.ERROR) {
+      openBuildTw = true;
+    }
+
+    // open Build tw for recognized build failures like startup errors
+    if (!openBuildTw && event instanceof FinishBuildEvent) {
+      EventResult buildResult = ((FinishBuildEvent)event).getResult();
+      if (buildResult instanceof FailureResult) {
+        openBuildTw = !((FailureResult)buildResult).getFailures().isEmpty();
+      }
+    }
+    if (!openBuildTw) return;
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ToolWindow toolWindow = BuildContentManager.getInstance(project).getOrCreateToolWindow();
+      if (toolWindow.isAvailable() && !toolWindow.isVisible()) {
+        toolWindow.show(null);
+      }
+    }, ModalityState.NON_MODAL, project.getDisposed());
   }
 
   @Override
