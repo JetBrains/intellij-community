@@ -57,6 +57,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
       listOf(
+        JavaBasicCompletionLesson(it),
         JavaSmartTypeCompletionLesson(it),
         JavaPostfixCompletionLesson(it),
         JavaStatementCompletionLesson(it),
@@ -92,6 +93,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
       listOf(
+        JavaSearchEverywhereLesson(it),
         JavaFileStructureLesson(it),
         JavaDeclarationAndUsagesLesson(it),
         JavaInheritanceHierarchyLesson(it),
