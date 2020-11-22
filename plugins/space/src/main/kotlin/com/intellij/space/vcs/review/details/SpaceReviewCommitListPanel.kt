@@ -6,15 +6,15 @@ import com.intellij.ui.OnePixelSplitter
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-internal class SpaceReviewCommitListPanel(detailsDetailsVm: CrDetailsVm<out CodeReviewRecord>) {
+internal class SpaceReviewCommitListPanel(reviewDetailsVm: CrDetailsVm<out CodeReviewRecord>) {
   val view: JPanel = JPanel(BorderLayout())
 
   init {
     val commitsBrowser = OnePixelSplitter(true, "space.review.commit.list", 0.7f).apply {
-      firstComponent = SpaceReviewCommitListFactory.createCommitList(detailsDetailsVm)
-      secondComponent = SpaceReviewChangesTreeFactory.create(detailsDetailsVm.ideaProject,
-                                                             detailsDetailsVm.changesVm,
-                                                             detailsDetailsVm.spaceDiffVm)
+      firstComponent = SpaceReviewCommitListFactory.createCommitList(reviewDetailsVm)
+      secondComponent = SpaceReviewChangesTreeFactory.create(reviewDetailsVm.ideaProject,
+                                                             reviewDetailsVm.changesVm,
+                                                             reviewDetailsVm.spaceDiffVm)
     }
     view.add(commitsBrowser, BorderLayout.CENTER)
   }
