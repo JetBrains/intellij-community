@@ -19,6 +19,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -27,9 +28,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class DetailedInfoPanel(detailsVm: CrDetailsVm<out CodeReviewRecord>) {
-  val view: JComponent
-
+internal class DetailedInfoPanel(detailsVm: CrDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
   init {
     val titleComponent = HtmlEditorPane().apply {
       font = font.deriveFont((font.size * 1.2).toFloat())
@@ -41,9 +40,11 @@ internal class DetailedInfoPanel(detailsVm: CrDetailsVm<out CodeReviewRecord>) {
     }
 
     detailsVm.createdBy.forEach(detailsVm.lifetime) {
-      infoLabel.text = SpaceBundle.message("review.label.created.by.user.at.time",
-                                           it!!.englishFullName(),
-                                           detailsVm.createdAt.value.formatPrettyDateTime())
+      infoLabel.text = SpaceBundle.message(
+        "review.label.created.by.user.at.time",
+        it.englishFullName(),
+        detailsVm.createdAt.value.formatPrettyDateTime()
+      )
     }
 
     detailsVm.title.forEach(detailsVm.lifetime) {
@@ -116,13 +117,13 @@ internal class DetailedInfoPanel(detailsVm: CrDetailsVm<out CodeReviewRecord>) {
       add(detailsPanel)
     }
 
-    view = ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
+    val scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
       viewport.isOpaque = false
       isOpaque = false
     }
 
-    UIUtil.setBackgroundRecursively(view, UIUtil.getListBackground())
-
+    addToCenter(scrollPane)
+    UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
   }
 
   private fun createDirectionPanel(detailsVm: MergeRequestDetailsVm): NonOpaquePanel {

@@ -3,12 +3,9 @@ package com.intellij.space.vcs.review.details
 
 import circlet.code.api.CodeReviewRecord
 import com.intellij.ui.OnePixelSplitter
-import java.awt.BorderLayout
-import javax.swing.JPanel
+import com.intellij.util.ui.components.BorderLayoutPanel
 
-internal class SpaceReviewCommitListPanel(reviewDetailsVm: CrDetailsVm<out CodeReviewRecord>) {
-  val view: JPanel = JPanel(BorderLayout())
-
+internal class SpaceReviewCommitListPanel(reviewDetailsVm: CrDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
   init {
     val commitsBrowser = OnePixelSplitter(true, "space.review.commit.list", 0.7f).apply {
       firstComponent = SpaceReviewCommitListFactory.createCommitList(reviewDetailsVm)
@@ -16,7 +13,7 @@ internal class SpaceReviewCommitListPanel(reviewDetailsVm: CrDetailsVm<out CodeR
                                                              reviewDetailsVm.changesVm,
                                                              reviewDetailsVm.spaceDiffVm)
     }
-    view.add(commitsBrowser, BorderLayout.CENTER)
+    addToCenter(commitsBrowser)
   }
 }
 

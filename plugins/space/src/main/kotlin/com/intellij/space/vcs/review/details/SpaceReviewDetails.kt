@@ -40,13 +40,13 @@ internal class SpaceReviewDetails(project: Project,
 
       val uiDisposable = Disposer.newDisposable()
 
-      val detailsTabInfo = TabInfo(DetailedInfoPanel(detailsVm).view).apply {
+      val detailsTabInfo = TabInfo(DetailedInfoPanel(detailsVm)).apply {
         text = SpaceBundle.message("review.tab.name.details")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
           currentReview.value = null
         }
       }
-      val commitsTabInfo = TabInfo(SpaceReviewCommitListPanel(detailsVm).view).apply {
+      val commitsTabInfo = TabInfo(SpaceReviewCommitListPanel(detailsVm)).apply {
         text = SpaceBundle.message("review.tab.name.commits")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
           currentReview.value = null
