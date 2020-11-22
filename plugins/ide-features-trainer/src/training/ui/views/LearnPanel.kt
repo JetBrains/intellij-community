@@ -532,6 +532,9 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     nextButton.isSelected = true
     nextButton.isFocusable = true
     nextButton.requestFocus()
+    if (scrollToNewMessages) {
+      nextButton.scrollRectToVisible(Rectangle(0, 0, nextButton.width, nextButton.height))
+    }
   }
 
   fun clearRestoreMessage() {
