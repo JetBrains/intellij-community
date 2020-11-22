@@ -112,6 +112,13 @@ public final class FontInfo {
     return info.toString().equalsIgnoreCase(name);
   }
 
+  private boolean isLogicalFont() {
+    for (String logicalFontName : DEFAULT) {
+      if (matches(this, logicalFontName)) return true;
+    }
+    return false;
+  }
+
   private static FontInfo byName(String name) {
     return isWrongSuffix(name) ? null : create(name, null);
   }
@@ -142,18 +149,12 @@ public final class FontInfo {
     List<FontInfo> list = new ArrayList<>(fonts.length);
     for (Font font : fonts) {
       FontInfo info = byFont(font);
-      if (info != null) list.add(info);
-    }
-    List<FontInfo> listWithoutLogicalFonts = new ArrayList<>();
-    outer:
-    for (FontInfo info : list) {
-      for (String logicalFontName : DEFAULT) {
-        if (matches(info, logicalFontName)) continue outer;
+      if (info != null && !info.isLogicalFont()) {
+        list.add(info);
       }
-      listWithoutLogicalFonts.add(info);
     }
-    listWithoutLogicalFonts.sort(COMPARATOR);
-    return Collections.unmodifiableList(listWithoutLogicalFonts);
+    list.sort(COMPARATOR);
+    return Collections.unmodifiableList(list);
   }
 
   private static FontInfo create(String name, Font font) {
