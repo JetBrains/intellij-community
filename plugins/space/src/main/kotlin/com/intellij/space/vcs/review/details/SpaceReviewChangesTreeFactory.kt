@@ -17,7 +17,6 @@ import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import runtime.reactive.Property
@@ -98,21 +97,10 @@ internal class RepositoryNode(@NlsSafe val repositoryName: String,
   }
 }
 
-internal class ReviewChangeNode(private val changeInReview: ChangeInReview)
+internal class ReviewChangeNode(changeInReview: ChangeInReview)
   : AbstractChangesBrowserFilePathNode<ChangeInReview>(changeInReview, getFileStatus(changeInReview)) {
 
   private val filePath: FilePath = getFilePath(changeInReview)
-
-  override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    super.render(renderer, selected, expanded, hasFocus)
-    changeInReview.change.diffSize?.let { diffSize ->
-      val (added, removed) = diffSize
-      if (added != 0) renderer.append("${FontUtil.spaceAndThinSpace()}+$added",
-                                      SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.ADDED.color))
-      if (removed != 0) renderer.append("${FontUtil.spaceAndThinSpace()}-${removed}",
-                                        SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.DELETED.color))
-    }
-  }
 
   override fun filePath(userObject: ChangeInReview): FilePath = filePath
 }
