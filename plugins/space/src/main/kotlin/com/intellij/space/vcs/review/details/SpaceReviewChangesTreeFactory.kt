@@ -53,7 +53,7 @@ internal object SpaceReviewChangesTreeFactory {
     tree.doubleClickHandler = Processor { e ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
 
-      val spaceDiffFile = SpaceDiffFile(spaceDiffVm.value, changesVm, changesVm.participantsVm)
+      val spaceDiffFile = SpaceDiffFile(spaceDiffVm.value, changesVm)
       FileEditorManager.getInstance(project).openFile(spaceDiffFile, true)
       true
     }

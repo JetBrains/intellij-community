@@ -25,7 +25,7 @@ internal class SpaceDiffRequestProcessor(project: Project,
                                          lifetime: LifetimeSource) : CacheDiffRequestProcessor.Simple(project) {
   val spaceDiffVm = spaceDiffFile.diffVm
   val changesVm = spaceDiffFile.changesVm
-  val participantsVm = spaceDiffFile.participantsVm
+  val participantsVm = changesVm.participantsVm
   val codeViewService = spaceDiffVm.client.codeView
   val seqLifetimeSource = SequentialLifetimes(lifetime)
 
