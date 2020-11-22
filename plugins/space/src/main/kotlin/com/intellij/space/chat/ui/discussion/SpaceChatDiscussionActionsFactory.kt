@@ -10,6 +10,7 @@ import com.intellij.space.chat.ui.thread.SpaceChatThreadActionsFactory
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil.getContextHelpForeground
 import com.intellij.util.ui.codereview.SingleValueModel
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
@@ -32,6 +33,13 @@ internal class SpaceChatDiscussionActionsFactory(
         newMessageStateModel.value = true
       }
 
+      val resolvingLabel = JLabel(SpaceBundle.message("chat.resolving.action.state")).apply {
+        foreground = getContextHelpForeground()
+      }
+      val reopeningLabel = JLabel(SpaceBundle.message("chat.reopening.action.state")).apply {
+        foreground = getContextHelpForeground()
+      }
+
       val resolvingModel = SingleValueModelImpl(ResolvingState.READY)
       val resolveReopenLabel = createResolveReopenLabel(chatVm, resolvingModel)
       JPanel(HorizontalLayout(JBUI.scale(5))).apply {
@@ -40,17 +48,12 @@ internal class SpaceChatDiscussionActionsFactory(
         add(resolveReopenLabel)
         resolvingModel.addValueUpdatedListener { newState ->
           remove(1)
-          when (newState) {
-            ResolvingState.RESOLVING -> {
-              add(JLabel(SpaceBundle.message("chat.resolving.action.state")))
-            }
-            ResolvingState.REOPENING -> {
-              add(JLabel(SpaceBundle.message("chat.reopening.action.state")))
-            }
-            ResolvingState.READY -> {
-              add(resolveReopenLabel)
-            }
+          val stateLabel = when (newState) {
+            ResolvingState.RESOLVING -> resolvingLabel
+            ResolvingState.REOPENING -> reopeningLabel
+            ResolvingState.READY -> resolveReopenLabel
           }
+          add(stateLabel)
           revalidate()
           repaint()
         }
