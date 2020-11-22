@@ -28,7 +28,8 @@ internal class SpaceReviewCommentPanelFactory(
   private val lifetime: Lifetime,
   private val workspace: Workspace,
   private val client: KCircletClient,
-  selectedChange: ChangeInReview
+  selectedChange: ChangeInReview,
+  private val pendingStateProvider: () -> Boolean
 ) {
   private val selectedChangeFilePath = getFilePath(selectedChange)
 
@@ -62,7 +63,7 @@ internal class SpaceReviewCommentPanelFactory(
       parent,
       ChannelsVm(client, me, completionVm, M2DraftsVm(client, completionVm, null), featureFlags, contactList),
       discussionRecord.value.channel,
-      SpaceChatDiscussionActionsFactory(discussionRecord)
+      SpaceChatDiscussionActionsFactory(discussionRecord, pendingStateProvider)
     )
   }
 }

@@ -16,7 +16,8 @@ class SpaceReviewCommentSubmitterImpl(
   client: KCircletClient,
   private val projectKey: ProjectKey,
   private val reviewId: ReviewIdentifier,
-  private val changeInReview: ChangeInReview
+  private val changeInReview: ChangeInReview,
+  private val pendingStateProvider: () -> Boolean
 ) : SpaceReviewCommentSubmitter {
 
   private val reviewService: CodeReviewService = client.codeReview
@@ -40,7 +41,8 @@ class SpaceReviewCommentSubmitterImpl(
       anchor = anchor,
       text = text.trim(),
       reviewId = reviewId,
-      diffContext = diffContext
+      diffContext = diffContext,
+      pending = pendingStateProvider()
     )
   }
 }

@@ -25,4 +25,6 @@ interface SpaceReviewChangesVm : SpaceVmWithClient, Lifetimed {
   val changes: Property<Map<String, ChangesWithDiscussion>?>
   val selectedChange: MutableProperty<ChangeInReview?>
   val selectedChangeDiscussions: Property<ObservableMutableMap<TID, PropagatedCodeDiscussion>?>
+
+  val participantsVm: Property<SpaceReviewParticipantsVm?>
 }

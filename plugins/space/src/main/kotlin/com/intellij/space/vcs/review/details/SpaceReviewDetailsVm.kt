@@ -7,7 +7,8 @@ import circlet.client.api.TD_MemberProfile
 import circlet.client.api.identifier
 import circlet.code.api.*
 import circlet.code.codeReview
-import circlet.platform.api.*
+import circlet.platform.api.Ref
+import circlet.platform.api.TID
 import circlet.platform.client.*
 import com.intellij.openapi.project.Project
 import com.intellij.space.settings.SpaceSettings
@@ -93,8 +94,10 @@ abstract class CrDetailsVm<R : CodeReviewRecord>(
   val spaceDiffVm: Property<SpaceDiffVm> = mutableProperty(
     SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, selectedChange))
 
-  val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(lifetime, client, projectKey, review.value.identifier,
-                                                                 reviewId, selectedCommits, selectedChange)
+  val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(
+    lifetime, client, projectKey, review.value.identifier,
+    reviewId, selectedCommits, participantsVm, selectedChange
+  )
 }
 
 internal class MergeRequestDetailsVm(

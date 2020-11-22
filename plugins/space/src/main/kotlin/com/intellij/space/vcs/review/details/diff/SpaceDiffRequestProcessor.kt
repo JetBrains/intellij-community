@@ -12,14 +12,12 @@ import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
-import com.intellij.space.vcs.review.details.getChangeFilePathInfo
-import com.intellij.space.vcs.review.details.getFileContent
-import com.intellij.space.vcs.review.details.getFilePath
+import com.intellij.space.vcs.review.details.*
 import kotlinx.coroutines.asCoroutineDispatcher
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.runBlocking
+import runtime.reactive.Property
 import runtime.reactive.SequentialLifetimes
 
 internal class SpaceDiffRequestProcessor(project: Project,
@@ -27,6 +25,7 @@ internal class SpaceDiffRequestProcessor(project: Project,
                                          lifetime: LifetimeSource) : CacheDiffRequestProcessor.Simple(project) {
   val spaceDiffVm = spaceDiffFile.diffVm
   val changesVm = spaceDiffFile.changesVm
+  val participantsVm = spaceDiffFile.participantsVm
   val codeViewService = spaceDiffVm.client.codeView
   val seqLifetimeSource = SequentialLifetimes(lifetime)
 
@@ -61,7 +60,7 @@ internal class SpaceDiffRequestProcessor(project: Project,
               newFilePath?.let { diffContentFactory.create(project, rightFileText, it) } ?: diffContentFactory.createEmpty()
             )
 
-            val diffRequestData = DiffRequestData(nextLifetime, spaceDiffVm, changesVm)
+            val diffRequestData = DiffRequestData(nextLifetime, spaceDiffVm, changesVm, participantsVm)
 
             return@runBlocking SimpleDiffRequest(getFilePath(change).toString(), documents, titles).apply {
               putUserData(SpaceDiffKeys.DIFF_REQUEST_DATA, diffRequestData)
@@ -74,6 +73,9 @@ internal class SpaceDiffRequestProcessor(project: Project,
   }
 }
 
-data class DiffRequestData(val lifetime: Lifetime,
-                           val spaceDiffVm: SpaceDiffVm,
-                           val changesVm: SpaceReviewChangesVm)
+data class DiffRequestData(
+  val lifetime: Lifetime,
+  val spaceDiffVm: SpaceDiffVm,
+  val changesVm: SpaceReviewChangesVm,
+  val participantsVm: Property<SpaceReviewParticipantsVm?>
+)

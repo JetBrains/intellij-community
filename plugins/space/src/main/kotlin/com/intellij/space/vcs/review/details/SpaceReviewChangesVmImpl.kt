@@ -30,7 +30,8 @@ class SpaceReviewChangesVmImpl(
   override val reviewIdentifier: ReviewIdentifier,
   override val reviewId: TID,
   override val selectedCommits: Property<List<ReviewCommitListItem>>,
-  override val selectedChange: MutableProperty<ChangeInReview?> = mutableProperty(null)
+  override val participantsVm: Property<SpaceReviewParticipantsVm?>,
+  override val selectedChange: MutableProperty<ChangeInReview?> = mutableProperty(null),
 ) : SpaceReviewChangesVm,
     SpaceVmWithClient {
 

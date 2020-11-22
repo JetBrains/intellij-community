@@ -5,13 +5,16 @@ import circlet.platform.api.TID
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
+import com.intellij.space.vcs.review.details.SpaceReviewParticipantsVm
 import com.intellij.testFramework.LightVirtualFile
 import icons.SpaceIcons
+import runtime.reactive.Property
 import javax.swing.Icon
 
 internal class SpaceDiffFile(
   val diffVm: SpaceDiffVm,
-  val changesVm: SpaceReviewChangesVm
+  val changesVm: SpaceReviewChangesVm,
+  val participantsVm: Property<SpaceReviewParticipantsVm?>
 ) : LightVirtualFile(SpaceBundle.message("review.diff.tab.title", diffVm.reviewKey),
                      SpaceDiffFileType,
                      "") {

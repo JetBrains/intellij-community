@@ -5,6 +5,7 @@ import circlet.code.api.CodeDiscussionAnchor
 import circlet.code.api.InterpolatedLineState
 import circlet.code.api.PropagatedCodeDiscussion
 import circlet.platform.client.property
+import circlet.platform.client.resolve
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool
@@ -24,6 +25,7 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
     val ws = SpaceWorkspaceComponent.getInstance().workspace.value ?: return
     val diffRequestData = request.getUserData(SpaceDiffKeys.DIFF_REQUEST_DATA) ?: return
     val changesVm = diffRequestData.changesVm
+    val participantsVm = diffRequestData.participantsVm
     val selectedChange = changesVm.selectedChange.value ?: return
     val discussions = changesVm.selectedChangeDiscussions.value ?: return
     val project = context.project!!
@@ -32,7 +34,13 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
 
     viewer as DiffViewerBase
 
-    val chatPanelFactory = SpaceReviewCommentPanelFactory(project, viewer, lifetime, ws, client, selectedChange)
+    fun pendingStateProvider(): Boolean {
+      val reviewers = participantsVm.value?.reviewers?.value?.filter { it.theirTurn == true } ?: return false
+      val me = SpaceWorkspaceComponent.getInstance().workspace.value?.me ?: return false
+      return reviewers.any { it.user.resolve() == me.value }
+    }
+
+    val chatPanelFactory = SpaceReviewCommentPanelFactory(project, viewer, lifetime, ws, client, selectedChange, ::pendingStateProvider)
 
     viewer.addListener(object : DiffViewerListener() {
       var viewerIsReady = false // todo: remove this hack
@@ -45,6 +53,7 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
             changesVm.projectKey,
             changesVm.reviewIdentifier,
             selectedChange,
+            ::pendingStateProvider
           )
           val handler = createHandler(viewer, spaceReviewCommentSubmitter)
 

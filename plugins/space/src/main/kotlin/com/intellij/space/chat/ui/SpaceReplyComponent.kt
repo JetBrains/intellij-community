@@ -29,11 +29,12 @@ internal fun createReplyComponent(chatVM: M2ChannelVm): JComponent {
 
 internal fun createNewMessageField(
   chatVM: M2ChannelVm,
+  pendingStateProvider: () -> Boolean = { false },
   onCancel: (() -> Unit)? = null
 ): JComponent {
   val submittableModel = object : SubmittableTextFieldModelBase("") {
     override fun submit() {
-      chatVM.sendMessage(document.text)
+      chatVM.sendMessage(document.text, pending = pendingStateProvider())
       runWriteAction {
         document.setText("")
       }

@@ -21,7 +21,10 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class SpaceChatDiscussionActionsFactory(private val discussion: Property<CodeDiscussionRecord>) : SpaceChatThreadActionsFactory {
+internal class SpaceChatDiscussionActionsFactory(
+  private val discussion: Property<CodeDiscussionRecord>,
+  private val pendingStateProvider: () -> Boolean = { false }
+) : SpaceChatThreadActionsFactory {
   override fun createActionsComponent(chatVm: M2ChannelVm): JComponent {
     val newMessageStateModel = SingleValueModelImpl(false)
     val actionsPanel = {
@@ -58,7 +61,11 @@ internal class SpaceChatDiscussionActionsFactory(private val discussion: Propert
       newMessageStateModel,
       mainComponentSupplier = actionsPanel,
       toggleableComponentSupplier = {
-        createNewMessageField(chatVm, onCancel = { newMessageStateModel.value = false })
+        createNewMessageField(
+          chatVm,
+          onCancel = { newMessageStateModel.value = false },
+          pendingStateProvider = pendingStateProvider
+        )
       }
     )
   }
