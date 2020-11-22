@@ -40,7 +40,7 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
       return reviewers.any { it.user.resolve() == me.value }
     }
 
-    val chatPanelFactory = SpaceReviewCommentPanelFactory(project, viewer, lifetime, ws, client, selectedChange, ::pendingStateProvider)
+    val chatPanelFactory = SpaceReviewCommentPanelFactory(project, viewer, lifetime, ws, selectedChange, ::pendingStateProvider)
 
     viewer.addListener(object : DiffViewerListener() {
       var viewerIsReady = false // todo: remove this hack

@@ -4,10 +4,6 @@ package com.intellij.space.vcs.review.details.diff
 import circlet.code.api.ChangeInReview
 import circlet.code.api.CodeDiscussionRecord
 import circlet.code.api.PropagatedCodeDiscussion
-import circlet.m2.ChannelsVm
-import circlet.m2.channel.M2DraftsVm
-import circlet.m2.contacts2.ContactListVm
-import circlet.platform.client.KCircletClient
 import circlet.platform.client.property
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
@@ -27,7 +23,6 @@ internal class SpaceReviewCommentPanelFactory(
   private val parent: Disposable,
   private val lifetime: Lifetime,
   private val workspace: Workspace,
-  private val client: KCircletClient,
   selectedChange: ChangeInReview,
   private val pendingStateProvider: () -> Boolean
 ) {
@@ -52,18 +47,13 @@ internal class SpaceReviewCommentPanelFactory(
     }
   }
 
-  private fun createSpaceChatContentPanel(discussionRecord: Property<CodeDiscussionRecord>): JComponent {
-    val me = workspace.me
-    val completionVm = workspace.completion
-    val featureFlags = workspace.featureFlags.featureFlags
-    val contactList = ContactListVm(lifetime, client, me, workspace.preferredLanguage, null)
-    return SpaceChatStandaloneThreadComponent(
+  private fun createSpaceChatContentPanel(discussionRecord: Property<CodeDiscussionRecord>): JComponent =
+    SpaceChatStandaloneThreadComponent(
       project,
       lifetime,
       parent,
-      ChannelsVm(client, me, completionVm, M2DraftsVm(client, completionVm, null), featureFlags, contactList),
+      workspace.chatVm.channels,
       discussionRecord.value.channel,
       SpaceChatDiscussionActionsFactory(discussionRecord, pendingStateProvider)
     )
-  }
 }
