@@ -12973,6 +12973,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/throwableNotThrown/property5.kt");
         }
 
+        @TestMetadata("resultOfLambda.kt")
+        public void testResultOfLambda() throws Exception {
+            runTest("testData/inspectionsLocal/throwableNotThrown/resultOfLambda.kt");
+        }
+
+        @TestMetadata("resultOfLambda2.kt")
+        public void testResultOfLambda2() throws Exception {
+            runTest("testData/inspectionsLocal/throwableNotThrown/resultOfLambda2.kt");
+        }
+
         @TestMetadata("return.kt")
         public void testReturn() throws Exception {
             runTest("testData/inspectionsLocal/throwableNotThrown/return.kt");

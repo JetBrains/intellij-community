@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isNullable
@@ -44,7 +45,9 @@ class KotlinThrowableNotThrownInspection : AbstractKotlinInspection() {
     })
 
     private fun KtExpression.isUsed(): Boolean {
-        if (!isUsedAsExpression(analyze(BodyResolveMode.PARTIAL_WITH_CFA))) return false
+        val context = analyze(BodyResolveMode.PARTIAL_WITH_CFA)
+        if (!isUsedAsExpression(context)) return false
+        if (isUsedAsResultOfLambda(context)) return true
         val property = getParentOfTypes(
             true,
             KtThrowExpression::class.java,
