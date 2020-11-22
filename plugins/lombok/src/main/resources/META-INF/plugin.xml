@@ -189,50 +189,50 @@
     <canBeFinal implementation="de.plushnikov.intellij.plugin.extension.LombokCanBeFinalHandler"/>
 
     <localInspection
-      displayName="Lombok annotations"
       groupName="Lombok"
       shortName="Lombok"
       enabledByDefault="true"
-      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokInspection"/>
+      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokInspection" key="inspection.lombok.display.name"
+      bundle="messages.LombokBundle"/>
 
     <localInspection
-      displayName="Deprecated Lombok annotations"
       groupName="Lombok"
       shortName="DeprecatedLombok"
       enabledByDefault="true"
-      implementationClass="de.plushnikov.intellij.plugin.inspection.DeprecatedLombokAnnotationInspection"/>
+      implementationClass="de.plushnikov.intellij.plugin.inspection.DeprecatedLombokAnnotationInspection"
+      key="inspection.deprecated.lombok.display.name" bundle="messages.LombokBundle"/>
 
     <localInspection
-      displayName="@Value modifiers"
       groupPath="Lombok"
       groupName="Redundant modifiers"
       shortName="RedundantModifiersValueLombok"
       enabledByDefault="true"
-      implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnValueLombokAnnotationInspection"/>
+      implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnValueLombokAnnotationInspection"
+      key="inspection.redundant.modifiers.value.lombok.display.name" bundle="messages.LombokBundle"/>
 
     <localInspection
-      displayName="@UtilityClass modifiers"
       groupPath="Lombok"
       groupName="Redundant modifiers"
       shortName="RedundantModifiersUtilityClassLombok"
       enabledByDefault="false"
-      implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnUtilityClassLombokAnnotationInspection"/>
+      implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnUtilityClassLombokAnnotationInspection"
+      key="inspection.redundant.modifiers.utility.class.lombok.display.name" bundle="messages.LombokBundle"/>
 
     <localInspection
-      displayName="@Slf4j"
       groupPath="Lombok"
       groupName="Redundant definitions"
       shortName="RedundantSlf4jDefinition"
       enabledByDefault="true"
-      implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"/>
+      implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"
+      key="inspection.redundant.slf.4.j.definition.display.name" bundle="messages.LombokBundle"/>
 
     <localInspection
-      displayName="Unnecessary final before 'val'"
       groupPath="Lombok"
       groupName="Redundant modifiers"
       shortName="RedundantModifiersValLombok"
       enabledByDefault="true"
-      implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnValLombokAnnotationInspection"/>
+      implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnValLombokAnnotationInspection"
+      key="inspection.redundant.modifiers.val.lombok.display.name" bundle="messages.LombokBundle"/>
 
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.valvar.to.ReplaceExplicitTypeWithValIntentionAction</className>
@@ -263,32 +263,16 @@
   </extensions>
 
   <actions>
-    <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
-           icon="LombokIcons.Lombok" popup="true">
+    <group id="LombokActionGroup" icon="LombokIcons.Lombok" popup="true">
 
-      <action id="defaultLombokData" class="de.plushnikov.intellij.plugin.action.lombok.LombokDataAction"
-              text="Default @Data"
-              description="Action to replace getter/setter/equals/hashcode/toString methods with lombok @Data annotation">
-      </action>
+      <action id="defaultLombokData" class="de.plushnikov.intellij.plugin.action.lombok.LombokDataAction"/>
       <separator/>
-      <action id="defaultLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokGetterAction"
-              text="Default @Getter" description="Action to replace all getter methods with lombok @Getter annotation">
-      </action>
-      <action id="defaultLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokSetterAction"
-              text="Default @Setter" description="Action to replace all setter methods with lombok @Setter annotation">
-      </action>
-      <action id="defaultLombokEqualsAndHashcode"
-              class="de.plushnikov.intellij.plugin.action.lombok.LombokEqualsAndHashcodeAction"
-              text="Default @EqualsAndHashcode"
-              description="Action to replace equals and hashcode methods with lombok @EqualsAndHashcode annotation">
-      </action>
-      <action id="defaultLombokToString" class="de.plushnikov.intellij.plugin.action.lombok.LombokToStringAction"
-              text="Default @ToString" description="Action to replace toString method with lombok @ToString annotation">
-      </action>
+      <action id="defaultLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokGetterAction"/>
+      <action id="defaultLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokSetterAction"/>
+      <action id="defaultLombokEqualsAndHashcode" class="de.plushnikov.intellij.plugin.action.lombok.LombokEqualsAndHashcodeAction"/>
+      <action id="defaultLombokToString" class="de.plushnikov.intellij.plugin.action.lombok.LombokToStringAction"/>
       <separator/>
-      <action id="defaultLombokLogger" class="de.plushnikov.intellij.plugin.action.lombok.LombokLoggerAction"
-              text="@Log (and friends)" description="Action to replace logger with lombok @Log annotation">
-      </action>
+      <action id="defaultLombokLogger" class="de.plushnikov.intellij.plugin.action.lombok.LombokLoggerAction"/>
 
       <!--<separator/>-->
       <!--<action id="generalLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorGetterAction"-->
@@ -302,65 +286,27 @@
 
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
-    <group id="DelombokActionGroup" text="Delombok" description="Refactor code removing lombok annotations"
-           icon="LombokIcons.Lombok" popup="true">
-      <action id="delombokAny" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEverythingAction"
-              text="All lombok annotations"
-              description="Action to replace all lombok annotations with vanilla java methods">
-      </action>
+    <group id="DelombokActionGroup" icon="LombokIcons.Lombok" popup="true">
+      <action id="delombokAny" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEverythingAction"/>
       <separator/>
-      <action id="delombokData" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDataAction"
-              text="@Data" description="Action to replace lombok @Data annotation with vanilla java methods">
-      </action>
-      <action id="delombokValue" class="de.plushnikov.intellij.plugin.action.delombok.DelombokValueAction"
-              text="@Value" description="Action to replace lombok @Value annotation with vanilla java methods">
-      </action>
-      <action id="delombokWither" class="de.plushnikov.intellij.plugin.action.delombok.DelombokWitherAction"
-              text="@Wither" description="Action to replace lombok @Wither annotation with vanilla java methods">
-      </action>
-      <action id="delombokDelegate" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDelegateAction"
-              text="@Delegate" description="Action to replace lombok @Delegate annotation with vanilla java methods">
-      </action>
-      <action id="delombokBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokBuilderAction"
-              text="@Builder" description="Action to replace lombok @Builder annotation with vanilla java methods">
-      </action>
-      <action id="delombokSuperBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokSuperBuilderAction"
-              text="@SuperBuilder"
-              description="Action to replace lombok @SuperBuilder annotation with vanilla java methods">
-      </action>
+      <action id="delombokData" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDataAction"/>
+      <action id="delombokValue" class="de.plushnikov.intellij.plugin.action.delombok.DelombokValueAction"/>
+      <action id="delombokWither" class="de.plushnikov.intellij.plugin.action.delombok.DelombokWitherAction"/>
+      <action id="delombokDelegate" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDelegateAction"/>
+      <action id="delombokBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokBuilderAction"/>
+      <action id="delombokSuperBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokSuperBuilderAction"/>
       <separator/>
-      <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"
-              text="@Constructors"
-              description="Action to replace lombok @NoArgsConstructor, @RequiredArgsConstructor and @AllArgsConstructor annotations with vanilla java methods">
-      </action>
-      <action id="delombokGetter" class="de.plushnikov.intellij.plugin.action.delombok.DelombokGetterAction"
-              text="@Getter" description="Action to replace lombok @Getter annotation with vanilla getter methods">
-      </action>
-      <action id="delombokSetter" class="de.plushnikov.intellij.plugin.action.delombok.DelombokSetterAction"
-              text="@Setter" description="Action to replace lombok @Setter annotation with vanilla setter methods">
-      </action>
+      <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"/>
+      <action id="delombokGetter" class="de.plushnikov.intellij.plugin.action.delombok.DelombokGetterAction"/>
+      <action id="delombokSetter" class="de.plushnikov.intellij.plugin.action.delombok.DelombokSetterAction"/>
       <action id="delombokEqualsAndHashCode"
-              class="de.plushnikov.intellij.plugin.action.delombok.DelombokEqualsAndHashCodeAction"
-              text="@EqualsAndHashCode"
-              description="Action to replace lombok @EqualsAndHashCode annotation with vanilla java methods">
-      </action>
-      <action id="delombokToString" class="de.plushnikov.intellij.plugin.action.delombok.DelombokToStringAction"
-              text="@ToString" description="Action to replace lombok @ToString annotation with vanilla java methods">
-      </action>
+              class="de.plushnikov.intellij.plugin.action.delombok.DelombokEqualsAndHashCodeAction"/>
+      <action id="delombokToString" class="de.plushnikov.intellij.plugin.action.delombok.DelombokToStringAction"/>
       <separator/>
-      <action id="delombokLogger" class="de.plushnikov.intellij.plugin.action.delombok.DelombokLoggerAction"
-              text="@Log (and friends)"
-              description="Action to replace lombok @Log (and other) annotation with vanilla log field">
-      </action>
+      <action id="delombokLogger" class="de.plushnikov.intellij.plugin.action.delombok.DelombokLoggerAction"/>
       <action id="delombokFieldNameCostants"
-              class="de.plushnikov.intellij.plugin.action.delombok.DelombokFieldNameConstantsAction"
-              text="@FieldNameConstants"
-              description="Action to replace lombok @FieldNameConstants annotation with vanilla java fields">
-      </action>
-      <action id="delombokUtilityClass" class="de.plushnikov.intellij.plugin.action.delombok.DelombokUtilityClassAction"
-              text="@UtilityClass"
-              description="Action to replace lombok @UtilityClass annotation with vanilla java fields">
-      </action>
+              class="de.plushnikov.intellij.plugin.action.delombok.DelombokFieldNameConstantsAction"/>
+      <action id="delombokUtilityClass" class="de.plushnikov.intellij.plugin.action.delombok.DelombokUtilityClassAction"/>
 
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
