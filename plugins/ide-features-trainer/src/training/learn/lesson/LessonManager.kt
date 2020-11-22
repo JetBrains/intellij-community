@@ -27,6 +27,7 @@ import training.ui.MessagePart
 import training.ui.views.LearnPanel
 import training.util.createNamedSingleThreadExecutor
 import training.util.useNewLearningUi
+import java.awt.Rectangle
 import java.util.concurrent.Executor
 
 @Service
@@ -65,7 +66,10 @@ class LessonManager {
 
   internal fun openLessonPassed(lesson: KLesson, project: Project) {
     initLesson(null, lesson, project)
+    learnPanel?.scrollToNewMessages = false
     OpenPassedContext(project).apply(lesson.lessonContent)
+    learnPanel?.scrollRectToVisible(Rectangle(0, 0, 1, 1))
+    learnPanel?.makeNextButtonSelected()
     learnPanel?.learnToolWindow?.showGotItAboutRestart()
   }
 

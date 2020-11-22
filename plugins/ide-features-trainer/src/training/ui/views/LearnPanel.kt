@@ -54,11 +54,14 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   private val lessonPanelBoxLayout = BoxLayout(lessonPanel, BoxLayout.Y_AXIS)
 
+  internal var scrollToNewMessages = true
+
   init {
     isFocusable = false
   }
 
   fun reinitMe(lesson: Lesson) {
+    scrollToNewMessages = true
     clearMessages()
     modulePanel.removeAll()
     footer.removeAll()
@@ -228,7 +231,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     val needToShow = lessonMessagePane.addMessage(messageParts, state)
     adjustMessagesArea()
     if (useNewLearningUi) {
-      if (state != LessonMessagePane.MessageState.INACTIVE && needToShow != null) {
+      if (scrollToNewMessages && state != LessonMessagePane.MessageState.INACTIVE && needToShow != null) {
         lessonMessagePane.scrollRectToVisible(needToShow)
       }
     }
