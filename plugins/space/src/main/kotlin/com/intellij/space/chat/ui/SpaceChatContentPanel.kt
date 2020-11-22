@@ -22,7 +22,6 @@ import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.ui.ColorUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -43,10 +42,6 @@ internal class SpaceChatContentPanel(
   private val channelsVm: ChannelsVm,
   chatRecord: Ref<M2ChannelRecord>,
 ) : SpaceChatContentPanelBase(lifetime, parent, channelsVm, chatRecord) {
-  companion object {
-    fun getChatAvatarSize() = JBValue.UIInteger("space.chat.avatar.size", 30)
-  }
-
   private val server = channelsVm.client.server
 
   override fun onChatLoad(chatVm: M2ChannelVm) {
@@ -66,7 +61,7 @@ internal class SpaceChatContentPanel(
   }
 
   private fun createContentPanel(model: SpaceChatItemListModel, chatVM: M2ChannelVm): JPanel {
-    val avatarSize = getChatAvatarSize()
+    val avatarSize = SpaceChatAvatarType.MAIN_CHAT.size
     val avatarProvider = SpaceAvatarProvider(lifetime, this, avatarSize)
     val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
     val timeline = TimelineComponent(model, itemComponentFactory, offset = 0).apply {
@@ -76,7 +71,7 @@ internal class SpaceChatContentPanel(
     return JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       add(timeline, VerticalLayout.FILL_HORIZONTAL)
-      add(createNewMessageField(chatVM), VerticalLayout.FILL_HORIZONTAL)
+      add(createNewMessageField(chatVM, SpaceChatAvatarType.MAIN_CHAT), VerticalLayout.FILL_HORIZONTAL)
     }
   }
 }

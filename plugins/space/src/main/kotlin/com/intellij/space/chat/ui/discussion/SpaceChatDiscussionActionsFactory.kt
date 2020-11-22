@@ -5,6 +5,8 @@ import circlet.code.api.CodeDiscussionRecord
 import circlet.code.codeReview
 import circlet.m2.channel.M2ChannelVm
 import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.space.chat.ui.SpaceChatAvatarType
+import com.intellij.space.chat.ui.SpaceChatItemComponentFactory
 import com.intellij.space.chat.ui.createNewMessageField
 import com.intellij.space.chat.ui.thread.SpaceChatThreadActionsFactory
 import com.intellij.space.messages.SpaceBundle
@@ -24,6 +26,8 @@ import javax.swing.JPanel
 
 internal class SpaceChatDiscussionActionsFactory(
   private val discussion: Property<CodeDiscussionRecord>,
+  private val avatarType: SpaceChatAvatarType,
+  private val withOffset: Boolean = true,
   private val pendingStateProvider: () -> Boolean = { false }
 ) : SpaceChatThreadActionsFactory {
   override fun createActionsComponent(chatVm: M2ChannelVm): JComponent {
@@ -44,6 +48,9 @@ internal class SpaceChatDiscussionActionsFactory(
       val resolveReopenLabel = createResolveReopenLabel(chatVm, resolvingModel)
       JPanel(HorizontalLayout(JBUI.scale(5))).apply {
         isOpaque = false
+        if (withOffset) {
+          border = JBUI.Borders.emptyLeft(avatarType.size.get() + SpaceChatItemComponentFactory.Item.AVATAR_GAP)
+        }
         add(replyAction)
         add(resolveReopenLabel)
         resolvingModel.addValueUpdatedListener { newState ->
@@ -67,7 +74,8 @@ internal class SpaceChatDiscussionActionsFactory(
         createNewMessageField(
           chatVm,
           onCancel = { newMessageStateModel.value = false },
-          pendingStateProvider = pendingStateProvider
+          pendingStateProvider = pendingStateProvider,
+          avatarType = SpaceChatAvatarType.THREAD
         )
       }
     )

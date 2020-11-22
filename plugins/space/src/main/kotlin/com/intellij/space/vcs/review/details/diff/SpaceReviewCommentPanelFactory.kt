@@ -9,6 +9,7 @@ import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.chat.ui.discussion.SpaceChatDiscussionActionsFactory
 import com.intellij.space.chat.ui.thread.SpaceChatStandaloneThreadComponent
 import com.intellij.space.vcs.review.details.getFilePath
@@ -54,6 +55,10 @@ internal class SpaceReviewCommentPanelFactory(
       parent,
       workspace.chatVm.channels,
       discussionRecord.value.channel,
-      SpaceChatDiscussionActionsFactory(discussionRecord, pendingStateProvider)
+      SpaceChatDiscussionActionsFactory(
+        discussionRecord,
+        avatarType = SpaceChatAvatarType.THREAD,
+        pendingStateProvider = pendingStateProvider
+      )
     )
 }

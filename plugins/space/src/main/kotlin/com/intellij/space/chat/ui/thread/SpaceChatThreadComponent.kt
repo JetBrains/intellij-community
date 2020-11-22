@@ -5,14 +5,13 @@ import circlet.m2.channel.M2ChannelVm
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.project.Project
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
+import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.chat.ui.SpaceChatItemComponentFactory
 import com.intellij.space.chat.ui.SpaceChatItemListModel
 import com.intellij.space.chat.ui.getLink
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
-import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.coroutines.extra.Lifetime
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -28,8 +27,8 @@ internal fun createThreadComponent(
     isOpaque = false
   }
   val server = thread.client.server
-  val threadAvatarSize = JBValue.UIInteger("space.chat.thread.avatar.size", 20)
-  val avatarProvider = SpaceAvatarProvider(lifetime, threadComponent, threadAvatarSize)
+  val avatarSize = SpaceChatAvatarType.THREAD.size
+  val avatarProvider = SpaceAvatarProvider(lifetime, threadComponent, avatarSize)
 
   val itemsListModel = SpaceChatItemListModel()
 
@@ -50,11 +49,7 @@ internal fun createThreadComponent(
     border = JBUI.Borders.emptyBottom(5)
   }
 
-  val replyComponent = BorderLayoutPanel().apply {
-    isOpaque = false
-    border = JBUI.Borders.emptyLeft(threadAvatarSize.get() + SpaceChatItemComponentFactory.Item.AVATAR_GAP)
-    addToCenter(threadActionsFactory.createActionsComponent(thread))
-  }
+  val replyComponent = threadActionsFactory.createActionsComponent(thread)
 
   return threadComponent.apply {
     add(threadTimeline, VerticalLayout.FILL_HORIZONTAL)

@@ -5,7 +5,7 @@ import circlet.code.api.CodeReviewState
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.space.chat.model.impl.SpaceChatReviewHeaderDetails
-import com.intellij.space.chat.ui.SpaceChatContentPanel
+import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.chat.ui.getGrayTextHtml
 import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
@@ -32,7 +32,7 @@ internal class SpaceChatReviewHeaderComponent(
   }
 
   private val stateIconSize: Int
-    get() = (SpaceChatContentPanel.getChatAvatarSize().get() * STATE_ICON_FACTOR).toInt()
+    get() = (SpaceChatAvatarType.MAIN_CHAT.size.get() * STATE_ICON_FACTOR).toInt()
 
   init {
     isOpaque = false

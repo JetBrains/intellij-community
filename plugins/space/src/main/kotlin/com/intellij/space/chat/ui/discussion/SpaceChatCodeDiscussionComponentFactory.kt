@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.chat.ui.processItemText
 import com.intellij.space.chat.ui.thread.createThreadComponent
 import com.intellij.space.messages.SpaceBundle
@@ -81,12 +82,21 @@ class SpaceChatCodeDiscussionComponentFactory(
       add(reviewCommentComponent, VerticalLayout.FILL_HORIZONTAL)
     }
 
-    val actionsFactory = SpaceChatDiscussionActionsFactory(discussionProperty)
-    val threadComponent = createThreadComponent(project, lifetime, thread, actionsFactory, withFirst = false)
+    val threadActionsFactory = SpaceChatDiscussionActionsFactory(
+      discussionProperty,
+      withOffset = true,
+      avatarType = SpaceChatAvatarType.THREAD
+    )
+    val threadComponent = createThreadComponent(project, lifetime, thread, threadActionsFactory, withFirst = false)
     val outerActionsPanel = BorderLayoutPanel().apply {
       isOpaque = false
       border = JBUI.Borders.emptyTop(UI.scale(4))
-      addToCenter(actionsFactory.createActionsComponent(thread))
+      val outerActionsFactory = SpaceChatDiscussionActionsFactory(
+        discussionProperty,
+        withOffset = false,
+        avatarType = SpaceChatAvatarType.THREAD
+      )
+      addToCenter(outerActionsFactory.createActionsComponent(thread))
     }
     val collapseModel = SingleValueModelImpl(true)
 
