@@ -19,6 +19,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -28,10 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
   private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
@@ -225,6 +224,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void startNonCancelableSection() {
+    DeprecatedMethodException.report("Use ProgressManager#executeNonCancelableSection() instead");
     myNonCancelableSectionCount++;
   }
 
