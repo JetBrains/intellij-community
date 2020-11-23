@@ -155,7 +155,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private boolean myUseLastConfiguration;
   private final boolean myEditConfigOnly;
   private boolean myDoingOkAction;
-  private boolean myFilterIsShowing;
 
   // components
   private final FileTypeChooser myFileTypeChooser = new FileTypeChooser();
@@ -711,7 +710,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         final Presentation presentation = e.getPresentation();
-        presentation.setIcon(myFilterIsShowing ? filterModifiedIcon : AllIcons.General.Filter);
+        presentation.setIcon(myFilterPanel.hasVisibleFilter() ? filterModifiedIcon : AllIcons.General.Filter);
       }
 
       @Override
@@ -1382,7 +1381,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         else{
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
         }
-        myFilterIsShowing = myFilterPanel.hasVisibleFilter();
         if (isFilterPanelVisible()) {
           myConfiguration.setCurrentVariableName(variableName);
         }
