@@ -10,7 +10,6 @@ import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
@@ -98,9 +97,6 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   protected fun <K : Any, V: Any> map(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map<K, V>(null))
 
   protected fun <K : Any, V: Any> linkedMap(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map<K, V>(LinkedHashMap()))
-
-  @Deprecated(message = "No one should use concurrent collections here")
-  protected fun <K : Any, V: Any> concurrentMap(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map<K, V>(ConcurrentHashMap()))
 
   @Deprecated(level = DeprecationLevel.ERROR, message = "Use map", replaceWith = ReplaceWith("map()"))
   protected fun <K : Any, V: Any> map(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map(value))
