@@ -6,8 +6,6 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.util.ConcurrencyUtil
 
 /**
- * Warning! Magic of coroutines outside Hogwarts
- *
  * It allows to avoid the hell with listeners by pretty linear program.
  * It allows to write:
  *
