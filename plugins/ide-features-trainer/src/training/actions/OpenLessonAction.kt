@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.Alarm
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.CourseManager
@@ -200,11 +201,16 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       else error("Unknown lesson format")
     }
     catch (invalidSdkException: InvalidSdkException) {
-      Messages.showMessageDialog(projectWhereToStartLesson,
-                                 invalidSdkException.message,
-                                 LearnBundle.message("dialog.noSdk.title"), Messages.getErrorIcon())
-      if (ProjectSettingsService.getInstance(projectWhereToStartLesson).chooseAndSetSdk() != null) openLesson(projectWhereToStartLesson,
-                                                                                                              lesson)
+      LOG.error(invalidSdkException)
+      if (ProjectSettingsService.getInstance(projectWhereToStartLesson).chooseAndSetSdk() != null) {
+        LOG.error("Install SDK by deprecated way!")
+        openLesson(projectWhereToStartLesson, lesson)
+      }
+      else {
+        Messages.showMessageDialog(projectWhereToStartLesson,
+                                   invalidSdkException.message,
+                                   LearnBundle.message("dialog.noSdk.title"), Messages.getErrorIcon())
+      }
     }
     catch (e: Exception) {
       LOG.error(e)
@@ -271,7 +277,13 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
         val runnable = if (lesson.properties.showLearnToolwindowAtStart) null else Runnable { learnToolWindow.hide() }
         learnToolWindow.show(runnable)
         DumbService.getInstance(myLearnProject).runWhenSmart {
-          openLesson(myLearnProject, lesson)
+          // Try to fix PyChar double startup indexing :(
+          val openWhenSmart = {
+            DumbService.getInstance(myLearnProject).runWhenSmart {
+              openLesson(myLearnProject, lesson)
+            }
+          }
+          Alarm().addRequest(openWhenSmart, 500)
         }
       }
     }
