@@ -1,17 +1,16 @@
 <component name="libraryTable">
   <library name="jna" type="repository">
-    <properties maven-id="net.java.dev.jna:jna-platform:5.6.0" />
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/jna" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.6.0/jna-platform-5.6.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.6.0/jna-5.6.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jna-platform-5.7.0-SNAPSHOT.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jna-5.7.0-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.6.0/jna-platform-5.6.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.6.0/jna-5.6.0-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jna-platform-5.7.0-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jna-5.7.0-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
