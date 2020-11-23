@@ -51,6 +51,12 @@ class PyMarkAsNamespacePackageAction : AnAction() {
       }
       else -> {
         presentation.isEnabled = false
+        presentation.text = if (PlatformUtils.isPyCharm()) {
+          PyBundle.message("python.namespace.package.folder")
+        }
+        else {
+          PyBundle.message("python.python.namespace.package.folder")
+        }
       }
     }
   }
