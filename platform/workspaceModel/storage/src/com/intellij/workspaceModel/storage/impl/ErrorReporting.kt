@@ -17,7 +17,7 @@ internal inline fun createAttachment(path: String,
   return createAttachment(path, bytes, displayText)
 }
 
-fun WorkspaceEntityStorage.asAttachment(path: String, displayText: String): Attachment {
+internal fun WorkspaceEntityStorage.asAttachment(path: String, displayText: String): Attachment {
   return createAttachment(path, displayText) { serializer, stream ->
     serializer.serializeCache(stream, this.makeSureItsStore())
   }
