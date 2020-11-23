@@ -45,7 +45,6 @@ fun main() {
   val leftFile = dir.resolve("Left_Store")
   val rightFile = dir.resolve("Right_Store")
   val rightDiffLogFile = dir.resolve("Right_Diff_Log")
-  val leftDiffLogFile = dir.resolve("Left_Diff_Log")
   val converterFile = dir.resolve("ClassToIntConverter")
   val resFile = dir.resolve("Res_Store")
 
@@ -53,7 +52,7 @@ fun main() {
 
   serializer.deserializeClassToIntConverter(converterFile.inputStream())
 
-  val leftStore = serializer.deserializeCacheAndDiffLog(leftFile.inputStream(), leftDiffLogFile.inputStream())!!
+  val leftStore = serializer.deserializeCache(leftFile.inputStream())!!
   val rightStore = serializer.deserializeCacheAndDiffLog(rightFile.inputStream(), rightDiffLogFile.inputStream())!!
   //val resStore = serializer.deserializeCache(resFile.inputStream())!!
 
