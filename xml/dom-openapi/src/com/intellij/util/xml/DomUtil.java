@@ -21,6 +21,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.xml.util.XmlTagUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,6 +146,12 @@ public class DomUtil {
   public static Class<?> getGenericValueParameter(Type type) {
     final Class<?> aClass = ourTypeParameters.get(type);
     return aClass == DUMMY ? null : aClass;
+  }
+
+  @ApiStatus.Internal
+  public static void clearCaches() {
+    ourTypeParameters.clear();
+    ourVariableSubstitutions.clear();
   }
 
   @Nullable
