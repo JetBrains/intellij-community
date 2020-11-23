@@ -71,9 +71,10 @@ class UISettings {
   val codeForegroundColor = JBColor.namedColor("ParameterInfo.foreground", JBColor(0x1D1D1D, 0xBBBBBB))
   val codeBorderColor = JBColor.namedColor("Button.disabledBorderColor", JBColor(0xC4C4C4, 0x5E6060))
   val passedColor = JBColor(Color(200, 200, 200), Color(103, 103, 103))
+  val moduleProgressColor = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
   val backgroundColor = UIUtil.getTreeBackground()
   val descriptionColor = Color(128, 128, 128)
-  val completedColor = JBColor(Color(50, 100, 50), Color(100, 150, 100))
+  val completedColor = JBColor(0x368746, 0x50A661)
   var questionColor = lessonActiveColor
   val activeTaskBorder = JBColor.namedColor("Component.focusedBorderColor", JBColor(0x87AFDA, 0x466d94))
 
