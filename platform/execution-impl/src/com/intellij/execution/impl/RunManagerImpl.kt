@@ -44,13 +44,13 @@ import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.UniqueNameGenerator
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
+import kotlin.collections.HashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.concurrent.read
@@ -663,7 +663,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     settings.forEach { parentNode.addContent((it as RunnerAndConfigurationSettingsImpl).writeScheme()) }
   }
 
-  internal fun writeBeforeRunTasks(configuration: RunConfiguration): Element {
+  fun writeBeforeRunTasks(configuration: RunConfiguration): Element {
     val tasks = configuration.beforeRunTasks
     val methodElement = Element(METHOD)
     methodElement.setAttribute("v", "2")
@@ -948,7 +948,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
   }
 
-  internal fun readBeforeRunTasks(element: Element?, settings: RunnerAndConfigurationSettings, configuration: RunConfiguration) {
+  fun readBeforeRunTasks(element: Element?, settings: RunnerAndConfigurationSettings, configuration: RunConfiguration) {
     var result: MutableList<BeforeRunTask<*>>? = null
     if (element != null) {
       for (methodElement in element.getChildren(OPTION)) {

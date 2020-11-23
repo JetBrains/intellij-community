@@ -4,6 +4,8 @@ package com.intellij.execution.testframework.sm.runner.history.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
@@ -186,6 +188,9 @@ public abstract class AbstractImportTestsAction extends AnAction {
                     myConfiguration = configurationType.getConfigurationFactories()[0].createTemplateConfiguration(project);
                     myConfiguration.setName(config.getAttributeValue("name"));
                     myConfiguration.readExternal(config);
+                    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+                    runManager.readBeforeRunTasks(config.getChild("method"), 
+                                                  new RunnerAndConfigurationSettingsImpl(runManager), myConfiguration);
   
                     final Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
                     if (executor != null) {

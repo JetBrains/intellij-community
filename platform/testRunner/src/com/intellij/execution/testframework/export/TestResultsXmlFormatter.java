@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleBuffer;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -119,6 +120,7 @@ public final class TestResultsXmlFormatter {
       if (!DefaultExecutionTarget.INSTANCE.equals(myExecutionTarget)) {
         config.setAttribute("target", myExecutionTarget.getId());
       }
+      config.addContent(RunManagerImpl.getInstanceImpl(myRuntimeConfiguration.getProject()).writeBeforeRunTasks(myRuntimeConfiguration));
     }
     catch (WriteExternalException ignore) {}
     processJDomElement(config);
