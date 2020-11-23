@@ -22,7 +22,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "F7",                       "NextDiff", "StepInto"},
     { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add", "XDebugger.NewWatch"},
     { "SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
-    { "TAB",                      "SelectVirtualTemplateElement", "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
+    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                   "EditorTab", "NextTemplateParameter", "ExpandLiveTemplateByTab", "BraceOrQuoteOut"},
     { "alt DOWN",                 "ShowContent", "MethodDown", "ShowSearchHistory"},
     { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
@@ -175,7 +175,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta K",                   "CheckinProject", "Terminal.ClearBuffer"},
     });
     put("Emacs", new String[][] {
-    { "TAB",                      "SelectVirtualTemplateElement", "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
+    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                   "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab", "BraceOrQuoteOut"},
     { "alt MINUS",                "RInsertAssignmentAction", "SECOND_STROKE_SHORTCUT"},
     { "alt SLASH",                "CodeCompletion", "HippieCompletion"},
