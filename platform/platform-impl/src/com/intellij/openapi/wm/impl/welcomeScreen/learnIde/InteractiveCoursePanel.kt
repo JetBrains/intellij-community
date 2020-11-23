@@ -33,7 +33,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
   private var contentState: ContentState = ContentState.COLLAPSED
   private val expandCollapseListener: MouseListener = createExpandCollapseListener()
 
-  private val expandedCourseContent = data.getExpandContent()
+  private val expandedCourseContent: JComponent by lazy { data.getExpandContent() }
   private val chevronPanel = JPanel()
   private val chevronLabel = JLabel(AllIcons.General.ChevronDown)
   val pluginPanel = JPanel()
