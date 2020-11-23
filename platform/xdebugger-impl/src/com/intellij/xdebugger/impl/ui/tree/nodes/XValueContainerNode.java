@@ -52,9 +52,13 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     startComputingChildren();
   }
 
-  public void startComputingChildren() {
+  private void prepareForComputingChildren() {
     myCachedAllChildren = null;
     setTemporaryMessageNode(createLoadingMessageNode());
+  }
+
+  public void startComputingChildren() {
+    prepareForComputingChildren();
     myValueContainer.computeChildren(this);
   }
 
@@ -150,7 +154,17 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   @Override
   public void tooManyChildren(final int remaining) {
-    invokeNodeUpdate(() -> setTemporaryMessageNode(MessageTreeNode.createEllipsisNode(myTree, this, remaining)));
+    tooManyChildren(remaining, () -> myValueContainer.computeChildren(this));
+  }
+
+  @Override
+  public void tooManyChildren(int remaining, @NotNull ChildrenSupplier childrenSupplier) {
+    invokeNodeUpdate(() -> setTemporaryMessageNode(
+      MessageTreeNode.createEllipsisNode(myTree, this, remaining, () -> {
+        myTree.selectNodeOnLoad(n -> n.getParent() == this, n -> isObsolete());
+        prepareForComputingChildren();
+        childrenSupplier.computeChildren();
+      })));
   }
 
   @Override

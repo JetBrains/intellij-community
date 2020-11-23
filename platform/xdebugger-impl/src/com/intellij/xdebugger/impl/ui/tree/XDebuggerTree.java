@@ -176,7 +176,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        return expandIfEllipsis();
+        return expandIfEllipsis(e);
       }
     }.installOn(this);
 
@@ -185,7 +185,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
         if (key == KeyEvent.VK_ENTER || key == KeyEvent.VK_SPACE || key == KeyEvent.VK_RIGHT) {
-          expandIfEllipsis();
+          expandIfEllipsis(dummyMouseClickEvent());
         }
       }
     });
@@ -218,7 +218,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
               XDebuggerTreeNodeHyperlink link = ((XDebuggerTreeNode)component).getLink();
               if (link != null) {
                 // dummy event
-                link.onClick(new MouseEvent(XDebuggerTree.this, 0,0,0,0,0,1,false));
+                link.onClick(dummyMouseClickEvent());
               }
             }
           }
@@ -253,6 +253,11 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     addTreeExpansionListener(myTreeExpansionListener);
   }
 
+  @NotNull
+  private MouseEvent dummyMouseClickEvent() {
+    return new MouseEvent(this, 0, 0, 0, 0, 0, 1, false);
+  }
+
   public void updateEditor() {
     myAlarm.cancelAndRequest();
   }
@@ -266,15 +271,14 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return false;
   }
 
-  private boolean expandIfEllipsis() {
+  private boolean expandIfEllipsis(@NotNull MouseEvent e) {
     MessageTreeNode[] treeNodes = getSelectedNodes(MessageTreeNode.class, null);
     if (treeNodes.length == 1) {
       MessageTreeNode node = treeNodes[0];
       if (node.isEllipsis()) {
-        TreeNode parent = node.getParent();
-        if (parent instanceof XValueContainerNode) {
-          selectNodeOnLoad(n -> n.getParent() == parent, n -> ((XValueContainerNode)parent).isObsolete());
-          ((XValueContainerNode)parent).startComputingChildren();
+        XDebuggerTreeNodeHyperlink link = node.getLink();
+        if (link != null) {
+          link.onClick(e);
           return true;
         }
       }
