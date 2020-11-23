@@ -129,7 +129,7 @@ public class ParameterInfoComponent extends JPanel {
     setPanels();
 
     if (myRequestFocus) {
-      AccessibleContextUtil.setName(this, "Parameter Info. Press TAB to navigate through each element. Press ESC to close.");
+      AccessibleContextUtil.setName(this, CodeInsightBundle.message("parameter.info.message"));
     }
 
     myDumbLabel.setForeground(CONTEXT_HELP_FOREGROUND);
