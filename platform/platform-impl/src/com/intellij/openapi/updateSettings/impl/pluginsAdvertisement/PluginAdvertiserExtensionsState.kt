@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SimpleModificationTracker
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -26,7 +27,7 @@ internal data class PluginAdvertiserExtensionsData(
 
 @State(name = "PluginAdvertiserExtensions", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 @Service(Service.Level.APP)
-internal class PluginAdvertiserExtensionsStateService : PersistentStateComponent<PluginAdvertiserExtensionsStateService.State> {
+internal class PluginAdvertiserExtensionsStateService : SimpleModificationTracker(), PersistentStateComponent<PluginAdvertiserExtensionsStateService.State> {
   companion object {
     @JvmStatic
     fun getInstance(): PluginAdvertiserExtensionsStateService = service()
@@ -51,6 +52,9 @@ internal class PluginAdvertiserExtensionsStateService : PersistentStateComponent
 
   fun registerLocalPlugin(extensionOrFileName: String, plugin: PluginDescriptor) {
     state.localState.put(extensionOrFileName, PluginsAdvertiser.Plugin(plugin.pluginId.idString, plugin.name, plugin.isBundled, false))
+    // no need to waste time to check that map is really changed - registerLocalPlugin is not called often after start-up,
+    // so, mod count will be not incremented too often
+    incModificationCount()
   }
 
   fun getLocalPlugin(fileName: String, fullExtension: String?): PluginAdvertiserExtensionsData? {
