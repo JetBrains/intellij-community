@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -72,13 +71,7 @@ public class ExceptionWorker {
 
     myMethod = myInfo.methodNameRange.substring(line);
 
-    myClassResolveInfo = myCache.resolveClass(myInfo.classFqnRange.substring(line).trim());
-    if (myClassResolveInfo.myClasses.isEmpty() && myInfo.fileName != null) {
-      // try find the file with the required name
-      //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
-      PsiFile[] files = PsiShortNamesCache.getInstance(myProject).getFilesByName(myInfo.fileName);
-      myClassResolveInfo = ExceptionInfoCache.ClassResolveInfo.create(myProject, files);
-    }
+    myClassResolveInfo = myCache.resolveClassOrFile(myInfo.classFqnRange.substring(line).trim(), myInfo.fileName);
     if (myClassResolveInfo.myClasses.isEmpty()) return null;
 
     /*

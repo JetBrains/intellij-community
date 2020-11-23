@@ -140,6 +140,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @NotNull
   private final InputFilter myInputMessageFilter;
+  private final List<Filter> myPredefinedFilters;
 
   public ConsoleViewImpl(@NotNull Project project, boolean viewer) {
     this(project, GlobalSearchScope.allScope(project), viewer, true);
@@ -222,6 +223,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
     });
+    myPredefinedFilters = myUsePredefinedMessageFilter ?
+                          ConsoleViewUtil.computeConsoleFilters(myProject, this, mySearchScope) :
+                          Collections.emptyList();
   }
 
   private static synchronized void initTypedHandler() {
@@ -398,12 +402,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @NotNull
   protected CompositeFilter createCompositeFilter() {
-    List<Filter> predefinedFilters = myUsePredefinedMessageFilter ?
-                                       ConsoleViewUtil.computeConsoleFilters(myProject, this, mySearchScope) :
-                                       Collections.emptyList();
     CompositeFilter compositeFilter = new CompositeFilter(myProject, myCustomFilters);
     compositeFilter.setForceUseAllFilters(true);
-    predefinedFilters.forEach(compositeFilter::addFilter);
+    myPredefinedFilters.forEach(compositeFilter::addFilter);
     return compositeFilter;
   }
 
