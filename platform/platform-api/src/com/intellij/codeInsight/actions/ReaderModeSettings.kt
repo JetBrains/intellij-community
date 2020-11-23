@@ -23,12 +23,13 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
       return ServiceManager.getService(project, ReaderModeSettings::class.java)
     }
 
-    fun applyReaderMode(project: Project, editor: Editor?, file: VirtualFile?, fileIsOpenAlready: Boolean = false) {
+    fun applyReaderMode(project: Project, editor: Editor?, file: VirtualFile?, fileIsOpenAlready: Boolean = false, forceUpdate: Boolean = false) {
       if (editor == null || file == null || PsiManager.getInstance(project).findFile(file) == null) return
 
-      if (matchMode(project, file, editor)) {
+      val matchMode = matchMode(project, file, editor)
+      if (matchMode || forceUpdate) {
         EP_READER_MODE_PROVIDER.extensions().forEach {
-          it.applyModeChanged(project, editor, instance(project).enabled, fileIsOpenAlready)
+          it.applyModeChanged(project, editor, instance(project).enabled && matchMode, fileIsOpenAlready)
         }
       }
     }

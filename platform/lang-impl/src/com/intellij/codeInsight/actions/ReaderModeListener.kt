@@ -15,7 +15,7 @@ interface ReaderModeListener : EventListener {
   fun modeChanged(project: Project)
 }
 
-interface ReaderModeSettingsListener : ReaderModeListener {
+class ReaderModeSettingsListener : ReaderModeListener {
   companion object {
     @Topic.ProjectLevel
     @JvmStatic
