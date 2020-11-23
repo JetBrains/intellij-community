@@ -74,35 +74,11 @@ private fun ProcessOutput.checkExitCode(executable: String, arguments: List<Stri
 }
 
 @Throws(ExecutionException::class, JsonSyntaxException::class)
-fun listCondaEnvironments(sdk: Sdk?, baseEnvFirst: Boolean = false): List<String> {
+fun listCondaEnvironments(sdk: Sdk?): List<String> {
   val output = runConda(sdk, listOf("env", "list", "--json"))
   val text = output.stdout
   val envList = Gson().fromJson(text, CondaEnvironmentsList::class.java)
-  val envs = envList.envs.toMutableList()
-  if (baseEnvFirst) {
-    val baseEnv = findBaseEnvPath(sdk)
-    if (baseEnv != null && envs.remove(baseEnv)) {
-      envs.add(0, baseEnv)
-    }
-  }
-  return envs
-}
-
-private fun findBaseEnvPath(sdk: Sdk?): String? {
-  try {
-    val output = runConda(sdk, listOf("env", "list"))
-    val envs = output.stdout.split("\n")
-    val basePath = envs.firstOrNull { it.trim().startsWith("base ") }
-    basePath?.trim()?.split(" ")?.let { paths ->
-      if (paths.size > 1) {
-        return paths[paths.size - 1]
-      }
-    }
-  }
-  catch (e: ExecutionException) {
-    return null
-  }
-  return null
+  return envList.envs
 }
 
 @Throws(ExecutionException::class, JsonSyntaxException::class)
