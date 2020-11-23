@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.auth
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.CustomPluginRepositoryService
 import com.intellij.ide.plugins.RepositoryHelper.getPluginHosts
 import com.intellij.notification.NotificationType
@@ -59,8 +60,8 @@ object PluginAuthService {
     val services = PluginsAuthExtension.getAuthServices().filter { it.isUrlSupported(url) }.toList()
     if (services.size > 1) {
       UpdateChecker.getNotificationGroup().createNotification(
-        "Custom plugin repository auth",
-        "There are too many authorization services supporting '$url': ${services.map { it.name }.joinToString(",")}",
+        IdeBundle.message("notification.title.custom.plugin.repository.auth"),
+        IdeBundle.message("notification.content.there.are.too.many.authorization.services.supporting", url, services.map { it.name }.joinToString(",")),
         NotificationType.WARNING).notify(null)
       return null
     }
