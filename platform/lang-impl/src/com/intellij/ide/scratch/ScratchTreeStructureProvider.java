@@ -4,7 +4,6 @@ package com.intellij.ide.scratch;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.DefaultSortWeight;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
@@ -205,8 +204,8 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     }
 
     @Override
-    public int getWeight() {
-      return DefaultSortWeight.SCRATCH_ROOT.getWeight();
+    public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+      return NodeSortOrder.SCRATCH_ROOT;
     }
 
     @Override

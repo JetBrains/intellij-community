@@ -6,8 +6,8 @@ import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarksListener;
 import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.NodeSortOrder;
 import com.intellij.ide.projectView.impl.CompoundIconProvider;
-import com.intellij.ide.projectView.impl.DefaultSortWeight;
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.scratch.ScratchFileService;
@@ -669,18 +669,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     @Override
-    public int getWeight() {
-      return getTypeSortKey().getWeight();
-    }
-
-    @Override
-    public int getTypeSortWeight(boolean sortByType) {
-      return getWeight();
-    }
-
-    @Override
-    public @NotNull DefaultSortWeight getTypeSortKey() {
-      return DefaultSortWeight.PROJECT;
+    public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+      return NodeSortOrder.PROJECT_ROOT;
     }
 
     @NotNull
@@ -764,25 +754,23 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     @Override
+    public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+      if (getVirtualFile().isDirectory()) {
+        if (settings.isSortByType() && isPackage(getIcon())) return NodeSortOrder.PACKAGE;
+        if (settings.isSortByType() || settings.isFoldersAlwaysOnTop()) return NodeSortOrder.FOLDER;
+      }
+      return super.getSortOrder(settings);
+    }
+
+    @Override
+    public @Nullable Comparable<PsiFileNode.ExtensionSortKey> getTypeSortKey() {
+      String extension = getVirtualFile().getExtension();
+      return extension == null ? null : new PsiFileNode.ExtensionSortKey(extension);
+    }
+
+    @Override
     public int getWeight() {
-      return DefaultSortWeight.FILE.getWeight();
-    }
-
-    @Override
-    public int getTypeSortWeight(boolean sortByType) {
-      return getTypeSortKey(sortByType).getWeight();
-    }
-
-    @Override
-    public @Nullable Comparable<?> getTypeSortKey() {
-      DefaultSortWeight key = getTypeSortKey(true);
-      if (key != DefaultSortWeight.FILE) return key;
-      return new PsiFileNode.ExtensionSortKey(getVirtualFile().getFileType().getDefaultExtension());
-    }
-
-    private @NotNull DefaultSortWeight getTypeSortKey(boolean sortByType) {
-      if (!sortByType || !getVirtualFile().isDirectory()) return DefaultSortWeight.FILE;
-      return isPackage(getIcon()) ? DefaultSortWeight.PACKAGE : DefaultSortWeight.FOLDER;
+      return 20; // see PsiFileNode.getWeight
     }
 
     @NotNull
@@ -839,25 +827,9 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     @Override
-    public int getWeight() {
-      if (isScratchFile()) return DefaultSortWeight.SCRATCH_ROOT.getWeight();
-      return super.getWeight();
-    }
-
-    @Override
-    public int getTypeSortWeight(boolean sortByType) {
-      if (isScratchFile()) return DefaultSortWeight.SCRATCH_ROOT.getWeight();
-      return super.getTypeSortWeight(sortByType);
-    }
-
-    @Override
-    public @Nullable Comparable<?> getTypeSortKey() {
-      if (isScratchFile()) return DefaultSortWeight.SCRATCH_ROOT;
-      return super.getTypeSortKey();
-    }
-
-    private boolean isScratchFile() {
-      return null != ScratchFileService.getInstance().getRootType(getVirtualFile());
+    public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+      boolean scratch = null != ScratchFileService.getInstance().getRootType(getVirtualFile());
+      return scratch ? NodeSortOrder.SCRATCH_ROOT : super.getSortOrder(settings);
     }
 
     @NotNull
@@ -1007,21 +979,11 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     @Override
-    public int getWeight() {
-      return DefaultSortWeight.MODULE_GROUP.getWeight();
-    }
-
-    @Override
-    public int getTypeSortWeight(boolean sortByType) {
-      return sortByType ? getTypeSortKey().getWeight() : getWeight();
-    }
-
-    @Override
-    public @NotNull DefaultSortWeight getTypeSortKey() {
-      Group group = this.group;
+    public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+      Group group = settings.isSortByType() ? this.group : null;
       return group == null || null == group.getCommonRootID()
-             ? DefaultSortWeight.MODULE_GROUP
-             : DefaultSortWeight.MODULE_ROOT;
+             ? NodeSortOrder.MODULE_GROUP
+             : NodeSortOrder.MODULE_ROOT;
     }
 
     @Override
