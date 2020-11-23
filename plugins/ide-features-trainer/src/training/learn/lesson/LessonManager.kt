@@ -125,8 +125,9 @@ class LessonManager {
     }
   }
 
-  fun addMessage(@Language("HTML") text: String) {
-    learnPanel?.addMessage(text)
+  fun addMessage(@Language("HTML") text: String, isInformer: Boolean = false) {
+    val state = if (isInformer) LessonMessagePane.MessageState.INFORMER else LessonMessagePane.MessageState.NORMAL
+    learnPanel?.addMessage(text, state)
     if (!useNewLearningUi) LearningUiManager.activeToolWindow?.updateScrollPane()
   }
 
