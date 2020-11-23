@@ -612,22 +612,21 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiParameter &&
             element.getManager().areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(), oldConstructor)) {
-          PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
-          PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
-          for (int j = 0; j < declarationParameters.length; j++) {
-            if (declarationParameters[j] == resolved) {
-              try {
-                replacement.put(expression, instanceCreationArguments[j]);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
-            }
+          int parameterIndex = oldConstructor.getParameterList().getParameterIndex((PsiParameter)resolved);
+          if (parameterIndex >= 0) {
+            replacement.put(expression, instanceCreationArguments[parameterIndex]);
           }
         }  
       }
     });
-    replacement.forEach(PsiElement::replace);
+    for (Map.Entry<PsiReferenceExpression, PsiExpression> entry : replacement.entrySet()) {
+      try {
+        entry.getKey().replace(entry.getValue());
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
