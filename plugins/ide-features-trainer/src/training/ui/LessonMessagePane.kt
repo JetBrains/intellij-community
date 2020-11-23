@@ -273,8 +273,9 @@ class LessonMessagePane : JTextPane() {
       setPassedStyle(lessonMessage)
     }
     else { //Repaint text with passed style
-      val lessonMessage = lessonMessages.lastOrNull { it.state == MessageState.NORMAL } ?: return
-      lessonMessage.state = MessageState.PASSED
+      for (message in activeMessages) {
+        message.state = MessageState.PASSED
+      }
     }
   }
 
