@@ -240,7 +240,8 @@ public final class JavadocHighlightUtil {
     PsiElement nameElement = tag.getNameElement();
     if (nameElement != null) {
       String key = tagInfo == null ? "inspection.javadoc.problem.wrong.tag" : "inspection.javadoc.problem.disallowed.tag";
-      holder.problem(nameElement, JavaBundle.message(key, "<code>" + tagName + "</code>"), holder.registerTagFix(tagName));
+      LocalQuickFix fix = "return".equals(tagName) ? null : holder.registerTagFix(tagName);
+      holder.problem(nameElement, JavaBundle.message(key, "<code>" + tagName + "</code>"), fix);
     }
 
     return false;
