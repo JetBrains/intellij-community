@@ -343,19 +343,21 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
 
       val results = service.invokeAll(tasks)
-      val projectRootManager = ProjectRootManager.getInstance(project) as ProjectRootManagerBridge
 
       WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
         val moduleMap = builder.mutableModuleMap
         results.mapNotNull { it.get() }.forEach { (entity, module) ->
           moduleMap.addMapping(entity, module)
           ModuleRootComponentBridge.getInstance(module).moduleLibraryTable.registerModuleLibraryInstances(builder)
-          projectRootManager.addTrackedLibraryAndJdkFromEntity(entity)
         }
       }
     }
     finally {
       service.shutdownNow()
+    }
+
+    WriteAction.runAndWait<RuntimeException> {
+      (ProjectRootManager.getInstance(project) as ProjectRootManagerBridge).setupTrackedLibrariesAndJdks()
     }
   }
 

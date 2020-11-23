@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
@@ -91,7 +92,15 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     jdkChangeListener.unsubscribeListeners()
   }
 
-  fun addTrackedLibraryAndJdkFromEntity(moduleEntity: ModuleEntity) {
+  fun setupTrackedLibrariesAndJdks() {
+    val currentStorage = WorkspaceModel.getInstance(project).entityStorage.current
+    for (moduleEntity in currentStorage.entities(ModuleEntity::class.java)) {
+      addTrackedLibraryAndJdkFromEntity(moduleEntity);
+    }
+  }
+
+  private fun addTrackedLibraryAndJdkFromEntity(moduleEntity: ModuleEntity) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
     LOG.debug { "Add tracked global libraries and JDK from ${moduleEntity.name}" }
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     moduleEntity.dependencies.forEach {
