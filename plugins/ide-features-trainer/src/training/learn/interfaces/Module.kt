@@ -38,7 +38,11 @@ interface Module {
     for (lesson in lessons) {
       if (lesson.passed) done++
     }
-    if (useNewLearningUi) return LearnBundle.message("learn.module.progress", done, total)
+    if (useNewLearningUi)
+      return if (done == total)
+        LearnBundle.message("learn.module.progress.completed")
+      else
+        LearnBundle.message("learn.module.progress", done, total)
 
     return if (done != 0) {
       if (done == total)
