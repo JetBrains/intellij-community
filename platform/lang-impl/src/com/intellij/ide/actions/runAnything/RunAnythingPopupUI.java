@@ -56,6 +56,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -809,6 +810,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   @Override
+  @Nls
   protected @NotNull String getAccessibleName() {
     return IdeBundle.message("run.anything.accessible.name");
   }
