@@ -106,7 +106,7 @@ object LessonUtil {
   private fun TaskRuntimeContext.checkCaretOnText(text: String): Boolean {
     val caretOffset = editor.caretModel.offset
     val textStartOffset = editor.document.charsSequence.indexOf(text)
-    if (textStartOffset == -1) throw IllegalArgumentException("Not found text: '$text' in the document")
+    if (textStartOffset == -1) return false
     val textEndOffset = textStartOffset + text.length
     return caretOffset in textStartOffset..textEndOffset
   }
