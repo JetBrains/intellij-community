@@ -60,11 +60,22 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static void checkIdeDirectories() {
     if (System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR) != null) {
       if (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null && System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
-        showNotification("implicit.plugin.directory.path", null);
+        showNotification("implicit.plugin.directory.path", null, shorten(PathManager.getPluginsPath()));
       }
       if (System.getProperty(PathManager.PROPERTY_SYSTEM_PATH) != null && System.getProperty(PathManager.PROPERTY_LOG_PATH) == null) {
-        showNotification("implicit.log.directory.path", null);
+        showNotification("implicit.log.directory.path", null, shorten(PathManager.getLogPath()));
       }
+    }
+  }
+
+  private static String shorten(String pathStr) {
+    Path path = Paths.get(pathStr).toAbsolutePath(), userHome = Paths.get(SystemProperties.getUserHome());
+    if (path.startsWith(userHome)) {
+      Path relative = userHome.relativize(path);
+      return SystemInfo.isWindows ? "%USERPROFILE%\\" + relative : "~/" + relative;
+    }
+    else {
+      return pathStr;
     }
   }
 
