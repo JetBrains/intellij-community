@@ -36,10 +36,10 @@
   </projectListeners>
 
   <actions>
-    <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction" text="Update JPS Caches">
+    <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
-    <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction" text="Force Update JPS Caches">
+    <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
   </actions>
