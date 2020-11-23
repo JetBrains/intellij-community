@@ -794,10 +794,10 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testWithTimeout() {
-    assertEquals("a", ProgressIndicatorUtils.withTimeout(1000, () -> "a"));
+    assertEquals("a", ProgressIndicatorUtils.withTimeout(1_000_000_000, () -> "a"));
 
     assertNull(ProgressIndicatorUtils.withTimeout(1, () -> {
-      TimeoutUtil.sleep(10);
+      TimeoutUtil.sleep(50);
       ProgressManager.checkCanceled();
       return "a";
     }));
