@@ -123,7 +123,7 @@ public final class PluginsAdvertiser {
     PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(project, disabledPlugins.toArray(PluginId.EMPTY_ARRAY));
   }
 
-  static @Nullable List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
+  static @Nullable List<String> hasBundledPluginToInstall(Collection<Plugin> plugins) {
     if (PlatformUtils.isIdeaUltimate()) {
       return null;
     }
@@ -222,7 +222,7 @@ public final class PluginsAdvertiser {
 
     public @Nullable Set<Plugin> find(@NotNull String extension) {
       PluginSet pluginSet = myExtensions.get(extension);
-      return pluginSet != null ? pluginSet.myPlugins : null;
+      return pluginSet == null ? null : pluginSet.myPlugins;
     }
   }
 
@@ -233,13 +233,13 @@ public final class PluginsAdvertiser {
     @SuppressWarnings("unused")
     public PluginSet() { }
 
-    public PluginSet(Set<? extends Plugin> plugins) {
+    public PluginSet(Set<Plugin> plugins) {
       myPlugins.addAll(plugins);
     }
   }
 
   @Tag("plugin")
-  public static class Plugin implements Comparable<Plugin> {
+  public static final class Plugin implements Comparable<Plugin> {
     public String myPluginId;
     public String myPluginName;
     public boolean myBundled;

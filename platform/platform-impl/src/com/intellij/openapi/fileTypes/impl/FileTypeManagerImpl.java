@@ -447,8 +447,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       List<String> hashBangs = bean.hashBangs == null ? Collections.emptyList() : StringUtil.split(bean.hashBangs, ";");
       registerFileTypeWithoutNotification(fileType, standardFileType.matchers, hashBangs, true);
 
+      PluginAdvertiserExtensionsStateService pluginAdvertise = PluginAdvertiserExtensionsStateService.getInstance();
       for (FileNameMatcher matcher : standardFileType.matchers) {
-        PluginAdvertiserExtensionsStateService.getInstance().registerLocalPlugin(matcher.getPresentableString(), bean.getPluginDescriptor());
+        pluginAdvertise.registerLocalPlugin(matcher.getPresentableString(), bean.getPluginDescriptor());
       }
 
       myPendingAssociations.removeAllAssociations(bean);
