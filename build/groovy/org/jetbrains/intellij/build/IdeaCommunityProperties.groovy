@@ -89,7 +89,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        iconPngPath = "$projectHome/platform/icons/compatibilityResources/icon_CE_128.png"
+        iconPngPath = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_128.png"
         iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
         snapName = "intellij-idea-community"
         snapDescription =
