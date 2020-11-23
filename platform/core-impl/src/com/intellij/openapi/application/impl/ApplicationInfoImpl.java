@@ -101,6 +101,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionAdditionalFormData;
   private final List<ProgressSlide> myProgressSlides = new ArrayList<>();
 
+  private String myDefaultLightLaf;
+  private String myDefaultDarkLaf;
+
   private static final @NonNls String ELEMENT_VERSION = "version";
   private static final @NonNls String ATTRIBUTE_MAJOR = "major";
   private static final @NonNls String ATTRIBUTE_MINOR = "minor";
@@ -175,6 +178,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
   private static final @NonNls String PROGRESS_SLIDE = "progressSlide";
   private static final @NonNls String PROGRESS_PERCENT = "progressPercent";
+
+  private static final @NonNls String ELEMENT_DEFAULT_LAF = "default-laf";
+  private static final @NonNls String ATTRIBUTE_LAF_LIGHT = "light";
+  private static final @NonNls String ATTRIBUTE_LAF_DARK = "dark";
 
   static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
@@ -398,6 +405,19 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       mySubscriptionTipsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY);
       mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
       mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
+    }
+
+    Element defaultLafElement = getChild(element, ELEMENT_DEFAULT_LAF);
+    if (defaultLafElement != null) {
+      String laf = getAttributeValue(defaultLafElement, ATTRIBUTE_LAF_LIGHT);
+      if (laf != null) {
+        myDefaultLightLaf = laf.trim();
+      }
+
+      laf = getAttributeValue(defaultLafElement, ATTRIBUTE_LAF_DARK);
+      if (laf != null) {
+        myDefaultDarkLaf = laf.trim();
+      }
     }
   }
 
@@ -952,6 +972,16 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @NotNull List<PluginId> getEssentialPluginsIds() {
     return myEssentialPluginsIds;
+  }
+
+  @Override
+  public @Nullable String getDefaultLightLaf() {
+    return myDefaultLightLaf;
+  }
+
+  @Override
+  public @Nullable String getDefaultDarkLaf() {
+    return myDefaultDarkLaf;
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {

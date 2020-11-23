@@ -160,4 +160,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract @NotNull BuildNumber getApiVersionAsNumber();
 
   public abstract @NotNull List<PluginId> getEssentialPluginsIds();
+
+  public abstract @Nullable String getDefaultLightLaf();
+
+  public abstract @Nullable String getDefaultDarkLaf();
 }
