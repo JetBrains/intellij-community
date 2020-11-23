@@ -180,8 +180,7 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          PluginEnabledState state = myPluginModel.getState(myPlugin);
-          if (state.isPerProject()) {
+          if (myPluginModel.getState(myPlugin).isPerProject()) {
             myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
               newState -> new EnableDisableAction(newState, List.of(this)),
               () -> new UninstallAction(List.of())
@@ -191,11 +190,7 @@ public class ListPluginComponent extends JPanel {
           }
           else {
             myEnableDisableButton = createEnableDisableButton(
-              __ -> myPluginModel.changeEnableDisable(
-                Set.of(myPlugin),
-                state.getInverted()
-              )
-            );
+              __ -> myPluginModel.changeEnableDisable(Set.of(myPlugin), myPluginModel.getState(myPlugin).getInverted()));
           }
 
           myLayout.addButtonComponent(myEnableDisableButton);
@@ -802,6 +797,10 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else if (!restart && !update) {
+      if (keyCode == KeyEvent.VK_SPACE && event.getComponent() instanceof JCheckBox) {
+        return;
+      }
+
       DumbAwareAction action = keyCode == KeyEvent.VK_SPACE && event.getModifiersEx() == 0 ?
                                createEnableDisableAction(selection) :
                                keyCode == EventHandler.DELETE_CODE ?
