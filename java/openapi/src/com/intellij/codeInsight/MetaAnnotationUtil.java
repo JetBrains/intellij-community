@@ -36,8 +36,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.psi.PsiAnnotation.TargetType.ANNOTATION_TYPE;
 import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 
 /**
  * NB: Supposed to be used for annotations used in libraries and frameworks only, external annotations are not considered.
@@ -79,13 +81,12 @@ public abstract class MetaAnnotationUtil {
   }
 
   public static Set<PsiClass> getChildren(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
-    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) ==
-        null) {
-      return Collections.emptySet();
+    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) == null) {
+      return emptySet();
     }
 
     String name = psiClass.getQualifiedName();
-    if (name == null) return Collections.emptySet();
+    if (name == null) return emptySet();
 
     Set<PsiClass> result = new THashSet<>(HASHING_STRATEGY);
     AnnotatedElementsSearch.searchPsiClasses(psiClass, scope).forEach(processorResult -> {
@@ -95,6 +96,8 @@ public abstract class MetaAnnotationUtil {
       }
       return true;
     });
+
+    if (result.isEmpty()) return emptySet();
 
     return result;
   }
@@ -116,7 +119,7 @@ public abstract class MetaAnnotationUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static Collection<PsiClass> getAnnotatedTypes(@NotNull Module module,
-                                                       @NotNull Key<CachedValue<Collection<PsiClass>>> key,
+                                                       @SuppressWarnings("unused") @NotNull Key<CachedValue<Collection<PsiClass>>> key,
                                                        @NotNull String annotationName) {
     return getAnnotatedTypes(module, annotationName);
   }
@@ -135,6 +138,9 @@ public abstract class MetaAnnotationUtil {
   private static Collection<PsiClass> getAnnotationTypesWithChildren(PsiClass annotationClass, GlobalSearchScope scope) {
     Set<PsiClass> classes = new THashSet<>(HASHING_STRATEGY);
     collectClassWithChildren(annotationClass, classes, scope);
+
+    if (classes.isEmpty()) return emptySet();
+
     return classes;
   }
 
@@ -241,8 +247,7 @@ public abstract class MetaAnnotationUtil {
 
   public static boolean hasMetaAnnotatedMethods(@NotNull PsiClass psiClass,
                                                 @NotNull Collection<String> annotations) {
-    return Stream.of(psiClass.getMethods())
-      .anyMatch(psiMethod -> isMetaAnnotated(psiMethod, annotations));
+    return ContainerUtil.or(psiClass.getMethods(), psiMethod -> isMetaAnnotated(psiMethod, annotations));
   }
 
   private static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,
