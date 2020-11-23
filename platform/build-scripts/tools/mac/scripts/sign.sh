@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 APP_DIRECTORY=$1
 JB_CERT=$2
 
@@ -30,6 +31,7 @@ for f in \
   "Contents/jbr/Contents/Home/Frameworks" \
   "Contents/jbr/Contents/Frameworks" \
   "Contents/Home/Frameworks" \
+  "Contents/Frameworks" \
   "Contents/plugins" "Contents/lib"; do
   if [ -d "$APP_DIRECTORY/$f" ]; then
     find "$APP_DIRECTORY/$f" \
@@ -72,6 +74,7 @@ log "Signing other files..."
 for f in \
   "Contents/jdk/Contents/Home/bin" "Contents/jdk/Contents/Home/jre/bin" \
   "Contents/jbr/Contents/Home/bin" \
+  "Contents/Frameworks" \
   "Contents/MacOS" "Contents/bin"; do
   if [ -d "$APP_DIRECTORY/$f" ]; then
     find "$APP_DIRECTORY/$f" \
