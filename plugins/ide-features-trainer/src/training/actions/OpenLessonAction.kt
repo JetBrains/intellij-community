@@ -207,9 +207,7 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
         openLesson(projectWhereToStartLesson, lesson)
       }
       else {
-        Messages.showMessageDialog(projectWhereToStartLesson,
-                                   invalidSdkException.message,
-                                   LearnBundle.message("dialog.noSdk.title"), Messages.getErrorIcon())
+        LOG.error("No SDK installed!")
       }
     }
     catch (e: Exception) {
