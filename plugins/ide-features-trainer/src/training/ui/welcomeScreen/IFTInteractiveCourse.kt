@@ -79,7 +79,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   private fun moduleDescription(module: Module): HeightLimitedPane {
-    return HeightLimitedPane(module.description ?: "", -2, MODULE_DESCRIPTION)
+    return HeightLimitedPane(module.description ?: "", -1, MODULE_DESCRIPTION)
   }
 
   private fun moduleHeader(module: Module): LinkLabel<Any> {
