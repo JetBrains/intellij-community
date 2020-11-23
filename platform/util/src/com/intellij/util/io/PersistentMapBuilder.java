@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +57,10 @@ public final class PersistentMapBuilder<Key, Value> {
       PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(myCancellationCallback);
     }
     try {
+      if (SystemProperties.getBooleanProperty("idea.use.in.memory.persistent.map", false)) {
+        return new PersistentMapInMemory<>(this);
+      }
+
       return new PersistentMapImpl<>(this);
     }
     finally {
