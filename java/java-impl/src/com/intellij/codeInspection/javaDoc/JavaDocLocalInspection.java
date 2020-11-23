@@ -90,8 +90,8 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     return new AddUnknownTagToCustoms(this, tag);
   }
 
-  private static LocalQuickFix createRemoveTagWithoutDescriptionFix(@NotNull String tag) {
-    return new RemoveTagWithoutDescriptionFix(tag);
+  private static LocalQuickFix createRemoveTagFix(@NotNull String tag) {
+    return new RemoveTagFix(tag);
   }
 
   public void setPackageOption(String modifier, String tags) {
@@ -797,10 +797,10 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     }
   }
 
-  private static class RemoveTagWithoutDescriptionFix implements LocalQuickFix {
+  private static class RemoveTagFix implements LocalQuickFix {
     private final String myTagName;
 
-    RemoveTagWithoutDescriptionFix(String tagName) {
+    RemoveTagFix(String tagName) {
       myTagName = tagName;
     }
 
@@ -818,9 +818,9 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiDocTag tag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
-      if (tag != null) {
-        tag.delete();
+      PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
+      if (myTag != null) {
+        myTag.delete();
       }
     }
   }
@@ -878,8 +878,8 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     }
 
     @Override
-    public LocalQuickFix removeTagWithoutDescriptionFix(@NotNull String tag) {
-      return createRemoveTagWithoutDescriptionFix(tag);
+    public LocalQuickFix removeTagFix(@NotNull String tag) {
+      return createRemoveTagFix(tag);
     }
   }
 }

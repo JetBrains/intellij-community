@@ -45,7 +45,7 @@ public final class JavadocHighlightUtil {
     LocalQuickFix addMissingTagFix(@NotNull String tag, @NotNull String value);
     LocalQuickFix addMissingParamTagFix(@NotNull String name);
     LocalQuickFix registerTagFix(@NotNull String tag);
-    LocalQuickFix removeTagWithoutDescriptionFix(@NotNull String tag);
+    LocalQuickFix removeTagFix(@NotNull String tag);
   }
 
   static boolean isJavaDocRequired(@NotNull JavaDocLocalInspection inspection, @NotNull PsiModifierListOwner element) {
@@ -240,7 +240,7 @@ public final class JavadocHighlightUtil {
     PsiElement nameElement = tag.getNameElement();
     if (nameElement != null) {
       String key = tagInfo == null ? "inspection.javadoc.problem.wrong.tag" : "inspection.javadoc.problem.disallowed.tag";
-      LocalQuickFix fix = "return".equals(tagName) ? null : holder.registerTagFix(tagName);
+      LocalQuickFix fix = tagInfo == null ? holder.registerTagFix(tagName) : holder.removeTagFix(tagName);
       holder.problem(nameElement, JavaBundle.message(key, "<code>" + tagName + "</code>"), fix);
     }
 
@@ -450,14 +450,14 @@ public final class JavadocHighlightUtil {
       if ("return".equals(tag.getName())) {
         if (!PsiType.VOID.equals(psiMethod.getReturnType()) && emptyTag(tag)) {
           String tagText = "<code>@return</code>";
-          LocalQuickFix fix = holder.removeTagWithoutDescriptionFix("return");
+          LocalQuickFix fix = holder.removeTagFix("return");
           holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), fix);
         }
       }
       else if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
         if (emptyThrowsTag(tag)) {
           String tagText = "<code>@" + tag.getName() + "</code>";
-          LocalQuickFix fix = holder.removeTagWithoutDescriptionFix(tag.getName());
+          LocalQuickFix fix = holder.removeTagFix(tag.getName());
           holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), fix);
         }
       }
@@ -465,7 +465,7 @@ public final class JavadocHighlightUtil {
         PsiDocTagValue valueElement = tag.getValueElement();
         if (valueElement != null && emptyParamTag(tag, valueElement)) {
           String tagText = "<code>@param " + valueElement.getText() + "</code>";
-          LocalQuickFix fix = holder.removeTagWithoutDescriptionFix("param " + valueElement.getText());
+          LocalQuickFix fix = holder.removeTagFix("param " + valueElement.getText());
           holder.problem(valueElement, JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), fix);
         }
       }
