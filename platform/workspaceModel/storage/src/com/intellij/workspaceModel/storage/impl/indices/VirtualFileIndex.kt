@@ -28,8 +28,12 @@ open class VirtualFileIndex internal constructor(
   internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> =
     entityId2VirtualFileUrl[id]?.values?.flatten()?.toSet() ?: emptySet()
 
-  internal fun getVirtualFileUrlInfoByEntityId(id: EntityId): Map<String, MutableSet<VirtualFileUrl>> =
-    entityId2VirtualFileUrl[id] ?: emptyMap()
+  internal fun getVirtualFileUrlInfoByEntityId(id: EntityId): Map<String, MutableSet<VirtualFileUrl>> {
+    val property2VfuMap = entityId2VirtualFileUrl[id] ?: return emptyMap()
+    val copiedVfuMap = HashMap<String, MutableSet<VirtualFileUrl>>()
+    property2VfuMap.forEach { copiedVfuMap[it.key] = HashSet(it.value) }
+    return copiedVfuMap
+  }
 
   override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
@@ -51,15 +55,16 @@ open class VirtualFileIndex internal constructor(
     private var freezed = true
 
     @Synchronized
-    internal fun index(id: EntityId, propertyName: String, virtualFileUrls: MutableSet<VirtualFileUrl>) {
+    internal fun index(id: EntityId, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
       startWrite()
+      val newVirtualFileUrls = HashSet(virtualFileUrls)
       val existingVfuSet = entityId2VirtualFileUrl[id]?.get(propertyName)
       existingVfuSet?.removeIf { vfu ->
-        val elementRemoved = virtualFileUrls.remove(vfu)
+        val elementRemoved = newVirtualFileUrls.remove(vfu)
         if (!elementRemoved) removeFromVfu2EntityIdMap(id, propertyName, vfu)
         return@removeIf !elementRemoved
       }
-      virtualFileUrls.forEach { indexVirtualFileUrl(id, propertyName, it) }
+      newVirtualFileUrls.forEach { indexVirtualFileUrl(id, propertyName, it) }
 
       existingVfuSet?.let { if (it.isEmpty()) entityId2VirtualFileUrl[id]?.remove(propertyName) }
       entityId2VirtualFileUrl[id]?.let { if (it.isEmpty()) entityId2VirtualFileUrl.remove(id) }
