@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -396,7 +397,9 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       NewLearnProjectUtil.createLearnProject(projectToClose, langSupport) { learnProject ->
         langSupport.applyToProjectAfterConfigure().invoke(learnProject)
         LearningUiManager.learnProject = learnProject
-        postInitCallback(learnProject)
+        runInEdt {
+          postInitCallback(learnProject)
+        }
       }
     }
     catch (e: IOException) {
