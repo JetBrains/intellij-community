@@ -72,9 +72,9 @@ public class JvmMethodNameReferenceInjector extends ReferenceInjector {
     }
 
     @Override
-    public @Nullable PsiMethod resolve() {
+    public @Nullable PsiElement resolve() {
       UMethod uMethod = UastContextKt.toUElement(myMethod, UMethod.class);
-      return uMethod == null ? null : uMethod.getPsi();
+      return uMethod == null ? null : uMethod.getSourcePsi();
     }
   }
 }
