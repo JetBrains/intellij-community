@@ -129,7 +129,7 @@ public class ParameterInfoComponent extends JPanel {
     setPanels();
 
     if (myRequestFocus) {
-      AccessibleContextUtil.setName(this, CodeInsightBundle.message("parameter.info.message"));
+      AccessibleContextUtil.setName(this, CodeInsightBundle.message("accessible.name.parameter.info.press.tab"));
     }
 
     myDumbLabel.setForeground(CONTEXT_HELP_FOREGROUND);
