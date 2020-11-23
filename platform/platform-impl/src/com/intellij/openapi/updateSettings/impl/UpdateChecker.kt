@@ -425,18 +425,16 @@ object UpdateChecker {
 
     for (source in ExternalComponentManager.getEnabledComponentSources(updateSettings)) {
       indicator?.checkCanceled()
-      if (source.name in updateSettings.enabledExternalUpdateSources) {
-        try {
-          val siteResult = source.getAvailableVersions(indicator, updateSettings)
-            .filter { it.isUpdateFor(manager.findExistingComponentMatching(it, source)) }
-          if (siteResult.isNotEmpty()) {
-            result += ExternalUpdate(siteResult, source)
-          }
+      try {
+        val siteResult = source.getAvailableVersions(indicator, updateSettings)
+          .filter { it.isUpdateFor(manager.findExistingComponentMatching(it, source)) }
+        if (siteResult.isNotEmpty()) {
+          result += ExternalUpdate(siteResult, source)
         }
-        catch (e: Exception) {
-          LOG.warn(e)
-          showErrorMessage(manualCheck, IdeBundle.message("updates.external.error.message", source.name, e.message ?: "internal error"))
-        }
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
+        showErrorMessage(manualCheck, IdeBundle.message("updates.external.error.message", source.name, e.message ?: "internal error"))
       }
     }
 
