@@ -407,17 +407,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       PluginId pluginId = bean.getPluginDescriptor().getPluginId();
       try {
-        @SuppressWarnings("unchecked")
-        Class<FileType> beanClass =
-          (Class<FileType>)Class.forName(bean.implementationClass, true, bean.getPluginDescriptor().getPluginClassLoader());
-        if (bean.fieldName != null) {
-          Field field = beanClass.getDeclaredField(bean.fieldName);
-          field.setAccessible(true);
-          fileType = (FileType)field.get(null);
+        if (bean.fieldName == null) {
+          // uncached - cached by FileTypeManagerImpl and not by bean
+          fileType = ApplicationManager.getApplication().instantiateClass(bean.implementationClass, bean.getPluginDescriptor());
         }
         else {
-          // uncached - cached by FileTypeManagerImpl and not by bean
-          fileType = ReflectionUtil.newInstance(beanClass, false);
+          Field field = ApplicationManager.getApplication().loadClass(bean.implementationClass, bean.getPluginDescriptor()).getDeclaredField(bean.fieldName);
+          field.setAccessible(true);
+          fileType = (FileType)field.get(null);
         }
       }
       catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
@@ -447,9 +444,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       List<String> hashBangs = bean.hashBangs == null ? Collections.emptyList() : StringUtil.split(bean.hashBangs, ";");
       registerFileTypeWithoutNotification(fileType, standardFileType.matchers, hashBangs, true);
 
-      PluginAdvertiserExtensionsStateService pluginAdvertise = PluginAdvertiserExtensionsStateService.getInstance();
+      PluginAdvertiserExtensionsStateService pluginAdvertiser = PluginAdvertiserExtensionsStateService.getInstance();
       for (FileNameMatcher matcher : standardFileType.matchers) {
-        pluginAdvertise.registerLocalPlugin(matcher.getPresentableString(), bean.getPluginDescriptor());
+        pluginAdvertiser.registerLocalPlugin(matcher.getPresentableString(), bean.getPluginDescriptor());
       }
 
       myPendingAssociations.removeAllAssociations(bean);
