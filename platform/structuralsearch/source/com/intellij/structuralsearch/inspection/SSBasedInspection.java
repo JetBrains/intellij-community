@@ -39,7 +39,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -307,11 +306,11 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return removed;
   }
 
-  private class InspectionResultSink extends DefaultMatchResultSink {
+  private final class InspectionResultSink extends DefaultMatchResultSink {
     private Configuration myConfiguration;
     private ProblemsHolder myHolder;
 
-    private final Set<SmartPsiPointer> duplicates = new THashSet<>();
+    private final Set<SmartPsiPointer> duplicates = new HashSet<>();
 
     InspectionResultSink() {}
 

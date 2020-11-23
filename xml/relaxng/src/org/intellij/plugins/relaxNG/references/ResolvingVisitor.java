@@ -28,10 +28,10 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor {
@@ -45,7 +45,7 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
     myPattern = pattern;
     myProcessingContext = context;
 
-    myProcessingContext.put(VISITED_KEY, new THashSet<>());
+    myProcessingContext.put(VISITED_KEY, new HashSet<>());
   }
 
   @Override
