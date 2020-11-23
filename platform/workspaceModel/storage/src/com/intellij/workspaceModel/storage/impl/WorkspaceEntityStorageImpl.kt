@@ -959,15 +959,13 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
                                              left: WorkspaceEntityStorage,
                                              right: WorkspaceEntityStorage) {
     if (StrictMode.rbsEnabled) {
-      val storage = if (this is WorkspaceEntityStorageBuilder) this.toStorage() as AbstractEntityStorage else this
-      consistencyChecker.execute {
-        try {
-          storage.assertConsistency()
-        }
-        catch (e: Throwable) {
-          brokenConsistency = true
-          reportConsistencyIssue(message, e, sourceFilter, left, right, storage)
-        }
+      try {
+        this.assertConsistency()
+      }
+      catch (e: Throwable) {
+        brokenConsistency = true
+        val storage = if (this is WorkspaceEntityStorageBuilder) this.toStorage() as AbstractEntityStorage else this
+        consistencyChecker.execute { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
       }
     }
   }
@@ -1055,20 +1053,9 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 }
 
-/** It exposes [assertConsistency] function to the outside and can be used for checking if the current store is consistent */
+/** This function exposes [brokenConsistency] property to the outside and should be removed along with the property itself */
 val WorkspaceEntityStorage.isConsistent: Boolean
-  get() {
-    this as AbstractEntityStorage
-    if (brokenConsistency) return false
-    try {
-      assertConsistency()
-    }
-    catch (e: Throwable) {
-      brokenConsistency = true
-      return false
-    }
-    return true
-  }
+  get() = !(this as AbstractEntityStorage).brokenConsistency
 
 internal object ClassConversion {
 
