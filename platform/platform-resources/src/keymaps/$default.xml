@@ -977,7 +977,7 @@
     <keyboard-shortcut first-keystroke="alt DELETE"/>
   </action>
   <action id="SelectVirtualTemplateElement">
-    <keyboard-shortcut first-keystroke="TAB"/>
+    <keyboard-shortcut first-keystroke="Alt Shift O"/>
   </action>
   <action id="NextTemplateVariable">
     <keyboard-shortcut first-keystroke="TAB"/>
