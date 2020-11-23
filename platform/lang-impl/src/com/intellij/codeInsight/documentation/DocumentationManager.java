@@ -498,6 +498,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
   }
 
+  public void showJavaDocInfo(@NotNull Editor editor,
+                              @NotNull PsiElement element,
+                              PsiElement original,
+                              boolean requestFocus,
+                              @Nullable Runnable closeCallback) {
+    myEditor = editor;
+    showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
+  }
+
   public void showJavaDocInfo(@NotNull PsiElement element,
                               PsiElement original,
                               boolean requestFocus,
