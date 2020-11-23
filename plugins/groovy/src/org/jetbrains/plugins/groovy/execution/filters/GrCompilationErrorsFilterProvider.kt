@@ -27,6 +27,11 @@ class GrCompilationErrorsFilterProvider : ConsoleFilterProvider {
         return super.createOpenFileHyperlink(fileName, line, column)
                ?: LazyFileHyperlinkInfo(project, fileName, line, column)
       }
+
+      override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
+        if (!line.contains(": ")) return null
+        return super.applyFilter(line, entireLength)
+      }
     }
   )
 }
