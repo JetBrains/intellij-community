@@ -44,12 +44,6 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   @Override
-  public final boolean isCorrupted() {
-    //note: this method used in Scala plugin
-    return myImpl.isCorrupted();
-  }
-
-  @Override
   public final void closeAndClean() throws IOException {
     myImpl.closeAndDelete();
   }

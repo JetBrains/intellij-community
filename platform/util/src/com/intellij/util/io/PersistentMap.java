@@ -24,8 +24,6 @@ public interface PersistentMap<K, V> extends KeyValueStore<K, V> {
 
   void markDirty() throws IOException;
 
-  boolean isCorrupted();
-
   /**
    * Closes the map removing all entries
    */

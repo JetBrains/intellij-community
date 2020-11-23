@@ -80,9 +80,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   private final PersistentEnumeratorBase<Key> myEnumerator;
   private final boolean myCompactOnClose;
 
-  @Override
   @TestOnly
   public boolean isCorrupted() {
+    // please do not use this method outside of tests (e.g. as in Scala plugin)
     return myEnumerator.isCorrupted();
   }
 

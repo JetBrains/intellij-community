@@ -500,7 +500,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       myMap.get(key);
       fail();
     } catch (IOException ignore) {
-      assertTrue(myMap.isCorrupted());
+      assertTrue(PersistentMapImpl.unwrap(myMap).isCorrupted());
     }
 
     createInitializedMap(key, value, defaultMapConstructor);
@@ -511,7 +511,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       myMap.put(key, value + value);
       fail();
     } catch (IOException ignore) {
-      assertTrue(myMap.isCorrupted());
+      assertTrue(PersistentMapImpl.unwrap(myMap).isCorrupted());
     }
 
     createInitializedMap(key, value, defaultMapConstructor);
@@ -527,7 +527,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       });
       fail();
     } catch (IOException ignore) {
-      assertTrue(myMap.isCorrupted());
+      assertTrue(PersistentMapImpl.unwrap(myMap).isCorrupted());
     }
   }
 

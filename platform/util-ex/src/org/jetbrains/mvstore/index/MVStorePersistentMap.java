@@ -104,12 +104,6 @@ public class MVStorePersistentMap<Key, Value> implements PersistentMapBase<Key, 
   }
 
   @Override
-  public boolean isCorrupted() {
-    //TODO
-    return false;
-  }
-
-  @Override
   public void close() throws IOException {
     //TODO
   }

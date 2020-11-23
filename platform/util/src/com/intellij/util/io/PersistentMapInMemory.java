@@ -24,11 +24,6 @@ public final class PersistentMapInMemory<Key, Value> implements PersistentMapBas
     return myValueExternalizer;
   }
 
-  @Override
-  public boolean isCorrupted() {
-    return false;
-  }
-
   public @NotNull Object getDataAccessLock() {
     return myLock;
   }

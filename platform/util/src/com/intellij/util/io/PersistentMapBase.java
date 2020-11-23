@@ -90,13 +90,6 @@ public interface PersistentMapBase<Key, Value> {
   void markDirty() throws IOException;
 
   /**
-   * Returns true if storage data was corrupted and can't be used anymore.
-   * <br>
-   * If client tries to access corrupted storage the only result can be an exception.
-   */
-  boolean isCorrupted();
-
-  /**
    * Force all transient changes to disk.
    */
   void force() throws IOException;
