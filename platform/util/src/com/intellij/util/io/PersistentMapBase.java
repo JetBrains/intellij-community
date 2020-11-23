@@ -50,6 +50,7 @@ public interface PersistentMapBase<Key, Value> {
 
   /**
    * Process only existing keys in a map.
+   * TODO: do we have constraint on ordering? Deterministic ordering?
    */
   boolean processExistingKeys(@NotNull Processor<? super Key> processor) throws IOException;
 
@@ -64,6 +65,8 @@ public interface PersistentMapBase<Key, Value> {
    * </li><li>
    *  some implementations might not support it.
    * </li></ul>
+   * TODO: shall we name it explicitly? Let's use default implementation for either of methods.
+   * TODO: do we have constraint on ordering? Deterministic ordering?
    */
   boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException;
 
