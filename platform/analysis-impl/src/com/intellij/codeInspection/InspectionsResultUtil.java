@@ -10,7 +10,6 @@ import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.JBIterable;
@@ -130,12 +129,6 @@ public final class InspectionsResultUtil {
         }
       }
     }
-  }
-
-  public static void writeProfileName(@NotNull Path outputDirectory, @Nullable String profileName) throws IOException {
-    Element element = new Element(INSPECTIONS_NODE);
-    element.setAttribute(PROFILE, Objects.requireNonNull(profileName));
-    JDOMUtil.write(element, outputDirectory.resolve(DESCRIPTIONS + XML_EXTENSION));
   }
 
   private static final class XmlWriterWrapper implements Closeable {
