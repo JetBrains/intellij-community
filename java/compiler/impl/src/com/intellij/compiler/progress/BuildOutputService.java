@@ -4,7 +4,6 @@ package com.intellij.compiler.progress;
 import com.intellij.build.*;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
-import com.intellij.build.progress.BuildIssueContributor;
 import com.intellij.build.progress.BuildProgress;
 import com.intellij.build.progress.BuildProgressDescriptor;
 import com.intellij.compiler.impl.CompilerPropertiesAction;
@@ -18,7 +17,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -42,9 +40,8 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 @ApiStatus.Internal
 public class BuildOutputService implements BuildViewService {
-  private static final Logger LOG = Logger.getInstance(BuildViewService.class);
   private static final ExtensionPointName<BuildIssueContributor> BUILD_ISSUE_EP =
-    ExtensionPointName.create("com.intellij.build.issueContributor");
+    ExtensionPointName.create("com.intellij.compiler.buildIssueContributor");
 
   private static final @NonNls String ANSI_RESET = "\u001B[0m";
   private static final @NonNls String ANSI_RED = "\u001B[31m";
@@ -189,17 +186,9 @@ public class BuildOutputService implements BuildViewService {
                                 @NotNull MessageEvent.Kind kind,
                                 @Nullable VirtualFile virtualFile,
                                 @Nullable Navigatable navigatable) {
-    try {
-      for (BuildIssueContributor ex : BUILD_ISSUE_EP.getExtensionList()) {
-
-        BuildIssue issue = ex.createBuildIssue(myProject, moduleNames, title, message, kind, virtualFile, navigatable);
-        if (issue != null) return issue;
-      }
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    return null;
+    return BUILD_ISSUE_EP.computeSafeIfAny(contributor -> {
+      return contributor.createBuildIssue(myProject, moduleNames, title, message, kind, virtualFile, navigatable);
+    });
   }
 
   @NotNull
