@@ -46,8 +46,9 @@ import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibrariesDepende
 import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibrariesFixer
 import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
-import org.jetbrains.kotlin.idea.configuration.utils.createSourceSetDependsOnGraph
+import org.jetbrains.kotlin.idea.configuration.utils.*
 import org.jetbrains.kotlin.idea.configuration.utils.createSourceSetVisibilityGraph
+import org.jetbrains.kotlin.idea.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.configuration.utils.transitiveClosure
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
@@ -422,15 +423,15 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     it.version = externalProject.version
 
                     // TODO NOW: Use TestSourceSetUtil instead!
-                    val name = sourceSet.name
-                    val baseName = name.removeSuffix("Test")
-                    if (baseName != name) {
+
+                    if (sourceSet.isTestModule) {
                         it.productionModuleId = getInternalModuleName(
                             gradleModule,
                             externalProject,
                             sourceSet,
                             resolverCtx,
-                            baseName + "Main"
+                            @OptIn(UnsafeTestSourceSetHeuristicApi::class)
+                            predictedProductionSourceSetName(sourceSet.name)
                         )
                     }
 
