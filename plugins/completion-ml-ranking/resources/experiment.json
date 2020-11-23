@@ -46,7 +46,7 @@
     {
       "id": "python",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13 ]
+      "includeGroups": [ 7, 13, 11, 12, 8 ]
     },
     {
       "id": "kotlin",
