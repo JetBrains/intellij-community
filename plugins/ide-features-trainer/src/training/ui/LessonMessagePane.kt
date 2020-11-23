@@ -32,7 +32,7 @@ import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
 class LessonMessagePane : JTextPane() {
-  enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE }
+  enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
   private data class LessonMessage(
     val messageParts: List<MessagePart>,
@@ -431,7 +431,7 @@ class LessonMessagePane : JTextPane() {
     val lastPassedMessage: LessonMessage? = activeMessages.indexOfLast { it.state == MessageState.PASSED }
       .takeIf { it != -1 && it < activeMessages.size - 1 }
       ?.let { activeMessages[it + 1] }
-    if (lastActiveMessage != null && lastActiveMessage.state != MessageState.PASSED) {
+    if (lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
       drawRectangleAroundMessage(lastPassedMessage, lastActiveMessage, g2d, UISettings.instance.activeTaskBorder)
     }
   }
