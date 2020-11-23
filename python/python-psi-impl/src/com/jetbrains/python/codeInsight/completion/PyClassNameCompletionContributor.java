@@ -21,6 +21,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
@@ -114,7 +115,8 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
                                                                        @NotNull Class<T> elementClass,
                                                                        @NotNull Function<LookupElement, LookupElement> elementHandler) {
     final Project project = targetFile.getProject();
-    final GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(targetFile);
+    final GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(targetFile)
+      .intersectWith(GlobalSearchScope.notScope(PyUserSkeletonsUtil.getUserSkeletonsDirectoryScope(project)));
     final Set<String> alreadySuggested = new HashSet<>();
 
     StubIndex stubIndex = StubIndex.getInstance();

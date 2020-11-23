@@ -11,10 +11,13 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,6 +181,18 @@ public class PyClassNameCompletionTest extends PyTestCase {
     assertNotNull(notExportedVar);
     TestLookupElementPresentation varPresentation = TestLookupElementPresentation.renderReal(notExportedVar);
     assertEquals(" (pkg.mod)", varPresentation.getTailText());
+  }
+
+  // PY-45566
+  public void testPythonSkeletonsVariantsNotSuggested() {
+    LookupElement[] lookupElements = doExtendedCompletion();
+
+    LookupElement ndarray = ContainerUtil.find(lookupElements, variant -> variant.getLookupString().equals("ndarray"));
+    assertNull(ndarray);
+
+    PyClass ndarrayUserSkeleton = PyClassNameIndex.findClass("numpy.core.multiarray.ndarray", myFixture.getProject());
+    assertNotNull(ndarrayUserSkeleton);
+    assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(ndarrayUserSkeleton.getContainingFile()));
   }
 
   private void doTest() {
