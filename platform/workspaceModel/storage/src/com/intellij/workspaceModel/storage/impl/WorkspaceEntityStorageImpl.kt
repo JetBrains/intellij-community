@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBiMap
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ObjectUtils
@@ -17,6 +18,8 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.ints.IntSet
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -982,11 +985,40 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     }
     else null
 
-    val displayText = "Content of the workspace model in binary format"
-    var _message = "$message\n\n!Please include all attachments to the report!"
-    _message += "\n\nEntity source filter: $entitySourceFilter"
+    var _message = "$message\n\nEntity source filter: $entitySourceFilter"
     _message += "\n\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
 
+    val property = System.getProperty("ide.new.project.model.store.dump.directory")
+    if (property != null) {
+      serializeContentToFolder(Paths.get(property), left, right, resulting)
+      LOG.error(_message, e)
+    }
+    else {
+      LOG.error(_message, e, *createAttachmentsForReport(left, right, resulting))
+    }
+  }
+
+  private fun serializeContentToFolder(contentFolder: Path,
+                                       left: WorkspaceEntityStorage,
+                                       right: WorkspaceEntityStorage,
+                                       resulting: WorkspaceEntityStorage) {
+    serializeEntityStorage(contentFolder.resolve("Left_Store"), left)
+    serializeEntityStorage(contentFolder.resolve("Right_Store"), right)
+    serializeEntityStorage(contentFolder.resolve("Res_Store"), resulting)
+    serializeContent(contentFolder.resolve("ClassToIntConverter")) { serializer, stream -> serializer.serializeClassToIntConverter(stream) }
+
+    if (right is WorkspaceEntityStorageBuilder) {
+      serializeContent(contentFolder.resolve("Right_Diff_Log")) { serializer, stream ->
+        right as WorkspaceEntityStorageBuilderImpl
+        serializer.serializeDiffLog(stream, right.changeLog)
+      }
+    }
+  }
+
+  private fun createAttachmentsForReport(left: WorkspaceEntityStorage,
+                                         right: WorkspaceEntityStorage,
+                                         resulting: WorkspaceEntityStorage): Array<Attachment> {
+    val displayText = "Content of the workspace model in binary format"
     val leftAttachment = left.asAttachment("Left_Store", displayText)
     val rightAttachment = right.asAttachment("Right_Store", displayText)
     val resAttachment = resulting.asAttachment("Res_Store", displayText)
@@ -1001,7 +1033,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
         serializer.serializeDiffLog(stream, right.changeLog)
       }
     }
-    LOG.error(_message, e, *attachments)
+    return attachments
   }
 
   private fun assertResolvable(clazz: Int, id: Int) {
