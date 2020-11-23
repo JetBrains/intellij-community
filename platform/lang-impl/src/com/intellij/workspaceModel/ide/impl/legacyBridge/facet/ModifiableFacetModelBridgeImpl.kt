@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.CustomModuleEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
@@ -50,6 +51,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
         JpsImportedEntitySource(moduleSource.internalFile, externalSource.id, moduleBridge.project.isExternalStorageEnabled)
       moduleSource is JpsImportedEntitySource && externalSource == null ->
         moduleSource.internalFile
+      moduleSource is CustomModuleEntitySource && externalSource == null ->
+        moduleSource.internalSource
       else -> moduleSource
     }
     val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }

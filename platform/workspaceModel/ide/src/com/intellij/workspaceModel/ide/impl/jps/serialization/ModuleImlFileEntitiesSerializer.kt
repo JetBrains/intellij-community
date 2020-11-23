@@ -13,11 +13,8 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.exists
 import com.intellij.util.isEmpty
-import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.virtualFile
-import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -362,6 +359,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   protected open fun acceptsSource(entitySource: EntitySource): Boolean {
     return entitySource is JpsFileEntitySource ||
+           entitySource is CustomModuleEntitySource ||
            entitySource is JpsFileDependentEntitySource && (entitySource as? JpsImportedEntitySource)?.storedExternally != true
   }
 
@@ -645,7 +643,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     get() = "ProjectModuleManager"
 
   override val entitySourceFilter: (EntitySource) -> Boolean
-    get() = { it is JpsFileEntitySource ||
+    get() = { it is JpsFileEntitySource || it is CustomModuleEntitySource ||
               it is JpsFileDependentEntitySource && (it as? JpsImportedEntitySource)?.storedExternally != true }
 
   override fun getFileName(entity: ModuleEntity): String {
@@ -694,6 +692,9 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
 
   protected open fun getSourceToSave(module: ModuleEntity): JpsFileEntitySource.FileInDirectory? {
     val entitySource = module.entitySource
+    if (entitySource is CustomModuleEntitySource) {
+      return entitySource.internalSource as? JpsFileEntitySource.FileInDirectory
+    }
     if (entitySource is JpsFileDependentEntitySource) {
       return entitySource.originalSource as? JpsFileEntitySource.FileInDirectory
     }

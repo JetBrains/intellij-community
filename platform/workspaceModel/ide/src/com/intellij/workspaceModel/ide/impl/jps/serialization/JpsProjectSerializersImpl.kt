@@ -16,10 +16,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
@@ -278,13 +275,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         source.internalFile
       }
     }
-    is JpsFileDependentEntitySource -> source.originalSource
-    is JpsFileEntitySource -> source
-    else -> null
+    else -> getInternalFileSource(source)
   }
 
   private fun getInternalFileSource(source: EntitySource) = when (source) {
     is JpsFileDependentEntitySource -> source.originalSource
+    is CustomModuleEntitySource -> source.internalSource
     is JpsFileEntitySource -> source
     else -> null
   }
