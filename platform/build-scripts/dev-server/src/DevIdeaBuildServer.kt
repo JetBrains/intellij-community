@@ -69,7 +69,7 @@ private fun start() {
   val httpServer = createHttpServer(buildServer)
   LOG.info("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
   @Suppress("SpellCheckingInspection")
-  LOG.info("Custom plugins: ${getAdditionalModules() ?: "not set"} (use VM property -Dadditional.plugins to specify additional module ids)")
+  LOG.info("Custom plugins: ${getAdditionalModules()?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
   @Suppress("SpellCheckingInspection")
   LOG.info("Run IDE with VM property -Didea.use.dev.build.server=true to use it")
   httpServer.start()
@@ -77,10 +77,8 @@ private fun start() {
   val doneSignal = CountDownLatch(1)
 
   // wait for ctrl-c
-  Runtime.getRuntime().addShutdownHook(object : Thread() {
-    override fun run() {
-      doneSignal.countDown()
-    }
+  Runtime.getRuntime().addShutdownHook(Thread {
+    doneSignal.countDown()
   })
 
   try {

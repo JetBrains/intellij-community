@@ -144,12 +144,16 @@ private fun createLibClassPath(buildContext: BuildContext,
 private fun getBundledMainModuleNames(productProperties: ProductProperties): List<String> {
   val bundledPlugins = productProperties.productLayout.bundledPluginModules
   getAdditionalModules()?.let {
-    return bundledPlugins + it.splitToSequence(',')
+    return bundledPlugins + it
   }
   return bundledPlugins
 }
 
-fun getAdditionalModules(): String? = System.getProperty("additional.modules") ?: System.getProperty("additional.plugins")
+fun getAdditionalModules(): Sequence<String>? {
+  return (System.getProperty("additional.modules") ?: System.getProperty("additional.plugins") ?: return null)
+    .splitToSequence(',')
+    .map(String::trim)
+}
 
 private fun createRunDirForProduct(homePath: Path, platformPrefix: String): Path {
   // if symlinked to ram disk, use real path for performance reasons and avoid any issues in ant/other code
