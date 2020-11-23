@@ -19,6 +19,7 @@ import training.actions.StartLearnAction
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.interfaces.Module
+import training.statistic.StatisticBase
 import java.awt.Component
 import java.awt.Component.LEFT_ALIGNMENT
 import java.awt.Dimension
@@ -58,10 +59,6 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   override fun getExpandContent(): JComponent {
-    return modulesPanel()
-  }
-
-  private fun modulesPanel(): JPanel {
     val modules = CourseManager.instance.modules
     val panel = JPanel()
     panel.isOpaque = false
@@ -75,6 +72,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
       panel.add(rigid(16, 16))
     }
     panel.add(rigid(16, 15))
+    StatisticBase.instance.onExpandWelcomeScreenPanel()
     return panel
   }
 
@@ -96,6 +94,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
       { _, _ ->
         var lesson = module.giveNotPassedLesson()
         if (lesson == null) lesson = module.lessons[0]
+        StatisticBase.instance.onStartModuleAction(module)
         performActionOnWelcomeScreen(OpenLessonAction(lesson))
       }, null)
     return linkLabel
