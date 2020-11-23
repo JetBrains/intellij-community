@@ -181,8 +181,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   @Nullable
   public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
     if (virtualFile != null) {
-      Charset fileEncoding = FileEncodingProvider.getFileEncoding(myProject, virtualFile);
-      if (fileEncoding != null) return fileEncoding;
+      for (FileEncodingProvider encodingProvider : FileEncodingProvider.EP_NAME.getIterable()) {
+        Charset encoding = encodingProvider.getEncoding(virtualFile);
+        if (encoding != null) return encoding;
+      }
     }
     VirtualFile parent = virtualFile;
     while (parent != null) {

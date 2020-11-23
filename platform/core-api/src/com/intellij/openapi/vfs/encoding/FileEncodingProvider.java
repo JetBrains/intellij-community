@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,20 +9,22 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 
 /**
- * Overrides encoding specified in {@link EncodingRegistry} for an arbitrary file. Doesn't affect files defining
- * their own encoding via {@code LanguageFileType.getCharset()}
+ * Implement this interface to override encoding specified in {@link EncodingRegistry} for an arbitrary virtual file
+ * and define an extension in {@code plugin.xml}, for example:
+ * <pre><code>
+ *   &lt;fileEncodingProvider implementation="com.acme.example.MyFileEncodingProvider"/&gt;
+ * </code></pre>
+ * <b>Note:</b> The provider doesn't affect files defining their own encoding via {@code LanguageFileType.getCharset()}.
  */
 public interface FileEncodingProvider {
   ExtensionPointName<FileEncodingProvider> EP_NAME = new ExtensionPointName<>("com.intellij.fileEncodingProvider");
 
+  /**
+   * @param virtualFile The virtual file to override encoding for.
+   * @return The encoding to be used for the given virtual file. <b>It should not depend on the current project. Otherwise it may
+   * cause index inconsistencies.</b>
+   */
   @Nullable
-  Charset getEncoding(@NotNull Project project, @NotNull VirtualFile virtualFile);
+  Charset getEncoding(@NotNull VirtualFile virtualFile);
 
-  static Charset getFileEncoding(@NotNull Project project, @NotNull VirtualFile virtualFile) {
-    for (FileEncodingProvider encodingProvider : EP_NAME.getIterable()) {
-      Charset encoding = encodingProvider.getEncoding(project, virtualFile);
-      if (encoding != null) return encoding;
-    }
-    return null;
-  }
 }

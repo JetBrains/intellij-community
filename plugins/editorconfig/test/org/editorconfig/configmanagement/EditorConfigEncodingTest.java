@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.TemporaryDirectory;
+import org.editorconfig.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -27,6 +28,15 @@ public class EditorConfigEncodingTest extends EditorConfigFileSettingsTestCase {
     VirtualFile newFile = createTargetFile();
     Charset charset = EncodingManager.getInstance().getEncoding(newFile, true);
     assertEquals(StandardCharsets.ISO_8859_1, charset);
+  }
+
+  public void testForcedUtf8() throws IOException {
+    VirtualFile newFile = createTargetFile();
+    VirtualFile dir = newFile.getParent();
+    VirtualFile editorConfig = dir.findChild(Utils.EDITOR_CONFIG_FILE_NAME);
+    assertNotNull(editorConfig);
+    Charset charset = editorConfig.getCharset();
+    assertEquals(StandardCharsets.UTF_8, charset);
   }
 
 

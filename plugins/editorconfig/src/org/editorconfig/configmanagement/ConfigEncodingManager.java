@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.FileEncodingProvider;
 import org.editorconfig.Utils;
@@ -39,9 +40,9 @@ public class ConfigEncodingManager implements FileEncodingProvider {
   private final ThreadLocal<Boolean> isApplyingSettings = new ThreadLocal<>();
 
   @Override
-  public @Nullable Charset getEncoding(@NotNull Project project,
-                                       @NotNull VirtualFile virtualFile) {
-    if (!Utils.isEnabled(CodeStyle.getSettings(project)) ||
+  public @Nullable Charset getEncoding(@NotNull VirtualFile virtualFile) {
+    Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+    if (project != null && !Utils.isEnabled(CodeStyle.getSettings(project)) ||
         isApplyingSettings.get() != null && isApplyingSettings.get()) return null;
     try {
       isApplyingSettings.set(true);
