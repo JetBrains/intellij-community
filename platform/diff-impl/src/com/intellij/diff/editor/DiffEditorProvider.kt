@@ -18,14 +18,14 @@ package com.intellij.diff.editor
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
-import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 
-class DiffEditorProvider : FileEditorProvider, DumbAware {
+class DiffEditorProvider : DefaultPlatformFileEditorProvider, DumbAware {
   companion object {
     @NonNls
     const val DIFF_EDITOR_PROVIDER_ID = "DiffEditor"
@@ -46,5 +46,5 @@ class DiffEditorProvider : FileEditorProvider, DumbAware {
   }
 
   override fun getEditorTypeId(): String = DIFF_EDITOR_PROVIDER_ID
-  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.NONE
 }
