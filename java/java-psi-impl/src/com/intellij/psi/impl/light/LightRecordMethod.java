@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.NotNull;
@@ -108,6 +109,11 @@ public class LightRecordMethod extends LightMethod implements LightRecordMember 
 
   private static boolean hasTargetApplicableForMethod(PsiAnnotation annotation) {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.METHOD) != null;
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    return myRecordComponent.setName(name);
   }
 
   @Override
