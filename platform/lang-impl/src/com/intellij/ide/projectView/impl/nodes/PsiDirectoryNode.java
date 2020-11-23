@@ -372,11 +372,6 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   }
 
   @Override
-  public @Nullable Comparable getManualOrderKey() {
-    return super.getManualOrderKey();
-  }
-
-  @Override
   public boolean shouldDrillDownOnEmptyElement() {
     return true;
   }
