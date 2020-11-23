@@ -17,15 +17,16 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Mikhail Golubev
@@ -120,7 +121,7 @@ public final class PyNewStyleStringFormatParser {
     int autoFieldNumber = myImplicitlyNumberedFieldsCounter;
 
     // in the order of appearance inside a field
-    final TIntArrayList attrAndLookupBounds = new TIntArrayList();
+    final IntArrayList attrAndLookupBounds = new IntArrayList();
     int conversionStart = -1;
     int formatSpecStart = -1;
     final List<Field> nestedFields = new ArrayList<>();
@@ -159,7 +160,7 @@ public final class PyNewStyleStringFormatParser {
             addIfNotLastItem(attrAndLookupBounds, offset);
 
             // no name in the field, increment implicitly named fields counter
-            if (attrAndLookupBounds.size() == 1 && attrAndLookupBounds.get(0) == startOffset + 1) {
+            if (attrAndLookupBounds.size() == 1 && attrAndLookupBounds.getInt(0) == startOffset + 1) {
               myImplicitlyNumberedFieldsCounter++;
             }
           }
@@ -205,7 +206,7 @@ public final class PyNewStyleStringFormatParser {
 
     return new Field(myNodeText,
                      startOffset,
-                     attrAndLookupBounds.toNativeArray(),
+                     attrAndLookupBounds.toIntArray(),
                      conversionStart,
                      formatSpecStart,
                      nestedFields,
@@ -215,8 +216,8 @@ public final class PyNewStyleStringFormatParser {
                      recursionDepth);
   }
 
-  private static void addIfNotLastItem(TIntArrayList attrAndLookupBounds, int offset) {
-    if (attrAndLookupBounds.isEmpty() || attrAndLookupBounds.get(attrAndLookupBounds.size() - 1) != offset) {
+  private static void addIfNotLastItem(IntList attrAndLookupBounds, int offset) {
+    if (attrAndLookupBounds.isEmpty() || attrAndLookupBounds.getInt(attrAndLookupBounds.size() - 1) != offset) {
       attrAndLookupBounds.add(offset);
     }
   }
@@ -383,7 +384,7 @@ public final class PyNewStyleStringFormatParser {
      */
     @NotNull
     public List<String> getAttributesAndLookups() {
-      return getAttributesAndLookupsRanges().stream().map(ranges -> ranges.substring(myNodeText)).collect(Collectors.toList());
+      return ContainerUtil.map(getAttributesAndLookupsRanges(), ranges -> ranges.substring(myNodeText));
     }
 
     @NotNull
