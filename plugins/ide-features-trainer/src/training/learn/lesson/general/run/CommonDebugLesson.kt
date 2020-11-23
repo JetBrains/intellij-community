@@ -53,6 +53,7 @@ import javax.swing.text.JTextComponent
 abstract class CommonDebugLesson(module: Module, id: String, languageId: String)
   : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name"), module, languageId) {
   protected abstract val sample: LessonSample
+  protected abstract var logicalPosition: LogicalPosition
   protected abstract val configurationName: String
   protected abstract val quickEvaluationArgument: String
   protected abstract val expressionToBeEvaluated: String
@@ -65,16 +66,12 @@ abstract class CommonDebugLesson(module: Module, id: String, languageId: String)
 
   protected var mayBeStopped: Boolean = false
   private var debugSession: XDebugSession? by WeakReferenceDelegator()
-  private var logicalPosition: LogicalPosition = LogicalPosition(0, 0)
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
 
     prepareTask()
 
-    prepareRuntimeTask {
-      logicalPosition = editor.offsetToLogicalPosition(sample.startOffset)
-    }
     toggleBreakpointTask(sample, { logicalPosition }) {
       LessonsBundle.message("debug.workflow.toggle.breakpoint", action("ToggleLineBreakpoint"))
     }
@@ -424,7 +421,7 @@ abstract class CommonDebugLesson(module: Module, id: String, languageId: String)
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val line = editor.offsetToVisualLine(offset, true)
         val y = editor.visualLineToY(line)
-        return@l Rectangle(2, y, ui.width - 60, editor.lineHeight)
+        return@l Rectangle(2, y, ui.iconsAreaWidth + 6, editor.lineHeight)
       }
     }
   }

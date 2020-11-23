@@ -3,6 +3,7 @@ package com.intellij.java.ift.lesson.run
 
 import com.intellij.icons.AllIcons
 import com.intellij.java.ift.JavaLessonsBundle
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.testGuiFramework.impl.button
 import training.commands.kotlin.TaskTestContext
 import training.learn.interfaces.Module
@@ -14,6 +15,7 @@ class JavaDebugLesson(module: Module) : CommonDebugLesson(module, "java.debug.wo
   private val demoClassName = JavaRunLessonsUtils.demoClassName
   override val configurationName: String = demoClassName
   override val sample = JavaRunLessonsUtils.demoSample
+  override var logicalPosition: LogicalPosition = LogicalPosition(10, 6)
 
   override val confNameForWatches: String = "Application"
   override val quickEvaluationArgument = "Integer.parseInt"
