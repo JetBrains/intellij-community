@@ -936,12 +936,17 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     }
   }
 
-  public void testBigFileAutoDetectedAsTextMustDetermineItsEncodingFromTheWholeTextToMinimizePossibilityOfDetectionErrors() {
-    VirtualFile vTestRoot = getTestRoot();
-    VirtualFile file = vTestRoot.findChild("BIG_CHANGES");
-    assertNotNull(file);
+  public void testBigFileAutoDetectedAsTextMustDetermineItsEncodingFromTheWholeTextToMinimizePossibilityOfDetectionErrors() throws IOException {
+    // must not allow sheer luck to have guessed UTF-8 correctly
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetName(US_ASCII.name());
+    VirtualFile src = getTestRoot().findChild("BIG_CHANGES");
+    assertNotNull(src);
+
+    // create new file to avoid caching the file AUTO_DETECTED attribute. we need to re-detect from scratch to test its correctness
+    VirtualFile file = createTempFile("blah-blah", NO_BOM, new String(src.contentsToByteArray(), StandardCharsets.UTF_8), StandardCharsets.UTF_8);
 
     assertNull(file.getBOM());
+    assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
   }
 
