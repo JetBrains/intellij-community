@@ -64,7 +64,7 @@ class LanguageChoosePanel(private val toolWindow: LearnToolWindow?,
 
   private fun init() {
     caption.isOpaque = false
-    caption.font = UISettings.instance.moduleNameFont
+    caption.font = UISettings.instance.modulesFont
 
     description.isOpaque = false
     description.isEditable = false
