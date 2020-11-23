@@ -91,6 +91,9 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
   public void testRenameGetterOverloadPresent() {
     doTestRename();
   }
+  public void testRenameComponentUsedInOuterClass() {
+    doTestRename();
+  }
 
   private void doTestRename() {
     doTest();
