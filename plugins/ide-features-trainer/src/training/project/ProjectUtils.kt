@@ -7,6 +7,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -164,7 +165,8 @@ object ProjectUtils {
     val notificationGroup = NotificationGroup.findRegisteredGroup("IDE Features Trainer")
                             ?: error("Not found notificationGroup for IDE Features Trainer")
     return notificationGroup.createNotification(LearnBundle.message("learn.project.initializing.jdk.download.notification.title"),
-                                                LearnBundle.message("learn.project.initializing.jdk.download.notification.message"))
+                                                LearnBundle.message("learn.project.initializing.jdk.download.notification.message",
+                                                                    ApplicationNamesInfo.getInstance().fullProductName))
   }
 
   fun closeAllEditorsInProject(project: Project) {
