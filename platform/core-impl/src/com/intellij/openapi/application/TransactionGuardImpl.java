@@ -45,8 +45,9 @@ public class TransactionGuardImpl extends TransactionGuard {
       if (!Disposer.isDisposed(parentDisposable)) {
         transaction.run();
       }
-    } else {
-      AppUIExecutor.onWriteThread(modality).later().expireWith(parentDisposable).submit(transaction);
+    }
+    else {
+      AppUIExecutor.onWriteThread(modality).later().expireWith(parentDisposable).execute(transaction);
     }
   }
 

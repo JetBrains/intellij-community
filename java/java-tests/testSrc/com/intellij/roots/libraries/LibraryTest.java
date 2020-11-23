@@ -7,7 +7,6 @@ import com.intellij.java.codeInsight.daemon.quickFix.OrderEntryTest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
@@ -35,7 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.LongAdder;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
