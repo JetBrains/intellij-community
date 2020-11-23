@@ -332,7 +332,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   @Override
   @Nls
-  protected @NotNull @Nls String getAccessibleName() {
+  protected String getAccessibleName() {
     return IdeBundle.message("searcheverywhere.accessible.name");
   }
 

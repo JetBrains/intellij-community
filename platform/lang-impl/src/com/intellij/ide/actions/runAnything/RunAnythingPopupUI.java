@@ -811,7 +811,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @Override
   @Nls
-  protected @NotNull @Nls String getAccessibleName() {
+  protected String getAccessibleName() {
     return IdeBundle.message("run.anything.accessible.name");
   }
 
