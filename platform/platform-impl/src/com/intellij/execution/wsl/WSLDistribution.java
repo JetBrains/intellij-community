@@ -309,7 +309,7 @@ public class WSLDistribution {
     }
   }
 
-  static @Nullable Path findWslExe() {
+   public static @Nullable Path findWslExe() {
     File file = PathEnvironmentVariableUtil.findInPath("wsl.exe");
     return file != null ? file.toPath() : null;
   }
