@@ -31,7 +31,7 @@ class HelpSearch {
 
     @NonNls
     val PREFIX = "/search/"
-    val NOT_FOUND = "[]"
+    const val NOT_FOUND = "[]"
 
     private val analyzer: StandardAnalyzer = StandardAnalyzer()
 
@@ -84,18 +84,17 @@ class HelpSearch {
                               FileNameUtils.getBaseName(doc.get("filename")),
                               doc.get("title"),
                               doc.get("filename"),
-                              i.toString() + doc.get("filename")))
+                              "$i-${doc.get("filename")}"))
           }
 
-          if (results.isEmpty())
-            return NOT_FOUND
+          if (results.isNotEmpty()) {
+            val searchResults = SearchResult(results.size, results)
+            return Gson().toJson(searchResults)
+          }
 
-          val searchResults = SearchResult(results.size, results)
-
-          return Gson().toJson(searchResults)
         }
         catch (e: Exception) {
-          Logger.getInstance(HelpSearch::class.java).error("Error searching help for $query", e)
+          Logger.getInstance(HelpSearch::class.java).error("Error searching help for \"$query\"", e)
         }
         finally {
           indexDirectory?.close()
