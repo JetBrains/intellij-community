@@ -710,6 +710,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return dir.toFile();
   }
 
+  @NotNull
   protected static VirtualFile getVirtualFile(@NotNull File file) {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }

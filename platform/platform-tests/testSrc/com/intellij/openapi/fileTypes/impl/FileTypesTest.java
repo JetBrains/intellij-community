@@ -207,7 +207,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
     FileUtil.writeToFile(file, "xxx xxx xxx xxx");
     VirtualFile virtualFile = getVirtualFile(file);
-    assertNotNull(virtualFile);
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     assertNotNull(document);
     assertEquals(FileTypes.PLAIN_TEXT, virtualFile.getFileType());
@@ -218,7 +217,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
     FileUtil.writeToFile(file, "xxx xxx xxx xxx");
     VirtualFile virtualFile = getVirtualFile(file);
-    assertNotNull(virtualFile);
     TestCase.assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
   }
 
@@ -226,7 +224,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     File dir = createTempDirectory();
     File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
     VirtualFile virtualFile = getVirtualFile(file);
-    assertNotNull(virtualFile);
     assertEquals(FileTypes.UNKNOWN, virtualFile.getFileType());
     PsiFile psi = getPsiManager().findFile(virtualFile);
     assertTrue(psi instanceof PsiBinaryFile);
