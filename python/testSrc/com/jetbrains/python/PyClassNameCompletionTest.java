@@ -8,6 +8,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
@@ -162,6 +164,20 @@ public class PyClassNameCompletionTest extends PyTestCase {
     List<String> allVariants = myFixture.getLookupElementStrings();
     assertNotNull(allVariants);
     assertEquals(1, Collections.frequency(allVariants, "my_func"));
+  }
+
+  // PY-45541
+  public void testCanonicalImportPathUsedAsLookupTailText() {
+    LookupElement[] lookupElements = doExtendedCompletion();
+    LookupElement reexportedFunc = ContainerUtil.find(lookupElements, variant -> variant.getLookupString().equals("my_func"));
+    assertNotNull(reexportedFunc);
+    TestLookupElementPresentation funcPresentation = TestLookupElementPresentation.renderReal(reexportedFunc);
+    assertEquals(" (pkg)", funcPresentation.getTailText());
+
+    LookupElement notExportedVar = ContainerUtil.find(lookupElements, variant -> variant.getLookupString().equals("my_var"));
+    assertNotNull(notExportedVar);
+    TestLookupElementPresentation varPresentation = TestLookupElementPresentation.renderReal(notExportedVar);
+    assertEquals(" (pkg.mod)", varPresentation.getTailText());
   }
 
   private void doTest() {

@@ -7,8 +7,6 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -24,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
@@ -125,16 +124,15 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
         ProgressManager.checkCanceled();
         if (!condition.value(element)) return true;
         String name = element.getName();
-        ItemPresentation itemPresentation = ((NavigationItem)element).getPresentation();
-        if (name == null || itemPresentation == null) return true;
-        String locationString = itemPresentation.getLocationString();
-        if (locationString == null) return true;
-        String uniquenessKey = name + locationString;
-        if (alreadySuggested.add(uniquenessKey)) {
+        if (name == null) return true;
+        QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(element, targetFile);
+        if (importPath == null) return true;
+        String qualifiedName = importPath + "." + name;
+        if (alreadySuggested.add(qualifiedName)) {
           LookupElementBuilder lookupElement = LookupElementBuilder
             .createWithSmartPointer(name, element)
             .withIcon(element.getIcon(0))
-            .withTailText(" " + locationString, true)
+            .withTailText(" (" + importPath + ")", true)
             .withInsertHandler(insertHandler);
           resultSet.addElement(elementHandler.apply(lookupElement));
         }
