@@ -189,14 +189,17 @@
     <canBeFinal implementation="de.plushnikov.intellij.plugin.extension.LombokCanBeFinalHandler"/>
 
     <localInspection
-      groupName="Lombok"
+      groupKey="inspection.lombok.group.name.lombok"
+      groupBundle="messages.LombokBundle"
       shortName="Lombok"
       enabledByDefault="true"
-      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokInspection" key="inspection.lombok.display.name"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokInspection"
+      key="inspection.lombok.display.name"
       bundle="messages.LombokBundle"/>
 
     <localInspection
-      groupName="Lombok"
+      groupKey="inspection.lombok.group.name.lombok"
+      groupBundle="messages.LombokBundle"
       shortName="DeprecatedLombok"
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.DeprecatedLombokAnnotationInspection"
@@ -204,7 +207,8 @@
 
     <localInspection
       groupPath="Lombok"
-      groupName="Redundant modifiers"
+      groupKey="inspection.lombok.group.name.redundant.modifiers"
+      groupBundle="messages.LombokBundle"
       shortName="RedundantModifiersValueLombok"
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnValueLombokAnnotationInspection"
@@ -212,7 +216,8 @@
 
     <localInspection
       groupPath="Lombok"
-      groupName="Redundant modifiers"
+      groupKey="inspection.lombok.group.name.redundant.modifiers"
+      groupBundle="messages.LombokBundle"
       shortName="RedundantModifiersUtilityClassLombok"
       enabledByDefault="false"
       implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnUtilityClassLombokAnnotationInspection"
@@ -220,7 +225,8 @@
 
     <localInspection
       groupPath="Lombok"
-      groupName="Redundant definitions"
+      groupKey="inspection.lombok.group.name.redundant.definitions"
+      groupBundle="messages.LombokBundle"
       shortName="RedundantSlf4jDefinition"
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"
@@ -228,7 +234,8 @@
 
     <localInspection
       groupPath="Lombok"
-      groupName="Redundant modifiers"
+      groupKey="inspection.lombok.group.name.redundant.modifiers"
+      groupBundle="messages.LombokBundle"
       shortName="RedundantModifiersValLombok"
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnValLombokAnnotationInspection"
