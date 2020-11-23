@@ -846,7 +846,7 @@ final class DistributionJARsBuilder {
     def productLayout = buildContext.productProperties.productLayout
     def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
             buildContext.proprietaryBuildTools.artifactsServer != null
-    CompatibleBuildRange compatibleBuildRange = bundled ||
+    CompatibleBuildRange compatibleBuildRange = bundled || plugin.pluginCompatibilityExactVersion ||
             //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
             includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
                     //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
