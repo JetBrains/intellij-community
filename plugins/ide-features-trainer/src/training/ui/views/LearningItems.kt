@@ -110,7 +110,7 @@ class LearningItems : JPanel() {
     result.add(expandPanel)
 
     val name = JLabel(module.name)
-    name.font = UISettings.instance.moduleNameFont
+    name.font = UISettings.instance.modulesFont
     modulePanel.add(name)
 
     createModuleProgressLabel(module)?.let {

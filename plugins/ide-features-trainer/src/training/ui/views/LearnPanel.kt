@@ -156,7 +156,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.isOpaque = false
     lessonMessagePane.alignmentX = Component.LEFT_ALIGNMENT
     lessonMessagePane.margin = JBUI.emptyInsets()
-    lessonMessagePane.border = EmptyBorder(0, 0, 0, 0)
+    lessonMessagePane.border = EmptyBorder(0, 0, UISettings.instance.beforeButtonGap, UISettings.instance.eastInset)
     lessonMessagePane.maximumSize = Dimension(UISettings.instance.width, 10000)
 
     //Set Next Button UI
@@ -169,7 +169,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
 
     buttonPanel.name = "buttonPanel"
-    buttonPanel.border = UISettings.instance.checkmarkShiftBorder
+    buttonPanel.border = UISettings.instance.checkmarkShiftButtonBorder
     buttonPanel.isOpaque = false
     buttonPanel.isFocusable = false
     buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
@@ -187,9 +187,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       lessonPanel.add(UISettings.rigidGap(UISettings::moduleNameLessonGap))
       lessonPanel.add(lessonNameLabel)
       lessonPanel.add(lessonMessagePane)
-      //lessonPanel.add(Box.createVerticalStrut(UISettings.instance.beforeButtonGap))
       lessonPanel.add(buttonPanel)
-      //lessonPanel.add(Box.createVerticalStrut(UISettings.instance.afterButtonGap))
       lessonPanel.add(Box.createVerticalGlue())
     }
     else {
@@ -197,7 +195,6 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       lessonPanel.add(Box.createVerticalStrut(UISettings.instance.lessonNameGap))
       lessonPanel.add(lessonNameLabel)
       lessonPanel.add(lessonMessagePane)
-      lessonPanel.add(Box.createVerticalStrut(UISettings.instance.beforeButtonGap))
 
       lessonPanel.add(Box.createVerticalGlue())
       lessonPanel.add(buttonPanel)

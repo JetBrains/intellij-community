@@ -12,6 +12,7 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
 import javax.swing.Box
+import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
@@ -40,7 +41,7 @@ class UISettings {
   val radioButtonGap: Int by lazy { JBUI.scale(3) }
 
   val lessonNameGap: Int by lazy { JBUI.scale(5) }
-  val beforeButtonGap: Int by lazy { JBUI.scale(20) }
+  val beforeButtonGap: Int by lazy { JBUI.scale(24) }
   val afterButtonGap: Int by lazy { JBUI.scale(44) }
   val afterCaptionGap: Int by lazy { JBUI.scale(12) }
   val groupGap: Int by lazy { JBUI.scale(24) }
@@ -52,6 +53,7 @@ class UISettings {
   //FONTS
   val fontSize: Float by lazy { UISettings.instance.fontSize.ifZero(JBUI.scale(13)) * 1f }
   val fontFace: String by lazy { UISettings.instance.fontFace ?: JLabel().font.fontName }
+  val modulesFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize).deriveFont(Font.BOLD) }
   val moduleNameFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize + 1f) }
   val plainFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize) }
   val italicFont: Font by lazy { plainFont.deriveFont(Font.ITALIC) }
@@ -74,6 +76,7 @@ class UISettings {
   val descriptionColor = Color(128, 128, 128)
   val completedColor = JBColor(0x368746, 0x50A661)
   var questionColor = lessonActiveColor
+  val activeTaskBorder = JBColor.namedColor("Component.focusedBorderColor", JBColor(0x87AFDA, 0x466d94))
 
   //BORDERS
   val emptyBorder: Border
@@ -90,6 +93,10 @@ class UISettings {
 
   val checkmarkShiftBorder: Border
     get() = EmptyBorder(0, checkIndent, 0, 0)
+
+  val checkmarkShiftButtonBorder: Border by lazy {
+    return@lazy EmptyBorder(0, checkIndent - JButton().insets.left, 0, 0)
+  }
 
   val checkIndent: Int
     get() = checkWidth + checkRightIndent
