@@ -168,7 +168,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     void showHint(@HintText String informationHint) {
       JComponent label = HintUtil.createInformationLabel(informationHint);
       setInstance(this);
-      AccessibleContextUtil.setName(label, CodeInsightBundle.message("expression.type.hint.label"));
+      AccessibleContextUtil.setName(label, CodeInsightBundle.message("accessible.name.expression.type.hint"));
       HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
       LightweightHint hint = new LightweightHint(label);
       hint.addHintListener(e -> ApplicationManager.getApplication().invokeLater(() -> setInstance(null)));
