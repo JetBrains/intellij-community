@@ -96,7 +96,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
     // Assert consistency
     if (!target.brokenConsistency && !diff.brokenConsistency) {
-      target.assertConsistencyInStrictMode("Check after add Diff", { true }, initialStorage, diff)
+      target.assertConsistencyInStrictMode("Check after add Diff", null, initialStorage, diff)
     }
     else {
       target.brokenConsistency = true

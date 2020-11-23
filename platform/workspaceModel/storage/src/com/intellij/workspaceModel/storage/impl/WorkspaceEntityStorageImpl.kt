@@ -952,7 +952,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   internal fun assertConsistencyInStrictMode(message: String,
-                                             sourceFilter: (EntitySource) -> Boolean,
+                                             sourceFilter: ((EntitySource) -> Boolean)?,
                                              left: WorkspaceEntityStorage,
                                              right: WorkspaceEntityStorage) {
     if (StrictMode.rbsEnabled) {
