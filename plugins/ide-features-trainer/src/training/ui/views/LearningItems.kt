@@ -157,7 +157,7 @@ class LearningItems : JPanel() {
     val progressStr = module.calcProgress() ?: return null
     val progressLabel = JBLabel(progressStr)
     progressLabel.name = "progressLabel"
-    progressLabel.foreground = if (module.hasNotPassedLesson()) UISettings.instance.passedColor else UISettings.instance.completedColor
+    progressLabel.foreground = if (module.hasNotPassedLesson()) UISettings.instance.moduleProgressColor else UISettings.instance.completedColor
     return progressLabel
   }
 }
