@@ -4,7 +4,7 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/allopen-compiler-plugin-for-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/android-extensions-compiler-plugin-for-ide.jar!/" />
-      <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/completion-ranking-kotlin-0.1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/completion-ranking-kotlin-0.2.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javaslang-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javaslang-match-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javax.inject-1.jar!/" />
@@ -80,7 +80,7 @@
     <excluded>
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/allopen-compiler-plugin-for-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/android-extensions-compiler-plugin-for-ide.jar!/" />
-      <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/completion-ranking-kotlin-0.1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/completion-ranking-kotlin-0.2.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javaslang-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javaslang-match-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javax.inject-1.jar!/" />

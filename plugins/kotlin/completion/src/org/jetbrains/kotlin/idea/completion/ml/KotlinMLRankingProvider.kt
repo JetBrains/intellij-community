@@ -5,20 +5,14 @@
 
 package org.jetbrains.kotlin.idea.completion.ml
 
-import com.jetbrains.completion.ranker.model.kotlin.MLGlassBox
-import com.intellij.internal.ml.DecisionFunction
-import com.intellij.internal.ml.ModelMetadata
-import com.intellij.internal.ml.completion.CompletionRankingModelBase
-import com.intellij.internal.ml.completion.JarCompletionModelProvider
+import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.lang.Language
+import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 
-@Suppress("UnstableApiUsage")
-class KotlinMLRankingProvider : JarCompletionModelProvider("Kotlin", "kotlin_features") {
-    override fun createModel(metadata: ModelMetadata): DecisionFunction {
-        return object : CompletionRankingModelBase(metadata) {
-            override fun predict(features: DoubleArray?): Double = MLGlassBox.makePredict(features)
-        }
-    }
-
+class KotlinMLRankingProvider : CatBoostJarCompletionModelProvider(
+    KotlinIdeaCompletionBundle.message("kotlin.ml.completion.model"),
+    "kotlin_features",
+    "kotlin_model"
+) {
     override fun isLanguageSupported(language: Language): Boolean = language.id.equals("kotlin", ignoreCase = true)
 }
