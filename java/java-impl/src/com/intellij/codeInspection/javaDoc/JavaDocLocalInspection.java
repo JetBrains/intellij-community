@@ -818,9 +818,9 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
-      if (myTag != null) {
-        myTag.delete();
+      PsiDocTag tag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
+      if (tag != null) {
+        tag.delete();
       }
     }
   }
