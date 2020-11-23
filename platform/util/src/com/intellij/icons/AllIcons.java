@@ -1149,25 +1149,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2021.1")
-    public static final @NotNull Icon CreateDesktopEntry = load("welcome/createDesktopEntry.png", 0L, 0);
-
-    /** @deprecated to be removed in IDEA 2021.1 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
     public static final @NotNull Icon CreateNewProject = load("welcome/createNewProject.svg", 0L, 0);
-
-    /** @deprecated to be removed in IDEA 2021.1 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public static final @NotNull Icon FromVcs = load("welcome/fromVcs.svg", 0L, 0);
-
-    /** @deprecated to be removed in IDEA 2021.1 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public static final @NotNull Icon Register = load("welcome/register.png", 0L, 0);
   }
 
   public static final class Windows {
@@ -1244,20 +1226,4 @@ public class AllIcons {
   @SuppressWarnings("unused")
   @Deprecated
   public static final @NotNull Icon Icon = load("icon.png", 0L, 0);
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static final @NotNull Icon Icon_128 = load("icon_128.png", 0L, 0);
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static final @NotNull Icon Icon_CE = load("icon_CE.png", 0L, 0);
-
-  /** @deprecated use ProductIcons.getInstance().getProductIcon() instead */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static final @NotNull Icon Icon_CEsmall = load("icon_CEsmall.png", 0L, 0);
-
-  /** @deprecated use ProductIcons.getInstance().getProductIcon() instead */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static final @NotNull Icon Icon_small = load("icon_small.png", 0L, 0);
 }
