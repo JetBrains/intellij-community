@@ -1646,9 +1646,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="FieldCanBeLocal" bundle="messages.JavaBundle" key="inspection.field.can.be.local.display.name"
                      groupKey="group.names.class.structure" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING" runForWholeFile="true"
                      implementationClass="com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="Dependency" groupKey="group.names.dependency.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.codeInspection.dependencyViolation.DependencyInspection"
-                     key="inspection.dependency.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Since15" bundle="messages.JavaBundle" key="inspection.1.5.display.name"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.java15api.Java15APIUsageInspection"/>
