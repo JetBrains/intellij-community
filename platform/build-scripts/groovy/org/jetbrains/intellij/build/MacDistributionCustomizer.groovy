@@ -80,9 +80,9 @@ abstract class MacDistributionCustomizer {
   List<String> urlSchemes = []
 
   /**
-   * CPU architectures app can be launched on, currently only x86_64 is supported
+   * CPU architectures app can be launched on, currently arm64 and x86_64 are supported
    */
-  List<String> architectures = ["x86_64"]
+  List<String> architectures = ["arm64", "x86_64"]
 
   /**
    * If {@code true} *.ipr files will be associated with the product in Info.plist
