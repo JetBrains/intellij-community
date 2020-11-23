@@ -40,6 +40,7 @@ class LessonMessagePane : JTextPane() {
     var end: Int,
     var state: MessageState = MessageState.NORMAL
   )
+
   private data class RangeData(var range: IntRange, val action: (Point) -> Unit)
 
   private val lessonMessages get() = activeMessages + restoreMessages + inactiveMessages
@@ -80,7 +81,7 @@ class LessonMessagePane : JTextPane() {
     addMouseMotionListener(listener)
   }
 
-  private fun getRangeDataForMouse(me: MouseEvent) : RangeData? {
+  private fun getRangeDataForMouse(me: MouseEvent): RangeData? {
     val point = Point(me.x, me.y)
     val offset = viewToModel(point)
     val result = ranges.find { offset in it.range } ?: return null
@@ -124,11 +125,11 @@ class LessonMessagePane : JTextPane() {
     StyleConstants.setUnderline(LINK, true)
     StyleConstants.setFontSize(LINK, fontSize)
 
-    StyleConstants.setLeftIndent(PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
-    StyleConstants.setRightIndent(PARAGRAPH_STYLE, 0f)
-    StyleConstants.setSpaceAbove(PARAGRAPH_STYLE, 16.0f)
-    StyleConstants.setSpaceBelow(PARAGRAPH_STYLE, 0.0f)
-    StyleConstants.setLineSpacing(PARAGRAPH_STYLE, 0.2f)
+    StyleConstants.setLeftIndent(TASK_PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
+    StyleConstants.setRightIndent(TASK_PARAGRAPH_STYLE, 0f)
+    StyleConstants.setSpaceAbove(TASK_PARAGRAPH_STYLE, 20.0f)
+    StyleConstants.setSpaceBelow(TASK_PARAGRAPH_STYLE, 0.0f)
+    StyleConstants.setLineSpacing(TASK_PARAGRAPH_STYLE, 0.2f)
 
     StyleConstants.setForeground(REGULAR, UISettings.instance.defaultTextColor)
     StyleConstants.setForeground(BOLD, UISettings.instance.defaultTextColor)
@@ -136,7 +137,6 @@ class LessonMessagePane : JTextPane() {
     StyleConstants.setForeground(LINK, UISettings.instance.lessonLinkColor)
     StyleConstants.setForeground(CODE, UISettings.instance.codeForegroundColor)
 
-    this.setParagraphAttributes(PARAGRAPH_STYLE, true)
   }
 
   fun messagesNumber(): Int = activeMessages.size
@@ -200,6 +200,7 @@ class LessonMessagePane : JTextPane() {
 
   private fun insertText(text: String, attributeSet: AttributeSet) {
     document.insertString(insertOffset, text, attributeSet)
+    styledDocument.setParagraphAttributes(insertOffset, insertOffset + text.length - 1, TASK_PARAGRAPH_STYLE, true)
     insertOffset += text.length
   }
 
@@ -211,8 +212,10 @@ class LessonMessagePane : JTextPane() {
       else -> lastActiveOffset
     }
     val start = insertOffset
-    if (insertOffset != 0)
+    if (insertOffset != 0) {
       insertText("\n", REGULAR)
+    }
+
     val newRanges = mutableListOf<RangeData>()
     for (message in messageParts) {
       val startOffset = insertOffset
@@ -285,7 +288,6 @@ class LessonMessagePane : JTextPane() {
     styledDocument.setCharacterAttributes(lessonMessage.start, lessonMessage.end, INACTIVE, false)
   }
 
-
   fun redrawMessages() {
     val copy = lessonMessages.toList()
     clear()
@@ -352,7 +354,7 @@ class LessonMessagePane : JTextPane() {
       .setCloseButtonEnabled(true)
       .setAnimationCycle(0)
       .setBlockClicksThroughBalloon(true)
-      //.setContentInsets(Insets(0, 0, 0, 0))
+    //.setContentInsets(Insets(0, 0, 0, 0))
     builder.setBorderColor(JBColor(Color.BLACK, Color.WHITE))
     balloon = builder.createBalloon()
     balloon.show(RelativePoint(this, it), Balloon.Position.below)
@@ -419,11 +421,18 @@ class LessonMessagePane : JTextPane() {
           }
         }
         else if (myMessage.type == MessagePart.MessageType.ICON_IDX) {
-          val rect = modelToView(myMessage.startOffset + 1)
+          val rect = modelToView2D(myMessage.startOffset + 1)
           val icon = LearningUiManager.iconMap[myMessage.text]
-          icon?.paintIcon(this, g2d, rect.x, rect.y)
+          icon?.paintIcon(this, g2d, rect.x.toInt(), rect.y.toInt())
         }
       }
+    }
+    val lastActiveMessage: LessonMessage? = activeMessages.lastOrNull()
+    val lastPassedMessage: LessonMessage? = activeMessages.indexOfLast { it.state == MessageState.PASSED }
+      .takeIf { it != -1 && it < activeMessages.size - 1 }
+      ?.let { activeMessages[it + 1] }
+    if (lastActiveMessage != null && lastActiveMessage.state != MessageState.PASSED) {
+      drawRectangleAroundMessage(lastPassedMessage, lastActiveMessage, g2d, UISettings.instance.activeTaskBorder)
     }
   }
 
@@ -433,8 +442,8 @@ class LessonMessagePane : JTextPane() {
                                       draw: (r2d: RoundRectangle2D) -> Unit) {
     val startOffset = myMessage.startOffset
     val endOffset = myMessage.endOffset
-    val rectangleStart = modelToView(startOffset + 1)
-    val rectangleEnd = modelToView(endOffset - 1)
+    val rectangleStart = modelToView2D(startOffset + 1)
+    val rectangleEnd = modelToView2D(endOffset - 1)
     val color = g2d.color
     val fontSize = UISettings.instance.fontSize
 
@@ -452,6 +461,38 @@ class LessonMessagePane : JTextPane() {
     g2d.color = color
   }
 
+  private fun drawRectangleAroundMessage(lastPassedMessage: LessonMessage? = null,
+                                         lastActiveMessage: LessonMessage,
+                                         g2d: Graphics2D,
+                                         needColor: Color) {
+    val startOffset = lastPassedMessage?.let { it.start + 1 } ?: 0
+    val endOffset = lastActiveMessage.end
+
+    val topLineX = modelToView2D(startOffset).x
+    val topLineY = modelToView2D(startOffset).y
+    val bottomLineY = modelToView2D(endOffset - 1).let { it.y + it.height }
+    val textHeight = bottomLineY - topLineY
+    val color = g2d.color
+
+    g2d.color = needColor
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+    val r2d: RoundRectangle2D = if (!SystemInfo.isMac)
+      RoundRectangle2D.Double(topLineX - activeTaskInset, topLineY - activeTaskInset - JBUIScale.scale(1),
+                              this.bounds.width - UISettings.instance.checkIndent.toDouble() - insets.right * 1.0f + 2 * activeTaskInset, textHeight + 2 * activeTaskInset - JBUIScale.scale(2),
+                              arc.toDouble(), arc.toDouble())
+    else
+      RoundRectangle2D.Double(topLineX - activeTaskInset, topLineY - activeTaskInset - JBUIScale.scale(1),
+                              this.bounds.width - UISettings.instance.checkIndent.toDouble() - insets.right * 1.0f + 2 * activeTaskInset, textHeight + 2 * activeTaskInset - JBUIScale.scale(2),
+                              arc.toDouble(), arc.toDouble())
+    g2d.draw(r2d)
+    g2d.color = color
+  }
+
+  override fun getMaximumSize(): Dimension {
+    return preferredSize
+  }
+
   companion object {
     private val LOG = Logger.getInstance(LessonMessagePane::class.java)
 
@@ -463,10 +504,12 @@ class LessonMessagePane : JTextPane() {
     private val ROBOTO = SimpleAttributeSet()
     private val CODE = SimpleAttributeSet()
     private val LINK = SimpleAttributeSet()
-    private val PARAGRAPH_STYLE = SimpleAttributeSet()
+
+    private val TASK_PARAGRAPH_STYLE = SimpleAttributeSet()
 
     //arc & indent for shortcut back plate
     private val arc by lazy { JBUI.scale(4) }
     private val indent by lazy { JBUI.scale(2) }
+    private val activeTaskInset by lazy { JBUI.scale(8) }
   }
 }

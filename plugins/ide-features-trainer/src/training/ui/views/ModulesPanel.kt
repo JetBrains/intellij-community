@@ -160,7 +160,7 @@ class ModulesPanel(private val learnToolWindow: LearnToolWindow?) : JPanel() {
                                LOG.warn(e)
                              }
                            }, null)
-    moduleName.font = UISettings.instance.moduleNameFont
+    moduleName.font = UISettings.instance.modulesFont
     moduleName.alignmentY = Component.BOTTOM_ALIGNMENT
     moduleName.alignmentX = Component.LEFT_ALIGNMENT
     return moduleName
