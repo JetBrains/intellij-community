@@ -87,7 +87,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     try {
       RunAll()
         .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
-        .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
+        .append(ThrowableRunnable { changeListManager.waitEverythingDoneAndStopInTestMode() })
         .append(ThrowableRunnable { if (::vcsNotifier.isInitialized) vcsNotifier.cleanup() })
         .append(ThrowableRunnable { waitForPendingTasks() })
         .run()
