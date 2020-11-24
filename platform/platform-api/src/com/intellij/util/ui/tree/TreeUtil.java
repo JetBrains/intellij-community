@@ -1986,6 +1986,18 @@ public final class TreeUtil {
    * @return {@code null} if next visible path cannot be found
    */
   public static @Nullable TreePath nextVisiblePath(@NotNull JTree tree, int row, @NotNull Predicate<TreePath> predicate) {
+    return nextVisiblePath(tree, row, isCyclicScrollingAllowed(), predicate);
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param row       a starting row number to iterate
+   * @param cyclic    {@code true} if cyclic searching is allowed, {@code false} otherwise
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if next visible path cannot be found
+   */
+  public static @Nullable TreePath nextVisiblePath(@NotNull JTree tree, int row, boolean cyclic,
+                                                   @NotNull Predicate<TreePath> predicate) {
     assert EventQueue.isDispatchThread();
     if (row < 0) return null; // ignore illegal row
     int count = tree.getRowCount();
@@ -1993,7 +2005,7 @@ public final class TreeUtil {
     int stop = row;
     while (true) {
       row++; // NB!: increase row before checking for cycle scrolling
-      if (row == count && isCyclicScrollingAllowed()) row = 0;
+      if (row == count && cyclic) row = 0;
       if (row == count) return null; // stop scrolling on last node if no cyclic scrolling
       if (row == stop) return null; // stop scrolling when cyclic scrolling is done
       TreePath path = tree.getPathForRow(row);
@@ -2018,13 +2030,25 @@ public final class TreeUtil {
    * @return {@code null} if previous visible path cannot be found
    */
   public static @Nullable TreePath previousVisiblePath(@NotNull JTree tree, int row, @NotNull Predicate<TreePath> predicate) {
+    return previousVisiblePath(tree, row, isCyclicScrollingAllowed(), predicate);
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param row       a starting row number to iterate
+   * @param cyclic    {@code true} if cyclic searching is allowed, {@code false} otherwise
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if previous visible path cannot be found
+   */
+  public static @Nullable TreePath previousVisiblePath(@NotNull JTree tree, int row, boolean cyclic,
+                                                       @NotNull Predicate<TreePath> predicate) {
     assert EventQueue.isDispatchThread();
     if (row < 0) return null; // ignore illegal row
     int count = tree.getRowCount();
     if (count <= row) return null; // ignore illegal row
     int stop = row;
     while (true) {
-      if (row == 0 && isCyclicScrollingAllowed()) row = count;
+      if (row == 0 && cyclic) row = count;
       if (row == 0) return null; // stop scrolling on first node if no cyclic scrolling
       row--; // NB!: decrease row after checking for cyclic scrolling
       if (row == stop) return null; // stop scrolling when cyclic scrolling is done

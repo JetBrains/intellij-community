@@ -217,7 +217,8 @@ final class TreeAction extends AbstractAction implements UIResource {
           select(type, tree, parent);
         }
         else if (row > 0) {
-          select(type, tree, row - 1);
+          TreePath path = TreeUtil.previousVisiblePath(tree, row, false, tree::isExpanded);
+          select(type, tree, path != null ? path : tree.getPathForRow(0), path == null ? 0 : tree.getRowForPath(path));
         }
       }
     }
