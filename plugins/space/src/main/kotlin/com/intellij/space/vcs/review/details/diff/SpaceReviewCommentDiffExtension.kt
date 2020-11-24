@@ -42,21 +42,21 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
 
     val chatPanelFactory = SpaceReviewCommentPanelFactory(project, viewer, lifetime, ws, selectedChange, ::pendingStateProvider)
 
+    val spaceReviewCommentSubmitter = SpaceReviewCommentSubmitterImpl(
+      lifetime,
+      client,
+      changesVm.projectKey,
+      changesVm.reviewIdentifier,
+      selectedChange,
+      ::pendingStateProvider
+    )
+    val handler = createHandler(viewer, spaceReviewCommentSubmitter)
+
     viewer.addListener(object : DiffViewerListener() {
       var viewerIsReady = false // todo: remove this hack
 
       override fun onAfterRediff() {
         if (!viewerIsReady) {
-          val spaceReviewCommentSubmitter = SpaceReviewCommentSubmitterImpl(
-            lifetime,
-            client,
-            changesVm.projectKey,
-            changesVm.reviewIdentifier,
-            selectedChange,
-            ::pendingStateProvider
-          )
-          val handler = createHandler(viewer, spaceReviewCommentSubmitter)
-
           discussions.values.forEach { propagatedCodeDiscussion ->
             addCommentToDiff(chatPanelFactory, propagatedCodeDiscussion, lifetime, handler)
           }
