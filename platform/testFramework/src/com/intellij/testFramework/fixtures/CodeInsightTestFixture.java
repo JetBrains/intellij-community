@@ -49,8 +49,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/testing_plugins.html">Testing Plugins</a>.
- * 
+ * @see <a href="https://jetbrains.org/intellij/sdk/docs/basics/testing_plugins/testing_plugins.html">Testing Plugins</a>.
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
  * @author Dmitry Avdeev
  */
