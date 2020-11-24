@@ -40,7 +40,7 @@ object AvatarUtils {
     g2.fillRect(0, 0, size, size)
     g2.paint = JBColor.WHITE
     g2.font = JBFont.create(Font(if (SystemInfo.isWinVistaOrNewer) "Segoe UI" else "Tahoma", Font.PLAIN, (size / 2.2).toInt()))
-    UIUtil.drawCenteredString(g2, Rectangle(0, 0, size, (size * 0.92).toInt()), shortName)
+    UIUtil.drawCenteredString(g2, Rectangle(0, 0, size, size), shortName)
     g2.dispose()
 
     return image
