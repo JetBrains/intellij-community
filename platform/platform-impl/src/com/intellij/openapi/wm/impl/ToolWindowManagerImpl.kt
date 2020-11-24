@@ -79,8 +79,6 @@ import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
 private val LOG = logger<ToolWindowManagerImpl>()
 
@@ -613,6 +611,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                  info: WindowInfoImpl,
                                  autoFocusContents: Boolean = true,
                                  source: ToolWindowEventSource? = null) {
+    if (entry.toolWindow.hasFocus) {
+      return
+    }
+
     LOG.debug { "activateToolWindow($entry)" }
 
     if (source != null) {
