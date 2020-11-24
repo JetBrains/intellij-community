@@ -17,13 +17,12 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -36,12 +35,14 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR;
+
 final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private final SimpleColoredText myText;
   private final boolean myCustomNode;
   private final XValueNodeImpl myValueNode;
   private final XWatchesView myView;
-  private final Producer<Boolean> myIsOnExecutionLine;
+  private final Producer<Boolean> myIsInExecutionPointHighlight;
   private @Nullable final Consumer<Inlay> myOnClick;
   private boolean isHovered = false;
   private int myRemoveXCoordinate = Integer.MAX_VALUE;
@@ -53,13 +54,13 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   InlineDebugRenderer(SimpleColoredText text,
                       XValueNodeImpl valueNode,
                       XWatchesView view,
-                      Producer<Boolean> isOnExecutionLine,
+                      Producer<Boolean> isInExecutionPointHighlight,
                       @Nullable Consumer<Inlay> onClick) {
     myText = text;
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
     myView = view;
-    myIsOnExecutionLine = isOnExecutionLine;
+    myIsInExecutionPointHighlight = isInExecutionPointHighlight;
     myOnClick = onClick;
   }
 
@@ -242,23 +243,31 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   }
 
   private TextAttributes getAttributes(Editor editor) {
-    TextAttributesKey key = myIsOnExecutionLine.produce() ? DebuggerColors.INLINED_VALUES_EXECUTION_LINE : DebuggerColors.INLINED_VALUES;
-    TextAttributes attributes = editor.getColorsScheme().getAttributes(key);
+    TextAttributesKey key = myIsInExecutionPointHighlight.produce() ? DebuggerColors.INLINED_VALUES_EXECUTION_LINE : DebuggerColors.INLINED_VALUES;
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    TextAttributes inlinedAttributes = scheme.getAttributes(key);
 
     if (isHovered) {
-      TextAttributes attr = new TextAttributes();
-      attr.copyFrom(attributes);
+      TextAttributes hoveredInlineAttr = new TextAttributes();
+      hoveredInlineAttr.copyFrom(inlinedAttributes);
 
-      Color hoveredAndSelectedColor = UIUtil.isUnderDarcula()
-                                         ? editor.getColorsScheme().getDefaultForeground()
-                                         : DebuggerColors.EXECUTIONPOINT_ATTRIBUTES.getDefaultAttributes().getForegroundColor();
-      Color foregroundColor = myIsOnExecutionLine.produce()
+      boolean isDarkEditorTheme = ColorUtil.isDark(scheme.getDefaultBackground());
+
+      Color executionPointForeground = scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES).getForegroundColor();
+
+      Color hoveredAndSelectedColor = isDarkEditorTheme
+                                         ? scheme.getDefaultForeground()
+                                         : executionPointForeground;
+      Color foregroundColor = myIsInExecutionPointHighlight.produce()
                               ? hoveredAndSelectedColor
-                              : JBUI.CurrentTheme.Link.linkColor();
-      attr.setForegroundColor(foregroundColor);
+                              : scheme.getAttributes(REFERENCE_HYPERLINK_COLOR).getForegroundColor();
 
-      return attr;
+      if (foregroundColor == null) foregroundColor = scheme.getDefaultForeground();
+
+      hoveredInlineAttr.setForegroundColor(foregroundColor);
+
+      return hoveredInlineAttr;
     }
-    return attributes;
+    return inlinedAttributes;
   }
 }

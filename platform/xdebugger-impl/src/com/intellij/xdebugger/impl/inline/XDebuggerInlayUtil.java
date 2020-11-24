@@ -28,10 +28,12 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
@@ -110,14 +112,16 @@ public final class XDebuggerInlayUtil {
             }
           }
 
-          Producer<Boolean> isOnExecutionLine = () -> {
+          Producer<Boolean> isInExecutionPointHighlight = () -> {
             XSourcePosition debuggerPosition = session.getCurrentPosition();
             if (debuggerPosition != null) {
-              return position.getFile().equals(debuggerPosition.getFile()) && position.getLine() == debuggerPosition.getLine();
+              return position.getFile().equals(debuggerPosition.getFile())
+                     && position.getLine() == debuggerPosition.getLine()
+                     && ((XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject())).isFullLineHighlighter();
             }
             return false;
           };
-          InlineDebugRenderer renderer = new InlineDebugRenderer(variablePresentation, valueNode, view, isOnExecutionLine, onClick);
+          InlineDebugRenderer renderer = new InlineDebugRenderer(variablePresentation, valueNode, view, isInExecutionPointHighlight, onClick);
           Inlay<InlineDebugRenderer> inlay = ((InlayModelImpl)e.getInlayModel()).addAfterLineEndDebuggerHint(offset, customNode, renderer);
           if (customNode) {
             ((InlineWatchNodeImpl)valueNode).inlayCreated(inlay);
