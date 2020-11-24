@@ -45,10 +45,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import java.util.*
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.*
 import kotlin.math.abs
 
 internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
@@ -183,7 +180,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     get() = decorator
 
   val hasFocus: Boolean
-    get() = decorator?.hasFocus() ?: false
+    get() = decorator != null && SwingUtilities.findFocusOwner(decorator) != null
 
   fun setFocusedComponent(component: Component) {
     toolWindowFocusWatcher?.setFocusedComponentImpl(component)
