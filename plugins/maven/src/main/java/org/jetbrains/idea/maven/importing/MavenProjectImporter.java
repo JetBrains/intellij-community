@@ -47,10 +47,7 @@ import org.jetbrains.idea.maven.importing.worktree.WorkspaceModuleImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.*;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
@@ -272,20 +269,20 @@ public class MavenProjectImporter {
 
       List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
 
-      MavenUtil.runInBackground(myProject, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
-        float count = 0;
-        for (MavenProject mavenProject : myAllProjects) {
-          Module module = myMavenProjectToModule.get(mavenProject);
-          if(module == null) {
-            continue;
-          }
-          indicator.setFraction(count++ / myAllProjects.size());
-          indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
-          for (MavenModuleConfigurer configurer : configurers) {
-            configurer.configure(mavenProject, myProject, module);
-          }
+
+      MavenTask configureTask = new MyMavenTask(myAllProjects, myMavenProjectToModule, myProject, configurers);
+
+      if(ApplicationManager.getApplication().isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+        MavenUtil.runInBackground(myProject, MavenProjectBundle.message("command.name.configuring.projects"), false, configureTask);
+      } else {
+        final MavenProgressIndicator indicator = new MavenProgressIndicator(myProject, MavenProjectsManager.getInstance(myProject)::getSyncConsole);
+        try {
+          configureTask.run(indicator);
         }
-      });
+        catch (MavenProcessCanceledException e) {
+          throw new ProcessCanceledException(e);
+        }
+      }
     }
     else {
       disposeModifiableModels();
@@ -749,5 +746,36 @@ public class MavenProjectImporter {
 
   public List<Module> getCreatedModules() {
     return myCreatedModules;
+  }
+
+  private static class MyMavenTask implements MavenTask {
+    private final List<MavenModuleConfigurer> myConfigurers;
+    private Set<MavenProject> myAllProjects;
+    private Map<MavenProject, Module> myMavenProjectToModule;
+    private Project myProject;
+
+    public MyMavenTask(Set<MavenProject> allProjects,
+                       Map<MavenProject, Module> mavenProjectToModule, Project project,
+                       List<MavenModuleConfigurer> configurers) {myConfigurers = configurers;
+      this.myAllProjects = allProjects;
+      this.myMavenProjectToModule = mavenProjectToModule;
+      this.myProject = project;
+    }  // TODO: Move this to MavenProjectsProcessor
+
+    @Override
+    public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+      float count = 0;
+      for (MavenProject mavenProject : myAllProjects) {
+        Module module = myMavenProjectToModule.get(mavenProject);
+        if (module == null) {
+          continue;
+        }
+        indicator.setFraction(count++ / myAllProjects.size());
+        indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
+        for (MavenModuleConfigurer configurer : myConfigurers) {
+          configurer.configure(mavenProject, myProject, module);
+        }
+      }
+    }
   }
 }

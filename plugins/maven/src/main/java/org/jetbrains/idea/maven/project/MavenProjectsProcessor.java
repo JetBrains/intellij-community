@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.internal.statistic.IdeActivity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
@@ -25,12 +24,14 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenTask;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -41,6 +42,7 @@ public class MavenProjectsProcessor {
   private final MavenEmbeddersManager myEmbeddersManager;
 
   private final Queue<MavenProjectsProcessorTask> myQueue = new LinkedList<>();
+  private final Queue<MavenUtil.MavenTaskHandler> tasksToWait = new LinkedList<>();
   private boolean isProcessing;
 
   private volatile boolean isStopped;
@@ -57,13 +59,14 @@ public class MavenProjectsProcessor {
 
   public void scheduleTask(MavenProjectsProcessorTask task) {
     synchronized (myQueue) {
-      if (!isProcessing && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!isProcessing) {
         isProcessing = true;
-        startProcessing(task);
-        return;
+        tasksToWait.add(startProcessing(task));
       }
-      if (myQueue.contains(task)) return;
-      myQueue.add(task);
+      else {
+        if (myQueue.contains(task)) return;
+        myQueue.add(task);
+      }
     }
   }
 
@@ -76,25 +79,27 @@ public class MavenProjectsProcessor {
   public void waitForCompletion() {
     if (isStopped) return;
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      while (true) {
-        MavenProjectsProcessorTask task;
-        synchronized (myQueue) {
-          task = myQueue.poll();
-          if(task == null){
-            return;
-          }
-        }
-        startProcessing(task);
-        }
-      }
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
 
     while (true) {
-      if (isStopped || semaphore.waitFor(1000)) return;
+      if (isStopped) return;
+      if(semaphore.waitFor(1000) && noTasksToWait()) return;
+    }
+  }
+
+  private boolean noTasksToWait() {
+    synchronized (myQueue) {
+      Iterator<MavenUtil.MavenTaskHandler> iterator = tasksToWait.iterator();
+      while (iterator.hasNext()) {
+        MavenUtil.MavenTaskHandler handler = iterator.next();
+        if(handler.stopped()){
+          iterator.remove();
+        }
+      }
+      return tasksToWait.isEmpty();
     }
   }
 
@@ -102,11 +107,15 @@ public class MavenProjectsProcessor {
     isStopped = true;
     synchronized (myQueue) {
       myQueue.clear();
+      for(MavenUtil.MavenTaskHandler handler: tasksToWait){
+        handler.cancel(true);
+      }
+      tasksToWait.clear();
     }
   }
-
-  private void startProcessing(final MavenProjectsProcessorTask task) {
-    MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
+  @NotNull
+  private MavenUtil.MavenTaskHandler startProcessing(final MavenProjectsProcessorTask task) {
+    return MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
       @Override
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
         Condition<MavenProgressIndicator> condition = mavenProgressIndicator -> isStopped;
@@ -201,5 +210,10 @@ public class MavenProjectsProcessor {
       throws MavenProcessCanceledException {
       mySemaphore.up();
     }
+  }
+
+  @Override
+  public String toString() {
+    return "MavenProjectsProcessor(" + myTitle + ")";
   }
 }

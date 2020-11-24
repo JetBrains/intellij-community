@@ -155,12 +155,7 @@ public final class MavenUtil {
   }
 
   public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
-    if (isNoBackgroundMode()) {
-      r.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed());
-    }
+    ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed());
   }
 
   public static void invokeAndWait(@NotNull Project p, @NotNull Runnable r) {
@@ -168,16 +163,11 @@ public final class MavenUtil {
   }
 
   public static void invokeAndWait(final Project p, final ModalityState state, @NotNull Runnable r) {
-    if (isNoBackgroundMode()) {
-      r.run();
-    }
-    else {
       ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
-    }
   }
 
   public static void smartInvokeAndWait(final Project p, final ModalityState state, final Runnable r) {
-    if (isNoBackgroundMode() || ApplicationManager.getApplication().isDispatchThread()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       r.run();
     }
     else {
@@ -219,11 +209,6 @@ public final class MavenUtil {
   public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable runnable) {
     if (project.isDisposed()) return;
 
-    if (isNoBackgroundMode()) {
-      runnable.run();
-      return;
-    }
-
     if (!project.isInitialized()) {
       StartupManager.getInstance(project).runAfterOpened(runnable);
       return;
@@ -238,7 +223,6 @@ public final class MavenUtil {
   }
 
   public static boolean isInModalContext() {
-    if (isNoBackgroundMode()) return false;
     return LaterInvocator.isInModalContext();
   }
 
@@ -522,44 +506,25 @@ public final class MavenUtil {
       }
     };
 
-    if (isNoBackgroundMode()) {
-      runnable.run();
-      return new MavenTaskHandler() {
-        @Override
-        public void waitFor() {
-        }
-      };
+
+    final Future<?> future;
+    if (executorService == null) {
+      future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    } else {
+      future = executorService.submit(runnable);
     }
-    else {
-      final Future<?> future;
-      if (executorService == null) {
-        future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
-      } else {
-        future = executorService.submit(runnable);
-      }
-      final MavenTaskHandler handler = new MavenTaskHandler() {
+    final MavenTaskHandler handler = new FutureMavenTaskHandler(future);
+    invokeLater(project, () -> {
+      if (future.isDone()) return;
+      new Task.Backgroundable(project, title, cancellable) {
         @Override
-        public void waitFor() {
-          try {
-            future.get();
-          }
-          catch (InterruptedException | ExecutionException e) {
-            MavenLog.LOG.error(e);
-          }
+        public void run(@NotNull ProgressIndicator i) {
+          indicator.setIndicator(i);
+          handler.waitFor();
         }
-      };
-      invokeLater(project, () -> {
-        if (future.isDone()) return;
-        new Task.Backgroundable(project, title, cancellable) {
-          @Override
-          public void run(@NotNull ProgressIndicator i) {
-            indicator.setIndicator(i);
-            handler.waitFor();
-          }
-        }.queue();
-      });
-      return handler;
-    }
+      }.queue();
+    });
+    return handler;
   }
 
   @Nullable
@@ -1032,6 +997,10 @@ public final class MavenUtil {
 
   public interface MavenTaskHandler {
     void waitFor();
+
+    boolean cancel(boolean interuptIfRunning);
+
+    boolean stopped();
   }
 
   public static int crcWithoutSpaces(@NotNull InputStream in) throws IOException {
@@ -1342,5 +1311,31 @@ public final class MavenUtil {
       }
     }
     throw new InvalidSdkException(name);
+  }
+
+  public static class FutureMavenTaskHandler implements MavenTaskHandler {
+    private final Future<?> myFuture;
+
+    public FutureMavenTaskHandler(Future<?> future) {myFuture = future;}
+
+    @Override
+    public void waitFor() {
+      try {
+        myFuture.get();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        MavenLog.LOG.error(e);
+      }
+    }
+
+    @Override
+    public boolean cancel(boolean interuptIfRunning){
+      return myFuture.cancel(interuptIfRunning);
+    }
+
+    @Override
+    public boolean stopped() {
+      return myFuture.isDone();
+    }
   }
 }

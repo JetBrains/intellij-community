@@ -1135,11 +1135,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private void runWhenFullyOpen(final Runnable runnable) {
     if (!isInitialized()) return; // may be called from scheduleImport after project started closing and before it is closed.
 
-    if (isNoBackgroundMode()) {
-      runnable.run();
-      return;
-    }
-
     final Ref<Runnable> wrapper = new Ref<>();
     wrapper.set(() -> {
       if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
@@ -1279,6 +1274,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
         @Override
         public void run(MavenProgressIndicator indicator) {
           r.run();
+
         }
       }).waitFor();
     }
