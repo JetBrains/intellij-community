@@ -68,6 +68,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
     assumeTrue("No WSL distributions found", distributions.isNotEmpty())
 
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
+    LOG.debug("WSL VMS: ${distributions}")
 
     wsl = distributions[0]
     tempDir = Files.createTempDirectory(Paths.get("\\\\wsl$\\${wsl}\\tmp"), "${UsefulTestCase.TEMP_DIR_MARKER}${getTestName(false)}_")
