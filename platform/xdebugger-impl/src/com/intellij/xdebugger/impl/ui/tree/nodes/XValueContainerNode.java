@@ -42,11 +42,6 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     myValueContainer = valueContainer;
   }
 
-  @Deprecated
-  protected XValueContainerNode(XDebuggerTree tree, XDebuggerTreeNode parent, @NotNull ValueContainer valueContainer) {
-    this(tree, parent, true, valueContainer);
-  }
-
   private void loadChildren() {
     if (myValueChildren != null || myMessageChildren != null || myTemporaryMessageChildren != null) return;
     startComputingChildren();

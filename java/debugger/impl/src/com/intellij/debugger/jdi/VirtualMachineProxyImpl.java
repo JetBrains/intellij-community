@@ -264,14 +264,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.eventRequestManager();
   }
 
-  /**
-   * @deprecated use {@link #mirrorOfVoid()} instead
-   */
-  @Deprecated
-  public VoidValue mirrorOf() throws EvaluateException {
-    return mirrorOfVoid();
-  }
-
   public VoidValue mirrorOfVoid() {
     return myVirtualMachine.mirrorOfVoid();
   }

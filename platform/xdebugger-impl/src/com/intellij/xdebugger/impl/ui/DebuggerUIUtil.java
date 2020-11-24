@@ -89,17 +89,6 @@ public final class DebuggerUIUtil {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
 
-  @Deprecated
-  public static RelativePoint calcPopupLocation(@NotNull Editor editor, final int line) {
-    Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
-
-    final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    if (!visibleArea.contains(p)) {
-      p = new Point((visibleArea.x + visibleArea.width) / 2, (visibleArea.y + visibleArea.height) / 2);
-    }
-    return new RelativePoint(editor.getContentComponent(), p);
-  }
-
   @Nullable
   public static RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
     if (line > -1) {
