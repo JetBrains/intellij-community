@@ -3,10 +3,13 @@ package de.plushnikov.intellij.plugin.activity;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.notification.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
@@ -42,6 +45,8 @@ import java.util.List;
  * @author Alexej Kubarev
  */
 public class LombokProjectValidatorActivity implements StartupActivity.DumbAware {
+  private static final Logger LOG = Logger.getInstance(LombokProjectValidatorActivity.class);
+
   @Override
   public void runActivity(@NotNull Project project) {
     LombokProcessorProvider lombokProcessorProvider = LombokProcessorProvider.getInstance(project);
@@ -129,21 +134,29 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
   }
 
   public static boolean hasLombokLibrary(Project project) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      PsiPackage aPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findPackage("lombok.experimental"));
+      PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("lombok.experimental");
       return new CachedValueProvider.Result<>(aPackage, ProjectRootManager.getInstance(project));
     }) != null;
   }
 
   public static boolean isVersionLessThan1_18_16(Project project) {
-    if (hasLombokLibrary(project)) {
-      return CachedValuesManager.getManager(project)
-        .getCachedValue(project, () -> {
-          Boolean isVersionLessThan = ReadAction.compute(() -> isVersionLessThan1_18_16_Internal(project));
-          return new CachedValueProvider.Result<>(isVersionLessThan, ProjectRootManager.getInstance(project));
-        });
-    }
-    return false;
+    return CachedValuesManager.getManager(project)
+      .getCachedValue(project, () -> {
+        Boolean isVersionLessThan;
+        try {
+          isVersionLessThan = ReadAction.nonBlocking(() -> isVersionLessThan1_18_16_Internal(project)).executeSynchronously();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          isVersionLessThan = false;
+          LOG.error(e);
+        }
+        return new CachedValueProvider.Result<>(isVersionLessThan, ProjectRootManager.getInstance(project));
+      });
   }
 
   private static boolean isVersionLessThan1_18_16_Internal(@NotNull Project project) {
