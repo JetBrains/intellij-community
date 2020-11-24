@@ -133,7 +133,7 @@ public class PluginUpdatesService {
   public void recalculateUpdates() {
     synchronized (ourLock) {
       for (PluginUpdatesService service : SERVICES) {
-        service.runAllCallbacks(0);
+        service.runAllCallbacks(null);
       }
 
       if (myPreparing) {
@@ -232,7 +232,7 @@ public class PluginUpdatesService {
     runCountCallbacks(countValue);
 
     if (myUpdateCallback != null) {
-      myUpdateCallback.accept(myCache);
+      myUpdateCallback.accept(countValue == null ? null : myCache);
     }
   }
 

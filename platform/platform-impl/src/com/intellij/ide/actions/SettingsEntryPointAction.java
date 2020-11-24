@@ -228,6 +228,10 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
   private static void initPluginsListeners() {
     if (myUpdatesService == null) {
       myUpdatesService = PluginUpdatesService.connectWithUpdates(descriptors -> {
+        if (ContainerUtil.isEmpty(descriptors)) {
+          newPluginsUpdate(null, null);
+          return;
+        }
         List<PluginDownloader> downloaders = new ArrayList<>();
         try {
           for (IdeaPluginDescriptor descriptor : descriptors) {
