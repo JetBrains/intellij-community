@@ -37,7 +37,7 @@ import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
-final class CustomMethodHandlers {
+public final class CustomMethodHandlers {
   private static final CallMatcher CONSTANT_CALLS = anyOf(
     exactInstanceCall(JAVA_LANG_STRING, "contains", "indexOf", "startsWith", "endsWith", "lastIndexOf", "length", "trim",
                  "substring", "equals", "equalsIgnoreCase", "charAt", "codePointAt", "compareTo", "replace"),
