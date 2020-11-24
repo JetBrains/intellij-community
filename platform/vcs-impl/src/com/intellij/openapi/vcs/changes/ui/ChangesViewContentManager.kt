@@ -49,9 +49,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     return if (isCommitToolWindow && shouldUseCommitToolWindow) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
   }
 
-  private fun getToolWindowIdFor(contentName: String): String {
-    return getToolWindowId(commitToolWindowTabs.contains(contentName))
-  }
+  private fun isInCommitToolWindow(contentName: String): Boolean = commitToolWindowTabs.contains(contentName)
 
   private fun Content.isInCommitToolWindow() = IS_IN_COMMIT_TOOLWINDOW_KEY.get(this) == true
 
@@ -230,8 +228,11 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     fun isCommitToolWindow(project: Project): Boolean = getInstanceImpl(project)?.isCommitToolWindow == true
 
     @JvmStatic
-    fun getToolWindowIdFor(project: Project, contentName: String): String? =
-      getInstanceImpl(project)?.getToolWindowIdFor(contentName)
+    fun getToolWindowIdFor(project: Project, contentName: String): String? {
+      val shouldUseCommitToolWindow = getInstanceImpl(project)?.isInCommitToolWindow(contentName) == true ||
+                                      VcsToolWindowFactory.isInCommitToolWindow(project, contentName)
+      return getInstanceImpl(project)?.getToolWindowId(shouldUseCommitToolWindow)
+    }
 
     @JvmStatic
     fun getToolWindowFor(project: Project, contentName: String): ToolWindow? =
