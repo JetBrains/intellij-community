@@ -1041,12 +1041,8 @@
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction"/>
       <action id="ResetGotItTooltips" internal="true" class="com.intellij.internal.ResetGotItTooltips"/>
       <group id="Internal.Performance" popup="true">
-        <group id="Internal.CachedValuesProfiler" internal="true" popup="true">
-          <action id="TurnOnOffCachedValueProfilerAction" internal="true"
-                  class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"/>
-          <action id="DumpCachedValueProfilerInfoAction" internal="true"
-                  class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"/>
-        </group>
+        <action id="TurnOnOffCachedValueProfilerAction" internal="true"
+                class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"/>
         <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction"/>
       </group>
       <separator/>

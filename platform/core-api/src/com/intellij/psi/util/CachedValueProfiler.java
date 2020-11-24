@@ -1,152 +1,232 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.ConcurrentMap;
+import java.text.NumberFormat;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class CachedValueProfiler {
-  private static final CachedValueProfiler ourInstance = new CachedValueProfiler();
-  private static final boolean ourCanProfile = ApplicationManager.getApplication().isInternal();
+  private static final Logger LOG = Logger.getInstance(CachedValueProfiler.class);
 
-  private final Object myLock = new Object();
+  public interface EventConsumer {
+    void onFrameEnter(long frameId, long parentId, long time);
 
-  private volatile MultiMap<StackTraceElement, Info> myStorage;
-  private volatile ConcurrentMap<CachedValueProvider.Result<?>, Info> myTmpInfos;
+    void onFrameExit(long frameId, long time);
 
-  public static boolean canProfile() {
-    return ourCanProfile;
+    void onValueComputed(long frameId, StackTraceElement place, long start, long time);
+
+    void onValueUsed(long frameId, StackTraceElement place, long start, long time);
+
+    void onValueInvalidated(long frameId, StackTraceElement place, long start, long time);
   }
 
-  public boolean isEnabled() {
-    return myStorage != null;
+  private static final ThreadLocal<ThreadContext> ourContext = ThreadLocal.withInitial(() -> new ThreadContext());
+  private static final AtomicLong ourFrameId = new AtomicLong();
+  private static final Overhead ourFrameOverhead = new Overhead();
+  private static final Overhead ourTrackerOverhead = new Overhead();
+
+  private static volatile EventConsumer ourEventConsumer;
+
+  public static boolean isProfiling() {
+    return ourEventConsumer != null;
   }
 
-  public void setEnabled(boolean value) {
-    synchronized (myLock) {
-      if (value) {
-        MultiMap<StackTraceElement, Info> storage = myStorage;
-        if (storage == null) {
-          myStorage = MultiMap.createConcurrent();
-          myTmpInfos = CollectionFactory.createConcurrentWeakMap();
-        }
+  @Nullable
+  public static EventConsumer setEventConsumer(@Nullable EventConsumer eventConsumer) {
+    EventConsumer prev = ourEventConsumer;
+    ourEventConsumer = eventConsumer;
+    if (prev != null) {
+      LOG.info(ourFrameOverhead.resetAndReport("doCompute()"));
+      LOG.info(ourTrackerOverhead.resetAndReport("getValue()"));
+    }
+    return prev;
+  }
+
+  public static final class Frame implements AutoCloseable {
+    final long time = currentTime();
+    final long id = ourFrameId.incrementAndGet();
+    final Frame parent;
+
+    private final Map<CachedValueProvider.Result<?>, StackTraceElement> places = new HashMap<>();
+    private long timeComputed;
+
+    Frame() {
+      ThreadContext context = ourContext.get();
+      parent = context.topFrame;
+      context.topFrame = this;
+      if (context.consumer != null) {
+        context.consumer.onFrameEnter(id, parent == null ? 0 : parent.id, time);
       }
-      else {
-        myStorage = null;
-        myTmpInfos = null;
+      ourFrameOverhead.count.incrementAndGet();
+      ourFrameOverhead.time.addAndGet(currentTime() - time);
+    }
+
+    @Override
+    public void close() {
+      ThreadContext context = ourContext.get();
+      places.clear();
+      if (context.topFrame != this) {
+        LOG.warn("unexpected frame: " + (context.topFrame == null ? "null" : context.topFrame.id) + ", expected: " + id , new Throwable());
       }
+      context.topFrame = parent;
+      if (parent == null) {
+        ourContext.remove(); // also releases ThreadContext.consumer reference
+      }
+      if (context.consumer != null) {
+        //report place for aborted computations?
+        //StackTraceElement place = timeComputed != 0 ? null : findAnyPlace();
+        context.consumer.onFrameExit(id, currentTime());
+      }
+
+      if (timeComputed != 0) {
+        ourFrameOverhead.time.addAndGet(currentTime() - timeComputed);
+      }
+    }
+
+    @Nullable
+    public ValueTracker newValueTracker(@NotNull CachedValueProvider.Result<?> result) {
+      timeComputed = currentTime();
+      return onResultReturned(this, result);
     }
   }
 
-  public static @NotNull CachedValueProfiler getInstance() {
-    return ourInstance;
+  @NotNull
+  public static Frame newFrame() {
+    return new Frame();
   }
 
-  public void createInfo(@NotNull CachedValueProvider.Result<?> result) {
-    if (myStorage == null) return;
+  static void onResultCreated(@NotNull CachedValueProvider.Result<?> result, @Nullable Object original) {
+    long time = currentTime();
+    ThreadContext context = ourContext.get();
+    if (context.consumer == null) return;
 
-    ConcurrentMap<CachedValueProvider.Result<?>, Info> map = myTmpInfos;
-    if (map == null) return;
+    Frame frame = context.topFrame;
+    if (frame == null) return;
 
-    StackTraceElement origin = findOrigin();
-    if (origin == null) return;
+    StackTraceElement place = original == null ? findExactPlace() :
+                              original instanceof CachedValueProvider.Result ? frame.places.get(original) :
+                              original instanceof Function ? findAnyPlace() : null;
+    if (place == null) return;
 
-    map.put(result, new Info(origin, -1, currentTime()));
+    frame.places.put(result, place);
+    ourFrameOverhead.time.addAndGet(currentTime() - time);
   }
 
-  public @Nullable Info storeInfo(@NotNull CachedValueProvider.Result<?> result, long startTime) {
-    MultiMap<StackTraceElement, Info> storage = myStorage;
-    if (storage == null) return null;
+  @Nullable
+  static ValueTracker onResultReturned(@NotNull Frame frame, @NotNull CachedValueProvider.Result<?> result) {
+    long time = currentTime();
+    ThreadContext context = ourContext.get();
+    if (context.consumer == null) return null;
 
-    ConcurrentMap<CachedValueProvider.Result<?>, Info> map = myTmpInfos;
-    Info tmp = map != null ? map.remove(result) : null;
-    if (tmp == null) return null;
+    StackTraceElement place = frame.places.get(result);
+    if (place == null) place = findAnyPlace();
 
-    Info stored = new Info(tmp.origin, startTime, tmp.endTime);
-    storage.putValue(tmp.getOrigin(), stored);
-    return stored;
+    context.consumer.onValueComputed(frame.id, place, frame.time, time);
+    return new ValueTracker(place, time);
   }
 
-  public MultiMap<StackTraceElement, Info> getStorageSnapshot() {
-    return myStorage.copy();
-  }
-
-  private static @Nullable StackTraceElement findOrigin() {
+  @Nullable
+  private static StackTraceElement findExactPlace() {
     StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-    int idx = 0;
-    for (StackTraceElement e : stackTrace) {
-      String method = e.getMethodName();
-      String className = e.getClassName();
+    int idx, len;
+    for (idx = 2, len = stackTrace.length; idx < len; idx ++) {
+      String method = stackTrace[idx].getMethodName();
+      String className = stackTrace[idx].getClassName();
       if ("doCompute".equals(method) &&
           (className.endsWith("CachedValueImpl") || className.endsWith("CachedValue")) &&
           (className.startsWith("com.intellij.util.") || className.startsWith("com.intellij.psi."))) {
         break;
       }
-      idx ++;
     }
-    if (idx >= stackTrace.length) return null;
-    for (int i = idx + 1; i >= 0; i --) {
-      String className = stackTrace[i].getClassName();
+    if (idx >= len) return null;
+    for (--idx; idx > 0; idx--) {
+      String className = stackTrace[idx].getClassName();
       if (className.startsWith("com.intellij.util.CachedValue")) continue;
       if (className.startsWith("com.intellij.psi.util.CachedValue")) continue;
       if (className.startsWith("com.intellij.psi.impl.PsiCachedValue")) continue;
       if (className.startsWith("com.intellij.openapi.util.Recursion")) continue;
-      return stackTrace[i];
+      break;
+
+    }
+    if (idx > 0) {
+      return stackTrace[idx];
     }
     return null;
   }
 
-  public static long currentTime() {
-    return System.currentTimeMillis();
+  @NotNull
+  private static StackTraceElement findAnyPlace() {
+    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+    for (int idx = 2, len = stackTrace.length; idx < len; idx++) {
+      String className = stackTrace[idx].getClassName();
+      if (className.startsWith("com.intellij.util.CachedValue")) continue;
+      if (className.startsWith("com.intellij.psi.util.CachedValue")) continue;
+      if (className.startsWith("com.intellij.psi.impl.PsiCachedValue")) continue;
+      if (className.startsWith("com.intellij.openapi.util.Recursion")) continue;
+      if (className.startsWith("com.intellij.psi.impl.PsiParameterizedCachedValue")) continue;
+      return stackTrace[idx];
+    }
+    return new StackTraceElement("unknown", "unknown", "", -1);
   }
 
-  public static final class Info extends AtomicLong {
-    public final StackTraceElement origin;
-    public final long startTime;
-    public final long endTime;
+  private static long currentTime() {
+    return System.nanoTime();
+  }
 
-    private volatile long myInvalidatedTime = -1;
+  public static final class ValueTracker {
+    public final StackTraceElement place;
+    public final long time;
 
-    Info(@NotNull StackTraceElement origin, long startTime, long endTime) {
-      this.origin = origin;
-      this.startTime = startTime;
-      this.endTime = endTime;
+    ValueTracker(@NotNull StackTraceElement place, long time) {
+      this.place = place;
+      this.time = time;
     }
 
     public void invalidate() {
-      long cur = myInvalidatedTime;
-      myInvalidatedTime = cur == -1 ? currentTime() : cur;
+      long time = currentTime();
+      ThreadContext context = ourContext.get();
+      if (context.consumer != null) {
+        context.consumer.onValueInvalidated(context.topFrame == null ? 0 : context.topFrame.id, place, this.time, time);
+      }
+      ourTrackerOverhead.time.addAndGet(currentTime() - time);
     }
 
     public void valueUsed() {
-      incrementAndGet();
-    }
-
-    public long getUseCount() {
-      return get();
-    }
-
-    public long getLifetime() {
-      long disposedTime = myInvalidatedTime;
-      if (disposedTime == -1) disposedTime = currentTime();
-
-      return disposedTime - endTime;
-    }
-
-    public long getComputeTime() {
-      return endTime - startTime;
-    }
-
-    @NotNull
-    public StackTraceElement getOrigin() {
-      return origin;
+      long time = currentTime();
+      ThreadContext context = ourContext.get();
+      if (context.consumer != null) {
+        context.consumer.onValueUsed(context.topFrame == null ? 0 : context.topFrame.id, place, this.time, time);
+      }
+      ourTrackerOverhead.count.incrementAndGet();
+      ourTrackerOverhead.time.addAndGet(currentTime() - time);
     }
   }
+
+  private static class ThreadContext {
+    @Nullable Frame topFrame;
+    @Nullable EventConsumer consumer = ourEventConsumer;
+  }
+
+  private static class Overhead {
+    final AtomicLong time = new AtomicLong();
+    final AtomicLong count = new AtomicLong();
+
+    String resetAndReport(String eventName) {
+      long delta = this.time.getAndSet(0);
+      long events = this.count.getAndSet(0);
+      NumberFormat format = NumberFormat.getInstance(Locale.US);
+      return format.format(events) + " " + eventName + " calls, " +
+             format.format(delta) + " overhead ns (" + format.format(delta / events) + " ns/call)";
+    }
+  }
+
 }

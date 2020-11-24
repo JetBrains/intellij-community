@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Dmitry Avdeev
@@ -31,8 +30,18 @@ public abstract class CachedValueBase<T> {
 
   @NotNull
   private Data<T> computeData(Computable<? extends CachedValueProvider.Result<T>> doCompute) {
-    long stamp = CachedValueProfiler.currentTime();
-    CachedValueProvider.Result<T> result = doCompute.compute();
+    CachedValueProvider.Result<T> result;
+    CachedValueProfiler.ValueTracker tracker;
+    if (CachedValueProfiler.isProfiling()) {
+      try (CachedValueProfiler.Frame frame = CachedValueProfiler.newFrame()) {
+        result = doCompute.compute();
+        tracker = frame.newValueTracker(result);
+      }
+    }
+    else {
+      result = doCompute.compute();
+      tracker = null;
+    }
     if (result == null) {
       return new Data<>(null, ArrayUtilRt.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY, null);
     }
@@ -42,9 +51,7 @@ public abstract class CachedValueBase<T> {
     for (int i = 0; i < inferredDependencies.length; i++) {
       inferredTimeStamps[i] = getTimeStamp(inferredDependencies[i]);
     }
-
-    CachedValueProfiler.Info info = CachedValueProfiler.canProfile() ? CachedValueProfiler.getInstance().storeInfo(result, stamp) : null;
-    return new Data<>(value, inferredDependencies, inferredTimeStamps, info);
+    return new Data<>(value, inferredDependencies, inferredTimeStamps, tracker);
   }
 
   @Nullable
@@ -90,8 +97,8 @@ public abstract class CachedValueBase<T> {
     if (isUpToDate(data)) {
       return true;
     }
-    if (data.useCount instanceof CachedValueProfiler.Info) {
-      ((CachedValueProfiler.Info)data.useCount).invalidate();
+    if (data.trackingInfo != null) {
+      data.trackingInfo.invalidate();
     }
     return false;
   }
@@ -174,13 +181,14 @@ public abstract class CachedValueBase<T> {
     private final T myValue;
     private final Object @NotNull [] myDependencies;
     private final long @NotNull [] myTimeStamps;
-    final @Nullable AtomicLong useCount;
+    final @Nullable CachedValueProfiler.ValueTracker trackingInfo;
 
-    Data(T value, Object @NotNull [] dependencies, long @NotNull [] timeStamps, @Nullable AtomicLong useCount) {
+    Data(T value, Object @NotNull [] dependencies, long @NotNull [] timeStamps,
+         @Nullable CachedValueProfiler.ValueTracker trackingInfo) {
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
-      this.useCount = useCount;
+      this.trackingInfo = trackingInfo;
     }
 
     public Object @NotNull [] getDependencies() {
@@ -197,7 +205,9 @@ public abstract class CachedValueBase<T> {
     }
 
     public T getValue() {
-      if (useCount != null) useCount.incrementAndGet();
+      if (trackingInfo != null) {
+        trackingInfo.valueUsed();
+      }
       return myValue;
     }
   }
