@@ -41,6 +41,8 @@ class VmOptionsGenerator {
       // when changing, please review usages of `ProductProperties#getCustomJvmMemoryOptionsX64` and synchronize if necessary
       case JvmArchitecture.x32: return ['-server', '-Xms128m', '-Xmx512m', '-XX:ReservedCodeCacheSize=384m']
       case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
+      case JvmArchitecture.aarch64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
+      // todo review options for aarch64
     }
     throw new AssertionError(arch)
   }

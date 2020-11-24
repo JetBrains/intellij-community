@@ -116,7 +116,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private void generateVMOptions(String unixDistPath) {
-    JvmArchitecture.values().each {
+    [JvmArchitecture.x32, JvmArchitecture.x64].each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
                       ['-Dsun.tools.attach.tmp.only=true'] //todo
