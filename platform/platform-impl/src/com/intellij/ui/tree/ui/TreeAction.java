@@ -185,7 +185,8 @@ final class TreeAction extends AbstractAction implements UIResource {
       selectFirst(type, tree);
     }
     else if (tree.isExpanded(lead) || isLeaf(tree, lead)) {
-      select(type, tree, row + 1);
+      TreePath path = tree.getPathForRow(row + 1);
+      if (!TreeUtil.isLoadingPath(path)) select(type, tree, path, row + 1);
     }
     else {
       tree.expandPath(lead);
