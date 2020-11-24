@@ -165,7 +165,21 @@ class BundledJreManager {
       prefix = "jbr_${buildContext.productProperties.jbrDistribution.classifier}-"
     }
 
-    "${prefix}${update}-${os.jbrArchiveSuffix}-${arch == JvmArchitecture.x32 ? 'x86' : 'x64'}-${build}.tar.gz"
+    def archSuffix = getJBRArchSuffix(arch)
+    "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
+  }
+
+  private static String getJBRArchSuffix(JvmArchitecture arch) {
+    switch (arch) {
+      case JvmArchitecture.x32:
+        return 'x86'
+      case JvmArchitecture.x64:
+        return 'x64'
+      case JvmArchitecture.aarch64:
+        return 'aarch64'
+      default:
+        throw new IllegalStateException("Unsupported arch: $arch")
+    }
   }
 
   /**

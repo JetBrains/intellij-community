@@ -53,7 +53,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     if (customizer.includeBatchLaunchers) {
       generateScripts(winDistPath)
     }
-    List<JvmArchitecture> architectures = customizer.include32BitLauncher ? JvmArchitecture.values() : [JvmArchitecture.x64]
+    List<JvmArchitecture> architectures = customizer.include32BitLauncher ? [JvmArchitecture.x32, JvmArchitecture.x64] : [JvmArchitecture.x64]
     generateVMOptions(winDistPath, architectures)
     architectures.each {
       buildWinLauncher(it, winDistPath)
@@ -191,6 +191,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def productName = buildContext.applicationInfo.shortProductName
       String classPath = buildContext.bootClassPathJarNames.join(";")
 
+      assert (arch in [JvmArchitecture.x32, JvmArchitecture.x64])
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : ""
       String vmOptionsEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "64" : ""
       def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
