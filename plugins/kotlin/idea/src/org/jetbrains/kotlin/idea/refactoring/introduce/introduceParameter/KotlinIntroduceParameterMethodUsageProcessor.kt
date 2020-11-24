@@ -50,7 +50,7 @@ class KotlinIntroduceParameterMethodUsageProcessor : IntroduceParameterMethodUsa
         val changeSignatureData = KotlinChangeSignatureData(psiMethodDescriptor, method, Collections.singletonList(psiMethodDescriptor))
         val changeInfo = KotlinChangeInfo(methodDescriptor = changeSignatureData, context = method)
 
-        data.parametersToRemove.toNativeArray().sortedDescending().forEach { changeInfo.removeParameter(it) }
+        data.parameterListToRemove.sortedDescending().forEach { changeInfo.removeParameter(it) }
 
         // Temporarily assume that the new parameter is of Any type. Actual type is substituted during the signature update phase
         val defaultValueForCall = (data.parameterInitializer.expression as? PsiExpression)?.j2k()
