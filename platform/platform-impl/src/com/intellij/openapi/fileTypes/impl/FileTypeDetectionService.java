@@ -524,7 +524,7 @@ final class FileTypeDetectionService implements Disposable {
         }
 
         int fileLength = (int)file.getLength();
-        int bufferLength = getDetectFileBufferSize();
+        int bufferLength = getDetectFileBufferSize(file);
         byte[] buffer = fileLength <= FileUtilRt.THREAD_LOCAL_BUFFER_LENGTH
                         ? FileUtilRt.getThreadLocalBuffer()
                         : new byte[Math.min(fileLength, bufferLength)];
@@ -601,7 +601,12 @@ final class FileTypeDetectionService implements Disposable {
       });
   }
 
-  private int getDetectFileBufferSize() {
+  private int getDetectFileBufferSize(@NotNull VirtualFile file) {
+    if (!file.isCharsetSet()) {
+      // when detecting type from content of a file with unknown charset we have to determine charset first,
+      // which in turn may require file content. But in this case, the whole file content because the UTF surrogates may very well be at the end of the file.
+      return FileUtilRt.getUserContentLoadLimit(); 
+    }
     int bufferLength = cachedDetectFileBufferSize;
     if (bufferLength == -1) {
       List<FileTypeRegistry.FileTypeDetector> detectors = FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensionList();
