@@ -207,11 +207,9 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
                                             exceptionBreakpointProperties.getCatchClassExclusionFilters());
       }
 
-      if (Registry.is("debugger.breakpoints.caller.filter")) {
-        myCallerFiltersPanel.setVisible(true);
-        myCallerFiltersCheckBox.setSelected(properties.isCALLER_FILTERS_ENABLED());
-        myCallerFilters.setClassFilters(properties.getCallerFilters(), properties.getCallerExclusionFilters());
-      }
+      myCallerFiltersPanel.setVisible(true);
+      myCallerFiltersCheckBox.setSelected(properties.isCALLER_FILTERS_ENABLED());
+      myCallerFilters.setClassFilters(properties.getCallerFilters(), properties.getCallerExclusionFilters());
 
       XSourcePosition position = breakpoint.getSourcePosition();
       // TODO: need to calculate psi class

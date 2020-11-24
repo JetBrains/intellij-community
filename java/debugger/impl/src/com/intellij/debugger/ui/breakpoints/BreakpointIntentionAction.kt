@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions.ActionText
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.classFilter.ClassFilter
 import com.intellij.util.ArrayUtil
@@ -17,7 +16,6 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
-import java.util.*
 
 internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XBreakpoint<*>, @ActionText text : String) : AnAction(text) {
 
@@ -150,11 +148,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
             res.add(AddInstanceFilter(breakpoint, it))
           }
 
-          if (Registry.`is`("debugger.breakpoints.caller.filter")) {
-            frameDescriptor.getUserData(CALLER_KEY)?.let {
-              res.add(AddCallerFilter(breakpoint, it))
-              res.add(AddCallerNotFilter(breakpoint, it))
-            }
+          frameDescriptor.getUserData(CALLER_KEY)?.let {
+            res.add(AddCallerFilter(breakpoint, it))
+            res.add(AddCallerNotFilter(breakpoint, it))
           }
         }
 
