@@ -283,23 +283,5 @@ object CacheForCompilerErrorMessages {
     return -1
   }
 
-
-  /*private fun reade(project: Project, moduleName: String): List<MessagePredicate> {
-    Files.walk(Paths.get(URI.create("jrt:/modules")))
-      .filter { Files.isRegularFile(it) }
-      .forEach {
-        val readAllBytes = Files.readAllBytes(it)
-        try {
-          val s = String(readAllBytes);
-          if (s.contains("compiler.err.unsupported.release.version")) {
-            println(it)
-          }
-        }
-        catch (e: Throwable) {
-        }
-
-      }
-    return emptyList()
-  }*/
 }
 
