@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.build.FilePosition;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.build.issue.BuildIssueChecker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.tooling.UnsupportedVersionException;
@@ -19,6 +21,7 @@ import org.jetbrains.plugins.gradle.issue.GradleIssueData;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
 import org.jetbrains.plugins.gradle.service.notification.OpenGradleSettingsCallback;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -76,8 +79,8 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     if (location == null && !StringUtil.isEmpty(buildFilePath)) {
       location = String.format("Build file: '%1$s'", buildFilePath);
     }
-
-    GradleIssueData issueData = new GradleIssueData(projectPath, error, buildEnvironment, null);
+    FilePosition errorFilePosition = getErrorFilePosition(location);
+    GradleIssueData issueData = new GradleIssueData(projectPath, error, buildEnvironment, errorFilePosition);
     List<GradleIssueChecker> knownIssuesCheckList = GradleIssueChecker.getKnownIssuesCheckList();
     for (BuildIssueChecker<GradleIssueData> checker : knownIssuesCheckList) {
       BuildIssue buildIssue = checker.check(issueData);
@@ -102,23 +105,6 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
           OpenGradleSettingsCallback.ID);
         return createUserFriendlyError(msg, location, OpenGradleSettingsCallback.ID);
       }
-    }
-
-    if (rootCause instanceof OutOfMemoryError) {
-      // The OutOfMemoryError happens in the Gradle daemon process.
-      String msg = "Out of memory";
-      if (rootCauseMessage != null && !rootCauseMessage.isEmpty()) {
-        msg = msg + ": " + rootCauseMessage;
-      }
-      if (msg.endsWith("Java heap space")) {
-        msg += ". Configure Gradle memory settings using '-Xmx' JVM option (e.g. '-Xmx2048m'.)";
-      }
-      else if (!msg.endsWith(".")) {
-        msg += ".";
-      }
-      msg += EMPTY_LINE + OPEN_GRADLE_SETTINGS;
-      // Location of build.gradle is useless for this error. Omitting it.
-      return createUserFriendlyError(msg, null);
     }
 
     if (rootCause instanceof ClassNotFoundException) {
@@ -179,5 +165,13 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
       errMessage = rootCauseMessage;
     }
     return createUserFriendlyError(errMessage, location);
+  }
+
+  @Nullable
+  private static FilePosition getErrorFilePosition(@Nullable String location) {
+    if (location == null) return null;
+    Pair<String, Integer> errorLocation = GradleExecutionErrorHandler.getErrorLocation(location);
+    if (errorLocation == null) return null;
+    return new FilePosition(new File(errorLocation.first), errorLocation.second - 1, 0);
   }
 }

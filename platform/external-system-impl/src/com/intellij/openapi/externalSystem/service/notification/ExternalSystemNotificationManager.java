@@ -129,6 +129,7 @@ public class ExternalSystemNotificationManager implements Disposable {
           quickFix.runQuickFix(project, dataProvider);
         });
       }
+      notificationData.setNavigatable(buildIssue.getNavigatable(project));
       return notificationData;
     }
 

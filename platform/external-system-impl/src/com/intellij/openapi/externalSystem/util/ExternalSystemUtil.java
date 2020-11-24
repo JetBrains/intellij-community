@@ -10,6 +10,7 @@ import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.events.impl.*;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -38,6 +39,7 @@ import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionCons
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.importing.ImportSpecImpl;
+import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -707,7 +709,11 @@ public final class ExternalSystemUtil {
       notificationData.getFilePath() != null ? findLocalFileByPath(notificationData.getFilePath()) : null;
 
     final Navigatable navigatable;
-    if (notificationData.getNavigatable() == null || notificationData.getNavigatable() instanceof NonNavigatable) {
+    Navigatable buildIssueNavigatable = exception instanceof BuildIssueException ? ((BuildIssueException)exception).getBuildIssue().getNavigatable(project) : null;
+    if (!isNullOrNonNavigatable(buildIssueNavigatable)) {
+      navigatable = buildIssueNavigatable;
+    }
+    else if (isNullOrNonNavigatable(notificationData.getNavigatable())) {
       navigatable = virtualFile != null ? new OpenFileDescriptor(project, virtualFile, line, column) : NonNavigatable.INSTANCE;
     }
     else {
@@ -726,8 +732,18 @@ public final class ExternalSystemUtil {
         notificationData.getTitle(), notificationData.getMessage(),
         notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
     }
-    return new FailureResultImpl(
-      Collections.singletonList(new FailureImpl(notificationData.getMessage(), exception, notification, navigatable)));
+    FailureImpl failure;
+    if (exception instanceof BuildIssueException) {
+      BuildIssue buildIssue = ((BuildIssueException)exception).getBuildIssue();
+      failure = new FailureImpl(buildIssue.getTitle(), notificationData.getMessage(), Collections.emptyList(), exception, notification, navigatable);
+    } else {
+      failure = new FailureImpl(notificationData.getMessage(), exception, notification, navigatable);
+    }
+    return new FailureResultImpl(Collections.singletonList(failure));
+  }
+
+  private static boolean isNullOrNonNavigatable(@Nullable Navigatable navigatable) {
+    return navigatable == null || navigatable == NonNavigatable.INSTANCE;
   }
 
   public static BuildEvent convert(ExternalSystemTaskExecutionEvent taskExecutionEvent) {
