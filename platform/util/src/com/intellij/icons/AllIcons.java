@@ -45,7 +45,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon DeleteTagHover = load("actions/deleteTagHover.svg", 5580544105554597808L, 2);
     /** 16x16 */ public static final @NotNull Icon DiagramDiff = load("actions/diagramDiff.svg", 4050539090745180126L, 2);
     /** 16x16 */ public static final @NotNull Icon Diff = load("actions/diff.svg", -4789806540685383240L, 2);
-    /** 16x16 */ public static final @NotNull Icon DiffWithClipboard = load("actions/diffWithClipboard.svg", -3860075951405125257L, 2);
+    /** 16x17 */ public static final @NotNull Icon DiffWithClipboard = load("actions/diffWithClipboard.svg", -4644729761610662766L, 2);
     /** 16x16 */ public static final @NotNull Icon Download = load("actions/download.svg", -5995640021644586396L, 2);
     /** 16x16 */ public static final @NotNull Icon Dump = load("actions/dump.svg", -1999792581111822882L, 2);
     /** 16x16 */ public static final @NotNull Icon DynamicUsages = load("actions/dynamicUsages.svg", -3038340384984333293L, 2);
@@ -99,7 +99,7 @@ public class AllIcons {
     /** 16x16 */ public static final @Deprecated @NotNull Icon Menu_cut = MenuCut;
     /** 16x16 */ public static final @NotNull Icon MenuOpen = load("actions/menu-open.svg", 7227999428473585553L, 2);
     /** 16x16 */ public static final @Deprecated @NotNull Icon Menu_open = MenuOpen;
-    /** 16x16 */ public static final @NotNull Icon MenuPaste = load("actions/menu-paste.svg", 1024487401753000156L, 2);
+    /** 16x16 */ public static final @NotNull Icon MenuPaste = load("actions/menu-paste.svg", 58251009612783400L, 2);
     /** 16x16 */ public static final @Deprecated @NotNull Icon Menu_paste = MenuPaste;
     /** 16x16 */ public static final @NotNull Icon MenuSaveall = load("actions/menu-saveall.svg", -4987978715156629295L, 2);
     /** 16x16 */ public static final @Deprecated @NotNull Icon Menu_saveall = MenuSaveall;
@@ -130,9 +130,9 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Play_forward = load("actions/play_forward.svg", -3861886799491248314L, 2);
     /** 16x16 */ public static final @NotNull Icon Play_last = load("actions/play_last.svg", 8561966384508807746L, 2);
     /** 16x16 */ public static final @NotNull Icon PopFrame = load("actions/popFrame.svg", 4001160359081710211L, 2);
-    /** 16x16 */ public static final @NotNull Icon PreserveCase = load("actions/preserveCase.svg", -8201723460641817914L, 0);
-    /** 16x16 */ public static final @NotNull Icon PreserveCaseHover = load("actions/preserveCaseHover.svg", -2554284268215176340L, 0);
-    /** 16x16 */ public static final @NotNull Icon PreserveCaseSelected = load("actions/preserveCaseSelected.svg", -6577269650530143474L, 0);
+    /** 16x16 */ public static final @NotNull Icon PreserveCase = load("actions/preserveCase.svg", -1322116453035686737L, 0);
+    /** 16x16 */ public static final @NotNull Icon PreserveCaseHover = load("actions/preserveCaseHover.svg", 6175350140642539380L, 0);
+    /** 16x16 */ public static final @NotNull Icon PreserveCaseSelected = load("actions/preserveCaseSelected.svg", -3589871950844855647L, 0);
     /** 16x16 */ public static final @NotNull Icon PrettyPrint = load("actions/prettyPrint.svg", -306145386571111647L, 2);
     /** 16x16 */ public static final @NotNull Icon Preview = load("actions/preview.svg", -4590724503395184315L, 2);
     /** 16x16 */ public static final @NotNull Icon PreviewDetails = load("actions/previewDetails.svg", 3503221558376525063L, 2);
@@ -145,7 +145,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ProfileRed = load("actions/profileRed.svg", -5397081292725366730L, 2);
     /** 16x16 */ public static final @NotNull Icon ProfileYellow = load("actions/profileYellow.svg", -1996801427383721020L, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectDirectory = load("actions/projectDirectory.svg", -2286332708757590503L, 2);
-    /** 16x16 */ public static final @NotNull Icon Properties = load("actions/properties.svg", 7493703359318009496L, 2);
+    /** 16x16 */ public static final @NotNull Icon Properties = load("actions/properties.svg", -1192087932538467805L, 2);
     /** 16x16 */ public static final @NotNull Icon QuickfixBulb = load("actions/quickfixBulb.svg", 487925246148052249L, 2);
     /** 16x16 */ public static final @NotNull Icon QuickfixOffBulb = load("actions/quickfixOffBulb.svg", -9152331797598346514L, 2);
     /** 16x16 */ public static final @NotNull Icon RealIntentionBulb = load("actions/realIntentionBulb.svg", 4462317638084577335L, 2);
@@ -290,7 +290,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon PromptInputHistory = load("debugger/promptInputHistory.svg", 267985079255180872L, 2);
     /** 7x9 */ public static final @NotNull Icon Question_badge = load("debugger/question_badge.svg", -8533873966631320931L, 2);
     /** 16x16 */ public static final @NotNull Icon RestoreLayout = load("debugger/restoreLayout.svg", 9080611226970364260L, 2);
-    /** 16x16 */ public static final @NotNull Icon Selfreference = load("debugger/selfreference.svg", 1032746745886484396L, 2);
+    /** 16x16 */ public static final @NotNull Icon Selfreference = load("debugger/selfreference.svg", -6245482850631762733L, 2);
     /** 16x16 */ public static final @NotNull Icon ShowCurrentFrame = load("debugger/showCurrentFrame.svg", 1786771350398767849L, 2);
     /** 16x16 */ public static final @NotNull Icon SmartStepInto = load("debugger/smartStepInto.svg", -8653432387754040588L, 2);
     /** 16x16 */ public static final @NotNull Icon ThreadAtBreakpoint = load("debugger/threadAtBreakpoint.svg", 7133240471129902888L, 0);
@@ -803,7 +803,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon RunnableMark = load("nodes/runnableMark.svg", 712918329178502349L, 0);
     /** 16x16 */ public static final @NotNull Icon RwAccess = load("nodes/rw-access.svg", -2790954136544911595L, 0);
     /** 16x16 */ public static final @Deprecated @NotNull Icon Rw_access = RwAccess;
-    /** 16x16 */ public static final @NotNull Icon SecurityRole = load("nodes/securityRole.svg", 7982075147680335989L, 0);
+    /** 16x16 */ public static final @NotNull Icon SecurityRole = load("nodes/securityRole.svg", -5500371977726954805L, 0);
     /** 14x12 */ public static final @NotNull Icon Services = load("nodes/services.svg", -2057777837011288462L, 0);
     /** 16x16 */ public static final @NotNull Icon Servlet = load("nodes/servlet.svg", -6853224320261092461L, 0);
     /** 16x16 */ public static final @NotNull Icon Shared = load("nodes/shared.svg", -6894260543915480253L, 0);
@@ -1031,7 +1031,7 @@ public class AllIcons {
 
   public static final class Toolbar {
     /** 16x16 */ public static final @NotNull Icon Filterdups = load("toolbar/filterdups.svg", -2072787910408798833L, 2);
-    /** 16x16 */ public static final @NotNull Icon Locale = load("toolbar/locale.svg", -8745154471411918360L, 2);
+    /** 16x16 */ public static final @NotNull Icon Locale = load("toolbar/locale.svg", 3441484815021437595L, 2);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("toolbar/unknown.svg", -1073235514944118836L, 2);
     /** 16x16 */ public static final @NotNull Icon Xcode = load("toolbar/Xcode.svg", -434156538492644022L, 2);
   }
