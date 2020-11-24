@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -147,6 +148,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
                                        @NotNull PsiFileSystemItem context,
                                        final Collection<ResolveResult> result,
                                        final boolean caseSensitive) {
+    context = ModelBranch.obtainCopyFromTheSameBranch(getElement(), context);
     if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {
       if (context instanceof FileReferenceResolver) {
         ContainerUtil.addIfNotNull(result, resolveFileReferenceResolver((FileReferenceResolver)context, text));

@@ -105,6 +105,24 @@ public interface ModelBranch extends UserDataHolder {
     return file instanceof BranchedVirtualFile ? ((BranchedVirtualFile)file).getBranch() : null;
   }
 
+  /**
+   * @param context context element that may belong to the branch
+   * @param element element to get the copy in the same branch as context
+   * @param <T> type of the element
+   * @return a copy of element that belongs to the same branch as context. 
+   * May return input element if it already belongs to the same branch or if context doesn't belong to any branch
+   * @throws IllegalArgumentException if element and context already belong to different branches
+   */
+  static <T extends PsiElement> @NotNull T obtainCopyFromTheSameBranch(@NotNull PsiElement context, @NotNull T element) {
+    ModelBranch branch = getPsiBranch(context);
+    if (branch == null) return element;
+    ModelBranch elementBranch = getPsiBranch(element);
+    if (elementBranch == branch) return element;
+    if (elementBranch != null) {
+      throw new IllegalArgumentException("Branch of supplied element differs from context branch");
+    }
+    return branch.obtainPsiCopy(element);
+  } 
 
   
   // ----------------- other

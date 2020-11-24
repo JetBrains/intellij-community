@@ -220,7 +220,6 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   @Override
   @Nullable
   public <T extends PsiElement> T findOriginalPsi(@NotNull T branched) {
-    assert myMerged;
     if (branched instanceof PsiDirectory) {
       VirtualFile originalDir = findOriginalFile(((PsiDirectory) branched).getVirtualFile());
       if (originalDir == null) return null;
