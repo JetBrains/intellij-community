@@ -13,7 +13,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -56,13 +55,13 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
 
     Processor<SliceUsage> uniqueProcessor = new CommonProcessors.UniqueProcessor<>(processor, new HashingStrategy<SliceUsage>() {
         @Override
-        public int hashCode(@Nullable SliceUsage object) {
-          return object == null ? 0 : object.getUsageInfo().hashCode();
+        public int hashCode(@NotNull SliceUsage object) {
+          return object.getUsageInfo().hashCode();
         }
 
         @Override
-        public boolean equals(@Nullable SliceUsage o1, @Nullable SliceUsage o2) {
-          return o1 == o2 || (o1 != null && o2 != null && o1.getUsageInfo().equals(o2.getUsageInfo()));
+        public boolean equals(@NotNull SliceUsage o1, @NotNull SliceUsage o2) {
+          return o1.getUsageInfo().equals(o2.getUsageInfo());
         }
       }) {
         @Override

@@ -4,15 +4,14 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 @ApiStatus.Internal
 public interface HashingStrategy<T> {
-  int hashCode(@Nullable T object);
+  int hashCode(T object);
 
-  boolean equals(@Nullable T o1, @Nullable T o2);
+  boolean equals(T o1, T o2);
 
   static <T> @NotNull HashingStrategy<T> canonical() {
     //noinspection unchecked

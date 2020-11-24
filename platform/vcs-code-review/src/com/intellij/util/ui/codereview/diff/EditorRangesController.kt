@@ -9,12 +9,11 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.Disposer
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 
 open class EditorRangesController(private val gutterIconRendererFactory: DiffEditorGutterIconRendererFactory,
                                   private val editor: EditorEx) {
-
-  private val commentableLines: TIntHashSet = TIntHashSet()
+  private val commentableLines = IntOpenHashSet()
   private val highlighters: MutableSet<RangeHighlighterEx> = mutableSetOf()
 
   init {
@@ -36,7 +35,9 @@ open class EditorRangesController(private val gutterIconRendererFactory: DiffEdi
 
   protected fun markCommentableLines(range: LineRange) {
     for (i in range.start until range.end) {
-      if (!commentableLines.add(i)) continue
+      if (!commentableLines.add(i)) {
+        continue
+      }
       val start = editor.document.getLineStartOffset(i)
       val end = editor.document.getLineEndOffset(i)
       highlighters.add(editor.markupModel

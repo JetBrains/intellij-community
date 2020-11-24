@@ -16,7 +16,6 @@
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff" />
-    <orderEntry type="module" module-name="intellij.platform.diff" />
-    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>
