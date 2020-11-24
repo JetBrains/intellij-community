@@ -3,25 +3,17 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.ide.DataManager
-import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.packageDependencies.DependenciesBuilder
-import com.intellij.packageDependencies.DependenciesBuilder.DependencyProcessor
 import com.intellij.packageDependencies.DependencyRule
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.packageDependencies.ui.DependencyConfigurable
 import com.intellij.psi.*
-import com.intellij.psi.impl.PsiFileEx
 import com.intellij.util.SmartList
 import com.intellij.util.containers.FactoryMap
-import org.jetbrains.uast.UCallableReferenceExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.tryResolve
-import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.awt.FlowLayout
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -64,9 +56,9 @@ class DependencyInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   private class EditDependencyRulesAction(private val myRule: DependencyRule) : LocalQuickFix {
-    override fun getName() = JvmAnalysisBundle.message("jvm.inspections.dependency.edit.rules.text", myRule.displayText)
+    override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.dependency.edit.rules.text", myRule.displayText)
 
-    override fun getFamilyName() = JvmAnalysisBundle.message("jvm.inspections.dependency.edit.rules.family")
+    override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.dependency.edit.rules.family")
 
     override fun startInWriteAction() = false
 

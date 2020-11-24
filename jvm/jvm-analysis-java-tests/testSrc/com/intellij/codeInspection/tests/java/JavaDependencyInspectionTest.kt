@@ -12,7 +12,7 @@ class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
     myFixture.addFileToProject("$clientFileName.java", """
       package com.jetbrains.test.client;
       
-      import <error descr="$errorMessage">com.jetbrains.test.api.Foo</error>;
+      import com.jetbrains.test.api.<error descr="$errorMessage">Foo</error>;
       
       class Client {
         public static void main(String[] args) {

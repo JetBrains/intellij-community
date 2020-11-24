@@ -1,15 +1,12 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.tests.DependencyInspectionTestBase
-import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
 import com.intellij.packageDependencies.DependencyRule
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 
 class KotlinDependencyInspectionTest : DependencyInspectionTestBase() {
-  override fun getBasePath(): String = "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/dependency"
-
   override fun setUp() {
     super.setUp()
     myFixture.addFileToProject("$clientFileName.kt", """
