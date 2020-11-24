@@ -234,7 +234,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     if (externalSystemNodes.isEmpty()) return false;
 
     if (myChildrenList == NO_CHILDREN_LIST) {
-      myChildrenList = new ArrayList<>();
+      myChildrenList = ContainerUtil.createConcurrentList();
     }
 
     for (ExternalSystemNode<?> externalSystemNode : externalSystemNodes) {
