@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.Module
@@ -48,9 +49,12 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.*
 import org.junit.Assert.assertFalse
 import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -93,6 +97,35 @@ class ExternalSystemStorageTest {
                                                               ModuleTypeId.JAVA_MODULE)
     ModuleRootModificationUtil.addContentRoot(module, projectDir.systemIndependentPath)
     setExternalSystemOptions(module, projectDir)
+  }
+
+  @Test(expected = Test.None::class)
+  fun `applying external system options twice`() {
+    AppUIExecutor.onWriteThread().submit {
+      runWriteAction {
+        createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true, useDefaultProjectSettings = false) { project ->
+          val projectDir = project.stateStore.directoryStorePath!!.parent
+          val module = ModuleManager.getInstance(project).newModule(projectDir.resolve("test.iml").systemIndependentPath,
+                                                                    ModuleTypeId.JAVA_MODULE)
+          ModuleRootModificationUtil.addContentRoot(module, projectDir.systemIndependentPath)
+
+
+          val propertyManager = ExternalSystemModulePropertyManager.getInstance(module)
+          val systemId = ProjectSystemId("GRADLE")
+          val moduleData = ModuleData("test", systemId, "", "", "", projectDir.systemIndependentPath).also {
+            it.group = "group"
+            it.version = "42.0"
+          }
+          val projectData = ProjectData(systemId, "", "", projectDir.systemIndependentPath)
+
+
+          val modelsProvider = IdeModifiableModelsProviderImpl(project)
+
+          propertyManager.setExternalOptions(systemId, moduleData, projectData, modelsProvider)
+          propertyManager.setExternalOptions(systemId, moduleData, projectData, modelsProvider)
+        }
+      }
+    }
   }
 
   @Test
