@@ -47,6 +47,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vfs.*;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -808,6 +809,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   }
 
   public @Nullable InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
+    InspectionProfileManager.getInstance().getProfiles(); //force init provided profiles
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
     if (inspectionProfile != null) {
