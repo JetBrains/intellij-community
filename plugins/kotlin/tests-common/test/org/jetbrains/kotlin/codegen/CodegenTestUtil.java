@@ -40,22 +40,30 @@ public class CodegenTestUtil {
             @NotNull File outDirectory
     ) {
         try {
-            List<String> classpath = new ArrayList<>();
-            classpath.add(KotlinArtifacts.getInstance().getKotlinStdlib().getPath());
-            classpath.add(KotlinArtifacts.getInstance().getKotlinReflect().getPath());
-            classpath.add(KotlinArtifacts.getInstance().getJetbrainsAnnotations().getPath());
-            classpath.addAll(additionalClasspath);
-
-            List<String> options = new ArrayList<>(Arrays.asList(
-                    "-classpath", StringsKt.join(classpath, File.pathSeparator),
-                    "-d", outDirectory.getPath()
-            ));
-            options.addAll(additionalOptions);
-
+            List<String> options = prepareJavacOptions(additionalClasspath, additionalOptions, outDirectory);
             KotlinTestUtils.compileJavaFiles(CollectionsKt.map(fileNames, File::new), options);
         }
         catch (IOException e) {
             throw ExceptionUtilsKt.rethrow(e);
         }
+    }
+    @NotNull
+    public static List<String> prepareJavacOptions(
+            @NotNull List<String> additionalClasspath,
+            @NotNull List<String> additionalOptions,
+            @NotNull File outDirectory
+    ) {
+        List<String> classpath = new ArrayList<>();
+        classpath.add(KotlinArtifacts.getInstance().getKotlinStdlib().getPath());
+        classpath.add(KotlinArtifacts.getInstance().getKotlinReflect().getPath());
+        classpath.add(KotlinArtifacts.getInstance().getJetbrainsAnnotations().getPath());
+        classpath.addAll(additionalClasspath);
+
+        List<String> options = new ArrayList<>(Arrays.asList(
+                "-classpath", StringsKt.join(classpath, File.pathSeparator),
+                "-d", outDirectory.getPath()
+        ));
+        options.addAll(additionalOptions);
+        return options;
     }
 }
