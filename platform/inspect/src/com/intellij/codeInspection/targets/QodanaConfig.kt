@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.targets
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.codeInspection.InspectionApplication
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
@@ -21,8 +20,8 @@ import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
 private const val QODANA_GLOBAL_SCOPE = "qodana.global"
-private const val QODANA_CONFIG_FILENAME = "qodana.yaml"
-private const val DEFAULT_QODANA_PROFILE = "qodana.recommended"
+const val QODANA_CONFIG_FILENAME = "qodana.yaml"
+const val DEFAULT_QODANA_PROFILE = "qodana.recommended"
 private const val CONFIG_VERSION = "1.0"
 private const val CONFIG_ALL_INSPECTIONS = "All"
 
@@ -69,34 +68,18 @@ class QodanaConfig(var version: String = CONFIG_VERSION,
     @JvmField
     val EMPTY = QodanaConfig()
 
-    fun load(projectPath: Path, application: InspectionApplication): QodanaConfig {
+    fun load(projectPath: Path): QodanaConfig {
       val path = projectPath.resolve(QODANA_CONFIG_FILENAME)
 
       val yaml = Yaml()
-      var qodanaConfig = if (!path.exists()) {
-        return EMPTY
+      return if (!path.exists()) {
+        EMPTY
       }
       else {
         InputStreamReader(Files.newInputStream(path)).use {
           yaml.loadAs(it, QodanaConfig::class.java)
         }
       }
-
-      if (qodanaConfig.profile.name.isEmpty() && qodanaConfig.profile.path.isEmpty()) {
-        qodanaConfig = QodanaConfig(qodanaConfig.version, QodanaProfile("", DEFAULT_QODANA_PROFILE))
-      }
-
-      if (application.myProfileName != null || application.myProfilePath != null) {
-        if (application.myProfileName != null) {
-          qodanaConfig.profile = QodanaProfile("", application.myProfileName)
-
-        }
-        if (application.myProfilePath != null) {
-          qodanaConfig.profile = QodanaProfile(application.myProfilePath,"")
-        }
-      }
-
-      return qodanaConfig
     }
   }
 
