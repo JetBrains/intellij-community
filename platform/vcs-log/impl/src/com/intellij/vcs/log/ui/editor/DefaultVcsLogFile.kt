@@ -2,6 +2,8 @@
 package com.intellij.vcs.log.ui.editor
 
 import com.intellij.ide.actions.SplitAction
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.DumbAware
@@ -10,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.*
@@ -21,11 +24,13 @@ import javax.swing.JComponent
 internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.VcsLogComplexPath,
                                  private var filters: VcsLogFilterCollection? = null) :
   VcsLogFile(VcsLogTabsManager.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
-  
+
   private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.getInstance()
   internal val tabId get() = pathId.logId
 
-  internal var tabName = name
+  internal var tabName: String
+    get() = service<VcsLogEditorTabNameCache>().getTabName(path) ?: name
+    set(value) = service<VcsLogEditorTabNameCache>().putTabName(path, value)
 
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
@@ -95,5 +100,30 @@ class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
     if (file !is DefaultVcsLogFile) return null
     return file.tabName
+  }
+}
+
+@Service(Service.Level.APP)
+@State(name = "Vcs.Log.Editor.Tab.Names", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+class VcsLogEditorTabNameCache : SimplePersistentStateComponent<VcsLogEditorTabNameCache.MyState>(MyState()) {
+
+  fun getTabName(path: String) = state.pathToTabName[path]
+
+  fun putTabName(path: String, tabName: String) {
+    state.pathToTabName.remove(path)
+    state.pathToTabName[path] = tabName // to put recently changed paths at the end of the linked map
+
+    val limit = UISettings.instance.recentFilesLimit
+    while (state.pathToTabName.size > limit) {
+      val (firstPath, _) = state.pathToTabName.asIterable().first()
+      state.pathToTabName.remove(firstPath)
+    }
+
+    state.intIncrementModificationCount()
+  }
+
+  class MyState : BaseState() {
+    @get:Tag("path-to-tab-name")
+    val pathToTabName by linkedMap<String, String>()
   }
 }
