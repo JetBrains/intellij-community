@@ -43,10 +43,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
-import com.sun.jdi.InternalException;
-import com.sun.jdi.ThreadReference;
-import com.sun.jdi.VMDisconnectedException;
-import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
@@ -218,6 +215,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 }
 
                 Set<ClassPrepareRequestor> notifiedClassPrepareEventRequestors = null;
+                ReferenceType lastPreparedClass = null;
 
                 for (Event event : eventSet) {
                   if (getEventRequestHandler(event) != null) { // handled before
@@ -240,6 +238,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       if (notifiedClassPrepareEventRequestors == null) {
                         notifiedClassPrepareEventRequestors = new HashSet<>(eventSet.size());
                       }
+                      ReferenceType type = ((ClassPrepareEvent)event).referenceType();
+                      LOG.assertTrue(lastPreparedClass == null || lastPreparedClass.equals(type),
+                                     "EventSet contains ClassPrepareEvents for: " + lastPreparedClass + " and " + type);
+                      lastPreparedClass = type;
+
                       processClassPrepareEvent(suspendContext, (ClassPrepareEvent)event, notifiedClassPrepareEventRequestors);
                     }
                     //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
