@@ -72,7 +72,7 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
         val afterDir = File(testFile.parentFile, "after")
         val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDir)?.apply {
             UsefulTestCase.refreshRecursively(this)
-        }
+        } ?: error("`after` directory not found")
 
         action(beforeVFile)
 

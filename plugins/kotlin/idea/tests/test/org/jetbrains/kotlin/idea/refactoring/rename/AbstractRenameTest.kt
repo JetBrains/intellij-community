@@ -372,7 +372,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val afterDir = File(context.testFile.parentFile, "after")
         val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDir)?.apply {
             UsefulTestCase.refreshRecursively(this)
-        }
+        } ?: error("`after` directory not found")
 
         action(beforeVFile)
 
