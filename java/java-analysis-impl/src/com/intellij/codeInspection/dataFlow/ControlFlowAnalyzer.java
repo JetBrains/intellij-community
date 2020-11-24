@@ -1688,6 +1688,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new MethodCallInstruction(expression, myFactory.createValue(expression), contracts));
       anchor = expression;
     }
+    processFailResult(contracts, anchor);
+
+    addMethodThrows(method, anchor);
+    if (expression != null) {
+      addNullCheck(expression);
+    }
+  }
+
+  private void processFailResult(List<? extends MethodContract> contracts, PsiExpression anchor) {
     if (contracts.stream().anyMatch(c -> c.getReturnValue().isFail())) {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
@@ -1698,11 +1707,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new ReturnInstruction(myFactory.controlTransfer(myExceptionCache.get(JAVA_LANG_THROWABLE), myTrapStack), anchor));
 
       ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
-    }
-
-    addMethodThrows(method, anchor);
-    if (expression != null) {
-      addNullCheck(expression);
     }
   }
 
@@ -1792,7 +1796,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addConditionalErrorThrow();
       DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
       List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() : JavaMethodContractUtil.getMethodContracts(constructor);
-      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, DfaUtil.addRangeContracts(constructor, contracts)));
+      contracts = DfaUtil.addRangeContracts(constructor, contracts);
+      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
+      processFailResult(contracts, expression);
 
       addMethodThrows(constructor, expression);
     }
