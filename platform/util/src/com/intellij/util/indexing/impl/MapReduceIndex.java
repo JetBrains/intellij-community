@@ -44,10 +44,10 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   @NotNull protected final IndexId<Key, Value> myIndexId;
   @NotNull protected final IndexStorage<Key, Value> myStorage;
 
-  protected final DataExternalizer<Value> myValueExternalizer;
-  protected final IndexExtension<Key, Value, Input> myExtension;
   protected final AtomicLong myModificationStamp = new AtomicLong();
   protected final DataIndexer<Key, Value, Input> myIndexer;
+  private final @Nullable ValueSerializationChecker<Value> myValueSerializationChecker;
+  private final @NotNull IndexExtension<Key, Value, Input> myExtension;
 
   private final ForwardIndex myForwardIndex;
   private final ForwardIndexAccessor<Key, Value> myForwardIndexAccessor;
@@ -78,6 +78,16 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   });
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                           @NotNull IndexStorageLayout<Key, Value> indexStorageLayout,
+                           @Nullable ReadWriteLock lock) throws IOException {
+    this(extension,
+         indexStorageLayout.getIndexStorage(),
+         indexStorageLayout.getForwardIndex(),
+         indexStorageLayout.getForwardIndexAccessor(),
+         lock);
+  }
+
+  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable ForwardIndex forwardIndex,
                            @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
@@ -86,12 +96,16 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
     myStorage = storage;
-    myValueExternalizer = extension.getValueExternalizer();
     myForwardIndex = forwardIndex;
     myForwardIndexAccessor = forwardIndexAccessor;
     myUseIntForwardIndex = forwardIndex instanceof IntForwardIndex && forwardIndexAccessor instanceof IntForwardIndexAccessor;
-    LOG.assertTrue(forwardIndex instanceof IntForwardIndex == forwardIndexAccessor instanceof IntForwardIndexAccessor, "Invalid index configuration");
+    LOG.assertTrue(forwardIndex instanceof IntForwardIndex == forwardIndexAccessor instanceof IntForwardIndexAccessor,
+                   "Invalid index configuration");
     myLock = lock == null ? new ReentrantReadWriteLock() : lock;
+    if (myForwardIndex != null && myForwardIndexAccessor == null) {
+      throw new AssertionError("azaza" + myIndexId);
+    }
+    myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension) : null;
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
@@ -281,7 +295,9 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       return InputData.empty();
     }
     Map<Key, Value> data = mapByIndexer(inputId,  content);
-    checkValuesHaveProperEqualsAndHashCode(data, myIndexId, myValueExternalizer);
+    if (myValueSerializationChecker != null) {
+      myValueSerializationChecker.checkValuesHaveProperEqualsAndHashCode(data);
+    }
     checkCanceled();
     return new InputData<>(data);
   }
@@ -346,35 +362,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
     finally {
       myLock.writeLock().unlock();
-    }
-  }
-
-  public static <Key, Value> void checkValuesHaveProperEqualsAndHashCode(@NotNull Map<Key, Value> data,
-                                                                         @NotNull IndexId<Key, Value> indexId,
-                                                                         @NotNull DataExternalizer<Value> valueExternalizer) {
-    if (IndexDebugProperties.DEBUG) {
-      for (Map.Entry<Key, Value> e : data.entrySet()) {
-        final Value value = e.getValue();
-        if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {
-          LOG.error("Index " + indexId + " violates equals / hashCode contract for Value parameter");
-        }
-
-        try {
-          final BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-          DataOutputStream outputStream = new DataOutputStream(out);
-          valueExternalizer.save(outputStream, value);
-          outputStream.close();
-          final Value deserializedValue =
-            valueExternalizer.read(new DataInputStream(out.toInputStream()));
-
-          if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
-            LOG.error("Index " + indexId + " deserialization violates equals / hashCode contract for Value parameter");
-          }
-        }
-        catch (IOException ex) {
-          LOG.error(ex);
-        }
-      }
     }
   }
 

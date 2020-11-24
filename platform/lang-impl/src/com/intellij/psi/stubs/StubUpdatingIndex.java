@@ -36,6 +36,7 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntMapForwardIndex;
 import com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage;
+import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.io.*;
@@ -54,7 +55,7 @@ import java.util.function.Consumer;
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
   private static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
-  public static final boolean USE_SNAPSHOT_MAPPINGS = SystemProperties.is("stubs.use.snapshot.mappings");
+  public static final boolean USE_SNAPSHOT_MAPPINGS = false; //TODO
 
   private static final int VERSION = 45 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
 
@@ -77,11 +78,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
                            @NotNull SerializationManagerEx serializationManager) {
     myStubIndexesExternalizer = stubIndexesExternalizer;
     mySerializationManager = serializationManager;
-  }
-
-  @Override
-  public boolean hasSnapshotMapping() {
-    return USE_SNAPSHOT_MAPPINGS;
   }
 
   public static boolean canHaveStub(@NotNull VirtualFile file) {
@@ -368,12 +364,30 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   @NotNull
   @Override
   public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull final FileBasedIndexExtension<Integer, SerializedStubTree> extension,
-                                                                                            @NotNull IndexStorage<Integer, SerializedStubTree> storage)
+                                                                                            @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout)
     throws StorageException, IOException {
     ((StubIndexImpl)StubIndex.getInstance()).initializeStubIndexes();
-    if (storage instanceof TransientChangesIndexStorage) {
+    checkNameStorage();
+
+    MyIndex index = new MyIndex(extension, new VfsAwareIndexStorageLayout<>() {
+      @Override
+      public @NotNull IndexStorage<Integer, SerializedStubTree> getIndexStorage() throws IOException {
+        return layout.getIndexStorage();
+      }
+
+      @Override
+      public @Nullable ForwardIndex getForwardIndex() throws IOException {
+        return layout.getForwardIndex();
+      }
+
+      @Override
+      public @NotNull ForwardIndexAccessor<Integer, SerializedStubTree> getForwardIndexAccessor() throws IOException {
+        return new StubUpdatingForwardIndexAccessor(extension);
+      }
+    }, mySerializationManager);
+    if (index.getStorage() instanceof TransientChangesIndexStorage) {
       final TransientChangesIndexStorage<Integer, SerializedStubTree>
-        memStorage = (TransientChangesIndexStorage<Integer, SerializedStubTree>)storage;
+        memStorage = (TransientChangesIndexStorage<Integer, SerializedStubTree>)index.getStorage();
       memStorage.addBufferingStateListener(new TransientChangesIndexStorage.BufferingStateListener() {
         @Override
         public void bufferingStateChanged(final boolean newState) {
@@ -386,27 +400,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
         }
       });
     }
-    checkNameStorage();
-
-    boolean hasSnapshotMapping = VfsAwareMapReduceIndex.hasSnapshotMapping(this);
-    StubUpdatingForwardIndexAccessor stubForwardIndexAccessor = new StubUpdatingForwardIndexAccessor(extension);
-
-    SnapshotInputMappings<Integer, SerializedStubTree> snapshotInputMappings =
-      hasSnapshotMapping
-      ? new SnapshotInputMappings<>(this, stubForwardIndexAccessor)
-      : null;
-
-    ForwardIndex forwardIndex =
-      hasSnapshotMapping
-      ? new IntMapForwardIndex(snapshotInputMappings.getInputIndexStorageFile(), true)
-      : new EmptyForwardIndex();
-
-    ForwardIndexAccessor<Integer, SerializedStubTree> accessor =
-      hasSnapshotMapping
-      ? snapshotInputMappings.getForwardIndexAccessor()
-      : stubForwardIndexAccessor;
-
-    return new MyIndex(extension, storage, forwardIndex, accessor, snapshotInputMappings, mySerializationManager);
+    return index;
   }
 
   private void checkNameStorage() throws StorageException {
@@ -424,12 +418,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     private final @NotNull SerializationManagerEx mySerializationManager;
 
     MyIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
-            @NotNull IndexStorage<Integer, SerializedStubTree> storage,
-            @Nullable ForwardIndex forwardIndex,
-            @Nullable ForwardIndexAccessor<Integer, SerializedStubTree> forwardIndexAccessor,
-            @Nullable SnapshotInputMappings<Integer, SerializedStubTree> snapshotInputMappings,
+            @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout,
             @NotNull SerializationManagerEx serializationManager) throws IOException {
-      super(extension, storage, forwardIndex, forwardIndexAccessor, snapshotInputMappings, null);
+      super(extension, layout, null, true);
       mySerializationManager = serializationManager;
     }
 

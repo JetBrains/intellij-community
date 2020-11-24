@@ -66,36 +66,33 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   private final boolean myUpdateMappings;
   private final boolean mySingleEntryIndex;
 
-  public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, FileContent> extension,
-                                @NotNull IndexStorage<Key, Value> storage) throws IOException {
+  public VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
+                                @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
+                                @Nullable ReadWriteLock lock,
+                                boolean useBuffering) throws IOException {
     this(extension,
-         storage,
-         hasSnapshotMapping(extension) ? new SnapshotInputMappings<>(extension, getForwardIndexAccessor(extension)) : null);
+         indexStorageLayout.getIndexStorage(),
+         indexStorageLayout.getForwardIndex(),
+         indexStorageLayout.getForwardIndexAccessor(),
+         indexStorageLayout.getSnapshotInputMappings(),
+         lock,
+         useBuffering);
+  }
+
+  protected VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
+                                 @NotNull IndexStorage<Key, Value> storage,
+                                 @Nullable ForwardIndex forwardIndexMap,
+                                 @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
+                                 @Nullable SnapshotInputMappings<Key, Value> snapshotInputMappings,
+                                 @Nullable ReadWriteLock lock,
+                                 boolean useBuffering) {
+    super(extension, useBuffering ? new TransientChangesIndexStorage<>(storage, extension.getName()) : storage, forwardIndexMap, forwardIndexAccessor, lock);
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
-  }
-
-  public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, FileContent> extension,
-                                @NotNull IndexStorage<Key, Value> storage,
-                                @Nullable SnapshotInputMappings<Key, Value> snapshotInputMappings) throws IOException {
-    this(extension,
-         storage,
-         snapshotInputMappings != null ? new IntMapForwardIndex(snapshotInputMappings.getInputIndexStorageFile(), true)
-                                       : getForwardIndexMap(extension),
-         snapshotInputMappings != null ? snapshotInputMappings.getForwardIndexAccessor() : getForwardIndexAccessor(extension),
-         snapshotInputMappings, null);
-  }
-
-  public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, FileContent> extension,
-                                @NotNull IndexStorage<Key, Value> storage,
-                                @Nullable ForwardIndex forwardIndexMap,
-                                @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                                @Nullable SnapshotInputMappings<Key, Value> snapshotInputMappings,
-                                @Nullable ReadWriteLock lock) {
-    super(extension, storage, forwardIndexMap, forwardIndexAccessor, lock);
-    if (storage instanceof TransientChangesIndexStorage && snapshotInputMappings != null) {
-      VfsAwareIndexStorage<Key, Value> backendStorage = ((TransientChangesIndexStorage<Key, Value>)storage).getBackendStorage();
+    assert !useBuffering || getStorage() instanceof TransientChangesIndexStorage;
+    if (snapshotInputMappings != null) {
+      VfsAwareIndexStorage<Key, Value> backendStorage = ((TransientChangesIndexStorage<Key, Value>)getStorage()).getBackendStorage();
       if (backendStorage instanceof SnapshotSingleValueIndexStorage) {
         LOG.assertTrue(forwardIndexMap instanceof IntForwardIndex);
         ((SnapshotSingleValueIndexStorage<Key, Value>)backendStorage).init(snapshotInputMappings, ((IntForwardIndex)forwardIndexMap));
@@ -454,16 +451,6 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     } finally {
       IOUtil.closeSafe(LOG, mySnapshotInputMappings, mySubIndexerRetriever);
     }
-  }
-
-  @ApiStatus.Internal
-  @NotNull
-  public static <Key, Value> AbstractMapForwardIndexAccessor<Key, Value, ?> getForwardIndexAccessor(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
-    if (!(indexExtension instanceof SingleEntryFileBasedIndexExtension) || FileBasedIndex.USE_IN_MEMORY_INDEX) {
-      return new MapForwardIndexAccessor<>(new InputMapExternalizer<>(indexExtension));
-    }
-    //noinspection unchecked,rawtypes
-    return new SingleEntryIndexForwardIndexAccessor(indexExtension);
   }
 
   @Nullable

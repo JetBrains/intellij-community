@@ -24,11 +24,9 @@ import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.AbstractUpdateData;
-import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
-import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
-import com.intellij.util.indexing.impl.RemovedKeyProcessor;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage;
+import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
@@ -203,18 +201,10 @@ public final class StubIndexImpl extends StubIndexEx {
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final VfsAwareIndexStorage<K, Void> storage = FileBasedIndex.USE_IN_MEMORY_INDEX
-                                                      ? new InMemoryIndexStorage<>(wrappedExtension.getKeyDescriptor())
-                                                      : new VfsAwareMapIndexStorage<>(
-          IndexInfrastructure.getStorageFile(indexKey).toPath(),
-          wrappedExtension.getKeyDescriptor(),
-          wrappedExtension.getValueExternalizer(),
-          wrappedExtension.getCacheSize(),
-          wrappedExtension.keyIsUniqueForIndexedFile(),
-          wrappedExtension.traceKeyHashToVirtualFileMapping()
-        );
-        final TransientChangesIndexStorage<K, Void> memStorage = new TransientChangesIndexStorage<>(storage, indexKey);
-        UpdatableIndex<K, Void, FileContent> index = new VfsAwareMapReduceIndex<>(wrappedExtension, memStorage, null, null, null, lock);
+        UpdatableIndex<K, Void, FileContent> index = new VfsAwareMapReduceIndex<>(wrappedExtension,
+                                                                                  new StubIndexStorageLayout<K>(wrappedExtension, indexKey),
+                                                                                  lock,
+                                                                                  true);
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
           UpdatableIndex<K, Void, FileContent> intermediateIndex = infrastructureExtension.combineIndex(wrappedExtension, index);
@@ -646,6 +636,30 @@ public final class StubIndexImpl extends StubIndexEx {
       }
     });
 
+  }
+
+  private static class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
+    private final FileBasedIndexExtension<K, Void> myWrappedExtension;
+    private final StubIndexKey<K, ?> myIndexKey;
+
+    private StubIndexStorageLayout(FileBasedIndexExtension<K, Void> wrappedExtension, StubIndexKey<K, ?> indexKey) {
+      myWrappedExtension = wrappedExtension;
+      myIndexKey = indexKey;
+    }
+
+    @Override
+    public @NotNull IndexStorage<K, Void> getIndexStorage() throws IOException {
+      return FileBasedIndex.USE_IN_MEMORY_INDEX
+             ? new InMemoryIndexStorage<>(myWrappedExtension.getKeyDescriptor())
+             : new VfsAwareMapIndexStorage<>(
+               IndexInfrastructure.getStorageFile(myIndexKey).toPath(),
+               myWrappedExtension.getKeyDescriptor(),
+               myWrappedExtension.getValueExternalizer(),
+               myWrappedExtension.getCacheSize(),
+               myWrappedExtension.keyIsUniqueForIndexedFile(),
+               myWrappedExtension.traceKeyHashToVirtualFileMapping()
+             );
+    }
   }
 
   private final class StubIndexInitialization extends IndexInfrastructure.DataInitialization<AsyncState> {
