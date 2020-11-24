@@ -988,6 +988,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
     val property = System.getProperty("ide.new.project.model.store.dump.directory")
     if (property != null) {
+      _message += "\nSaving store content at this path: $property"
       serializeContentToFolder(Paths.get(property), left, right, resulting)
       LOG.error(_message, e)
     }
