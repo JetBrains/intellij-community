@@ -90,6 +90,7 @@ object ProjectUtils {
         }
       }
       else {
+        LangManager.getInstance().setLearningProjectPath(langSupport, dest.toAbsolutePath().toString())
         val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dest)
                                           ?: error("Copied Learn project folder is null")
         invokeLater {
