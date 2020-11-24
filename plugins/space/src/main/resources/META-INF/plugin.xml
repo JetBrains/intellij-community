@@ -55,13 +55,6 @@
     <fileEditorProvider implementation="com.intellij.space.chat.editor.SpaceChatEditorProvider"/>
     <editorTabTitleProvider implementation="com.intellij.space.chat.editor.SpaceChatFileTabTitleProvider"/>
 
-    <!--registry keys-->
-    <!--suppress PluginXmlCapitalization -->
-    <registryKey key="space.code.review.enabled"
-                 defaultValue="false"
-                 description="Space Code Review"
-                 restartRequired="true"/>
-
     <fileEditorProvider implementation="com.intellij.space.vcs.review.details.diff.SpaceDiffEditorProvider"/>
     <diff.DiffExtension implementation="com.intellij.space.vcs.review.details.diff.SpaceReviewCommentDiffExtension"/>
   </extensions>
