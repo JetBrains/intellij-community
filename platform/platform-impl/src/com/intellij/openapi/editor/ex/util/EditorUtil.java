@@ -677,6 +677,7 @@ public final class EditorUtil {
    * <p>
    * The second value is a sub-range no other logical line maps to (or {@code null} if there's no such sub-range).
    *
+   * @return EXCLUSIVE intervals [startY, endY)
    * @see #yToLogicalLineRange(Editor, int)
    */
   @NotNull
@@ -732,6 +733,7 @@ public final class EditorUtil {
    * rendered form. In the former case, all logical lines corresponding to the visual line will be returned, in the latter case - all
    * logical lines of the rendered comment.
    *
+   * @return INCLUSIVE interval [startLogicalLine, endLogicalLine]
    * @see #logicalLineToYRange(Editor, int)
    */
   @NotNull
