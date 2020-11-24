@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.impl.wsl.WslFileWatcher
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.INTER_RESPONSE_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.NATIVE_PROCESS_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.SHORT_PROCESS_DELAY
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.START_STOP_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.refresh
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
@@ -67,12 +69,14 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
     val distributions = enumerateWslDistributions()
     assumeTrue("No WSL distributions found", distributions.isNotEmpty())
 
-    LOG.debug("================== setting up " + getTestName(false) + " ==================")
-    LOG.debug("WSL VMS: ${distributions}")
-
     wsl = distributions[0]
-    tempDir = Files.createTempDirectory(Paths.get("\\\\wsl$\\${wsl}\\tmp"), "${UsefulTestCase.TEMP_DIR_MARKER}${getTestName(false)}_")
+    val pwd = ExecUtil.execAndGetOutput(GeneralCommandLine("wsl", "-d", wsl, "-e", "pwd").withRedirectErrorStream(true), START_STOP_DELAY.toInt())
+    LOG.debug("${wsl}: ${pwd.exitCode} out:${pwd.stdout.trim()}")
+    assumeTrue("WSL distribution ${wsl} doesn't seem to be alive", pwd.exitCode == 0)
 
+    LOG.debug("================== setting up " + getTestName(false) + " ==================")
+
+    tempDir = Files.createTempDirectory(Paths.get("\\\\wsl$\\${wsl}\\tmp"), "${UsefulTestCase.TEMP_DIR_MARKER}${getTestName(false)}_")
     fs = LocalFileSystem.getInstance()
     vfsTempDir = refresh(tempDir.toFile())
 
