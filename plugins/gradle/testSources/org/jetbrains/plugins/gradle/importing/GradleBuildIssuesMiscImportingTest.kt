@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() {
@@ -30,7 +31,8 @@ class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() 
                              " -failed\n" +
                              "  -build.gradle\n" +
                              "   $oomMessage")
-    assertSyncViewSelectedNode(oomMessage, """
+    assertSyncViewSelectedNode(oomMessage, true) { text ->
+      assertThat(text).startsWith("""
       * Where:
       Build file '$buildScript' line: 9
 
@@ -40,9 +42,7 @@ class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() 
       Possible solution:
        - Check the JVM memory arguments defined for the gradle process in:
          gradle.properties in project root directory
-         gradle.properties in in GRADLE_USER_HOME directory
-
-
     """.trimIndent())
+    }
   }
 }
