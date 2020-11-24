@@ -32,7 +32,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     "implementationClass", "implementation", "instance",
     "factoryClass", // ToolWindowEP
     "extenderClass", // DomExtenderEP
-    "className" // GroovyClassDescriptor
+    "className" // ChangesViewContentEP
   );
 
   @Nullable
