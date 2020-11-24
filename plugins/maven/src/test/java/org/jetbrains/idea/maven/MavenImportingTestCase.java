@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +31,6 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -45,10 +43,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
@@ -401,24 +397,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     initProjectsManager(false);
 
     readProjects(files, profiles);
-    Ref<Boolean> failed = new Ref<>(Boolean.FALSE);
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.waitForResolvingCompletion();
       myProjectsManager.scheduleImportInTests(files);
       myProjectsManager.importProjects();
-      Promise<?> promise = myProjectsManager.waitForImportCompletion();
-      try {
-        promise.blockingGet(10_000);
-      }
-      catch (TimeoutException | ExecutionException e) {
-        failed.set(Boolean.TRUE);
-      }
     });
 
-    if(failed.get()){
-      fail("cannot wait for import completion");
-    }
     if (failOnReadingError) {
       for (MavenProject each : myProjectsTree.getProjects()) {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems());
