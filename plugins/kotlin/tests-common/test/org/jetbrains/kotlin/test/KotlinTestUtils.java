@@ -284,6 +284,12 @@ public class KotlinTestUtils {
             JvmContentRootsKt.addJvmClasspathRoot(configuration, findMockJdkRtJar());
             configuration.put(JVMConfigurationKeys.NO_JDK, true);
         }
+        else if (jdkKind == TestJdkKind.FULL_JDK_9) {
+            configuration.put(JVMConfigurationKeys.JDK_HOME, getJdk9Home());
+        }
+        else if (jdkKind == TestJdkKind.FULL_JDK_15) {
+            configuration.put(JVMConfigurationKeys.JDK_HOME, getJdk15Home());
+        }
         else if (SystemInfo.IS_AT_LEAST_JAVA9) {
             configuration.put(JVMConfigurationKeys.JDK_HOME, getAtLeastJdk9Home());
         }
@@ -308,6 +314,15 @@ public class KotlinTestUtils {
     @NotNull
     public static File getAtLeastJdk9Home() {
         return new File(System.getProperty("java.home"));
+    }
+
+    @NotNull
+    public static File getJdk15Home() {
+        String jdk15 = System.getenv("JDK_15");
+        if (jdk15 == null) {
+            throw new AssertionError("Environment variable JDK_15 is not set!");
+        }
+        return new File(jdk15);
     }
 
     public static void assertEqualsToFile(@NotNull File expectedFile, @NotNull Editor editor) {
@@ -512,7 +527,7 @@ public class KotlinTestUtils {
 
     public static boolean compileJavaFilesExternallyWithJava9(@NotNull Collection<File> files, @NotNull List<String> options) {
         List<String> command = new ArrayList<>();
-        command.add(new File(getAtLeastJdk9Home(), "bin/javac").getPath());
+        command.add(new File(jdkHome, "bin/javac").getPath());
         command.addAll(options);
         for (File file : files) {
             command.add(file.getPath());
