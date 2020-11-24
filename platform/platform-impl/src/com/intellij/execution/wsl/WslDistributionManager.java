@@ -90,8 +90,7 @@ public final class WslDistributionManager implements Disposable {
   }
 
   public boolean isWslPath(@NotNull String path) {
-    Pair<String, @Nullable WSLDistribution> pair = parseWslPath(path);
-    return pair != null && pair.second != null;
+    return FileUtil.toSystemDependentName(path).startsWith(WSLDistribution.UNC_PREFIX);
   }
 
   @NotNull

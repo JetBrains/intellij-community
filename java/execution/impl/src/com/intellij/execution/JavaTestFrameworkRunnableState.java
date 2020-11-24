@@ -100,12 +100,12 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @Nullable
   @Override
   public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
-    return remoteConnectionCreator == null ? null : remoteConnectionCreator.createRemoteConnection(environment);
+    return remoteConnectionCreator == null ? super.createRemoteConnection(environment) : remoteConnectionCreator.createRemoteConnection(environment);
   }
 
   @Override
   public boolean isPollConnection() {
-    return remoteConnectionCreator != null && remoteConnectionCreator.isPollConnection();
+    return remoteConnectionCreator != null ? remoteConnectionCreator.isPollConnection() : super.isPollConnection();
   }
 
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {

@@ -641,6 +641,11 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     getOptions().setRemoteTarget(targetName);
   }
 
+  @Override
+  public boolean needPrepareTarget() {
+    return getDefaultTargetName() != null || runsUnderWslJdk();
+  }
+
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     public @NlsSafe String MAIN_CLASS_NAME;
