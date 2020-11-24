@@ -26,19 +26,15 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.BitUtil;
 import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.impl.forward.EmptyForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
-import com.intellij.util.indexing.impl.forward.IntMapForwardIndex;
+import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage;
 import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
-import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -411,7 +407,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
   }
 
-  private static final class MyIndex extends VfsAwareMapReduceIndex<Integer, SerializedStubTree> {
+  private static final class MyIndex extends TransientFileContentIndex<Integer, SerializedStubTree> {
     private StubIndexImpl myStubIndex;
     @Nullable
     private final CompositeBinaryBuilderMap myCompositeBinaryBuilderMap = FileBasedIndex.USE_IN_MEMORY_INDEX ? null : new CompositeBinaryBuilderMap();
@@ -420,7 +416,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     MyIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
             @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout,
             @NotNull SerializationManagerEx serializationManager) throws IOException {
-      super(extension, layout, null, true);
+      super(extension, layout, null);
       mySerializationManager = serializationManager;
     }
 
