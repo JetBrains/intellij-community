@@ -31,7 +31,8 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
   private static final @NonNls Set<String> EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES = ContainerUtil.immutableSet(
     "implementationClass", "implementation", "instance",
     "factoryClass", // ToolWindowEP
-    "extenderClass" // DomExtenderEP
+    "extenderClass", // DomExtenderEP
+    "className" // GroovyClassDescriptor
   );
 
   @Nullable
