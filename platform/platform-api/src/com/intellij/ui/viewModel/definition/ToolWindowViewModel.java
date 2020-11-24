@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public interface ToolWindowViewModel {
+  String getTitle();
 
   String getId();
 

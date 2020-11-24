@@ -24,7 +24,6 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
 
   @Override
   public ToolWindowViewModel extractViewModel(ToolWindow toolWindow) {
-
     Content mavenContent = toolWindow.getContentManager().getContents()[0];
     MavenProjectsNavigatorPanel mavenPanel = (MavenProjectsNavigatorPanel)mavenContent.getComponent();
     SimpleTree tree = mavenPanel.getTree();
@@ -36,7 +35,7 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
 
     DataContext context = DataManager.getInstance().getDataContext(mavenPanel);
     ActionBarViewModel actionBarViewModel = getFromDecoration(decoration, context);
-    return new SimpleToolWindowViewModel(actionBarViewModel, treeModel, decoration.getIcon(), toolWindow.getId());
+    return new SimpleToolWindowViewModel(actionBarViewModel, treeModel, decoration.getIcon(), toolWindow.getId(), toolWindow.getTitle());
   }
 
   private static ActionBarViewModel getFromDecoration(ToolWindowEx.ToolWindowDecoration decoration,
@@ -45,8 +44,8 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
     AnAction[] childrenActions = defaultActionGroup.getChildActionsOrStubs();
 
     final ArrayList<ActionViewModel> iconActions = new ArrayList<>();
-    for (AnAction action : childrenActions) {
 
+    for (AnAction action : childrenActions) {
       new IconAction(action.getTemplatePresentation().getIcon(), "", () -> {
         action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
       });
@@ -55,11 +54,12 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
     return new ActionBarViewModel(iconActions);
   }
 
+  // TODO also seems like could be made more generic @see SimpleNode
   private TreeViewModel extractViewModel(SimpleTree tree) {
     MavenProjectsStructure.MavenSimpleNode mavenRoot = (MavenProjectsStructure.MavenSimpleNode)tree.getModel().getRoot();
 
     ViewModelNode viewModelRoot = new ViewModelNode(mavenRoot.getName(), () -> {
-
+    // TODO
     }, mavenRoot.getIcon());
 
     processRecursive(mavenRoot, viewModelRoot);
@@ -67,12 +67,13 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
     return new TreeViewModel(viewModelRoot);
   }
 
+  // TODO move somewhere else as it may be useful for other toolwindows
   private static void processRecursive(SimpleNode currentSimpleNode, ViewModelNode currentViewModelNode) {
     SimpleNode[] children = currentSimpleNode.getChildren();
     List<ViewModelNode> childrenViewModel = new ArrayList<>();
     for (SimpleNode child : children) {
       ViewModelNode childViewModelNode = new ViewModelNode(child.getName(), () -> {
-
+      // TODO
       }, child.getIcon());
       childrenViewModel.add(childViewModelNode);
 
