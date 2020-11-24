@@ -23,7 +23,7 @@ public class BaseFixture implements IdeaTestFixture {
   private final Disposable myTestRootDisposable = Disposer.newDisposable();
 
   static {
-    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
   }
 
   @Override

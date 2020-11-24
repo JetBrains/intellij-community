@@ -125,7 +125,7 @@ public abstract class UsefulTestCase extends TestCase {
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
-    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     Logger.setFactory(TestLoggerFactory.class);
 
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
