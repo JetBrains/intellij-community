@@ -31,6 +31,8 @@ import com.android.tools.idea.gradle.dsl.model.GradleFileModelTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
 import org.junit.Test;
+import java.util.List;
+import java.util.Set;
 
 
 /**

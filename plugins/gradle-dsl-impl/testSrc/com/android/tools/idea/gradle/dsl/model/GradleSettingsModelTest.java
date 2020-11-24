@@ -15,9 +15,9 @@
  */
 package com.android.tools.idea.gradle.dsl.model;
 
-import static com.android.tools.idea.Projects.getBaseDirPath;
 import static com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction;
 
+import com.android.tools.idea.gradle.dsl.GradleUtil;
 import com.android.tools.idea.gradle.dsl.TestFileName;
 import com.android.tools.idea.gradle.dsl.api.GradleBuildModel;
 import com.android.tools.idea.gradle.dsl.api.GradleSettingsModel;
@@ -25,7 +25,6 @@ import com.android.tools.idea.gradle.dsl.api.ProjectBuildModel;
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.module.Module;
 import java.io.File;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemDependent;
 import org.junit.Test;
@@ -310,9 +309,6 @@ public class GradleSettingsModelTest extends GradleFileModelTestCase {
     else {
       verifyFileContents(mySettingsFile, TestFile.SET_PROJECT_DIR_NON_RELATIVE_EXPECTED);
     }
-  }
-
-
   }
 
   @Test

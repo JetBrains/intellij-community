@@ -42,16 +42,7 @@ public final class GradleModelSource extends GradleModelProvider {
   private static final BuildModelContext.ResolvedConfigurationFileLocationProvider myResolvedConfigurationFileLocationProvider;
 
   static {
-    // FIXME-ank4: get rid of reflection (i.e. merge `api` and `impl` modules?)
-    BuildModelContext.ResolvedConfigurationFileLocationProvider inst = null;
-    try {
-      inst = (BuildModelContext.ResolvedConfigurationFileLocationProvider)Class
-        .forName("com.android.tools.idea.projectsystem.gradle.ResolvedConfigurationFileLocationProviderImpl").newInstance();
-    }
-    catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
-      Logger.getInstance(GradleModelSource.class).error(e);
-    }
-    myResolvedConfigurationFileLocationProvider = inst;
+    myResolvedConfigurationFileLocationProvider = new ResolvedConfigurationFileLocationProviderImpl();
   }
 
   public static class GradleModelProviderFactoryImpl implements GradleModelProviderFactory {

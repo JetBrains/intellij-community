@@ -15,7 +15,6 @@
  */
 package com.android.tools.idea.gradle.dsl.model.build;
 
-import static com.android.tools.idea.Projects.getBaseDirPath;
 import static com.android.tools.idea.gradle.dsl.TestFileNameImpl.REFERENCE_RESOLUTION_RESOLVE_OTHER_PROJECT_PATH;
 import static com.android.tools.idea.gradle.dsl.TestFileNameImpl.REFERENCE_RESOLUTION_RESOLVE_OTHER_PROJECT_PATH_SUB;
 import static com.android.tools.idea.gradle.dsl.TestFileNameImpl.REFERENCE_RESOLUTION_RESOLVE_PARENT;
