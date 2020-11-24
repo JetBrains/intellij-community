@@ -27,7 +27,7 @@ object LearnIdeContentColorsAndFonts {
   val REGULAR = SimpleAttributeSet()
 
   val ModuleHeaderColor = JBColor.namedColor("link", JBColor(0x2470B3, 0x589DF6))
-  val ModuleDescriptionColor = JBColor.namedColor("disabledText", JBColor(0x8C8C8C, 0x777777))
+  val ModuleDescriptionColor = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
   val MODULE_HEADER = SimpleAttributeSet()
   val MODULE_DESCRIPTION = SimpleAttributeSet()
 

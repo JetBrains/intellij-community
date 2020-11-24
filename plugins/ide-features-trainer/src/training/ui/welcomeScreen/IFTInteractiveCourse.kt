@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
@@ -85,7 +86,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
       override fun setUI(ui: LabelUI?) {
         super.setUI(ui)
         if (font != null) {
-          font = FontUIResource(font.deriveFont(font.size2D + JBUIScale.scale(-1)))
+          font = FontUIResource(font.deriveFont(font.size2D + JBUIScale.scale(-1) + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0))
         }
       }
     }
