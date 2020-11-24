@@ -31,6 +31,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.Base64;
+import java.util.Objects;
 
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
@@ -61,7 +62,7 @@ public final class Splash extends Window {
 
     setFocusableWindowState(false);
 
-    myImage = loadImage(info.getSplashImageUrl());
+    myImage = loadImage(info.getSplashImageUrl(), info);
     myWidth = myImage.getWidth(null);
     myHeight = myImage.getHeight(null);
     long rgba = info.getProgressColor();
@@ -75,22 +76,18 @@ public final class Splash extends Window {
 
   private static @Nullable Icon getProgressTailIcon(@NotNull ApplicationInfoEx info) {
     String progressTailIconName = info.getProgressTailIcon();
-    Icon progressTail = null;
-    if (progressTailIconName != null) {
-      try {
-        int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
-        if (StartupUiUtil.isUnderDarcula()) {
-          flags |= ImageLoader.USE_CACHE;
-        }
-        Image image = ImageLoader.loadFromUrl(Splash.class.getResource(progressTailIconName).toString(), null, flags, null, ScaleContext.create());
-        if (image != null) {
-          progressTail = new JBImageIcon(image);
-        }
-      }
-      catch (Exception ignore) {
-      }
+    if (progressTailIconName == null) {
+      return null;
     }
-    return progressTail;
+
+    try {
+      int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
+      Image image = ImageLoader.loadFromUrl(Objects.requireNonNull(Splash.class.getResource(progressTailIconName)).toString(), null, flags, null, ScaleContext.create());
+      return image == null ? null : new JBImageIcon(image);
+    }
+    catch (Exception ignore) {
+      return null;
+    }
   }
 
   public void initAndShow(boolean visible) {
@@ -112,15 +109,15 @@ public final class Splash extends Window {
     super.dispose();
   }
 
-  private static @NotNull Image loadImage(@NotNull String path) {
+  private static @NotNull Image loadImage(@NotNull String path, @NotNull ApplicationInfoEx appInfo) {
     float scale = JBUIScale.sysScale();
     if (isCacheNeeded(scale)) {
-      var image = loadImageFromCache(path, scale);
+      var image = loadImageFromCache(path, scale, appInfo);
       if (image != null) {
         return image;
       }
 
-      cacheAsync(path);
+      cacheAsync(path, appInfo);
     }
 
     Image result = doLoadImage(path);
@@ -130,10 +127,10 @@ public final class Splash extends Window {
     return result;
   }
 
-  private static void cacheAsync(@NotNull String url) {
+  private static void cacheAsync(@NotNull String url, @NotNull ApplicationInfoEx appInfo) {
     // Don't use already loaded image to avoid oom
     NonUrgentExecutor.getInstance().execute(() -> {
-      var cacheFile = getCacheFile(url, JBUIScale.sysScale());
+      var cacheFile = getCacheFile(url, JBUIScale.sysScale(), appInfo);
       if (cacheFile == null) {
         return;
       }
@@ -223,7 +220,7 @@ public final class Splash extends Window {
 
    private static void saveImage(@NotNull Path file, String extension, @NotNull Image image) {
      try {
-       var tmp = file.resolve(file.toString() + ".tmp" + System.currentTimeMillis());
+       var tmp = file.resolve(file + ".tmp" + System.currentTimeMillis());
        Files.createDirectories(tmp.getParent());
        try {
          ImageIO.write(ImageUtil.toBufferedImage(image), extension, tmp.toFile());
@@ -242,8 +239,8 @@ public final class Splash extends Window {
      }
    }
 
-   private static @Nullable Image loadImageFromCache(@NotNull String path, float scale) {
-     var file = getCacheFile(path, scale);
+   private static @Nullable Image loadImageFromCache(@NotNull String path, float scale, @NotNull ApplicationInfoEx appInfo) {
+     var file = getCacheFile(path, scale, appInfo);
      if (file == null) {
        return null;
      }
@@ -267,14 +264,15 @@ public final class Splash extends Window {
      return null;
    }
 
-   private static @Nullable Path getCacheFile(@NotNull String path, float scale) {
+   private static @Nullable Path getCacheFile(@NotNull String path, float scale, @NotNull ApplicationInfoEx appInfo) {
      try {
        var d = MessageDigest.getInstance("SHA-256", Security.getProvider("SUN"));
-       // cache version
-       int dotIndex = path.lastIndexOf('.');
-       d.update((dotIndex < 0 ? path : path.substring(0, dotIndex)).getBytes(StandardCharsets.UTF_8));
+       d.update(path.getBytes(StandardCharsets.UTF_8));
+       // path for EAP and release builds is the same, but content maybe different
+       d.update((byte)(appInfo.isEAP() ? 1 : 0));
        var encodedDigest = Base64.getUrlEncoder().encodeToString(d.digest());
-       return Paths.get(PathManager.getSystemPath(), "splashSlides").resolve(encodedDigest + '.' + scale + '.' + (dotIndex < 0 ? "" : path.substring(dotIndex)));
+       int dotIndex = path.lastIndexOf('.');
+       return Paths.get(PathManager.getSystemPath(), "splashSlides", encodedDigest + '.' + scale + '.' + (dotIndex < 0 ? "" : path.substring(dotIndex)));
      }
      catch (NoSuchAlgorithmException e) {
        return null;
