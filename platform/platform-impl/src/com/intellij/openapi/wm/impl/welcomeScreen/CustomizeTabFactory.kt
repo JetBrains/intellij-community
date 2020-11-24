@@ -226,7 +226,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   }
 
   private fun updateKeymaps() {
-    (keymapComboBox?.model as DefaultComboBoxModel).apply {
+    (keymapComboBox?.model as DefaultComboBoxModel?)?.apply {
       removeAllElements()
       addAll(getKeymaps())
       selectedItem = keymapProperty.get()
