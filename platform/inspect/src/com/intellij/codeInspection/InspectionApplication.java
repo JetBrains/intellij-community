@@ -788,7 +788,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
                                                                @Nullable String profilePath,
                                                                @NotNull String configSource) throws IOException, JDOMException {
     //fetch profile by name from project file (project profiles can be disabled)
-    if (profileName != null) {
+    if (profileName != null && !profileName.isEmpty()) {
       InspectionProfileImpl inspectionProfile = loadProfileByName(project, profileName);
       if (inspectionProfile == null) {
         reportError("Profile with configured name (" + profileName + ") was not found (neither in project nor in config directory). Configured by: " + configSource);
@@ -798,7 +798,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       return inspectionProfile;
     }
 
-    if (profilePath != null) {
+    if (profilePath != null && !profilePath.isEmpty()) {
       InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
       if (inspectionProfile == null) {
         reportError("Failed to load profile from '" + profilePath + "'. Configured by: " + configSource);
