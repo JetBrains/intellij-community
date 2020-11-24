@@ -545,7 +545,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
-    FileType fileType = file.getFileType();
+    FileType fileType = file.isDirectory() ? null : file.getFileType();
     Pair<VirtualFile, FileType> old = FILE_TYPE_FIXED_TEMPORARILY.get();
     FILE_TYPE_FIXED_TEMPORARILY.set(new Pair<>(file, fileType));
     if (toLog()) {
