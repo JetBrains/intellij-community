@@ -3,6 +3,10 @@
   "fixed": false,
   "ui": [
     {
+      "key": "BigSpinner.background",
+      "description": "A translucent overlay background for decorated panel while loading"
+    },
+    {
       "key": "Borders.color",
       "description": "Used in tables, lists, toolbars, tool windows, editor split mode"
     },

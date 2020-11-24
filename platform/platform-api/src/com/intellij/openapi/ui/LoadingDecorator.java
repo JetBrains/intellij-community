@@ -5,21 +5,32 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class LoadingDecorator {
+  private static final Color OVERLAY_BACKGROUND = JBColor.namedColor(
+    "BigSpinner.background",
+    ColorUtil.withAlpha(JBColor.PanelBackground, Registry.doubleValue("ide.loading.decorator.overlay.alpha")));
+
+  private Color myOverlayBackground = OVERLAY_BACKGROUND;
 
   JLayeredPane myPane;
 
@@ -59,6 +70,7 @@ public class LoadingDecorator {
         myLoadingLayer.setAlpha(0); // paint with zero alpha before hiding completely
         hideLoadingLayer();
         myLoadingLayer.setAlpha(-1);
+        myPane.repaint();
       }
     };
     Disposer.register(parent, myFadeOutAnimator);
@@ -67,6 +79,14 @@ public class LoadingDecorator {
     myPane.add(content, JLayeredPane.DEFAULT_LAYER, 0);
 
     Disposer.register(parent, myLoadingLayer.myProgress);
+  }
+
+  public Color getOverlayBackground() {
+    return myOverlayBackground;
+  }
+
+  public void setOverlayBackground(@Nullable Color background) {
+    myOverlayBackground = background;
   }
 
   /**
@@ -92,17 +112,14 @@ public class LoadingDecorator {
 
   protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
     parent.setLayout(new GridBagLayout());
+    text.setFont(UIUtil.getLabelFont());
+    text.setForeground(UIUtil.getContextHelpForeground());
+    icon.setBorder(JBUI.Borders.emptyRight(Registry.intValue("ide.loading.decorator.right.margin", 8)));
 
-    final Font font = text.getFont();
-    text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 8));
-    //text.setForeground(Color.black);
-
-    final int gap = new JLabel().getIconTextGap();
-    final NonOpaquePanel result = new NonOpaquePanel(new FlowLayout(FlowLayout.CENTER, gap * 3, 0));
+    NonOpaquePanel result = new NonOpaquePanel(new VerticalLayout(JBUI.scale(Registry.intValue("ide.loading.decorator.icon.gap", 6))));
     result.add(icon);
     result.add(text);
     parent.add(result);
-
     return result;
   }
 
@@ -137,6 +154,7 @@ public class LoadingDecorator {
     if (!isLoading()) return;
 
     myLoadingLayer.setVisible(false, false);
+    myPane.repaint();
   }
 
 
@@ -230,8 +248,9 @@ public class LoadingDecorator {
         }
       }
 
-      if (mySnapshotBg != null) {
-        g.setColor(mySnapshotBg);
+      Color background = mySnapshotBg != null ? mySnapshotBg : getOverlayBackground();
+      if (background != null) {
+        g.setColor(background);
         g.fillRect(0, 0, getWidth(), getHeight());
       }
     }

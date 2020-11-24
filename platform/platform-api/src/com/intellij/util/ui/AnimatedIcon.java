@@ -157,11 +157,11 @@ public class AnimatedIcon extends JComponent implements Disposable {
       icon = getPassiveIcon();
     }
 
-    final Dimension size = getSize();
-    int x = (size.width - icon.getIconWidth()) / 2;
-    int y = (size.height - icon.getIconHeight()) / 2;
-
-    paintIcon(g, icon, x, y);
+    Rectangle bounds = new Rectangle(getWidth(), getHeight());
+    JBInsets.removeFrom(bounds, getInsets());
+    bounds.x += (bounds.width - icon.getIconWidth()) / 2;
+    bounds.y += (bounds.height - icon.getIconHeight()) / 2;
+    paintIcon(g, icon, bounds.x, bounds.y);
   }
 
   protected void paintIcon(Graphics g, Icon icon, int x, int y) {
