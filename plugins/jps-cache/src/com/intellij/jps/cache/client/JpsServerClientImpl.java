@@ -41,13 +41,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
-public final class TemporaryCacheServerClient implements JpsServerClient {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.TemporaryCacheServerClient");
+public final class JpsServerClientImpl implements JpsServerClient {
+  private static final Logger LOG = Logger.getInstance(JpsServerClientImpl.class.getCanonicalName());
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-  static final TemporaryCacheServerClient INSTANCE = new TemporaryCacheServerClient();
+  static final JpsServerClientImpl INSTANCE = new JpsServerClientImpl();
   private final String stringThree;
 
-  private TemporaryCacheServerClient() {
+  private JpsServerClientImpl() {
     byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9kMWxjNWs5bGVyZzZrbS5jbG91ZGZyb250Lm5ldA==");
     stringThree = new String(decodedBytes, StandardCharsets.UTF_8);
   }
