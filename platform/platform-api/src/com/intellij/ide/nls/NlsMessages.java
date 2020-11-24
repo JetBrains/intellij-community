@@ -10,6 +10,7 @@ import com.ibm.icu.text.MeasureFormat;
 import com.ibm.icu.util.Measure;
 import com.ibm.icu.util.MeasureUnit;
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.Contract;
@@ -85,11 +86,20 @@ public class NlsMessages {
   
   /**
    * Formats duration given in milliseconds as a sum of time units with at most two units
-   * (example: {@code formatDuration(123456) = "2 m 3 s"}).
+   * (example: {@code formatDuration(123456) = "2 m, 3 s"}).
    */
   @Contract(pure = true)
   public static @NotNull @Nls String formatDurationApproximate(long duration) {
-    return formatDuration(duration, 2);
+    return formatDuration(duration, 2, false);
+  }
+  
+  /**
+   * Formats duration given in milliseconds as a sum of time units with at most two units
+   * (example: {@code formatDuration(123456) = "2 m 3 s"}).
+   */
+  @Contract(pure = true)
+  public static @NotNull @Nls String formatDurationApproximateNarrow(long duration) {
+    return formatDuration(duration, 2, true);
   }
 
   /** 
@@ -98,11 +108,11 @@ public class NlsMessages {
    */
   @Contract(pure = true)
   public static @NotNull @Nls String formatDuration(long duration) {
-    return formatDuration(duration, Integer.MAX_VALUE);
+    return formatDuration(duration, Integer.MAX_VALUE, false);
   }
 
   @Contract(pure = true)
-  private static @NotNull @Nls String formatDuration(long duration, int maxFragments) {
+  private static @NotNull @Nls String formatDuration(long duration, int maxFragments, boolean narrow) {
     TLongArrayList unitValues = new TLongArrayList();
     TIntArrayList unitIndices = new TIntArrayList();
 
@@ -130,13 +140,22 @@ public class NlsMessages {
         for (int unit = lastUnitIndex - 1; unit > 0; unit--) {
           increment *= TIME_MULTIPLIERS[unit];
         }
-        return formatDuration(duration + increment, maxFragments);
+        return formatDuration(duration + increment, maxFragments, narrow);
       }
     }
 
+    int finalCount = Math.min(unitValues.size(), maxFragments);
+    if (narrow) {
+      List<String> fragments = new ArrayList<>();
+      LocalizedNumberFormatter formatter = NumberFormatter.withLocale(DynamicBundle.getLocale()).unitWidth(NumberFormatter.UnitWidth.SHORT);
+      for (i = 0; i < finalCount; i++) {
+        fragments.add(formatter.unit(TIME_UNITS[unitIndices.get(i)]).format(unitValues.get(i)).toString().replace(' ', '\u2009'));
+      }
+      return StringUtil.join(fragments, " ");
+    }
     MeasureFormat format = MeasureFormat.getInstance(DynamicBundle.getLocale(), MeasureFormat.FormatWidth.SHORT);
-    Measure[] measures = new Measure[Math.min(unitValues.size(), maxFragments)];
-    for (i = 0; i < measures.length; i++) {
+    Measure[] measures = new Measure[finalCount];
+    for (i = 0; i < finalCount; i++) {
       measures[i] = new Measure(unitValues.get(i), TIME_UNITS[unitIndices.get(i)]);
     }
     return format.formatMeasures(measures);
