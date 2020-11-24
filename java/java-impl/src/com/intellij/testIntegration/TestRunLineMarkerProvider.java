@@ -16,7 +16,7 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
     if (executor != null) {
       String actionId = executor.getContextActionId();
       String shortcutText = KeymapUtil.getShortcutText(actionId);
-      @NotNull String shortcutColor = ColorUtil.toHex(JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999)));
+      @NotNull String shortcutColor = ColorUtil.toHex(JBUI.CurrentTheme.Tooltip.shortcutForeground());
       return XmlStringUtil.wrapInHtml(ExecutionBundle.message("run.text") + CommonXmlStrings.NBSP + CommonXmlStrings.NBSP + "<font color='#" + shortcutColor + "'>" + XmlStringUtil.escapeString(shortcutText) + "</font>");
     }
     else {

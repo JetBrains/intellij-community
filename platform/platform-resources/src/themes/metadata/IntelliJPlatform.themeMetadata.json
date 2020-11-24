@@ -327,8 +327,40 @@
       "deprecated": true
     },
     {
+      "key": "GotItTooltip.foreground",
+      "description": "GotIt tooltip foreground color if different from ToolTip.foreground"
+    },
+    {
+      "key": "GotItTooltip.background",
+      "description": "GotIt tooltip background color if different from ToolTip.background"
+    },
+    {
+      "key": "GotItTooltip.shortcutForeground",
+      "description": "GotIt tooltip shortcuts foreground color if different from ToolTip.shortcutForeground"
+    },
+    {
       "key": "GotItTooltip.borderColor",
       "description": "GotIt tooltip border color if different from ToolTip.borderColor"
+    },
+    {
+      "key": "GotItTooltip.linkForeground",
+      "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
+    },
+    {
+      "key": "GotItTooltip.startBackground",
+      "description": "GotIt tooltip button background gradient start color if different from Button.startBackground"
+    },
+    {
+      "key": "GotItTooltip.endBackground",
+      "description": "GotIt tooltip button background gradient end color if different from Button.endBackground"
+    },
+    {
+      "key": "GotItTooltip.startBorderColor",
+      "description": "GotIt tooltip button outline gradient start color if different from Button.startBorderColor"
+    },
+    {
+      "key": "GotItTooltip.endBorderColor",
+      "description": "GotIt tooltip button outline gradient end color if different from Button.endBorderColor"
     },
     {
       "key": "Group.disabledSeparatorColor"

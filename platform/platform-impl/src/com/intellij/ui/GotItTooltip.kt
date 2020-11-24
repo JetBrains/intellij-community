@@ -35,7 +35,10 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.ActionListener
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.KeyEvent
 import java.net.URL
 import javax.swing.*
 import javax.swing.event.AncestorEvent
@@ -140,7 +143,9 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
    * Add optional link to the tooltip.
    */
   fun withLink(@Nls linkLabel: String, action: () -> Unit) : GotItTooltip {
-    link = LinkLabel<Unit>(linkLabel, null)
+    link = object : LinkLabel<Unit>(linkLabel, null) {
+      override fun getNormal() : Color = LINK_FOREGROUND
+    }
     linkAction = action
     return this
   }
@@ -156,7 +161,9 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
    * Add optional browser link to the tooltip. Link is rendered with arrow icon.
    */
   fun withBrowserLink(@Nls linkLabel: String, url: URL) : GotItTooltip {
-    link = LinkLabel<Unit>(linkLabel, AllIcons.Ide.External_link_arrow).apply{ horizontalTextPosition = SwingConstants.LEFT }
+    link = object : LinkLabel<Unit>(linkLabel, AllIcons.Ide.External_link_arrow) {
+      override fun getNormal() : Color = LINK_FOREGROUND
+    }.apply { horizontalTextPosition = SwingConstants.LEFT }
     linkAction = { BrowserUtil.browse(url) }
     return this
   }
@@ -414,12 +421,13 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
     if (header.isNotEmpty()) {
       if (icon == null) gc.nextLine()
 
-      panel.add(JBLabel(HtmlChunk.raw(header).bold().wrapWith(HtmlChunk.html()).toString()),
+      panel.add(JBLabel(HtmlChunk.raw(header).bold().wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(FOREGROUND_COLOR))).
+                        wrapWith(HtmlChunk.html()).toString()),
                 gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insetLeft(left))
     }
 
     val builder = HtmlBuilder()
-    builder.append(HtmlChunk.raw(text))
+    builder.append(HtmlChunk.raw(text).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(FOREGROUND_COLOR))))
     shortcut?.let {
       builder.append(HtmlChunk.nbsp()).append(HtmlChunk.nbsp()).
               append(HtmlChunk.text(KeymapUtil.getShortcutText(it)).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(SHORTCUT_COLOR))))
@@ -437,7 +445,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
       val button = JButton(buttonLabel).apply{
         isFocusable = false
         isOpaque = false
-        putClientProperty("styleBorderless", true)
+        putClientProperty("gotItButton", true)
       }
       buttonSupplier(button)
 
@@ -495,9 +503,11 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
     private const val DEFAULT_TIMEOUT = 5000 // milliseconds
     private const val CLOSE_ACTION_NAME = "CloseGotItTooltip"
     private val MAX_WIDTH   = JBUIScale.scale(280)
-    private val SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", JBColor(0x787878, 0x999999))
-    private val BACKGROUND_COLOR = JBColor.namedColor("ToolTip.background", JBColor(0xf7f7f7, 0x474a4c))
-    private val BORDER_COLOR = JBColor.namedColor("GotItTooltip.borderColor", JBColor(Color(0xcccccc), JBColor.namedColor("ToolTip.borderColor", 0x636569)))
+    private val FOREGROUND_COLOR = JBColor.namedColor("GotItTooltip.foreground", UIUtil.getToolTipForeground())
+    private val SHORTCUT_COLOR = JBColor.namedColor("GotItTooltip.shortcutForeground", JBUI.CurrentTheme.Tooltip.shortcutForeground())
+    private val BACKGROUND_COLOR = JBColor.namedColor("GotItTooltip.background", UIUtil.getToolTipBackground())
+    private val BORDER_COLOR = JBColor.namedColor("GotItTooltip.borderColor", JBUI.CurrentTheme.Tooltip.borderColor())
+    private val LINK_FOREGROUND = JBColor.namedColor("GotItTooltip.linkForeground", JBUI.CurrentTheme.Link.linkColor());
 
     private val PANEL_MARGINS = JBUI.Borders.empty(7, 4, 9, 9)
 
