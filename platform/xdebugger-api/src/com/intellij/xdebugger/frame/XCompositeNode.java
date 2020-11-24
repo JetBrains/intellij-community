@@ -27,22 +27,20 @@ public interface XCompositeNode extends Obsolescent {
   void addChildren(@NotNull XValueChildrenList children, final boolean last);
 
   /**
-   * Add an ellipsis node ("...") indicating that the node has too many children. If user double-click on that node
-   * {@link XValueContainer#computeChildren(XCompositeNode)} method will be called again to add next children.
-   * @param remaining number of remaining children or {@code -1} if unknown
-   * @see #MAX_CHILDREN_TO_SHOW
-   * @deprecated use {@link #tooManyChildren(int, ChildrenSupplier)}
+   * @deprecated use {@link #tooManyChildren(int, Runnable)}
    */
   @Deprecated
   void tooManyChildren(int remaining);
 
   /**
-   * Add an ellipsis node ("...") indicating that the node has too many children. If user double-click on that node
-   * {@link ChildrenSupplier#computeChildren()} method will be called again to add next children.
-   * @param remaining number of remaining children or {@code -1} if unknown
+   * Add an ellipsis node ("...") indicating that the node has too many children.
+   * When the user double-clicks the node, the supplied Runnable is called to add the next batch of children.
+   * @param remaining number of remaining children or {@code -1} if unknown. This number is used only in the UI.
+   * @param addNextChildren Runnable that is used to add the next batch of children.
+   *                        Note that it is called from the Event Dispatch thread so it should return quickly.
    * @see #MAX_CHILDREN_TO_SHOW
    */
-  default void tooManyChildren(int remaining, @NotNull ChildrenSupplier childrenSupplier) {
+  default void tooManyChildren(int remaining, @NotNull Runnable addNextChildren) {
     tooManyChildren(remaining);
   }
 
@@ -65,8 +63,4 @@ public interface XCompositeNode extends Obsolescent {
   void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link);
 
   void setMessage(@NotNull String message, final @Nullable Icon icon, final @NotNull SimpleTextAttributes attributes, @Nullable XDebuggerTreeNodeHyperlink link);
-
-  interface ChildrenSupplier {
-    void computeChildren();
-  }
 }
