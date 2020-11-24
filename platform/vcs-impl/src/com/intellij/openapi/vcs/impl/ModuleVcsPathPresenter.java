@@ -33,6 +33,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
   public String getPresentableRelativePathFor(final VirtualFile file) {
     if (file == null) return "";
     return ReadAction.compute(() -> {
+      if (myProject.isDisposed()) return file.getPresentableUrl();
       boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
 
@@ -59,6 +60,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
 
     if (fromParent != null && toParent != null) {
       String moduleResult = ReadAction.compute(() -> {
+        if (myProject.isDisposed()) return null;
         final boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
         ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
 
