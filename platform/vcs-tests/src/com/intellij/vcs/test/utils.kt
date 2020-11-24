@@ -6,11 +6,31 @@ import com.intellij.notification.NotificationType
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 import org.junit.Assert.assertEquals
 
+fun assertHasNotification(type: NotificationType,
+                          title: String,
+                          content: String,
+                          actions: List<String>?,
+                          notifications: Collection<Notification>): Notification {
+  val notification = notifications.find { type == it.type && title == it.title } ?: notifications.lastOrNull()
+  if (notification == null) {
+    throw AssertionError("No $type notification '${title}|${content}' was shown")
+  }
+  assertEquals("Incorrect notification type: " + tos(notification), type, notification.type)
+  assertEquals("Incorrect notification title: " + tos(notification), title, notification.title)
+  assertEquals("Incorrect notification content: " + tos(notification), cleanupForAssertion(content), cleanupForAssertion(notification.content))
+  if (actions != null) {
+    assertOrderedEquals("Incorrect notification actions", notification.actions.map { it.templatePresentation.text }, actions)
+  }
+
+  return notification
+}
+
+fun assertHasNotification(type: NotificationType, title: String, content: String, notifications: Collection<Notification>): Notification {
+  return assertHasNotification(type, title, content, null, notifications)
+}
+
 fun assertNotification(type: NotificationType, title: String, content: String, actions: List<String>?, actual: Notification): Notification {
-  assertEquals("Incorrect notification type: " + tos(actual), type, actual.type)
-  assertEquals("Incorrect notification title: " + tos(actual), title, actual.title)
-  assertEquals("Incorrect notification content: " + tos(actual), cleanupForAssertion(content), cleanupForAssertion(actual.content))
-  if (actions != null) assertOrderedEquals("Incorrect notification actions", actual.actions.map { it.templatePresentation.text }, actions)
+  assertHasNotification(type, title, content, actions, setOf(actual))
   return actual
 }
 
