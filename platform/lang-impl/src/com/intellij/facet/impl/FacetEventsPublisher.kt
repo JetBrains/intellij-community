@@ -11,10 +11,9 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
-import java.util.*
 
 @Service
-class FacetEventsPublisher(private val project: Project) {
+internal class FacetEventsPublisher(private val project: Project) {
   private val facetsByType: MutableMap<FacetTypeId<*>, MutableMap<Facet<*>, Boolean>> = HashMap()
   private val manuallyRegisteredListeners = ContainerUtil.createConcurrentList<Pair<FacetTypeId<*>?, ProjectFacetListener<*>>>()
 
@@ -199,5 +198,4 @@ class FacetEventsPublisher(private val project: Project) {
 
   private val Module.publisher
     get() = messageBus.syncPublisher(FacetManager.FACETS_TOPIC)
-
 }

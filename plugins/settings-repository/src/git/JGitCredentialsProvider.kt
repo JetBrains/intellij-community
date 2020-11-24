@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.isFulfilled
 import com.intellij.credentialStore.isMacOsCredentialStoreSupported
@@ -20,13 +20,13 @@ import org.jetbrains.settingsRepository.showAuthenticationForm
 import java.util.concurrent.TimeUnit
 
 class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsStore>, private val repository: Repository) : CredentialsProvider() {
-  private val credentialsFromGit = CacheBuilder.newBuilder()
+  private val credentialsFromGit: LoadingCache<URIish, Credentials> by lazy {
+    Caffeine.newBuilder()
       .expireAfterAccess(5, TimeUnit.MINUTES)
-      .build(object : CacheLoader<URIish, Credentials>() {
-        override fun load(it: URIish) = getCredentialsUsingGit(it, repository) ?: Credentials(null)
-      })
+      .build { getCredentialsUsingGit(it, repository) ?: Credentials(null) }
+  }
 
-  override fun isInteractive(): Boolean = true
+  override fun isInteractive() = true
 
   override fun supports(vararg items: CredentialItem): Boolean {
     for (item in items) {

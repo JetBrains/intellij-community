@@ -34,7 +34,6 @@ import com.intellij.util.io.div
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
-import com.intellij.workspaceModel.ide.CustomModuleEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
@@ -48,13 +47,12 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
-import kotlin.collections.HashSet
 
 @Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
   private val LOG = Logger.getInstance(javaClass)
 
-  internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
+  internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = LinkedHashMap()
 
   override fun dispose() {
     modules().forEach {
