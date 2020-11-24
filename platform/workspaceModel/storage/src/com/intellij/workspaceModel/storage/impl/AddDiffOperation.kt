@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage.impl
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.containers.reverse
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import java.io.File
 
@@ -62,7 +61,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           //   with this id. But there is a case when some different entity from source builder will get this id if there was a gup before.
           //   So we should check if entity at this id was added in this transaction. If replaceMap has a value with this entity id
           //   this means that this entity was added in this transaction and there was a gup before and we should not remove anything.
-          if (sourceEntityId !in replaceMap.reverse()) {
+          if (!replaceMap.containsValue(sourceEntityId)) {
             target.indexes.removeFromIndices(sourceEntityId)
             if (target.entityDataById(sourceEntityId) != null) {
               target.removeEntity(sourceEntityId)
