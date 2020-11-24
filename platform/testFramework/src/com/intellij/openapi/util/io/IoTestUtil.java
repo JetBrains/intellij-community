@@ -416,6 +416,24 @@ public final class IoTestUtil {
     return Collections.emptyList();
   }
 
+  public static boolean reanimateWslDistribution(@NotNull String name) {
+    try {
+      GeneralCommandLine cmd = new GeneralCommandLine("wsl", "-d", name, "-e", "pwd").withRedirectErrorStream(true);
+      ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 30_000);
+      if (output.getExitCode() == 0) {
+        return true;
+      }
+      else {
+        Logger.getInstance(IoTestUtil.class).debug(output.getExitCode() + " " + output.getStdout().trim());
+      }
+    }
+    catch (Exception e) {
+      Logger.getInstance(IoTestUtil.class).debug(e);
+    }
+
+    return false;
+  }
+
   public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) throws IOException {
     assertTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
     String changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");

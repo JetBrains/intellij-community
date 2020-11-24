@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
@@ -18,7 +17,6 @@ import com.intellij.openapi.vfs.impl.wsl.WslFileWatcher
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.INTER_RESPONSE_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.NATIVE_PROCESS_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.SHORT_PROCESS_DELAY
-import com.intellij.openapi.vfs.local.FileWatcherTestUtil.START_STOP_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.refresh
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
@@ -70,9 +68,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
     assumeTrue("No WSL distributions found", distributions.isNotEmpty())
 
     wsl = distributions[0]
-    val pwd = ExecUtil.execAndGetOutput(GeneralCommandLine("wsl", "-d", wsl, "-e", "pwd").withRedirectErrorStream(true), START_STOP_DELAY.toInt())
-    LOG.debug("${wsl}: ${pwd.exitCode} out:${pwd.stdout.trim()}")
-    assumeTrue("WSL distribution ${wsl} doesn't seem to be alive", pwd.exitCode == 0)
+    assumeTrue("WSL distribution ${wsl} doesn't seem to be alive", reanimateWslDistribution(wsl))
 
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 

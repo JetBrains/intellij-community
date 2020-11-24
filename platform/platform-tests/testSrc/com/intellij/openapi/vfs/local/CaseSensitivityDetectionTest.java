@@ -46,10 +46,11 @@ public class CaseSensitivityDetectionTest {
     List<@NotNull String> distributions = enumerateWslDistributions();
     assumeTrue("No WSL distributions found", !distributions.isEmpty());
 
-    for (String name : distributions) {
-      String root = "\\\\wsl$\\" + name;
-      assertEquals(root, FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(new File(root)));
-    }
+    String name = distributions.get(0);
+    assumeTrue("WSL distribution " + name + " doesn't seem to be alive", reanimateWslDistribution(name));
+
+    String root = "\\\\wsl$\\" + name;
+    assertEquals(root, FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(new File(root)));
   }
 
   @Test
