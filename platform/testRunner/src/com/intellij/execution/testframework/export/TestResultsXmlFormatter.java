@@ -273,7 +273,21 @@ public final class TestResultsXmlFormatter {
       public void mark() {
       }
     };
-    node.printOwnPrintablesOn(printer);
+    node.printOwnPrintablesOn(printer, false);
+
+    for (DiffHyperlink hyperlink : node.getDiffViewerProviders()) {
+      printer.printHyperlink(hyperlink.getDiffTitle(), hyperlink.getInfo());
+    }
+
+    String errorMessage = node.getErrorMessage();
+    if (errorMessage != null) {
+      printer.print(errorMessage, ConsoleViewContentType.ERROR_OUTPUT);
+    }
+    String stacktrace = node.getStacktrace();
+    if (stacktrace != null) {
+      printer.print(stacktrace, ConsoleViewContentType.ERROR_OUTPUT);
+    }
+
     if (!error.isNull()) {
       throw error.get();
     }

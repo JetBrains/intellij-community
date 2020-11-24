@@ -154,10 +154,12 @@ public class SMTestProxy extends AbstractTestProxy {
     if (myStacktrace == null) myStacktrace = stacktrace;
   }
 
+  @Override
   public @Nullable @NlsSafe String getStacktrace() {
     return myStacktrace;
   }
 
+  @Override
   public @Nullable @NlsSafe String getErrorMessage() {
     return myErrorMessage;
   }

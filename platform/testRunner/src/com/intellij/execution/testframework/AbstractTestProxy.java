@@ -134,6 +134,11 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   }
 
   @Nullable
+  public String getStacktrace() {
+    return null;
+  }
+  
+  @Nullable
   public DiffHyperlink getLeafDiffViewerProvider() {
     DiffHyperlink provider = getDiffViewerProvider();
     if (provider != null) return provider;
@@ -168,6 +173,11 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   @Nullable
   public String getMetainfo() {
+    return null;
+  }
+
+  @Nullable
+  public String getErrorMessage() {
     return null;
   }
 }
