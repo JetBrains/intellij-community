@@ -1133,6 +1133,11 @@ public class KotlinEvaluateExpressionTestGenerated extends AbstractKotlinEvaluat
             runTest("testData/evaluation/multipleBreakpoints/extensionMemberProperty.kt");
         }
 
+        @TestMetadata("externalReceiverInLambda.kt")
+        public void testExternalReceiverInLambda() throws Exception {
+            runTest("testData/evaluation/multipleBreakpoints/externalReceiverInLambda.kt");
+        }
+
         @TestMetadata("fieldVariable.kt")
         public void testFieldVariable() throws Exception {
             runTest("testData/evaluation/multipleBreakpoints/fieldVariable.kt");

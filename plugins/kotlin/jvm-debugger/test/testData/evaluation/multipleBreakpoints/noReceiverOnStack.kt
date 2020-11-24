@@ -23,6 +23,11 @@ fun main(args: Array<String>) {
     //Breakpoint!
     buildSum { repeat(3) { addOne() } }
 
+    // EXPRESSION: buildString { append(buildSum { buildString { addOne() } }) }
+    // RESULT: "1": Ljava/lang/String;
+    //Breakpoint!
+    buildString { append(buildSum { buildString { addOne() } }) }
+
     // EXPRESSION: with("Hello!") { one() }
     // RESULT: 1: I
     //Breakpoint!

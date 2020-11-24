@@ -7,7 +7,9 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.getCallLabelForLambdaArgument
 import org.jetbrains.kotlin.descriptors.*
@@ -25,6 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.isDotSelector
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_1_3_FQ_NAME
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
@@ -109,7 +112,8 @@ class CodeFragmentParameterAnalyzer(
                 var processed = false
 
                 val extensionReceiver = resolvedCall.extensionReceiver
-                if (extensionReceiver is ImplicitReceiver) {
+                val substitutedReceiversTypes = expression.getSubstitutedReceiversTypes()
+                if (extensionReceiver is ImplicitReceiver && extensionReceiver.type !in substitutedReceiversTypes) {
                     val descriptor = extensionReceiver.declarationDescriptor
                     val parameter = processReceiver(extensionReceiver)
                     checkBounds(descriptor, expression, parameter)
@@ -117,7 +121,7 @@ class CodeFragmentParameterAnalyzer(
                 }
 
                 val dispatchReceiver = resolvedCall.dispatchReceiver
-                if (dispatchReceiver is ImplicitReceiver) {
+                if (dispatchReceiver is ImplicitReceiver && dispatchReceiver.type !in substitutedReceiversTypes) {
                     val descriptor = dispatchReceiver.declarationDescriptor
                     val parameter = processReceiver(dispatchReceiver)
                     if (parameter != null) {
@@ -142,6 +146,14 @@ class CodeFragmentParameterAnalyzer(
                     checkBounds(descriptor, expression, parameter)
                 }
             }
+
+            private fun KtExpression.getSubstitutedReceiversTypes() =
+                parentsOfType<KtLambdaExpression>()
+                    .asSequence()
+                    .mapNotNull { it.getType(bindingContext) }
+                    .filter { it.isExtensionFunctionType }
+                    .map { it.arguments[0].type }
+                    .toSet()
 
             private fun processDescriptor(descriptor: DeclarationDescriptor, expression: KtSimpleNameExpression): Smart? {
                 return processDebugLabel(descriptor)
