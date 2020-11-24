@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
@@ -180,7 +181,7 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          if (myPluginModel.getState(myPlugin).isPerProject()) {
+          if (Registry.is("ide.plugins.per.project", false)) {
             myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
               newState -> new EnableDisableAction(newState, List.of(this)),
               () -> new UninstallAction(List.of())

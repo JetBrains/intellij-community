@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.PluginEnabledState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NonNls;
@@ -17,12 +16,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.split;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 abstract class SelectionBasedPluginModelAction<C extends JComponent> extends DumbAwareAction {
 
@@ -62,18 +60,32 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      Project project = e.getProject();
+      List<PluginId> pluginIds = mapNotNull(getAllDescriptors(), IdeaPluginDescriptor::getPluginId);
 
-      getAllDescriptors()
-        .map(IdeaPluginDescriptor::getPluginId)
-        .forEach(pluginId -> update(pluginId, presentation, project));
+      boolean isForceEnableAll = myNewState == PluginEnabledState.ENABLED &&
+                                 exists(pluginIds, pluginId -> getState(pluginId) != PluginEnabledState.ENABLED);
+      boolean disabled = pluginIds.isEmpty() ||
+                         myNewState.isPerProject() && (e.getProject() == null || !isPerProjectEnabled()) ||
+                         exists(pluginIds, this::isInvisibleFor);
+
+      Presentation presentation = e.getPresentation();
+      presentation.setEnabledAndVisible(isForceEnableAll || !disabled);
+
+      PluginId selectedPluginId = getOnlyItem(pluginIds);
+      if (myNewState == PluginEnabledState.ENABLED_FOR_PROJECT &&
+          selectedPluginId != null && getState(selectedPluginId) == PluginEnabledState.ENABLED) {
+        presentation.setText(IdeBundle.message("plugins.configurable.enable.for.current.project.only"));
+      }
+    }
+
+    private @NotNull PluginEnabledState getState(@NotNull PluginId pluginId) {
+      return myPluginModel.getState(pluginId);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myPluginModel.changeEnableDisable(
-        getAllDescriptors().collect(Collectors.toSet()),
+        getAllDescriptors(),
         myNewState
       );
     }
@@ -83,27 +95,13 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
              oldState == PluginEnabledState.DISABLED && myNewState == PluginEnabledState.DISABLED_FOR_PROJECT;
     }
 
-    private void update(@NotNull PluginId pluginId,
-                        @NotNull Presentation presentation,
-                        @Nullable Project project) {
-      PluginEnabledState oldState = myPluginModel.getState(pluginId);
-
-      boolean disabled = isInvisible(oldState) ||
-                         myNewState.isPerProject() && (project == null ||
-                                                       !isPerProjectEnabled() ||
-                                                       isPluginExcluded(pluginId.getIdString()));
-      presentation.setEnabledAndVisible(!disabled);
-
-      if (oldState == PluginEnabledState.ENABLED && myNewState == PluginEnabledState.ENABLED_FOR_PROJECT) {
-        presentation.setText(IdeBundle.message("plugins.configurable.enable.for.current.project.only"));
-      }
+    private boolean isInvisibleFor(@NotNull PluginId pluginId) {
+      return isInvisible(getState(pluginId)) ||
+             myNewState.isPerProject() && isPluginExcluded(pluginId.getIdString());
     }
 
-    private @NotNull Stream<IdeaPluginDescriptor> getAllDescriptors() {
-      return mySelection
-        .stream()
-        .map(this::getPluginDescriptor)
-        .filter(Objects::nonNull);
+    private @NotNull Set<? extends IdeaPluginDescriptor> getAllDescriptors() {
+      return map2SetNotNull(mySelection, this::getPluginDescriptor);
     }
 
     private static @NotNull @NonNls String getActionTextPropertyKey(@NotNull PluginEnabledState newState) {
@@ -155,11 +153,9 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = !mySelection.isEmpty() &&
-                        mySelection
-                          .stream()
-                          .noneMatch(this::isBundled);
-      e.getPresentation().setEnabledAndVisible(enabled);
+      boolean disabled = mySelection.isEmpty() ||
+                         exists(mySelection, this::isBundled);
+      e.getPresentation().setEnabledAndVisible(!disabled);
     }
 
     @Override
