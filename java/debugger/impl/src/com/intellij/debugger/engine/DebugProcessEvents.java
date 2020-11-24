@@ -239,8 +239,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
                         notifiedClassPrepareEventRequestors = new HashSet<>(eventSet.size());
                       }
                       ReferenceType type = ((ClassPrepareEvent)event).referenceType();
-                      LOG.assertTrue(lastPreparedClass == null || lastPreparedClass.equals(type),
-                                     "EventSet contains ClassPrepareEvents for: " + lastPreparedClass + " and " + type);
+                      if (lastPreparedClass != null && !lastPreparedClass.equals(type)) {
+                        LOG.error("EventSet contains ClassPrepareEvents for: " + lastPreparedClass + " and " + type);
+                      }
                       lastPreparedClass = type;
 
                       processClassPrepareEvent(suspendContext, (ClassPrepareEvent)event, notifiedClassPrepareEventRequestors);
