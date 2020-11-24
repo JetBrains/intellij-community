@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.event.MouseEvent
 import javax.swing.JTextPane
-import javax.swing.plaf.ComponentUI
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.TextUI
 import javax.swing.text.DefaultCaret
@@ -18,10 +20,11 @@ import javax.swing.text.StyleConstants
  */
 class HeightLimitedPane(text: String, private val relativeFontSize: Int, private val style: SimpleAttributeSet, private val maximumWidth: Int? = null) : JTextPane() {
   init {
+    border = JBUI.Borders.empty()
     isEditable = false
     document.insertString(0, text, style)
     //ensure that style has been applied
-    StyleConstants.setFontSize(style, (font.size2D + JBUIScale.scale(relativeFontSize)).toInt())
+    StyleConstants.setFontSize(style, (adjustFontSize()).toInt())
     styledDocument.setCharacterAttributes(0, text.length, style, true)
     styledDocument.setParagraphAttributes(0, text.length, style, true)
     isOpaque = false
@@ -60,13 +63,11 @@ class HeightLimitedPane(text: String, private val relativeFontSize: Int, private
   override fun setUI(ui: TextUI?) {
     super.setUI(ui)
     if (font != null) {
-      font = FontUIResource(font.deriveFont(font.size2D + JBUIScale.scale(relativeFontSize)))
+      font = FontUIResource(font.deriveFont(adjustFontSize()))
     }
   }
 
-  override fun setUI(newUI: ComponentUI?) {
-    super.setUI(newUI)
-  }
+  private fun adjustFontSize() = UISettings.instance.fontSize + JBUIScale.scale(relativeFontSize) + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0
 
   override fun updateUI() {
     super.updateUI()

@@ -2,9 +2,11 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -106,7 +108,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
     val learnIdeFeaturesHeader = DynamicFontLabel(data.getName())
 
     learnIdeFeaturesHeader.apply { val labelFont = UIUtil.getLabelFont()
-      font = labelFont.deriveFont(Font.BOLD).deriveFont(labelFont.size2D)
+      font = labelFont.deriveFont(Font.BOLD).deriveFont(labelFont.size2D + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 )
     }
     learnIdeFeaturesHeader.alignmentX = LEFT_ALIGNMENT
     panel.add(learnIdeFeaturesHeader)
@@ -234,7 +236,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
     override fun setUI(ui: LabelUI?) {
       super.setUI(ui)
       if (font != null) {
-        font = FontUIResource(font.deriveFont(UIUtil.getLabelFont().size.toFloat()).deriveFont(Font.BOLD))
+        font = FontUIResource(font.deriveFont(UIUtil.getLabelFont().size.toFloat() + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 ).deriveFont(Font.BOLD))
       }
     }
   }
