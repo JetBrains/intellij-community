@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.LoadingNode;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
@@ -1352,6 +1353,19 @@ public final class TreeUtil {
       if (toRetain.equals(each)) continue;
       tree.getSelectionModel().removeSelectionPath(each);
     }
+  }
+
+  public static boolean isLoadingPath(@Nullable TreePath path) {
+    return path != null && isLoadingNode(path.getLastPathComponent());
+  }
+
+  public static boolean isLoadingNode(@Nullable Object node) {
+    while (node != null) {
+      if (node instanceof LoadingNode) return true;
+      if (!(node instanceof DefaultMutableTreeNode)) return false;
+      node = ((DefaultMutableTreeNode)node).getUserObject();
+    }
+    return false;
   }
 
   @Nullable
