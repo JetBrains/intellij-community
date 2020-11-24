@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="org.jetbrains.kotlin:gradle-tooling:211-1.4.10-release-IJ1012" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:gradle-tooling:211-1.4.10-release-IJ1012" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/gradle-tooling/211-1.4.10-release-IJ1012/gradle-tooling-211-1.4.10-release-IJ1012.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
