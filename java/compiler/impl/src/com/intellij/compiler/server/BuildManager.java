@@ -475,6 +475,9 @@ public final class BuildManager implements Disposable {
   }
 
   public void clearState(@NotNull Project project) {
+    if (project.isDefault())
+      return;
+
     String projectPath = getProjectPath(project);
     cancelPreloadedBuilds(projectPath);
 
