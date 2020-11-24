@@ -659,10 +659,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     //myAllThreadsDirty = true;
     myTimeStamp++;
-
-    if (Registry.is("debugger.types.preload")) {
-      scheduleTypesDataPreload();
-    }
   }
 
   @Override
@@ -707,7 +703,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
   }
 
-
   private abstract static class Capability {
     private ThreeState myValue = ThreeState.UNSURE;
 
@@ -725,49 +720,5 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
 
     protected abstract boolean calcValue();
-  }
-
-  private long myLastTypesCheckTime;
-  private int myLastTypesSize;
-
-  // Preload all supertypes information for faster queries (especially for emulated method breakpoints)
-  private void scheduleTypesDataPreload() {
-    if (DebuggerUtilsImpl.isRemote(myDebugProcess)) {
-      return;
-    }
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    long time = System.currentTimeMillis();
-    if (time > myLastTypesCheckTime + 10000) {
-      List<ReferenceType> types = allClasses();
-      if (time > myLastTypesCheckTime + 60000 || Math.abs(types.size() - myLastTypesSize) > 1000) {
-        scheduleTypesDataPreload(types.iterator());
-        myLastTypesCheckTime = time;
-        myLastTypesSize = types.size();
-      }
-    }
-  }
-
-  private void scheduleTypesDataPreload(Iterator<ReferenceType> iterator) {
-    if (iterator.hasNext()) {
-      myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.LOWEST, () -> {
-        long start = System.currentTimeMillis();
-        do {
-          ReferenceType type = iterator.next();
-          if (type.isPrepared()) {
-            try {
-              DebuggerUtilsImpl.supertypes(type);
-            }
-            catch (ObjectCollectedException ignored) {
-            }
-          }
-          if (System.currentTimeMillis() - start > 50) { // batch process for 50ms
-            // schedule here to allow other LOWEST priority commands to be processed
-            scheduleTypesDataPreload(iterator);
-            return;
-          }
-        }
-        while (iterator.hasNext());
-      });
-    }
   }
 }
