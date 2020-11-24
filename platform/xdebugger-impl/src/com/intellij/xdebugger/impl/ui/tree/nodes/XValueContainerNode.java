@@ -153,12 +153,12 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Override
-  public void tooManyChildren(int remaining, @NotNull ChildrenSupplier childrenSupplier) {
+  public void tooManyChildren(int remaining, @NotNull Runnable childrenSupplier) {
     invokeNodeUpdate(() -> setTemporaryMessageNode(
       MessageTreeNode.createEllipsisNode(myTree, this, remaining, () -> {
         myTree.selectNodeOnLoad(n -> n.getParent() == this, n -> isObsolete());
         prepareForComputingChildren();
-        childrenSupplier.computeChildren();
+        childrenSupplier.run();
       })));
   }
 
