@@ -90,11 +90,11 @@ static def platformsToDownload(targetOs) {
 }
 
 enum Arch {
-  x86, x64
+  x86, x64, aarch64
 }
 
 static def archToDownload(platform) {
-  platform != 'osx' ? [Arch.x86, Arch.x64] : [Arch.x64]
+  platform != 'osx' ? [Arch.x86, Arch.x64] : [Arch.x64, Arch.aarch64]
 }
 
 /**

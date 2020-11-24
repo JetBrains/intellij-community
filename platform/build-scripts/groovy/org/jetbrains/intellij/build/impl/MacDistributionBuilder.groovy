@@ -187,6 +187,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
+    // todo support aarch64
     def vmOptions = VmOptionsGenerator.computeVmOptions(JvmArchitecture.x64, buildContext.applicationInfo.isEAP, buildContext.productProperties)
     //todo[r.sh] additional VM options should go into the launcher (probably via Info.plist)
     vmOptions += buildContext.productProperties.additionalIdeJvmArguments.split(' ').toList()
