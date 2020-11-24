@@ -128,7 +128,7 @@ public final class BuildConsoleUtils {
     message = stripHtml(message, true);
     int sepIndex = message.indexOf(". ");
     int eolIndex = message.indexOf("\n");
-    if (sepIndex > eolIndex && eolIndex > 0) {
+    if (sepIndex < 0 || sepIndex > eolIndex && eolIndex > 0) {
       sepIndex = eolIndex;
     }
     if (sepIndex > 0) {
