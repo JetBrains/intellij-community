@@ -426,10 +426,8 @@
       <module fileurl="file://$PROJECT_DIR$/android/layout-inspector/intellij.android.layout-inspector.iml" filepath="$PROJECT_DIR$/android/layout-inspector/intellij.android.layout-inspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/layout-inspector/intellij.android.layout-inspector.tests.iml" filepath="$PROJECT_DIR$/android/layout-inspector/intellij.android.layout-inspector.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/layout-ui/intellij.android.layout-ui.iml" filepath="$PROJECT_DIR$/android/layout-ui/intellij.android.layout-ui.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/layoutlib/intellij.android.layoutlib.iml" filepath="$PROJECT_DIR$/android/layoutlib/intellij.android.layoutlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/layoutlib-loader/intellij.android.layoutlib-loader.iml" filepath="$PROJECT_DIR$/android/layoutlib-loader/intellij.android.layoutlib-loader.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/layoutlib-loader/intellij.android.layoutlib-loader.tests.iml" filepath="$PROJECT_DIR$/android/layoutlib-loader/intellij.android.layoutlib-loader.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/layoutlib-native/intellij.android.layoutlib-native.iml" filepath="$PROJECT_DIR$/android/layoutlib-native/intellij.android.layoutlib-native.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/lint/intellij.android.lint.iml" filepath="$PROJECT_DIR$/android/lint/intellij.android.lint.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/lint/tests/intellij.android.lint.tests.iml" filepath="$PROJECT_DIR$/android/lint/tests/intellij.android.lint.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.iml" filepath="$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.iml" />
