@@ -6,6 +6,7 @@ import circlet.code.api.ChangeInReview
 import circlet.code.api.PropagatedCodeDiscussion
 import circlet.code.api.ReviewIdentifier
 import circlet.platform.api.TID
+import com.intellij.openapi.ListSelection
 import com.intellij.space.SpaceVmWithClient
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.MutableProperty
@@ -23,8 +24,7 @@ interface SpaceReviewChangesVm : SpaceVmWithClient, Lifetimed {
   val reviewId: TID
   val selectedCommits: Property<List<ReviewCommitListItem>>
   val changes: Property<Map<String, ChangesWithDiscussion>?>
-  val selectedChange: MutableProperty<ChangeInReview?>
-  val selectedChangeDiscussions: Property<ObservableMutableMap<TID, PropagatedCodeDiscussion>?>
+  val listSelection: MutableProperty<ListSelection<ChangeInReview>>
 
   val participantsVm: Property<SpaceReviewParticipantsVm?>
 }

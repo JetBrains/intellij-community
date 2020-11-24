@@ -12,6 +12,7 @@ import circlet.platform.api.TID
 import circlet.platform.client.FluxSourceItem
 import circlet.platform.client.KCircletClient
 import circlet.platform.client.durableInitializedFluxChannel
+import com.intellij.openapi.ListSelection
 import com.intellij.space.SpaceVmWithClient
 import kotlinx.coroutines.channels.ReceiveChannel
 import libraries.coroutines.extra.Lifetime
@@ -31,7 +32,7 @@ class SpaceReviewChangesVmImpl(
   override val reviewId: TID,
   override val selectedCommits: Property<List<ReviewCommitListItem>>,
   override val participantsVm: Property<SpaceReviewParticipantsVm?>,
-  override val selectedChange: MutableProperty<ChangeInReview?> = mutableProperty(null),
+  override val listSelection: MutableProperty<ListSelection<ChangeInReview>>,
 ) : SpaceReviewChangesVm,
     SpaceVmWithClient {
 
@@ -44,18 +45,6 @@ class SpaceReviewChangesVmImpl(
       .map { it.key to loadChanges(lifetimeSource, it.value) }
       .toMap()
   }
-
-  override val selectedChangeDiscussions: Property<ObservableMutableMap<TID, PropagatedCodeDiscussion>?> =
-    mapInit(changes, selectedChange, null) { changes, selected ->
-
-      changes ?: return@mapInit null
-      selected ?: return@mapInit null
-      val repository = selected.repository
-
-      val changesWithDiscussion = changes[repository] ?: return@mapInit null
-
-      changesWithDiscussion.discussions
-    }
 
   private suspend fun loadChanges(lt: LifetimeSource,
                                   revisions: List<RevisionInReview>): ChangesWithDiscussion {

@@ -59,11 +59,9 @@ internal object SpaceReviewChangesTreeFactory {
     }
 
     tree.addSelectionListener {
-      VcsTreeModelData.selected(tree).userObjectsStream().findFirst().ifPresent {
-        if (it is ChangeInReview) {
-          changesVm.selectedChange.value = it
-        }
-      }
+        val selection = VcsTreeModelData.getListSelectionOrAll(tree).map { it as? ChangeInReview }
+        // do not reset selection to zero
+        if (!selection.isEmpty) changesVm.listSelection.value = selection
     }
     return ScrollPaneFactory.createScrollPane(tree, true)
   }

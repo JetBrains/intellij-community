@@ -10,6 +10,7 @@ import circlet.code.codeReview
 import circlet.platform.api.Ref
 import circlet.platform.api.TID
 import circlet.platform.client.*
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
 import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.vcs.SpaceProjectInfo
@@ -89,14 +90,15 @@ abstract class CrDetailsVm<R : CodeReviewRecord>(
     indices.map { commits[it] }
   }
 
-  private val selectedChange: MutableProperty<ChangeInReview?> = mutableProperty(null)
+  private val selectedChanges: MutableProperty<ListSelection<ChangeInReview>> =
+    mutableProperty(ListSelection.create(emptyList<ChangeInReview>(), null))
 
   val spaceDiffVm: Property<SpaceDiffVm> = mutableProperty(
-    SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, selectedChange))
+    SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, selectedChanges))
 
   val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(
     lifetime, client, projectKey, review.value.identifier,
-    reviewId, selectedCommits, participantsVm, selectedChange
+    reviewId, selectedCommits, participantsVm, selectedChanges
   )
 }
 
