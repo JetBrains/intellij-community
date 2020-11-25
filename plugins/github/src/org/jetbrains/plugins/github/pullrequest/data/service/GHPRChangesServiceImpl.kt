@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
-import com.google.common.graph.*
+import com.google.common.graph.Graph
+import com.google.common.graph.GraphBuilder
+import com.google.common.graph.ImmutableGraph
+import com.google.common.graph.Traverser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
@@ -137,7 +140,6 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       return lastCommit to GraphBuilder
         .directed()
         .allowsSelfLoops(false)
-        .incidentEdgeOrder(ElementOrder.stable<GHCommit>())
         .immutable<GHCommit>()
         .apply {
           addCommits(lastCommit)
