@@ -97,11 +97,11 @@ object AdditionalKotlinArtifacts {
     }
 
     val parcelizeRuntime: File by lazy {
-        KotlinArtifacts.instance.kotlincDistDir.resolve("lib/parcelize-runtime.jar")
+        KotlinArtifacts.instance.kotlincDistDir.resolve("kotlinc/lib/parcelize-runtime.jar")
     }
 
     val androidExtensionsRuntime by lazy {
-        KotlinArtifacts.instance.kotlincDistDir.resolve("lib/android-extensions-runtime.jar")
+        KotlinArtifacts.instance.kotlincDistDir.resolve("kotlinc/lib/android-extensions-runtime.jar")
     }
 }
 
