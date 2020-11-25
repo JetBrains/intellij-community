@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 class KotlinMppGradleModelExtensionsTest {
 
     @Test
-    fun getDeclaredDependsOnSourceSets() {
+    fun resolveDeclaredDependsOnSourceSets() {
         val commonMain = createKotlinSourceSet("commonMain")
         val appleMain = createKotlinSourceSet("appleMain", dependsOnSourceSets = setOf("commonMain"))
         val macosMain = createKotlinSourceSet("macosMain", dependsOnSourceSets = setOf("appleMain"))
@@ -20,17 +20,17 @@ class KotlinMppGradleModelExtensionsTest {
         )
 
         assertEquals(
-            emptySet(), model.getDeclaredDependsOnSourceSets(commonMain),
+            emptySet(), model.resolveDeclaredDependsOnSourceSets(commonMain),
             "Expected no declared dependency source sets for commonMain"
         )
 
         assertEquals(
-            setOf(commonMain), model.getDeclaredDependsOnSourceSets(appleMain),
+            setOf(commonMain), model.resolveDeclaredDependsOnSourceSets(appleMain),
             "Expected only declared dependency for 'appleMain'"
         )
 
         assertEquals(
-            setOf(appleMain, commonMain), model.getDeclaredDependsOnSourceSets(iosMain),
+            setOf(appleMain, commonMain), model.resolveDeclaredDependsOnSourceSets(iosMain),
             "Expected only declared dependency for 'iosMain'"
         )
     }
@@ -42,13 +42,13 @@ class KotlinMppGradleModelExtensionsTest {
         val model = createKotlinMPPGradleModel(sourceSets = setOf(commonMain, macosMain))
 
         assertEquals(
-            setOf(commonMain), model.getDeclaredDependsOnSourceSets(macosMain),
+            setOf(commonMain), model.resolveDeclaredDependsOnSourceSets(macosMain),
             "Expected declaredDependencySourceSets to ignore missing dependency source set"
         )
     }
 
     @Test
-    fun getAllDependsOnSourceSets() {
+    fun resolveAllDependsOnSourceSets() {
         val commonMain = createKotlinSourceSet("commonMain")
         val appleMain = createKotlinSourceSet("appleMain", dependsOnSourceSets = setOf("commonMain"))
         val x64Main = createKotlinSourceSet("x64Main", dependsOnSourceSets = setOf("commonMain"))
@@ -60,27 +60,27 @@ class KotlinMppGradleModelExtensionsTest {
 
         assertEquals(
             setOf(appleMain, x64Main, commonMain),
-            model.getAllDependsOnSourceSets(macosX64Main),
+            model.resolveAllDependsOnSourceSets(macosX64Main),
         )
 
         assertEquals(
             setOf(appleMain, x64Main, commonMain).sortedBy { it.name },
-            model.getAllDependsOnSourceSets(macosX64Main).sortedBy { it.name }.toList(),
+            model.resolveAllDependsOnSourceSets(macosX64Main).sortedBy { it.name }.toList(),
         )
 
         assertEquals(
             setOf(appleMain, commonMain),
-            model.getAllDependsOnSourceSets(macosArm64Main).toSet(),
+            model.resolveAllDependsOnSourceSets(macosArm64Main).toSet(),
         )
 
         assertEquals(
             setOf(commonMain),
-            model.getAllDependsOnSourceSets(appleMain).toSet(),
+            model.resolveAllDependsOnSourceSets(appleMain).toSet(),
             "Expected only 'commonMain' for 'appleMain'"
         )
 
         assertEquals(
-            emptySet(), model.getAllDependsOnSourceSets(commonMain).toSet(),
+            emptySet(), model.resolveAllDependsOnSourceSets(commonMain).toSet(),
             "Expected empty set for 'commonMain'"
         )
     }

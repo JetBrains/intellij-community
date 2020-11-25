@@ -20,24 +20,24 @@ fun KotlinMPPGradleModel.compilationDependsOnSourceSet(
 }
 
 @ExperimentalKotlinMPPGradleModelExtensionsApi
-fun KotlinMPPGradleModel.getDeclaredDependsOnSourceSets(sourceSet: KotlinSourceSet): Set<KotlinSourceSet> {
+fun KotlinMPPGradleModel.resolveDeclaredDependsOnSourceSets(sourceSet: KotlinSourceSet): Set<KotlinSourceSet> {
     return sourceSet.dependsOnSourceSets.mapNotNull { name -> sourceSets[name] }.toSet()
 }
 
 @ExperimentalKotlinMPPGradleModelExtensionsApi
-fun KotlinMPPGradleModel.getAllDependsOnSourceSets(sourceSet: KotlinSourceSet): Set<KotlinSourceSet> {
+fun KotlinMPPGradleModel.resolveAllDependsOnSourceSets(sourceSet: KotlinSourceSet): Set<KotlinSourceSet> {
     return mutableSetOf<KotlinSourceSet>().apply {
-        val declaredDependencySourceSets = getDeclaredDependsOnSourceSets(sourceSet)
+        val declaredDependencySourceSets = resolveDeclaredDependsOnSourceSets(sourceSet)
         addAll(declaredDependencySourceSets)
         for (declaredDependencySourceSet in declaredDependencySourceSets) {
-            addAll(getAllDependsOnSourceSets(declaredDependencySourceSet))
+            addAll(resolveAllDependsOnSourceSets(declaredDependencySourceSet))
         }
     }
 }
 
 @ExperimentalKotlinMPPGradleModelExtensionsApi
 fun KotlinMPPGradleModel.isDependsOn(from: KotlinSourceSet, to: KotlinSourceSet): Boolean {
-    return to in getAllDependsOnSourceSets(from)
+    return to in resolveAllDependsOnSourceSets(from)
 }
 
 @ExperimentalKotlinMPPGradleModelExtensionsApi
