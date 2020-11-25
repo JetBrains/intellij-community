@@ -7,21 +7,17 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 /**
  * Registry for {@link ExternalComponentSource}s, used for integrating with the {@link UpdateChecker}.
  * Keeps track of the external components and component sources that can be updated.
  */
 @Service
 public final class ExternalComponentManager {
-  @NotNull
-  public static ExternalComponentManager getInstance() {
+  public static @NotNull ExternalComponentManager getInstance() {
     return ApplicationManager.getApplication().getService(ExternalComponentManager.class);
   }
 
-  @NotNull
-  public static Iterable<ExternalComponentSource> getComponentSources() {
+  public static @NotNull Iterable<ExternalComponentSource> getComponentSources() {
     return ExternalComponentSource.EP_NAME.getExtensionList();
   }
 
@@ -32,11 +28,9 @@ public final class ExternalComponentManager {
    * @param source The source for the update.
    * @return A component from the same source for which the given component is an update, or null if no such component is found.
    */
-  @Nullable
-  public UpdatableExternalComponent findExistingComponentMatching(@NotNull UpdatableExternalComponent update,
-                                                                  @NotNull ExternalComponentSource source) {
-    Collection<UpdatableExternalComponent> existing = source.getCurrentVersions();
-    for (UpdatableExternalComponent c : existing) {
+  public @Nullable UpdatableExternalComponent findExistingComponentMatching(@NotNull UpdatableExternalComponent update,
+                                                                            @NotNull ExternalComponentSource source) {
+    for (UpdatableExternalComponent c : source.getCurrentVersions()) {
       if (update.isUpdateFor(c)) {
         return c;
       }
