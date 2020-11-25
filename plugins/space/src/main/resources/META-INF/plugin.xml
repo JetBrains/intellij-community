@@ -57,6 +57,11 @@
 
     <fileEditorProvider implementation="com.intellij.space.vcs.review.details.diff.SpaceDiffEditorProvider"/>
     <diff.DiffExtension implementation="com.intellij.space.vcs.review.details.diff.SpaceReviewCommentDiffExtension"/>
+
+    <diff.actions.ShowDiffAction.ExtensionProvider
+      implementation="com.intellij.space.vcs.review.details.diff.SpaceReviewOpenDiffActionProvider"
+      order="first"
+    />
   </extensions>
 
   <actions>
@@ -121,6 +126,14 @@
       <action id="com.intellij.space.vcs.review.list.SpaceReviewAuthorActionGroup"
               class="com.intellij.space.vcs.review.list.SpaceReviewAuthorActionGroup"/>
 
+    </group>
+
+    <group id="space.review.changes.toolbar">
+      <reference id="Diff.ShowDiff"/>
+    </group>
+
+    <group id="space.review.changes.popup">
+      <reference id="Diff.ShowDiff"/>
     </group>
   </actions>
 

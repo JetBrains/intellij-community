@@ -64,7 +64,7 @@ internal class SpaceReviewsList(
   }
 
   override fun getData(dataId: String): Any? = when {
-    SpaceReviewListDataKeys.SELECTED_REVIEW.`is`(dataId) -> selectedValue
+    SpaceReviewDataKeys.SELECTED_REVIEW.`is`(dataId) -> selectedValue
     else -> null
   }
 
@@ -76,7 +76,7 @@ internal class SpaceReviewsList(
 private class SpaceOpenCodeReviewDetailsAction : DumbAwareAction(SpaceBundle.messagePointer("action.open.review.details.text")) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val data = e.getData(SpaceReviewListDataKeys.SELECTED_REVIEW) ?: return
+    val data = e.getData(SpaceReviewDataKeys.SELECTED_REVIEW) ?: return
     val selectedReviewVm = e.getData(SpaceReviewDataKeys.SELECTED_REVIEW_VM) ?: return
     selectedReviewVm.selectedReview.value = data
 

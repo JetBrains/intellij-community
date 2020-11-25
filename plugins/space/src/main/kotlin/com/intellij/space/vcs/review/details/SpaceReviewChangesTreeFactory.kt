@@ -5,6 +5,9 @@ import circlet.client.api.GitCommitChangeType
 import circlet.client.api.GitFile
 import circlet.client.api.isDirectory
 import circlet.code.api.ChangeInReview
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -24,6 +27,7 @@ import javax.swing.JComponent
 
 internal object SpaceReviewChangesTreeFactory {
   fun create(project: Project,
+             parentPanel: JComponent,
              changesVm: SpaceReviewChangesVm,
              spaceDiffVm: Property<SpaceDiffVm>): JComponent {
 
@@ -63,6 +67,10 @@ internal object SpaceReviewChangesTreeFactory {
         // do not reset selection to zero
         if (!selection.isEmpty) changesVm.listSelection.value = selection
     }
+    DataManager.registerDataProvider(parentPanel) {
+      if (tree.isShowing) tree.getData(it) else null
+    }
+    tree.installPopupHandler(ActionManager.getInstance().getAction("space.review.changes.popup") as ActionGroup)
     return ScrollPaneFactory.createScrollPane(tree, true)
   }
 

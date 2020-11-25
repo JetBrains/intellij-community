@@ -29,7 +29,7 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
     val selectedChange = diffRequestData.selectedChangeInReview
     val discussions = changesVm.changes.value?.get(selectedChange.repository)?.discussions ?: return
     val project = context.project!!
-    val lifetime = diffRequestData.lifetime.next()
+    val lifetime = diffRequestData.diffExtensionLifetimes.next()
     val client = changesVm.client
 
     viewer as DiffViewerBase

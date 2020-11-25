@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.space.ui.LoadableListVmImpl
 import com.intellij.space.ui.bindScroll
 import com.intellij.space.ui.toLoadable
+import com.intellij.space.vcs.review.SpaceReviewDataKeys
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ListUtil
 import com.intellij.ui.PopupHandler
@@ -52,7 +53,7 @@ object SpaceReviewListFactory {
     bindScroll(listVm.lifetime, scrollableList, LoadableListVmImpl(listVm.isLoading, listVm.reviews.toLoadable()), reviewsList)
 
     DataManager.registerDataProvider(scrollableList) { dataId ->
-      if (SpaceReviewListDataKeys.REVIEWS_LIST_VM.`is`(dataId)) listVm else null
+      if (SpaceReviewDataKeys.REVIEWS_LIST_VM.`is`(dataId)) listVm else null
     }
 
     val disposable = Disposer.newDisposable()

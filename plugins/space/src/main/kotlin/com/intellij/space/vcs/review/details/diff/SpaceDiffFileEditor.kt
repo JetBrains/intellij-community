@@ -19,7 +19,7 @@ internal class SpaceDiffFileEditor(project: Project, spaceDiffFile: SpaceDiffFil
   private val editorLifetime = LifetimeSource()
 
   private val diffProcessor: MutableDiffRequestChainProcessor = MutableDiffRequestChainProcessor(project, null)
-  private val chainBuilder: SpaceDiffRequestChainBuilder = SpaceDiffRequestChainBuilder(editorLifetime, project, spaceDiffFile)
+  private val chainBuilder: SpaceDiffRequestChainBuilder = SpaceDiffRequestChainBuilder(editorLifetime, project, spaceDiffFile.diffVm, spaceDiffFile.changesVm)
 
   init {
     Disposer.register(this, Disposable { editorLifetime.terminate() })

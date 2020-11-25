@@ -4,5 +4,5 @@ package com.intellij.space.vcs.review.details.diff
 import com.intellij.openapi.util.Key
 
 internal object SpaceDiffKeys {
-  val DIFF_REQUEST_DATA = Key.create<DiffRequestData>("space.review.diff.request.data")
+  val DIFF_REQUEST_DATA = Key.create<SpaceReviewDiffRequestData>("space.review.diff.request.data")
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
+import com.intellij.space.vcs.review.SpaceReviewDataKeys
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.UIUtil
@@ -62,6 +63,13 @@ internal class SpaceReviewDetails(project: Project,
       val tabs = object : SingleHeightTabs(project, uiDisposable) {
         override fun adjust(each: TabInfo?) {}
       }.apply {
+        setDataProvider { dataId ->
+          when {
+            SpaceReviewDataKeys.REVIEW_DETAILS_VM.`is`(dataId) -> detailsVm
+            else -> null
+          }
+        }
+
         addTab(detailsTabInfo)
         addTab(commitsTabInfo)
       }
