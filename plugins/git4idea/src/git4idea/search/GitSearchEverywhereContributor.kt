@@ -44,13 +44,6 @@ import javax.swing.ListCellRenderer
 
 class GitSearchEverywhereContributor(private val project: Project) : WeightedSearchEverywhereContributor<Any>, DumbAware {
 
-  // higher priority -> higher position
-  private val COMMIT_BY_HASH_PRIORITY = 0 - 10
-  private val LOCAL_BRANCH_PRIORITY = 0 - 20
-  private val REMOTE_BRANCH_PRIORITY = 0 - 30
-  private val TAG_PRIORITY = 0 - 40
-  private val COMMIT_BY_MESSAGE_PRIORITY = 0 - 50
-
   override fun fetchWeightedElements(
     pattern: String,
     progressIndicator: ProgressIndicator,
@@ -72,7 +65,7 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       }?.let { commitId ->
         val id = storage.getCommitIndex(commitId.hash, commitId.root)
         dataManager.miniDetailsGetter.loadCommitsData(listOf(id), {
-          consumer.process(FoundItemDescriptor(it, COMMIT_BY_HASH_PRIORITY))
+          consumer.process(FoundItemDescriptor(it, GitSearchEverywhereItemType.COMMIT_BY_HASH.weight))
         }, progressIndicator)
       }
     }
@@ -86,11 +79,11 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       progressIndicator.checkCanceled()
       if (matcher.matches(it.name)) {
         val weight = when (it.type) {
-          GitRefManager.TAG -> TAG_PRIORITY
-          GitRefManager.LOCAL_BRANCH -> LOCAL_BRANCH_PRIORITY
-          GitRefManager.REMOTE_BRANCH -> REMOTE_BRANCH_PRIORITY
-          GitRefManager.HEAD -> LOCAL_BRANCH_PRIORITY
-          else -> REMOTE_BRANCH_PRIORITY
+          GitRefManager.LOCAL_BRANCH -> GitSearchEverywhereItemType.LOCAL_BRANCH.weight
+          GitRefManager.HEAD -> GitSearchEverywhereItemType.LOCAL_BRANCH.weight
+          GitRefManager.REMOTE_BRANCH -> GitSearchEverywhereItemType.REMOTE_BRANCH.weight
+          GitRefManager.TAG -> GitSearchEverywhereItemType.TAG.weight
+          else -> GitSearchEverywhereItemType.REMOTE_BRANCH.weight
         }
         consumer.process(FoundItemDescriptor(it, weight))
       }
@@ -105,7 +98,7 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       index.dataGetter?.filterMessages(VcsLogFilterObject.fromPattern(pattern)) { commitIdx ->
         progressIndicator.checkCanceled()
         dataManager.miniDetailsGetter.loadCommitsData(listOf(commitIdx), {
-          consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE_PRIORITY))
+          consumer.process(FoundItemDescriptor(it, GitSearchEverywhereItemType.COMMIT_BY_MESSAGE.weight))
         }, progressIndicator)
       }
     }
@@ -117,7 +110,8 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
     do {
       indicator.checkCanceled()
       dataPack = dataManager.dataPack
-    } while (!dataPack.isFull && Thread.sleep(1000) == Unit)
+    }
+    while (!dataPack.isFull && Thread.sleep(1000) == Unit)
     return dataPack
   }
 
@@ -214,7 +208,7 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
 
   override fun isShownInSeparateTab(): Boolean =
     ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(GitVcs.NAME) &&
-      VcsProjectLog.getInstance(project).logManager != null
+    VcsProjectLog.getInstance(project).logManager != null
 
   override fun getDataForItem(element: Any, dataId: String): Any? = null
 
