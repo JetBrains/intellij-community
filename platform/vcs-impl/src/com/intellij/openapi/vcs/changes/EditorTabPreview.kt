@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.DumbAwareAction
@@ -129,7 +130,14 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     updatePreviewProcessor?.refresh(false)
     if (!hasContent()) return false
 
-    openPreview(project, previewFile, focusEditor, escapeHandler)
+    val editors = openPreview(project, previewFile, focusEditor)
+
+    escapeHandler?.let { handler ->
+      for (editor in editors) {
+        registerEscapeHandler(editor, handler)
+      }
+    }
+
     return true
   }
 
@@ -143,13 +151,12 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
   }
 
   companion object {
-    fun openPreview(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean, escapeHandler: Runnable? = null) {
-      val wasAlreadyOpen = FileEditorManager.getInstance(project).isFileOpen(file)
-      val diffPreviewFilesManager = EditorDiffPreviewFilesManager.getInstance(project)
-      val editor = diffPreviewFilesManager.openFile(file, focusEditor).singleOrNull() ?: return
+    fun openPreview(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean): Array<out FileEditor> {
+      return EditorDiffPreviewFilesManager.getInstance(project).openFile(file, focusEditor)
+    }
 
-      if (wasAlreadyOpen || escapeHandler == null) return
-      EditorTabPreviewEscapeAction(escapeHandler).registerCustomShortcutSet(ESCAPE, editor.component, editor)
+    fun registerEscapeHandler(editor: FileEditor, handler: Runnable) {
+      EditorTabPreviewEscapeAction(handler).registerCustomShortcutSet(ESCAPE, editor.component, editor)
     }
   }
 }
