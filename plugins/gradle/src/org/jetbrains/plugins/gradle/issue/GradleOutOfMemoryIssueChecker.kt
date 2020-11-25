@@ -45,7 +45,7 @@ class GradleOutOfMemoryIssueChecker : GradleIssueChecker {
     if (commonGradleProperties.isFile()) {
       val openFileQuickFix = OpenFileQuickFix(commonGradleProperties, "org.gradle.jvmargs")
       quickFixDescription.append(
-        "$subItemPadding<a href=\"${openFileQuickFix.id}\">gradle.properties</a> in in GRADLE_USER_HOME directory\n")
+        "$subItemPadding<a href=\"${openFileQuickFix.id}\">gradle.properties</a> in GRADLE_USER_HOME directory\n")
       quickFixes.add(openFileQuickFix)
     }
 
