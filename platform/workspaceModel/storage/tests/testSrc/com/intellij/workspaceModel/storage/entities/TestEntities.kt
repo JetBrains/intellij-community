@@ -22,6 +22,10 @@ internal object AnotherSource : EntitySource {
   override fun toString(): String = "AnotherSource"
 }
 
+internal object MyDummyParentSource : DummyParentEntitySource {
+  override fun toString(): String = "DummyParent"
+}
+
 // ---------------------------------------
 
 internal class SampleEntityData : WorkspaceEntityData<SampleEntity>() {

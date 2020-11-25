@@ -32,10 +32,7 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -190,7 +187,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       childActivity = childActivity.endAndStart("(wm) Add changes to store")
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-          updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource }, builder.toStorage())
+          updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
+                                    || it is DummyParentEntitySource }, builder.toStorage())
         }
       }
       sourcesToSave.clear()

@@ -322,7 +322,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           replaceMap[localNodePid] = matchedEntityId
           val dataDiffersByProperties = !localNode.equalsIgnoringEntitySource(matchedEntityData)
           val dataDiffersByEntitySource = localNode.entitySource != matchedEntityData.entitySource
-          if (localNode.hasPersistentId() && (dataDiffersByEntitySource || dataDiffersByProperties)) {
+          if (localNode.hasPersistentId() && (dataDiffersByEntitySource || dataDiffersByProperties) && matchedEntityData.entitySource !is DummyParentEntitySource) {
             // Entity exists in local store, but has changes. Generate replace operation
             replaceOperation(matchedEntityData, replaceWith, localNode, matchedEntityId, dataDiffersByProperties, dataDiffersByEntitySource)
           }
