@@ -34,8 +34,9 @@ public final class ResourceUtil {
     List<String> bundles = calculateBundleNames(fixedPath, Locale.getDefault());
     for (String bundle : bundles) {
       InputStream stream = loader.getResourceAsStream(bundle + "/" + fileName);
-      if (stream == null) continue;
-
+      if (stream == null) {
+        continue;
+      }
       return stream;
     }
 
@@ -66,8 +67,7 @@ public final class ResourceUtil {
   /**
    * Copied from java.util.ResourceBundle implementation
    */
-  @NotNull
-  private static List<String> calculateBundleNames(@NotNull String baseName, @NotNull Locale locale) {
+  private static @NotNull List<String> calculateBundleNames(@NotNull String baseName, @NotNull Locale locale) {
     final List<String> result = new ArrayList<>(3);
 
     result.add(0, baseName);
@@ -110,21 +110,20 @@ public final class ResourceUtil {
     return result;
   }
 
-  @NotNull
-  public static String loadText(@NotNull URL url) throws IOException {
+  public static @NotNull String loadText(@NotNull URL url) throws IOException {
     return loadText(URLUtil.openStream(url));
   }
 
-  @NotNull
-  public static String loadText(@NotNull InputStream in) throws IOException {
+  public static @NotNull String loadText(@NotNull InputStream in) throws IOException {
     InputStream inputStream = in instanceof BufferedInputStream ? in : new BufferedInputStream(in);
-
     try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
       StringBuilder text = new StringBuilder();
       char[] buf = new char[5000];
       while (reader.ready()) {
-        final int length = reader.read(buf);
-        if (length == -1) break;
+        int length = reader.read(buf);
+        if (length == -1) {
+          break;
+        }
         text.append(buf, 0, length);
       }
       return text.toString();
