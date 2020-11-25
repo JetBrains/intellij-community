@@ -2,8 +2,33 @@
 <problems>
   <problem>
     <file>A.java</file>
-    <line>3</line>
+    <line>5</line>
     <description>Variable &lt;code&gt;i&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>7</line>
+    <description>Variable &lt;code&gt;k&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>10</line>
+    <description>Variable &lt;code&gt;unusedStr1&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>13</line>
+    <description>Variable &lt;code&gt;unusedStr3&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>18</line>
+    <description>Variable &lt;code&gt;unusedStr5&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>21</line>
+    <description>Variable &lt;code&gt;unusedStr7&lt;/code&gt; is never used</description>
   </problem>
 </problems>
 
