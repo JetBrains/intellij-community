@@ -8,6 +8,7 @@
 #include <vector>                           // std::vector
 #include <sstream>                          // std::stringstream
 #include <type_traits>                      // std::decay_t, std::is_base_of
+#include <filesystem>                       // std::filesystem::path
 #include <cassert>                          // assert
 
 
@@ -81,6 +82,49 @@ namespace intellij::ui::win::jni
             return std::move(description);
         }
 
+        bool compareUpdateWStringProperty(PROPVARIANT& property, const WCHAR* expectedValue)
+        {
+            if (property.vt == VT_EMPTY)
+            {
+                if (expectedValue == nullptr)
+                    return false;
+            }
+            else if (property.vt == VT_LPWSTR)
+            {
+                if ( (expectedValue != nullptr) && (StrCmpW(property.pwszVal, expectedValue) == 0) )
+                    return false;
+            }
+
+            constexpr std::string_view thisCtxName = "intellij::ui::win::jni";
+
+            auto comResult = PropVariantClear(&property);
+            if (FAILED(comResult))
+                errors::throwCOMException(
+                    comResult,
+                    "PropVariantClear failed",
+                    __func__,
+                    thisCtxName
+                );
+
+            if (expectedValue == nullptr)
+            {
+                PropVariantInit(&property);
+            }
+            else
+            {
+                comResult = InitPropVariantFromString(expectedValue, &property);
+                if (FAILED(comResult))
+                    errors::throwCOMException(
+                        comResult,
+                        "InitPropVariantFromString failed",
+                        __func__,
+                        thisCtxName
+                    );
+            }
+
+            return true;
+        }
+
     } // namespace
 
 
@@ -105,8 +149,7 @@ namespace intellij::ui::win::jni
 
     void WinShellIntegrationBridge::initialize(
         JNIEnv* jEnv,
-        [[maybe_unused]] jclass jClass,
-        jstring jAppUserModelId) noexcept
+        [[maybe_unused]] jobject jThis) noexcept
     {
         try
         {
@@ -116,14 +159,6 @@ namespace intellij::ui::win::jni
 
             if (storage.has_value())
                 throw std::logic_error("intellij::ui::win::jni::WinShellIntegrationBridge has already been initialized");
-
-            if (jAppUserModelId != nullptr)
-            {
-                const auto appUserModelId = jStringToWideString(jEnv, jAppUserModelId);
-
-                if (Application::getInstance().obtainAppUserModelId() != appUserModelId)
-                    Application::getInstance().setAppUserModelId(appUserModelId);
-            }
 
             storage.emplace(PrivateCtorTag{});
         }
@@ -154,13 +189,55 @@ namespace intellij::ui::win::jni
     }
 
 
-    void WinShellIntegrationBridge::clearRecentTasksList(
-        JNIEnv* jEnv,
-        jclass jClass) noexcept
+    void WinShellIntegrationBridge::setAppUserModelId(
+        JNIEnv *jEnv,
+        [[maybe_unused]] jobject jThis,
+        jstring jAppUserModelId) noexcept
     {
         try
         {
-            return (void)getInstance().clearRecentTasksListImpl(jEnv, jClass);
+            if (jAppUserModelId == nullptr)
+                throw std::logic_error{ "jAppUserModelId == nullptr" };
+
+            const auto appUserModelId = jStringToWideString(jEnv, jAppUserModelId);
+
+            if (Application::getInstance().obtainAppUserModelId() != appUserModelId)
+                Application::getInstance().setAppUserModelId(appUserModelId);
+        }
+        catch (const jthrowable& javaErrWillBeThrown)
+        {
+            jEnv->DeleteLocalRef(javaErrWillBeThrown);
+        }
+        catch (const std::system_error& err)
+        {
+            handleException(err, jEnv, __func__);
+        }
+        catch (const std::runtime_error& err)
+        {
+            handleException(err, jEnv, __func__);
+        }
+        catch (const std::logic_error& err)
+        {
+            handleException(err, jEnv, __func__);
+        }
+        catch (const std::exception& err)
+        {
+            handleException(err, jEnv, __func__);
+        }
+        catch (...)
+        {
+            handleUnknownException(jEnv, __func__);
+        }
+    }
+
+
+    void WinShellIntegrationBridge::clearRecentTasksList(
+        JNIEnv* jEnv,
+        jobject jThis) noexcept
+    {
+        try
+        {
+            return (void)getInstance().clearRecentTasksListImpl(jEnv, jThis);
         }
         catch (const jthrowable& javaErrWillBeThrown)
         {
@@ -190,7 +267,7 @@ namespace intellij::ui::win::jni
 
     void WinShellIntegrationBridge::clearRecentTasksListImpl( // NOLINT(readability-convert-member-functions-to-static)
         JNIEnv* jEnv,
-        [[maybe_unused]] jclass jClass) noexcept(false)
+        [[maybe_unused]] jobject jThis) noexcept(false)
     {
         assert( (jEnv != nullptr) );
 
@@ -202,12 +279,12 @@ namespace intellij::ui::win::jni
 
     void WinShellIntegrationBridge::setRecentTasksList(
         JNIEnv* jEnv,
-        jclass jClass,
+        jobject jThis,
         jobjectArray jTasks) noexcept
     {
         try
         {
-            return (void)getInstance().setRecentTasksListImpl(jEnv, jClass, jTasks);
+            return (void)getInstance().setRecentTasksListImpl(jEnv, jThis, jTasks);
         }
         catch (const jthrowable& javaErrWillBeThrown)
         {
@@ -237,7 +314,7 @@ namespace intellij::ui::win::jni
 
     void WinShellIntegrationBridge::setRecentTasksListImpl( // NOLINT(readability-convert-member-functions-to-static)
         JNIEnv* jEnv,
-        [[maybe_unused]] jclass jClass,
+        [[maybe_unused]] jobject jThis,
         jobjectArray jTasks) noexcept(false)
     {
         assert( (jEnv != nullptr) );
@@ -293,6 +370,181 @@ namespace intellij::ui::win::jni
     }
 
 
+    jstring WinShellIntegrationBridge::findAndPatchShortcut(
+        JNIEnv* jEnv,
+        jobject jThis,
+        jstring jShortcutTargetPath,
+        jobjectArray jShortcutsPaths,
+        jstring jNewAppUserModelId) noexcept
+    {
+        try
+        {
+            return getInstance().findAndPatchShortcutImpl(
+                jEnv,
+                jThis,
+                jShortcutTargetPath,
+                jShortcutsPaths,
+                jNewAppUserModelId
+            );
+        }
+        catch (const jthrowable& javaErrWillBeThrown)
+        {
+            jEnv->DeleteLocalRef(javaErrWillBeThrown);
+        }
+        catch (const std::system_error& err)
+        {
+            handleException(err, jEnv, __func__);
+        }
+        catch (const std::runtime_error& err)
+        {
+            handleException(err, jEnv, __func__);
+        }
+        catch (const std::logic_error& err)
+        {
+            handleException(err, jEnv, __func__);
+        }
+        catch (const std::exception& err)
+        {
+            handleException(err, jEnv, __func__);
+        }
+        catch (...)
+        {
+            handleUnknownException(jEnv, __func__);
+        }
+
+        return nullptr;
+    }
+
+    jstring WinShellIntegrationBridge::findAndPatchShortcutImpl(
+        JNIEnv* jEnv,
+        [[maybe_unused]] jobject jThis,
+        jstring jShortcutTargetPath,
+        jobjectArray jShortcutsPaths,
+        jstring jNewAppUserModelId) noexcept(false)
+    {
+        assert( (jEnv != nullptr) );
+
+        ensureJNINoErrors(*jEnv);
+
+        const jsize shortcutsCount = jEnv->GetArrayLength(jShortcutsPaths);
+        ensureJNINoErrors(*jEnv);
+
+        if (shortcutsCount < 1)
+            return nullptr;
+
+        const std::optional<WideString> newAppUserModelId = [jEnv, jNewAppUserModelId] {
+            std::optional<WideString> result;
+            if (jNewAppUserModelId != nullptr)
+                result.emplace(jStringToWideString(jEnv, jNewAppUserModelId));
+            return result;
+        }();
+        ensureJNINoErrors(*jEnv);
+
+        CComPtr<IShellLinkW> shortcutNative;
+        auto comResult = shortcutNative.CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC);
+        if (FAILED(comResult))
+            errors::throwCOMException(
+                comResult,
+                "CoCreateInstance(CLSID_ShellLink) failed",
+                __func__,
+                thisCtxName
+            );
+
+        CComPtr<IPropertyStore> shortcutPropertiesNative;
+        comResult = shortcutNative.QueryInterface(&shortcutPropertiesNative);
+        if (FAILED(comResult))
+            errors::throwCOMException(
+                comResult,
+                "IShellLinkW::QueryInterface(IPropertyStore) failed",
+                __func__,
+                thisCtxName
+            );
+
+        CComPtr<IPersistFile> shortcutFileNative;
+        comResult = shortcutNative.QueryInterface(&shortcutFileNative);
+        if (FAILED(comResult))
+            errors::throwCOMException(
+                comResult,
+                "IShellLinkW::QueryInterface(IPersistFile) failed",
+                __func__,
+                thisCtxName
+            );
+
+        const std::filesystem::path shortcutTargetPath{ jStringToWideString(jEnv, jShortcutTargetPath) };
+        std::filesystem::path::string_type shortcutResolvedPathBuffer;
+        shortcutResolvedPathBuffer.resize(shortcutTargetPath.native().size() * 2, 0);
+
+        for (jsize i = 0; i < shortcutsCount; ++i)
+        {
+            const auto jShortcutPath = static_cast<jstring>(jEnv->GetObjectArrayElement(jShortcutsPaths, i));
+            ensureJNINoErrors(*jEnv);
+
+            if (jShortcutPath == nullptr)
+                throw std::logic_error{std::to_string(i) + "th passed path to a shortcut is null"};
+
+            const auto shortcutPath = jStringToWideString(jEnv, jShortcutPath);
+            ensureJNINoErrors(*jEnv);
+
+            comResult = shortcutFileNative->Load(shortcutPath.c_str(), STGM_READWRITE);
+            if (FAILED(comResult))
+                continue;
+
+            comResult = shortcutNative->GetPath(
+                shortcutResolvedPathBuffer.data(),
+                static_cast<int>(shortcutResolvedPathBuffer.size()) - 1,
+                nullptr,
+                SLGP_RAWPATH
+            );
+
+            if (FAILED(comResult))
+                continue;
+
+            std::error_code ec;
+            if (!std::filesystem::equivalent(shortcutTargetPath, shortcutResolvedPathBuffer.c_str(), ec))
+                continue;
+
+            {
+                PROPVARIANT shortcutAppUserModelIdProperty;
+                comResult = shortcutPropertiesNative->GetValue(PKEY_AppUserModel_ID, &shortcutAppUserModelIdProperty);
+                if (FAILED(comResult))
+                    errors::throwCOMException(
+                        comResult,
+                        "IPropertyStore::GetValue failed",
+                        __func__,
+                        thisCtxName
+                    );
+
+                const WCHAR *const newAppUserModelIdCStr = newAppUserModelId.has_value() ? newAppUserModelId->c_str()
+                                                                                         : nullptr;
+
+                if (!compareUpdateWStringProperty(shortcutAppUserModelIdProperty, newAppUserModelIdCStr)) {
+                    (void)PropVariantClear(&shortcutAppUserModelIdProperty);
+                    return jShortcutPath;
+                }
+
+                comResult = shortcutPropertiesNative->SetValue(PKEY_AppUserModel_ID, shortcutAppUserModelIdProperty);
+                (void)PropVariantClear(&shortcutAppUserModelIdProperty);
+            }
+
+            if (FAILED(comResult))
+                errors::throwCOMException(
+                    comResult,
+                    "IPropertyStore::SetValue failed",
+                    __func__,
+                    thisCtxName
+                );
+
+            comResult = shortcutFileNative->Save(nullptr, TRUE);
+            if (FAILED(comResult))
+                continue;
+
+            return jShortcutPath;
+        }
+
+        return nullptr;
+    }
+
+
     std::optional<WinShellIntegrationBridge>& WinShellIntegrationBridge::accessStorage() noexcept(false)
     {
         static const auto initializerThreadId = std::this_thread::get_id();
@@ -310,7 +562,7 @@ namespace intellij::ui::win::jni
         auto& storage = accessStorage();
 
         if (!storage.has_value())
-            throw std::logic_error{ "Instance of RecentTasks has not yet been initialized" };
+            throw std::logic_error{ "Instance of WinShellIntegrationBridge has not yet been initialized" };
 
         return *storage;
     }

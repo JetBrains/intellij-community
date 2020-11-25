@@ -11,8 +11,8 @@ add_library(winshellintegrationbridge SHARED
     "win_shell_integration_bridge.h"
     "win_shell_integration_bridge.cpp"
 
-    "com_intellij_ui_win_WinShellIntegration.h"
-    "com_intellij_ui_win_WinShellIntegration.cpp"
+    "com_intellij_ui_win_WinShellIntegration_Bridge.h"
+    "com_intellij_ui_win_WinShellIntegration_Bridge.cpp"
 
     "dllmain.cpp"
 )

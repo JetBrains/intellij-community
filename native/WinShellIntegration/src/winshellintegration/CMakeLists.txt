@@ -1,5 +1,7 @@
 # Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
+find_package(Threads REQUIRED)
+
 add_library(winshellintegration STATIC
     "include/winshellintegration.h"
 
@@ -33,6 +35,7 @@ target_include_directories(winshellintegration
 
 target_link_libraries(winshellintegration
     PUBLIC "shell32.lib"
+    PUBLIC "Threads::Threads"
 )
 
 target_compile_definitions(winshellintegration

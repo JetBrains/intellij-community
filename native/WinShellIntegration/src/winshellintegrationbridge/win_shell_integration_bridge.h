@@ -21,15 +21,32 @@ namespace intellij::ui::win::jni
     class WinShellIntegrationBridge final
     {
     public:
-        static void initialize(JNIEnv* jEnv, jclass jClass, jstring jAppUserModelId) noexcept;
+        static void initialize(JNIEnv* jEnv, jobject jThis) noexcept;
 
     public:
-        static void clearRecentTasksList(JNIEnv* jEnv, jclass jClass) noexcept;
+        static void setAppUserModelId(JNIEnv* jEnv, jobject jThis, jstring jAppUserModelId) noexcept;
+
+        static void clearRecentTasksList(JNIEnv* jEnv, jobject jThis) noexcept;
 
         static void setRecentTasksList(
             JNIEnv* jEnv,
-            jclass jClass,
+            jobject jThis,
             jobjectArray jTasks
+        ) noexcept;
+
+        static jint patchShortcutsIfResolvedTo(
+            JNIEnv* jEnv,
+            jobject jThis,
+            jstring jTargetPath,
+            jobjectArray jShortcutsPaths
+        ) noexcept;
+
+        static jstring findAndPatchShortcut(
+            JNIEnv* jEnv,
+            jobject jThis,
+            jstring jShortcutTargetPath,
+            jobjectArray jShortcutsPaths,
+            jstring jNewAppUserModelId
         ) noexcept;
 
     private:
@@ -50,12 +67,20 @@ namespace intellij::ui::win::jni
         static constexpr std::string_view thisCtxName = "intellij::ui::win::jni::WinShellIntegrationBridge";
 
     private: // impl
-        void clearRecentTasksListImpl(JNIEnv* jEnv, jclass jClass) noexcept(false);
+        void clearRecentTasksListImpl(JNIEnv* jEnv, jobject jThis) noexcept(false);
 
         void setRecentTasksListImpl(
             JNIEnv* jEnv,
-            jclass jClass,
+            jobject jThis,
             jobjectArray jTasks
+        ) noexcept(false);
+
+        jstring findAndPatchShortcutImpl(
+            JNIEnv* jEnv,
+            jobject jThis,
+            jstring jShortcutTargetPath,
+            jobjectArray jShortcutsPaths,
+            jstring jNewAppUserModelId
         ) noexcept(false);
 
     private:
