@@ -29,31 +29,6 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     fun getInstance() = service<ProjectPluginTrackerManager>()
 
     @JvmStatic
-    fun createPluginTrackerOrNull(project: Project?): ProjectPluginTracker? = project?.let { getInstance().createPluginTracker(it) }
-
-    @JvmStatic
-    @JvmOverloads
-    fun updatePluginsState(
-      descriptors: Collection<IdeaPluginDescriptor>,
-      state: PluginEnabledState,
-      project: Project? = null,
-      parentComponent: JComponent? = null,
-    ): Boolean {
-      if (!state.isPerProject) {
-        DisabledPluginsState.enablePlugins(
-          descriptors,
-          state.isEnabled,
-          false,
-        )
-      }
-
-      return if (state.isEnabled)
-        loadPlugins(descriptors)
-      else
-        getInstance().unloadPlugins(descriptors, project, parentComponent)
-    }
-
-    @JvmStatic
     internal fun loadPlugins(candidatesToLoad: Collection<PluginId>) {
       loadPlugins(
         candidatesToLoad.findPluginById()
@@ -137,6 +112,57 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       .trackers
       .values
       .forEach { it.unregister(pluginId) }
+  }
+
+  @JvmOverloads
+  fun updatePluginsState(
+    descriptors: Collection<IdeaPluginDescriptor>,
+    action: PluginEnableDisableAction,
+    project: Project? = null,
+    parentComponent: JComponent? = null,
+  ): Boolean {
+    assert(!action.isPerProject || project != null)
+
+    val pluginIds = descriptors.map { it.pluginId }
+    val pluginTracker = project?.let { createPluginTracker(it) }
+
+    fun startTrackingPerProject(enable: Boolean) = pluginTracker?.startTrackingPerProject(pluginIds, enable)
+
+    fun stopTrackingPerProject() = pluginTracker?.stopTrackingPerProject(pluginIds)
+
+    fun enablePlugins(enabled: Boolean) = DisabledPluginsState.enablePlugins(descriptors, enabled, false)
+
+    fun loadPlugins() = loadPlugins(descriptors)
+
+    fun unloadPlugins() = unloadPlugins(descriptors, project, parentComponent)
+
+    return when (action) {
+      PluginEnableDisableAction.ENABLE_GLOBALLY -> {
+        stopTrackingPerProject()
+        enablePlugins(true)
+        loadPlugins()
+      }
+      PluginEnableDisableAction.ENABLE_FOR_PROJECT -> {
+        startTrackingPerProject(true)
+        loadPlugins()
+      }
+      PluginEnableDisableAction.ENABLE_FOR_PROJECT_DISABLE_GLOBALLY -> {
+        startTrackingPerProject(true)
+        enablePlugins(false)
+        true
+      }
+      PluginEnableDisableAction.DISABLE_GLOBALLY -> {
+        stopTrackingPerProject()
+        enablePlugins(false)
+        unloadPlugins()
+      }
+      PluginEnableDisableAction.DISABLE_FOR_PROJECT -> {
+        startTrackingPerProject(false)
+        unloadPlugins()
+      }
+      PluginEnableDisableAction.DISABLE_FOR_PROJECT_ENABLE_GLOBALLY ->
+        false
+    }
   }
 
   internal fun unloadPlugins(

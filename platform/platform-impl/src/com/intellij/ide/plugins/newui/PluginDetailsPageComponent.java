@@ -869,11 +869,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> {
 
-    private EnableDisableAction(@NotNull PluginEnabledState newState) {
+    private EnableDisableAction(@NotNull PluginEnableDisableAction action) {
       super(
         null,
         PluginDetailsPageComponent.this.myPluginModel,
-        newState,
+        action,
         List.of(PluginDetailsPageComponent.this)
       );
     }
@@ -884,10 +884,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
 
     @Override
-    protected boolean isInvisible(@NotNull PluginEnabledState oldState) {
-      return super.isInvisible(oldState) ||
-             myNewState.isPerProject() && myRequiresRestart ||
-             myNewState == PluginEnabledState.DISABLED_FOR_PROJECT && myPluginIsRequired;
+    protected boolean isInvisibleFor(@NotNull PluginId pluginId) {
+      return super.isInvisibleFor(pluginId) ||
+             myRequiresRestart && myAction.isPerProject() ||
+             myPluginIsRequired &&
+             (myAction == PluginEnableDisableAction.DISABLE_FOR_PROJECT ||
+              myAction == PluginEnableDisableAction.DISABLE_FOR_PROJECT_ENABLE_GLOBALLY);
     }
   }
 

@@ -3,16 +3,19 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginEnableDisableAction;
 import com.intellij.ide.plugins.PluginEnabledState;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Producer;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.util.List;
@@ -27,11 +30,11 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
   protected final @NotNull MyPluginModel myPluginModel;
   protected final @NotNull List<C> mySelection;
 
-  protected SelectionBasedPluginModelAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String propertyKey,
+  protected SelectionBasedPluginModelAction(@NotNull @Nls String text,
                                             @Nullable ShortcutSet shortcutSet,
                                             @NotNull MyPluginModel pluginModel,
                                             @NotNull List<C> selection) {
-    super(IdeBundle.message(propertyKey));
+    super(text);
     setShortcutSet(shortcutSet == null ? CustomShortcutSet.EMPTY : shortcutSet);
 
     myPluginModel = pluginModel;
@@ -42,40 +45,35 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
   static abstract class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
 
-    protected final @NotNull PluginEnabledState myNewState;
+    protected final @NotNull PluginEnableDisableAction myAction;
 
     protected EnableDisableAction(@Nullable ShortcutSet shortcutSet,
                                   @NotNull MyPluginModel pluginModel,
-                                  @NotNull PluginEnabledState newState,
+                                  @NotNull PluginEnableDisableAction action,
                                   @NotNull List<C> selection) {
       super(
-        getActionTextPropertyKey(newState),
+        action.toString(),
         shortcutSet,
         pluginModel,
         selection
       );
 
-      myNewState = newState;
+      myAction = action;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       List<PluginId> pluginIds = mapNotNull(getAllDescriptors(), IdeaPluginDescriptor::getPluginId);
 
-      boolean isForceEnableAll = myNewState == PluginEnabledState.ENABLED &&
+      boolean isForceEnableAll = myAction == PluginEnableDisableAction.ENABLE_GLOBALLY &&
                                  exists(pluginIds, pluginId -> getState(pluginId) != PluginEnabledState.ENABLED);
       boolean disabled = pluginIds.isEmpty() ||
-                         myNewState.isPerProject() && (e.getProject() == null || !isPerProjectEnabled()) ||
-                         exists(pluginIds, this::isInvisibleFor);
+                         exists(pluginIds, this::isInvisibleFor) ||
+                         myAction.isPerProject() && (e.getProject() == null ||
+                                                     !isPerProjectEnabled() ||
+                                                     exists(pluginIds, EnableDisableAction::isPluginExcluded));
 
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabledAndVisible(isForceEnableAll || !disabled);
-
-      PluginId selectedPluginId = getOnlyItem(pluginIds);
-      if (myNewState == PluginEnabledState.ENABLED_FOR_PROJECT &&
-          selectedPluginId != null && getState(selectedPluginId) == PluginEnabledState.ENABLED) {
-        presentation.setText(IdeBundle.message("plugins.configurable.enable.for.current.project.only"));
-      }
+      e.getPresentation().setEnabledAndVisible(isForceEnableAll || !disabled);
     }
 
     private @NotNull PluginEnabledState getState(@NotNull PluginId pluginId) {
@@ -86,45 +84,25 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
     public void actionPerformed(@NotNull AnActionEvent e) {
       myPluginModel.changeEnableDisable(
         getAllDescriptors(),
-        myNewState
+        myAction
       );
     }
 
-    protected boolean isInvisible(@NotNull PluginEnabledState oldState) {
-      return myNewState == oldState ||
-             oldState == PluginEnabledState.DISABLED && myNewState == PluginEnabledState.DISABLED_FOR_PROJECT;
-    }
-
-    private boolean isInvisibleFor(@NotNull PluginId pluginId) {
-      return isInvisible(getState(pluginId)) ||
-             myNewState.isPerProject() && isPluginExcluded(pluginId.getIdString());
+    protected boolean isInvisibleFor(@NotNull PluginId pluginId) {
+      return !myAction.isApplicable(getState(pluginId));
     }
 
     private @NotNull Set<? extends IdeaPluginDescriptor> getAllDescriptors() {
       return map2SetNotNull(mySelection, this::getPluginDescriptor);
     }
 
-    private static @NotNull @NonNls String getActionTextPropertyKey(@NotNull PluginEnabledState newState) {
-      switch (newState) {
-        case ENABLED_FOR_PROJECT:
-          return "plugins.configurable.enable.for.current.project";
-        case ENABLED:
-          return "plugins.configurable.enable.for.all.projects";
-        case DISABLED_FOR_PROJECT:
-          return "plugins.configurable.disable.for.current.project";
-        case DISABLED:
-          return "plugins.configurable.disable.for.all.projects";
-        default:
-          throw new IllegalArgumentException();
-      }
-    }
-
     private static boolean isPerProjectEnabled() {
       return Registry.is("ide.plugins.per.project", false);
     }
 
-    private static boolean isPluginExcluded(@NotNull @NonNls String pluginIdString) {
-      return split(Registry.stringValue("ide.plugins.per.project.exclusion.list"), ",").contains(pluginIdString);
+    private static boolean isPluginExcluded(@NotNull PluginId pluginId) {
+      return split(Registry.stringValue("ide.plugins.per.project.exclusion.list"), ",")
+        .contains(pluginId.getIdString());
     }
   }
 
@@ -137,7 +115,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
                               @NotNull JComponent uiParent,
                               @NotNull List<C> selection) {
       super(
-        "plugins.configurable.uninstall.button",
+        IdeBundle.message("plugins.configurable.uninstall.button"),
         shortcutSet,
         pluginModel,
         selection
@@ -181,19 +159,19 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
   }
 
   static <C extends JComponent> void addActionsTo(@NotNull DefaultActionGroup group,
-                                                  @NotNull Function<@NotNull PluginEnabledState, @NotNull ? extends EnableDisableAction<C>> createEnableDisableAction,
+                                                  @NotNull Function<@NotNull PluginEnableDisableAction, @NotNull ? extends EnableDisableAction<C>> createEnableDisableAction,
                                                   @NotNull Producer<@NotNull ? extends UninstallAction<C>> createUninstallAction) {
-    PluginEnabledState[] states = PluginEnabledState.values();
-    for (int i = 0; i < states.length; i++) {
-      group.add(createEnableDisableAction.apply(states[i]));
-      if ((i + 1) % 2 == 0) {
+    PluginEnableDisableAction[] actions = PluginEnableDisableAction.values();
+    for (int i = 0; i < actions.length; i++) {
+      group.add(createEnableDisableAction.apply(actions[i]));
+      if ((i + 1) % 3 == 0) {
         group.addSeparator();
       }
     }
     group.add(createUninstallAction.produce());
   }
 
-  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<@NotNull PluginEnabledState, @NotNull ? extends EnableDisableAction<C>> createEnableDisableAction,
+  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<@NotNull PluginEnableDisableAction, @NotNull ? extends EnableDisableAction<C>> createEnableDisableAction,
                                                                      @NotNull Producer<@NotNull ? extends UninstallAction<C>> createUninstallAction) {
     DefaultActionGroup result = new DefaultActionGroup();
     addActionsTo(

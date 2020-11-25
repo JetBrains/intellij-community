@@ -883,7 +883,7 @@ public class PluginManagerConfigurable
               null,
               (__, ___) -> myPluginModel.changeEnableDisable(
                 Set.copyOf(group.descriptors),
-                PluginEnabledState.getState(group.rightAction.getText().startsWith("Enable"))
+                PluginEnableDisableAction.globally(group.rightAction.getText().startsWith("Enable"))
               )
             );
             group.titleWithEnabled(myPluginModel);
@@ -1579,7 +1579,7 @@ public class PluginManagerConfigurable
       if (!descriptors.isEmpty()) {
         myPluginModel.changeEnableDisable(
           descriptors,
-          PluginEnabledState.getState(myEnable)
+          PluginEnableDisableAction.globally(myEnable)
         );
       }
     }

@@ -191,7 +191,11 @@ public class ListPluginComponent extends JPanel {
           }
           else {
             myEnableDisableButton = createEnableDisableButton(
-              __ -> myPluginModel.changeEnableDisable(Set.of(myPlugin), myPluginModel.getState(myPlugin).getInverted()));
+              __ -> myPluginModel.changeEnableDisable(
+                Set.of(myPlugin),
+                PluginEnableDisableAction.globally(myPluginModel.getState(myPlugin).isEnabled())
+              )
+            );
           }
 
           myLayout.addButtonComponent(myEnableDisableButton);
@@ -844,29 +848,29 @@ public class ListPluginComponent extends JPanel {
     }
 
     return new EnableDisableAction(
-      PluginEnabledState.getState(setTrue || !firstEnabled),
+      PluginEnableDisableAction.globally(setTrue || !firstEnabled),
       selection
     );
   }
 
   private final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> {
 
-    private EnableDisableAction(@NotNull PluginEnabledState newState,
+    private EnableDisableAction(@NotNull PluginEnableDisableAction action,
                                 @NotNull List<ListPluginComponent> selection) {
       this(
         null,
-        newState,
+        action,
         selection
       );
     }
 
     private EnableDisableAction(@Nullable ShortcutSet shortcutSet,
-                                @NotNull PluginEnabledState newState,
+                                @NotNull PluginEnableDisableAction action,
                                 @NotNull List<ListPluginComponent> selection) {
       super(
         shortcutSet,
         ListPluginComponent.this.myPluginModel,
-        newState,
+        action,
         selection
       );
     }

@@ -52,9 +52,9 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
     Set<IdeaPluginDescriptor> autoSwitchedIds = enabled ?
                                                 getPluginsIdsToEnable(plugin) :
                                                 getPluginsIdsToDisable(plugin);
-    boolean enabledWithoutRestart = ProjectPluginTrackerManager.updatePluginsState(
+    boolean enabledWithoutRestart = ProjectPluginTrackerManager.getInstance().updatePluginsState(
       autoSwitchedIds,
-      enabled ? PluginEnabledState.ENABLED : PluginEnabledState.DISABLED
+      PluginEnableDisableAction.globally(enabled)
     );
 
     if (autoSwitchedIds.size() > 1) {

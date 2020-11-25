@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -80,7 +81,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private final Set<IdeaPluginDescriptorImpl> myDynamicPluginsToUninstall = new HashSet<>();
   private final Set<IdeaPluginDescriptorImpl> myPluginsToRemoveOnCancel = new HashSet<>();
 
-  private final @NotNull Map<IdeaPluginDescriptor, PluginEnabledState> myDiff = new HashMap<>();
+  private final @NotNull Map<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> myDiff = new HashMap<>();
 
   private final Set<PluginId> myErrorPluginsToDisable = new HashSet<>();
 
@@ -207,7 +208,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public void cancel(@Nullable JComponent parentComponent) {
-    myDiff.forEach((key, value) -> setEnabled(key.getPluginId(), value));
+    myDiff.forEach((key, value) -> setEnabled(key.getPluginId(), value.getSecond()));
     myDiff.clear();
 
     myPluginsToRemoveOnCancel.forEach(pluginDescriptor -> PluginInstaller.uninstallDynamicPlugin(parentComponent, pluginDescriptor, false));
@@ -215,9 +216,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   private boolean applyEnableDisablePlugins(@Nullable JComponent parentComponent) {
-    EnumMap<PluginEnabledState, List<IdeaPluginDescriptor>> descriptorsByState = new EnumMap<>(PluginEnabledState.class);
+    EnumMap<PluginEnableDisableAction, List<IdeaPluginDescriptor>> descriptorsByAction = new EnumMap<>(PluginEnableDisableAction.class);
 
-    for (Map.Entry<IdeaPluginDescriptor, PluginEnabledState> entry : myDiff.entrySet()) {
+    for (Map.Entry<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> entry : myDiff.entrySet()) {
       IdeaPluginDescriptor descriptor = entry.getKey();
       PluginId pluginId = descriptor.getPluginId();
 
@@ -226,36 +227,22 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         continue;
       }
 
-      PluginEnabledState oldState = entry.getValue();
+      Pair<PluginEnableDisableAction, PluginEnabledState> pair = entry.getValue();
+      PluginEnabledState oldState = pair.getSecond();
       PluginEnabledState newState = getState(pluginId);
-      if (newState.isPerProject()) {
-        if (oldState == PluginEnabledState.ENABLED &&
-            newState == PluginEnabledState.ENABLED_FOR_PROJECT) {
-          ProjectPluginTrackerManager
-            .getInstance()
-            .stopTracking(pluginId);
-        }
-
-        Objects.requireNonNull(getPluginTracker())
-          .startTrackingPerProject(pluginId, newState.isEnabled());
-      }
-      else {
-        ProjectPluginTrackerManager
-          .getInstance()
-          .stopTracking(pluginId);
-      }
 
       boolean shouldEnable = newState.isEnabled();
       boolean isEnabled = oldState.isEnabled();
       if (shouldEnable != isEnabled || !shouldEnable && myErrorPluginsToDisable.contains(pluginId)) {
-        descriptorsByState
-          .computeIfAbsent(newState, __ -> new ArrayList<>())
+        descriptorsByAction
+          .computeIfAbsent(pair.getFirst(), __ -> new ArrayList<>())
           .add(descriptor);
       }
     }
 
-    for (Map.Entry<PluginEnabledState, List<IdeaPluginDescriptor>> entry : descriptorsByState.entrySet()) {
-      if (!ProjectPluginTrackerManager.updatePluginsState(entry.getValue(), entry.getKey(), getProject(), parentComponent)) {
+    ProjectPluginTrackerManager pluginTrackerManager = ProjectPluginTrackerManager.getInstance();
+    for (Map.Entry<PluginEnableDisableAction, List<IdeaPluginDescriptor>> entry : descriptorsByAction.entrySet()) {
+      if (!pluginTrackerManager.updatePluginsState(entry.getValue(), entry.getKey(), getProject(), parentComponent)) {
         return false;
       }
     }
@@ -827,20 +814,20 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public void changeEnableDisable(@NotNull Set<? extends IdeaPluginDescriptor> plugins,
-                                  @NotNull PluginEnabledState newState) {
-    enableRows(plugins, newState);
+                                  @NotNull PluginEnableDisableAction action) {
+    enableRows(plugins, action);
     updateAfterEnableDisable();
     runInvalidFixCallback();
   }
 
   @Override
   public void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
-    changeEnableDisable(plugins, PluginEnabledState.ENABLED);
+    changeEnableDisable(plugins, PluginEnableDisableAction.ENABLE_GLOBALLY);
   }
 
   @Override
   public void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
-    changeEnableDisable(plugins, PluginEnabledState.DISABLED);
+    changeEnableDisable(plugins, PluginEnableDisableAction.DISABLE_GLOBALLY);
   }
 
   void enableRequiredPlugins(@NotNull IdeaPluginDescriptor descriptor) {
@@ -875,13 +862,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   @Override
   protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor,
-                                               @NotNull PluginEnabledState newState) {
+                                               @NotNull Pair<PluginEnableDisableAction, PluginEnabledState> pair) {
     PluginId pluginId = descriptor.getPluginId();
-    PluginEnabledState oldState = myDiff.get(descriptor);
-    if (oldState == null) {
-      myDiff.put(descriptor, getState(pluginId));
+    Pair<PluginEnableDisableAction, PluginEnabledState> oldPair = myDiff.get(descriptor);
+
+    PluginEnabledState newState = pair.getSecond();
+    if (oldPair == null) {
+      myDiff.put(descriptor, Pair.create(pair.getFirst(), getState(pluginId)));
     }
-    else if (oldState == newState) {
+    else if (oldPair.getSecond() == newState) {
       myDiff.remove(descriptor);
     }
 
