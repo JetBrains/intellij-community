@@ -16,16 +16,22 @@
 package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.psi.resolve.PyCanonicalPathProvider
+import com.jetbrains.python.sdk.PythonSdkUtil
 import java.util.*
 
 /**
  * @author yole
  */
 class PyStdlibCanonicalPathProvider : PyCanonicalPathProvider {
-  override fun getCanonicalPath(qName: QualifiedName, foothold: PsiElement?): QualifiedName? {
-    return restoreStdlibCanonicalPath(qName)
+  override fun getCanonicalPath(symbol: PsiElement?, qName: QualifiedName, foothold: PsiElement?): QualifiedName? {
+    val virtualFile = PsiUtilCore.getVirtualFile(symbol)
+    if (virtualFile != null && foothold != null && PythonSdkUtil.isStdLib(virtualFile, PythonSdkUtil.findPythonSdk(foothold))) {
+      return restoreStdlibCanonicalPath(qName)
+    }
+    return null
   }
 }
 
