@@ -116,6 +116,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         if (myToggleListener != null) {
           myToggleListener.accept(s);
         }
+        logChange(state, e);
       }
 
       @Override
