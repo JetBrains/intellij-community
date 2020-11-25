@@ -165,6 +165,9 @@ public abstract class FileBasedIndex {
    * Inside the command it's safe to call index related stuff and
    * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to be happen here.
    *
+   * <p> Please use {@link DumbModeAccessType#ignoreDumbMode(Runnable)} or {@link DumbModeAccessType#ignoreDumbMode(ThrowableComputable)}
+   * since they produce less boilerplate code.
+   *
    * <p> In smart mode, the behavior is similar to direct command execution
    * @param dumbModeAccessType - defines in which manner command should be executed. Does a client expect only reliable data
    * @param command - a command to execute
