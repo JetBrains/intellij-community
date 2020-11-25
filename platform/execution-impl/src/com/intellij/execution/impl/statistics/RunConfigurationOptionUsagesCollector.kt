@@ -17,9 +17,8 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
 
     val optionId = EventFields.String("option_id", listOf("before.launch.editSettings", "before.launch.openToolWindow", "beforeRunTasks", "commandLineParameters", "coverage", "doNotBuildBeforeRun", "environmentVariables", "jrePath", "log.monitor", "mainClass", "module.classpath", "redirectInput", "runParallel", "shorten.command.line", "target.project.path", "vmParameters", "workingDirectory",
                                                                 "count", "junit.test.kind", "repeat", "testScope")) // junit
-    val configId = EventFields.StringValidatedByCustomRule("config_id", "run_config_id")
-    val modifyOption = GROUP.registerEvent("modify.run.option", optionId, configId, EventFields.InputEvent)
-    val removeOption = GROUP.registerEvent("remove.run.option", optionId, configId, EventFields.InputEvent)
+    val modifyOption = GROUP.registerEvent("modify.run.option", optionId, RunConfigurationTypeUsagesCollector.ID_FIELD, EventFields.InputEvent)
+    val removeOption = GROUP.registerEvent("remove.run.option", optionId, RunConfigurationTypeUsagesCollector.ID_FIELD, EventFields.InputEvent)
 
     @JvmStatic
     fun logModifyOption(project: Project?, option: String?, config: String?, inputEvent: FusInputEvent?) {
