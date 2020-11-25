@@ -181,6 +181,12 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     setSelected(selected);
     if (selected) {
       myComponent.scrollRectToVisible(new Rectangle(new Point(0, 50), myComponent.getPreferredSize()));
+    }
+    logChange(selected, e);
+  }
+
+  protected void logChange(boolean selected, @Nullable AnActionEvent e) {
+    if (selected) {
       FragmentStatisticsService.getInstance().logOptionModified(getProject(), getId(), myConfigId, e);
     }
     else {
