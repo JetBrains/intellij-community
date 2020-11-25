@@ -850,7 +850,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       @Override
       public void successfullyConverted(@NotNull Path backupDir) {
         reportMessage(1, InspectionsBundle.message(
-          "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
+          "inspection.application.project.was.successfully.converted.old.project.files.were.saved.to.0",
           backupDir.toString()));
       }
 
