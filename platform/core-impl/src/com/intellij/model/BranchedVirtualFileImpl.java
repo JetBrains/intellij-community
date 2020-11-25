@@ -219,4 +219,9 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
     return myOriginal != null && myBranch.equals(((BranchedVirtualFileImpl)obj).myBranch) &&
            myOriginal.equals(((BranchedVirtualFileImpl)obj).myOriginal);
   }
+
+  @Override
+  public String toString() {
+    return "BranchedVFile[" + myBranch.hashCode() + "]: " + getPresentableUrl();
+  }
 }

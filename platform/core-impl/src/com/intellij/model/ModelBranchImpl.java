@@ -189,6 +189,10 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
       //noinspection unchecked
       return (T)Objects.requireNonNull(PsiManager.getInstance(myProject).findDirectory(findFileCopy(((PsiDirectory)original).getVirtualFile())));
     }
+    if (original instanceof BranchableSyntheticPsiElement) {
+      //noinspection unchecked
+      return (T)((BranchableSyntheticPsiElement)original).obtainBranchCopy(this);
+    }
 
     PsiFile file = original.getContainingFile();
     assert file != null : original;
@@ -204,10 +208,12 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
     TextRange range = original.getRangeInElement();
     PsiReference[] refs = psiCopy.getReferences();
     T found = findSimilarReference(original, range, refs);
-    if (found == null) throw new AssertionError("Cannot find " + original +
-                                                " of " + original.getClass() +
-                                                " at " + range +
-                                                " in the copy, where references are " + Arrays.toString(refs));
+    if (found == null) {
+      throw new AssertionError("Cannot find " + original +
+                                                  " of " + original.getClass() +
+                                                  " at " + range +
+                                                  " in the copy, where references are " + Arrays.toString(refs));
+    }
     return found;
   }
 
