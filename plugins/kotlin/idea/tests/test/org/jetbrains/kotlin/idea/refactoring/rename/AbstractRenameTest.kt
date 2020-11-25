@@ -6,8 +6,9 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser
+import com.google.gson.JsonParser.parseString
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -129,7 +130,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                 Assert.fail("""Hint "$hintDirective" was expected""")
             }
 
-            if (renameObject["checkErrorsAfter"]?.asBoolean ?: false) {
+            if (renameObject["checkErrorsAfter"]?.asBoolean == true) {
                 val psiManager = myFixture.psiManager
                 val visitor = object : VirtualFileVisitor<Any>() {
                     override fun visitFile(file: VirtualFile): Boolean {
@@ -191,7 +192,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         doTestCommittingDocuments(context) {
             val aClass = context.javaFacade.findClass(classFQN, GlobalSearchScope.moduleScope(context.module))!!
 
-            val methodText = context.javaFacade.elementFactory.createMethodFromText(methodSignature + "{}", null)
+            val methodText = context.javaFacade.elementFactory.createMethodFromText("$methodSignature{}", null)
             val method = aClass.findMethodBySignature(methodText, false)
 
             if (method == null) throw IllegalStateException("Method with signature '$methodSignature' wasn't found in class $classFQN")
@@ -391,9 +392,7 @@ private fun String.toClassId(): ClassId {
 fun loadTestConfiguration(testFile: File): JsonObject {
     val fileText = FileUtil.loadFile(testFile, true)
 
-    val jsonParser = JsonParser()
-    val renameObject = jsonParser.parse(fileText) as JsonObject
-    return renameObject
+    return parseString(fileText) as JsonObject
 }
 
 fun runRenameProcessor(
