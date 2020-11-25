@@ -29,7 +29,6 @@ import javax.swing.event.DocumentEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
@@ -138,9 +137,9 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     identifierTable = processor.getIdentifierTable();
   }
 
-  private static @NotNull Set<URL> findSearchableOptions() throws IOException, URISyntaxException {
+  private static @NotNull Set<URL> findSearchableOptions() throws IOException {
     Set<URL> urls = new HashSet<>();
-    Set<ClassLoader> visited = new HashSet<>();
+    Set<ClassLoader> visited = Collections.newSetFromMap(new IdentityHashMap<>());
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
       ClassLoader classLoader = plugin.getPluginClassLoader();
       if (!visited.add(classLoader)) {
@@ -164,8 +163,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
           }
         }
         else {
-          Path file = Paths.get(url.toURI());
-          try (DirectoryStream<Path> paths = Files.newDirectoryStream(file)) {
+          try (DirectoryStream<Path> paths = Files.newDirectoryStream(Paths.get(url.getPath()))) {
             for (Path xml : paths) {
               if (xml.getFileName().toString().endsWith(SEARCHABLE_OPTIONS_XML) && Files.isRegularFile(xml)) {
                 urls.add(xml.toUri().toURL());
