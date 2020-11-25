@@ -7,23 +7,12 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
  * The latest state of the versioned item.
  */
 public class ItemLatestState {
-
   private final boolean myDefaultHead;
-
-  /**
-   * version number
-   */
   private final VcsRevisionNumber myNumber;
-
-  /**
-   * true if the item still exists in the remote repository
-   */
   private final boolean myItemExists;
 
   /**
-   * @param number      version number
-   * @param itemExists  true if the item still exists in the remote repository
-   * @param defaultHead true if default head
+   * @param itemExists true if the item still exists in the remote repository
    */
   public ItemLatestState(final VcsRevisionNumber number, final boolean itemExists, boolean defaultHead) {
     myNumber = number;
@@ -38,9 +27,6 @@ public class ItemLatestState {
     return myNumber;
   }
 
-  /**
-   * @return true if the item exists in the remote repository
-   */
   public boolean isItemExists() {
     return myItemExists;
   }
