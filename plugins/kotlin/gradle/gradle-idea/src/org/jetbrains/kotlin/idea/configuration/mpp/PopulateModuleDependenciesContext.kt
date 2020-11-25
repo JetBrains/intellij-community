@@ -61,15 +61,10 @@ internal fun PopulateModuleDependenciesContext.getDependencies(module: KotlinMod
     return dependenciesPreprocessor(module.dependencies.mapNotNull { id -> mppModel.dependencyMap[id] })
 }
 
-internal fun PopulateModuleDependenciesContext.getCompilations(sourceSet: KotlinSourceSet): List<KotlinCompilation> {
-    return mppModel.targets.flatMap { target -> target.compilations }
-        .filter { compilation -> compilation.dependsOnSourceSet(mppModel, sourceSet) }
-}
-
 internal fun PopulateModuleDependenciesContext.getCompilationsWithDependencies(
     sourceSet: KotlinSourceSet
 ): List<CompilationWithDependencies> {
-    return getCompilations(sourceSet).map { compilation -> CompilationWithDependencies(compilation, getDependencies(compilation)) }
+    return mppModel.getCompilations(sourceSet).map { compilation -> CompilationWithDependencies(compilation, getDependencies(compilation)) }
 }
 
 internal fun KotlinCompilation.dependsOnSourceSet(mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet): Boolean {
