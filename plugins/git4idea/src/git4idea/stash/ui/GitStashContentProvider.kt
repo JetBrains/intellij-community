@@ -55,7 +55,7 @@ class GitStashContentPreloader(val project: Project) : ChangesViewContentProvide
 }
 
 class GitStashContentVisibilityPredicate : NotNullFunction<Project, Boolean> {
-  override fun `fun`(project: Project) = isStashToolWindowAvailable()
+  override fun `fun`(project: Project) = isStashToolWindowAvailable(project)
 }
 
 class GitStashDisplayNameSupplier : Supplier<String> {
@@ -69,7 +69,7 @@ class GitStashStartupActivity : StartupActivity.Background {
     val gitStashTracker = project.service<GitStashTracker>()
     stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
-        if (isStashToolWindowAvailable()) {
+        if (isStashToolWindowAvailable(project)) {
           gitStashTracker.scheduleRefresh()
         }
         project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
