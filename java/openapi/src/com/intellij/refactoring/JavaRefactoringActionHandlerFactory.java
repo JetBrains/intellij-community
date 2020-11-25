@@ -13,7 +13,6 @@ public abstract class JavaRefactoringActionHandlerFactory {
    *
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
    * is not implemented.
-   * @return
    */
   public abstract RefactoringActionHandler createAnonymousToInnerHandler();
 
@@ -40,7 +39,6 @@ public abstract class JavaRefactoringActionHandlerFactory {
    *
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
    * accepts 1 {@code PsiClass}.
-   * @return
    */
   public abstract RefactoringActionHandler createTurnRefsToSuperHandler();
 
