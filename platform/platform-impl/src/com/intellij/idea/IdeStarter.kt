@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchBarsManager
+import com.intellij.ui.win.WinShellIntegration
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -93,6 +94,10 @@ open class IdeStarter : ApplicationStarter {
     if (java.lang.Boolean.getBoolean("ide.popup.enablePopupType")) {
       @Suppress("SpellCheckingInspection")
       System.setProperty("jbre.popupwindow.settype", "true")
+    }
+
+    if (SystemInfo.isWindows && WinShellIntegration.isAvailable) {
+      WinShellIntegration.getInstance()!!.updateAppUserModelId()
     }
 
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
@@ -246,6 +251,16 @@ private fun postOpenUiTasks(app: Application) {
   invokeLaterWithAnyModality("system dock menu") {
     SystemDock.updateMenu()
   }
+
+  if (SystemInfo.isWindows && WinShellIntegration.isAvailable) {
+    // should not be executed neither in IDE main thread nor in EDT
+    AppExecutorUtil.getAppExecutorService().execute {
+      runActivity("patch system Shell links on Windows") {
+        WinShellIntegration.getInstance()!!.patchSystemShortcuts()
+      }
+    }
+  }
+
   invokeLaterWithAnyModality("ScreenReader") {
     val generalSettings = GeneralSettings.getInstance()
     generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app, PropertyChangeListener { e ->
