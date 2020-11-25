@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
+
 public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, PrioritizedDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(FoldingModelImpl.class);
@@ -82,7 +84,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
           boolean relatedToPrecedingText = inlay.isRelatedToPrecedingText();
           if ((relatedToPrecedingText || offset != foldStartOffset) &&
               (!relatedToPrecedingText || offset != foldEndOffset) &&
-              EditorUtil.isInlayFolded(inlay)) {
+              !showWhenFolded(inlay)) {
             sum += inlay.getHeightInPixels();
           }
         }

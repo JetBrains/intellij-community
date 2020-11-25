@@ -168,8 +168,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
                                                                           @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     offset = Math.max(0, Math.min(myEditor.getDocument().getTextLength(), offset));
-    BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, priority, renderer);
-    inlay.putUserData(EditorUtil.SHOW_WHEN_FOLDED, showWhenFolded);
+    BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, showWhenFolded, priority, renderer);
     notifyAdded(inlay);
     return inlay;
   }
@@ -553,6 +552,10 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
       return true;
     });
     return joiner.toString();
+  }
+
+  public static boolean showWhenFolded(@NotNull Inlay<?> inlay) {
+    return inlay instanceof BlockInlayImpl && ((BlockInlayImpl<?>)inlay).myShowWhenFolded;
   }
 
   private class InlineElementsTree extends HardReferencingRangeMarkerTree<InlineInlayImpl<?>> {
