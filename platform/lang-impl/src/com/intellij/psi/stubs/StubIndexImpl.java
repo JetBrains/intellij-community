@@ -28,6 +28,7 @@ import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.storage.*;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -644,17 +646,23 @@ public final class StubIndexImpl extends StubIndexEx {
     }
 
     @Override
-    public @NotNull IndexStorage<K, Void> getIndexStorage() throws IOException {
-      return FileBasedIndex.USE_IN_MEMORY_INDEX
-             ? new InMemoryIndexStorage<>(myWrappedExtension.getKeyDescriptor())
-             : new VfsAwareMapIndexStorage<>(
-               IndexInfrastructure.getStorageFile(myIndexKey).toPath(),
-               myWrappedExtension.getKeyDescriptor(),
-               myWrappedExtension.getValueExternalizer(),
-               myWrappedExtension.getCacheSize(),
-               myWrappedExtension.keyIsUniqueForIndexedFile(),
-               myWrappedExtension.traceKeyHashToVirtualFileMapping()
-             );
+    public @NotNull IndexStorage<K, Void> createOrClearIndexStorage() throws IOException {
+      if (FileBasedIndex.USE_IN_MEMORY_INDEX) return new InMemoryIndexStorage<>(myWrappedExtension.getKeyDescriptor());
+
+      Path storageFile = IndexInfrastructure.getStorageFile(myIndexKey).toPath();
+      try {
+        return new VfsAwareMapIndexStorage<>(
+          storageFile,
+          myWrappedExtension.getKeyDescriptor(),
+          myWrappedExtension.getValueExternalizer(),
+          myWrappedExtension.getCacheSize(),
+          myWrappedExtension.keyIsUniqueForIndexedFile(),
+          myWrappedExtension.traceKeyHashToVirtualFileMapping()
+        );
+      } catch (IOException e) {
+        IOUtil.deleteAllFilesStartingWith(storageFile);
+        throw e;
+      }
     }
   }
 

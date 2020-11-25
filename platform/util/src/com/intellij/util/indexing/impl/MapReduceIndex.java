@@ -17,22 +17,19 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -81,8 +78,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
                            @NotNull IndexStorageLayout<Key, Value> indexStorageLayout,
                            @Nullable ReadWriteLock lock) throws IOException {
     this(extension,
-         indexStorageLayout.getIndexStorage(),
-         indexStorageLayout.getForwardIndex(),
+         indexStorageLayout.createOrClearIndexStorage(),
+         indexStorageLayout.createOrClearForwardIndex(),
          indexStorageLayout.getForwardIndexAccessor(),
          lock);
   }
@@ -91,27 +88,46 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable ForwardIndex forwardIndex,
                            @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                           @Nullable ReadWriteLock lock) {
+                           @Nullable ReadWriteLock lock) throws IOException {
+    this(extension, () -> storage, () -> forwardIndex, forwardIndexAccessor, lock);
+  }
+
+  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                           @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
+                           @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndex,
+                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
+                           @Nullable ReadWriteLock lock) throws IOException {
     myIndexId = extension.getName();
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
-    myStorage = storage;
-    myForwardIndex = forwardIndex;
-    myForwardIndexAccessor = forwardIndexAccessor;
-    myUseIntForwardIndex = forwardIndex instanceof IntForwardIndex && forwardIndexAccessor instanceof IntForwardIndexAccessor;
-    LOG.assertTrue(forwardIndex instanceof IntForwardIndex == forwardIndexAccessor instanceof IntForwardIndexAccessor,
-                   "Invalid index configuration");
-    myLock = lock == null ? new ReentrantReadWriteLock() : lock;
-    if (myForwardIndex != null && myForwardIndexAccessor == null) {
-      throw new AssertionError("azaza" + myIndexId);
+    myStorage = storage.compute();
+    try {
+      myForwardIndex = forwardIndex == null ? null : forwardIndex.compute();
+    } catch (IOException e) {
+      clearAndDispose();
+      throw e;
     }
+    myForwardIndexAccessor = forwardIndexAccessor;
+    myUseIntForwardIndex = myForwardIndex instanceof IntForwardIndex && myForwardIndexAccessor instanceof IntForwardIndexAccessor;
+    LOG.assertTrue(myForwardIndex instanceof IntForwardIndex == myForwardIndexAccessor instanceof IntForwardIndexAccessor,
+                   "Invalid index configuration for " + myIndexId);
+    myLock = lock == null ? new ReentrantReadWriteLock() : lock;
     myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension) : null;
+  }
+
+  protected void clearAndDispose() {
+    try {
+      clear();
+      dispose();
+    } catch (Exception e) {
+      LOG.info(e);
+    }
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable ForwardIndex forwardIndex,
-                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) {
+                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
     this(extension, storage, forwardIndex, forwardIndexAccessor,  null);
   }
 

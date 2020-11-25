@@ -367,17 +367,17 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
     MyIndex index = new MyIndex(extension, new VfsAwareIndexStorageLayout<>() {
       @Override
-      public @NotNull IndexStorage<Integer, SerializedStubTree> getIndexStorage() throws IOException {
-        return layout.getIndexStorage();
+      public @NotNull IndexStorage<Integer, SerializedStubTree> createOrClearIndexStorage() throws IOException {
+        return layout.createOrClearIndexStorage();
       }
 
       @Override
-      public @Nullable ForwardIndex getForwardIndex() throws IOException {
-        return layout.getForwardIndex();
+      public @Nullable ForwardIndex createOrClearForwardIndex() throws IOException {
+        return layout.createOrClearForwardIndex();
       }
 
       @Override
-      public @NotNull ForwardIndexAccessor<Integer, SerializedStubTree> getForwardIndexAccessor() throws IOException {
+      public @NotNull ForwardIndexAccessor<Integer, SerializedStubTree> getForwardIndexAccessor() {
         return new StubUpdatingForwardIndexAccessor(extension);
       }
     }, mySerializationManager);

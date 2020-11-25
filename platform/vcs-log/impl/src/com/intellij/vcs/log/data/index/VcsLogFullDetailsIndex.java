@@ -140,7 +140,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     private MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
                              @NotNull IndexStorage<Integer,T> storage,
                              @Nullable ForwardIndex forwardIndex,
-                             @Nullable ForwardIndexAccessor<Integer, T> forwardIndexAccessor) {
+                             @Nullable ForwardIndexAccessor<Integer, T> forwardIndexAccessor) throws IOException {
       super(extension, storage, forwardIndex, forwardIndexAccessor);
     }
 

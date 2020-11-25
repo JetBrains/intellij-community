@@ -404,9 +404,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                               @NotNull IndexConfiguration state,
                                               @NotNull IndexVersionRegistrationSink registrationStatusSink)
     throws IOException {
-    VfsAwareIndexStorage<K, V> storage = null;
     final ID<K, V> name = extension.getName();
-    boolean contentHashesEnumeratorOk = false;
 
     final InputFilter inputFilter = extension.getInputFilter();
     final Set<FileType> addedTypes;
@@ -420,16 +418,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       addedTypes = null;
     }
 
+    boolean contentHashesEnumeratorOk = true;
+    if (VfsAwareMapReduceIndex.hasSnapshotMapping(extension)) {
+      contentHashesEnumeratorOk = SnapshotHashEnumeratorService.getInstance().initialize();
+    }
+
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        if (VfsAwareMapReduceIndex.hasSnapshotMapping(extension)) {
-          contentHashesEnumeratorOk = SnapshotHashEnumeratorService.getInstance().initialize();
-          if (!contentHashesEnumeratorOk) {
-            throw new IOException("content hash enumerator will be forcibly clean");
-          }
-        }
-
-        VfsAwareIndexStorageLayout<K, V> layout = VfsAwareIndexStorageLayout.getLayout(extension);
+        VfsAwareIndexStorageLayout<K, V> layout = VfsAwareIndexStorageLayout.getLayout(extension, contentHashesEnumeratorOk);
         UpdatableIndex<K, V, FileContent> index = createIndex(extension, layout);
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
@@ -453,38 +449,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         else {
           LOG.warn(e);
         }
-        boolean instantiatedStorage = storage != null;
-        try {
-          if (storage != null) storage.close();
-          storage = null;
-        }
-        catch (Exception ignored) { }
 
-        FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(name));
-
-        if (extension.hasSnapshotMapping() && (!contentHashesEnumeratorOk || instantiatedStorage)) {
-          FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name)); // todo there is possibility of corruption of storage and content hashes
-        }
         registrationStatusSink.setIndexVersionDiff(name, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
         IndexVersion.rewriteVersion(name, version);
       }
     }
-  }
-
-  @NotNull
-  private static <K, V> VfsAwareIndexStorage<K, V> createIndexStorage(FileBasedIndexExtension<K, V> extension) throws IOException {
-    if (USE_IN_MEMORY_INDEX) {
-      return new InMemoryIndexStorage<>(extension.getKeyDescriptor());
-    }
-    boolean createSnapshotStorage = VfsAwareMapReduceIndex.hasSnapshotMapping(extension) && extension instanceof SingleEntryFileBasedIndexExtension;
-    return createSnapshotStorage ? new SnapshotSingleValueIndexStorage<>(extension.getCacheSize()) : new VfsAwareMapIndexStorage<>(
-      IndexInfrastructure.getStorageFile(extension.getName()).toPath(),
-      extension.getKeyDescriptor(),
-      extension.getValueExternalizer(),
-      extension.getCacheSize(),
-      extension.keyIsUniqueForIndexedFile(),
-      extension.traceKeyHashToVirtualFileMapping()
-    );
   }
 
   @NotNull

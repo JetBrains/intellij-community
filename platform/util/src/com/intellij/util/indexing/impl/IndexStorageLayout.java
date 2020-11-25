@@ -11,9 +11,9 @@ import java.io.IOException;
 
 @ApiStatus.Experimental
 public interface IndexStorageLayout<Key, Value> {
-  @NotNull IndexStorage<Key, Value> getIndexStorage() throws IOException;
+  @NotNull IndexStorage<Key, Value> createOrClearIndexStorage() throws IOException;
 
-  default @Nullable ForwardIndex getForwardIndex() throws IOException {
+  default @Nullable ForwardIndex createOrClearForwardIndex() throws IOException {
     return null;
   }
 

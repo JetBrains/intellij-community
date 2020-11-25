@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
@@ -66,31 +67,41 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
                                 @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
                                 @Nullable ReadWriteLock lock) throws IOException {
     this(extension,
-         indexStorageLayout.getIndexStorage(),
-         indexStorageLayout.getForwardIndex(),
+         () -> indexStorageLayout.createOrClearIndexStorage(),
+         () -> indexStorageLayout.createOrClearForwardIndex(),
          indexStorageLayout.getForwardIndexAccessor(),
-         indexStorageLayout.getSnapshotInputMappings(),
+         () -> indexStorageLayout.createOrClearSnapshotInputMappings(),
          lock);
   }
 
   protected VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                 @NotNull IndexStorage<Key, Value> storage,
-                                 @Nullable ForwardIndex forwardIndexMap,
-                                 @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                                 @Nullable SnapshotInputMappings<Key, Value> snapshotInputMappings,
-                                 @Nullable ReadWriteLock lock) {
+                                   @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
+                                   @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexMap,
+                                   @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
+                                   @Nullable ThrowableComputable<? extends SnapshotInputMappings<Key, Value>, ? extends IOException> snapshotInputMappings,
+                                   @Nullable ReadWriteLock lock) throws IOException {
     super(extension, storage, forwardIndexMap, forwardIndexAccessor, lock);
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
-    if (snapshotInputMappings != null) {
+    SnapshotInputMappings<Key, Value> inputMappings;
+    try {
+      inputMappings = snapshotInputMappings == null ? null : snapshotInputMappings.compute();
+    } catch (IOException e) {
+      clearAndDispose();
+      throw e;
+    }
+    mySnapshotInputMappings = inputMappings;
+    myUpdateMappings = mySnapshotInputMappings != null;
+
+    if (inputMappings != null) {
       @NotNull IndexStorage<Key, Value> backendStorage = getStorage();
       if (backendStorage instanceof TransientChangesIndexStorage) {
         backendStorage = ((TransientChangesIndexStorage<Key, Value>)backendStorage).getBackendStorage();
       }
       if (backendStorage instanceof SnapshotSingleValueIndexStorage) {
         LOG.assertTrue(forwardIndexMap instanceof IntForwardIndex);
-        ((SnapshotSingleValueIndexStorage<Key, Value>)backendStorage).init(snapshotInputMappings, ((IntForwardIndex)forwardIndexMap));
+        ((SnapshotSingleValueIndexStorage<Key, Value>)backendStorage).init(inputMappings, ((IntForwardIndex)forwardIndexMap));
       }
     }
     if (isCompositeIndexer(myIndexer)) {
@@ -98,19 +109,18 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
         // noinspection unchecked,rawtypes
         mySubIndexerRetriever = new PersistentSubIndexerRetriever((ID)myIndexId,
                                                                   extension.getVersion(),
-                                                                  (CompositeDataIndexer) myIndexer);
-        if (snapshotInputMappings != null) {
-          snapshotInputMappings.setSubIndexerRetriever(mySubIndexerRetriever);
+                                                                  (CompositeDataIndexer)myIndexer);
+        if (inputMappings != null) {
+          inputMappings.setSubIndexerRetriever(mySubIndexerRetriever);
         }
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        clearAndDispose();
+        throw e;
       }
     } else {
       mySubIndexerRetriever = null;
     }
-    mySnapshotInputMappings = snapshotInputMappings;
-    myUpdateMappings = mySnapshotInputMappings != null;
     mySingleEntryIndex = extension instanceof SingleEntryFileBasedIndexExtension;
   }
 

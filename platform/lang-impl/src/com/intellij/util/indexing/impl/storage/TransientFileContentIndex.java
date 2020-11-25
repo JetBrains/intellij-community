@@ -32,25 +32,28 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
                                    @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
                                    @Nullable ReadWriteLock lock)
     throws IOException {
-    this(extension,
-         indexStorageLayout.getIndexStorage(),
-         indexStorageLayout.getForwardIndex(),
-         indexStorageLayout.getForwardIndexAccessor(),
-         indexStorageLayout.getSnapshotInputMappings(),
-         lock);
-  }
-
-  private TransientFileContentIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                    @NotNull IndexStorage<Key, Value> storage,
-                                    @Nullable ForwardIndex forwardIndexMap,
-                                    @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                                    @Nullable SnapshotInputMappings<Key, Value> snapshotInputMappings,
-                                    @Nullable ReadWriteLock lock) {
     super(extension,
-          new TransientChangesIndexStorage<>(storage, extension.getName()),
-          forwardIndexMap,
-          forwardIndexAccessor,
-          snapshotInputMappings,
+          new VfsAwareIndexStorageLayout<>() {
+            @Override
+            public @NotNull IndexStorage<Key, Value> createOrClearIndexStorage() throws IOException {
+              return new TransientChangesIndexStorage<>(indexStorageLayout.createOrClearIndexStorage(), extension.getName());
+            }
+
+            @Override
+            public @Nullable SnapshotInputMappings<Key, Value> createOrClearSnapshotInputMappings() throws IOException {
+              return indexStorageLayout.createOrClearSnapshotInputMappings();
+            }
+
+            @Override
+            public @Nullable ForwardIndex createOrClearForwardIndex() throws IOException {
+              return indexStorageLayout.createOrClearForwardIndex();
+            }
+
+            @Override
+            public @Nullable ForwardIndexAccessor<Key, Value> getForwardIndexAccessor() throws IOException {
+              return indexStorageLayout.getForwardIndexAccessor();
+            }
+          },
           lock);
     installMemoryModeListener();
   }
