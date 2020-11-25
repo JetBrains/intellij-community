@@ -84,7 +84,10 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
     if (snapshotInputMappings != null) {
-      VfsAwareIndexStorage<Key, Value> backendStorage = ((TransientChangesIndexStorage<Key, Value>)getStorage()).getBackendStorage();
+      @NotNull IndexStorage<Key, Value> backendStorage = getStorage();
+      if (backendStorage instanceof TransientChangesIndexStorage) {
+        backendStorage = ((TransientChangesIndexStorage<Key, Value>)backendStorage).getBackendStorage();
+      }
       if (backendStorage instanceof SnapshotSingleValueIndexStorage) {
         LOG.assertTrue(forwardIndexMap instanceof IntForwardIndex);
         ((SnapshotSingleValueIndexStorage<Key, Value>)backendStorage).init(snapshotInputMappings, ((IntForwardIndex)forwardIndexMap));
