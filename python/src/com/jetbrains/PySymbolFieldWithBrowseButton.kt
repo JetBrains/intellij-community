@@ -159,7 +159,7 @@ private class PySymbolChooserDialog(project: Project, scope: GlobalSearchScope, 
 
   override fun createChooseByNameModel() = GotoSymbolModel2(project, arrayOf(object : PyGotoSymbolContributor(), DumbAware {
     override fun getNames(project: Project?, includeNonProjectItems: Boolean): Array<String> {
-      return FileBasedIndex.getInstance().ignoreDumbMode<Array<String>, RuntimeException>(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<Array<String>, RuntimeException> {
         super.getNames(project, includeNonProjectItems)
       }
     }
@@ -168,25 +168,25 @@ private class PySymbolChooserDialog(project: Project, scope: GlobalSearchScope, 
                                 pattern: String?,
                                 project: Project?,
                                 includeNonProjectItems: Boolean): Array<NavigationItem> {
-      return FileBasedIndex.getInstance().ignoreDumbMode<Array<NavigationItem>, RuntimeException>(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<Array<NavigationItem>, RuntimeException> {
         super.getItemsByName(name, pattern, project, includeNonProjectItems)
       }
     }
 
     override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
-      FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode {
         super.processNames(processor, scope, filter)
       }
     }
 
     override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
-      FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode {
         super.processElementsWithName(name, processor, parameters)
       }
     }
 
     override fun getQualifiedName(item: NavigationItem?): String? {
-      return FileBasedIndex.getInstance().ignoreDumbMode<String?, RuntimeException>(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<String?, RuntimeException> {
         super.getQualifiedName(item)
       }
     }

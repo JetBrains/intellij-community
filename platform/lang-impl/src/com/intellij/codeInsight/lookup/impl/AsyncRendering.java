@@ -61,7 +61,7 @@ public class AsyncRendering {
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void renderInBackground(LookupElement element, LookupElementRenderer renderer) {
     LookupElementPresentation presentation = new LookupElementPresentation();
-    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       renderer.renderElement(element, presentation);
     });
 

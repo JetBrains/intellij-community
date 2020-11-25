@@ -84,7 +84,7 @@ public final class CompletionInitializationUtil {
         }
       };
     Project project = psiFile.getProject();
-    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       for (final CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project)) {
         current.set(contributor);
         contributor.beforeCompletion(context);
