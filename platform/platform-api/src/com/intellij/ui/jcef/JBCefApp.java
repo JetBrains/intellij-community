@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.cef.JCefAppConfig;
+import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefApp;
 import org.cef.CefSettings;
 import org.cef.CefSettings.LogSeverity;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.ApiStatus;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -263,32 +265,22 @@ public final class JBCefApp {
       {
         return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
       }
-      String version;
+      JCefVersionDetails version;
       try {
-        version = JCefAppConfig.getVersion();
+        version = JCefAppConfig.getVersionDetails();
       }
-      catch (NoSuchMethodError e) {
+      catch (Throwable e) {
         return unsupported.apply("JCEF runtime version is not supported");
       }
-      if (version == null) {
-        return unsupported.apply("JCEF runtime version is not available");
+      if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
+        return unsupported.apply("JCEF minimum supported major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
+                                 ", current is " + version.cefVersion.major);
       }
-      String[] split = version.split("\\.");
-      if (split.length == 0) {
-        return unsupported.apply("JCEF runtime version has wrong format: " + version);
+      URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
+      if (url == null) {
+        return unsupported.apply("JCefAppConfig.class not found");
       }
-      try {
-        int majorVersion = Integer.parseInt(split[0]);
-        if (MIN_SUPPORTED_CEF_MAJOR_VERSION > majorVersion) {
-          return unsupported.apply("JCEF minimum supported major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
-                                   ", current is " + majorVersion);
-        }
-      }
-      catch (NumberFormatException e) {
-        return unsupported.apply("JCEF runtime version has wrong format: " + version);
-      }
-
-      String path = JCefAppConfig.class.getResource("JCefAppConfig.class").toString();
+      String path = url.toString();
       String name = JCefAppConfig.class.getName().replace('.', '/');
       boolean isJbrModule = path != null && path.contains("/jcef/" + name);
       if (!isJbrModule) {
