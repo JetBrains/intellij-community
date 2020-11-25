@@ -2,11 +2,10 @@
 package git4idea.search
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
-import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -16,6 +15,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.Processor
+import com.intellij.util.text.Matcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
@@ -35,14 +35,23 @@ import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager
 import git4idea.repo.GitRepositoryManager
+import git4idea.search.GitSearchEverywhereItemType.*
 import java.awt.BorderLayout
 import java.awt.Component
+import java.util.function.Function
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
 class GitSearchEverywhereContributor(private val project: Project) : WeightedSearchEverywhereContributor<Any>, DumbAware {
+
+  private val filter = PersistentSearchEverywhereContributorFilter(
+    GitSearchEverywhereItemType.values().asList(),
+    project.service<GitSearchEverywhereFilterConfiguration>(),
+    Function { it.displayName },
+    Function { null }
+  )
 
   override fun fetchWeightedElements(
     pattern: String,
@@ -58,14 +67,14 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
 
     val dataPack = awaitFullLogDataPack(dataManager, progressIndicator) ?: return
 
-    if (pattern.length >= 7 && VcsLogUtil.HASH_REGEX.matcher(pattern).matches()) {
+    if (filter.isSelected(COMMIT_BY_HASH) && pattern.length >= 7 && VcsLogUtil.HASH_REGEX.matcher(pattern).matches()) {
       storage.findCommitId {
         progressIndicator.checkCanceled()
         it.hash.asString().startsWith(pattern, true) && dataPack.containsAll(listOf(it), storage)
       }?.let { commitId ->
         val id = storage.getCommitIndex(commitId.hash, commitId.root)
         dataManager.miniDetailsGetter.loadCommitsData(listOf(id), {
-          consumer.process(FoundItemDescriptor(it, GitSearchEverywhereItemType.COMMIT_BY_HASH.weight))
+          consumer.process(FoundItemDescriptor(it, COMMIT_BY_HASH.weight))
         }, progressIndicator)
       }
     }
@@ -77,19 +86,14 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
 
     dataPack.refsModel.stream().forEach {
       progressIndicator.checkCanceled()
-      if (matcher.matches(it.name)) {
-        val weight = when (it.type) {
-          GitRefManager.LOCAL_BRANCH -> GitSearchEverywhereItemType.LOCAL_BRANCH.weight
-          GitRefManager.HEAD -> GitSearchEverywhereItemType.LOCAL_BRANCH.weight
-          GitRefManager.REMOTE_BRANCH -> GitSearchEverywhereItemType.REMOTE_BRANCH.weight
-          GitRefManager.TAG -> GitSearchEverywhereItemType.TAG.weight
-          else -> GitSearchEverywhereItemType.REMOTE_BRANCH.weight
-        }
-        consumer.process(FoundItemDescriptor(it, weight))
+      when (it.type) {
+        GitRefManager.LOCAL_BRANCH, GitRefManager.HEAD -> processRefOfType(it, LOCAL_BRANCH, matcher, consumer)
+        GitRefManager.REMOTE_BRANCH -> processRefOfType(it, REMOTE_BRANCH, matcher, consumer)
+        GitRefManager.TAG -> processRefOfType(it, TAG, matcher, consumer)
       }
     }
 
-    if (Registry.`is`("git.search.everywhere.commit.by.message")) {
+    if (filter.isSelected(COMMIT_BY_MESSAGE) && Registry.`is`("git.search.everywhere.commit.by.message")) {
       if (pattern.length < 3) return
 
       val allRootsIndexed = GitRepositoryManager.getInstance(project).repositories.all { index.isIndexed(it.root) }
@@ -98,10 +102,16 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       index.dataGetter?.filterMessages(VcsLogFilterObject.fromPattern(pattern)) { commitIdx ->
         progressIndicator.checkCanceled()
         dataManager.miniDetailsGetter.loadCommitsData(listOf(commitIdx), {
-          consumer.process(FoundItemDescriptor(it, GitSearchEverywhereItemType.COMMIT_BY_MESSAGE.weight))
+          consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE.weight))
         }, progressIndicator)
       }
     }
+  }
+
+  private fun processRefOfType(ref: VcsRef, type: GitSearchEverywhereItemType,
+                               matcher: Matcher, consumer: Processor<in FoundItemDescriptor<Any>>) {
+    if (!filter.isSelected(type)) return
+    if (matcher.matches(ref.name)) consumer.process(FoundItemDescriptor(ref, type.weight))
   }
 
   private fun awaitFullLogDataPack(dataManager: VcsLogData, indicator: ProgressIndicator): DataPack? {
@@ -197,6 +207,8 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
     }
     return false
   }
+
+  override fun getActions(onChanged: Runnable) = listOf(SearchEverywhereFiltersAction(filter, onChanged))
 
   override fun getSearchProviderId() = "Vcs.Git"
   override fun getGroupName() = GitBundle.message("search.everywhere.group.name")
