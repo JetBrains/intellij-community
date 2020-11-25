@@ -44,10 +44,7 @@ import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import net.miginfocom.swing.MigLayout;
@@ -67,6 +64,8 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -124,7 +123,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
-        saveLocation(getBounds());
+        saveSizeAndLocation(getBounds());
       }
     });
     connection.subscribe(LafManagerListener.TOPIC, new LafManagerListener(){
@@ -171,8 +170,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       setContentPane(myScreen.getWelcomePanel());
     }
     if (USE_TABBED_WELCOME_SCREEN) {
-      getRootPane().setPreferredSize(JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight));
-      getRootPane().setMaximumSize(JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight));
+      JBDimension defaultSize = JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight);
+      getRootPane().setPreferredSize(chooseNotNull(WindowStateService.getInstance().getSize(WelcomeFrame.DIMENSION_KEY), defaultSize));
     }
     else {
       int width = RecentProjectListActionProvider.getInstance().getActions(false).size() == 0 ? 666 : MAX_DEFAULT_WIDTH;
@@ -219,9 +218,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     WelcomeFrame.resetInstance();
   }
 
-  private static void saveLocation(@NotNull Rectangle location) {
+  private static void saveSizeAndLocation(@NotNull Rectangle location) {
     Point middle = new Point(location.x + location.width / 2, location.y + location.height / 2);
     WindowStateService.getInstance().putLocation(WelcomeFrame.DIMENSION_KEY, middle);
+    WindowStateService.getInstance().putSize(WelcomeFrame.DIMENSION_KEY, JBUI.size(location.width, location.height));
   }
 
   @Nullable
