@@ -44,7 +44,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   public static final String RUNNERS_GROUP = "RunnerActions";
   public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
   public static final String RUN_CONTEXT_GROUP_MORE = "RunContextGroupMore";
-  public static final String RDC_GROUP = "RunDebugConfigRunnerActions";
+  public static final String STATE_WIDGET_GROUP = "StateWidgetProcessesActionGroup";
 
   private final Set<String> myContextActionIdSet = new HashSet<>();
   private final Map<String, AnAction> myIdToAction = new HashMap<>();
@@ -113,7 +113,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     processes.forEach(it -> {
       if (it.getExecutorId().equals(executor.getId()) && !(executor instanceof ExecutorGroup)) {
         ExecutorAction wrappedAction = new StateWidget(executor, it);
-        registerActionInGroup(actionManager, it.getActionId(), wrappedAction, RDC_GROUP,
+        registerActionInGroup(actionManager, it.getActionId(), wrappedAction, STATE_WIDGET_GROUP,
                               myRunDebugIdToAction);
       }
     });
@@ -154,7 +154,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     else {
       unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
     }
-    unregisterAction(StateWidgetProcess.generateActionID(executor.getId()), RDC_GROUP, myRunDebugIdToAction);
+    unregisterAction(StateWidgetProcess.generateActionID(executor.getId()), STATE_WIDGET_GROUP, myRunDebugIdToAction);
   }
 
   private static void unregisterAction(@NotNull String actionId, @NotNull String groupId, @NotNull Map<String, AnAction> map) {

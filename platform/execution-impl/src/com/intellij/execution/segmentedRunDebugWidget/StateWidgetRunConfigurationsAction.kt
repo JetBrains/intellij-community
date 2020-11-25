@@ -5,12 +5,11 @@ import com.intellij.execution.*
 import com.intellij.execution.ExecutorRegistryImpl.RunnerHelper
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.compound.SettingsAndEffectiveTarget
+import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopup
@@ -38,13 +37,12 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
 
 
     val popup = StateActionGroupPopup(myPopupTitle, group, context, false,
-                                      shouldShowDisabledActions(), false, true,
+                                      shouldShowDisabledActions(), false, false,
                                       disposeCallback, maxRows, preselectCondition, null) { action ->
       if (action is FinalActionGroup) {
         StateWidgetManager.getInstance(action.project)
           .getActiveProcessesBySettings(action.configuration)
-          ?.mapNotNull { it?.name }
-          ?.joinToString(separator = "|")
+          ?.joinToString(separator = " | ") { it.name }
       }
       else null
     }
@@ -72,19 +70,25 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
 
     init {
       isPopup = true
+      updatePresentation(templatePresentation)
     }
 
     private fun prepareGroup(project: Project): MutableList<AnAction> {
       val actions = mutableListOf<AnAction>()
 
-      availableProcesses.forEach { process ->
-        if (executorRegistry is ExecutorRegistryImpl) {
+      if (executorRegistry is ExecutorRegistryImpl) {
+        stateWidgetManager.getExecutionBySettings(configuration)?.forEach { execution ->
+          stateWidgetManager.getProcessByExecutionId(execution.executionId)?.let { process ->
+            actions.add(createStopAction(process, execution.contentToReuse))
+          }
+        }
+
+        availableProcesses.forEach { process ->
           executorRegistry.getExecutorById(process.executorId)?.let {
             val activeTarget = ExecutionTargetManager.getActiveTarget(project)
             val target = SettingsAndEffectiveTarget(configuration.configuration, activeTarget)
             if (RunnerHelper.canRun(project, listOf(target), it)) {
-              val action = createAction(process, it)
-              actions.add(action)
+              actions.add(createProcessAction(process, it))
             }
           }
         }
@@ -95,20 +99,24 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
 
     override fun update(e: AnActionEvent) {
       super.update(e)
+      updatePresentation(e.presentation)
+    }
+
+    private fun updatePresentation(presentation: Presentation) {
       var name = Executor.shortenNameIfNeeded(configuration.name)
       if (name.isEmpty()) {
         name = " "
       }
-      e.presentation.setText(name, false)
-      e.presentation.description = ExecutionBundle.message("select.0.1", configuration.type.configurationTypeDescription, name)
-      setConfigurationIcon(e.presentation, configuration, project)
+      presentation.setText(name, false)
+      presentation.description = ExecutionBundle.message("select.0.1", configuration.type.configurationTypeDescription, name)
+      setConfigurationIcon(presentation, configuration, project)
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       return e?.project?.let { prepareGroup(it).toTypedArray() } ?: emptyArray()
     }
 
-    private fun createAction(process: StateWidgetProcess, executor: Executor): AnAction {
+    private fun createProcessAction(process: StateWidgetProcess, executor: Executor): AnAction {
       return object : AnAction(Supplier { process.name }, executor.icon), DumbAware {
 
         override fun actionPerformed(e: AnActionEvent) {
@@ -123,6 +131,16 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
           if (executorRegistry is ExecutorRegistryImpl) {
             e.presentation.isEnabled = canRun(process, executor)
           }
+        }
+      }
+    }
+
+    private fun createStopAction(process: StateWidgetProcess, descriptor: RunContentDescriptor?): AnAction {
+      return object : AnAction(Supplier { ExecutionBundle.message("state.widget.stop.process.action.item.name", process.name) },
+                               AllIcons.Actions.Suspend), DumbAware {
+
+        override fun actionPerformed(e: AnActionEvent) {
+          ExecutionManagerImpl.stopProcess(descriptor)
         }
       }
     }

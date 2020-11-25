@@ -37,11 +37,15 @@ internal class StateWidgetManager(val project: Project) {
     }
   }
 
-  private var sessionsCount: Int = 0
-  private val executorSessions: MutableMap<String, MutableMap<Long, ExecutionEnvironment>> = mutableMapOf()
-  private val executorProcessMap: MutableMap<String, StateWidgetProcess> = mutableMapOf()
-  private val processMap: MutableMap<String, StateWidgetProcess> = mutableMapOf()
-  private val runningConfigurations: MutableMap<RunnerAndConfigurationSettings?, MutableSet<StateWidgetProcess>> = mutableMapOf()
+  private val processById: MutableMap<String, StateWidgetProcess> = mutableMapOf()
+  private val processByExecutorId: MutableMap<String, StateWidgetProcess> = mutableMapOf()
+
+  private val executions: MutableMap<Long, ExecutionEnvironment> = mutableMapOf()
+  private val processIdByExecutionId: MutableMap<Long, String> = mutableMapOf()
+  private val executionsByExecutorId: MutableMap<String, MutableSet<Long>> = mutableMapOf()
+
+  private val activeProcessByConfiguration: MutableMap<RunnerAndConfigurationSettings?, MutableSet<StateWidgetProcess>> = mutableMapOf()
+  private val executionByConfiguration: MutableMap<RunnerAndConfigurationSettings?, MutableSet<Long>> = mutableMapOf()
 
   init {
     ApplicationManager.getApplication().invokeLater {
@@ -49,62 +53,57 @@ internal class StateWidgetManager(val project: Project) {
 
       val processes = StateWidgetProcess.getProcesses()
       processes.forEach {
-        executorProcessMap[it.executorId] = it
-        processMap[it.ID] = it
+        processByExecutorId[it.executorId] = it
+        processById[it.ID] = it
       }
 
       ExecutionManager.EXECUTION_TOPIC.subscribe(project, object : ExecutionListener {
         override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+          executions[env.executionId] = env
+
           processes.forEach {
             if (it.executorId == executorId) {
-              executorSessions.computeIfAbsent(executorId, Function { mutableMapOf() })[env.executionId] = env
+              executionsByExecutorId.computeIfAbsent(executorId, Function { mutableSetOf() }).add(env.executionId)
+              processIdByExecutionId[env.executionId] = it.ID
               update()
             }
           }
+
+          executionByConfiguration.computeIfAbsent(env.runnerAndConfigurationSettings, Function { mutableSetOf() }).add(env.executionId)
         }
 
         override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
-          executorSessions[executorId]?.let {
+          executions.remove(env.executionId)
+          executionsByExecutorId[executorId]?.let {
             it.remove(env.executionId)
-            if (it.isEmpty()) executorSessions.remove(executorId)
+            if (it.isEmpty()) executionsByExecutorId.remove(executorId)
           }
+
+          processIdByExecutionId[env.executionId]
+          executionByConfiguration[env.runnerAndConfigurationSettings]?.remove(env.executionId)
           update()
         }
 
         private fun update() {
-          sessionsCount = executorSessions.values.map { it.values.count() }.sum()
-
           updateRunningConfiguration()
           fireConfigurationChanged()
         }
 
         private fun updateRunningConfiguration() {
-          runningConfigurations.clear()
+          activeProcessByConfiguration.clear()
 
-          executorSessions.forEach { entry ->
-            executorProcessMap[entry.key]?.let { process ->
-              entry.value.values.map { it.runnerAndConfigurationSettings }.forEach {
-                runningConfigurations.computeIfAbsent(it, Function { mutableSetOf() }).add(process)
-              }
+          executions.values.forEach { env ->
+            processByExecutorId[env.executor.id]?.let { process ->
+              activeProcessByConfiguration.computeIfAbsent(env.runnerAndConfigurationSettings, Function { mutableSetOf() }).add(process)
             }
           }
-          runningConfigurations
         }
       })
     }
-
-    /*    app.messageBus.connect().subscribe(TOPIC, object : StateWidgetManagerListener {
-          override fun configurationChanged() {
-            println("\n\n NEW")
-            executorSessions.forEach { (key, map) ->
-              print("$key ${map.size}; ")
-            }
-          }
-        })*/
   }
 
   fun getActiveCount(): Int {
-    return sessionsCount
+    return executions.count()
   }
 
   fun getActiveProcessesIDs(): Set<String> {
@@ -112,16 +111,28 @@ internal class StateWidgetManager(val project: Project) {
   }
 
   fun getActiveProcesses(): Set<StateWidgetProcess> {
-    return executorSessions.keys.mapNotNull { executorProcessMap[it] }.toSet()
+    return executionsByExecutorId.keys.mapNotNull { processByExecutorId[it] }.toSet()
   }
 
-  fun getExecutorProcesses(): MutableMap<String, StateWidgetProcess> = executorProcessMap
+  fun getExecutorProcesses(): MutableMap<String, StateWidgetProcess> = processByExecutorId
 
   fun getProcessById(processId: String): StateWidgetProcess? {
-    return executorProcessMap[processId]
+    return processByExecutorId[processId]
   }
 
-  fun getActiveProcessesBySettings(configuration: RunnerAndConfigurationSettings): Set<StateWidgetProcess?>? {
-    return runningConfigurations[configuration]
+  fun getActiveProcessesBySettings(configuration: RunnerAndConfigurationSettings): Set<StateWidgetProcess>? {
+    return activeProcessByConfiguration[configuration]
+  }
+
+  fun getExecutionBySettings(configuration: RunnerAndConfigurationSettings): Set<ExecutionEnvironment>? {
+    return executionByConfiguration[configuration]?.mapNotNull { executions[it] }?.toSet()
+  }
+
+  fun getExecutionByExecutionId(executionId: Long): ExecutionEnvironment? {
+    return executions[executionId]
+  }
+
+  fun getProcessByExecutionId(executionId: Long): StateWidgetProcess? {
+    return processIdByExecutionId[executionId]?.let { processById[it] }
   }
 }

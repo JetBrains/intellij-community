@@ -5,8 +5,11 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.PillBorder
+import com.intellij.openapi.ui.popup.ListPopupStep
+import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -34,8 +37,20 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
                                     preselectActionCondition,
                                     actionPlace) {
 
-  override fun getListElementRenderer(): ListCellRenderer<*> {
-    return object : PopupListElementRenderer<Any?>(this) {
+  override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
+    return if (step is ListPopupStep<*>) {
+      object : ListPopupImpl(project, parent, step, parentValue) {
+        override fun getListElementRenderer(): ListCellRenderer<*> {
+          return createRenderer(this)
+        }
+      }
+    }
+    else super.createPopup(parent, step, parentValue)
+
+  }
+
+  private fun createRenderer(popup: ListPopupImpl): PopupListElementRenderer<Any?> {
+    return object : PopupListElementRenderer<Any?>(popup) {
       private var stateLabel: JLabel? = null
       private var stateButton: JComponent? = null
 
@@ -103,9 +118,11 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
           }
         }
       }
-
-
     }
+  }
+
+  override fun getListElementRenderer(): ListCellRenderer<*> {
+    return createRenderer(this)
   }
 
 }

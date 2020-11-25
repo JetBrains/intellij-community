@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.registry.Registry
 import javax.swing.SwingUtilities
 
-class SegmentedRDCAction : PillActionComponent(), DumbAware {
+class StateWidgetAction : PillActionComponent(), DumbAware {
   companion object {
     const val runDebugKey = "ide.new.navbar.run.debug"
   }
@@ -19,7 +19,7 @@ class SegmentedRDCAction : PillActionComponent(), DumbAware {
   }
 
   init {
-    ActionManager.getInstance().getAction("SegmentedRunDebugConfigActionGroup")?.let {
+    ActionManager.getInstance().getAction("StateWidgetPillActionGroup")?.let {
       if(it is ActionGroup) {
         SwingUtilities.invokeLater {
           actionGroup = it

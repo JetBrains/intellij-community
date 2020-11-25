@@ -115,7 +115,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
 
       Pair<List<HandlerItem>, HandlerItem>
-        handlerItems = getItemsList(stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
+        handlerItems = getItemsList(project, stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
       if (handlerItems == null || handlerItems.first.isEmpty()) {
         return;
       }
@@ -205,7 +205,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Nullable
-  private Pair<List<HandlerItem>, HandlerItem> getItemsList(List<? extends RunContentDescriptor> descriptors, RunContentDescriptor toSelect) {
+  private Pair<List<HandlerItem>, HandlerItem> getItemsList(Project project, List<? extends RunContentDescriptor> descriptors, RunContentDescriptor toSelect) {
     if (descriptors.isEmpty()) {
       return null;
     }
@@ -215,7 +215,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     for (final RunContentDescriptor descriptor : descriptors) {
       final ProcessHandler handler = descriptor.getProcessHandler();
       if (handler != null) {
-        HandlerItem item = new HandlerItem(getDisplayName(descriptor), descriptor.getIcon(), false) {
+        HandlerItem item = new HandlerItem(getDisplayName(project, descriptor), descriptor.getIcon(), false) {
           @Override
           void stop() {
             ExecutionManagerImpl.stopProcess(descriptor);
@@ -232,7 +232,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @BuildEventsNls.Title
-  protected String getDisplayName(final RunContentDescriptor descriptor) {
+  protected String getDisplayName(final Project project, final RunContentDescriptor descriptor) {
     return descriptor.getDisplayName();
   }
 

@@ -7,9 +7,9 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
 import javax.swing.SwingUtilities
 
-class RDCBarAction : SegmentedBarActionComponent(ActionPlaces.STATE_WIDGET_ACTION_BAR) {
+class StateWidgetPillBarAction : SegmentedBarActionComponent(ActionPlaces.STATE_WIDGET_ACTION_BAR) {
   init {
-    ActionManager.getInstance().getAction("RunDebugConfigActionBarGroup")?.let {
+    ActionManager.getInstance().getAction("StateWidgetBarGroup")?.let {
       if(it is ActionGroup) {
         SwingUtilities.invokeLater {
           actionGroup = it

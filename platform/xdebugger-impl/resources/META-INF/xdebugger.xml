@@ -91,6 +91,12 @@
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
     </group>
 
+    <group id="StateWidgetDebugGroup">
+      <separator text="Debug"/>
+      <reference ref="XDebugger.AttachGroup"/>
+      <add-to-group group-id="StateWidgetMoreActionGroup"/>
+    </group>
+
     <group id="MemoryView.SettingsPopupActionGroup">
       <action class="com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction" id="MemoryView.ShowOnlyWithDiff"/>
       <separator/>
