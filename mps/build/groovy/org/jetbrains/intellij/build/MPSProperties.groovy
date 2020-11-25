@@ -12,6 +12,7 @@ class MPSProperties extends JetBrainsProductProperties {
     MPSProperties(String home) {
         baseFileName = "mps"
         productCode = "MPS"
+        customProductCode = productCode
         platformPrefix = "Idea"
         applicationInfoModule = "intellij.idea.community.resources"
         toolsJarRequired = true

@@ -1,6 +1,7 @@
 package org.jetbrains.intellij.build
 
 import org.codehaus.gant.GantBinding
+import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 
 /**
@@ -18,6 +19,10 @@ class MPSBuilder {
     def build() {
         def buildContext = BuildContext.createContext("$home/community", home, new MPSProperties(home))
         buildContext.getOptions().targetOS = ""
+        ProprietaryBuildTools buildTools = ProprietaryBuildTools.DUMMY
+        buildTools.featureUsageStatisticsProperties = new FeatureUsageStatisticsProperties(
+                "FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/")
+        buildContext.proprietaryBuildTools = buildTools
         def buildTasks = BuildTasks.create(buildContext)
         buildTasks.buildDistributions()
 
