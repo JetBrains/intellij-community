@@ -29,7 +29,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
 
   val startLearningButton = JButton()
 
-  private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.REGULAR)
+  private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.HeaderColor)
   private val interactiveCourseContent = createInteractiveCourseContent()
 
   private var contentState: ContentState = ContentState.COLLAPSED
