@@ -423,7 +423,7 @@ object UpdateChecker {
     val manager = ExternalComponentManager.getInstance()
     indicator?.text = IdeBundle.message("updates.external.progress")
 
-    for (source in ExternalComponentManager.getEnabledComponentSources(updateSettings)) {
+    for (source in ExternalComponentManager.getComponentSources()) {
       indicator?.checkCanceled()
       try {
         val siteResult = source.getAvailableVersions(indicator, updateSettings)

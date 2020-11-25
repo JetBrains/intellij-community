@@ -4,11 +4,10 @@ package com.intellij.ide.externalComponents;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
 
 /**
  * Registry for {@link ExternalComponentSource}s, used for integrating with the {@link UpdateChecker}.
@@ -22,28 +21,8 @@ public final class ExternalComponentManager {
   }
 
   @NotNull
-  public static Iterable<ExternalComponentSource> getEnabledComponentSources(@NotNull UpdateSettings updateSettings) {
-    refreshKnownSources(updateSettings);
-    Set<String> enabledSources = new HashSet<>(updateSettings.getEnabledExternalUpdateSources());
-
-    List<ExternalComponentSource> res = new LinkedList<>(ExternalComponentSource.EP_NAME.getExtensionList());
-    res.removeIf(source -> !enabledSources.contains(source.getName()));
-    return res;
-  }
-
-  private static void refreshKnownSources(@NotNull UpdateSettings updateSettings) {
-    List<ExternalComponentSource> unknownSources = new LinkedList<>(ExternalComponentSource.EP_NAME.getExtensionList());
-    Set<String> knownSources = new HashSet<>(updateSettings.getKnownExternalUpdateSources());
-    unknownSources.removeIf(source -> knownSources.contains(source.getName()));
-
-    for (ExternalComponentSource source : unknownSources) {
-      updateSettings.getKnownExternalUpdateSources().add(source.getName());
-      updateSettings.getEnabledExternalUpdateSources().add(source.getName());
-      List<String> channels = source.getAllChannels();
-      if (channels != null) {
-        updateSettings.getExternalUpdateChannels().put(source.getName(), channels.get(0));
-      }
-    }
+  public static Iterable<ExternalComponentSource> getComponentSources() {
+    return ExternalComponentSource.EP_NAME.getExtensionList();
   }
 
   /**
