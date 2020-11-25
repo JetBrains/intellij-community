@@ -855,6 +855,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     });
   }
 
+  // PY-44918
+  public void testResolvePathImportToUserFile() {
+    doMultiFileTest("resolvePathImportToUserFile.py");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
