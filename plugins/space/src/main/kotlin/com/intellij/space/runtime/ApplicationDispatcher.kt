@@ -73,7 +73,7 @@ private class ApplicationCoroutineContext(
     executor.schedule(toResume, timeMillis, TimeUnit.MILLISECONDS)
   }
 
-  override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+  override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
     val toResume = java.lang.Runnable {
       application.invokeLater({
                                 block.run()
