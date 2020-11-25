@@ -100,7 +100,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -475,9 +476,6 @@ public final class BuildManager implements Disposable {
   }
 
   public void clearState(@NotNull Project project) {
-    if (project.isDefault())
-      return;
-
     String projectPath = getProjectPath(project);
     cancelPreloadedBuilds(projectPath);
 
@@ -528,6 +526,7 @@ public final class BuildManager implements Disposable {
   }
 
   private static @NotNull String getProjectPath(@NotNull Project project) {
+    assert !project.isDefault() : BuildManager.class.getName() + " methods should not be called for default project";
     return VirtualFileManager.extractPath(Objects.requireNonNull(project.getPresentableUrl()));
   }
 
@@ -1519,8 +1518,10 @@ public final class BuildManager implements Disposable {
   }
 
   public void setGeneratePortableCachesEnabled(boolean generatePortableCachesEnabled) {
-    if (myGeneratePortableCachesEnabled != generatePortableCachesEnabled) clearState();
-    myGeneratePortableCachesEnabled = generatePortableCachesEnabled;
+    if (myGeneratePortableCachesEnabled != generatePortableCachesEnabled) {
+      myGeneratePortableCachesEnabled = generatePortableCachesEnabled;
+      clearState();
+    }
   }
 
   private abstract class BuildManagerPeriodicTask implements Runnable {
@@ -1671,7 +1672,7 @@ public final class BuildManager implements Disposable {
         @Override
         public void rootsChanged(@NotNull ModuleRootEvent event) {
           Object source = event.getSource();
-          if (source instanceof Project) {
+          if (source instanceof Project && !((Project)source).isDefault()) {
             getInstance().clearState((Project)source);
           }
         }
