@@ -13,7 +13,7 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("run.configuration.ui.interactions", 1)
+    val GROUP = EventLogGroup("run.configuration.ui.interactions", 2)
 
     val optionId = EventFields.String("option_id", listOf("before.launch.editSettings", "before.launch.openToolWindow", "beforeRunTasks", "commandLineParameters", "coverage", "doNotBuildBeforeRun", "environmentVariables", "jrePath", "log.monitor", "mainClass", "module.classpath", "redirectInput", "runParallel", "shorten.command.line", "target.project.path", "vmParameters", "workingDirectory",
                                                                 "count", "junit.test.kind", "repeat", "testScope")) // junit
