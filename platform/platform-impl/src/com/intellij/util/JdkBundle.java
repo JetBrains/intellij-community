@@ -141,7 +141,7 @@ public final class JdkBundle {
     }
     if (versionInfo != null) {
       boolean bundled = PathManager.isUnderHomeDirectory(bundleHome.getPath());
-      boolean jdk = JdkUtil.checkForJdk(actualHome);
+      boolean jdk = JdkUtil.checkForJdk(actualHome.toPath());
       return new JdkBundle(bundleHome, versionInfo, boot, bundled, jdk);
     }
 

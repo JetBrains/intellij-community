@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,13 +29,11 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.nio.file.Files.isDirectory;
 import static java.util.Collections.emptySet;
 
 public class JavaHomeFinderBasic {
-
   private final Logger log = Logger.getInstance(getClass());
   private final List<Supplier<Set<String>>> myFinders = new ArrayList<>();
 
@@ -51,7 +50,7 @@ public class JavaHomeFinderBasic {
   }
 
   private @NotNull Set<String> findInSpecifiedPaths(String[] paths) {
-    return scanAll(Stream.of(paths).map(it -> Paths.get(it)).collect(Collectors.toList()), true);
+    return scanAll(ContainerUtil.map(paths, Paths::get), true);
   }
 
   protected void registerFinder(@NotNull Supplier<Set<String>> finder) {
@@ -76,7 +75,6 @@ public class JavaHomeFinderBasic {
 
   private @NotNull Set<String> findInPATH() {
     try {
-
       Set<Path> dirsToCheck = new HashSet<>();
       for (String p : getPath()) {
         Path dir = Paths.get(p);
@@ -150,24 +148,24 @@ public class JavaHomeFinderBasic {
   protected @NotNull Set<String> scanAll(@NotNull Collection<Path> files, boolean includeNestDirs) {
     Set<String> result = new HashSet<>();
     for (Path root : new HashSet<>(files)) {
-      scanFolder(root.toFile(), includeNestDirs, result);
+      scanFolder(root, includeNestDirs, result);
     }
     return result;
   }
 
-  protected void scanFolder(@NotNull File folder, boolean includeNestDirs, @NotNull Collection<? super String> result) {
+  protected void scanFolder(@NotNull Path folder, boolean includeNestDirs, @NotNull Collection<? super String> result) {
     if (JdkUtil.checkForJdk(folder)) {
-      result.add(folder.getAbsolutePath());
+      result.add(folder.toAbsolutePath().toString());
       return;
     }
 
     if (!includeNestDirs) return;
-    File[] files = folder.listFiles();
+    File[] files = folder.toFile().listFiles();
     if (files == null) return;
 
     for (File candidate : files) {
       for (File adjusted : listPossibleJdkHomesFromInstallRoot(candidate)) {
-        scanFolder(adjusted, false, result);
+        scanFolder(adjusted.toPath(), false, result);
       }
     }
   }
@@ -275,23 +273,24 @@ public class JavaHomeFinderBasic {
             if (Files.isSymbolicLink(releaseFile)) {
               var realReleaseFile = releaseFile.toRealPath();
               if (!safeExists(realReleaseFile)) {
-                log.warn("Failed to resolve the target file (it doesn't exist) for: " + releaseFile.toString());
+                log.warn("Failed to resolve the target file (it doesn't exist) for: " + releaseFile);
                 continue;
               }
               var realHome = realReleaseFile.getParent();
               if (realHome == null) {
-                log.warn("Failed to resolve the target file (it has no parent dir) for: " + releaseFile.toString());
+                log.warn("Failed to resolve the target file (it has no parent dir) for: " + releaseFile);
                 continue;
               }
               home = realHome;
             }
           }
           catch (IOException ioe) {
-            log.warn("Failed to resolve the target file for: " + releaseFile.toString() + ": " + ioe.getMessage());
+            log.warn("Failed to resolve the target file for: " + releaseFile + ": " + ioe.getMessage());
             continue;
           }
           catch (Exception e) {
-            log.warn("Failed to resolve the target file for: " + releaseFile.toString() + ": Unexpected exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            log.warn("Failed to resolve the target file for: " +
+                     releaseFile + ": Unexpected exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
             continue;
           }
         }

@@ -53,7 +53,7 @@ interface JdkInstallRequest {
   val javaHome: Path
 }
 
-private val JDK_INSTALL_LISTENER_EP_NAME = ExtensionPointName.create<JdkInstallerListener>("com.intellij.jdkDownloader.jdkInstallerListener")
+private val JDK_INSTALL_LISTENER_EP_NAME = ExtensionPointName<JdkInstallerListener>("com.intellij.jdkDownloader.jdkInstallerListener")
 
 interface JdkInstallerListener {
   /**
@@ -203,7 +203,7 @@ class JdkInstaller {
         decompressor.postProcessor { indicator?.checkCanceled() }
 
         val fullMatchPath = item.packageRootPrefix.trim('/')
-        if (!fullMatchPath.isBlank()) {
+        if (fullMatchPath.isNotBlank()) {
           decompressor.removePrefixPath(fullMatchPath)
         }
         decompressor.extract(targetDir)
@@ -339,7 +339,7 @@ class JdkInstaller {
         if (item != feedItem) continue
 
         val jdkHome = item.resolveJavaHome(installDir)
-        if (jdkHome.isDirectory() && JdkUtil.checkForJdk(jdkHome.toFile())) {
+        if (jdkHome.isDirectory() && JdkUtil.checkForJdk(jdkHome)) {
           return LocallyFoundJdk(feedItem, installDir, jdkHome)
         }
       }

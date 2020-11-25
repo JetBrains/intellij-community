@@ -14,7 +14,6 @@ import com.intellij.openapi.project.clearCachesForAllProjects
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.div
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.lastModified
@@ -69,7 +68,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
       return testFile
     }
 
-    return project.getProjectDataPath(DATA_DIR_NAME) / "cache.data"
+    return project.getProjectDataPath(DATA_DIR_NAME).resolve("cache.data")
   }
 
   private val saveAlarm = pooledThreadSingleAlarm(1000, this) {

@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static com.intellij.ide.plugins.marketplace.MarketplaceRequests.parsePluginList;
@@ -98,17 +100,16 @@ public final class RepositoryHelper {
   /**
    * Use method only for getting plugins from custom repositories
    */
-  @NotNull
-  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
-                                                       @Nullable BuildNumber build,
-                                                       @Nullable ProgressIndicator indicator) throws IOException {
-    File pluginListFile;
+  public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
+                                                                @Nullable BuildNumber build,
+                                                                @Nullable ProgressIndicator indicator) throws IOException {
+    Path pluginListFile;
     Url url;
     if (repositoryUrl == null) {
       LOG.error("Using deprecated API for getting plugins from Marketplace");
       String base = ApplicationInfoImpl.getShadowInstance().getPluginsListUrl();
       url = Urls.newFromEncoded(base).addParameters(singletonMap("uuid", PermanentInstallationID.get()));  // NON-NLS
-      pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
+      pluginListFile = Paths.get(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
     }
     else {
       url = Urls.newFromEncoded(repositoryUrl);

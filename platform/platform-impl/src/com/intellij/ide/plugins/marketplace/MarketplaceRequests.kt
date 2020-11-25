@@ -13,11 +13,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
+import com.intellij.util.io.readText
+import com.intellij.util.io.write
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.xml.sax.InputSource
@@ -35,7 +36,6 @@ import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
 
 private val LOG = logger<MarketplaceRequests>()
-private const val TAG_EXT = ".etag"
 private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
 
 @ApiStatus.Internal
@@ -85,12 +85,13 @@ open class MarketplaceRequests {
 
   private val objectMapper by lazy { ObjectMapper() }
 
-  private fun getUpdatesMetadataFilesDirectory() = File(PathManager.getPluginsPath()).resolve("meta")
+  private fun getUpdatesMetadataFilesDirectory(): Path = Paths.get(PathManager.getPluginsPath(), "meta")
 
-  internal fun getBrokenPluginsFile() = File(PathManager.getPluginsPath()).resolve("brokenPlugins.json")
+  internal fun getBrokenPluginsFile(): Path = Paths.get(PathManager.getPluginsPath(), "brokenPlugins.json")
 
-  private fun getUpdateMetadataFile(update: IdeCompatibleUpdate) = getUpdatesMetadataFilesDirectory().resolve(
-    update.externalUpdateId + ".json")
+  private fun getUpdateMetadataFile(update: IdeCompatibleUpdate): Path {
+    return getUpdatesMetadataFilesDirectory().resolve(update.externalUpdateId + ".json")
+  }
 
   private fun getUpdateMetadataUrl(update: IdeCompatibleUpdate) =
     "${PLUGIN_MANAGER_URL}/files/${update.externalPluginId}/${update.externalUpdateId}/meta.json"
@@ -128,7 +129,7 @@ open class MarketplaceRequests {
 
   @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
-    val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
+    val pluginXmlIdsFile = Paths.get(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     return readOrUpdateFile(
       pluginXmlIdsFile,
       AVAILABLE_PLUGINS_XML_IDS_URL,
@@ -246,7 +247,7 @@ open class MarketplaceRequests {
   }
 
   @Throws(IOException::class)
-  fun <T> readOrUpdateFile(file: File?,
+  fun <T> readOrUpdateFile(file: Path?,
                            url: String,
                            indicator: ProgressIndicator?,
                            @Nls indicatorMessage: String,
@@ -254,7 +255,11 @@ open class MarketplaceRequests {
     val eTag = if (file == null) null else loadEtagForFile(file)
     return HttpRequests
       .request(url)
-      .tuner { connection -> setUpETag(connection, eTag) }
+      .tuner { connection ->
+        if (eTag != null) {
+          connection.setRequestProperty("If-None-Match", eTag)
+        }
+      }
       .tuner { connection ->  addAuthHeadersIfTheyExist(connection, url) }
       .productNameAsUserAgent()
       .connect { request ->
@@ -262,26 +267,26 @@ open class MarketplaceRequests {
           indicator?.checkCanceled()
           val connection = request.connection
           if (file != null && isNotModified(connection, file)) {
-            return@connect file.bufferedReader().use(parser)
+            return@connect Files.newBufferedReader(file).use(parser)
           }
+
           if (indicator != null) {
             indicator.checkCanceled()
             indicator.text2 = indicatorMessage
           }
-          if (file != null) {
-            synchronized(INSTANCE) {
-              request.saveToFile(file, indicator)
-              connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
-            }
-            return@connect file.bufferedReader().use(parser)
-          }
-          else {
+          if (file == null) {
             return@connect request.reader.use(parser)
           }
+
+          synchronized(INSTANCE) {
+            request.saveToFile(file, indicator)
+            connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
+          }
+          return@connect Files.newBufferedReader(file).use(parser)
         }
         catch (e: Exception) {
           val fileText = file?.readText()
-          LOG.warn("Error reading Marketplace file: url=$url file=${file?.name}. File content:\n$fileText")
+          LOG.warn("Error reading Marketplace file: url=$url file=${file?.fileName}. File content:\n$fileText")
           throw e
         }
       }
@@ -381,45 +386,39 @@ open class MarketplaceRequests {
   }
 }
 
-private fun loadEtagForFile(file: File): String {
+private fun loadEtagForFile(file: Path): String {
   val eTagFile = getETagFile(file)
   try {
-    val lines = eTagFile.readLines()
-    if (lines.size != 1) {
-      LOG.warn("Can't load ETag from '" + eTagFile.absolutePath + "'. Unexpected number of lines: " + lines.size)
-      FileUtil.delete(eTagFile)
-    }
-    else {
+    val lines = Files.readAllLines(eTagFile)
+    if (lines.size == 1) {
       return lines[0]
     }
+
+    LOG.warn("Can't load ETag from '" + eTagFile + "'. Unexpected number of lines: " + lines.size)
+    Files.deleteIfExists(eTagFile)
   }
-  catch (e: NoSuchFileException) {
-    return ""
+  catch (ignore: NoSuchFileException) {
   }
   catch (e: IOException) {
-    LOG.warn("Can't load ETag from '" + eTagFile.absolutePath + "'", e)
+    LOG.warn("Can't load ETag from '$eTagFile'", e)
   }
   return ""
 }
 
-private fun getETagFile(file: File): File = file.resolveSibling(file.name + TAG_EXT)
+private fun getETagFile(file: Path): Path = file.parent.resolve("${file.fileName}.etag")
 
-private fun saveETagForFile(file: File, eTag: String) {
+private fun saveETagForFile(file: Path, eTag: String) {
   val eTagFile = getETagFile(file)
   try {
-    eTagFile.writeText(eTag)
+    eTagFile.write(eTag)
   }
   catch (e: IOException) {
-    LOG.warn("Can't save ETag to '" + eTagFile.absolutePath + "'", e)
+    LOG.warn("Can't save ETag to '$eTagFile'", e)
   }
 }
 
-private fun setUpETag(urlConnection: URLConnection, eTag: String?) {
-  eTag?.also { urlConnection.setRequestProperty("If-None-Match", it) }
-}
-
-private fun isNotModified(urlConnection: URLConnection, file: File?): Boolean {
-  return file != null && file.length() > 0 && urlConnection is HttpURLConnection && urlConnection.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED
+private fun isNotModified(urlConnection: URLConnection, file: Path?): Boolean {
+  return file != null && Files.size(file) > 0 && urlConnection is HttpURLConnection && urlConnection.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED
 }
 
 private data class CompatibleUpdateRequest(val build: String, val pluginXMLIds: List<String>)

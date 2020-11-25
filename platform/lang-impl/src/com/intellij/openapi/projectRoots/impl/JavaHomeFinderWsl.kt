@@ -2,8 +2,8 @@
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.openapi.projectRoots.impl.JavaHomeFinderBasic
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class JavaHomeFinderWsl internal constructor(
   private val distribution: WSLDistribution,
@@ -14,18 +14,16 @@ class JavaHomeFinderWsl internal constructor(
     return emptySet()
   }
 
-  override fun scanFolder(folder: File, includeNestDirs: Boolean, result: MutableCollection<in String>) {
+  override fun scanFolder(folder: Path, includeNestDirs: Boolean, result: MutableCollection<in String>) {
+    val path = folder.toString()
     when {
-      folder.path.startsWith(distribution.mntRoot) ->
-        return
-
-      folder.path.startsWith(WSLDistribution.UNC_PREFIX) ->
-        super.scanFolder(folder, includeNestDirs, result)
-
-      else ->
-        distribution.getWindowsPath(folder.path)?.let { windowsPath ->
-          super.scanFolder(File(windowsPath), includeNestDirs, result)
+      path.startsWith(distribution.mntRoot) -> return
+      path.startsWith(WSLDistribution.UNC_PREFIX) -> super.scanFolder(folder, includeNestDirs, result)
+      else -> {
+        distribution.getWindowsPath(path)?.let { windowsPath ->
+          super.scanFolder(Paths.get(windowsPath), includeNestDirs, result)
         }
+      }
     }
   }
 

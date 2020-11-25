@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
 import java.util.jar.Attributes;
@@ -90,20 +93,22 @@ public final class JdkUtil {
   }
 
   public static boolean checkForJdk(@NotNull String homePath) {
-    return checkForJdk(new File(FileUtil.toSystemDependentName(homePath)));
+    return checkForJdk(Paths.get(homePath));
   }
 
-  public static boolean checkForJdk(@NotNull File homePath) {
-    return (new File(homePath, "bin/javac").isFile() || new File(homePath, "bin/javac.exe").isFile()) &&
-           checkForRuntime(homePath.getAbsolutePath());
+  public static boolean checkForJdk(@NotNull Path homePath) {
+    Path bin = homePath.resolve("bin");
+    return (Files.exists(bin.resolve("javac")) || Files.exists(bin.resolve("javac.exe"))) &&
+           checkForRuntime(homePath.toAbsolutePath().toString());
   }
 
   public static boolean checkForJre(@NotNull String homePath) {
-    return checkForJre(new File(FileUtil.toSystemDependentName(homePath)));
+    return checkForJre(Paths.get(homePath));
   }
 
-  public static boolean checkForJre(@NotNull File homePath) {
-    return new File(homePath, "bin/java").isFile() || new File(homePath, "bin/java.exe").isFile();
+  public static boolean checkForJre(@NotNull Path homePath) {
+    Path bin = homePath.resolve("bin");
+    return Files.exists(bin.resolve("java")) || Files.exists(bin.resolve("java.exe"));
   }
 
   public static boolean checkForRuntime(@NotNull String homePath) {

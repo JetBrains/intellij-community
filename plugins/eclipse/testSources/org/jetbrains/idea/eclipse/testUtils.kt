@@ -21,11 +21,10 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
-import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
 
 internal val eclipseTestDataRoot: Path
-  get() = PluginPathManager.getPluginHome("eclipse").toPath() / "testData"
+  get() = PluginPathManager.getPluginHome("eclipse").toPath().resolve("testData")
 
 internal fun checkLoadSaveRoundTrip(testDataDirs: List<Path>,
                                     tempDirectory: TempDirectory,
@@ -55,7 +54,7 @@ internal fun checkConvertToStandardStorage(testDataDirs: List<Path>,
   }
 
   fun updateExpectedDir(projectDir: Path) {
-    expectedIml.copy(projectDir / "${imlFilePaths.first().second}.iml")
+    expectedIml.copy(projectDir.resolve("${imlFilePaths.first().second}.iml"))
   }
 
   loadEditSaveAndCheck(testDataDirs, tempDirectory, setupPathVariables, imlFilePaths, ::edit, ::updateExpectedDir)
@@ -78,12 +77,12 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
     val text = it.readText().replace("\$ROOT\$", projectDir.systemIndependentPath)
     it.writeText(if (SystemInfo.isWindows) text else text.replace("${EclipseXml.FILE_PROTOCOL}/", EclipseXml.FILE_PROTOCOL))
   }
-  val modulesXml = originalProjectDir / ".idea/modules.xml"
+  val modulesXml = originalProjectDir.resolve(".idea/modules.xml")
   modulesXml.write(imlFilePaths.fold(modulesXml.readText()) { text, (original, replacement) ->
     text.replace("/$original.iml", "/$replacement.iml")
   })
   for ((originalPath, targetPath) in imlFilePaths) {
-    (originalProjectDir / "$originalPath.iml").move(originalProjectDir / "$targetPath.iml")
+    originalProjectDir.resolve("$originalPath.iml").move(originalProjectDir.resolve("$targetPath.iml"))
   }
 
   FileUtil.copyDir(originalProjectDir.toFile(), projectDir.toFile())
