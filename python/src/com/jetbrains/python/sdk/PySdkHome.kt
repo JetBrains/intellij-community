@@ -42,7 +42,7 @@ class PySdkHome private constructor(val pythonBinary: File) {
    */
   fun getRootDir(): File? {
     val dirWithPython = pythonBinary.parentFile
-    if (dirWithPython.name == "bin" && !SystemInfoRt.isWindows) dirWithPython.parentFile
+    if (dirWithPython.name == "bin" && !SystemInfoRt.isWindows) return dirWithPython.parentFile
     if (SystemInfoRt.isWindows) return dirWithPython
     return null
   }
@@ -55,7 +55,7 @@ class PySdkHome private constructor(val pythonBinary: File) {
   fun findBinaryInSdk(requestedBinFileName: String): File? {
     assert('/' !in requestedBinFileName && '\\' !in requestedBinFileName) { "Provide only file name" }
     val parent = getRootDir() ?:return null
-    val file = File(parent, if (SystemInfoRt.isWindows) "Scripts/$requestedBinFileName" else requestedBinFileName)
+    val file = parent.resolve(if (SystemInfoRt.isWindows) "Scripts" else "bin").resolve(requestedBinFileName)
     return if (file.normalExecutable) file else null
   }
 
