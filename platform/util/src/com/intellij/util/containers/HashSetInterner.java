@@ -18,10 +18,12 @@ public class HashSetInterner<T> extends Interner<T> {
   private final ObjectOpenHashSet<T> mySet;
 
   public HashSetInterner() {
+    //noinspection SSBasedInspection
     mySet = new ObjectOpenHashSet<>();
   }
 
   public HashSetInterner(@NotNull Collection<? extends T> initialItems) {
+    //noinspection SSBasedInspection
     mySet = new ObjectOpenHashSet<>(initialItems);
   }
 

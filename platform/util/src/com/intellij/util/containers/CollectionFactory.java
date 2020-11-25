@@ -193,7 +193,7 @@ public final class CollectionFactory {
 
   public static @NotNull Set<String> createFilePathLinkedSet() {
     return SystemInfoRt.isFileSystemCaseSensitive
-           ? new ObjectLinkedOpenHashSet<>()
+           ? createSmallMemoryFootprintLinkedSet()
            : new ObjectLinkedOpenCustomHashSet<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
@@ -250,7 +250,18 @@ public final class CollectionFactory {
   }
 
   /**
-   * Returns a {@link Set} implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint
+   * Returns a linked-keys (i.e. iteration order is the same as the insertion order) {@link Set} implementation with slightly faster access for very big collection (>100K keys) and a bit smaller memory footprint
+   * than {@link HashSet}. Null keys are permitted. Use sparingly only when performance considerations are utterly important;
+   * in all other cases please prefer {@link HashSet}.
+   */
+  @Contract(value = "-> new", pure = true)
+  public static <K> @NotNull Set<K> createSmallMemoryFootprintLinkedSet() {
+    //noinspection SSBasedInspection
+    return new ObjectLinkedOpenHashSet<>();
+  }
+
+  /**
+   * Returns a {@link Set} implementation with slightly faster access for very big collections (>100K keys) and a bit smaller memory footprint
    * than {@link HashSet}. Null keys are permitted. Use sparingly only when performance considerations are utterly important;
    * in all other cases please prefer {@link HashSet}.
    */

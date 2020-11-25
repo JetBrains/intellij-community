@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.RecentStringInterner;
@@ -18,8 +19,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,7 @@ final class StubSerializationHelper {
 
   private final Int2ObjectMap<String> myIdToName = new Int2ObjectOpenHashMap<>();
   private final Object2IntMap<String> myNameToId = new Object2IntOpenHashMap<>();
-  private final Object2ObjectMap<String, Supplier<ObjectStubSerializer<?, ? extends Stub>>> myNameToLazySerializer = new Object2ObjectOpenHashMap<>();
+  private final Map<String, Supplier<ObjectStubSerializer<?, ? extends Stub>>> myNameToLazySerializer = CollectionFactory.createSmallMemoryFootprintMap();
 
   private final ConcurrentIntObjectMap<ObjectStubSerializer<?, ? extends Stub>> myIdToSerializer = ContainerUtil.createConcurrentIntObjectMap();
   private final Map<ObjectStubSerializer<?, ? extends Stub>, Integer> mySerializerToId = new ConcurrentHashMap<>();
@@ -94,7 +93,7 @@ final class StubSerializationHelper {
       return;
     }
 
-    for (Object2ObjectMap.Entry<String, Supplier<ObjectStubSerializer<?, ? extends Stub>>> entry : helper.myNameToLazySerializer.object2ObjectEntrySet()) {
+    for (Map.Entry<String, Supplier<ObjectStubSerializer<?, ? extends Stub>>> entry : helper.myNameToLazySerializer.entrySet()) {
       assignId(entry.getValue(), entry.getKey());
     }
   }
