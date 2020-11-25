@@ -264,7 +264,7 @@ public final class PsiPrecedenceUtil {
       return precedence1 >= precedence2 || !isCommutativeOperator(newOperatorToken);
     }
     else {
-      return rhs instanceof PsiConditionalExpression;
+      return rhs instanceof PsiConditionalExpression || rhs instanceof PsiAssignmentExpression;
     }
   }
 }
