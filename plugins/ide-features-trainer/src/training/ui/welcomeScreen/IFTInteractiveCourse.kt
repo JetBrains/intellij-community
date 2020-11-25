@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.MODULE_DESCRIPTION
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -78,7 +78,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   private fun moduleDescription(module: Module): HeightLimitedPane {
-    return HeightLimitedPane(module.description ?: "", -1, MODULE_DESCRIPTION)
+    return HeightLimitedPane(module.description ?: "", -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
   }
 
   private fun moduleHeader(module: Module): LinkLabel<Any> {
