@@ -23,7 +23,7 @@ import java.util.UUID;
  * <p>
  *   Usage:
  *   <ol>
- *     <li>Get the script from {@link #getScriptPath()}.</li>
+ *     <li>Get the script from {@link #getScriptPath(GitExecutable, boolean)}.</li>
  *     <li>Set up proper environment variable
  *         (e.g. {@code GIT_SSH} for SSH connections, or {@code GIT_ASKPASS} for HTTP) pointing to the script.</li>
  *     <li>{@link #registerHandler(Object) Register} the handler of Git requests.</li>
