@@ -261,8 +261,9 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     runTask(myProject,
             ReadAction.nonBlocking(() -> {
               FileBasedIndex.getInstance().ignoreDumbMode(
-                () -> myParameterInfoControllerData.getHandler().updateParameterInfo(elementForUpdating, context),
-                DumbModeAccessType.RELIABLE_DATA_ONLY);
+                DumbModeAccessType.RELIABLE_DATA_ONLY,
+                () -> myParameterInfoControllerData.getHandler().updateParameterInfo(elementForUpdating, context)
+              );
               return elementForUpdating;
             })
               .withDocumentsCommitted(myProject)

@@ -159,39 +159,36 @@ private class PySymbolChooserDialog(project: Project, scope: GlobalSearchScope, 
 
   override fun createChooseByNameModel() = GotoSymbolModel2(project, arrayOf(object : PyGotoSymbolContributor(), DumbAware {
     override fun getNames(project: Project?, includeNonProjectItems: Boolean): Array<String> {
-      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
-                                                         ThrowableComputable<Array<String>, RuntimeException> {
-                                                           super.getNames(project, includeNonProjectItems)
-                                                         })
+      return FileBasedIndex.getInstance().ignoreDumbMode<Array<String>, RuntimeException>(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+        super.getNames(project, includeNonProjectItems)
+      }
     }
 
     override fun getItemsByName(name: String?,
                                 pattern: String?,
                                 project: Project?,
                                 includeNonProjectItems: Boolean): Array<NavigationItem> {
-      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
-                                                         ThrowableComputable<Array<NavigationItem>, RuntimeException> {
-                                                           super.getItemsByName(name, pattern, project, includeNonProjectItems)
-                                                         })
+      return FileBasedIndex.getInstance().ignoreDumbMode<Array<NavigationItem>, RuntimeException>(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+        super.getItemsByName(name, pattern, project, includeNonProjectItems)
+      }
     }
 
     override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
-      FileBasedIndex.getInstance().ignoreDumbMode({
-                                                    super.processNames(processor, scope, filter)
-                                                  }, DumbModeAccessType.RELIABLE_DATA_ONLY)
+      FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+        super.processNames(processor, scope, filter)
+      }
     }
 
     override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
-      FileBasedIndex.getInstance().ignoreDumbMode({
-                                                    super.processElementsWithName(name, processor, parameters)
-                                                  }, DumbModeAccessType.RELIABLE_DATA_ONLY)
+      FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+        super.processElementsWithName(name, processor, parameters)
+      }
     }
 
     override fun getQualifiedName(item: NavigationItem?): String? {
-      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
-                                                         ThrowableComputable<String?, RuntimeException> {
-                                                           super.getQualifiedName(item)
-                                                         })
+      return FileBasedIndex.getInstance().ignoreDumbMode<String?, RuntimeException>(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+        super.getQualifiedName(item)
+      }
     }
   }))
 }

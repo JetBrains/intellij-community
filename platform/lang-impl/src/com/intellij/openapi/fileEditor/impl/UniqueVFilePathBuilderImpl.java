@@ -178,8 +178,9 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     }
     else {
       Ref<Collection<VirtualFile>> filesFromIndex = Ref.create();
-      FileBasedIndex.getInstance().ignoreDumbMode(() -> filesFromIndex.set(FilenameIndex.getVirtualFilesByName(project, fileName, scope)),
-                                                  DumbModeAccessType.RELIABLE_DATA_ONLY);
+      FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
+                                                  () -> filesFromIndex.set(FilenameIndex.getVirtualFilesByName(project, fileName, scope))
+      );
       return filesFromIndex.get();
     }
   }

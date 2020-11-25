@@ -166,12 +166,11 @@ public abstract class FileBasedIndex {
    * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to be happen here.
    *
    * <p> In smart mode, the behavior is similar to direct command execution
-   * @param command - a command to execute
    * @param dumbModeAccessType - defines in which manner command should be executed. Does a client expect only reliable data
+   * @param command - a command to execute
    */
   @ApiStatus.Experimental
-  public void ignoreDumbMode(@NotNull Runnable command,
-                             @NotNull DumbModeAccessType dumbModeAccessType) {
+  public void ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType, @NotNull Runnable command) {
     ignoreDumbMode(dumbModeAccessType, () -> {
       command.run();
       return null;

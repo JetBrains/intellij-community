@@ -686,9 +686,9 @@ public class CodeCompletionHandlerBase {
         if (item.requiresCommittedDocuments()) {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
         }
-        FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+        FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
           item.handleInsert(context);
-        }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+        });
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
       }
       finally {

@@ -84,7 +84,7 @@ public final class CompletionInitializationUtil {
         }
       };
     Project project = psiFile.getProject();
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
       for (final CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project)) {
         current.set(contributor);
         contributor.beforeCompletion(context);
@@ -93,7 +93,7 @@ public final class CompletionInitializationUtil {
                                                                                              contributor +
                                                                                              " left the document uncommitted";
       }
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
     return context;
   }
 

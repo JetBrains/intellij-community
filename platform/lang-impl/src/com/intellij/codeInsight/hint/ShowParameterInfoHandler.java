@@ -103,11 +103,11 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                 for (ParameterInfoHandler<PsiElement, Object> handler : handlers) {
                   PsiElement element = handler.findElementForParameterInfo(context);
                   if (element != null) {
-                    return (Runnable)() -> FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+                    return (Runnable)() -> FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
                       if (element.isValid()) {
                         handler.showParameterInfo(element, context);
                       }
-                    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+                    });
                   }
                 }
                 return null;
