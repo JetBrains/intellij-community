@@ -115,10 +115,11 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   }
 
   @Override
-  public void dumpStatistics() {
+  public String dumpStatistics() {
     if (mySnapshotInputMappings instanceof SnapshotInputMappings<?, ?>) {
-      ((SnapshotInputMappings<?, ?>) mySnapshotInputMappings).dumpStatistics();
+      return ((SnapshotInputMappings<?, ?>) mySnapshotInputMappings).dumpStatistics();
     }
+    return null;
   }
 
   public static boolean isCompositeIndexer(@NotNull DataIndexer<?, ?, ?> indexer) {

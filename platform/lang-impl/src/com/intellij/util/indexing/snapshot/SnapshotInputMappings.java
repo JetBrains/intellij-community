@@ -359,13 +359,14 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   }
 
   @ApiStatus.Internal
-  public void dumpStatistics() {
+  public String dumpStatistics() {
     if (myStatistics != null) {
-      myStatistics.dumpStatistics();
+      return myStatistics.dumpStatistics();
     }
+    return null;
   }
 
-  private class Statistics {
+  private static class Statistics {
     private final LongAdder totalRequests = new LongAdder();
     private final LongAdder totalMisses = new LongAdder();
 
@@ -376,15 +377,14 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
       }
     }
 
-    void dumpStatistics() {
+    String dumpStatistics() {
       long requests = totalRequests.longValue();
       long misses = totalMisses.longValue();
-      String message =
-        "Snapshot mappings stats for " + myIndexId +
-        ". requests: " + requests +
+      return
+        "input snapshot stats[" +
+        "requests: " + requests +
         ", hits: " + (requests - misses) +
-        ", misses: " + misses;
-      LOG.info(message);
+        ", misses: " + misses + "]";
     }
   }
 }

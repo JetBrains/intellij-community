@@ -264,11 +264,6 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public void dumpStatistics() {
-
-    }
-
-    @Override
     public @NotNull ValueContainer<Value> getData(@NotNull Key key) {
       return SnapshotSingleValueIndexStorage.empty();
     }

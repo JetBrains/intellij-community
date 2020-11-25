@@ -298,8 +298,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   public void dumpIndexStatistics() {
     IndexConfiguration state = getRegisteredIndexes().getState();
-    for (ID<?, ?> id : state.getIndexIDs()) {
-      state.getIndex(id).dumpStatistics();
+    String statistics = state.getIndexIDs().stream().map(id -> {
+      var indexStats = state.getIndex(id).dumpStatistics();
+      if (indexStats == null) return null;
+      return "id = " + id + ": " + indexStats;
+    }).filter(Objects::nonNull).collect(Collectors.joining(", "));
+    if (!statistics.isEmpty()) {
+      LOG.info(statistics);
     }
   }
 
