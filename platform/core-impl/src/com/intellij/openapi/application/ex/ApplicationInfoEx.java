@@ -145,7 +145,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     return "JetBrains".equals(getShortCompanyName());
   }
 
-  public abstract List<ProgressSlide> getProgressSlides();
+  public abstract @NotNull List<ProgressSlide> getProgressSlides();
 
   public abstract int getProgressHeight();
 

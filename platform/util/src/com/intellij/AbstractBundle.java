@@ -45,7 +45,7 @@ public class AbstractBundle {
 
   @Contract(pure = true)
   public @NotNull @Nls String getMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return message(getResourceBundle(getClass().getClassLoader()), key, params);
+    return BundleBase.messageOrDefault(getResourceBundle(getClass().getClassLoader()), key, null, params);
   }
 
   /**
@@ -165,7 +165,7 @@ public class AbstractBundle {
     ourCache.clear();
   }
 
-  protected void clearLocaleCache() {
+  public void clearLocaleCache() {
     if (myBundle != null) {
       myBundle.clear();
     }

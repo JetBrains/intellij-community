@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.AbstractBundle;
+import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,7 +96,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       }
     }
     else {
-      return AbstractBundle.message(resourceBundle, key);
+      return BundleBase.messageOrDefault(resourceBundle, key, null);
     }
   }
 

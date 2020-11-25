@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
-import com.intellij.AbstractBundle;
+import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
@@ -83,7 +83,7 @@ public final class NotificationGroupEP implements PluginAware {
       return id;
     }
     ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getPluginDescriptor().getPluginClassLoader());
-    return AbstractBundle.message(resourceBundle, key);
+    return BundleBase.messageOrDefault(resourceBundle, key, null);
   }
 
   public @Nullable Icon getIcon() {

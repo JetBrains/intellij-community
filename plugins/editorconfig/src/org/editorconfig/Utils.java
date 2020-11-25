@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig;
 
-import com.intellij.AbstractBundle;
+import com.intellij.BundleBase;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -83,12 +83,10 @@ public final class Utils {
   }
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {
+    Object @NotNull [] params = new Object[]{configValue, !configKey.isEmpty() ? configKey : "?", filePath};
     final String message = configValue != null ?
-                           AbstractBundle.message(EditorConfigBundle.INSTANCE.getResourceBundle(),
-                                                  "invalid.config.value",
-                                                  configValue,
-                                                  !configKey.isEmpty() ? configKey : "?",
-                                                  filePath) :
+                           BundleBase
+                             .messageOrDefault(EditorConfigBundle.INSTANCE.getResourceBundle(), "invalid.config.value", null, params) :
                            EditorConfigBundle.message("read.failure");
     configValue = configValue != null ? configValue : "ioError";
     EditorConfigNotifier.error(project, configValue, message);

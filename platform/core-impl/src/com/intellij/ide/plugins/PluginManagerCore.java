@@ -39,7 +39,10 @@ import java.io.*;
 import java.lang.ref.Reference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -516,7 +519,8 @@ public final class PluginManagerCore {
                    Stream.concat(globalErrors.stream().map(Supplier::get),
                                  pluginErrors.entrySet().stream()
                                    .sorted(Map.Entry.comparingByKey())
-                                   .map(e -> e.getValue().getInternalMessage())).collect(Collectors.joining("\n  "));
+                                   .map(e -> e.getValue().getInternalMessage()))
+                     .collect(Collectors.joining("\n  "));
     }
     else {
       logMessage = null;
@@ -669,7 +673,7 @@ public final class PluginManagerCore {
         descriptor.setEnabled(false);
       }
       String pluginsString = component.stream().map(it -> "'" + it.getName() + "'").collect(Collectors.joining(", "));
-      errors.add(() -> CoreBundle.message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginsString));
+      errors.add(message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginsString));
     }
   }
 
@@ -915,8 +919,8 @@ public final class PluginManagerCore {
       Set<String> set = brokenPluginVersions.get(descriptor.getPluginId());
       if (set != null && set.contains(descriptor.getVersion())) {
         descriptor.setEnabled(false);
-        PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.marked.as.broken", descriptor.getName(), descriptor.getVersion()),
-                                  CoreBundle.messagePointer("plugin.loading.error.short.marked.as.broken")).register(errors);
+        PluginLoadingError.create(descriptor, message("plugin.loading.error.long.marked.as.broken", descriptor.getName(), descriptor.getVersion()),
+                                  message("plugin.loading.error.short.marked.as.broken")).register(errors);
       }
       else if (explicitlyEnabled != null) {
         if (!explicitlyEnabled.contains(descriptor)) {
@@ -929,14 +933,14 @@ public final class PluginManagerCore {
       }
       else if (!shouldLoadPlugins) {
         descriptor.setEnabled(false);
-        PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.plugin.loading.disabled", descriptor.getName()),
-                                  CoreBundle.messagePointer("plugin.loading.error.short.plugin.loading.disabled")).register(errors);
+        PluginLoadingError.create(descriptor, message("plugin.loading.error.long.plugin.loading.disabled", descriptor.getName()),
+                                  message("plugin.loading.error.short.plugin.loading.disabled")).register(errors);
       }
       else if (isNonBundledPluginDisabled && !descriptor.isBundled()) {
         descriptor.setEnabled(false);
         PluginLoadingError.create(descriptor,
-                                  CoreBundle.messagePointer("plugin.loading.error.long.custom.plugin.loading.disabled", descriptor.getName()),
-                                  CoreBundle.messagePointer("plugin.loading.error.short.custom.plugin.loading.disabled"), false).register(errors);
+                                  message("plugin.loading.error.long.custom.plugin.loading.disabled", descriptor.getName()),
+                                  message("plugin.loading.error.short.custom.plugin.loading.disabled"), false).register(errors);
       }
     }
   }
@@ -976,23 +980,23 @@ public final class PluginManagerCore {
       BuildNumber sinceBuildNumber = sinceBuild == null ? null : BuildNumber.fromString(sinceBuild, null, null);
       if (sinceBuildNumber != null && sinceBuildNumber.compareTo(ideBuildNumber) > 0) {
         if (beforeCreateErrorCallback != null) beforeCreateErrorCallback.run();
-        return PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.incompatible.since.build", descriptor.getName(), descriptor.getVersion(), sinceBuild, ideBuildNumber),
-                                         CoreBundle.messagePointer("plugin.loading.error.short.incompatible.since.build", sinceBuild));
+        return PluginLoadingError.create(descriptor, message("plugin.loading.error.long.incompatible.since.build", descriptor.getName(), descriptor.getVersion(), sinceBuild, ideBuildNumber),
+                                         message("plugin.loading.error.short.incompatible.since.build", sinceBuild));
       }
 
       BuildNumber untilBuildNumber = untilBuild == null ? null : BuildNumber.fromString(untilBuild, null, null);
       if (untilBuildNumber != null && untilBuildNumber.compareTo(ideBuildNumber) < 0) {
         if (beforeCreateErrorCallback != null) beforeCreateErrorCallback.run();
-        return PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.incompatible.until.build", descriptor.getName(), descriptor.getVersion(), untilBuild, ideBuildNumber),
-                                         CoreBundle.messagePointer("plugin.loading.error.short.incompatible.until.build", untilBuild));
+        return PluginLoadingError.create(descriptor, message("plugin.loading.error.long.incompatible.until.build", descriptor.getName(), descriptor.getVersion(), untilBuild, ideBuildNumber),
+                                         message("plugin.loading.error.short.incompatible.until.build", untilBuild));
       }
       return null;
     }
     catch (Exception e) {
       getLogger().error(e);
       return PluginLoadingError.create(descriptor,
-                                       CoreBundle.messagePointer("plugin.loading.error.long.failed.to.load.requirements.for.ide.version", descriptor.getName()),
-                                       CoreBundle.messagePointer("plugin.loading.error.short.failed.to.load.requirements.for.ide.version"));
+                                       message("plugin.loading.error.long.failed.to.load.requirements.for.ide.version", descriptor.getName()),
+                                       message("plugin.loading.error.short.failed.to.load.requirements.for.ide.version"));
     }
   }
 
@@ -1243,8 +1247,8 @@ public final class PluginManagerCore {
 
       result = false;
       String presentableName = incompatibleId.getIdString();
-      PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.ide.contains.conflicting.module", descriptor.getName(), presentableName),
-                                CoreBundle.messagePointer("plugin.loading.error.short.ide.contains.conflicting.module", presentableName), notifyUser).register(errors);
+      PluginLoadingError.create(descriptor, message("plugin.loading.error.long.ide.contains.conflicting.module", descriptor.getName(), presentableName),
+                                message("plugin.loading.error.short.ide.contains.conflicting.module", presentableName), notifyUser).register(errors);
     }
 
     // no deps at all
@@ -1269,23 +1273,33 @@ public final class PluginManagerCore {
       if (depName == null) {
         @NlsSafe String depPresentableId = depId.getIdString();
         if (errors.containsKey(depId)) {
-          PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.getName(), depPresentableId),
-                                    CoreBundle.messagePointer("plugin.loading.error.short.depends.on.failed.to.load.plugin", depPresentableId), notifyUser).register(errors);
+          PluginLoadingError.create(descriptor, message("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.getName(), depPresentableId),
+                                    message("plugin.loading.error.short.depends.on.failed.to.load.plugin", depPresentableId), notifyUser).register(errors);
         }
         else {
-          PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.getName(), depPresentableId),
-                                    CoreBundle.messagePointer("plugin.loading.error.short.depends.on.not.installed.plugin", depPresentableId), notifyUser).register(errors);
+          PluginLoadingError.create(descriptor, message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.getName(), depPresentableId),
+                                    message("plugin.loading.error.short.depends.on.not.installed.plugin", depPresentableId), notifyUser).register(errors);
         }
       }
       else {
         PluginLoadingError
-          error = PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.getName(), depName),
-                                            CoreBundle.messagePointer("plugin.loading.error.short.depends.on.disabled.plugin", depName), notifyUser);
+          error = PluginLoadingError.create(descriptor, message("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.getName(), depName),
+                                            message("plugin.loading.error.short.depends.on.disabled.plugin", depName), notifyUser);
         error.setDisabledDependency(dep.getPluginId());
         error.register(errors);
       }
     }
     return result;
+  }
+
+  private static @NotNull @Nls Supplier<String> message(@NotNull @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String key, Object @NotNull ... params) {
+    //noinspection Convert2Lambda
+    return new Supplier<String>() {
+      @Override
+      public String get() {
+        return CoreBundle.message(key, params);
+      }
+    };
   }
 
   /**

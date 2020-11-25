@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
 import org.jdom.Element;
@@ -834,7 +833,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public List<ProgressSlide> getProgressSlides() {
+  public @NotNull List<ProgressSlide> getProgressSlides() {
     return myProgressSlides;
   }
 
@@ -894,7 +893,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
 
       String builtinPluginsUrl = element.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
-      if (StringUtil.isNotEmpty(builtinPluginsUrl)) {
+      if (builtinPluginsUrl != null && !builtinPluginsUrl.isEmpty()) {
         myBuiltinPluginsUrl = builtinPluginsUrl;
       }
     }

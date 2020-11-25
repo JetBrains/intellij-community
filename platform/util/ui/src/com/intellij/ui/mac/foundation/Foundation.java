@@ -476,8 +476,7 @@ public final class Foundation {
       return data.getByteArray(0, length());
     }
 
-    @NotNull
-    public Image createImageFromBytes() {
+    public @NotNull Image createImageFromBytes() {
       return ImageLoader.loadFromBytes(bytes());
     }
   }
