@@ -371,14 +371,15 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
 
         val afterDir = File(context.testFile.parentFile, "after")
-        val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDir)?.apply {
-            UsefulTestCase.refreshRecursively(this)
-        } ?: error("`after` directory not found")
-
         action(beforeVFile)
 
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         FileDocumentManager.getInstance().saveAllDocuments()
+
+        val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDir)?.apply {
+            UsefulTestCase.refreshRecursively(this)
+        } ?: error("`after` directory not found")
+
         PlatformTestUtil.assertDirectoriesEqual(afterVFile, beforeVFile)
     }
 }
