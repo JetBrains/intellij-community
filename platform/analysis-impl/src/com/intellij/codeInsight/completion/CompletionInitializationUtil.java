@@ -114,19 +114,20 @@ public final class CompletionInitializationUtil {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
     final Consumer<Supplier<Disposable>> registerDisposable = supplier -> indicator.registerChildDisposable(supplier);
 
-    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable, false);
   }
 
   //need for code with me
-  public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, OffsetsInFile topLevelOffsets, Disposable parentDisposable) {
+  public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, OffsetsInFile topLevelOffsets, Disposable parentDisposable, Boolean noWriteLock) {
     final Consumer<Supplier<Disposable>> registerDisposable = supplier -> Disposer.register(parentDisposable, supplier.get());
 
-    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable, noWriteLock);
   }
 
   private static Supplier<OffsetsInFile> doInsertDummyIdentifier(CompletionInitializationContext initContext,
                                                                  OffsetsInFile topLevelOffsets,
-                                                                 Consumer<Supplier<Disposable>> registerDisposable) {
+                                                                 Consumer<Supplier<Disposable>> registerDisposable,
+                                                                 Boolean noWriteLock) {
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
@@ -146,9 +147,13 @@ public final class CompletionInitializationUtil {
 
     Supplier<OffsetsInFile> apply = topLevelOffsets.replaceInCopy(hostCopy, startOffset, endOffset, dummyIdentifier);
 
+
     // despite being non-physical, the copy file should only be modified in a write action,
     // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
-    return () -> WriteAction.compute(() -> {
+
+    //kskrygan: this check is non-relevant for CWM (quick doc and other features work separately)
+    //and we are trying to avoid useless write locks during completion
+    return skipWriteLockIfNeeded(noWriteLock, () -> {
       registerDisposable.accept(() -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
       OffsetsInFile copyOffsets = apply.get();
 
@@ -156,6 +161,15 @@ public final class CompletionInitializationUtil {
 
       return copyOffsets;
     });
+  }
+
+  private static Supplier<OffsetsInFile> skipWriteLockIfNeeded(Boolean skipWriteLock, Supplier<OffsetsInFile> toWrap) {
+    if (skipWriteLock)
+      return toWrap;
+    else
+      return () -> WriteAction.compute(() -> {
+        return toWrap.get();
+      });
   }
 
   public static OffsetsInFile toInjectedIfAny(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
