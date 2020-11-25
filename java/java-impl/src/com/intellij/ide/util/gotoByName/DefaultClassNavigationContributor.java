@@ -52,7 +52,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     Project project = scope.getProject();
-    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, () -> {
+    DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
       PsiShortNamesCache.getInstance(project).processAllClassNames(processor, scope, filter);
     });
   }
@@ -71,7 +71,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
       }
     }
     final MinusculeMatcher innerMatcher = hasDollar ? NameUtil.buildMatcher("*" + namePattern).build() : null;
-    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<>() {
         final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");
 

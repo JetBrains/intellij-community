@@ -76,7 +76,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
       ThrowableComputable<TextSearchService.TextSearchResult, RuntimeException> findTextComputable =
         () -> myTextSearchService.processFilesWithText(stringToFind, Processors.cancelableCollectProcessor(hits), scope);
       TextSearchService.TextSearchResult result =
-        FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, findTextComputable);
+        DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(findTextComputable);
       if (result != TextSearchService.TextSearchResult.NO_TRIGRAMS) {
         return Collections.unmodifiableCollection(hits);
       }
@@ -84,7 +84,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
       PsiSearchHelper helper = PsiSearchHelper.getInstance(myProject);
       CacheManager cacheManager = CacheManager.getInstance(myProject);
 
-      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, () -> {
+      return DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
         Set<VirtualFile> resultFiles = new HashSet<>();
 
         helper.processCandidateFilesForText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, file -> {

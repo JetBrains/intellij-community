@@ -1185,10 +1185,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return query.compute();
       }
 
-      return ReadAction.compute(() -> FileBasedIndex.getInstance().ignoreDumbMode(
-        DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE,
-        () -> query.compute()
-      ));
+      return ReadAction.compute(() -> DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> query.compute()));
     }
     else {
       return DumbService.getInstance(project).runReadActionInSmartMode(query);

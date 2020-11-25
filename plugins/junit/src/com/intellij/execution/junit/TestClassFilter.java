@@ -63,7 +63,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   @Override
   public boolean isAccepted(final PsiClass aClass) {
     return ReadAction.compute(() -> {
-      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
         if (aClass.getQualifiedName() != null &&
             (myBase != null && aClass.isInheritor(myBase, true) && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) ||
              isTopMostTestClass(aClass))) {

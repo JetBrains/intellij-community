@@ -335,9 +335,7 @@ public class ParameterInfoComponent extends JPanel {
       }
       else {
         setVisible(i, true);
-        FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
-                                                    () -> myParameterInfoControllerData.getHandler().updateUI(o, context)
-        );
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> myParameterInfoControllerData.getHandler().updateUI(o, context));
 
         // ensure that highlighted element is visible
         if (context.isHighlighted()) {

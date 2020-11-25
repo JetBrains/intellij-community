@@ -224,7 +224,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
 
-    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       for (CompletionContributor contributor :
         CompletionContributor.forLanguageHonorDumbness(initContext.getPositionLanguage(), initContext.getProject())) {
         ProgressManager.checkCanceled();
@@ -308,7 +308,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (myLookup.isAvailableToUser()) {
       return;
     }
-    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
         if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
 
@@ -452,7 +452,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void addItemToLookup(CompletionResult item) {
     Ref<Boolean> stopRef = new Ref<>(Boolean.FALSE);
-    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       stopRef.set(!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher()));
     });
 
@@ -800,7 +800,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @HintText
   private String getNoSuggestionsMessage(CompletionParameters parameters) {
-    return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       return CompletionContributor.forParameters(parameters)
         .stream()
         .map(c -> c.handleEmptyLookup(parameters, getEditor()))
@@ -855,7 +855,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher, CompletionParameters parameters) {
-    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       duringCompletion(initContext, parameters);
       ProgressManager.checkCanceled();
 
