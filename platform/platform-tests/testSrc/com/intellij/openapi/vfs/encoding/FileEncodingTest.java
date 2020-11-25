@@ -13,10 +13,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
@@ -1120,6 +1117,93 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     for (VirtualFile mapping : ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject())).getAllMappings().keySet()) {
       assertTrue(mapping.isValid());
     }
+  }
+
+  public void testFileEncodingProviderOverridesMapping() throws IOException {
+    FileEncodingProvider encodingProvider = new FileEncodingProvider() {
+      @Override
+      public Charset getEncoding(@NotNull VirtualFile virtualFile) {
+        return StandardCharsets.UTF_16;
+      }
+    };
+    FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
+    VirtualFile file = createTempFile("txt", NO_BOM, "some", StandardCharsets.UTF_8);
+    EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(getProject());
+    encodingManager.setEncoding(file, StandardCharsets.ISO_8859_1);
+    try {
+      Charset charset = encodingManager.getEncoding(file, true);
+      assertEquals(StandardCharsets.UTF_16, charset);
+    }
+    finally {
+      encodingManager.setEncoding(file, null);
+    }
+  }
+
+  public void testForcedCharsetOverridesFileEncodingProvider() throws IOException {
+    final String ext = "yyy";
+    class TestFileType extends LanguageFileType {
+
+      protected TestFileType() {
+        super(new Language("test") {
+        });
+      }
+
+      @Override
+      public @NotNull String getName() {
+        return "Test";
+      }
+
+      @Override
+      public @NotNull String getDescription() {
+        return "Test";
+      }
+
+      @Override
+      public @NotNull String getDefaultExtension() {
+        return ext;
+      }
+
+      @Override
+      public @Nullable Icon getIcon() {
+        return null;
+      }
+
+      @Override
+      public @NotNull CharsetHint getCharsetHint() {
+        return new CharsetHint.ForcedCharset(StandardCharsets.ISO_8859_1);
+      }
+    };
+    TestFileType fileType = new TestFileType();
+    FileEncodingProvider encodingProvider = new FileEncodingProvider() {
+      @Override
+      public Charset getEncoding(@NotNull VirtualFile virtualFile) {
+        return StandardCharsets.UTF_16;
+      }
+    };
+    FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
+    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
+    fileTypeManager.registerFileType(fileType, Collections.singletonList(new ExtensionFileNameMatcher(ext)));
+    VirtualFile file = createTempFile(ext, NO_BOM, "some", StandardCharsets.UTF_8);
+    try {
+      assertEquals(fileType, file.getFileType());
+      assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
+    }
+    finally {
+      fileTypeManager.unregisterFileType(fileType);
+    }
+  }
+
+  public void testDetectedCharsetOverridesFileEncodingProvider() throws IOException {
+    FileEncodingProvider encodingProvider = new FileEncodingProvider() {
+      @Override
+      public Charset getEncoding(@NotNull VirtualFile virtualFile) {
+        return WINDOWS_1251;
+      }
+    };
+    FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
+    VirtualFile file = createTempFile("yyy", NO_BOM, "Some text" + THREE_RUSSIAN_LETTERS, StandardCharsets.UTF_8);
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
+    assertEquals(LoadTextUtil.AutoDetectionReason.FROM_BYTES, LoadTextUtil.getCharsetAutoDetectionReason(file));
   }
 
   private @NotNull VirtualFile createTempFile(@NotNull String ext, byte @NotNull [] BOM, @NotNull String content, @NotNull Charset charset) throws IOException {
