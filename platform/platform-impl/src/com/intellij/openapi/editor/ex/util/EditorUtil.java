@@ -48,8 +48,9 @@ import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
+
 public final class EditorUtil {
-  public static final Key<Boolean> SHOW_WHEN_FOLDED = Key.create("block.inlay.show.when.folded");
   private static final Logger LOG = Logger.getInstance(EditorUtil.class);
 
   private EditorUtil() {
@@ -996,8 +997,7 @@ public final class EditorUtil {
    * Tells whether given inlay element is invisible due to folding of text in editor
    */
   public static boolean isInlayFolded(@NotNull Inlay inlay) {
-    Boolean showWhenFolded = inlay.getUserData(SHOW_WHEN_FOLDED);
-    if (showWhenFolded != null && showWhenFolded) {
+    if (showWhenFolded(inlay)) {
       return false;
     }
     Editor editor = inlay.getEditor();

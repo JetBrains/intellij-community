@@ -15,6 +15,7 @@ import java.util.function.IntSupplier;
 
 final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, BlockInlayImpl<?>> implements IntSupplier {
   final boolean myShowAbove;
+  final boolean myShowWhenFolded;
   final int myPriority;
   private int myHeightInPixels;
   private GutterIconRenderer myGutterIconRenderer;
@@ -23,10 +24,12 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
                  int offset,
                  boolean relatesToPrecedingText,
                  boolean showAbove,
+                 boolean showWhenFolded,
                  int priority,
                  @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
     myShowAbove = showAbove;
+    myShowWhenFolded = showWhenFolded;
     myPriority = priority;
   }
 
