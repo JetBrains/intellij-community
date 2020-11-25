@@ -9,6 +9,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Helper methods to work with {@link ModelBranch} API
+ */
 public class ModelBranchUtil {
   private ModelBranchUtil() {}
 
@@ -32,14 +35,45 @@ public class ModelBranchUtil {
   }
 
   /**
+   * @param context context file that may belong to the branch
+   * @param file file to get the copy in the same branch as context
+   * @return a copy of the file that belongs to the same branch as context. 
+   * May return input file if it already belongs to the same branch or if context doesn't belong to any branch
+   * @throws IllegalArgumentException if file and context already belong to different branches
+   */
+  public static @NotNull VirtualFile obtainCopyFromTheSameBranch(@NotNull VirtualFile context, @NotNull VirtualFile file) {
+    ModelBranch branch = ModelBranch.getFileBranch(context);
+    if (branch == null) return file;
+    ModelBranch fileBranch = ModelBranch.getFileBranch(file);
+    if (fileBranch == branch) return file;
+    if (fileBranch != null) {
+      throw new IllegalArgumentException("Branch of supplied file differs from context branch");
+    }
+    return branch.findFileCopy(file);
+  } 
+
+  /**
    * @param file virtual file to find the original for
-   * @return original file if the supplied file belongs to the branch
+   * @return original file if the supplied file belongs to the branch; supplied file otherwise.
+   * May return null for non-null input if the file exists in branch only.
    */
   @Contract("null -> null")
   public static @Nullable VirtualFile findOriginalFile(@Nullable VirtualFile file) {
     if (file == null) return null;
     ModelBranch branch = ModelBranch.getFileBranch(file);
     return branch == null ? file : branch.findOriginalFile(file);
+  }
+
+  /**
+   * @param psi PSI-element to find the original for
+   * @return original PSI element if the supplied element belongs to the branch.
+   * May return null for non-null input if the PSI element exists in branch only.
+   */
+  @Contract("null -> null")
+  public static <T extends PsiElement> @Nullable T findOriginalPsi(@Nullable T psi) {
+    if (psi == null) return null;
+    ModelBranch branch = ModelBranch.getPsiBranch(psi);
+    return branch == null ? psi : branch.findOriginalPsi(psi);
   }
 
   /**
