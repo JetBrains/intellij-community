@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="kotlin.resources-descriptors" scope="TEST" />
   </component>
 </module>
