@@ -62,6 +62,18 @@ interface EntitySource {
 }
 
 /**
+ * Marker interface to represent entities which properties aren't loaded and which were added to the storage because other entities requires
+ * them. Entities which sources implements this interface don't replace existing entities when [WorkspaceEntityStorageBuilder.replaceBySource]
+ * is called.
+ *
+ * For example if we have `FacetEntity` which requires `ModuleEntity`, and need to load facet configuration from *.iml file and load the module
+ * configuration from some other source, we may use this interface to mark `entitySource` for `ModuleEntity`. This way when content of *.iml
+ * file is applied to the model via [WorkspaceEntityStorageBuilder.replaceBySource], it won't overwrite actual configuration
+ * of `ModuleEntity`.
+ */
+interface DummyParentEntitySource : EntitySource
+
+/**
  * Base interface for entities which may need to find all entities referring to them.
  */
 interface ReferableWorkspaceEntity : WorkspaceEntity {
