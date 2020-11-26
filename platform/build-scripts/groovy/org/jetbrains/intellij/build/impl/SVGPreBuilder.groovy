@@ -58,6 +58,6 @@ final class SVGPreBuilder {
       }
     }
 
-    buildContext.resourceFiles.add(Paths.get(dbFile))
+    buildContext.addResourceFile(Paths.get(dbFile))
   }
 }

@@ -129,7 +129,7 @@ final class BrokenPluginsBuildFileService {
     finally {
       out.close()
     }
-    buildContext.resourceFiles.add(targetFile)
+    buildContext.addResourceFile(targetFile)
   }
 
   @CompileStatic

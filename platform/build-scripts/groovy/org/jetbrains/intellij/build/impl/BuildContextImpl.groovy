@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -13,12 +14,19 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModule
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.BiFunction
 
 @CompileStatic
-class BuildContextImpl extends BuildContext {
+final class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
   private final CompilationContextImpl compilationContext
+
+  // thread-safe - forkForParallelTask pass it to child context
+  private final ConcurrentLinkedQueue<Path> resourceFiles
 
   static BuildContextImpl create(String communityHome, String projectHome, ProductProperties productProperties,
                                  ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
@@ -28,20 +36,21 @@ class BuildContextImpl extends BuildContext {
 
     def compilationContext = CompilationContextImpl.create(communityHome, projectHome,
                                                            createBuildOutputRootEvaluator(projectHome, productProperties), options)
-    def context = new BuildContextImpl(compilationContext, productProperties,
-                                       windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                       proprietaryBuildTools)
-    return context
+    return new BuildContextImpl(compilationContext, productProperties,
+                                windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                proprietaryBuildTools, new ConcurrentLinkedQueue<>())
   }
 
   private BuildContextImpl(CompilationContextImpl compilationContext, ProductProperties productProperties,
                            WindowsDistributionCustomizer windowsDistributionCustomizer,
                            LinuxDistributionCustomizer linuxDistributionCustomizer,
                            MacDistributionCustomizer macDistributionCustomizer,
-                           ProprietaryBuildTools proprietaryBuildTools) {
+                           ProprietaryBuildTools proprietaryBuildTools,
+                           @NotNull ConcurrentLinkedQueue<Path> resourceFiles) {
     this.compilationContext = compilationContext
     this.global = compilationContext.global
     this.productProperties = productProperties
+    this.resourceFiles = resourceFiles
     this.proprietaryBuildTools = proprietaryBuildTools == null ? ProprietaryBuildTools.DUMMY : proprietaryBuildTools
     this.windowsDistributionCustomizer = windowsDistributionCustomizer
     this.linuxDistributionCustomizer = linuxDistributionCustomizer
@@ -65,12 +74,21 @@ class BuildContextImpl extends BuildContext {
     fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
     systemSelector = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
-    bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar"]
+    bootClassPathJarNames = List.of("bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar")
     dependenciesProperties = new DependenciesProperties(this)
   }
 
+  @Override
+  void addResourceFile(@NotNull Path file) {
+    resourceFiles.add(file)
+  }
+
+  @NotNull Collection<Path> getResourceFiles() {
+    return List.copyOf(resourceFiles)
+  }
+
   private String readSnapshotBuildNumber() {
-    new File(paths.communityHome, "build.txt").text.trim()
+    return Files.readString(Paths.get(paths.communityHome, "build.txt")).trim()
   }
 
   private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome,
@@ -212,6 +230,7 @@ class BuildContextImpl extends BuildContext {
     else {
       messages.block(stepMessage, step)
     }
+    return true
   }
 
   @Override
@@ -232,7 +251,7 @@ class BuildContextImpl extends BuildContext {
       compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
     def copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                    proprietaryBuildTools)
+                                    proprietaryBuildTools, resourceFiles)
     copy.paths.artifacts = paths.artifacts
     return copy
   }
@@ -249,7 +268,7 @@ class BuildContextImpl extends BuildContext {
       compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties))
     def copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                    proprietaryBuildTools)
+                                    proprietaryBuildTools, new ConcurrentLinkedQueue<Path>())
     copy.paths.artifacts = paths.artifacts
     copy.compilationContext.prepareForBuild()
     return copy

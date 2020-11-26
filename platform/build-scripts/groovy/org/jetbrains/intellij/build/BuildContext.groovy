@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BundledJreManager
 import org.jetbrains.intellij.build.impl.DependenciesProperties
@@ -42,9 +43,11 @@ abstract class BuildContext implements CompilationContext {
   List<String> bootClassPathJarNames
 
   /**
-   * Paths of resource files which need to be copied to product resources
+   * Add file to be copied into application resources.
    */
-  final List<Path> resourceFiles = new ArrayList<>()
+  abstract void addResourceFile(@NotNull Path file)
+
+  abstract @NotNull Collection<Path> getResourceFiles();
 
   abstract boolean includeBreakGenLibraries()
 

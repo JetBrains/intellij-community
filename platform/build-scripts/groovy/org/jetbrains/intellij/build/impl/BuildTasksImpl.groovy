@@ -740,13 +740,7 @@ idea.fatal.error.notification=disabled
             def start = System.currentTimeMillis()
             childContext.messages.onForkStarted()
             try {
-              V result = task.run(childContext)
-              if (!childContext.resourceFiles.isEmpty()) {
-                synchronized (buildContext.resourceFiles) {
-                  buildContext.resourceFiles.addAll(childContext.resourceFiles)
-                }
-              }
-              return result
+              return task.run(childContext)
             }
             finally {
               buildContext.messages.info("'$task.taskName' task finished in ${Formats.formatDuration(System.currentTimeMillis() - start)}")
@@ -881,7 +875,7 @@ idea.fatal.error.notification=disabled
 
   static copyResourceFiles(BuildContext buildContext, String newDirPath) {
     Path newDir = Paths.get(newDirPath)
-      Files.createDirectories(newDir)
+    Files.createDirectories(newDir)
 
     for (Path file : buildContext.resourceFiles) {
       Files.copy(file, newDir.resolve(file.fileName))
