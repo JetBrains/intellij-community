@@ -185,7 +185,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final @NonNls String ATTRIBUTE_LAF_LIGHT = "light";
   private static final @NonNls String ATTRIBUTE_LAF_DARK = "dark";
 
-  private static final @NonNls String WIN32_APP_USER_MODEL_ID = "win32AppUserModelId";
+  private static final @NonNls String PROPERTY_WIN_APPUSERMODELID = "idea.win.appUserModelId";
 
   static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
@@ -426,17 +426,15 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     // AppUserModelId entity exists only on Windows 7+
     if (SystemInfo.isWin7OrNewer) {
-      final Element win32AppUserModelIdElement = getChild(element, WIN32_APP_USER_MODEL_ID);
-      if (win32AppUserModelIdElement == null) {
+      final String propertyValue = System.getProperty(PROPERTY_WIN_APPUSERMODELID);
+      if (propertyValue == null) {
         myWin32AppUserModelId = fallbackWin32AppUserModelId(this);
-      }
-      else {
-        final String value = win32AppUserModelIdElement.getText();
-        if (StringUtilRt.isEmptyOrSpaces(value) || (value.equals("__WIN32_APP_USER_MODEL_ID__"))) {
+      } else {
+        if (StringUtilRt.isEmptyOrSpaces(propertyValue)) {
           myWin32AppUserModelId = fallbackWin32AppUserModelId(this);
         }
         else {
-          myWin32AppUserModelId = value;
+          myWin32AppUserModelId = propertyValue;
         }
       }
     } else {
