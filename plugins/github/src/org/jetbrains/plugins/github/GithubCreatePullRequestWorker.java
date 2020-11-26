@@ -32,10 +32,7 @@ import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitCompareBranchesHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GHRepositoryPath;
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
-import org.jetbrains.plugins.github.api.GithubApiRequests;
-import org.jetbrains.plugins.github.api.GithubServerPath;
+import org.jetbrains.plugins.github.api.*;
 import org.jetbrains.plugins.github.api.data.GithubBranch;
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
@@ -334,16 +331,18 @@ public final class GithubCreatePullRequestWorker {
   private GithubPullRequestDetailed doCreatePullRequest(@NotNull ProgressIndicator indicator,
                                                         @NotNull final BranchInfo branch,
                                                         @NotNull final String title,
-                                                        @NotNull final String description) {
+                                                        @NotNull final String description,
+                                                        @NotNull final boolean isDraft) {
     final GHRepositoryPath forkPath = branch.getForkInfo().getPath();
 
     final String head = myPath.getOwner() + ":" + myCurrentBranch;
     final String base = branch.getRemoteName();
 
     try {
-      return myExecutor.execute(indicator,
-                                GithubApiRequests.Repos.PullRequests
-                                  .create(myServer, forkPath.getOwner(), forkPath.getRepository(), title, description, head, base));
+      var request = GithubApiRequests.Repos.PullRequests
+        .create(myServer, forkPath.getOwner(), forkPath.getRepository(), title, description, head, base, isDraft);
+
+      return myExecutor.execute(indicator, request);
     }
     catch (IOException e) {
       GithubNotifications.showError(myProject,
@@ -448,7 +447,8 @@ public final class GithubCreatePullRequestWorker {
 
   public void createPullRequest(@NotNull final BranchInfo branch,
                                 @NotNull final String title,
-                                @NotNull final String description) {
+                                @NotNull final String description,
+                                final boolean isDraft) {
     new Task.Backgroundable(myProject, GithubBundle.message("pull.request.create.process.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -465,7 +465,7 @@ public final class GithubCreatePullRequestWorker {
 
         LOG.info("Creating pull request");
         indicator.setText(GithubBundle.message("pull.request.create.process.title"));
-        GithubPullRequestDetailed request = doCreatePullRequest(indicator, branch, title, description);
+        GithubPullRequestDetailed request = doCreatePullRequest(indicator, branch, title, description, isDraft);
         if (request == null) {
           return;
         }

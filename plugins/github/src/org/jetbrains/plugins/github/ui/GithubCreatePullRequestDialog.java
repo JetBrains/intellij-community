@@ -38,6 +38,8 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     super(project, true);
     myWorker = worker;
 
+    setDoNotAskOption(new IsDraftOption());
+
     myProjectSettings = GithubProjectSettings.getInstance(project);
 
     myPanel = new GithubCreatePullRequestPanel();
@@ -138,7 +140,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     BranchInfo branch = myPanel.getSelectedBranch();
     if (myWorker.checkAction(branch)) {
       assert branch != null;
-      myWorker.createPullRequest(branch, getRequestTitle(), getDescription());
+      myWorker.createPullRequest(branch, getRequestTitle(), getDescription(), isDraft());
 
       myProjectSettings.setCreatePullRequestDefaultBranch(branch.getRemoteName());
       myProjectSettings.setCreatePullRequestDefaultRepo(branch.getForkInfo().getPath());
@@ -179,6 +181,10 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     return myPanel.getDescription();
   }
 
+  private boolean isDraft() {
+    return myCheckBoxDoNotShowDialog.isSelected();
+  }
+
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
@@ -200,7 +206,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
 
   @TestOnly
   public void testCreatePullRequest() {
-    myWorker.createPullRequest(myPanel.getSelectedBranch(), getRequestTitle(), getDescription());
+    myWorker.createPullRequest(myPanel.getSelectedBranch(), getRequestTitle(), getDescription(), isDraft());
   }
 
   @TestOnly
@@ -241,6 +247,34 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     @Override
     public String getDoNotShowMessage() {
       return UIBundle.message("dialog.options.do.not.ask");
+    }
+  }
+
+  private static class IsDraftOption implements DoNotAskOption {
+    @Override
+    public boolean isToBeShown() {
+      return true;
+    }
+
+    @Override
+    public void setToBeShown(boolean value, int exitCode) {
+      // Ignore
+    }
+
+    @Override
+    public boolean canBeHidden() {
+      return true;
+    }
+
+    @Override
+    public boolean shouldSaveOptionsOnCancel() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public String getDoNotShowMessage() {
+      return GithubBundle.message("pull.request.create.isDraft");
     }
   }
 }

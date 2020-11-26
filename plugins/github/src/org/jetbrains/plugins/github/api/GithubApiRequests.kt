@@ -330,9 +330,9 @@ object GithubApiRequests {
       @JvmStatic
       fun create(server: GithubServerPath,
                  username: String, repoName: String,
-                 title: String, description: String, head: String, base: String) =
+                 title: String, description: String, head: String, base: String, isDraft: Boolean) =
         Post.json<GithubPullRequestDetailed>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
-                                             GithubPullRequestRequest(title, description, head, base))
+                                             GithubPullRequestRequest(title, description, head, base, isDraft))
           .withOperationName("create pull request in $username/$repoName")
 
       @JvmStatic

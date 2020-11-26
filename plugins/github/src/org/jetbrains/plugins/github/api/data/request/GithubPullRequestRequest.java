@@ -9,11 +9,17 @@ public class GithubPullRequestRequest {
   @NotNull private final String body;
   @NotNull private final String head; // branch with changes
   @NotNull private final String base; // branch requested to
+  private final boolean draft;
 
-  public GithubPullRequestRequest(@NotNull String title, @NotNull String description, @NotNull String head, @NotNull String base) {
+  public GithubPullRequestRequest(@NotNull String title,
+                                  @NotNull String description,
+                                  @NotNull String head,
+                                  @NotNull String base,
+                                  boolean isDraft) {
     this.title = title;
     this.body = description;
     this.head = head;
     this.base = base;
+    this.draft = isDraft;
   }
 }
