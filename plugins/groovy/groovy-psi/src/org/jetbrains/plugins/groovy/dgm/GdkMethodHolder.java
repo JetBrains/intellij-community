@@ -51,7 +51,7 @@ public final class GdkMethodHolder {
       }
       byName.putValue(m.getName(), m);
     }
-    myOriginalMethodByType = NotNullLazyValue.createVolatile(() -> groupByType(byName.values()));
+    myOriginalMethodByType = NotNullLazyValue.volatileLazy(() -> groupByType(byName.values()));
     myOriginalMethodsByNameAndType = ConcurrentFactoryMap.createMap(name -> groupByType(byName.get(name)));
   }
 

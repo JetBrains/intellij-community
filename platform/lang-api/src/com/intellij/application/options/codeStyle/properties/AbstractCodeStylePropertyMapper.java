@@ -21,7 +21,7 @@ public abstract class AbstractCodeStylePropertyMapper {
 
   public AbstractCodeStylePropertyMapper(@NotNull CodeStyleSettings settings) {
     myRootSettings = settings;
-    myAccessorMap = NotNullLazyValue.createAtomic(() -> createMap());
+    myAccessorMap = NotNullLazyValue.atomicLazy(() -> createMap());
   }
 
   public List<String> enumProperties() {

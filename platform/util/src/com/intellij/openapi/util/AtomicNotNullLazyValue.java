@@ -11,7 +11,7 @@ public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
   private volatile T myValue;
 
   /**
-   * @deprecated Use {@link NotNullLazyValue#createAtomic(Supplier)}
+   * @deprecated Use {@link NotNullLazyValue#atomicLazy(Supplier)}
    */
   @Deprecated
   protected AtomicNotNullLazyValue() {
@@ -46,6 +46,6 @@ public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
   @NotNull
   public static <T> AtomicNotNullLazyValue<T> createValue(@NotNull NotNullFactory<? extends T> value) {
     //noinspection unchecked
-    return (AtomicNotNullLazyValue<T>)NotNullLazyValue.createAtomic(() -> value.create());
+    return (AtomicNotNullLazyValue<T>)NotNullLazyValue.atomicLazy(() -> value.create());
   }
 }

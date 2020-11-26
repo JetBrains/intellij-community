@@ -19,7 +19,7 @@ public final class PathExecLazyValue {
       throw new IllegalArgumentException(name);
     }
 
-    return NotNullLazyValue.createAtomic(() -> {
+    return NotNullLazyValue.atomicLazy(() -> {
       String path = EnvironmentUtil.getValue("PATH");
       if (path != null) {
         for (String dir : StringUtil.tokenize(path, File.pathSeparator)) {

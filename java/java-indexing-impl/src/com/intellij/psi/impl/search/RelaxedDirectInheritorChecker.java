@@ -40,7 +40,7 @@ public final class RelaxedDirectInheritorChecker {
   public RelaxedDirectInheritorChecker(@NotNull PsiClass baseClass) {
     myBaseClass = baseClass;
     myBaseClassName = Objects.requireNonNull(baseClass.getName());
-    myClasses = NotNullLazyValue.createVolatile(() -> getClassesAndTheirAmbiguities(myBaseClass.getProject(), myBaseClassName));
+    myClasses = NotNullLazyValue.volatileLazy(() -> getClassesAndTheirAmbiguities(myBaseClass.getProject(), myBaseClassName));
     myFileIndex = ProjectFileIndex.getInstance(myBaseClass.getProject());
   }
 

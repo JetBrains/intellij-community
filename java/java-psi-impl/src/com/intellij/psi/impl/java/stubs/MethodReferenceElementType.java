@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodReferenceElementType extends FunctionalExpressionElementType<PsiMethodReferenceExpression> {
   //prevents cyclic static variables initialization
-  private final static NotNullLazyValue<TokenSet> EXCLUDE_FROM_PRESENTABLE_TEXT = NotNullLazyValue.create(() -> {
+  private final static NotNullLazyValue<TokenSet> EXCLUDE_FROM_PRESENTABLE_TEXT = NotNullLazyValue.lazy(() -> {
     return TokenSet.orSet(ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET, TokenSet.create(JavaElementType.REFERENCE_PARAMETER_LIST));
   });
 

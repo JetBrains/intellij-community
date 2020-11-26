@@ -24,7 +24,7 @@ public final class MixinEP<T> extends LazyExtensionInstance<T> implements Plugin
   @Attribute("implementationClass")
   public String implementationClass;
 
-  private final NotNullLazyValue<Class<?>> myKey = NotNullLazyValue.create(() -> {
+  private final NotNullLazyValue<Class<?>> myKey = NotNullLazyValue.lazy(() -> {
     if (key == null) {
       String error = "No key specified for mixin with implementation class " + implementationClass;
       throw new PluginException(error, pluginDescriptor.getPluginId());

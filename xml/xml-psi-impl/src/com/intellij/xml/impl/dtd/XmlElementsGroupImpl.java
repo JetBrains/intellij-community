@@ -21,7 +21,7 @@ public final class XmlElementsGroupImpl implements XmlElementsGroup {
   public XmlElementsGroupImpl(@NotNull XmlContentParticle particle, XmlElementsGroup parent) {
     myParticle = particle;
     myParent = parent;
-    mySubGroups = NotNullLazyValue.create(() -> {
+    mySubGroups = NotNullLazyValue.lazy(() -> {
       return ContainerUtil.map(myParticle.getSubParticles(), xmlContentParticle -> new XmlElementsGroupImpl(xmlContentParticle, this));
     });
   }

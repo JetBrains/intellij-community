@@ -37,7 +37,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   private final Project myProject;
   private final Property[] myChildren;
 
-  private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = NotNullLazyValue.create(
+  private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = NotNullLazyValue.lazy(
     new Supplier<PropertyRenderer<BorderType>>() {
       @Override
       public PropertyRenderer<BorderType> get() {

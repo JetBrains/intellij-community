@@ -427,7 +427,7 @@ public final class JarHandler extends ZipHandler {
     }
   }
 
-  private static final NotNullLazyValue<NotificationGroup> ERROR_COPY_NOTIFICATION = NotNullLazyValue.create(() -> {
+  private static final NotNullLazyValue<NotificationGroup> ERROR_COPY_NOTIFICATION = NotNullLazyValue.lazy(() -> {
     return NotificationGroup.balloonGroup("Error Copying File", IdeBundle.message("jar.copy.error.title"));
   });
 

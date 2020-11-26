@@ -48,7 +48,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
     return new ClassResolveResult() {
       private final PsiClass myBaseClass = resolve();
 
-      private final NotNullLazyValue<PsiSubstitutor> mySubstitutor = NotNullLazyValue.create(() -> {
+      private final NotNullLazyValue<PsiSubstitutor> mySubstitutor = NotNullLazyValue.lazy(() -> {
         return inferSubstitutor(myBaseClass);
       });
 

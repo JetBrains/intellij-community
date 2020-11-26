@@ -42,7 +42,7 @@ public interface DirectoryProjectGenerator<T> {
 
   @NotNull
   default NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
-    return NotNullLazyValue.create(this::createPeer);
+    return NotNullLazyValue.lazy(this::createPeer);
   }
 
   /**

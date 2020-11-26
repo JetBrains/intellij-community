@@ -28,7 +28,7 @@ final class PortUnificationServerHandler extends Decoder {
   // https://github.com/kaikramer/keystore-explorer (use cert.cet as cert ext template)
   // keytool -genkey -keyalg EC -keysize 256 -alias selfsigned -keystore cert.jks -storepass jetbrains -validity 10000 -ext 'san=dns:localhost,dns:*.localhost,dns:*.dev,dns:*.local'
   @SuppressWarnings("SpellCheckingInspection")
-  private static final NotNullLazyValue<SslContext> SSL_SERVER_CONTEXT = NotNullLazyValue.createAtomic(() -> {
+  private static final NotNullLazyValue<SslContext> SSL_SERVER_CONTEXT = NotNullLazyValue.atomicLazy(() -> {
     String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
     if (algorithm == null) {
       algorithm = "SunX509";

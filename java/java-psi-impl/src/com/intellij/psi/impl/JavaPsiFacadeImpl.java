@@ -46,7 +46,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     myProject = project;
     myFileManager = JavaFileManager.getInstance(myProject);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
-    myJvmFacade = NotNullLazyValue.createAtomic(() -> (JvmFacadeImpl)JvmFacade.getInstance(project));
+    myJvmFacade = NotNullLazyValue.atomicLazy(() -> (JvmFacadeImpl)JvmFacade.getInstance(project));
     myConversionHelper = JvmPsiConversionHelper.getInstance(myProject);
 
     project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, () -> {

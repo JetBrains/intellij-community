@@ -31,7 +31,7 @@ public final class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsi
         return packageName != null ? new ClsJavaCodeReferenceElementImpl(ClsPackageAccessibilityStatementImpl.this, packageName) : null;
       }
     };
-    myModuleReferences = NotNullLazyValue.createAtomic(() -> {
+    myModuleReferences = NotNullLazyValue.atomicLazy(() -> {
       return ContainerUtil.map(getStub().getTargets(), target -> new ClsJavaModuleReferenceElementImpl(this, target));
     });
   }

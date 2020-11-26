@@ -15,7 +15,7 @@ public final class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClass
 
   public ClsReferenceListImpl(@NotNull PsiClassReferenceListStub stub) {
     super(stub);
-    myRefs = NotNullLazyValue.createAtomic(() -> {
+    myRefs = NotNullLazyValue.atomicLazy(() -> {
       TypeInfo[] types = getStub().getTypes();
       if (types.length <= 0) {
         return PsiJavaCodeReferenceElement.EMPTY_ARRAY;

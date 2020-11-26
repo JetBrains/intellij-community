@@ -26,7 +26,7 @@ import java.util.List;
 public class MavenGroovyPolyglotPomMemberContributor extends NonCodeMembersContributor {
 
   private static final NotNullLazyValue<Collection<Contributor>> contributors =
-    NotNullLazyValue.createAtomic(() -> {
+    NotNullLazyValue.atomicLazy(() -> {
       List<Contributor> list = new ArrayList<>();
       list.add(new Contributor("/maven/dsl/groovy/pom.groovy", ""));
       list.add(new Contributor("/maven/dsl/groovy/model.groovy", "project"));

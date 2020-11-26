@@ -59,7 +59,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
   private final InlineProgressPanel myInlinePanel = new InlineProgressPanel();
-  private final NotNullLazyValue<AsyncProcessIcon> myProgressIcon = NotNullLazyValue.create(() -> {
+  private final NotNullLazyValue<AsyncProcessIcon> myProgressIcon = NotNullLazyValue.lazy(() -> {
     AsyncProcessIcon icon = new AsyncProcessIcon("Background process");
     icon.setOpaque(false);
 

@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class AbstractArrangementUiComponent implements ArrangementUiComponent {
-  @NotNull private final NotNullLazyValue<JComponent> myComponent = NotNullLazyValue.create(() -> {
+  @NotNull private final NotNullLazyValue<JComponent> myComponent = NotNullLazyValue.lazy(() -> {
     JPanel result = new JPanel(new GridBagLayout()) {
       @Override
       protected void paintComponent(Graphics g) {

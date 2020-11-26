@@ -87,7 +87,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
         enableCachePanel();
       }
     });
-    myControlBinder = NotNullLazyValue.create(() -> new ControlBinder(getConfig()));
+    myControlBinder = NotNullLazyValue.lazy(() -> new ControlBinder(getConfig()));
   }
 
   private TaskManagerImpl.Config getConfig() {

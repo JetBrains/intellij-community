@@ -70,7 +70,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   private final WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
-  private final NotNullLazyValue<InspectionToolWrapper> myDummyWrapper = NotNullLazyValue.createAtomic(() -> {
+  private final NotNullLazyValue<InspectionToolWrapper> myDummyWrapper = NotNullLazyValue.atomicLazy(() -> {
     InspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
     toolWrapper.initialize(myContext);
     return toolWrapper;

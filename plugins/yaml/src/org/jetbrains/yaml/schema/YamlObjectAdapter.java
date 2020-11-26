@@ -20,7 +20,7 @@ import java.util.List;
 
 public final class YamlObjectAdapter implements JsonObjectValueAdapter {
   @NotNull private final YAMLMapping myObject;
-  @NotNull private final NotNullLazyValue<List<JsonPropertyAdapter>> myChildAdapters = NotNullLazyValue.create(this::computeChildAdapters);
+  @NotNull private final NotNullLazyValue<List<JsonPropertyAdapter>> myChildAdapters = NotNullLazyValue.lazy(this::computeChildAdapters);
 
   public YamlObjectAdapter(@NotNull YAMLMapping object) {myObject = object;}
 

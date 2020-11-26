@@ -52,7 +52,7 @@ final class ITNProxy {
   private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
 
   private static final NotNullLazyValue<Map<String, String>> TEMPLATE =
-    NotNullLazyValue.createAtomic(() -> {
+    NotNullLazyValue.atomicLazy(() -> {
       Map<String, String> template = new LinkedHashMap<>();
 
       template.put("protocol.version", "1.1");

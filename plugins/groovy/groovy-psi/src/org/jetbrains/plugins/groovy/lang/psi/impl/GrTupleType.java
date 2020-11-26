@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.List;
 
 public abstract class GrTupleType extends GrLiteralClassType {
-  private final NotNullLazyValue<PsiType[]> myParameters = NotNullLazyValue.createVolatile(() -> {
+  private final NotNullLazyValue<PsiType[]> myParameters = NotNullLazyValue.volatileLazy(() -> {
     List<PsiType> types = getComponentTypes();
     if (types.isEmpty()) return PsiType.EMPTY_ARRAY;
     final PsiType leastUpperBound = getLeastUpperBound(types.toArray(PsiType.EMPTY_ARRAY));
@@ -20,7 +20,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return new PsiType[]{leastUpperBound};
   });
 
-  private final NotNullLazyValue<List<PsiType>> myComponents = NotNullLazyValue.createVolatile(this::inferComponents);
+  private final NotNullLazyValue<List<PsiType>> myComponents = NotNullLazyValue.volatileLazy(this::inferComponents);
 
   public GrTupleType(@NotNull GlobalSearchScope scope, @NotNull JavaPsiFacade facade) {
     this(scope, facade, LanguageLevel.JDK_1_5);

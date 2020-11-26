@@ -18,7 +18,7 @@ public final class CompletionDataEP extends AbstractExtensionPointBean {
   @Attribute("className")
   public String className;
 
-  private final NotNullLazyValue<CompletionData> myHandler = NotNullLazyValue.create(() -> {
+  private final NotNullLazyValue<CompletionData> myHandler = NotNullLazyValue.lazy(() -> {
     return instantiate(findExtensionClass(className), ApplicationManager.getApplication().getPicoContainer());
   });
 

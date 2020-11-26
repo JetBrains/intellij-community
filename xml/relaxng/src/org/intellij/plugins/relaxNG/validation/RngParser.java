@@ -68,7 +68,7 @@ import java.util.concurrent.ConcurrentMap;
 public final class RngParser {
   private static final Logger LOG = Logger.getInstance(RngParser.class);
 
-  private static final NotNullLazyValue<DatatypeLibraryFactory> DT_LIBRARY_FACTORY = NotNullLazyValue.createAtomic(() -> {
+  private static final NotNullLazyValue<DatatypeLibraryFactory> DT_LIBRARY_FACTORY = NotNullLazyValue.atomicLazy(() -> {
     return new BuiltinDatatypeLibraryFactory(new CachedDatatypeLibraryFactory(
       new CascadingDatatypeLibraryFactory(createXsdDatatypeFactory(), new DatatypeLibraryLoader())) {
       @Override

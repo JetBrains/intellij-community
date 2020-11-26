@@ -21,7 +21,7 @@ import java.util.*;
  * @author peter
  */
 public abstract class GrMapType extends GrLiteralClassType {
-  private final NotNullLazyValue<PsiType[]> myParameters = NotNullLazyValue.createVolatile(() -> {
+  private final NotNullLazyValue<PsiType[]> myParameters = NotNullLazyValue.volatileLazy(() -> {
     final PsiType[] keyTypes = getAllKeyTypes();
     final PsiType[] valueTypes = getAllValueTypes();
     if (keyTypes.length == 0 && valueTypes.length == 0) {

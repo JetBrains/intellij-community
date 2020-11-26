@@ -146,7 +146,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return ((RangeCollectorImpl)rangeCollector).applyTemplateDataModifications(sourceCode, modifications);
   }
 
-  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = NotNullLazyValue.createVolatile(() -> {
+  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = NotNullLazyValue.volatileLazy(() -> {
     Class<?> implementationClass = ReflectionUtil.getMethodDeclaringClass(
       getClass(), "appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
     return implementationClass != TemplateDataElementType.class;

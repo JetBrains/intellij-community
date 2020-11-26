@@ -34,7 +34,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
   public ReferenceSetBase(final String text, @NotNull PsiElement element, int offset, final char separator) {
     myElement = element;
     mySeparator = separator;
-    myReferences = NotNullLazyValue.create(() -> parse(text, offset));
+    myReferences = NotNullLazyValue.lazy(() -> parse(text, offset));
   }
 
   public boolean isSoft() {

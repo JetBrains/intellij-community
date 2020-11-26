@@ -1180,7 +1180,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public boolean isNewStyleClass(@Nullable TypeEvalContext context) {
-    return NotNullLazyValue.<ParameterizedCachedValue<Boolean, TypeEvalContext>>create(() -> {
+    return NotNullLazyValue.<ParameterizedCachedValue<Boolean, TypeEvalContext>>lazy(() -> {
       return CachedValuesManager.getManager(getProject())
         .createParameterizedCachedValue(param -> new Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT), false);
     }).getValue().getValue(context);

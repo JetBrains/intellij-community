@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 final class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
-  private final NotNullLazyValue<FileTypeMapReduceIndex> myIndex = NotNullLazyValue.create(() -> {
+  private final NotNullLazyValue<FileTypeMapReduceIndex> myIndex = NotNullLazyValue.lazy(() -> {
     return (FileTypeMapReduceIndex)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(FileTypeIndex.NAME);
   });
 

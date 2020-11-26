@@ -19,13 +19,13 @@ public final class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotati
 
   public ClsAnnotationImpl(PsiAnnotationStub stub) {
     super(stub);
-    myReferenceElement = NotNullLazyValue.createAtomic(() -> {
+    myReferenceElement = NotNullLazyValue.atomicLazy(() -> {
       String annotationText = getStub().getText();
       int index = annotationText.indexOf('(');
       String refText = index > 0 ? annotationText.substring(1, index) : annotationText.substring(1);
       return new ClsJavaCodeReferenceElementImpl(this, refText);
     });
-    myParameterList = NotNullLazyValue.createAtomic(() -> {
+    myParameterList = NotNullLazyValue.atomicLazy(() -> {
       PsiNameValuePair[] attrs = getStub().getText().indexOf('(') > 0
                                  ? PsiTreeUtil.getRequiredChildOfType(getStub().getPsiElement(), PsiAnnotationParameterList.class)
                                    .getAttributes()

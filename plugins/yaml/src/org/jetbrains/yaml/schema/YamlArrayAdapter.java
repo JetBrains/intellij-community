@@ -17,7 +17,7 @@ import java.util.List;
 
 public final class YamlArrayAdapter implements JsonArrayValueAdapter {
   @NotNull private final YAMLSequence myArray;
-  @NotNull private final NotNullLazyValue<List<JsonValueAdapter>> myChildAdapters = NotNullLazyValue.create(this::computeChildAdapters);
+  @NotNull private final NotNullLazyValue<List<JsonValueAdapter>> myChildAdapters = NotNullLazyValue.lazy(this::computeChildAdapters);
 
   public YamlArrayAdapter(@NotNull YAMLSequence array) {myArray = array;}
 

@@ -32,7 +32,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>
   protected final Project myProject;
   private CreateRemoteSdkForm<T> myInterpreterForm;
   private Sdk mySdk;
-  protected final NotNullLazyValue<RemoteSdkFactoryImpl<T>> mySdkFactoryProvider = NotNullLazyValue.createAtomic(this::createRemoteSdkFactory);
+  protected final NotNullLazyValue<RemoteSdkFactoryImpl<T>> mySdkFactoryProvider = NotNullLazyValue.atomicLazy(this::createRemoteSdkFactory);
   @Nullable
   private T myOriginalData;
   protected final Collection<Sdk> myExistingSdks;

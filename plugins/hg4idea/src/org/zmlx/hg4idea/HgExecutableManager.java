@@ -35,7 +35,7 @@ public final class HgExecutableManager {
   @NotNull private final NotNullLazyValue<String> myDetectedExecutable;
 
   public HgExecutableManager() {
-    myDetectedExecutable = NotNullLazyValue.createAtomic(HgExecutableManager::identifyDefaultHgExecutable);
+    myDetectedExecutable = NotNullLazyValue.atomicLazy(HgExecutableManager::identifyDefaultHgExecutable);
   }
 
   @NotNull

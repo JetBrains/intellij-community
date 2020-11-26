@@ -20,7 +20,7 @@ import javax.swing.*;
 
 public final class AppEditorFontConfigurable implements SearchableConfigurable, NoScroll {
   @NonNls public static final String ID = "editor.preferences.fonts.default";
-  private final NotNullLazyValue<AppEditorFontPanel> myFontPanelInstance = NotNullLazyValue.create(() -> new AppEditorFontPanel());
+  private final NotNullLazyValue<AppEditorFontPanel> myFontPanelInstance = NotNullLazyValue.lazy(() -> new AppEditorFontPanel());
 
   @NotNull
   @Override

@@ -316,7 +316,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
       Map<String, Iterable<ResultWithContext>> result = new LinkedHashMap<>();
       for (String name : ContainerUtil.newLinkedHashSet(ContainerUtil.concat(ownClasses.keySet(), typeImports.keySet(), staticImports.keySet()))) {
-        NotNullLazyValue<Iterable<ResultWithContext>> lazy = NotNullLazyValue.createVolatile(() -> {
+        NotNullLazyValue<Iterable<ResultWithContext>> lazy = NotNullLazyValue.volatileLazy(() -> {
           return findExplicitDeclarations(name, ownClasses, typeImports, staticImports);
         });
         result.put(name, () -> lazy.getValue().iterator());

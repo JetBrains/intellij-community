@@ -39,12 +39,12 @@ public final class SvnAuthenticationManager {
   public SvnAuthenticationManager(@NotNull Project project, @NotNull Path configDirectory) {
     myProject = project;
     myConfigDirectory = configDirectory;
-    myConfigFile = NotNullLazyValue.create(() -> {
+    myConfigFile = NotNullLazyValue.lazy(() -> {
         SvnIniFile userConfig = new SvnIniFile(myConfigDirectory.resolve(CONFIG_FILE_NAME));
         SvnIniFile systemConfig = new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(CONFIG_FILE_NAME));
         return Couple.of(systemConfig, userConfig);
       });
-    myServersFile = NotNullLazyValue.create(() -> {
+    myServersFile = NotNullLazyValue.lazy(() -> {
         SvnIniFile userConfig = new SvnIniFile(myConfigDirectory.resolve(SERVERS_FILE_NAME));
         SvnIniFile systemConfig = new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME));
         return Couple.of(systemConfig, userConfig);

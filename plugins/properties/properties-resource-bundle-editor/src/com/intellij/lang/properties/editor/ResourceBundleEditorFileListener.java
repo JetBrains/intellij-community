@@ -92,7 +92,7 @@ final class ResourceBundleEditorFileListener implements VirtualFileListener {
             public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
               if (!myEditor.isValid()) return null;
               Runnable toDo = null;
-              NotNullLazyValue<Set<VirtualFile>> resourceBundleAsSet = NotNullLazyValue.create(() -> {
+              NotNullLazyValue<Set<VirtualFile>> resourceBundleAsSet = NotNullLazyValue.lazy(() -> {
                 return myEditor.getResourceBundle().getPropertiesFiles().stream().map(PropertiesFile::getVirtualFile)
                   .collect(Collectors.toSet());
               });

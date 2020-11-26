@@ -41,7 +41,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   public ClsMethodImpl(final PsiMethodStub stub) {
     super(stub);
 
-    myReturnType = isConstructor() ? null : NotNullLazyValue.createAtomic(() -> {
+    myReturnType = isConstructor() ? null : NotNullLazyValue.atomicLazy(() -> {
       return new ClsTypeElementImpl(ClsMethodImpl.this, getStub().getReturnTypeText());
     });
 

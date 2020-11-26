@@ -43,7 +43,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
           if (child instanceof PsiDirectory) {
             if (event.getOldParent() instanceof PsiDirectory && event.getNewParent() instanceof PsiDirectory) {
               final String fromDirUrl = ((PsiDirectory)event.getOldParent()).getVirtualFile().getUrl() + "/";
-              final NotNullLazyValue<String> toDirUrl = NotNullLazyValue.create(() -> {
+              final NotNullLazyValue<String> toDirUrl = NotNullLazyValue.lazy(() -> {
                 return ((PsiDirectory)event.getNewParent()).getVirtualFile().getUrl() + "/";
               });
               for (String dissociatedFileUrl : new SmartList<>(myState.getDissociatedFiles())) {
@@ -77,7 +77,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
           return;
         }
 
-        final NotNullLazyValue<Pair<String, String>> oldAndNewUrls = NotNullLazyValue.create(() -> {
+        final NotNullLazyValue<Pair<String, String>> oldAndNewUrls = NotNullLazyValue.lazy(() -> {
           final String newUrl = propertiesFile.getVirtualFile().getUrl();
           return new Pair<>(oldParentUrl + newUrl.substring(newParentUrl.length()), newUrl);
         });
@@ -130,7 +130,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
         if (!PropertiesImplUtil.canBePropertyFile(psiFile)) return;
 
         final VirtualFile virtualFile = psiFile.getVirtualFile();
-        final NotNullLazyValue<String> url = NotNullLazyValue.create(() -> virtualFile.getUrl());
+        final NotNullLazyValue<String> url = NotNullLazyValue.lazy(() -> virtualFile.getUrl());
         if (!myState.getDissociatedFiles().isEmpty()) {
           myState.getDissociatedFiles().remove(url.getValue());
         }

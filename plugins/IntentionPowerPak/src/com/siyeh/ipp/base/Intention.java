@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @SafeFieldForPreview
-  private final NotNullLazyValue<PsiElementPredicate> myPredicate = NotNullLazyValue.createAtomic(() -> getElementPredicate());
+  private final NotNullLazyValue<PsiElementPredicate> myPredicate = NotNullLazyValue.atomicLazy(() -> getElementPredicate());
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){

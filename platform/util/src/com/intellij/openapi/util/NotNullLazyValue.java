@@ -15,7 +15,7 @@ public abstract class NotNullLazyValue<T> {
   private T myValue;
 
   /**
-   * @deprecated Use {@link NotNullLazyValue#create(Supplier)}
+   * @deprecated Use {@link NotNullLazyValue#lazy(Supplier)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
@@ -41,14 +41,14 @@ public abstract class NotNullLazyValue<T> {
   }
 
   public static @NotNull <T> NotNullLazyValue<T> createConstantValue(@NotNull T value) {
-    return create(() -> value);
+    return lazy(() -> value);
   }
 
   public static @NotNull <T> NotNullLazyValue<T> createValue(@NotNull NotNullFactory<? extends T> value) {
-    return create(value::create);
+    return lazy(value::create);
   }
 
-  public static @NotNull <T> NotNullLazyValue<T> create(@NotNull Supplier<? extends T> value) {
+  public static @NotNull <T> NotNullLazyValue<T> lazy(@NotNull Supplier<? extends T> value) {
     return new NotNullLazyValue<T>() {
       @Override
       protected @NotNull T compute() {
@@ -57,7 +57,7 @@ public abstract class NotNullLazyValue<T> {
     };
   }
 
-  public static @NotNull <T> NotNullLazyValue<T> createAtomic(@NotNull Supplier<@NotNull ? extends T> value) {
+  public static @NotNull <T> NotNullLazyValue<T> atomicLazy(@NotNull Supplier<@NotNull ? extends T> value) {
     //noinspection deprecation
     return new AtomicNotNullLazyValue<T>() {
       @Override
@@ -72,7 +72,7 @@ public abstract class NotNullLazyValue<T> {
    * and readers should be ready to get different instances on different invocations of the {@link #getValue()}.
    */
   @NotNull
-  public static <T> NotNullLazyValue<T> createVolatile(@NotNull Supplier<@NotNull ? extends T> value) {
+  public static <T> NotNullLazyValue<T> volatileLazy(@NotNull Supplier<@NotNull ? extends T> value) {
     return new VolatileNotNullLazyValue<T>() {
       @NotNull
       @Override

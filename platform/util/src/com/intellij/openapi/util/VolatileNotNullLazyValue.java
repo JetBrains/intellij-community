@@ -30,12 +30,12 @@ public abstract class VolatileNotNullLazyValue<T> extends NotNullLazyValue<T> {
   }
 
   /**
-   * @deprecated Use {@link NotNullLazyValue#createVolatile(Supplier)}
+   * @deprecated Use {@link NotNullLazyValue#volatileLazy(Supplier)}
    */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @NotNull
   @Deprecated
   public static <T> VolatileNotNullLazyValue<T> createValue(@NotNull NotNullFactory<? extends T> value) {
-    return (VolatileNotNullLazyValue<T>)NotNullLazyValue.createVolatile(() -> value);
+    return (VolatileNotNullLazyValue<T>)NotNullLazyValue.volatileLazy(() -> value);
   }
 }

@@ -20,7 +20,7 @@ public final class LazyPatchContentRevision implements ContentRevision {
   @NotNull private final String myRevision;
   private final TextFilePatch myPatch;
 
-  private final NotNullLazyValue<Data> myData = NotNullLazyValue.createAtomic(this::loadContent);
+  private final NotNullLazyValue<Data> myData = NotNullLazyValue.atomicLazy(this::loadContent);
 
   public LazyPatchContentRevision(final VirtualFile vf,
                                   final FilePath newFilePath,

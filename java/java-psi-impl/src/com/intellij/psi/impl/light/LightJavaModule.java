@@ -36,7 +36,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 public final class LightJavaModule extends LightElement implements PsiJavaModule {
   private final LightJavaModuleReferenceElement myRefElement;
   private final VirtualFile myRoot;
-  private final NotNullLazyValue<List<PsiPackageAccessibilityStatement>> myExports = NotNullLazyValue.createAtomic(this::findExports);
+  private final NotNullLazyValue<List<PsiPackageAccessibilityStatement>> myExports = NotNullLazyValue.atomicLazy(this::findExports);
 
   private LightJavaModule(@NotNull PsiManager manager, @NotNull VirtualFile root, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE);

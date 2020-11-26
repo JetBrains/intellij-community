@@ -76,7 +76,7 @@ public class SubstitutorComputer {
     myTypeArguments = typeArguments;
     myPlace = place;
     myPlaceToInferContext = placeToInferContext;
-    myExitPoints = NotNullLazyValue.createVolatile(() -> {
+    myExitPoints = NotNullLazyValue.volatileLazy(() -> {
       if (canBeExitPoint(place)) {
         GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(place);
         return new HashSet<>(ControlFlowUtils.collectReturns(flowOwner));

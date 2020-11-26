@@ -21,7 +21,7 @@ public final class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRec
 
   public ClsRecordComponentImpl(@NotNull PsiRecordComponentStub stub) {
     super(stub);
-    myType = NotNullLazyValue.createAtomic(() -> new ClsTypeElementImpl(this, getStub().getType()));
+    myType = NotNullLazyValue.atomicLazy(() -> new ClsTypeElementImpl(this, getStub().getType()));
   }
 
   @Override

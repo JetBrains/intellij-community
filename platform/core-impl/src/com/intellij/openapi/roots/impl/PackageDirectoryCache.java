@@ -126,7 +126,7 @@ public class PackageDirectoryCache {
     PackageInfo(@NotNull String qname, @NotNull List<? extends VirtualFile> packageDirectories) {
       myQname = qname;
       myPackageDirectories = packageDirectories;
-      mySubPackages = NotNullLazyValue.createVolatile(() -> {
+      mySubPackages = NotNullLazyValue.volatileLazy(() -> {
         MultiMap<String, VirtualFile> result = MultiMap.createLinked();
         for (VirtualFile directory : myPackageDirectories) {
           ProgressManager.checkCanceled();

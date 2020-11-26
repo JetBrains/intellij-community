@@ -32,7 +32,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   public ClsFieldImpl(@NotNull PsiFieldStub stub) {
     super(stub);
-    myTypeElement = NotNullLazyValue.createAtomic(() -> new ClsTypeElementImpl(this, getStub().getType()));
+    myTypeElement = NotNullLazyValue.atomicLazy(() -> new ClsTypeElementImpl(this, getStub().getType()));
     myInitializer = new VolatileNullableLazyValue<PsiExpression>() {
       @Nullable
       @Override

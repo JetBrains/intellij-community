@@ -62,7 +62,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
 
   companion object {
     @JvmField
-    internal val NOTIFICATION_GROUP: NotNullLazyValue<NotificationGroup> = NotNullLazyValue.create {
+    internal val NOTIFICATION_GROUP: NotNullLazyValue<NotificationGroup> = NotNullLazyValue.lazy {
       NotificationGroup("Built-in Server", NotificationDisplayType.STICKY_BALLOON, true)
     }
 

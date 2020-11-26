@@ -82,7 +82,7 @@ public final class CertificateManager implements PersistentStateComponent<Certif
 
   private Config myConfig = new Config();
 
-  private final NotNullLazyValue<ConfirmingTrustManager> myTrustManager = NotNullLazyValue.createAtomic(() -> {
+  private final NotNullLazyValue<ConfirmingTrustManager> myTrustManager = NotNullLazyValue.atomicLazy(() -> {
     return ConfirmingTrustManager.createForStorage(tryMigratingDefaultTruststore(), DEFAULT_PASSWORD);
   });
 
@@ -108,7 +108,7 @@ public final class CertificateManager implements PersistentStateComponent<Certif
     return DEFAULT_PATH;
   }
 
-  private final NotNullLazyValue<SSLContext> mySslContext = NotNullLazyValue.createAtomic(this::calcSslContext);
+  private final NotNullLazyValue<SSLContext> mySslContext = NotNullLazyValue.atomicLazy(this::calcSslContext);
 
   /**
    * Component initialization constructor

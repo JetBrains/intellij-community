@@ -64,8 +64,8 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
             defer = null;
           }
           else {
-            NotNullLazyValue<CharSequence> myText = NotNullLazyValue.createVolatile(()->LoadTextUtil.loadText(virtualFile));
-            NotNullLazyValue<byte[]> myBytes = NotNullLazyValue.createVolatile(() -> {
+            NotNullLazyValue<CharSequence> myText = NotNullLazyValue.volatileLazy(()->LoadTextUtil.loadText(virtualFile));
+            NotNullLazyValue<byte[]> myBytes = NotNullLazyValue.volatileLazy(() -> {
               try {
                 return virtualFile.contentsToByteArray();
               }

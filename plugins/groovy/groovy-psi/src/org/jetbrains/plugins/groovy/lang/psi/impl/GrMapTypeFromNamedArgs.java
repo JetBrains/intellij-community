@@ -52,11 +52,11 @@ public final class GrMapTypeFromNamedArgs extends GrMapType {
         }
       }
     }
-    myTypesOfOtherEntries = NotNullLazyValue.createVolatile(() -> {
+    myTypesOfOtherEntries = NotNullLazyValue.volatileLazy(() -> {
       return ContainerUtil
         .map(myOtherEntries, pair -> Couple.of(inferTypePreventingRecursion(pair.first), inferTypePreventingRecursion(pair.second)));
     });
-    myTypesOfStringEntries = NotNullLazyValue.createVolatile(() -> {
+    myTypesOfStringEntries = NotNullLazyValue.volatileLazy(() -> {
       LinkedHashMap<String, PsiType> result = new LinkedHashMap<>();
       for (Map.Entry<String, GrExpression> entry : myStringEntries.entrySet()) {
         result.put(entry.getKey(), inferTypePreventingRecursion(entry.getValue()));

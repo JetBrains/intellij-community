@@ -193,7 +193,7 @@ public final class UIUtil {
     return 500;
   }
 
-  private static final NotNullLazyValue<Boolean> X_RENDER_ACTIVE = NotNullLazyValue.createAtomic(() -> {
+  private static final NotNullLazyValue<Boolean> X_RENDER_ACTIVE = NotNullLazyValue.atomicLazy(() -> {
     if (!SystemInfo.isXWindow) {
       return false;
     }

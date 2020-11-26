@@ -79,7 +79,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
 
   private final NotNullLazyValue<Map<@NonNls String, @NlsContexts.ConfigurableName String>> myConfigurablesNames =
-    NotNullLazyValue.createVolatile(() -> {
+    NotNullLazyValue.volatileLazy(() -> {
       if (SwingUtilities.isEventDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
         LOG.error("Configurable names must not be loaded on EDT");
       }

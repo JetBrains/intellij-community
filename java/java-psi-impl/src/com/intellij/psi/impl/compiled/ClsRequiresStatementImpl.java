@@ -20,7 +20,7 @@ public final class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiR
 
   public ClsRequiresStatementImpl(PsiRequiresStatementStub stub) {
     super(stub);
-    myModuleReference = NotNullLazyValue.createAtomic(() -> {
+    myModuleReference = NotNullLazyValue.atomicLazy(() -> {
       return new ClsJavaModuleReferenceElementImpl(this, getStub().getModuleName());
     });
   }

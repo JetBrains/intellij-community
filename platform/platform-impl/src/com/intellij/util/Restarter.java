@@ -59,7 +59,7 @@ public final class Restarter {
     return null;
   });
 
-  private static final NotNullLazyValue<Boolean> ourRestartSupported = NotNullLazyValue.createAtomic(() -> {
+  private static final NotNullLazyValue<Boolean> ourRestartSupported = NotNullLazyValue.atomicLazy(() -> {
     String problem;
 
     if (SystemInfo.isWindows) {

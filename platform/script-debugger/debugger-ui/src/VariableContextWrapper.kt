@@ -6,7 +6,7 @@ import org.jetbrains.concurrency.Promise
 
 internal open class VariableContextWrapper(override val parent: VariableContext, override val scope: Scope?) : VariableContext {
   // it's worth to cache it (JavaScriptDebuggerViewSupport, for example, performs expensive computation)
-  private val memberFilterPromise = NotNullLazyValue.createAtomic {
+  private val memberFilterPromise = NotNullLazyValue.atomicLazy {
     parent.viewSupport.getMemberFilter(this@VariableContextWrapper)
   }
 

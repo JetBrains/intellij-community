@@ -44,7 +44,7 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
     if (file == null) return null;
 
     return new XSourcePositionImpl(file) {
-      private final NotNullLazyValue<Integer> myLine = NotNullLazyValue.createAtomic(() -> {
+      private final NotNullLazyValue<Integer> myLine = NotNullLazyValue.atomicLazy(() -> {
         return ReadAction.compute(() -> {
           Document document = FileDocumentManager.getInstance().getDocument(file);
           if (document == null) {
@@ -83,7 +83,7 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
       SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
 
     return new XSourcePositionImpl(file) {
-      private final NotNullLazyValue<XSourcePosition> myDelegate = NotNullLazyValue.createAtomic(() -> {
+      private final NotNullLazyValue<XSourcePosition> myDelegate = NotNullLazyValue.atomicLazy(() -> {
         return ReadAction.compute(() -> {
           PsiElement elem = pointer.getElement();
           return XSourcePositionImpl.createByOffset(pointer.getVirtualFile(), elem != null ? elem.getTextOffset() : -1);
@@ -134,7 +134,7 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
     }
 
     return new XSourcePositionImpl(file) {
-      private final NotNullLazyValue<Integer> myOffset = NotNullLazyValue.createAtomic(() -> {
+      private final NotNullLazyValue<Integer> myOffset = NotNullLazyValue.atomicLazy(() -> {
         return ReadAction.compute(() -> {
           int offset;
           if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {

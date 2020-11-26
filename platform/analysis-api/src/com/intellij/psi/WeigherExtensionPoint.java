@@ -26,7 +26,7 @@ public class WeigherExtensionPoint extends AbstractExtensionPointBean implements
   @Attribute("id")
   public String id;
 
-  private final NotNullLazyValue<Weigher> myHandler = NotNullLazyValue.create(() -> {
+  private final NotNullLazyValue<Weigher> myHandler = NotNullLazyValue.lazy(() -> {
     Class<Weigher> tClass = findExtensionClass(implementationClass);
     final Weigher weigher = ReflectionUtil.newInstance(tClass);
     weigher.setDebugName(id);

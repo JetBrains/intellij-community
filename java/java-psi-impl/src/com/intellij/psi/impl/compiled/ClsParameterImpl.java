@@ -33,7 +33,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
 
   public ClsParameterImpl(@NotNull PsiParameterStub stub) {
     super(stub);
-    myType = NotNullLazyValue.createAtomic(() -> {
+    myType = NotNullLazyValue.atomicLazy(() -> {
       return new ClsTypeElementImpl(ClsParameterImpl.this, getStub().getType());
     });
   }

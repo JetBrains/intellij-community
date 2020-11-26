@@ -58,7 +58,7 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
-      private final NotNullLazyValue<Map<String, PsiClass>> myGuavaClassConversions = NotNullLazyValue.createAtomic(() -> {
+      private final NotNullLazyValue<Map<String, PsiClass>> myGuavaClassConversions = NotNullLazyValue.atomicLazy(() -> {
         Map<String, PsiClass> map = new HashMap<>();
         for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
           if (rule instanceof BaseGuavaTypeConversionRule) {

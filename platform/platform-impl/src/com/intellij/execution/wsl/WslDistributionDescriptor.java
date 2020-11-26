@@ -38,7 +38,7 @@ final class WslDistributionDescriptor {
   @Tag("presentable-name")
   private @NlsSafe String myPresentableName;
 
-  private final NotNullLazyValue<String> myMntRootProvider = NotNullLazyValue.createAtomic(this::computeMntRoot);
+  private final NotNullLazyValue<String> myMntRootProvider = NotNullLazyValue.atomicLazy(this::computeMntRoot);
   private final NullableLazyValue<String> myUserHomeProvider = AtomicNullableLazyValue.createValue(this::computeUserHome);
 
   /**

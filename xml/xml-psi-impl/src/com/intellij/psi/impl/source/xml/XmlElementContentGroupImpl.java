@@ -16,7 +16,7 @@ import com.intellij.xml.XmlElementDescriptor;
  */
 public final class XmlElementContentGroupImpl  extends XmlElementImpl implements XmlElementContentGroup,
                                                                            XmlElementType {
-  private final NotNullLazyValue<XmlContentParticle[]> myParticles = NotNullLazyValue.create(() -> {
+  private final NotNullLazyValue<XmlContentParticle[]> myParticles = NotNullLazyValue.lazy(() -> {
     return ContainerUtil.map(getChildren(TokenSet.create(XML_ELEMENT_CONTENT_GROUP, XML_NAME)), astNode -> {
       PsiElement element = astNode.getPsi();
       assert element != null;

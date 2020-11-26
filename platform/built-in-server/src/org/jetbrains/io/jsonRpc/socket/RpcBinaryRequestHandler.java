@@ -24,7 +24,7 @@ public final class RpcBinaryRequestHandler extends BinaryRequestHandler implemen
 
   private static final UUID ID = UUID.fromString("69957EEB-AFB8-4036-A9A8-00D2D022F9BD");
 
-  private final NotNullLazyValue<ClientManager> clientManager = NotNullLazyValue.createAtomic(() -> {
+  private final NotNullLazyValue<ClientManager> clientManager = NotNullLazyValue.atomicLazy(() -> {
     ClientManager result = new ClientManager(this, this, null);
     Disposable serverDisposable = BuiltInServerManager.getInstance().getServerDisposable();
     assert serverDisposable != null;

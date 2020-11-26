@@ -69,12 +69,12 @@ public final class SvnUtil {
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
 
-  public static final NotNullLazyValue<Path> USER_CONFIGURATION_PATH = NotNullLazyValue.createAtomic(() -> {
+  public static final NotNullLazyValue<Path> USER_CONFIGURATION_PATH = NotNullLazyValue.atomicLazy(() -> {
     return SystemInfo.isWindows
            ? Paths.get(Objects.requireNonNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
            : Paths.get(getUserHome(), ".subversion");
   });
-  public static final NotNullLazyValue<Path> SYSTEM_CONFIGURATION_PATH = NotNullLazyValue.createAtomic(() -> {
+  public static final NotNullLazyValue<Path> SYSTEM_CONFIGURATION_PATH = NotNullLazyValue.atomicLazy(() -> {
     return SystemInfo.isWindows
            ? Paths.get(Objects.requireNonNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
            : Paths.get("/etc/subversion");

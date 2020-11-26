@@ -264,7 +264,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   @Attribute("treeRenderer")
   public String treeRendererClass;
 
-  private final NotNullLazyValue<ObjectProducer> myProducer = NotNullLazyValue.createAtomic(this::createProducer);
+  private final NotNullLazyValue<ObjectProducer> myProducer = NotNullLazyValue.atomicLazy(this::createProducer);
   private ComponentManager componentManager;
   private Project myProject;
 

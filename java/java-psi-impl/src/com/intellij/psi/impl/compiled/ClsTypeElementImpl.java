@@ -56,7 +56,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
         return calculateChild();
       }
     };
-    myCachedType = NotNullLazyValue.createAtomic(() -> {
+    myCachedType = NotNullLazyValue.atomicLazy(() -> {
       return calculateType();
     });
   }

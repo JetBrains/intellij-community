@@ -75,7 +75,7 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
     final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
 
     Interner<List<String>> interner = new HashSetInterner<>();
-    final NotNullLazyValue<List<String>> externalProjectGradleSdkLibs = NotNullLazyValue.create(() -> {
+    final NotNullLazyValue<List<String>> externalProjectGradleSdkLibs = NotNullLazyValue.lazy(() -> {
       final Set<String> gradleSdkLibraries = new LinkedHashSet<>();
       File gradleHome = gradleInstallationManager.getGradleHome(project, linkedExternalProjectPath);
       if (gradleHome != null && gradleHome.isDirectory()) {

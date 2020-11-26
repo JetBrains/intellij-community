@@ -36,7 +36,7 @@ public final class GdkMethodDslProvider implements GdslMembersProvider {
       return;
     }
 
-    NotNullLazyValue<GdkMethodHolder> methodsMap = NotNullLazyValue.createVolatile(() -> {
+    NotNullLazyValue<GdkMethodHolder> methodsMap = NotNullLazyValue.volatileLazy(() -> {
       return GdkMethodHolder.getHolderForClass(categoryClass, isStatic);
     });
 

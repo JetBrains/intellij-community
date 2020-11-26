@@ -22,7 +22,7 @@ import java.util.*;
 public final class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
   private static final Key<Set<ResourceBundle>> VISITED_BUNDLES_KEY = Key.create("VISITED_BUNDLES_KEY");
 
-  private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders = NotNullLazyValue.create(() -> {
+  private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders = NotNullLazyValue.lazy(() -> {
     return new InconsistentResourceBundleInspectionProvider[]{
       new PropertiesKeysConsistencyInspectionProvider(),
       new DuplicatedPropertiesInspectionProvider(),

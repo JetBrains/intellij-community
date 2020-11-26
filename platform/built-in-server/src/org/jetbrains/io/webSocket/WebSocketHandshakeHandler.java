@@ -29,7 +29,7 @@ import java.util.Map;
 public abstract class WebSocketHandshakeHandler extends HttpRequestHandler implements ClientListener, ExceptionHandler {
   private static final Logger LOG = Logger.getInstance(WebSocketHandshakeHandler.class);
 
-  private final NotNullLazyValue<ClientManager> clientManager = NotNullLazyValue.createAtomic(() -> {
+  private final NotNullLazyValue<ClientManager> clientManager = NotNullLazyValue.atomicLazy(() -> {
     ClientManager result = new ClientManager(this, this, null);
     Disposable serverDisposable = BuiltInServerManager.getInstance().getServerDisposable();
     assert serverDisposable != null;

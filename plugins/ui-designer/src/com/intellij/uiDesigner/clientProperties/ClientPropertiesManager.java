@@ -31,7 +31,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     return ServiceManager.getService(project, ClientPropertiesManager.class);
   }
 
-  private static final NotNullLazyValue<ClientPropertiesManager> ourDefaultManager = NotNullLazyValue.createAtomic(() -> {
+  private static final NotNullLazyValue<ClientPropertiesManager> ourDefaultManager = NotNullLazyValue.atomicLazy(() -> {
     ClientPropertiesManager result = new ClientPropertiesManager();
     try {
       result.loadState(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
