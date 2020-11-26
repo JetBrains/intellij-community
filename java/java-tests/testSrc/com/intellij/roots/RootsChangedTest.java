@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
@@ -250,7 +251,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final Library libraryA = libraryTable.createLibrary("A");
       final Library.ModifiableModel libraryModifiableModel = libraryA.getModifiableModel();
-      libraryModifiableModel.addRoot("file:///a", OrderRootType.CLASSES);
+      libraryModifiableModel.addRoot(someAbsoluteUrl("a"), OrderRootType.CLASSES);
       libraryModifiableModel.commit();
       assertNoEvents();
 
@@ -281,6 +282,11 @@ public class RootsChangedTest extends JavaModuleTestCase {
     });
   }
 
+  @NotNull
+  private static String someAbsoluteUrl(@NotNull String name) {
+    return SystemInfo.isUnix ? "file:///" + name : "file://C:/"+name;
+  }
+
   private void verifyLibraryTableEditingInUncommittedModel(LibraryTable libraryTable) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final Module moduleA = createModule("a.iml");
@@ -289,7 +295,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
       final Library libraryA = libraryTable.createLibrary("A");
       final Library.ModifiableModel libraryModifiableModel = libraryA.getModifiableModel();
-      libraryModifiableModel.addRoot("file:///a", OrderRootType.CLASSES);
+      libraryModifiableModel.addRoot(someAbsoluteUrl("a"), OrderRootType.CLASSES);
       libraryModifiableModel.commit();
       assertNoEvents();
 
@@ -298,7 +304,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       rootModelA.addLibraryEntry(libraryA);
       rootModelB.addLibraryEntry(libraryA);
       final Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
-      libraryModifiableModel2.addRoot("file:///b", OrderRootType.CLASSES);
+      libraryModifiableModel2.addRoot(someAbsoluteUrl("b"), OrderRootType.CLASSES);
       libraryModifiableModel2.commit();
       assertNoEvents();
 
@@ -576,9 +582,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     assertTrue(excludedRoot.mkdirs());
     VirtualFile excludedRootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(excludedRoot);
 
-    ModuleRootModificationUtil.updateModel(myModule, model -> {
-      model.addContentEntry(excludedRootVFile.getParent()).addExcludeFolder(excludedRootVFile);
-    });
+    ModuleRootModificationUtil.updateModel(myModule, model -> model.addContentEntry(excludedRootVFile.getParent()).addExcludeFolder(excludedRootVFile));
 
     AtomicInteger dumbModeCount = new AtomicInteger();
     SimpleMessageBusConnection connection = myProject.getMessageBus().simpleConnect();
