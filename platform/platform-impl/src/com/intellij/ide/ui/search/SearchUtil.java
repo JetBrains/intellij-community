@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
+import com.intellij.BundleBase;
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -251,6 +252,7 @@ public final class SearchUtil {
 
     title = HTML_PATTERN.matcher(title).replaceAll(" ");
     final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
+    title = title.replace(BundleBase.MNEMONIC_STRING, "");
     title = NON_WORD_PATTERN.matcher(title).replaceAll(" ");
     for (String option : words) {
       configurableOptions.add(new OptionDescription(option, title, path));
