@@ -94,35 +94,12 @@ internal abstract class ExportableOrderEntryBridge(
   }
 }
 
-internal abstract class ModuleOrderEntryBaseBridge(
-  rootModel: ModuleRootModelBridge,
-  index: Int,
-  dependencyItem: ModuleDependencyItem.Exportable,
-  itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
-) : ExportableOrderEntryBridge(rootModel, index, dependencyItem, itemUpdater), ModuleOrderEntry, ClonableOrderEntry {
-
-  override fun getFiles(type: OrderRootType): Array<VirtualFile> {
-    return getEnumerator(type)?.roots ?: VirtualFile.EMPTY_ARRAY
-  }
-
-  override fun getUrls(rootType: OrderRootType): Array<String> {
-    return getEnumerator(rootType)?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
-  }
-
-  private fun getEnumerator(rootType: OrderRootType) = ownerModuleBridge.let { ModuleRootManagerImpl.getCachingEnumeratorForType(rootType, it) }
-
-  override fun getPresentableName() = moduleName
-  override fun isValid(): Boolean = module != null
-
-  override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitModuleOrderEntry(this, initialValue)
-}
-
 internal class ModuleOrderEntryBridge(
   rootModel: ModuleRootModelBridge,
   index: Int,
   moduleDependencyItem: ModuleDependencyItem.Exportable.ModuleDependency,
   itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
-) : ModuleOrderEntryBaseBridge(rootModel, index, moduleDependencyItem, itemUpdater) {
+) : ExportableOrderEntryBridge(rootModel, index, moduleDependencyItem, itemUpdater), ModuleOrderEntry, ClonableOrderEntry {
 
   private val moduleDependencyItem
     get() = item as ModuleDependencyItem.Exportable.ModuleDependency
@@ -145,6 +122,20 @@ internal class ModuleOrderEntryBridge(
     updater(index) { item -> (item as ModuleDependencyItem.Exportable.ModuleDependency).copy(productionOnTest = productionOnTestDependency) }
     item = (item as ModuleDependencyItem.Exportable.ModuleDependency).copy(productionOnTest = productionOnTestDependency)
   }
+
+  override fun getFiles(type: OrderRootType): Array<VirtualFile> = getEnumerator(type)?.roots ?: VirtualFile.EMPTY_ARRAY
+
+  override fun getUrls(rootType: OrderRootType): Array<String> = getEnumerator(rootType)?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
+
+  private fun getEnumerator(rootType: OrderRootType) = ownerModuleBridge.let {
+    ModuleRootManagerImpl.getCachingEnumeratorForType(rootType, it)
+  }
+
+  override fun getPresentableName() = moduleName
+
+  override fun isValid(): Boolean = module != null
+
+  override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitModuleOrderEntry(this, initialValue)
 
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
@@ -186,32 +177,12 @@ internal abstract class SdkOrderEntryBaseBridge(
   override fun getUrls(rootType: OrderRootType) = getRootUrls(rootType)
 }
 
-internal abstract class LibraryOrderEntryBaseBridge(
-  rootModel: ModuleRootModelBridge,
-  index: Int,
-  item: ModuleDependencyItem.Exportable,
-  itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
-) : ExportableOrderEntryBridge(rootModel, index, item, itemUpdater), LibraryOrderEntry {
-
-  protected abstract val rootProvider: RootProvider?
-
-  override fun getRootFiles(type: OrderRootType): Array<VirtualFile> = rootProvider?.getFiles(type) ?: VirtualFile.EMPTY_ARRAY
-
-  override fun getRootUrls(type: OrderRootType): Array<String> = rootProvider?.getUrls(type) ?: ArrayUtil.EMPTY_STRING_ARRAY
-
-  override fun getFiles(type: OrderRootType) = getRootFiles(type)
-
-  override fun getUrls(rootType: OrderRootType) = getRootUrls(rootType)
-
-  override fun isValid(): Boolean = library != null
-}
-
 internal class LibraryOrderEntryBridge(
   rootModel: ModuleRootModelBridge,
   index: Int,
   libraryDependencyItem: ModuleDependencyItem.Exportable.LibraryDependency,
   itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
-) : LibraryOrderEntryBaseBridge(rootModel, index, libraryDependencyItem, itemUpdater), LibraryOrderEntry, ClonableOrderEntry {
+) : ExportableOrderEntryBridge(rootModel, index, libraryDependencyItem, itemUpdater), LibraryOrderEntry, ClonableOrderEntry {
 
   override fun getPresentableName(): String = libraryName ?: getPresentableNameForUnnamedLibrary()
   internal val libraryDependencyItem
@@ -223,7 +194,7 @@ internal class LibraryOrderEntryBridge(
     return if (url != null) PathUtil.toPresentableUrl(url) else ProjectModelBundle.message("empty.library.title")
   }
 
-  override val rootProvider: RootProvider?
+  private val rootProvider: RootProvider?
     get() = library?.rootProvider
 
   override fun getLibraryLevel() = libraryDependencyItem.library.tableId.level
@@ -253,6 +224,16 @@ internal class LibraryOrderEntryBridge(
   }
 
   override fun isModuleLevel() = libraryLevel == JpsLibraryTableSerializer.MODULE_LEVEL
+
+  override fun getRootFiles(type: OrderRootType): Array<VirtualFile> = rootProvider?.getFiles(type) ?: VirtualFile.EMPTY_ARRAY
+
+  override fun getRootUrls(type: OrderRootType): Array<String> = rootProvider?.getUrls(type) ?: ArrayUtil.EMPTY_STRING_ARRAY
+
+  override fun getFiles(type: OrderRootType) = getRootFiles(type)
+
+  override fun getUrls(rootType: OrderRootType) = getRootUrls(rootType)
+
+  override fun isValid(): Boolean = library != null
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitLibraryOrderEntry(this, initialValue)
 
