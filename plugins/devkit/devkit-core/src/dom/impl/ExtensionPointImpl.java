@@ -8,6 +8,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,19 +39,35 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
   @Nullable
   @Override
   public PsiClass getExtensionPointClass() {
+    final GenericAttributeValue<PsiClass> attribute = findExtensionPointClassAttribute();
+    if (attribute == null) return null;
+
+    return attribute.getValue();
+  }
+
+  @Override
+  public @Nullable String getExtensionPointClassName() {
+    final GenericAttributeValue<PsiClass> attribute = findExtensionPointClassAttribute();
+    if (attribute == null) return null;
+
+    return attribute.getStringValue();
+  }
+
+  @Nullable
+  private GenericAttributeValue<PsiClass> findExtensionPointClassAttribute() {
     if (DomUtil.hasXml(getInterface())) {
-      return getInterface().getValue();
+      return getInterface();
     }
 
     final List<With> elements = getWithElements();
     if (elements.size() == 1) {
-      return elements.get(0).getImplements().getValue();
+      return elements.get(0).getImplements();
     }
 
     for (With element : elements) {
       final String attributeName = element.getAttribute().getStringValue();
       if (EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES.contains(attributeName)) {
-        return element.getImplements().getValue();
+        return element.getImplements();
       }
     }
 
