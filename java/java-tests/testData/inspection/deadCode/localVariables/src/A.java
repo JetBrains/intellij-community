@@ -20,6 +20,22 @@ class A {
           String unusedStr6 = "s";
           String unusedStr7;
           initializeSup(() -> unusedStr6);
+
+          class Local {
+            void test() {
+              String unusedStr8;
+              String unusedStr9 = "Str";
+            }
+          }
+          new Local().test();
+
+          Local o = new Local() {
+            void test() {
+              String unusedStr10;
+              String unusedStr11 = "Str";
+            }
+          }
+          System.out.println(o);
         });
     });
   }

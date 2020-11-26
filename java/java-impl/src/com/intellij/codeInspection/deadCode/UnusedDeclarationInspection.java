@@ -287,6 +287,11 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       }
       codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
+        public void visitClass(PsiClass aClass) {
+          // prevent going to local classes
+        }
+
+        @Override
         public void visitLambdaExpression(PsiLambdaExpression lambdaExpr) {
           PsiCodeBlock lambdaBody = ObjectUtils.tryCast(lambdaExpr.getBody(), PsiCodeBlock.class);
           if (lambdaBody != null) {

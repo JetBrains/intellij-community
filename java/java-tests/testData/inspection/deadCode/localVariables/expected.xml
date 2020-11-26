@@ -30,5 +30,25 @@
     <line>21</line>
     <description>Variable &lt;code&gt;unusedStr7&lt;/code&gt; is never used</description>
   </problem>
+  <problem>
+    <file>A.java</file>
+    <line>26</line>
+    <description>Variable &lt;code&gt;unusedStr8&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>27</line>
+    <description>Variable &lt;code&gt;unusedStr9&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>34</line>
+    <description>Variable &lt;code&gt;unusedStr10&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>35</line>
+    <description>Variable &lt;code&gt;unusedStr11&lt;/code&gt; is never used</description>
+  </problem>
 </problems>
 
