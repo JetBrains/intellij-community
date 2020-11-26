@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.storage;
 
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.IndexStorageLayout;
@@ -18,6 +19,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public interface VfsAwareIndexStorageLayout<Key, Value> extends IndexStorageLayout<Key, Value> {
+  boolean USE_MV_STORE_FORWARD_INDEX = SystemProperties.is("use.mv.store.forward.file.based.index");
+
   default @Nullable SnapshotInputMappings<Key, Value> createOrClearSnapshotInputMappings() throws IOException {
     return null;
   }
@@ -26,6 +29,9 @@ public interface VfsAwareIndexStorageLayout<Key, Value> extends IndexStorageLayo
   static <Key, Value> VfsAwareIndexStorageLayout<Key, Value> getLayout(@NotNull FileBasedIndexExtension<Key, Value> indexExtension,
                                                                        boolean contentHashEnumeratorReopen)
     throws IOException {
+    if (USE_MV_STORE_FORWARD_INDEX) {
+      return new MVStoreForwardIndexStorageLayout<>(indexExtension);
+    }
     if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
       return new InMemoryStorageLayout<>(indexExtension);
     }
@@ -35,7 +41,6 @@ public interface VfsAwareIndexStorageLayout<Key, Value> extends IndexStorageLayo
     if (VfsAwareMapReduceIndex.hasSnapshotMapping(indexExtension)) {
       return new SnapshotMappingsStorageLayout<>(indexExtension, contentHashEnumeratorReopen);
     }
-
     return new DefaultStorageLayout<>(indexExtension);
   }
 
@@ -50,7 +55,7 @@ public interface VfsAwareIndexStorageLayout<Key, Value> extends IndexStorageLayo
   }
 
   @NotNull
-  private static <K, V> VfsAwareIndexStorage<K, V> createOrClearIndexStorage(FileBasedIndexExtension<K, V> extension) throws IOException {
+  static <K, V> VfsAwareIndexStorage<K, V> createOrClearIndexStorage(FileBasedIndexExtension<K, V> extension) throws IOException {
     Path storageFile = IndexInfrastructure.getStorageFile(extension.getName()).toPath();
     try {
       return new VfsAwareMapIndexStorage<>(
@@ -67,7 +72,7 @@ public interface VfsAwareIndexStorageLayout<Key, Value> extends IndexStorageLayo
     }
   }
 
-  final class DefaultStorageLayout<K, V> implements VfsAwareIndexStorageLayout<K, V> {
+  class DefaultStorageLayout<K, V> implements VfsAwareIndexStorageLayout<K, V> {
     @NotNull
     private final FileBasedIndexExtension<K, V> myExtension;
 
