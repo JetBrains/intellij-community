@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase
+import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
@@ -81,21 +82,21 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     return TestSdkGenerator.SdkInfo(name, versionString, homePath)
   }
 
-  fun assertSdks(sdkName: String?, vararg moduleNames: String) {
-    assertProjectSdk(sdkName)
+  fun assertSdks(sdk: TestSdk?, vararg moduleNames: String, isAssertSdkName: Boolean = true) {
+    assertProjectSdk(sdk, isAssertSdkName)
     for (moduleName in moduleNames) {
-      assertModuleSdk(moduleName, sdkName)
+      assertModuleSdk(moduleName, sdk, isAssertSdkName)
     }
   }
 
-  private fun assertProjectSdk(sdkName: String?) {
+  private fun assertProjectSdk(sdk: TestSdk?, isAssertSdkName: Boolean) {
     val projectSdk = getSdkForProject()
-    assertEquals(sdkName, projectSdk?.name)
+    assertSdk(sdk, projectSdk, isAssertSdkName)
   }
 
-  private fun assertModuleSdk(moduleName: String, sdkName: String?) {
+  private fun assertModuleSdk(moduleName: String, sdk: TestSdk?, isAssertSdkName: Boolean) {
     val moduleSdk = getSdkForModule(moduleName)
-    assertEquals(sdkName, moduleSdk?.name)
+    assertSdk(sdk, moduleSdk, isAssertSdkName)
   }
 
   private fun getSdkForProject(): Sdk? {
