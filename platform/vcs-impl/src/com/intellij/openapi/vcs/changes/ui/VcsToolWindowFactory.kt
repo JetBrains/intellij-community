@@ -105,7 +105,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
 
   private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> {
     return ChangesViewContentEP.EP_NAME.getExtensions(project).filter {
-      ChangesViewContentManager.getInstanceImpl(project)?.getToolWindowId(it.isInCommitToolWindow) == toolWindow.id
+      ChangesViewContentManager.getToolWindowId(project, it) == toolWindow.id
     }
   }
 
@@ -150,8 +150,5 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
     internal val Project.vcsManager: ProjectLevelVcsManager
       get() = ProjectLevelVcsManager.getInstance(this)
-
-    internal fun isInCommitToolWindow(project: Project, tabName: String) =
-      ChangesViewContentEP.EP_NAME.getExtensions(project).firstOrNull { it.tabName == tabName }?.isInCommitToolWindow == true
   }
 }
