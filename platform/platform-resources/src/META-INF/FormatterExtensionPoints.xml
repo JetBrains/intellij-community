@@ -46,5 +46,7 @@
 
     <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider" dynamic="true"/>
     <extensionPoint name="predefinedCodeStyle" interface="com.intellij.psi.codeStyle.PredefinedCodeStyle" dynamic="true"/>
+
+    <extensionPoint name="fileSetDescriptorFactory" interface="com.intellij.formatting.fileSet.FileSetDescriptorFactory" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

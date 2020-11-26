@@ -1381,6 +1381,9 @@
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.FileBasedIndexTreeChangePreprocessor"/>
 
     <projectService serviceImplementation="com.intellij.execution.segmentedRunDebugWidget.StateWidgetManager"/>
+
+    <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
+    <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.PatternDescriptor$Factory"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>

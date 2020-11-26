@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.formatting.fileSet;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.application.options.codeStyle.excludedFiles;
 
+import com.intellij.formatting.fileSet.FileSetDescriptor;
+import com.intellij.formatting.fileSet.FileSetDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
@@ -90,5 +92,20 @@ public class NamedScopeDescriptor implements FileSetDescriptor {
   @Override
   public String toString() {
     return "scope: " + myScopeId;
+  }
+
+  public static class Factory implements FileSetDescriptorFactory {
+
+    @Override
+    public @Nullable FileSetDescriptor createDescriptor(@NotNull State state) {
+      if (NAMED_SCOPE_TYPE.equals(state.type) && state.name != null) {
+        NamedScopeDescriptor descriptor = new NamedScopeDescriptor(state.name);
+        if (state.pattern != null) {
+          descriptor.setPattern(state.pattern);
+        }
+        return descriptor;
+      }
+      return null;
+    }
   }
 }
