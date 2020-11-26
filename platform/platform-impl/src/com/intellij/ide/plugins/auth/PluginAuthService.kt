@@ -3,7 +3,7 @@ package com.intellij.ide.plugins.auth
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.CustomPluginRepositoryService
-import com.intellij.ide.plugins.RepositoryHelper.getPluginHosts
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
@@ -20,7 +20,6 @@ object PluginAuthService {
   private val hostsAuthHeaders = HashMap<String, Map<String, String>?>()
 
   init {
-    getPluginHosts().filterNotNull().forEach { hostsAuthHeaders[it] = null }
     subscribe(ServiceManager.getService(CustomPluginRepositoryService::class.java))
   }
 
@@ -46,9 +45,9 @@ object PluginAuthService {
 
   private fun changeHostsState(): Boolean {
     var result = false
-    for (host in getPluginHosts().filterNotNull()) {
+    for (host in RepositoryHelper.getPluginHosts().filterNotNull()) {
       val headers = getUrlAuthHeaders(host)
-      if (!hostsAuthHeaders.containsKey(host) || hostsAuthHeaders[host] != headers) {
+      if (hostsAuthHeaders.containsKey(host).not() || hostsAuthHeaders[host] != headers) {
         hostsAuthHeaders[host] = headers
         result = true
       }
