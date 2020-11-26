@@ -5,8 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -26,11 +24,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class LoadingDecorator {
-  private static final Color OVERLAY_BACKGROUND = JBColor.namedColor(
-    "BigSpinner.background",
-    ColorUtil.withAlpha(JBColor.PanelBackground, Registry.doubleValue("ide.loading.decorator.overlay.alpha")));
+  public static final Color OVERLAY_BACKGROUND = JBColor.namedColor("BigSpinner.background", JBColor.PanelBackground);
 
-  private Color myOverlayBackground = OVERLAY_BACKGROUND;
+  private Color myOverlayBackground = null;
 
   JLayeredPane myPane;
 
@@ -114,9 +110,10 @@ public class LoadingDecorator {
     parent.setLayout(new GridBagLayout());
     text.setFont(UIUtil.getLabelFont());
     text.setForeground(UIUtil.getContextHelpForeground());
-    icon.setBorder(JBUI.Borders.emptyRight(Registry.intValue("ide.loading.decorator.right.margin", 8)));
+    icon.setBorder(JBUI.Borders.emptyRight(8));
 
-    NonOpaquePanel result = new NonOpaquePanel(new VerticalLayout(JBUI.scale(Registry.intValue("ide.loading.decorator.icon.gap", 6))));
+    NonOpaquePanel result = new NonOpaquePanel(new VerticalLayout(JBUI.scale(6)));
+    result.setBorder(JBUI.Borders.empty(10));
     result.add(icon);
     result.add(text);
     parent.add(result);

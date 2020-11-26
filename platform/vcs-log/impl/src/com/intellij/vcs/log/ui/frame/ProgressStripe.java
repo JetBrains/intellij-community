@@ -80,7 +80,6 @@ public class ProgressStripe extends JBPanel {
                        @NotNull Disposable disposable,
                        int startDelayMs) {
       super(contentPanel, disposable, startDelayMs, false, ProgressStripeIcon.generateIcon(component));
-      setOverlayBackground(null);
       myDisposable = disposable;
     }
 
