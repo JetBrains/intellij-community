@@ -767,6 +767,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             runTest("testData/quickfix/changeSignature/addParameterWithImport.before.Main.kt");
         }
 
+        @TestMetadata("changeParameter.before.Main.kt")
+        public void testChangeParameter() throws Exception {
+            runTest("testData/quickfix/changeSignature/changeParameter.before.Main.kt");
+        }
+
         @TestMetadata("matchFunctionLiteralWithSAMType.before.Main.kt")
         public void testMatchFunctionLiteralWithSAMType() throws Exception {
             runTest("testData/quickfix/changeSignature/matchFunctionLiteralWithSAMType.before.Main.kt");

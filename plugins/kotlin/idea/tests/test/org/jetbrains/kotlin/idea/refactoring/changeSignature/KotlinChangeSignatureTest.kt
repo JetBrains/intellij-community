@@ -485,6 +485,46 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
+    fun testSimpleFlexibleType() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "integer", PsiType.INT)) }
+    }
+
+    fun testSimpleFlexibleType2() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "integer", PsiType.INT)) }
+    }
+
+    fun testMutableFlexibleType() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "integer", PsiType.INT)) }
+    }
+
+    fun testMutableFlexibleType2() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "integer", PsiType.INT)) }
+    }
+
+    fun testMutableFlexibleType3() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "integer", PsiType.INT)) }
+    }
+
+    fun testMutableFlexibleType4() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "integer", PsiType.INT)) }
+    }
+
+    fun testMutableFlexibleType5() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "integer", PsiType.INT)) }
+    }
+
+    fun testMutableFlexibleType6() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "integer", PsiType.INT)) }
+    }
+
+    fun testMutableFlexibleType7() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "integer", PsiType.INT)) }
+    }
+
+    fun testMutableFlexibleType8() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "integer", PsiType.INT)) }
+    }
+
     fun testEnumEntriesWithoutSuperCalls() {
         doTest {
             val defaultValueForCall = KtPsiFactory(project).createExpression("1")

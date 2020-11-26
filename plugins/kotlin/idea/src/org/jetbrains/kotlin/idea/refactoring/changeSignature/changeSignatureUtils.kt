@@ -83,18 +83,29 @@ fun KotlinType.renderTypeWithSubstitution(substitutor: TypeSubstitutor?, default
 // It's needed to prevent accesses to PSI (e.g. using LazyJavaClassifierType properties) when Change signature invalidates it
 // See KotlinChangeSignatureTest.testSAMChangeMethodReturnType
 fun DeclarationDescriptor.createDeepCopy(): DeclarationDescriptor =
- (this as? JavaMethodDescriptor)?.substitute(TypeSubstitutor.create(ForceTypeCopySubstitution)) ?: this
+    (this as? JavaMethodDescriptor)?.substitute(TypeSubstitutor.create(ForceTypeCopySubstitution)) ?: this
 
 private object ForceTypeCopySubstitution : TypeSubstitution() {
-    override fun get(key: KotlinType) =
-        with(key) {
-            if (isError) return@with asTypeProjection()
-            KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(annotations, constructor, arguments, isMarkedNullable, memberScope)
-                .asTypeProjection()
-        }
+    override fun get(key: KotlinType) = with(key) {
+        if (isError) return@with asTypeProjection()
+        val type = if (this is FlexibleType)
+            KotlinTypeFactory.flexibleType(lowerBound.copyAsSimpleType(), upperBound.copyAsSimpleType())
+        else
+            copyAsSimpleType()
+
+        type.asTypeProjection()
+    }
 
     override fun isEmpty() = false
 }
+
+private fun KotlinType.copyAsSimpleType(): SimpleType = KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
+    annotations,
+    constructor,
+    arguments,
+    isMarkedNullable,
+    memberScope,
+)
 
 fun suggestReceiverNames(project: Project, descriptor: CallableDescriptor): List<String> {
     val callable = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor) as? KtCallableDeclaration ?: return emptyList()

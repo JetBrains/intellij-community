@@ -26,7 +26,10 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
+import org.jetbrains.kotlin.types.FlexibleType
 import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinParameterInfo(
     val callableDescriptor: CallableDescriptor,
@@ -81,7 +84,15 @@ class KotlinParameterInfo(
         if (parameter.isVararg) return defaultRendering
         val parameterType = parameter.type
         if (parameterType.isError) return defaultRendering
-        return parameterType.renderTypeWithSubstitution(typeSubstitutor, defaultRendering, true)
+        val typeToRender = parameterType.safeAs<FlexibleType>()?.let { flexibleType ->
+            val originalType = inheritedCallable.originalCallableDescriptor.valueParameters.getOrNull(originalIndex)?.type
+            if (originalType?.isSubtypeOf(flexibleType.upperBound) == true && flexibleType.lowerBound.isSubtypeOf(originalType))
+                originalType
+            else
+                null
+        } ?: parameterType
+
+        return typeToRender.renderTypeWithSubstitution(typeSubstitutor, defaultRendering, true)
     }
 
     fun getInheritedName(inheritedCallable: KotlinCallableDefinitionUsage<*>): String {
