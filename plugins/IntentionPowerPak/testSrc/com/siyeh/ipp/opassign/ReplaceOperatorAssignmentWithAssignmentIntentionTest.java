@@ -18,6 +18,7 @@ public class ReplaceOperatorAssignmentWithAssignmentIntentionTest extends IPPTes
   public void testCastNecessary() { doTest(); }
   public void testAssignmentAssign() { doTest(); }
   public void testAdditionAssignmentAssign() { doTest(); }
+  public void testInstanceofAssign() { doTest(); }
 
   @Override
   protected String getIntentionName() {
