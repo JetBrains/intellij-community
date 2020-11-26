@@ -39,7 +39,6 @@ public final class SearchUtil {
   private static final String DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private static final Pattern QUOTED = Pattern.compile("\"([^\"]+)\"");
-  private static final Pattern MNEMONIC_PATTERN = Pattern.compile(BundleBase.MNEMONIC_STRING);
   private static final Pattern NON_WORD_PATTERN = Pattern.compile("[\\W&&[^\\p{Punct}\\p{Blank}]]");
 
   public static final String HIGHLIGHT_WITH_BORDER = "searchUtil.highlightWithBorder";
@@ -252,7 +251,7 @@ public final class SearchUtil {
     title = HTML_PATTERN.matcher(title).replaceAll(" ");
     Set<String> words = new HashSet<>();
     SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemming(title, words, Collections.emptySet());
-    title = MNEMONIC_PATTERN.matcher(title).replaceAll("");
+    title = title.replace(BundleBase.MNEMONIC_STRING, "");
     title = NON_WORD_PATTERN.matcher(title).replaceAll(" ");
     for (@NlsSafe String option : words) {
       configurableOptions.add(new OptionDescription(option, title, path));
