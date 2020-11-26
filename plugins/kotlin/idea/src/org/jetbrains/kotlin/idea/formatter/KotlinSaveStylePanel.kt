@@ -17,7 +17,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.util.applyKotlinCodeStyle
 import java.awt.BorderLayout
 import javax.swing.BorderFactory
 import javax.swing.JLabel
