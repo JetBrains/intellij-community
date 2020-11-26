@@ -38,6 +38,4 @@
               fus-settings="https://www.jetbrains.com/idea/statistics/fus-assistant.xml"
               event-log-settings="https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json"
   />
-
-  <win32AppUserModelId>__WIN32_APP_USER_MODEL_ID__</win32AppUserModelId>
 </component>
