@@ -136,6 +136,8 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       trace.logPerformance("Data import total", System.currentTimeMillis() - allStartTime);
     }
     catch (Throwable t) {
+      project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
+        .onImportFailed(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
       try {
         runFinalTasks(project, synchronous, onFailureImportTasks);
         dispose(modelsProvider, project, synchronous);
