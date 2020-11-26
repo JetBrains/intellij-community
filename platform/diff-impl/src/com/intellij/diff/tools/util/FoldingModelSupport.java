@@ -279,6 +279,7 @@ public class FoldingModelSupport {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null) return null;
     VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return null;
 
     if (document.getLineCount() <= lineNumber) return null;
     int offset = document.getLineStartOffset(lineNumber);
