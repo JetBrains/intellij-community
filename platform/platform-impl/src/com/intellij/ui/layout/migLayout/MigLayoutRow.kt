@@ -348,7 +348,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     if (builder.hideableRowNestingLevel > 0) {
-      cc.hideMode = 0
+      cc.hideMode = 3
     }
 
     // if this row is not labeled and:
