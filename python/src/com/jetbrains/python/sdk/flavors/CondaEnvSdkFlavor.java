@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -22,7 +21,10 @@ import org.jetbrains.annotations.SystemDependent;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   private CondaEnvSdkFlavor() {
@@ -44,44 +46,22 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
     final Sdk sdk = ReadAction.compute(() -> PythonSdkUtil.findPythonSdk(module));
     try {
       final List<String> environments = PyCondaRunKt.listCondaEnvironments(sdk);
-      if (PyCondaSdkCustomizer.Companion.getInstance().getDisableEnvsSorting()) {
-        moveBaseEnvToTop(sdk, environments);
-      }
       for (String environment : environments) {
         results.addAll(ReadAction.compute(() -> findInRootDirectory(StandardFileSystems.local().findFileByPath(environment))));
+      }
+      if (PyCondaSdkCustomizer.Companion.getInstance().getDisableEnvsSorting()) {
+        List<String> basePaths = ContainerUtil.filter(results, path -> PythonSdkUtil.isBaseConda(path));
+        for (String basePath : basePaths) {
+          if (results.remove(basePath)) {
+            results.add(0, basePath);
+          }
+        }
       }
     }
     catch (ExecutionException e) {
       return Collections.emptyList();
     }
     return results;
-  }
-
-  private static void moveBaseEnvToTop(Sdk sdk, List<String> environments) {
-    String basePath = findBaseEnvPath(sdk);
-    if (basePath != null && environments.remove(basePath)) {
-      environments.add(0, basePath);
-    }
-  }
-
-  @Nullable
-  private static String findBaseEnvPath(Sdk sdk) {
-    try {
-      ProcessOutput output = PyCondaRunKt.runConda(sdk, Arrays.asList("env", "list"));
-      String[] envs = output.getStdout().split("\n");
-      for (String env : envs) {
-        if (env.trim().startsWith("base ")) {
-          String[] paths = env.trim().split(" ");
-          if (paths.length > 1) {
-            return paths[paths.length - 1];
-          }
-        }
-      }
-    }
-    catch (ExecutionException e) {
-      return null;
-    }
-    return null;
   }
 
   @Override
