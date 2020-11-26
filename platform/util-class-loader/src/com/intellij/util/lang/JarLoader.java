@@ -40,7 +40,7 @@ class JarLoader extends Loader {
   private volatile String myClassPathManifestAttribute;
 
   JarLoader(@NotNull URL url, @NotNull String filePath, int index, @NotNull ClassPath configuration) throws IOException {
-    super(new URL("jar", "", -1, url + "!/"), index);
+    super(new URL("jar", "", -1, url + "!/"));
 
     myFilePath = filePath;
     myConfiguration = configuration;

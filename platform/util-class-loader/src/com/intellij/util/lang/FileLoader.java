@@ -20,7 +20,7 @@ final class FileLoader extends Loader {
   private final ClassPath myConfiguration;
 
   FileLoader(@NotNull URL url, int index, @NotNull ClassPath configuration) throws IOException {
-    super(url, index);
+    super(url);
     try {
       myRootDir = new File(url.toURI());
     }

@@ -13,6 +13,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
@@ -21,6 +22,10 @@ public final class ClassPath {
   private static final ResourceStringLoaderIterator ourResourceIterator = new ResourceStringLoaderIterator();
   private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
+
+  static final boolean ourClassLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
+
+  private static final ResourceLoadingLogger ourResourceLoadingLogger;
 
   private final List<URL> myUrls = new ArrayList<URL>();
   private final List<Loader> myLoaders = new ArrayList<Loader>();
@@ -220,32 +225,33 @@ public final class ClassPath {
     if (file.isDirectory()) {
       return new FileLoader(url, index, this);
     }
-    if (file.isFile()) {
-      boolean isSigned = myURLsWithProtectionDomain.contains(url);
-      JarLoader loader = isSigned ? new SecureJarLoader(url, file.getPath(), index, this) : new JarLoader(url, file.getPath(), index, this);
-      if (processRecursively) {
-        String[] referencedJars = loadManifestClasspath(loader);
-        if (referencedJars != null) {
-          long s2 = ourClassLoadingInfo ? System.nanoTime() : 0;
-          List<URL> urls = new ArrayList<URL>(referencedJars.length);
-          for (String referencedJar:referencedJars) {
-            try {
-              urls.add(UrlUtilRt.internProtocol(new URI(referencedJar).toURL()));
-            }
-            catch (Exception e) {
-              LoggerRt.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
-            }
+    if (!file.isFile()) {
+      return null;
+    }
+
+    boolean isSigned = myURLsWithProtectionDomain.contains(url);
+    JarLoader loader = isSigned ? new SecureJarLoader(url, file.getPath(), index, this) : new JarLoader(url, file.getPath(), index, this);
+    if (processRecursively) {
+      String[] referencedJars = loadManifestClasspath(loader);
+      if (referencedJars != null) {
+        long s2 = ourClassLoadingInfo ? System.nanoTime() : 0;
+        List<URL> urls = new ArrayList<URL>(referencedJars.length);
+        for (String referencedJar:referencedJars) {
+          try {
+            urls.add(UrlUtilRt.internProtocol(new URI(referencedJar).toURL()));
           }
-          push(urls);
-          if (ourClassLoadingInfo) {
-            //noinspection UseOfSystemOutOrSystemErr
-            System.out.println("Loaded all " + referencedJars.length + " urls " + (System.nanoTime() - s2) / 1000000 + "ms");
+          catch (Exception e) {
+            LoggerRt.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
           }
         }
+        push(urls);
+        if (ourClassLoadingInfo) {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.out.println("Loaded all " + referencedJars.length + " urls " + (System.nanoTime() - s2) / 1000000 + "ms");
+        }
       }
-      return loader;
     }
-    return null;
+    return loader;
   }
 
   private void initLoader(@NotNull URL url, @NotNull Loader loader) throws IOException {
@@ -411,32 +417,38 @@ public final class ClassPath {
   public interface ResourceLoadingLogger {
     void logResource(String url, URL baseLoaderURL, long resourceSize);
   }
-  private static final ResourceLoadingLogger ourResourceLoadingLogger;
 
   static {
     String className = System.getProperty("intellij.class.resources.loading.logger");
     ResourceLoadingLogger resourceLoadingLogger = null;
     if (className != null) {
       try {
-        resourceLoadingLogger = (ResourceLoadingLogger)Class.forName(className).newInstance();
+        resourceLoadingLogger = (ResourceLoadingLogger)Class.forName(className).getDeclaredConstructor().newInstance();
       }
       catch (Throwable e) {
         LoggerRt.getInstance(ClassPath.class).error("Failed to instantiate resource loading logger " + className, e);
       }
     }
     ourResourceLoadingLogger = resourceLoadingLogger;
+
+    if (ourClassLoadingInfo) {
+      Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook for tracing classloading information") {
+        @Override
+        public void run() {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.out.println("Classloading requests:" + ClassPath.class.getClassLoader() + "," + ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
+        }
+      });
+    }
   }
 
-  static final boolean ourClassLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
-
-  private static final Set<String> ourLoadedClasses = ourClassLoadingInfo ? Collections.synchronizedSet(new LinkedHashSet<String>()) : null;
+  private static final Set<String> ourLoadedClasses = ourClassLoadingInfo ? Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>()) : null;
   private static final AtomicLong ourTotalTime = new AtomicLong();
   private static final AtomicInteger ourTotalRequests = new AtomicInteger();
   private static final ThreadLocal<Boolean> ourDoingTiming = new ThreadLocal<Boolean>();
 
   private static long startTiming() {
-    if (!ourClassLoadingInfo) return 0;
-    if (ourDoingTiming.get() != null) {
+    if (!ourClassLoadingInfo || ourDoingTiming.get() != null) {
       return 0;
     }
     ourDoingTiming.set(Boolean.TRUE);
@@ -445,7 +457,9 @@ public final class ClassPath {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logInfo(ClassPath path, long started, String resourceName, Resource resource) {
-    if (!ourClassLoadingInfo) return;
+    if (!ourClassLoadingInfo) {
+      return;
+    }
 
     if (resource != null) {
       String urlPath = resource.getURL().getPath();
@@ -476,22 +490,10 @@ public final class ClassPath {
       System.out.println(path.getClass().getClassLoader() + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
     }
   }
-  static {
-    if (ourClassLoadingInfo) {
-      Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook for tracing classloading information") {
-        @Override
-        public void run() {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.out.println("Classloading requests:" + ClassPath.class.getClassLoader() + "," + ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
-        }
-      });
-    }
-  }
 
   private static String[] loadManifestClasspath(JarLoader loader) {
     try {
       String classPath = loader.getClassPathManifestAttribute();
-
       if (classPath != null) {
         String[] urls = classPath.split(" ");
         if (urls.length > 0 && urls[0].startsWith("file:")) {
@@ -499,7 +501,8 @@ public final class ClassPath {
         }
       }
     }
-    catch (Exception ignore) { }
+    catch (Exception ignore) {
+    }
     return null;
   }
 }
