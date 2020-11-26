@@ -70,7 +70,7 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
   @Nullable
   @Override
   public XDebuggerTreeNodeHyperlink getLink() {
-    return new XDebuggerTreeNodeHyperlink(" " + myWatch.getPosition().getFile().getName() + ":" + myWatch.getPosition().getLine()) {
+    return new XDebuggerTreeNodeHyperlink(" " + myWatch.getPosition().getFile().getName() + ":" + (myWatch.getPosition().getLine() + 1)) {
       @Override
       public boolean alwaysOnScreen() {
         return true;
