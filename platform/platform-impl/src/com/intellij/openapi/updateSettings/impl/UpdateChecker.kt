@@ -313,9 +313,12 @@ object UpdateChecker {
     val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor> = HashSet()
     for ((_, installedPlugin) in updateable) {
       // collect plugins that were not updated and would be incompatible with the new version
+      // `updateable` could contain bundled plugins with allow-bundled-update - those always have compatible version in IDE
       if (installedPlugin != null && installedPlugin.isEnabled &&
-          !toUpdate.containsKey(installedPlugin.pluginId) &&
-          !PluginManagerCore.isCompatible(installedPlugin, newBuildNumber)) {
+          toUpdate.containsKey(installedPlugin.pluginId).not() &&
+          PluginManagerCore.isCompatible(installedPlugin, newBuildNumber).not() &&
+          installedPlugin.isBundled.not()
+      ) {
         incompatiblePlugins += installedPlugin
       }
     }
