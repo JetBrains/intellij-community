@@ -15,10 +15,7 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
-import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.URLUtil
-import com.intellij.util.io.readText
-import com.intellij.util.io.write
+import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.xml.sax.InputSource
@@ -142,7 +139,7 @@ open class MarketplaceRequests {
   @Throws(IOException::class)
   fun getMarketplaceCachedPlugins(): List<String>? {
     val pluginXmlIdsFile = Paths.get(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
-    if (Files.size(pluginXmlIdsFile) > 0) {
+    if (pluginXmlIdsFile.exists() && Files.size(pluginXmlIdsFile) > 0) {
       return Files.newBufferedReader(pluginXmlIdsFile).use(::parseXmlIds)
     }
     else {
@@ -418,7 +415,8 @@ private fun saveETagForFile(file: Path, eTag: String) {
 }
 
 private fun isNotModified(urlConnection: URLConnection, file: Path?): Boolean {
-  return file != null && Files.size(file) > 0 && urlConnection is HttpURLConnection && urlConnection.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED
+  return file != null && file.exists() && Files.size(file) > 0 &&
+         urlConnection is HttpURLConnection && urlConnection.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED
 }
 
 private data class CompatibleUpdateRequest(val build: String, val pluginXMLIds: List<String>)
