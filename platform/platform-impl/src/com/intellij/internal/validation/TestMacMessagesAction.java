@@ -190,6 +190,14 @@ public class TestMacMessagesAction extends AnAction {
         });
         panel.add(secondDialog);
 
+        JButton html = new JButton("Show Alert with HTML content");
+        html.addActionListener(event -> {
+          Messages.showInfoMessage(
+            "<html>Message <a>Message</a> Message<br>Test <b>Test</b> Test<br>&nbsp;&nbsp;&nbsp;Foo &lt;&gt;&amp;&#39;&quot; Foo</html>",
+            "Title");
+        });
+        panel.add(html);
+
         return panel;
       }
     }.show();
