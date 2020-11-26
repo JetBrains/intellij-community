@@ -200,6 +200,15 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     getOptions().setRemoteTarget(targetName);
   }
 
+  @Override
+  public void onNewConfigurationCreated() {
+    super.onNewConfigurationCreated();
+    if (!getName().equals(suggestedName())) {
+      // prevent RC name reset by RunConfigurable.installUpdateListeners on target change in UI
+      getOptions().setNameGenerated(false);
+    }
+  }
+
   public static class MavenSettings implements Cloneable {
     public static final String TAG = "MavenSettings";
 

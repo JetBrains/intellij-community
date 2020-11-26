@@ -91,13 +91,14 @@ public final class MavenRunConfigurationType implements ConfigurationType {
     final String name = getMavenProjectName(project, runnerParameters);
     if (!StringUtil.isEmptyOrSpaces(name)) {
       stringBuilder.append(name);
-      stringBuilder.append(" ");
     }
 
-    stringBuilder.append("[");
-    listGoals(stringBuilder, runnerParameters.getGoals());
-    stringBuilder.append("]");
-
+    List<String> goals = runnerParameters.getGoals();
+    if (!goals.isEmpty()) {
+      stringBuilder.append(" [");
+      listGoals(stringBuilder, goals);
+      stringBuilder.append("]");
+    }
     return stringBuilder.toString();
   }
 
