@@ -50,7 +50,7 @@ public class JpsWslPathMapper implements JpsPathMapper {
       }
       if (path.indexOf(':') == 1) {
         int pathLengthAfterDriveLetter = path.length() - 2;
-        myWslRootPrefix = wslPath.substring(0, wslPath.length() - pathLengthAfterDriveLetter - 2 /* slash and drive letter */);
+        myWslRootPrefix = wslPath.substring(0, wslPath.length() - pathLengthAfterDriveLetter - 1);
       }
       return wslPath;
     }
@@ -62,6 +62,6 @@ public class JpsWslPathMapper implements JpsPathMapper {
     ProcessBuilder processBuilder = new ProcessBuilder("/usr/bin/wslpath", path);
     Process process = processBuilder.start();
     process.waitFor();
-    return StreamUtil.readText(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+    return StreamUtil.readText(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)).trim();
   }
 }
