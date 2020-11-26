@@ -239,8 +239,7 @@ idea.fatal.error.notification=disabled
     }
     BuildUtils.copyAndPatchFile(sourceFile, targetFile,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
-                                 "BUILTIN_PLUGINS_URL": builtinPluginsRepoUrl ?: "",
-                                 "WIN32_APP_USER_MODEL_ID": buildContext.win32AppUserModelId ?: ""])
+                                "BUILTIN_PLUGINS_URL": builtinPluginsRepoUrl ?: ""])
     return targetFile
   }
 

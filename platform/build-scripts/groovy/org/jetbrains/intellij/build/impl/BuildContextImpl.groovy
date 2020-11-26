@@ -81,8 +81,6 @@ final class BuildContextImpl extends BuildContext {
 
     bootClassPathJarNames = List.of("bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar")
     dependenciesProperties = new DependenciesProperties(this)
-
-    win32AppUserModelId = constructWin32AppUserModelId()
   }
 
   @Override
@@ -119,24 +117,6 @@ final class BuildContextImpl extends BuildContext {
       return null
     }
     return appInfoFile.toPath()
-  }
-
-  private String constructWin32AppUserModelId() {
-    // result example: "JetBrains.IntelliJIDEACommunityEdition.2020-3"
-
-    final def shortCompanyName = applicationInfo.shortCompanyName.replace('.', '-')
-    final def productName = applicationInfo.productNameWithEdition.replace('.', '-')
-
-    final def majorVersion = StringUtil.isEmptyOrSpaces(applicationInfo.majorVersion) ? "0" : applicationInfo.majorVersion
-    final def minorVersion = StringUtil.isEmptyOrSpaces(applicationInfo.minorVersion) ? "0" : applicationInfo.minorVersion
-    final def version = (majorVersion + "." + minorVersion).replace('.', '-')
-
-    final def result = (shortCompanyName + "." + productName + "." + version).replaceAll("\\s+", "")
-    if (result.length() > 128) { // AppUserModelId can have no more than 128 characters
-      messages.error("Generated AppUserModelId is too long (> 128 characters): \"$result\"")
-    }
-
-    return result
   }
 
   @Override

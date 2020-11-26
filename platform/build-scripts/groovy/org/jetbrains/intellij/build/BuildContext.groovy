@@ -50,11 +50,6 @@ abstract class BuildContext implements CompilationContext {
 
   abstract @NotNull Collection<Path> getResourceFiles();
 
-  /**
-   * See {@link com.intellij.openapi.application.ex.ApplicationInfoEx#getWin32AppUserModelId}
-   */
-  String win32AppUserModelId
-
   abstract boolean includeBreakGenLibraries()
 
   /**

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileFilters
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -32,6 +33,10 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final Path ideaProperties
   private final Path patchedApplicationInfo
   private final Path icoFile
+  /**
+   * See {@link com.intellij.openapi.application.ex.ApplicationInfoEx#getWin32AppUserModelId}
+   */
+  private final String appUserModelId
 
   WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, Path ideaProperties, Path patchedApplicationInfo) {
     super(buildContext)
@@ -41,6 +46,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     String icoPath = (buildContext.applicationInfo.isEAP ? customizer.icoPathForEAP : null) ?: customizer.icoPath
     icoFile = icoPath == null ? null : Paths.get(icoPath)
+
+    appUserModelId = generateAppUserModelId(this.buildContext)
   }
 
   @Override
@@ -162,6 +169,24 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
   }
 
+  private static String generateAppUserModelId(BuildContext buildContext) {
+    // result example: "JetBrains.IntelliJIDEACommunityEdition.2020-3"
+
+    final def shortCompanyName = buildContext.applicationInfo.shortCompanyName.replace('.', '-')
+    final def productName = buildContext.applicationInfo.productNameWithEdition.replace('.', '-')
+
+    final def majorVersion = StringUtil.isEmptyOrSpaces(buildContext.applicationInfo.majorVersion) ? "0" : buildContext.applicationInfo.majorVersion
+    final def minorVersion = StringUtil.isEmptyOrSpaces(buildContext.applicationInfo.minorVersion) ? "0" : buildContext.applicationInfo.minorVersion
+    final def version = (majorVersion + "." + minorVersion).replace('.', '-')
+
+    final def result = (shortCompanyName + "." + productName + "." + version).replaceAll("\\s+", "")
+    if (result.length() > 128) { // AppUserModelId can have no more than 128 characters
+      buildContext.messages.error("Generated AppUserModelId is too long (> 128 characters): \"$result\"")
+    }
+
+    return result
+  }
+
   @CompileStatic(TypeCheckingMode.SKIP)
   private void generateScripts(@NotNull Path distBinDir) {
     String fullName = buildContext.applicationInfo.productName
@@ -189,6 +214,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: scriptName)
         filter(token: "base_name", value: baseName)
+        filter(token: "win_app_user_model_id", value: appUserModelId)
       }
     }
 
@@ -223,7 +249,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       String vmOptions = (buildContext.additionalJvmArguments +
                           " -Dide.native.launcher=true" +
                           " -Didea.vendor.name=${buildContext.applicationInfo.shortCompanyName}" +
-                          " -Didea.paths.selector=${buildContext.systemSelector}").trim()
+                          " -Didea.paths.selector=${buildContext.systemSelector}" +
+                          " -Didea.win.appUserModelId=${appUserModelId}").trim()
       def productName = buildContext.applicationInfo.shortProductName
       String classPath = buildContext.bootClassPathJarNames.join(";")
 
