@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
@@ -54,13 +55,13 @@ class DistributionJARsBuilder {
   private final BuildContext buildContext
   private final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
   private final PlatformLayout platform
-  private final File patchedApplicationInfo
+  private final Path patchedApplicationInfo
   private final LinkedHashSet<PluginLayout> pluginsToPublish
 
   DistributionJARsBuilder(BuildContext buildContext,
                           File patchedApplicationInfo,
                           LinkedHashSet<PluginLayout> pluginsToPublish = []) {
-    this.patchedApplicationInfo = patchedApplicationInfo
+    this.patchedApplicationInfo = patchedApplicationInfo == null ? null : patchedApplicationInfo.toPath()
     this.buildContext = buildContext
     this.pluginsToPublish = filterPluginsToPublish(pluginsToPublish)
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
@@ -268,10 +269,11 @@ class DistributionJARsBuilder {
 
   void buildJARs() {
     validateModuleStructure()
-    BuildTasksImpl.runInParallel(Arrays.asList(
+    BuildTasksImpl.runInParallel(List.of(
       createAsyncTask(BuildOptions.SVGICONS_PREBUILD_STEP, { SVGPreBuilder.prebuildSVGIcons(it) }),
       createAsyncTask(BuildOptions.GENERATE_JAR_ORDER_STEP, { buildOrderFiles(it) }),
-      createAsyncTask(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) })
+      createAsyncTask(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) }),
+      createAsyncTask(BuildOptions.BROKEN_PLUGINS_LIST_STEP, { BrokenPluginsBuildFileService.buildFile(it) })
     ), buildContext)
     buildLib()
     buildBundledPlugins()
@@ -634,17 +636,16 @@ class DistributionJARsBuilder {
   }
 
   private void buildLib() {
-    def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     def productLayout = buildContext.productProperties.productLayout
-    new BrokenPluginsBuildFileService(buildContext, layoutBuilder).buildFile()
 
     processOrderFiles(layoutBuilder)
     addSearchableOptions(layoutBuilder)
 
-    def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
-    def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
-    ant.copy(file: applicationInfoFile, todir: "$applicationInfoDir/idea")
+    String applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
+    Path ideaDir = Paths.get(applicationInfoDir, "idea")
+    Files.createDirectories(ideaDir)
+    Files.copy(patchedApplicationInfo, ideaDir.resolve(patchedApplicationInfo.fileName))
     layoutBuilder.patchModuleOutput(buildContext.productProperties.applicationInfoModule, applicationInfoDir)
 
     if (buildContext.productProperties.reassignAltClickToMultipleCarets) {

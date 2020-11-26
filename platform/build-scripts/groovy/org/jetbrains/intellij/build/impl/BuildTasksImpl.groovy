@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.StringUtil
 import groovy.io.FileType
 import org.jetbrains.intellij.build.*
@@ -14,6 +15,9 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -22,6 +26,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.function.Function
+
 class BuildTasksImpl extends BuildTasks {
   final BuildContext buildContext
 
@@ -371,7 +376,7 @@ idea.fatal.error.notification=disabled
       else {
         buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
         DistributionJARsBuilder.buildOrderFiles(buildContext)
-        distributionJARsBuilder.buildSearchableOptions()
+        distributionJARsBuilder.buildSearchableOptions(buildContext)
         distributionJARsBuilder.buildNonBundledPlugins()
       }
     }
@@ -725,9 +730,8 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    List<V> results = []
     try {
-      results = buildContext.messages.block("Run parallel tasks") {
+      return buildContext.messages.block("Run parallel tasks") {
         buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
         def executorService = Executors.newCachedThreadPool()
         List<Future<V>> futures = tasks.collect { task ->
@@ -736,25 +740,31 @@ idea.fatal.error.notification=disabled
             def start = System.currentTimeMillis()
             childContext.messages.onForkStarted()
             try {
-              return task.run(childContext)
+              V result = task.run(childContext)
+              if (!childContext.resourceFiles.isEmpty()) {
+                synchronized (buildContext.resourceFiles) {
+                  buildContext.resourceFiles.addAll(childContext.resourceFiles)
+                }
+              }
+              return result
             }
             finally {
-              buildContext.messages.info("'$task.taskName' task finished in ${StringUtil.formatDuration(System.currentTimeMillis() - start)}")
+              buildContext.messages.info("'$task.taskName' task finished in ${Formats.formatDuration(System.currentTimeMillis() - start)}")
               childContext.messages.onForkFinished()
             }
           } as Callable<V>)
         }
 
-        //wait until all tasks finishes
-        futures.each {
+        // wait until all tasks finishes
+        List<V> results = new ArrayList<>(futures.size())
+        for (Future<V> future : futures) {
           try {
-            it.get()
+            results.add(future.get())
           }
           catch (Throwable ignore) {
           }
         }
-
-        futures.collect { it.get() }
+        results
       }
     }
     catch (ExecutionException e) {
@@ -763,7 +773,6 @@ idea.fatal.error.notification=disabled
     finally {
       buildContext.messages.onAllForksFinished()
     }
-    results
   }
 
   @Override
@@ -865,8 +874,17 @@ idea.fatal.error.notification=disabled
       }
     }
     else {
-      SVGPreBuilder.copyIconDb(buildContext, SystemInfo.isMac ? "$targetDirectory/Resources" : targetDirectory)
+      copyResourceFiles(buildContext, SystemInfo.isMac ? "$targetDirectory/Resources" : targetDirectory)
       unpackPty4jNative(buildContext, targetDirectory, null)
+    }
+  }
+
+  static copyResourceFiles(BuildContext buildContext, String newDirPath) {
+    Path newDir = Paths.get(newDirPath)
+      Files.createDirectories(newDir)
+
+    for (Path file : buildContext.resourceFiles) {
+      Files.copy(file, newDir.resolve(file.fileName))
     }
   }
 

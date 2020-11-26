@@ -2,9 +2,18 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+
 class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private final LinuxDistributionCustomizer customizer
   private final File ideaProperties
@@ -31,14 +40,14 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
     BuildTasksImpl.addDbusJava(buildContext, unixDistPath)
     BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
-    SVGPreBuilder.copyIconDb(buildContext, unixDistPath)
-
-    buildContext.ant.copy(file: ideaProperties.path, todir: "$unixDistPath/bin")
+    BuildTasksImpl.copyResourceFiles(buildContext, unixDistPath)
+    Path binDir = Paths.get(unixDistPath, "bin")
+    Files.copy(ideaProperties.toPath(), binDir.resolve(ideaProperties.name))
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
     // for real installers we need to checkout all text files with 'lf' separators anyway
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/idea.properties", eol: "unix")
     if (iconPngPath != null) {
-      buildContext.ant.copy(file: iconPngPath, tofile: "$unixDistPath/bin/${buildContext.productProperties.baseFileName}.png")
+      Files.copy(Paths.get(iconPngPath), binDir.resolve("${buildContext.productProperties.baseFileName}.png"))
     }
     generateScripts(unixDistPath)
     generateVMOptions(unixDistPath)

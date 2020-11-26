@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -20,6 +6,8 @@ import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BundledJreManager
 import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.jps.model.module.JpsModule
+
+import java.nio.file.Path
 
 @CompileStatic
 abstract class BuildContext implements CompilationContext {
@@ -52,6 +40,11 @@ abstract class BuildContext implements CompilationContext {
    * Names of JARs inside IDE_HOME/lib directory which need to be added to bootclasspath to start the IDE
    */
   List<String> bootClassPathJarNames
+
+  /**
+   * Paths of resource files which need to be copied to product resources
+   */
+  final List<Path> resourceFiles = new ArrayList<>()
 
   abstract boolean includeBreakGenLibraries()
 

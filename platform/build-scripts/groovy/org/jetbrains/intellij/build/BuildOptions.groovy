@@ -54,6 +54,7 @@ class BuildOptions {
   static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
   static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
+  static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
   static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
   static final String GENERATE_JAR_ORDER_STEP = "jar_order"
   static final String SOURCES_ARCHIVE_STEP = "sources_archive"

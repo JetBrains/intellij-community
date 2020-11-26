@@ -8,32 +8,13 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 
 @CompileStatic
-class SVGPreBuilder {
-  public static final String FILE_NAME = "icons.db"
-
+final class SVGPreBuilder {
   static final List<String> getModulesToInclude() {
     return ["intellij.platform.images.build"]
-  }
-
-  private static String getDbFile(BuildContext buildContext) {
-    return "$buildContext.paths.temp/" + FILE_NAME
-  }
-
-  static copyIconDb(BuildContext buildContext, String newDirPath) {
-    Path from = Paths.get(getDbFile(buildContext))
-    Path newDir = Paths.get(newDirPath)
-    Files.createDirectories(newDir)
-    try {
-      Files.copy(from, newDir.resolve(from.fileName))
-    }
-    catch (NoSuchFileException ignore) {
-      // if for some reasons cache generation is failed or simply disabled, do not throw yet another error
-    }
   }
 
   static void prebuildSVGIcons(BuildContext buildContext) {
@@ -58,10 +39,12 @@ class SVGPreBuilder {
 
   @CompileStatic(TypeCheckingMode.SKIP)
   private static void runSVGTool(BuildContext buildContext, List<String> svgToolClasspath, Path requestFile) {
+    String dbFile = "$buildContext.paths.temp/icons.db"
+
     buildContext.ant.java(classname: "org.jetbrains.intellij.build.images.ImageSvgPreCompiler", fork: true, failonerror: true) {
       jvmarg(line: "-ea -Xmx768m")
       sysproperty(key: "java.awt.headless", value: true)
-      arg(path: getDbFile(buildContext))
+      arg(path: dbFile)
       arg(path: requestFile.toString())
 
       buildContext.applicationInfo.svgProductIcons.forEach {
@@ -74,5 +57,7 @@ class SVGPreBuilder {
         }
       }
     }
+
+    buildContext.resourceFiles.add(Paths.get(dbFile))
   }
 }

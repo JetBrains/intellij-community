@@ -75,7 +75,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
     BuildTasksImpl.unpackPty4jNative(buildContext, macDistPath, "darwin")
     BuildTasksImpl.generateBuildTxt(buildContext, "$macDistPath/Resources")
-    SVGPreBuilder.copyIconDb(buildContext, "$macDistPath/Resources")
+    BuildTasksImpl.copyResourceFiles(buildContext, "$macDistPath/Resources")
 
     customizer.copyAdditionalFiles(buildContext, macDistPath)
 

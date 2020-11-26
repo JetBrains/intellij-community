@@ -21,11 +21,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -38,11 +42,7 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.lang.ref.Reference;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -108,11 +108,6 @@ public final class PluginManagerCore {
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
   public static boolean ourDisableNonBundledPlugins;
-
-  /**
-   * Broken plugins stored in IDEA
-   */
-  private static final @NonNls String BROKEN_PLUGIN_FILE = "/brokenPlugins.txt";
 
   /**
    * Bundled plugins that were updated.
@@ -224,7 +219,9 @@ public final class PluginManagerCore {
   }
 
   private static @NotNull Map<PluginId, Set<String>> getBrokenPluginVersions() {
-    if (IGNORE_DISABLED_PLUGINS) return Collections.emptyMap();
+    if (IGNORE_DISABLED_PLUGINS) {
+      return Collections.emptyMap();
+    }
 
     Map<PluginId, Set<String>> result = SoftReference.dereference(ourBrokenPluginVersions);
     if (result == null) {
@@ -234,32 +231,35 @@ public final class PluginManagerCore {
     return result;
   }
 
-  private static Map<PluginId, Set<String>> readBrokenPluginFile() {
-    try (InputStream stream = PluginManagerCore.class.getResourceAsStream(BROKEN_PLUGIN_FILE)) {
-      if (stream == null) return Collections.emptyMap();
-
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))){
-        Map<PluginId, Set<String>> result = new HashMap<>();
-
-        String line;
-        while ((line = reader.readLine()) != null) {
-          line = line.trim();
-          if (line.isEmpty() || line.startsWith("//")) continue;
-          List<String> tokens = ParametersListUtil.parse(line);
-          if (tokens.size() == 1) {
-            throw new RuntimeException(BROKEN_PLUGIN_FILE + " is broken. The line contains plugin name, but does not contains version: " + line);
-          }
-          PluginId pluginId = PluginId.getId(tokens.get(0));
-          List<String> versions = tokens.subList(1, tokens.size());
-          result.computeIfAbsent(pluginId, k -> new HashSet<>()).addAll(versions);
-        }
-
-        return result;
+  private static @NotNull Map<PluginId, Set<String>> readBrokenPluginFile() {
+    Path distDir = Paths.get(PathManager.getHomePath());
+    Path dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve("brokenPlugins.db");
+    try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(dbFile), 32_000))) {
+      int version = stream.readUnsignedByte();
+      if (version != 1) {
+        getLogger().error("Unsupported version of " + dbFile + "(fileVersion=" + version + ", supportedVersion=1)");
+        return Collections.emptyMap();
       }
+
+      int count = stream.readInt();
+      Map<PluginId, Set<String>> result = new HashMap<>(count);
+      for (int i = 0; i < count; i++) {
+        PluginId pluginId = PluginId.getId(stream.readUTF());
+        String[] versions = new String[stream.readUnsignedShort()];
+        for (int j = 0; j < versions.length; j++) {
+          versions[j] = stream.readUTF();
+        }
+        //noinspection SSBasedInspection
+        result.put(pluginId, versions.length == 1 ? Collections.singleton(versions[0]) : new HashSet<>(Arrays.asList(versions)));
+      }
+      return result;
+    }
+    catch (NoSuchFileException ignore) {
     }
     catch (IOException e) {
-      throw new RuntimeException("Failed to read " + BROKEN_PLUGIN_FILE, e);
+      getLogger().error("Failed to read " + dbFile, e);
     }
+    return Collections.emptyMap();
   }
 
   public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file) throws IOException {
@@ -272,10 +272,9 @@ public final class PluginManagerCore {
   public static void writePluginsList(@NotNull Collection<PluginId> ids, @NotNull Writer writer) throws IOException {
     List<PluginId> sortedIds = new ArrayList<>(ids);
     sortedIds.sort(null);
-    String separator = LineSeparator.getSystemLineSeparator().getSeparatorString();
     for (PluginId id : sortedIds) {
       writer.write(id.getIdString());
-      writer.write(separator);
+      writer.write('\n');
     }
   }
 

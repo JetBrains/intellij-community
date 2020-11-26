@@ -5,7 +5,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileFilters
 import com.intellij.openapi.util.io.FileUtil
 import groovy.xml.XmlUtil
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -42,7 +46,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
     BuildTasksImpl.generateBuildTxt(buildContext, winDistPath)
-    SVGPreBuilder.copyIconDb(buildContext, winDistPath)
+    BuildTasksImpl.copyResourceFiles(buildContext, winDistPath)
 
     buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
     buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")

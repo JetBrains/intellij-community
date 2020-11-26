@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
+import java.nio.file.Path
 import java.util.regex.Pattern
 
 class CrossPlatformDistributionBuilder {
@@ -90,7 +91,9 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/idea.properties")
           exclude(name: "help/**")
           exclude(name: "build.txt")
-          exclude(name: SVGPreBuilder.FILE_NAME)
+          for (Path resourceFile : buildContext.resourceFiles) {
+            exclude(name: resourceFile.fileName.toString())
+          }
         }
         zipfileset(dir: "$winDistPath/bin", prefix: "bin/win") {
           include(name: "fsnotifier*.exe")
