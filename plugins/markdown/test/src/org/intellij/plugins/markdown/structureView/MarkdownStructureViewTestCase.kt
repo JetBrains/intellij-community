@@ -2,21 +2,17 @@
 package org.intellij.plugins.markdown.structureView
 
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
-import com.intellij.openapi.ui.Queryable.PrintInfo
+import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ui.tree.TreeUtil
-import org.intellij.plugins.markdown.MarkdownTestingUtil
 import javax.swing.tree.TreePath
 
-class MarkdownOnlyHeadersInStructureViewTest : BasePlatformTestCase() {
-  override fun getTestDataPath(): String {
-    return MarkdownTestingUtil.TEST_DATA_PATH + "/structureView/withOnlyHeaders/"
-  }
-
-  fun doTest() {
-    Registry.get("markdown.structure.view.list.visibility").setValue(false)
+abstract class MarkdownStructureViewTestCase : BasePlatformTestCase() {
+  abstract override fun getTestDataPath(): String?
+  open fun doTest(listVisibility: Boolean = false) {
+    Registry.get("markdown.structure.view.list.visibility").setValue(listVisibility)
     myFixture.configureByFile(getTestName(true) + ".md")
     myFixture.testStructureView { svc: StructureViewComponent ->
       val tree = svc.tree
@@ -24,19 +20,7 @@ class MarkdownOnlyHeadersInStructureViewTest : BasePlatformTestCase() {
       PlatformTestUtil.waitForPromise(svc.select(svc.treeModel.currentEditorElement, false))
       assertSameLinesWithFile(
         testDataPath + '/' + getTestName(true) + ".txt",
-        PlatformTestUtil.print(tree, TreePath(tree.model.root), PrintInfo(null, null), true))
+        PlatformTestUtil.print(tree, TreePath(tree.model.root), Queryable.PrintInfo(null, null), true))
     }
-  }
-
-  fun testHeadersUnderBlockquotesAndLists() {
-    doTest()
-  }
-
-  fun testNormalATXDocument() {
-    doTest()
-  }
-
-  fun testPuppetlabsCoreTypes() {
-    doTest()
   }
 }
