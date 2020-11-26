@@ -88,6 +88,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   private fun updateContent(project: Project, toolWindow: ToolWindow) {
     val changesViewContentManager = project.changesViewContentManager
 
+    val wasEmpty = toolWindow.contentManager.contentCount == 0
     getExtensions(project, toolWindow).forEach { extension ->
       val isVisible = extension.newPredicateInstance(project)?.`fun`(project) != false
       val content = changesViewContentManager.findContents { it.getExtension() === extension }.firstOrNull()
@@ -99,6 +100,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
         changesViewContentManager.removeContent(content)
       }
     }
+    if (wasEmpty) toolWindow.contentManager.selectFirstContent()
   }
 
   private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> {
