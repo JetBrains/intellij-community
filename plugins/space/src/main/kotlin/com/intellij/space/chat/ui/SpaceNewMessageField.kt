@@ -7,12 +7,11 @@ import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.codereview.SingleValueModelImpl
-import com.intellij.util.ui.codereview.ToggleableContainer
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
+import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModel
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
+import libraries.coroutines.extra.Lifetime
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -33,15 +32,23 @@ internal fun createNewMessageField(
       }
     }
   }
+  return SpaceChatNewMessageWithAvatarComponent(chatVM.lifetime, avatarType, submittableModel, onCancel)
+}
 
-  return JPanel(null).apply {
+internal class SpaceChatNewMessageWithAvatarComponent(
+  avatarProviderLifetime: Lifetime,
+  avatarType: SpaceChatAvatarType,
+  submittableModel: SubmittableTextFieldModel,
+  onCancel: (() -> Unit)?
+) : JPanel(null) {
+  init {
     isOpaque = false
     layout = MigLayout(LC().gridGap("0", "0")
                          .insets("0", "0", "0", "0")
                          .fill()).apply {
       columnConstraints = "[][]"
     }
-    val avatarProvider = SpaceAvatarProvider(chatVM.lifetime, this, avatarType.size)
+    val avatarProvider = SpaceAvatarProvider(avatarProviderLifetime, this, avatarType.size)
     val avatar = avatarProvider.getIcon(SpaceWorkspaceComponent.getInstance().workspace.value!!.me.value)
     val avatarComponent = JBUI.Panels.simplePanel(JBLabel(avatar)).apply {
       isOpaque = false

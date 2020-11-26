@@ -18,12 +18,15 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.space.chat.ui.SpaceChatAvatarType
+import com.intellij.space.chat.ui.SpaceChatNewMessageWithAvatarComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.codereview.comment.wrapComponentUsingRoundedPanel
 import com.intellij.util.ui.codereview.diff.AddCommentGutterIconRenderer
 import com.intellij.util.ui.codereview.diff.DiffEditorGutterIconRendererFactory
 import com.intellij.util.ui.codereview.diff.EditorComponentInlaysManager
 import com.intellij.util.ui.codereview.diff.EditorRangesController
-import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
 import libraries.coroutines.extra.launch
 import runtime.Ui
@@ -154,7 +157,15 @@ internal class SpaceDiffEditorGutterIconRendererFactory(
             }
           }
         }
-        return SubmittableTextField(actionName, model, null, hideCallback)
+
+        val component = SpaceChatNewMessageWithAvatarComponent(commentSubmitter.lifetime, SpaceChatAvatarType.THREAD, model,
+                                                               hideCallback).apply {
+          border = JBUI.Borders.empty(10)
+        }
+
+        return wrapComponentUsingRoundedPanel(component).apply {
+          border = JBUI.Borders.empty(2, 0)
+        }
       }
     }
   }
