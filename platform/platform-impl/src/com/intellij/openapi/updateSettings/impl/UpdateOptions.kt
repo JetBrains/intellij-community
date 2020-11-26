@@ -14,12 +14,15 @@ class UpdateOptions : BaseState() {
   @get:CollectionBean
   val ignoredBuildNumbers by list<String>()
 
+  @kotlin.Deprecated("obsolete, removed in 2021.1")
   @get:CollectionBean
   val enabledExternalComponentSources by list<String>()
 
+  @kotlin.Deprecated("obsolete, removed in 2021.1")
   @get:CollectionBean
   val knownExternalComponentSources by list<String>()
 
+  @kotlin.Deprecated("obsolete, removed in 2021.1")
   @get:CollectionBean
   val externalUpdateChannels by map<String, String>()
 

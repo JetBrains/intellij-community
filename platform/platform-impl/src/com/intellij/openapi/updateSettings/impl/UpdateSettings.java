@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,14 +62,26 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     myState.setShowWhatsNewEditor(value);
   }
 
+  /** @deprecated obsolete */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public List<String> getEnabledExternalUpdateSources() {
     return myState.getEnabledExternalComponentSources();
   }
 
+  /** @deprecated obsolete */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public List<String> getKnownExternalUpdateSources() {
     return myState.getKnownExternalComponentSources();
   }
 
+  /** @deprecated obsolete */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public Map<String, String> getExternalUpdateChannels() {
     return myState.getExternalUpdateChannels();
   }
