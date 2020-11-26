@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -110,7 +111,9 @@ public class LoadingDecorator {
     parent.setLayout(new GridBagLayout());
     text.setFont(UIUtil.getLabelFont());
     text.setForeground(UIUtil.getContextHelpForeground());
-    icon.setBorder(JBUI.Borders.emptyRight(8));
+    icon.setBorder(Strings.notNullize(text.getText()).endsWith("...")
+                   ? JBUI.Borders.emptyRight(8)
+                   : JBUI.Borders.empty());
 
     NonOpaquePanel result = new NonOpaquePanel(new VerticalLayout(JBUI.scale(6)));
     result.setBorder(JBUI.Borders.empty(10));
@@ -160,6 +163,7 @@ public class LoadingDecorator {
   }
 
   public void setLoadingText(@Nls String loadingText) {
+    myLoadingLayer.myText.setVisible(!Strings.isEmptyOrSpaces(loadingText));
     myLoadingLayer.myText.setText(loadingText);
   }
 
