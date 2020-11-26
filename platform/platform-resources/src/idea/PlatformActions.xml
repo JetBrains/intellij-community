@@ -869,15 +869,14 @@
       <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction"/>
       <action id="OpenEditorInOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.OpenEditorInOppositeTabGroupAction"/>
       <reference ref="ChangeSplitOrientation"/>
+      <reference ref="Unsplit"/>
+      <reference ref="UnsplitAll"/>
       <separator/>
       <reference ref="PinActiveEditorTab"/>
       <reference ref="EditSourceInNewWindow"/>
       <reference ref="ConfigureEditorTabs"/>
       <separator/>
       <reference ref="ReopenClosedTab"/>
-      <separator/>
-      <reference ref="Unsplit"/>
-      <reference ref="UnsplitAll"/>
     </group>
 
     <group id="WelcomeScreen.QuickStart.EmptyState">
