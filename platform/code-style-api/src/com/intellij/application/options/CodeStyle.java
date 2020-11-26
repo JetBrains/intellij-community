@@ -120,15 +120,15 @@ public final class CodeStyle {
     return virtualFile != null && virtualFile.isInLocalFileSystem();
   }
 
+  public static CodeStyleSettings getSettings(@NotNull Project project, @NotNull Document document) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    return file != null ? getSettings(file) : getSettings(project);
+  }
 
   public static CodeStyleSettings getSettings(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project != null) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file != null) {
-        return getSettings(file);
-      }
-      return getSettings(project);
+      return getSettings(project, editor.getDocument());
     }
     return getDefaultSettings();
   }
@@ -427,6 +427,22 @@ public final class CodeStyle {
   @TestOnly
   public static CodeStyleSettings createTestSettings() {
     return CodeStyleSettingsManager.createTestSettings(null);
+  }
+
+  @NotNull
+  public static CodeStyleSettingsFacade getFacade(@NotNull PsiFile file) {
+    return new CodeStyleSettingsFacade(getSettings(file));
+  }
+
+  @NotNull
+  public static CodeStyleSettingsFacade getFacade(@NotNull Project project, @NotNull Document document) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    CodeStyleSettings settings = psiFile != null ? getSettings(psiFile) : getSettings(project);
+    return new CodeStyleSettingsFacade(settings);
+  }
+
+  public static CodeStyleSettingsFacade getFacade(@NotNull Editor editor) {
+    return new CodeStyleSettingsFacade(getSettings(editor));
   }
 
 }

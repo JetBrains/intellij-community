@@ -79,7 +79,8 @@ public abstract class CodeStyleFacade {
   public abstract int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit);
 
   /**
-   * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).TAB_SIZE}. See {@code CodeStyle for more information}
+   * @deprecated Use {@link com.intellij.application.options.CodeStyle#getFacade} and
+   * {@link com.intellij.application.options.CodeStyleSettingsFacade#getTabSize(FileType)}
    */
   @Deprecated
   public abstract int getTabSize(final FileType fileType);
