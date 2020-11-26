@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.target
 
+import com.intellij.execution.Platform
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil
 import icons.MavenIcons
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletableFuture.*
 
 class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TYPE_ID) {
   override val icon = MavenIcons.ExecuteMavenGoal
@@ -40,34 +42,46 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
   }
 
   override fun createIntrospector(config: MavenRuntimeTargetConfiguration): Introspector<MavenRuntimeTargetConfiguration>? {
-    if (config.homePath.isNotBlank() && config.versionString.isNotBlank()) return null
+    if (config.homePath.isNotBlank()) return null
 
     return object : Introspector<MavenRuntimeTargetConfiguration> {
       override fun introspect(subject: Introspectable): CompletableFuture<MavenRuntimeTargetConfiguration> {
-        val home = if (config.homePath.isBlank()) {
-          subject.promiseEnvironmentVariable("M2_HOME")
-            .thenApply {
-              it?.let { config.homePath = it }
+        var isWindows = false
+        val introspectionPromise = subject.promiseExecuteScript("ver")
+          .thenApply { isWindows = it?.contains("Microsoft Windows") ?: false }
+          .thenCompose { promiseMavenVersion(subject, "M2_HOME", isWindows) }
+          .thenCompose { it?.let { completedFuture(it) } ?: promiseMavenVersion(subject, "MAVEN_HOME", isWindows) }
+          .thenCompose { it?.let { completedFuture(it) } ?: promiseMavenVersion(subject, null, isWindows) }
+          .thenApply { (mavenHome, versionOutput) ->
+            if (versionOutput != null) {
+              val lines = StringUtil.splitByLines(versionOutput, true)
+              (mavenHome ?: lines.find { it.startsWith("Maven home: ") }?.substringAfter("Maven home: "))?.let {
+                config.homePath = it
+                config.versionString = lines.firstOrNull() ?: ""
+              }
             }
-        }
-        else {
-          Introspector.DONE
-        }
+          }
+        return introspectionPromise.thenApply { config }
+      }
+    }
+  }
 
-        val version = if (config.versionString.isBlank()) {
-          subject.promiseExecuteScript("mvn -version")
-            .thenApply { output ->
-              output?.let { StringUtil.splitByLines(output, true) }
-                ?.firstOrNull() // todo more accurate maven version command output parsing
-                ?.let { config.versionString = it }
-            }
-        }
-        else {
-          Introspector.DONE
-        }
+  private fun promiseMavenVersion(subject: Introspectable,
+                                  mavenHomeEnvVariable: String?,
+                                  isWindows: Boolean): CompletableFuture<Pair<String?, String?>> {
+    if (mavenHomeEnvVariable == null) {
+      return subject.promiseExecuteScript("mvn -version").thenCompose { completedFuture(null to it) }
+    }
 
-        return CompletableFuture.allOf(home, version)
-          .thenApply { config }
+    return subject.promiseEnvironmentVariable(mavenHomeEnvVariable).thenCompose { mavenHome ->
+      if (mavenHome == null) {
+        return@thenCompose completedFuture(null)
+      }
+      else {
+        val fileSeparator = if (isWindows) Platform.WINDOWS.fileSeparator else Platform.UNIX.fileSeparator
+        val mvnScriptPath = arrayOf(mavenHome, "bin", "mvn").joinToString(fileSeparator.toString())
+        return@thenCompose subject.promiseExecuteScript("$mvnScriptPath -version")
+          .thenCompose { completedFuture(mavenHome to it) }
       }
     }
   }
