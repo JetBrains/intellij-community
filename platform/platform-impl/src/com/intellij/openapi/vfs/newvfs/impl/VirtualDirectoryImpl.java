@@ -74,10 +74,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                            boolean ensureCanonicalName,
                                            @NotNull NewVirtualFileSystem delegate) {
     if (doRefresh) {
-      refreshCaseSensitivity(name);
+      updateCaseSensitivityIfUnknown(name);
     }
-    boolean caseSensitive = isCaseSensitive();
-    VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, delegate, caseSensitive);
+    VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, delegate, isCaseSensitive());
 
     //noinspection UseVirtualFileEquals
     if (result == NULL_VIRTUAL_FILE) {
@@ -272,7 +271,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                    (PersistentFS.isHidden(attributes) ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
                    (sensitivity != FileAttributes.CaseSensitivity.UNKNOWN ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
                    (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
-    segment.setFlags(id, VfsDataFlags.IS_SYMLINK_FLAG | VfsDataFlags.IS_SPECIAL_FLAG  | VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG | VfsDataFlags.IS_WRITABLE_FLAG | VfsDataFlags.IS_HIDDEN_FLAG | VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, newFlags);
+    int relevantFlagsMask = VfsDataFlags.IS_SYMLINK_FLAG |
+               VfsDataFlags.IS_SPECIAL_FLAG |
+               VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG |
+               VfsDataFlags.IS_WRITABLE_FLAG |
+               VfsDataFlags.IS_HIDDEN_FLAG |
+               VfsDataFlags.CHILDREN_CASE_SENSITIVE |
+               VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED;
+    segment.setFlags(id, relevantFlagsMask, newFlags);
     child.updateLinkStatus(this);
 
     if (delegate.markNewFilesAsDirty()) {
@@ -302,11 +308,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     ChildInfo[] children = isEmptyDirectory ? ChildInfo.EMPTY_ARRAY : null;
     VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, symlinkTarget, true, children);
     RefreshQueue.getInstance().processSingleEvent(event);
-    refreshCaseSensitivity(realName);
+    updateCaseSensitivityIfUnknown(realName);
     return findChild(realName);
   }
 
-  private void refreshCaseSensitivity(@NotNull String childName) {
+  private void updateCaseSensitivityIfUnknown(@NotNull String childName) {
     VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(this, childName);
     if (caseSensitivityEvent != null) {
       RefreshQueue.getInstance().processSingleEvent(caseSensitivityEvent);

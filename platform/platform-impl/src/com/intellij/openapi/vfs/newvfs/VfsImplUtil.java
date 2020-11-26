@@ -300,11 +300,11 @@ public final class VfsImplUtil {
    * Otherwise, return null.
    */
   public static VFileEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent, @NotNull String childName) {
-    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN) {
-      FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
-      return generateCaseSensitivityChangedEvent(parent, sensitivity);
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != FileAttributes.CaseSensitivity.UNKNOWN) {
+      return null;
     }
-    return null;
+    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
+    return generateCaseSensitivityChangedEvent(parent, sensitivity);
   }
 
   public static VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir, @NotNull FileAttributes.CaseSensitivity actualCaseSensitivity) {
