@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
-public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
+@ApiStatus.NonExtendable
+public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static final Logger LOG = Logger.getInstance(JavaPsiFacadeImpl.class);
 
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
