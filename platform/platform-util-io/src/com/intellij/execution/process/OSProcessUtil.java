@@ -127,33 +127,15 @@ public final class OSProcessUtil {
   }
 
   public static int getProcessID(@NotNull Process process) {
-    return getProcessID(process, Registry.is("disable.winp"));
+    return (int)process.pid();
   }
 
+  /**
+   * @deprecated use {@link #getProcessID(Process)}
+   */
+  @Deprecated
   public static int getProcessID(@NotNull Process process, Boolean disableWinp) {
-    if (SystemInfo.isWindows) {
-      try {
-        if (process instanceof WinPtyProcess) {
-          return ((WinPtyProcess)process).getChildProcessId();
-        }
-        if (!disableWinp) {
-          try {
-            return createWinProcess(process).getPid();
-          }
-          catch (Throwable e) {
-            LOG.error("Failed to get PID with winp, fallback to default logic", e);
-          }
-        }
-        return WinProcessManager.getProcessId(process);
-      }
-      catch (Throwable e) {
-        throw new IllegalStateException("Cannot get PID from an instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, e);
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      return UnixProcessManager.getProcessId(process);
-    }
-    throw new IllegalStateException("Unknown OS: "  + SystemInfo.OS_NAME);
+    return (int)process.pid();
   }
 
   @SuppressWarnings("deprecation")
