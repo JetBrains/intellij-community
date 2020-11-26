@@ -14,10 +14,14 @@ import org.jetbrains.annotations.TestOnly
  * - it has to be enabled with a registry key `ide.cancellation.check.enabled`, it is disabled by default
  * - threshold (in ms) is specified with a registry key `ide.cancellation.check.threshold`, default is 500
  */
-class CancellationCheck private constructor(val thresholdMs: () -> Long, val checkEnabled: () -> Boolean) {
+class CancellationCheck private constructor(
+  val thresholdMs: () -> Long,
+  val checkEnabled: () -> Boolean,
+  val trackTrace: () -> Boolean
+) {
 
   @TestOnly
-  internal constructor(thresholdMs: Long): this(thresholdMs = { thresholdMs }, checkEnabled = { true })
+  internal constructor(thresholdMs: Long) : this(thresholdMs = { thresholdMs }, checkEnabled = { true }, trackTrace = { false })
 
   private val statusRecord = ThreadLocal.withInitial { CanceledStatusRecord() }
   private val hook = CoreProgressManager.CheckCanceledHook {
@@ -30,9 +34,13 @@ class CancellationCheck private constructor(val thresholdMs: () -> Long, val che
       val now = Clock.getTime()
       val diff = now - record.timestamp
       if (diff > thresholdMs()) {
-        LOG.error("${Thread.currentThread().name} last checkCanceled was $diff ms ago")
+        val message = "${Thread.currentThread().name} last checkCanceled was $diff ms ago"
+        val t = Throwable(message, record.lastCancellationCall.takeIf { trackTrace() })
+        LOG.error(message, t)
       }
       record.timestamp = now
+      if (trackTrace())
+        record.lastCancellationCall = Exception("previous check cancellation call")
     }
   }
 
@@ -42,6 +50,7 @@ class CancellationCheck private constructor(val thresholdMs: () -> Long, val che
     if (enabled) progressManagerImpl.addCheckCanceledHook(hook) else progressManagerImpl.removeCheckCanceledHook(hook)
     record.enabled = enabled
     record.timestamp = Clock.getTime()
+    record.lastCancellationCall = null
   }
 
   fun <T> withCancellationCheck(block: () -> T): T {
@@ -53,17 +62,22 @@ class CancellationCheck private constructor(val thresholdMs: () -> Long, val che
     enableCancellationTimer(record, true)
     try {
       return block()
-    } finally {
+    }
+    finally {
       try {
         checkCancellationDiff(record)
       }
       finally {
-        enableCancellationTimer(record,false)
+        enableCancellationTimer(record, false)
       }
     }
   }
 
-  private data class CanceledStatusRecord(var enabled: Boolean = false, var timestamp: Long = Clock.getTime())
+  private data class CanceledStatusRecord(
+    var enabled: Boolean = false,
+    var timestamp: Long = Clock.getTime(),
+    var lastCancellationCall: Exception? = null
+  )
 
   companion object {
     private val LOG = Logger.getInstance(CancellationCheck::class.java)
@@ -72,7 +86,8 @@ class CancellationCheck private constructor(val thresholdMs: () -> Long, val che
     private val INSTANCE: CancellationCheck =
       CancellationCheck(
         thresholdMs = { Registry.intValue("ide.cancellation.check.threshold").toLong() },
-        checkEnabled = { Registry.`is`("ide.cancellation.check.enabled") }
+        checkEnabled = { Registry.`is`("ide.cancellation.check.enabled") },
+        trackTrace = { Registry.`is`("ide.cancellation.check.trace.all") }
       )
 
     @JvmStatic
