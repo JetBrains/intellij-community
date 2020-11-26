@@ -228,8 +228,13 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String stripHtml(@NotNull String html, boolean convertBreaks) {
-    if (convertBreaks) {
-      html = html.replaceAll("<br/?>", "\n\n");
+    return stripHtml(html, convertBreaks ? "\n\n" : null);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String stripHtml(@NotNull String html, @Nullable String breaks) {
+    if (breaks != null) {
+      html = html.replaceAll("<br/?>", breaks);
     }
 
     return html.replaceAll("<(.|\n)*?>", "");
