@@ -6,8 +6,9 @@
 package org.jetbrains.kotlin.idea.formatter
 
 import com.intellij.lang.Language
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.codeStyle.PredefinedCodeStyle
 
-abstract class KotlinPredefinedCodeStyle(name: String, language: Language) : PredefinedCodeStyle(name, language) {
+abstract class KotlinPredefinedCodeStyle(@NlsContexts.ListItem name: String, language: Language) : PredefinedCodeStyle(name, language) {
     abstract val codeStyleId: String
 }
