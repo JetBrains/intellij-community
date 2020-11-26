@@ -40,6 +40,8 @@ class MPSProperties extends JetBrainsProductProperties {
                 "intellij.java.plugin",
                 "intellij.java.ide.customization",
                 "intellij.copyright",
+                "intellij.properties",
+                "intellij.properties.resource.bundle.editor",
                 "intellij.terminal",
                 "intellij.emojipicker",
                 "intellij.settingsRepository",
