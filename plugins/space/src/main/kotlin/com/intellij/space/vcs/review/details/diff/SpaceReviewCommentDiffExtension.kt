@@ -26,8 +26,8 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
     val diffRequestData = request.getUserData(SpaceDiffKeys.DIFF_REQUEST_DATA) ?: return
     val changesVm = diffRequestData.changesVm
     val participantsVm = diffRequestData.participantsVm
-    val selectedChange = diffRequestData.selectedChangeInReview
-    val discussions = changesVm.changes.value?.get(selectedChange.repository)?.discussions ?: return
+    val selectedSpaceChange = diffRequestData.spaceReviewChange
+    val discussions = changesVm.changes.value?.get(selectedSpaceChange.repository)?.discussions ?: return
     val project = context.project!!
     val lifetime = diffRequestData.diffExtensionLifetimes.next()
     val client = changesVm.client
@@ -40,14 +40,14 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
       return reviewers.any { it.user.resolve() == me.value }
     }
 
-    val chatPanelFactory = SpaceReviewCommentPanelFactory(project, viewer, lifetime, ws, selectedChange, ::pendingStateProvider)
+    val chatPanelFactory = SpaceReviewCommentPanelFactory(project, viewer, lifetime, ws, selectedSpaceChange, ::pendingStateProvider)
 
     val spaceReviewCommentSubmitter = SpaceReviewCommentSubmitterImpl(
       lifetime,
       client,
       changesVm.projectKey,
       changesVm.reviewIdentifier,
-      selectedChange,
+      selectedSpaceChange,
       ::pendingStateProvider
     )
     val handler = createHandler(viewer, spaceReviewCommentSubmitter)

@@ -33,11 +33,11 @@ internal class SpaceReviewDetails(project: Project,
   }
 
   init {
-    currentReview.forEach(lifetime) { cr: CodeReviewListItem? ->
+    currentReview.forEach(lifetime) { reviewListItem: CodeReviewListItem? ->
       view.removeAll()
-      if (cr == null) return@forEach
+      if (reviewListItem == null) return@forEach
       val detailsLifetime = sequentialLifetimes.next()
-      val detailsVm = createReviewDetailsVm(detailsLifetime, project, client, spaceProjectInfo, repoInfo, cr.review)
+      val detailsVm = createReviewDetailsVm(detailsLifetime, project, client, spaceProjectInfo, repoInfo, reviewListItem)
 
       val uiDisposable = Disposer.newDisposable()
 

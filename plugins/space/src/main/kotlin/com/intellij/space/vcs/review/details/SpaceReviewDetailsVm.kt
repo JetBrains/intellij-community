@@ -21,11 +21,11 @@ import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.*
 
-sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
+internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   final override val lifetime: Lifetime,
   val ideaProject: Project,
   val spaceProjectInfo: SpaceProjectInfo,
-  val spaceReposInfo: Set<SpaceRepoInfo>,
+  spaceReposInfo: Set<SpaceRepoInfo>,
   private val reviewRef: Ref<R>,
   val client: KCircletClient
 ) : Lifetimed {
@@ -48,6 +48,7 @@ sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
 
   val turnBased: Property<Boolean?> = cellProperty { review.live.turnBased }
 
+  private val infoByRepos = spaceReposInfo.associateBy(SpaceRepoInfo::name)
 
   private val participantsProperty: Property<LoadingValue<Ref<CodeReviewParticipants>>> = load {
     client.arena.resolveRefsOrFetch {
@@ -66,11 +67,9 @@ sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   }
 
   val commits: Property<List<ReviewCommitListItem>?> = mapInit(detailedInfo, null) { detailedInfo ->
-    val spaceReposByName = spaceReposInfo.associateBy(SpaceRepoInfo::name)
-
     detailedInfo?.commits?.flatMap { revInReview ->
       val repo = revInReview.repository
-      val repoInfo = spaceReposByName[repo.name]
+      val repoInfo = infoByRepos[repo.name]
       val commitsInRepository = revInReview.commits.size
 
       revInReview.commits.mapIndexed { index, gitCommitWithGraph ->
@@ -90,15 +89,15 @@ sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
     indices.map { commits[it] }
   }
 
-  private val selectedChanges: MutableProperty<ListSelection<ChangeInReview>> =
-    mutableProperty(ListSelection.create(emptyList<ChangeInReview>(), null))
+  private val spaceReviewChange: MutableProperty<ListSelection<SpaceReviewChange>> =
+    mutableProperty(ListSelection.create(emptyList<SpaceReviewChange>(), null))
 
   val spaceDiffVm: Property<SpaceDiffVm> = mutableProperty(
-    SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, selectedChanges))
+    SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, spaceReviewChange))
 
   val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(
     lifetime, client, projectKey, review.value.identifier,
-    reviewId, selectedCommits, participantsVm, selectedChanges
+    reviewId, selectedCommits, participantsVm, spaceReviewChange, infoByRepos
   )
 }
 
@@ -116,8 +115,6 @@ internal class MergeRequestDetailsVm(
   val repository: Property<String> = cellProperty { branchPair.live.repository }
   val targetBranchInfo: Property<MergeRequestBranch?> = cellProperty { branchPair.live.targetBranchInfo }
   val sourceBranchInfo: Property<MergeRequestBranch?> = cellProperty { branchPair.live.sourceBranchInfo }
-
-  val repoInfo = spaceReposInfo.firstOrNull { it.name == repository.value }
 }
 
 internal class CommitSetReviewDetailsVm(
@@ -127,17 +124,7 @@ internal class CommitSetReviewDetailsVm(
   spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<CommitSetReviewRecord>,
   client: KCircletClient
-) : SpaceReviewDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
-
-  val reposInCurrentProject: Property<Map<String, SpaceRepoInfo?>?> = mapInit(commits, null) { commits ->
-    val spaceReposByName = spaceReposInfo.associateBy(SpaceRepoInfo::name)
-
-    commits?.associateBy(
-      { it.repositoryInReview.name },
-      { spaceReposByName[it.repositoryInReview.name] }
-    )
-  }
-}
+) : SpaceReviewDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client)
 
 fun buildReviewUrl(projectKey: ProjectKey, reviewNumber: Int): String {
   return Navigator.p.project(projectKey)
@@ -150,8 +137,8 @@ internal fun createReviewDetailsVm(lifetime: Lifetime,
                                    client: KCircletClient,
                                    spaceProjectInfo: SpaceProjectInfo,
                                    spaceReposInfo: Set<SpaceRepoInfo>,
-                                   ref: Ref<CodeReviewRecord>): SpaceReviewDetailsVm<out CodeReviewRecord> {
-  return when (val codeReviewRecord = ref.resolve()) {
+                                   codeReviewListItem: CodeReviewListItem): SpaceReviewDetailsVm<out CodeReviewRecord> {
+  return when (val codeReviewRecord = codeReviewListItem.review.resolve()) {
     is MergeRequestRecord -> MergeRequestDetailsVm(
       lifetime,
       project,

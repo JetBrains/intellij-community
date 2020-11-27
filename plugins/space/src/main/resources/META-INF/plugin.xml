@@ -132,10 +132,12 @@
 
     <group id="space.review.changes.toolbar">
       <reference id="Diff.ShowDiff"/>
+      <reference id="EditSource"/>
     </group>
 
     <group id="space.review.changes.popup">
       <reference id="Diff.ShowDiff"/>
+      <reference id="EditSource"/>
     </group>
   </actions>
 

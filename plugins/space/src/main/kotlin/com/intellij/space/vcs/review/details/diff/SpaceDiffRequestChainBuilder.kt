@@ -4,7 +4,6 @@ package com.intellij.space.vcs.review.details.diff
 import circlet.client.api.CodeViewService
 import circlet.client.api.ProjectKey
 import circlet.client.codeView
-import circlet.code.api.ChangeInReview
 import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
@@ -30,7 +29,7 @@ internal data class SpaceReviewDiffRequestData(
   val diffExtensionLifetimes: SequentialLifetimes,
   val spaceDiffVm: SpaceDiffVm,
   val changesVm: SpaceReviewChangesVm,
-  val selectedChangeInReview: ChangeInReview,
+  val spaceReviewChange: SpaceReviewChange,
   val participantsVm: Property<SpaceReviewParticipantsVm?>
 )
 
@@ -40,18 +39,18 @@ internal class SpaceDiffRequestChainBuilder(parentLifetime: Lifetime,
                                             val changesVm: SpaceReviewChangesVm) {
   private val chainBuilderLifetimes = SequentialLifetimes(parentLifetime)
 
-  fun getRequestChain(listSelection: ListSelection<out ChangeInReview>): DiffRequestChain {
+  fun getRequestChain(listSelection: ListSelection<SpaceReviewChange>): DiffRequestChain {
     val lifetime = chainBuilderLifetimes.next()
 
     return object : AsyncDiffRequestChain() {
       override fun loadRequestProducers(): ListSelection<out DiffRequestProducer> {
-        return listSelection.map { changeInReview: ChangeInReview ->
-          getDiffRequestProducer(lifetime, changeInReview)
+        return listSelection.map { spaceReviewChange: SpaceReviewChange ->
+          getDiffRequestProducer(lifetime, spaceReviewChange)
         }
       }
 
-      private fun getDiffRequestProducer(lifetime: Lifetime, change: ChangeInReview): DiffRequestProducer {
-        return SpaceDiffRequestProducer(project, lifetime, spaceDiffVm, changesVm, change)
+      private fun getDiffRequestProducer(lifetime: Lifetime, spaceReviewChange: SpaceReviewChange): DiffRequestProducer {
+        return SpaceDiffRequestProducer(project, lifetime, spaceDiffVm, changesVm, spaceReviewChange)
       }
     }
   }
@@ -64,18 +63,18 @@ internal class SpaceDiffRequestProducer(
   private val requestProducerLifetime: Lifetime,
   private val spaceDiffVm: SpaceDiffVm,
   private val changesVm: SpaceReviewChangesVm,
-  private val change: ChangeInReview,
+  private val spaceReviewChange: SpaceReviewChange,
 ) : DiffRequestProducer {
-  override fun getName(): String = getFilePath(change).path
+  override fun getName(): String = spaceReviewChange.filePath.path
 
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
     val projectKey = spaceDiffVm.projectKey
     val selectedCommitHashes = spaceDiffVm.selectedCommits.value
-      .filter { it.commitWithGraph.repositoryName == change.repository }
+      .filter { it.commitWithGraph.repositoryName == spaceReviewChange.repository }
       .map { it.commitWithGraph.commit.id }
 
     return if (selectedCommitHashes.isNotEmpty()) {
-      createSpaceDiffRequest(spaceDiffVm.client.codeView, projectKey, selectedCommitHashes, changesVm.participantsVm)
+      createSpaceDiffRequest(spaceDiffVm.client.codeView, projectKey, selectedCommitHashes, changesVm)
     }
     else LoadingDiffRequest("")
   }
@@ -83,18 +82,21 @@ internal class SpaceDiffRequestProducer(
   private fun createSpaceDiffRequest(codeViewService: CodeViewService,
                                      projectKey: ProjectKey,
                                      selectedCommitHashes: List<String>,
-                                     participantsVm: Property<SpaceReviewParticipantsVm?>): SimpleDiffRequest {
+                                     changesVm: SpaceReviewChangesVm): SimpleDiffRequest {
     return runBlocking(requestProducerLifetime, coroutineContext) {
+      val gitCommitChange = spaceReviewChange.gitCommitChange
       val sideBySideDiff = codeViewService.getSideBySideDiff(projectKey,
-                                                             change.repository,
-                                                             change.change, false, selectedCommitHashes)
+                                                             spaceReviewChange.repository,
+                                                             gitCommitChange,
+                                                             false,
+                                                             selectedCommitHashes)
 
       val leftFileText = getFileContent(sideBySideDiff.left)
       val rightFileText = getFileContent(sideBySideDiff.right)
 
-      val (oldFilePath, newFilePath) = getChangeFilePathInfo(change)
+      val (oldFilePath, newFilePath) = spaceReviewChange.changeFilePathInfo
       val diffContentFactory = DiffContentFactoryImpl.getInstanceEx()
-      val titles = listOf(change.change.old?.commit, change.change.new?.commit)
+      val titles = listOf(gitCommitChange.old?.commit, gitCommitChange.new?.commit)
       val documents = listOf(
         oldFilePath?.let { diffContentFactory.create(project, leftFileText, it) } ?: diffContentFactory.createEmpty(),
         newFilePath?.let { diffContentFactory.create(project, rightFileText, it) } ?: diffContentFactory.createEmpty()
@@ -103,10 +105,11 @@ internal class SpaceDiffRequestProducer(
       val diffRequestData = SpaceReviewDiffRequestData(SequentialLifetimes(requestProducerLifetime),
                                                        spaceDiffVm,
                                                        changesVm,
-                                                       change,
-                                                       participantsVm)
+                                                       spaceReviewChange,
+                                                       changesVm.participantsVm)
 
-      return@runBlocking SpaceReviewDiffRequest(getFilePath(change).toString(), documents, titles, requestProducerLifetime, diffRequestData)
+      return@runBlocking SpaceReviewDiffRequest(spaceReviewChange.filePath.path, documents, titles, requestProducerLifetime,
+                                                diffRequestData)
     }
   }
 }
