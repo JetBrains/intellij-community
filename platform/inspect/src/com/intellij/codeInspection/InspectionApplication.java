@@ -224,7 +224,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }
     }
 
-    if ("sa".equals(myOutputFormat)) {
+    if (Boolean.getBoolean("log.project.structure.changes")) {
       InspectionsReportConverter reportConverter = ReportConverterUtil.getReportConverter(myOutputFormat);
       if (reportConverter != null) {
         addRootChangesListener(parentDisposable, reportConverter);
@@ -332,8 +332,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     });
   }
 
-  private void subscribeToRootChanges(Project project, InspectionsReportConverter reportConverter) {
-    Path rootLogDir = Paths.get(myOutPath).resolve("log/projectStructureChanges");
+  private static void subscribeToRootChanges(Project project, InspectionsReportConverter reportConverter) {
+    Path rootLogDir = Paths.get(PathManager.getLogPath()).resolve("projectStructureChanges");
     //noinspection ResultOfMethodCallIgnored
     rootLogDir.toFile().mkdirs();
     AtomicInteger counter = new AtomicInteger(0);
