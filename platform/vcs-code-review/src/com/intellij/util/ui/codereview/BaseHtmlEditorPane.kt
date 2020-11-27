@@ -76,21 +76,23 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
 
       val view = super.create(elem)
       if (view is ParagraphView) {
-        return object : ParagraphView(elem) {
-          override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements {
-            var r = r
-            if (r == null) {
-              r = SizeRequirements()
-            }
-            r.minimum = layoutPool.getMinimumSpan(axis).toInt()
-            r.preferred = max(r.minimum, layoutPool.getPreferredSpan(axis).toInt())
-            r.maximum = Integer.MAX_VALUE
-            r.alignment = 0.5f
-            return r
-          }
-        }
+        return MyParagraphView(elem)
       }
       return view
+    }
+  }
+
+  protected open class MyParagraphView(elem: Element) : ParagraphView(elem) {
+    override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements {
+      var r = r
+      if (r == null) {
+        r = SizeRequirements()
+      }
+      r.minimum = layoutPool.getMinimumSpan(axis).toInt()
+      r.preferred = max(r.minimum, layoutPool.getPreferredSpan(axis).toInt())
+      r.maximum = Integer.MAX_VALUE
+      r.alignment = 0.5f
+      return r
     }
   }
 }

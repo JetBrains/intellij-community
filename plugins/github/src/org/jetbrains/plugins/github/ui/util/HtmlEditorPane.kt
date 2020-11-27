@@ -12,7 +12,10 @@ import java.awt.*
 import java.awt.image.ImageObserver
 import javax.swing.text.Element
 import javax.swing.text.FlowView
+import javax.swing.text.ParagraphView
 import javax.swing.text.View
+import javax.swing.text.html.ImageView
+import javax.swing.text.html.StyleSheet
 import javax.swing.text.html.*
 
 internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
@@ -30,6 +33,9 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
       }
       if (elem.name == "blockquote") {
         return GitHubQuoteView(elem)
+      }
+      if (view is ParagraphView) {
+        return GHParagraphView(elem)
       }
       return view
     }
@@ -51,6 +57,18 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
         html body blockquote p {
           border-left: ${borderWidth}px solid ${borderColor};
           padding-left: ${padding}px;
+        }
+      """.trimIndent())
+    }
+  }
+
+  private class GHParagraphView(elem: Element) : MyParagraphView(elem) {
+    override fun getStyleSheet(): StyleSheet = super.getStyleSheet().apply {
+      val margin = JBUI.scale(10)
+      //language=CSS
+      addRule("""
+        p {
+          margin-bottom: ${margin}px;
         }
       """.trimIndent())
     }
