@@ -107,7 +107,6 @@ object GitStashOperations {
   fun unstash(project: Project, stash: StashInfo, branch: String?, popStash: Boolean, reinstateIndex: Boolean): Boolean {
     val completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       ThrowableComputable {
-        //better to use quick to keep consistent state with ui
         return@ThrowableComputable unstash(project, mapOf(Pair(stash.root, stash.hash)),
                                            { unstashHandler(project, stash, branch, popStash, reinstateIndex) },
                                            UnstashConflictResolver(project, stash))
