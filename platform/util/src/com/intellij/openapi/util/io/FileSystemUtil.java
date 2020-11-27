@@ -582,7 +582,8 @@ public final class FileSystemUtil {
         NtOsKrnl.FileCaseSensitiveInformation);
 
       if (result != 0) {
-        if (LOG.isTraceEnabled()) LOG.trace("NtQueryInformationByName(" + path + "): " + result);
+        // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
+        if (LOG.isDebugEnabled()) LOG.debug("NtQueryInformationByName(" + path + "): 0x" + Integer.toHexString(result));
       }
       else if (fileInformation.Flags == 0) {
         return FileAttributes.CaseSensitivity.INSENSITIVE;
@@ -690,7 +691,7 @@ public final class FileSystemUtil {
     try {
       Memory buf = new Memory(256);
       if (LibC.INSTANCE.statfs(path, buf) != 0) {
-        if (LOG.isTraceEnabled()) LOG.trace("statfs(" + path + "): error");
+        if (LOG.isDebugEnabled()) LOG.debug("statfs(" + path + "): error");
       }
       else {
         long fs = SystemInfo.is32Bit ? buf.getInt(0) : buf.getLong(0);
@@ -705,16 +706,13 @@ public final class FileSystemUtil {
         // Ext*, F2FS
         if ((fs == 0xef53 || fs == 0xf2f52010) && ourLibExt2FsPresent) {
           LongByReference flags = new LongByReference();
-          if (E2P.INSTANCE.fgetflags(path, flags) == -1) {
-            if (LOG.isTraceEnabled()) LOG.trace("fgetflags(" + path + "): error");
+          if (E2P.INSTANCE.fgetflags(path, flags) != 0) {
+            if (LOG.isDebugEnabled()) LOG.debug("fgetflags(" + path + "): error");
           }
           else {
-            // The only known way for EXT4 to be case-insensitive is to set EXT4_CASEFOLD_FL flag in an inode
-            // see Linux git commit b886ee3e778ec2ad43e276fd378ab492cf6819b7, e.g. here:
-            // https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b886ee3e778ec2ad43e276fd378ab492cf6819b7
-            return (flags.getValue() & E2P.EXT4_CASEFOLD_FL) == 0
-                   ? FileAttributes.CaseSensitivity.SENSITIVE
-                   : FileAttributes.CaseSensitivity.INSENSITIVE;
+            // Ext4/F2FS inodes on file systems with "casefold" option enable may have EXT4_CASEFOLD_FL (F2FS_CASEFOLD_FL) attribute
+            // see e.g. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b886ee3e778ec2ad43e276fd378ab492cf6819b7
+            return (flags.getValue() & E2P.EXT4_CASEFOLD_FL) == 0 ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
           }
         }
       }
