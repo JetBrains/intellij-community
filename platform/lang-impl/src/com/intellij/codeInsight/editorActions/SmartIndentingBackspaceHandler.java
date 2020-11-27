@@ -44,7 +44,7 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
       return;
     }
     CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
-    myReplacement = codeStyleFacade.getLineIndent(editor, file.getLanguage(), lineStartOffset, true);
+    myReplacement = CodeStyle.getLineIndent(editor, file.getLanguage(), lineStartOffset, true);
     if (myReplacement == null) {
       return;
     }

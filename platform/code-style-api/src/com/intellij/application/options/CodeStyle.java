@@ -13,6 +13,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -419,6 +421,38 @@ public final class CodeStyle {
   @TestOnly
   public static CodeStyleSettings createTestSettings(@Nullable CodeStyleSettings baseSettings) {
     return CodeStyleSettingsManager.createTestSettings(baseSettings);
+  }
+
+  /**
+   * Calculates the indent that should be used for the line at specified offset in the specified
+   * editor. If there is a suitable {@code LineIndentProvider} for the language, it will be used to calculate the indent. Otherwise, if
+   * {@code allowDocCommit} flag is true, the method will use formatter on committed document.
+   *
+   * @param editor   The editor for which the indent must be returned.
+   * @param language Context language
+   * @param offset   The caret offset in the editor.
+   * @param allowDocCommit Allow calculation using committed document.
+   *                       <p>
+   *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
+   * @return the indent string (containing of tabs and/or white spaces), or null if it
+   *         was not possible to calculate the indent.
+   */
+  public static String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
+    Project project = editor.getProject();
+    if (project == null) return null;
+    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
+    String indent = lineIndentProvider != null ? lineIndentProvider.getLineIndent(project, editor, language, offset) : null;
+    if (indent == LineIndentProvider.DO_NOT_ADJUST) {
+      return allowDocCommit ? null : indent;
+    }
+    return indent != null ? indent : (allowDocCommit ? getLineIndent(project, editor.getDocument(), offset) : null);
+  }
+
+  @Nullable
+  private static String getLineIndent(@Nullable Project project, @NotNull final Document document, int offset) {
+    if (project == null) return null;
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    return CodeStyleManager.getInstance(project).getLineIndent(document, offset);
   }
 
   /**

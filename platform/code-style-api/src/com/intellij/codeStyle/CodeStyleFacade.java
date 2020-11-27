@@ -23,34 +23,16 @@ public abstract class CodeStyleFacade {
   }
 
   /**
-   * Calculates the indent that should be used for the line at specified offset in the specified
-   * document.
-   *
-   * @param document the document for which the indent should be calculated.
-   * @param offset the caret offset in the editor.
-   * @return the indent string (containing of tabs and/or white spaces), or null if it
-   *         was not possible to calculate the indent.
-   * @deprecated Use {@link #getLineIndent(Editor, Language, int, boolean)} instead.
+   * @deprecated Use {@link com.intellij.application.options.CodeStyle#getLineIndent(Editor, Language, int, boolean)} instead.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Nullable
   @Deprecated
   public abstract String getLineIndent(@NotNull Document document, int offset);
 
   /**
-   * Calculates the indent that should be used for the line at specified offset in the specified
-   * editor. If there is a suitable {@code LineIndentProvider} for the language, it will be used to calculate the indent. Otherwise, if
-   * {@code allowDocCommit} flag is true, the method will use formatter on committed document.
-   *
-   * @param editor   The editor for which the indent must be returned.
-   * @param language Context language
-   * @param offset   The caret offset in the editor.
-   * @param allowDocCommit Allow calculation using committed document.
-   *                       <p>
-   *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
-   * @return the indent string (containing of tabs and/or white spaces), or null if it
-   *         was not possible to calculate the indent.
+   * @deprecated Use {@link com.intellij.application.options.CodeStyle#getLineIndent(Editor, Language, int, boolean)}
    */
+  @Deprecated
   @Nullable
   public String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
     return getLineIndent(editor.getDocument(), offset);
