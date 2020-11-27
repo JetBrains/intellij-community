@@ -24,10 +24,6 @@ class CancellationCheck private constructor(
   internal constructor(thresholdMs: Long) : this(thresholdMs = { thresholdMs }, checkEnabled = { true }, trackTrace = { false })
 
   private val statusRecord = ThreadLocal.withInitial { CanceledStatusRecord() }
-  private val hook = CoreProgressManager.CheckCanceledHook {
-    checkCancellationDiff(statusRecord.get(), null)
-    false
-  }
 
   private fun checkCancellationDiff(record: CanceledStatusRecord, failure: Throwable?) {
     if (record.enabled) {
@@ -47,7 +43,7 @@ class CancellationCheck private constructor(
     }
   }
 
-  private fun enableCancellationTimer(record: CanceledStatusRecord, enabled: Boolean) {
+  private fun enableCancellationTimer(hook: CoreProgressManager.CheckCanceledHook, record: CanceledStatusRecord, enabled: Boolean) {
     val progressManagerImpl = ProgressManager.getInstance() as ProgressManagerImpl
 
     if (enabled) progressManagerImpl.addCheckCanceledHook(hook) else progressManagerImpl.removeCheckCanceledHook(hook)
@@ -62,7 +58,12 @@ class CancellationCheck private constructor(
     val record = statusRecord.get()
     if (record.enabled) return block()
 
-    enableCancellationTimer(record, true)
+    val hook = CoreProgressManager.CheckCanceledHook {
+      checkCancellationDiff(statusRecord.get(), null)
+      false
+    }
+
+    enableCancellationTimer(hook, record, true)
     try {
       val r = try {
         block()
@@ -75,7 +76,7 @@ class CancellationCheck private constructor(
       return r
     }
     finally {
-        enableCancellationTimer(record, false)
+      enableCancellationTimer(hook, record, false)
     }
   }
 
