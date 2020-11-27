@@ -43,7 +43,7 @@ private val LOG: Logger = Logger.getInstance("#git4idea.stash.GitStashUtils")
 fun unstash(project: Project,
             rootAndRevisions: Map<VirtualFile, Hash?>,
             handlerProvider: (VirtualFile) -> GitLineHandler,
-            conflictResolver: GitConflictResolver) {
+            conflictResolver: GitConflictResolver): Boolean {
   DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.unstash")).use {
     for ((root, hash) in rootAndRevisions) {
       val handler = handlerProvider(root)
@@ -62,26 +62,27 @@ fun unstash(project: Project,
 
       if (conflictDetector.hasHappened()) {
         val conflictsResolved = conflictResolver.merge()
-        if (!conflictsResolved) return
+        if (!conflictsResolved) return false
       }
       else if (untrackedFilesDetector.wasMessageDetected()) {
         GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.relativeFilePaths,
                                                                   GitBundle.message("unstash.operation.name"), null)
-        return
+        return false
       }
       else if (localChangesDetector.wasMessageDetected()) {
         LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, STASH_LOCAL_CHANGES_DETECTED, root,
                                                                    GitBundle.message("unstash.operation.name"),
                                                                    localChangesDetector.relativeFilePaths)
-        return
+        return false
       }
       else if (!result.success()) {
         VcsNotifier.getInstance(project).notifyError(UNSTASH_FAILED, GitBundle.message("notification.title.unstash.failed"),
                                                      result.errorOutputAsHtmlString, true)
-        return
+        return false
       }
     }
   }
+  return true
 }
 
 private fun loadChangesInStash(project: Project, root: VirtualFile, hash: Hash): List<Collection<Change>>? {
