@@ -126,11 +126,14 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     val pluginIds = descriptors.map { it.pluginId }
     val pluginTracker = project?.let { createPluginTracker(it) }
 
-    fun startTrackingPerProject(enable: Boolean) = pluginTracker?.startTrackingPerProject(pluginIds, enable)
+    fun enablePlugins(enabled: Boolean) = DisabledPluginsState.enablePlugins(descriptors, enabled)
+
+    fun startTrackingPerProject(enable: Boolean) {
+      descriptors.forEach { it.isEnabled = enable }
+      pluginTracker!!.startTrackingPerProject(pluginIds, enable)
+    }
 
     fun stopTrackingPerProject() = pluginTracker?.stopTrackingPerProject(pluginIds)
-
-    fun enablePlugins(enabled: Boolean) = DisabledPluginsState.enablePlugins(descriptors, enabled, false)
 
     fun loadPlugins() = loadPlugins(descriptors)
 
@@ -138,8 +141,8 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
     return when (action) {
       PluginEnableDisableAction.ENABLE_GLOBALLY -> {
-        stopTrackingPerProject()
         enablePlugins(true)
+        stopTrackingPerProject()
         loadPlugins()
       }
       PluginEnableDisableAction.ENABLE_FOR_PROJECT -> {
@@ -147,13 +150,13 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
         loadPlugins()
       }
       PluginEnableDisableAction.ENABLE_FOR_PROJECT_DISABLE_GLOBALLY -> {
-        startTrackingPerProject(true)
         enablePlugins(false)
+        startTrackingPerProject(true)
         true
       }
       PluginEnableDisableAction.DISABLE_GLOBALLY -> {
-        stopTrackingPerProject()
         enablePlugins(false)
+        stopTrackingPerProject()
         unloadPlugins()
       }
       PluginEnableDisableAction.DISABLE_FOR_PROJECT -> {

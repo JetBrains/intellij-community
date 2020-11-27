@@ -166,12 +166,6 @@ public final class DisabledPluginsState {
   }
 
   public static void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins, boolean enabled) {
-    enablePlugins(plugins, enabled, true);
-  }
-
-  static void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins,
-                            boolean enabled,
-                            boolean updateDescriptors) {
     Set<PluginId> pluginIds = new LinkedHashSet<>(plugins.size());
     for (PluginDescriptor descriptor : plugins) {
       PluginId value = descriptor.getPluginId();
@@ -179,38 +173,25 @@ public final class DisabledPluginsState {
         pluginIds.add(value);
       }
     }
-    enablePluginsById(pluginIds, enabled, updateDescriptors);
+    enablePluginsById(pluginIds, enabled);
   }
 
   public static void enablePluginsById(@NotNull Collection<PluginId> plugins, boolean enabled) {
-    enablePluginsById(plugins, enabled, true);
-  }
-
-  // todo reconsider whether PluginDescriptor#setEnabled should be updated as well
-  static void enablePluginsById(@NotNull Collection<PluginId> plugins,
-                                boolean enabled,
-                                boolean updateDescriptors) {
     Set<PluginId> disabled = getDisabledIds();
     boolean changed = enabled ?
                       disabled.removeAll(plugins) :
                       disabled.addAll(plugins);
 
-    Collection<PluginId> filteredPlugins;
-    if (updateDescriptors) {
-      filteredPlugins = new ArrayList<>(plugins.size());
-
-      Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
-      for (PluginId pluginId : plugins) {
-        IdeaPluginDescriptor descriptor = pluginIdMap.get(pluginId);
-        if (descriptor != null) {
-          descriptor.setEnabled(enabled);
-          filteredPlugins.add(pluginId);
-        }
+    Collection<PluginId> filteredPlugins = new ArrayList<>(plugins.size());
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+    for (PluginId pluginId : plugins) {
+      IdeaPluginDescriptor descriptor = pluginIdMap.get(pluginId);
+      if (descriptor != null) {
+        descriptor.setEnabled(enabled);
+        filteredPlugins.add(pluginId);
       }
     }
-    else {
-      filteredPlugins = plugins;
-    }
+
     getLogger().info(joinedPluginIds(filteredPlugins, enabled));
 
     if (!changed) {
