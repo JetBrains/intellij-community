@@ -1097,7 +1097,7 @@ user:
 back_up:
  ; back up old value of an association
   StrCpy $1 $R4
-call OMReadRegStr
+  Call OMReadRegStr
   StrCmp $3 "" skip_backup
   StrCmp $3 ${PRODUCT_PATHS_SELECTOR} skip_backup
   StrCpy $2 "backup_val"
@@ -1117,10 +1117,6 @@ skip_backup:
   StrCpy $2 ""
   StrCpy $3 "open"
   Call OMWriteRegStr
-  StrCpy $1 "$R5\DefaultIcon"
-  StrCpy $2 ""
-  StrCpy $3 "$productLauncher,0"
-  Call OMWriteRegStr
 command_exists:
   StrCpy $1 "$R5\DefaultIcon"
   StrCpy $2 ""
@@ -1129,6 +1125,10 @@ command_exists:
   StrCpy $1 "$R5\shell\open\command"
   StrCpy $2 ""
   StrCpy $3 '"$productLauncher" "%1"'
+  Call OMWriteRegStr
+  StrCpy $1 $R5
+  StrCpy $2 "AppUserModelID"
+  StrCpy $3 ${PRODUCT_APP_USER_MODEL_ID}
   Call OMWriteRegStr
 
   ; add "Edit with PRODUCT" action for files to Windows context menu
