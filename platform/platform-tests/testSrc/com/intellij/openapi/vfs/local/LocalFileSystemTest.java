@@ -898,4 +898,18 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertEquals(file.toPath(), nioFile.toNioPath());
     assertEquals(file.toPath(), ioFile.toNioPath());
   }
+
+  @Test
+  public void caseSensitivityNativeAPIMustWorkInSimpleCasesAndIsCached() {
+    String childName = "0";
+    assertFalse(FileSystemUtil.isCaseToggleable(childName));
+    File ioFile = tempDir.newFile("xxx/" + childName);
+    assertTrue(ioFile.exists());
+    VirtualDirectoryImpl dir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile.getParentFile());
+    assertEquals(FileAttributes.CaseSensitivity.UNKNOWN, dir.getChildrenCaseSensitivity());
+    VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(dir, childName);
+    FileAttributes.CaseSensitivity defaultCase = SystemInfo.isFileSystemCaseSensitive ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+    assertEquals(defaultCase, dir.getChildrenCaseSensitivity());
+    assertEquals(defaultCase == FileAttributes.CaseSensitivity.SENSITIVE, dir.isCaseSensitive());
+  }
 }
