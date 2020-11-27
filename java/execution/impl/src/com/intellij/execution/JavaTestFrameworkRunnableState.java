@@ -104,7 +104,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @Override
   public boolean isPollConnection() {
-    return remoteConnectionCreator != null && remoteConnectionCreator.isPollConnection();
+    return remoteConnectionCreator == null || remoteConnectionCreator.isPollConnection();
   }
 
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {
