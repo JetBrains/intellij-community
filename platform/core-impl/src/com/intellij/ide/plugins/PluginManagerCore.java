@@ -23,7 +23,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
@@ -260,13 +259,6 @@ public final class PluginManagerCore {
       getLogger().error("Failed to read " + dbFile, e);
     }
     return Collections.emptyMap();
-  }
-
-  public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file) throws IOException {
-    NioFiles.createDirectories(file.getParent());
-    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      writePluginsList(ids, writer);
-    }
   }
 
   public static void writePluginsList(@NotNull Collection<PluginId> ids, @NotNull Writer writer) throws IOException {

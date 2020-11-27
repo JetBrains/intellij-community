@@ -698,7 +698,7 @@ object UpdateChecker {
   @JvmStatic
   fun saveDisabledToUpdatePlugins() {
     try {
-      PluginManagerCore.savePluginsList(disabledToUpdate, Paths.get(PathManager.getConfigPath(), DISABLED_UPDATE))
+      DisabledPluginsState.savePluginsList(disabledToUpdate, Paths.get(PathManager.getConfigPath(), DISABLED_UPDATE))
     }
     catch (e: IOException) {
       LOG.error(e)

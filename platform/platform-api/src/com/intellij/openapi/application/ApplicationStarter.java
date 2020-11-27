@@ -77,7 +77,7 @@ public interface ApplicationStarter {
    */
   @MagicConstant(intValues = {NON_MODAL, ANY_MODALITY, NOT_IN_EDT})
   default int getRequiredModality() {
-    return allowAnyModalityState() ? ANY_MODALITY : NON_MODAL;
+    return NON_MODAL;
   }
 
   /** @see #canProcessExternalCommandLine */
@@ -94,11 +94,5 @@ public interface ApplicationStarter {
   @Deprecated
   default void main(String @NotNull [] args) { }
 
-  /** @deprecated Use {@link #getRequiredModality()} */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  default boolean allowAnyModalityState() {
-    return false;
-  }
   //</editor-fold>
 }

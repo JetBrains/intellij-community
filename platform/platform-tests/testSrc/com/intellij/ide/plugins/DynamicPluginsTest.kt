@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -97,11 +98,11 @@ class DynamicPluginsTest {
 
     DynamicPlugins.loadPlugin(descriptor)
 
-    DisabledPluginsState.saveDisabledPlugins(builder.id)
+    DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir(), builder.id)
     DynamicPlugins.unloadPlugin(descriptor, DynamicPlugins.UnloadPluginOptions(disable = true))
     assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
 
-    DisabledPluginsState.saveDisabledPlugins()
+    DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir())
     val newDescriptor = loadDescriptorInTest(path)
     PluginManagerCore.createClassLoaderConfiguratorForDynamicPlugin(newDescriptor).configure(newDescriptor)
     DynamicPlugins.loadPlugin(newDescriptor)

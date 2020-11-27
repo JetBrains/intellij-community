@@ -297,10 +297,6 @@ public final class IconLoader {
     ourIsActivated = false;
   }
 
-  private static boolean isLoaderDisabled() {
-    return !ourIsActivated;
-  }
-
   @Nullable
   public static Icon findLafIcon(@NotNull String key, @NotNull Class<?> aClass, boolean strict) {
     return findIcon(key + ".png", aClass, aClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, true);
