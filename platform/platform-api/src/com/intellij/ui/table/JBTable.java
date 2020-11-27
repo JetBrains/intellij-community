@@ -658,10 +658,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @NotNull
   @Override
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
-    if (renderer instanceof DefaultTableCellRenderer) {
-      ((DefaultTableCellRenderer)renderer).setBackground(null);
-    }
-
     Component result = super.prepareRenderer(renderer, row, column);
 
     if (result instanceof JComponent) {
@@ -673,6 +669,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
       else if (row == getHoveredRow()) {
         setRendererBackground(row, column, component, UIUtil.getTableHoverBackground(true));
+      }
+      else if (component.getBackground() == UIUtil.getTableHoverBackground(true)) {
+        setRendererBackground(row, column, component, getBackground());
       }
     }
 
