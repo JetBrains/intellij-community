@@ -22,6 +22,7 @@ public abstract class PatchAction {
 
   private static final byte CRITICAL = 0x1;
   private static final byte OPTIONAL = 0x2;
+  private static final byte STRICT = 0x4;
 
   protected final transient Patch myPatch;
   private final String myPath;
@@ -79,6 +80,14 @@ public abstract class PatchAction {
 
   public void setOptional(boolean optional) {
     if (optional) myFlags |= OPTIONAL; else myFlags &= ~OPTIONAL;
+  }
+
+  public boolean isStrict() {
+    return (myFlags & STRICT) != 0;
+  }
+
+  public void setStrict(boolean strict) {
+    if (strict) myFlags |= STRICT; else myFlags &= ~STRICT;
   }
 
   protected static FileType getFileType(File file) {
@@ -170,7 +179,7 @@ public abstract class PatchAction {
     if (toFile.exists()) {
       if (isModified(toFile)) {
         ValidationResult.Option[] options;
-        if (myPatch.isStrict()) {
+        if (myPatch.isStrict() || isStrict()) {
           if (isCritical()) {
             options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE};
           }
@@ -190,7 +199,7 @@ public abstract class PatchAction {
       }
     }
     else if (!isOptional()) {
-      ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
+      ValidationResult.Option[] options = {myPatch.isStrict() || isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
       return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ABSENT_MESSAGE, options);
     }
 

@@ -358,6 +358,22 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
   @Test
+  public void testApplyWhenCommonFileChangesStrictFile() throws Exception {
+    myPatchSpec.setStrictFiles(Collections.singletonList("lib/annotations.jar"));
+    createPatch();
+
+    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), new File(myOlderDir, "lib/annotations.jar"));
+
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    assertThat(preparationResult.validationResults).containsExactly(
+      new ValidationResult(ValidationResult.Kind.ERROR,
+                           "lib/annotations.jar",
+                           ValidationResult.Action.UPDATE,
+                           ValidationResult.MODIFIED_MESSAGE,
+                           ValidationResult.Option.NONE));
+  }
+
+  @Test
   public void testApplyWhenNewFileExists() throws Exception {
     createPatch();
 
