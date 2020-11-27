@@ -55,6 +55,7 @@ fun getDelegators(projectRoot: File, mode: Mode): List<Delegator> {
         Delegator("kotlin-coroutines-experimental-compat"),
         Delegator("kotlinx-serialization-compiler-plugin"),
         Delegator("noarg-compiler-plugin"),
+        Delegator("parcelize-compiler-plugin"),
         Delegator("sam-with-receiver-compiler-plugin"),
     )
 }
