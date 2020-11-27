@@ -267,6 +267,7 @@
     <codeInsight.externalLibraryResolver implementation="de.plushnikov.intellij.plugin.resolver.LombokExternalLibraryResolver"/>
 
     <buildProcess.parametersProvider implementation="de.plushnikov.intellij.plugin.jps.LombokBuildProcessParametersProvider"/>
+    <notificationGroup id="Lombok plugin" displayType="BALLOON"/>
   </extensions>
 
   <actions>

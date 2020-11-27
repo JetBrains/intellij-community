@@ -99,11 +99,7 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
 
   @NotNull
   private static NotificationGroup getNotificationGroup() {
-    NotificationGroup group = NotificationGroup.findRegisteredGroup(Version.PLUGIN_NAME);
-    if (group == null) {
-      group = new NotificationGroup(Version.PLUGIN_NAME, NotificationDisplayType.BALLOON, true);
-    }
-    return group;
+    return NotificationGroupManager.getInstance().getNotificationGroup(Version.PLUGIN_NAME);
   }
 
   private static void enableAnnotations(Project project) {
