@@ -4,6 +4,6 @@ import java.util.*;
 
 class Test {
   void foo(Set<Integer> source, List<Integer> removals) {
-    source.removeAll(removals)<caret>;
+    source.removeAll<caret>(removals);
   }
 }
