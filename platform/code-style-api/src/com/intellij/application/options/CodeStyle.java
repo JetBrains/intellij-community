@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.joinLines.JoinedLinesSpacingCalculator;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
@@ -23,8 +24,10 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Consumer;
 
+import static java.lang.Math.max;
+
 /**
- * Utility class for miscellaneous code style settings retrieving methods.
+ * Utility class for miscellaneous code style-related methods.
  */
 @SuppressWarnings("unused") // Contains API methods which may be used externally
 public final class CodeStyle {
@@ -453,6 +456,37 @@ public final class CodeStyle {
     if (project == null) return null;
     PsiDocumentManager.getInstance(project).commitDocument(document);
     return CodeStyleManager.getInstance(project).getLineIndent(document, offset);
+  }
+
+  /**
+   * Calculates the spacing (in columns) for joined lines at given offset after join lines or smart backspace actions.
+   * If there is a suitable {@code LineIndentProvider} for the language,
+   * it will be used to calculate the spacing. Otherwise, if
+   * {@code allowDocCommit} flag is true, the method will use formatter on committed document.
+   *
+   * @param editor   The editor for which the spacing must be returned.
+   * @param language Context language
+   * @param offset   Offset in the editor after the indent in the second joining line.
+   * @param allowDocCommit Allow calculation using committed document.
+   *                       <p>
+   *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
+   * @return non-negative spacing between end- and start-line tokens after the join.
+   */
+  public static int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
+    Project project = editor.getProject();
+    if (project == null) return 0;
+    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
+    int space = lineIndentProvider instanceof JoinedLinesSpacingCalculator
+                ? ((JoinedLinesSpacingCalculator)lineIndentProvider).getJoinedLinesSpacing(project, editor, language, offset)
+                : -1;
+    if (space < 0 && allowDocCommit) {
+      final Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (file == null) return 0;
+      return max(0, CodeStyleManager.getInstance(project).getSpacing(file, offset));
+    }
+    return max(0, space);
   }
 
   /**

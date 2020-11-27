@@ -9,9 +9,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated See deprecations for specific methods, use methods of {@link com.intellij.application.options.CodeStyle} instead.
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class CodeStyleFacade {
   public static CodeStyleFacade getInstance() {
     return ApplicationManager.getApplication().getService(CodeStyleFacade.class);
@@ -43,22 +49,6 @@ public abstract class CodeStyleFacade {
    */
   @Deprecated
   public abstract int getIndentSize(FileType fileType);
-
-  /**
-   * Calculates the spacing (in columns) for joined lines at given offset after join lines or smart backspace actions.
-   * If there is a suitable {@code LineIndentProvider} for the language,
-   * it will be used to calculate the spacing. Otherwise, if
-   * {@code allowDocCommit} flag is true, the method will use formatter on committed document.
-   *
-   * @param editor   The editor for which the spacing must be returned.
-   * @param language Context language
-   * @param offset   Offset in the editor after the indent in the second joining line.
-   * @param allowDocCommit Allow calculation using committed document.
-   *                       <p>
-   *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
-   * @return non-negative spacing between end- and start-line tokens after the join.
-   */
-  public abstract int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit);
 
   /**
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getFacade} and
