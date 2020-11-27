@@ -47,7 +47,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   private JPanel myPlaceholder;
   private JPanel myMainPanel;
   private final BuildoutConfigPanel mySettingsPanel;
-  private final Module myModule;
+  private final @NotNull Module myModule;
 
   public BuildoutConfigurable(@NotNull Module module) {
     myModule = module;
@@ -105,7 +105,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   @Override
   public boolean isModified() {
     if (! myEnabledCheckbox.isEnabled()) return false;
-    final BuildoutFacet facet = myModule != null? BuildoutFacet.getInstance(myModule) : null;
+    final BuildoutFacet facet = BuildoutFacet.getInstance(myModule);
     final boolean got_facet = facet != null;
     if (myEnabledCheckbox.isSelected() != got_facet) return true;
     if (got_facet && myEnabledCheckbox.isSelected()) {
@@ -116,7 +116,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
 
   @Override
   public void apply() throws ConfigurationException {
-    final BuildoutFacet facet = myModule != null? BuildoutFacet.getInstance(myModule) : null;
+    final BuildoutFacet facet = BuildoutFacet.getInstance(myModule);
     final boolean got_facet = facet != null;
     boolean facet_is_desired = myEnabledCheckbox.isSelected();
 
@@ -134,8 +134,11 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     }
     if (facet_is_desired && ! got_facet) addFacet(mySettingsPanel.getConfiguration());
     if (! facet_is_desired && got_facet) removeFacet(facet);
-    if (facet_is_desired) BuildoutFacet.attachLibrary(myModule);
-    else BuildoutFacet.detachLibrary(myModule);
+    if (got_facet) {
+      if (facet_is_desired) BuildoutFacet.attachLibrary(myModule);
+      else BuildoutFacet.detachLibrary(myModule);
+      FacetManager.getInstance(myModule).facetConfigurationChanged(facet);
+    }
   }
 
   private void addFacet(BuildoutFacetConfiguration config) {
