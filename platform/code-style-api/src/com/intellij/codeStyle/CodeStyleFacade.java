@@ -80,7 +80,7 @@ public abstract class CodeStyleFacade {
 
   /**
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getFacade} and
-   * {@link com.intellij.application.options.CodeStyleSettingsFacade#getTabSize(FileType)}
+   * {@link com.intellij.application.options.CodeStyleSettingsFacade#getTabSize()}
    */
   @Deprecated
   public abstract int getTabSize(final FileType fileType);
@@ -98,30 +98,4 @@ public abstract class CodeStyleFacade {
   @Deprecated
   public abstract String getLineSeparator();
 
-  /**
-   * Determines whether a comma before space is needed for given {@code PsiFile} in given {@code Language} context.
-   *
-   * @param psiFile  File to determine settings
-   * @param language Context language
-   * @return whether the space before comma is needed
-   */
-  public abstract boolean useSpaceBeforeComma(@NotNull PsiFile psiFile, @NotNull Language language);
-
-  /**
-   * Determines whether a comma after space is needed for given {@code PsiFile} in given {@code Language} context.
-   *
-   * @param psiFile  File to determine settings
-   * @param language Context language
-   * @return whether the space after comma is needed
-   */
-  public abstract boolean useSpaceAfterComma(@NotNull PsiFile psiFile, @NotNull Language language);
-
-  /**
-   * Determines whether assignment operator should be surrounded with spaces for given {@code PsiFile} in given {@code Language} context.
-   *
-   * @param psiFile  File to determine settings
-   * @param language Context language
-   * @return whether to surround assignment operator with spaces
-   */
-  public abstract boolean useSpaceAroundAssignmentOperators(@NotNull PsiFile psiFile, @NotNull Language language);
 }

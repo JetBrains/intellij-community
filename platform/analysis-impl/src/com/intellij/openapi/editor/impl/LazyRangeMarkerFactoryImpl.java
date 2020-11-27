@@ -30,7 +30,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
     return ReadAction.compute(() -> {
       final Document document = file.getFileType().isBinary() ? null : FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
-        int myTabSize = CodeStyle.getFacade(myProject, document).getTabSize(file.getFileType());
+        int myTabSize = CodeStyle.getFacade(myProject, document, file.getFileType()).getTabSize();
         final int offset = calculateOffset(document, line, column, myTabSize);
         return DocumentImpl.createRangeMarkerForVirtualFile(file, offset, offset, line, column, line, column, persistent);
       }

@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -431,18 +432,16 @@ public final class CodeStyle {
 
   @NotNull
   public static CodeStyleSettingsFacade getFacade(@NotNull PsiFile file) {
-    return new CodeStyleSettingsFacade(getSettings(file));
+    return new CodeStyleSettingsFacade(getSettings(file), file.getFileType());
   }
 
   @NotNull
-  public static CodeStyleSettingsFacade getFacade(@NotNull Project project, @NotNull Document document) {
+  public static CodeStyleSettingsFacade getFacade(@NotNull Project project, @NotNull Document document, @NotNull FileType fileType) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    CodeStyleSettings settings = psiFile != null ? getSettings(psiFile) : getSettings(project);
-    return new CodeStyleSettingsFacade(settings);
-  }
-
-  public static CodeStyleSettingsFacade getFacade(@NotNull Editor editor) {
-    return new CodeStyleSettingsFacade(getSettings(editor));
+    if (psiFile != null) {
+      return new CodeStyleSettingsFacade(getSettings(psiFile), fileType);
+    }
+    return new CodeStyleSettingsFacade(getSettings(project), fileType);
   }
 
 }
