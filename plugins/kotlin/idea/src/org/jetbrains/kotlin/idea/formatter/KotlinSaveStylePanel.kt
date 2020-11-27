@@ -75,7 +75,10 @@ class KotlinSaveStylePanel(settings: CodeStyleSettings) : CodeStyleAbstractPanel
         settings.kotlinCommonSettings.CODE_STYLE_DEFAULTS = selectedId
     }
 
-    override fun isModified(settings: CodeStyleSettings): Boolean = selectedId != settings.kotlinCodeStyleDefaults()
+    override fun isModified(settings: CodeStyleSettings): Boolean {
+        return selectedId != settings.kotlinCustomSettings.CODE_STYLE_DEFAULTS ||
+                selectedId != settings.kotlinCommonSettings.CODE_STYLE_DEFAULTS
+    }
 
     override fun getPanel() = jPanel
 
