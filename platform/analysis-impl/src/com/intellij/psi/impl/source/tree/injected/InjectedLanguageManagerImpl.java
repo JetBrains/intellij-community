@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -10,6 +9,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -79,12 +79,17 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   }
 
   public static void disposeInvalidEditors() {
-    EditorWindowTracker.getInstance().disposeInvalidEditors();
+    EditorWindowTracker editorWindowTracker = ApplicationManager.getApplication().getServiceIfCreated(EditorWindowTracker.class);
+    if (editorWindowTracker != null) {
+      editorWindowTracker.disposeInvalidEditors();
+    }
   }
 
   @Override
   public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider) {
-    if (!(injectedProvider instanceof InjectedFileViewProvider)) return null;
+    if (!(injectedProvider instanceof InjectedFileViewProvider)) {
+      return null;
+    }
     return ((InjectedFileViewProvider)injectedProvider).getShreds().getHostPointer().getElement();
   }
 
