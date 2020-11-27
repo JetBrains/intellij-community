@@ -22,6 +22,7 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static com.intellij.ui.TableUtil.stopEditing;
@@ -660,7 +662,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
 
-    if (result instanceof JComponent) {
+    if (result instanceof JComponent && !isCellSelected(row, column)) {
       JComponent component = (JComponent)result;
       if (isStriped()) {
         if (isTableDecorationSupported()) {
@@ -670,8 +672,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       else if (row == getHoveredRow()) {
         setRendererBackground(row, column, component, UIUtil.getTableHoverBackground(true));
       }
-      else if (component.getBackground() == UIUtil.getTableHoverBackground(true)) {
-        setRendererBackground(row, column, component, getBackground());
+      else {
+        forEachComponent(component, this::resetHoveredBackground);
       }
     }
 
@@ -685,13 +687,20 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return result;
   }
 
+  @ApiStatus.Internal
   protected void setRendererBackground(int row, int column, JComponent renderer, Color color) {
-    if (!isCellSelected(row, column)) {
-      renderer.setOpaque(true);
-      renderer.setBackground(color);
-      for (Component child : renderer.getComponents()) {
-        child.setBackground(color);
-      }
+    renderer.setOpaque(true);
+    forEachComponent(renderer, child -> child.setBackground(color));
+  }
+
+  private void resetHoveredBackground(@NotNull Component component) {
+    if (component.getBackground() == UIUtil.getTableHoverBackground(true)) component.setBackground(getBackground());
+  }
+
+  private static void forEachComponent(@NotNull Container container, @NotNull Consumer<Component> consumer) {
+    consumer.accept(container);
+    for (Component component : container.getComponents()) {
+      consumer.accept(component);
     }
   }
 
