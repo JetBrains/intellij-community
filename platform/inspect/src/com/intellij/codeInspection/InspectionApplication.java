@@ -75,7 +75,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInspection.WritersKt.writeProjectDescription;
 import static com.intellij.codeInspection.targets.QodanaConfigKt.DEFAULT_QODANA_PROFILE;
 import static com.intellij.codeInspection.targets.QodanaConfigKt.QODANA_CONFIG_FILENAME;
 import static com.intellij.codeInspection.targets.QodanaKt.runAnalysisByQodana;
@@ -470,11 +469,6 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         InspectResultsConsumer.runConsumers(context.getTools(), results, project);
         if (myOutPath != null) {
           reportConverter.projectData(project, Paths.get(myOutPath).resolve("projectStructure"));
-
-          //for backward compatibility with teamcity plugin
-          if ("sa".equals(myOutputFormat)) {
-            writeProjectDescription(Paths.get(myOutPath).resolve("projectDescription.json"), project);
-          }
         }
       }
       catch (InspectionsReportConverter.ConversionException e) {
