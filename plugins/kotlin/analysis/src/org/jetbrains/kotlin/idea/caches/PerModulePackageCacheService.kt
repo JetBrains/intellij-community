@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.F
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfoByVirtualFile
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.idea.util.sourceRoot
@@ -55,7 +56,8 @@ class KotlinPackageContentModificationListener : StartupActivity {
     }
 
     override fun runActivity(project: Project) {
-        val connection = project.messageBus.connect(project)
+        val disposable = KotlinPluginDisposable.getInstance(project)
+        val connection = project.messageBus.connect(disposable)
         connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
             override fun before(events: MutableList<out VFileEvent>) = onEvents(events, false)
             override fun after(events: List<VFileEvent>) = onEvents(events, true)

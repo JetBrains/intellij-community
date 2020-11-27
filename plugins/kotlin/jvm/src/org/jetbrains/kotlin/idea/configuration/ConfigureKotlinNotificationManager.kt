@@ -8,19 +8,35 @@ package org.jetbrains.kotlin.idea.configuration
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction.nonBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.ConfigureKotlinNotification
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
 object ConfigureKotlinNotificationManager : KotlinSingleNotificationManager<ConfigureKotlinNotification> {
     fun notify(project: Project, excludeModules: List<Module> = emptyList()) {
-        notify(this, project, excludeModules)
+        nonBlocking(Callable {
+            ConfigureKotlinNotification.getNotificationState(project, excludeModules)
+        })
+            .expireWith(KotlinPluginDisposable.getInstance(project))
+            .coalesceBy(this)
+            .finishOnUiThread(ModalityState.any()) { notificationState ->
+                notificationState?.let {
+                    notify(project, ConfigureKotlinNotification(project, excludeModules, it))
+                }
+            }
+            .submit(AppExecutorUtil.getAppExecutorService())
+
     }
 
     fun getVisibleNotifications(project: Project): Array<out ConfigureKotlinNotification> {

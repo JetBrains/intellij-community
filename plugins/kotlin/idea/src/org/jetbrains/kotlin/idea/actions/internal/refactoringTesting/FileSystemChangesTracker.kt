@@ -6,15 +6,10 @@
 package org.jetbrains.kotlin.idea.actions.internal.refactoringTesting
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.*
 
-internal class FileSystemChangesTracker(project: Project) : Disposable {
-
-    override fun dispose() {
-        trackerListener.dispose()
-    }
+internal class FileSystemChangesTracker : Disposable {
 
     private val trackerListener = object : VirtualFileListener, Disposable {
 
@@ -24,15 +19,14 @@ internal class FileSystemChangesTracker(project: Project) : Disposable {
         private var disposed = false
 
         init {
-            VirtualFileManager.getInstance().addVirtualFileListener(this)
-            Disposer.register(project, this)
+            VirtualFileManager.getInstance().addVirtualFileListener(this, this@FileSystemChangesTracker)
+            Disposer.register(this@FileSystemChangesTracker, this)
         }
 
         @Synchronized
         override fun dispose() {
             if (!disposed) {
                 disposed = true
-                VirtualFileManager.getInstance().removeVirtualFileListener(this)
                 createdFilesMutable.clear()
             }
         }
@@ -55,4 +49,8 @@ internal class FileSystemChangesTracker(project: Project) : Disposable {
     }
 
     val createdFiles: Set<VirtualFile> = trackerListener.createdFilesMutable
+
+    override fun dispose() {
+        trackerListener.dispose()
+    }
 }

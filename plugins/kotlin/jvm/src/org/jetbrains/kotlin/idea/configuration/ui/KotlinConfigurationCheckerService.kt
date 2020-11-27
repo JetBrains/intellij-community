@@ -30,6 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.configuration.notifyOutdatedBundledCompilerIfNecessary
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.project.getAndCacheLanguageLevelByDependencies
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
@@ -44,7 +45,7 @@ class KotlinConfigurationCheckerStartupActivity : StartupActivity {
                 NotificationDisplayType.STICKY_BALLOON, true
             )
 
-        val connection = project.messageBus.connect()
+        val connection = project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
         connection.subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener {
             notifyOutdatedBundledCompilerIfNecessary(project)
         })

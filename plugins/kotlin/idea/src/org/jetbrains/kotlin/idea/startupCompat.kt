@@ -12,12 +12,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import java.util.concurrent.Callable
 
 fun runActivity(project: Project) {
+    val disposable = KotlinPluginDisposable.getInstance(project)
     nonBlocking(Callable { FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(project)) })
         .inSmartMode(project)
-        .expireWith(project)
+        .expireWith(disposable)
         .finishOnUiThread(ModalityState.any()) { hasKotlinFiles ->
             if (!hasKotlinFiles) return@finishOnUiThread
 

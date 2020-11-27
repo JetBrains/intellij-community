@@ -175,7 +175,7 @@ class MoveRefactoringAction : AnAction() {
         countOfMovesBeforeCheck: Int
     ) {
         val compilationStatusTracker = CompilationStatusTracker(project)
-        val fileSystemChangesTracker = FileSystemChangesTracker(project)
+        val fileSystemChangesTracker = FileSystemChangesTracker()
         val cancelledChecker = { indicator.isCanceled }
         val setIndicator = { text: String, fraction: Double ->
             indicator.text2 = text

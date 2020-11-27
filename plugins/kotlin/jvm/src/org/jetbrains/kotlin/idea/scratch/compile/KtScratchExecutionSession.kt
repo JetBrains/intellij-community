@@ -18,9 +18,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.core.KotlinCompilerIde
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.scratch.LOG
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
@@ -56,7 +56,7 @@ class KtScratchExecutionSession(
             KtScratchSourceFileProcessor().process(expressions)
         }
             .inSmartMode(project)
-            .expireWith(project)
+            .expireWith(KotlinPluginDisposable.getInstance(project))
             .withDocumentsCommitted(project)
             .finishOnUiThread(ModalityState.any()) { result ->
                 when (result) {

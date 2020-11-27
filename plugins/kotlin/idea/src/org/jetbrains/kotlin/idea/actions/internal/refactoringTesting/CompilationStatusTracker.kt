@@ -15,13 +15,15 @@ import com.intellij.openapi.compiler.CompilationStatusListener
 import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompilerTopics.COMPILATION_STATUS
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 
 internal class CompilationStatusTracker(private val project: Project) {
 
     private val compilationStatusListener = object : CompilationStatusListener {
 
         init {
-            project.messageBus.connect(project).subscribe(COMPILATION_STATUS, this)
+            val disposable = KotlinPluginDisposable.getInstance(project)
+            project.messageBus.connect(disposable).subscribe(COMPILATION_STATUS, this)
         }
 
         var hasCompilerError = false

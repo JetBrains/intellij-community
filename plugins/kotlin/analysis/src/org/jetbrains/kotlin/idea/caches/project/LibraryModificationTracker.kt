@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 class LibraryModificationTracker(project: Project) : SimpleModificationTracker() {
@@ -31,13 +33,14 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
     }
 
     init {
-        val connection = project.messageBus.connect(project)
+        val disposable = KotlinPluginDisposable.getInstance(project)
+        val connection = project.messageBus.connect(disposable)
         connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
             override fun after(events: List<VFileEvent>) {
                 events.filter(::isRelevantEvent).let { createEvents ->
                     if (createEvents.isNotEmpty()) {
                         ApplicationManager.getApplication().invokeLater {
-                            if (!project.isDisposed) {
+                            if (!Disposer.isDisposed(disposable)) {
                                 processBulk(createEvents) {
                                     projectFileIndex.isInLibraryClasses(it) || isLibraryArchiveRoot(it)
                                 }

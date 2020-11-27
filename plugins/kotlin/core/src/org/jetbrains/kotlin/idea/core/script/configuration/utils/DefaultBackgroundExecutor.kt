@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.containers.HashSetQueue
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.DefaultBackgroundExecutor.Companion.PROGRESS_INDICATOR_DELAY
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.DefaultBackgroundExecutor.Companion.PROGRESS_INDICATOR_MIN_QUEUE
@@ -56,8 +57,8 @@ internal class DefaultBackgroundExecutor(
 
     private var silentWorker: SilentWorker? = null
     private var underProgressWorker: UnderProgressWorker? = null
-    private val longRunningAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, project)
-    private var longRunningAlaramRequested = false
+    private val longRunningAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, KotlinPluginDisposable.getInstance(project))
+    private var longRunningAlarmRequested = false
 
     private var inTransaction: Boolean = false
     private var currentFile: VirtualFile? = null
@@ -82,11 +83,11 @@ internal class DefaultBackgroundExecutor(
             } else {
                 requireSilentWorker()
 
-                if (!longRunningAlaramRequested) {
-                    longRunningAlaramRequested = true
+                if (!longRunningAlarmRequested) {
+                    longRunningAlarmRequested = true
                     longRunningAlarm.addRequest(
                         {
-                            longRunningAlaramRequested = false
+                            longRunningAlarmRequested = false
                             requireUnderProgressWorker()
                         },
                         PROGRESS_INDICATOR_DELAY
@@ -234,7 +235,7 @@ internal class DefaultBackgroundExecutor(
 
             // executeOnPooledThread requires read lock, and we may fail to acquire it
             SwingUtilities.invokeLater {
-                BackgroundTaskUtil.executeOnPooledThread(project, {
+                BackgroundTaskUtil.executeOnPooledThread(KotlinPluginDisposable.getInstance(project), {
                     run()
                 })
             }

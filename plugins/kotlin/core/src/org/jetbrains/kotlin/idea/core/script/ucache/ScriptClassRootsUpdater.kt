@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -143,13 +144,13 @@ abstract class ScriptClassRootsUpdater(
 
     private var scheduledUpdate: ProgressIndicator? = null
 
-    @Suppress("IncorrectParentDisposable")
     @Synchronized
     private fun ensureUpdateScheduled() {
         scheduledUpdate?.cancel()
+        val disposable = KotlinPluginDisposable.getInstance(project)
         runReadAction {
-            if (!Disposer.isDisposing(project)) {
-                scheduledUpdate = BackgroundTaskUtil.executeOnPooledThread(project) {
+            if (!Disposer.isDisposed(disposable)) {
+                scheduledUpdate = BackgroundTaskUtil.executeOnPooledThread(disposable) {
                     doUpdate()
                 }
             }

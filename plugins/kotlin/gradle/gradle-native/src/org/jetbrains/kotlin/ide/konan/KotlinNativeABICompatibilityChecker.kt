@@ -35,22 +35,23 @@ import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 /** TODO: merge [KotlinNativeABICompatibilityChecker] in the future with [UnsupportedAbiVersionNotificationPanelProvider], KT-34525 */
 class KotlinNativeABICompatibilityChecker : StartupActivity {
     override fun runActivity(project: Project) {
-        val service = KotlinNativeABICompatibilityCheckerService.getInstance(project)
-        project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-            override fun rootsChanged(event: ModuleRootEvent) {
-                // run when project roots are changes, e.g. on project import
-                service.validateKotlinNativeLibraries()
-            }
-        })
-
-        service.validateKotlinNativeLibraries()
+        KotlinNativeABICompatibilityCheckerService.getInstance(project).runActivity()
     }
 }
 
-class KotlinNativeABICompatibilityCheckerService(private val project: Project) {
+class KotlinNativeABICompatibilityCheckerService(private val project: Project): Disposable {
+
+    fun runActivity() {
+        project.messageBus.connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+            override fun rootsChanged(event: ModuleRootEvent) {
+                // run when project roots are changes, e.g. on project import
+                validateKotlinNativeLibraries()
+            }
+        })
+        validateKotlinNativeLibraries()
+    }
 
     private sealed class LibraryGroup(private val ordinal: Int) : Comparable<LibraryGroup> {
-
         override fun compareTo(other: LibraryGroup) = when {
             this == other -> 0
             this is FromDistribution && other is FromDistribution -> kotlinVersion.compareTo(other.kotlinVersion)
@@ -58,6 +59,7 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project) {
         }
 
         data class FromDistribution(val kotlinVersion: String) : LibraryGroup(0)
+
         object ThirdParty : LibraryGroup(1)
         object User : LibraryGroup(2)
     }
@@ -71,7 +73,7 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project) {
         val disposable = Disposable {
             backgroundJob.get()?.let(CancellablePromise<*>::cancel)
         }
-        Disposer.register(project, disposable)
+        Disposer.register(this, disposable)
 
         backgroundJob.set(
             nonBlocking<List<Notification>> {
@@ -83,7 +85,7 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project) {
                         it.notify(project)
                     }
                 }
-                .expireWith(project) // cancel job when project is disposed
+                .expireWith(this) // cancel job when project is disposed
                 .coalesceBy(this@KotlinNativeABICompatibilityCheckerService) // cancel previous job when new one is submitted
                 .withDocumentsCommitted(project)
                 .submit(AppExecutorUtil.getAppExecutorService())
@@ -206,6 +208,9 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project) {
         }
 
         return (ideLibraryName ?: PathUtilRt.getFileName(libraryInfo.libraryRoot)) to LibraryGroup.User
+    }
+
+    override fun dispose() {
     }
 
     companion object {

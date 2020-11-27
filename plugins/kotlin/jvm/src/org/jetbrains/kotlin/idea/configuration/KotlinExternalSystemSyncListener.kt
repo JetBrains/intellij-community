@@ -21,12 +21,13 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.runUnderDisposeAwareIndicator
 
 class KotlinExternalSystemSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
     override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
         val project = id.findResolvedProject() ?: return
-        runUnderDisposeAwareIndicator(project) {
+        runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
             KotlinMigrationProjectService.getInstance(project).onImportAboutToStart()
             KotlinConfigurationCheckerService.getInstance(project).syncStarted()
         }
@@ -35,7 +36,7 @@ class KotlinExternalSystemSyncListener : ExternalSystemTaskNotificationListenerA
     override fun onEnd(id: ExternalSystemTaskId) {
         // At this point changes might be still not applied to project structure yet.
         val project = id.findResolvedProject() ?: return
-        runUnderDisposeAwareIndicator(project) {
+        runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
             KotlinConfigurationCheckerService.getInstance(project).syncDone()
         }
     }

@@ -17,14 +17,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener.Companion.LISTENER
 import org.jetbrains.kotlin.idea.core.script.isScriptChangesNotifierDisabled
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 internal class ScriptChangesNotifier(
     private val project: Project
 ) {
-    private val scriptsQueue = Alarm(Alarm.ThreadToUse.POOLED_THREAD, project)
+    private val scriptsQueue = Alarm(Alarm.ThreadToUse.POOLED_THREAD, KotlinPluginDisposable.getInstance(project))
     private val scriptChangesListenerDelay = 1400
 
     init {
@@ -84,7 +85,7 @@ internal class ScriptChangesNotifier(
 
     private val defaultListener = DefaultScriptChangeListener(project)
     private val listeners: Collection<ScriptChangeListener> = mutableListOf<ScriptChangeListener>().apply {
-        addAll(LISTENER.getPoint(project).extensionList)
+        addAll(LISTENER.getExtensions(project))
         add(defaultListener)
     }
 
@@ -95,7 +96,6 @@ internal class ScriptChangesNotifier(
     }
 
     private fun areListenersDisabled(): Boolean {
-        return ApplicationManager.getApplication().isUnitTestMode && ApplicationManager.getApplication()
-            .isScriptChangesNotifierDisabled == true
+        return isUnitTestMode() && ApplicationManager.getApplication().isScriptChangesNotifierDisabled == true
     }
 }

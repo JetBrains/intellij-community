@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplates
@@ -108,7 +109,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                 ).filterNotNull()
             }
             .inSmartMode(project)
-            .expireWith(project)
+            .expireWith(KotlinPluginDisposable.getInstance(project))
             .submit(AppExecutorUtil.getAppExecutorService())
             .onSuccess { files ->
                 val (templates, classpath) = getTemplateClassPath(files)

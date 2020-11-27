@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -221,7 +222,7 @@ private class ScratchToolWindowFactory : ToolWindowFactory {
             editor.isRendererMode = true
         }
 
-        Disposer.register(project, consoleView)
+        Disposer.register(KotlinPluginDisposable.getInstance(project), consoleView)
     }
 }
 

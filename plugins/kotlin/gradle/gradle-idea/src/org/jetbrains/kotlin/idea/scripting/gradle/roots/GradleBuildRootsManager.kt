@@ -17,6 +17,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
@@ -205,7 +206,8 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
     fun scheduleModifiedFilesCheck(filePath: String) {
         modifiedFiles.add(filePath)
         if (modifiedFilesCheckScheduled.compareAndSet(false, true)) {
-            BackgroundTaskUtil.executeOnPooledThread(project) {
+            val disposable = KotlinPluginDisposable.getInstance(project)
+            BackgroundTaskUtil.executeOnPooledThread(disposable) {
                 if (modifiedFilesCheckScheduled.compareAndSet(true, false)) {
                     checkModifiedFiles()
                 }
@@ -269,7 +271,8 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
             }
         }
 
-        project.messageBus.connect(project).subscribe(GradleSettingsListener.TOPIC, listener)
+        val disposable = KotlinPluginDisposable.getInstance(project)
+        project.messageBus.connect(disposable).subscribe(GradleSettingsListener.TOPIC, listener)
     }
 
     private fun getGradleProjectSettings(workingDir: String): GradleProjectSettings? {

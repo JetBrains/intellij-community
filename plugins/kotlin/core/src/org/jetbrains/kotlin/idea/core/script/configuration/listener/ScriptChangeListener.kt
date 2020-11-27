@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration.listener
 
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -38,7 +38,7 @@ abstract class ScriptChangeListener(val project: Project) {
     }
 
     companion object {
-        val LISTENER: ExtensionPointName<ScriptChangeListener> =
-            ExtensionPointName.create("org.jetbrains.kotlin.scripting.idea.listener")
+        val LISTENER: ProjectExtensionPointName<ScriptChangeListener> =
+            ProjectExtensionPointName("org.jetbrains.kotlin.scripting.idea.listener")
     }
 }

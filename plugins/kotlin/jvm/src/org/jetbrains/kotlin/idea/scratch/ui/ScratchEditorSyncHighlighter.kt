@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.scratch.output.highlightLines
 
 interface ScratchEditorLinesTranslator {
@@ -81,8 +82,9 @@ private fun configureHighlightUpdateOnDocumentChange(
         }
     }
 
-    previewEditor.document.addDocumentListener(updateHighlightOnDocumentChangeListener, project)
-    sourceEditor.document.addDocumentListener(updateHighlightOnDocumentChangeListener, project)
+    val disposable = KotlinPluginDisposable.getInstance(project)
+    previewEditor.document.addDocumentListener(updateHighlightOnDocumentChangeListener, disposable)
+    sourceEditor.document.addDocumentListener(updateHighlightOnDocumentChangeListener, disposable)
 }
 
 /**

@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.idea.scratch
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -20,8 +19,9 @@ import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchFromHereAction
 import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
 import org.jetbrains.kotlin.idea.scratch.ui.findScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
-class ScratchFileAutoRunner(private val project: Project) : DocumentListener {
+class ScratchFileAutoRunner(private val project: Project) : DocumentListener, Disposable {
     companion object {
         fun addListener(project: Project, editor: TextEditor) {
             if (editor.getScratchFile() != null) {
@@ -32,17 +32,17 @@ class ScratchFileAutoRunner(private val project: Project) : DocumentListener {
             }
         }
 
-        private fun getInstance(project: Project) = ServiceManager.getService(project, ScratchFileAutoRunner::class.java)
+        private fun getInstance(project: Project): ScratchFileAutoRunner = project.getServiceSafe()
 
         const val AUTO_RUN_DELAY_IN_SECONDS = 2
     }
 
-    private val myAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, project)
+    private val myAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
 
     override fun documentChanged(event: DocumentEvent) {
         val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
 
-        if (project.isDisposed) return
+        if (Disposer.isDisposed(this)) return
         val scratchFile = getScratchFile(file, project) ?: return
         if (!scratchFile.options.isInteractiveMode) return
 
@@ -75,5 +75,9 @@ class ScratchFileAutoRunner(private val project: Project) : DocumentListener {
     private fun getScratchFile(file: VirtualFile, project: Project): ScratchFile? {
         val editor = FileEditorManager.getInstance(project).getSelectedEditor(file) as? TextEditor
         return editor?.findScratchFileEditorWithPreview()?.scratchFile
+    }
+
+    override fun dispose() {
+
     }
 }
