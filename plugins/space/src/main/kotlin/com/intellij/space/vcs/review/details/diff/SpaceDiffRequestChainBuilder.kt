@@ -99,7 +99,10 @@ internal class SpaceDiffRequestProducer(
 
       val (oldFilePath, newFilePath) = spaceReviewChange.changeFilePathInfo
       val diffContentFactory = DiffContentFactoryImpl.getInstanceEx()
-      val titles = listOf(gitCommitChange.old?.commit, gitCommitChange.new?.commit)
+      val titles = listOf(
+        gitCommitChange.old?.let { "${it.commit} (${oldFilePath!!.name})" },
+        gitCommitChange.new?.let { "${it.commit} (${newFilePath!!.name})" }
+      )
       val documents = listOf(
         oldFilePath?.let {
           diffContentFactory.create(project, leftFileText, it).apply {
