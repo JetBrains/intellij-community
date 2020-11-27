@@ -672,7 +672,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
         createTestDir(sub, "sub_" + j);
       }
     }
-    Files.walkFileTree(top.toPath(), new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(top.toPath(), new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
         for (int k = 1; k <= 3; k++) {
