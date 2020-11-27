@@ -883,7 +883,7 @@ public final class BuildManager implements Disposable {
               myBuildsInProgress.remove(projectPath);
               notifySessionTerminationIfNeeded(sessionId, execFailure);
 
-              if (isProcessPreloadingEnabled(project)) {
+              if (isProcessPreloadingEnabled(project) && !onlyCheckUpToDate) {
                 runCommand(() -> {
                   if (!myPreloadedBuilds.containsKey(projectPath)) {
                     try {
