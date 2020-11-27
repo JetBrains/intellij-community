@@ -155,7 +155,7 @@ class Delegator(
     private fun getLibraryWithActualJars(mode: Mode) = when (mode) {
         Mode.MVN -> """
             |<library name="kotlinc.$identifier" type="repository">
-            |  <properties${if (mavenArtifact.flatMapDependencies.size > 1) "" else "include-transitive-deps=\"false\" "} maven-id="${mavenArtifact.coordinates(mode)}" />
+            |  <properties ${if (mavenArtifact.flatMapDependencies.size > 1) "" else "include-transitive-deps=\"false\" "}maven-id="${mavenArtifact.coordinates(mode)}" />
             |  <CLASSES>
             |    ${getClasses(mode)}
             |  </CLASSES>
