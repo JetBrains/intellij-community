@@ -27,6 +27,7 @@ class EmojiCategoryPanel extends JPanel {
     gbc.gridy = 0;
     gbc.insets = JBUI.insets(0, 4);
     setLayout(new GridBagLayout());
+    final int buttonSize = JBUIScale.scale(30);
     for (EmojiCategory category : categories) {
       @Nls String name = EmojiCategoriesBundle.findNameForCategory(category);
       InplaceButton button = new InplaceButton(name, category.getIcon(), e -> emojiPicker.selectCategory(category, true)) {
@@ -44,7 +45,7 @@ class EmojiCategoryPanel extends JPanel {
           }
         }
       };
-      button.setPreferredSize(new Dimension(30, 30));
+      button.setPreferredSize(new Dimension(buttonSize, buttonSize));
       add(button, gbc);
     }
   }
