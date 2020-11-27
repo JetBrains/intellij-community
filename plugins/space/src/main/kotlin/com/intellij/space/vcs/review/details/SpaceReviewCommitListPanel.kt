@@ -11,7 +11,7 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JComponent
 
-internal class SpaceReviewCommitListPanel(reviewDetailsVm: CrDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
+internal class SpaceReviewCommitListPanel(reviewDetailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
   init {
     val commitsBrowser = OnePixelSplitter(true, "space.review.commit.list", 0.7f).apply {
       firstComponent = SpaceReviewCommitListFactory.createCommitList(reviewDetailsVm)

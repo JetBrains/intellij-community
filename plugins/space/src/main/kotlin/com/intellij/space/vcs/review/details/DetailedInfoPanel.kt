@@ -28,7 +28,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class DetailedInfoPanel(detailsVm: CrDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
+internal class DetailedInfoPanel(detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
   init {
     val titleComponent = HtmlEditorPane().apply {
       font = font.deriveFont((font.size * 1.2).toFloat())

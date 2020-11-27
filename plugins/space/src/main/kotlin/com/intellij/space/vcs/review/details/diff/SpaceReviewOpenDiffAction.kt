@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.space.vcs.review.SpaceReviewDataKeys
-import com.intellij.space.vcs.review.details.CrDetailsVm
+import com.intellij.space.vcs.review.details.SpaceReviewDetailsVm
 import libraries.coroutines.extra.LifetimeSource
 
 class SpaceReviewOpenDiffActionProvider : AnActionExtensionProvider {
@@ -31,5 +31,5 @@ class SpaceReviewOpenDiffActionProvider : AnActionExtensionProvider {
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)
   }
 
-  private fun getDetailsVm(e: AnActionEvent): CrDetailsVm<*>? = e.getData(SpaceReviewDataKeys.REVIEW_DETAILS_VM)
+  private fun getDetailsVm(e: AnActionEvent): SpaceReviewDetailsVm<*>? = e.getData(SpaceReviewDataKeys.REVIEW_DETAILS_VM)
 }

@@ -3,7 +3,7 @@ package com.intellij.space.vcs.review
 
 import circlet.code.api.CodeReviewListItem
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.space.vcs.review.details.CrDetailsVm
+import com.intellij.space.vcs.review.details.SpaceReviewDetailsVm
 import com.intellij.space.vcs.review.list.SpaceReviewsListVm
 
 object SpaceReviewDataKeys {
@@ -17,5 +17,5 @@ object SpaceReviewDataKeys {
   internal val SELECTED_REVIEW_VM: DataKey<SpaceSelectedReviewVm> = DataKey.create("com.intellij.space.vcs.review.selected.vm")
 
   @JvmStatic
-  internal val REVIEW_DETAILS_VM: DataKey<CrDetailsVm<*>> = DataKey.create("space.code.review.vm")
+  internal val REVIEW_DETAILS_VM: DataKey<SpaceReviewDetailsVm<*>> = DataKey.create("space.code.review.vm")
 }

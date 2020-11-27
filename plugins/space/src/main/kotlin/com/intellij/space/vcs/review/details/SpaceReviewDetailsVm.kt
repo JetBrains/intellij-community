@@ -21,7 +21,7 @@ import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.*
 
-abstract class CrDetailsVm<R : CodeReviewRecord>(
+abstract class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   final override val lifetime: Lifetime,
   val ideaProject: Project,
   val spaceProjectInfo: SpaceProjectInfo,
@@ -109,7 +109,7 @@ internal class MergeRequestDetailsVm(
   spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<MergeRequestRecord>,
   client: KCircletClient
-) : CrDetailsVm<MergeRequestRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
+) : SpaceReviewDetailsVm<MergeRequestRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
 
   private val branchPair: Property<MergeRequestBranchPair> = cellProperty { review.live.branchPair }
 
@@ -127,7 +127,7 @@ internal class CommitSetReviewDetailsVm(
   spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<CommitSetReviewRecord>,
   client: KCircletClient
-) : CrDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
+) : SpaceReviewDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
 
   val reposInCurrentProject: Property<Map<String, SpaceRepoInfo?>?> = mapInit(commits, null) { commits ->
     val spaceReposByName = spaceReposInfo.associateBy(SpaceRepoInfo::name)
@@ -150,7 +150,7 @@ internal fun createReviewDetailsVm(lifetime: Lifetime,
                                    client: KCircletClient,
                                    spaceProjectInfo: SpaceProjectInfo,
                                    spaceReposInfo: Set<SpaceRepoInfo>,
-                                   ref: Ref<CodeReviewRecord>): CrDetailsVm<out CodeReviewRecord> {
+                                   ref: Ref<CodeReviewRecord>): SpaceReviewDetailsVm<out CodeReviewRecord> {
   return when (val codeReviewRecord = ref.resolve()) {
     is MergeRequestRecord -> MergeRequestDetailsVm(
       lifetime,

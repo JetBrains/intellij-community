@@ -27,12 +27,12 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal class AuthorsComponent(
-  detailsVm: CrDetailsVm<out CodeReviewRecord>,
+  detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
   participantsVm: SpaceReviewParticipantsVm
 ) : ParticipantsComponent(detailsVm, participantsVm.authors, SpaceBundle.message("review.label.authors"))
 
 internal class ReviewersComponent(
-  private val detailsVm: CrDetailsVm<out CodeReviewRecord>,
+  private val detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
   private val participantsVm: SpaceReviewParticipantsVm
 ) : ParticipantsComponent(detailsVm, participantsVm.reviewers, SpaceBundle.message("review.label.reviewers")) {
 
@@ -68,7 +68,7 @@ internal class ReviewersComponent(
 }
 
 internal open class ParticipantsComponent(
-  detailsVm: CrDetailsVm<out CodeReviewRecord>,
+  detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
   participantsVm: Property<List<CodeReviewParticipant>?>,
   @NlsContexts.Label labelText: String
 ) : Lifetimed by detailsVm {

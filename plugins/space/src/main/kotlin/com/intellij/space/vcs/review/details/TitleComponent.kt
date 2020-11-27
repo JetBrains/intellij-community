@@ -32,7 +32,7 @@ import javax.swing.KeyStroke
 
 internal class TitleComponent(private val client: KCircletClient,
                               override val lifetime: Lifetime,
-                              private val detailsVm: CrDetailsVm<CodeReviewRecord>) : Lifetimed {
+                              private val detailsVm: SpaceReviewDetailsVm<CodeReviewRecord>) : Lifetimed {
   private val titleLabel = HtmlEditorPane().apply {
     font = font.deriveFont((font.size * 1.2).toFloat())
   }

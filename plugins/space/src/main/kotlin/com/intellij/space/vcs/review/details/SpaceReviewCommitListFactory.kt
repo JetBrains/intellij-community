@@ -15,7 +15,7 @@ import javax.swing.ScrollPaneConstants
 
 
 object SpaceReviewCommitListFactory {
-  internal fun createCommitList(reviewDetailsVm: CrDetailsVm<out CodeReviewRecord>): JComponent {
+  internal fun createCommitList(reviewDetailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>): JComponent {
     val listModel: CollectionListModel<ReviewCommitListItem> = CollectionListModel()
 
     val commitList = JBList(listModel).apply {
