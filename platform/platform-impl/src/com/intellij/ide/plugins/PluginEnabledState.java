@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -42,7 +43,13 @@ public enum PluginEnabledState {
   }
 
   public @NotNull @Nls String toString() {
-    return IdeBundle.message(myPropertyKey);
+    String propertyKey = this == ENABLED && !isPerProjectEnabled() ?
+                         "plugins.configurable.InstalledSearchOption.Enabled" :
+                         this == DISABLED && !isPerProjectEnabled() ?
+                         "plugins.configurable.InstalledSearchOption.Disabled" :
+                         myPropertyKey;
+
+    return IdeBundle.message(propertyKey);
   }
 
   public boolean isEnabled() {
@@ -51,6 +58,10 @@ public enum PluginEnabledState {
 
   public boolean isPerProject() {
     return myPerProject;
+  }
+
+  public static boolean isPerProjectEnabled() {
+    return Registry.is("ide.plugins.per.project", false);
   }
 
   public static @NotNull PluginEnabledState getState(boolean enabled,

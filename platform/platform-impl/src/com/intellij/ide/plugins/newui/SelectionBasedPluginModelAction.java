@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +72,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
     protected boolean isInvisible(@NotNull PluginEnabledState oldState,
                                   @Nullable Project project) {
       return myNewState == oldState ||
-             myNewState.isPerProject() && (!isPerProjectEnabled() || project == null);
+             myNewState.isPerProject() && (!PluginEnabledState.isPerProjectEnabled() || project == null);
     }
 
     private @NotNull Stream<? extends IdeaPluginDescriptor> getAllDescriptors() {
@@ -88,18 +87,18 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
         case ENABLED_FOR_PROJECT:
           return "plugins.configurable.enable.for.current.project";
         case ENABLED:
-          return "plugins.configurable.enable.for.all.projects";
+          return PluginEnabledState.isPerProjectEnabled() ?
+                 "plugins.configurable.enable.for.all.projects" :
+                 "plugins.configurable.enable.button";
         case DISABLED_FOR_PROJECT:
           return "plugins.configurable.disable.for.current.project";
         case DISABLED:
-          return "plugins.configurable.disable.for.all.projects";
+          return PluginEnabledState.isPerProjectEnabled() ?
+                 "plugins.configurable.disable.for.all.projects" :
+                 "plugins.configurable.disable.button";
         default:
           throw new IllegalArgumentException();
       }
-    }
-
-    private static boolean isPerProjectEnabled() {
-      return Registry.is("ide.plugins.per.project", false);
     }
   }
 
