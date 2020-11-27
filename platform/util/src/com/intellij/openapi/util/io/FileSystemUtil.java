@@ -705,11 +705,16 @@ public final class FileSystemUtil {
         // Ext*, F2FS
         if ((fs == 0xef53 || fs == 0xf2f52010) && ourLibExt2FsPresent) {
           LongByReference flags = new LongByReference();
-          if (E2P.INSTANCE.fgetflags(path, flags) == 0) {
+          if (E2P.INSTANCE.fgetflags(path, flags) == -1) {
             if (LOG.isTraceEnabled()) LOG.trace("fgetflags(" + path + "): error");
           }
           else {
-            return (flags.getValue() & E2P.CASE_FOLD) != 0 ? FileAttributes.CaseSensitivity.INSENSITIVE : FileAttributes.CaseSensitivity.SENSITIVE;
+            // The only known way for EXT4 to be case-insensitive is to set EXT4_CASEFOLD_FL flag in an inode
+            // see Linux git commit b886ee3e778ec2ad43e276fd378ab492cf6819b7, e.g. here:
+            // https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b886ee3e778ec2ad43e276fd378ab492cf6819b7
+            return (flags.getValue() & E2P.EXT4_CASEFOLD_FL) == 0
+                   ? FileAttributes.CaseSensitivity.SENSITIVE
+                   : FileAttributes.CaseSensitivity.INSENSITIVE;
           }
         }
       }
@@ -736,7 +741,7 @@ public final class FileSystemUtil {
   interface E2P extends Library {
     E2P INSTANCE = Native.load("e2p", E2P.class);
 
-    long CASE_FOLD = 0x4000_0000L;
+    long EXT4_CASEFOLD_FL = 0x4000_0000L;
 
     int fgetflags(String path, LongByReference flags);
   }
