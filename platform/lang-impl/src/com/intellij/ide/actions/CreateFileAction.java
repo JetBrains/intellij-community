@@ -77,7 +77,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
     else {
       if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
-        createLightWeightPopup(validator, elementsConsumer, directory, project).showCenteredInCurrentWindow(project);
+        createLightWeightPopup(validator, elementsConsumer, directory).showCenteredInCurrentWindow(project);
       }
       else {
         Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
@@ -89,8 +89,8 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
   private JBPopup createLightWeightPopup(MyInputValidator validator,
                                          Consumer<PsiElement[]> consumer,
-                                         @NotNull PsiDirectory directory,
-                                         @NotNull Project project) {
+                                         @NotNull PsiDirectory directory) {
+    Project project = directory.getProject();
     NewItemSimplePopupPanel contentPanel = new NewItemSimplePopupPanel();
     JTextField nameField = contentPanel.getTextField();
     JBPopup popup = NewItemPopupUtil.createNewItemPopup(IdeBundle.message("title.new.file"), contentPanel, nameField);
