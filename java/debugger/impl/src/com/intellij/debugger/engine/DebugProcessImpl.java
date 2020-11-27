@@ -112,7 +112,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
 
   private volatile ExecutionResult myExecutionResult;
-  private RemoteConnection myConnection;
+  private volatile RemoteConnection myConnection;
   private JavaDebugProcess myXDebugProcess;
 
   private volatile Map<String, Connector.Argument> myArguments;
@@ -124,7 +124,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = CompoundPositionManager.EMPTY;
-  private @NotNull DebuggerManagerThreadImpl myDebuggerManagerThread;
+  private volatile @NotNull DebuggerManagerThreadImpl myDebuggerManagerThread;
 
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
