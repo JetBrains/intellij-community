@@ -1,15 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.pycharm
 
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 
+import java.nio.file.Path
+
 /**
  * @author Aleksey.Rostovskiy
  */
 @CompileStatic
-class PyCharmBuildOptions {
+final class PyCharmBuildOptions {
   /**
    * Build step of generating indices and stubs. Pass it to {@link org.jetbrains.intellij.build.BuildOptions#buildStepsToSkip} to skip
    */
@@ -46,7 +48,7 @@ class PyCharmBuildOptions {
     return new File(context.paths.buildOutputRoot, "index")
   }
 
-  static File getTemporaryFolderForUnzip(BuildContext context) {
-    return new File(context.paths.temp, "unzips")
+  static Path getTemporaryFolderForUnzip(BuildContext context) {
+    return context.paths.tempDir.resolve("unzips")
   }
 }

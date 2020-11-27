@@ -4,20 +4,26 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.StringUtil
 import groovy.io.FileType
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -27,7 +33,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.function.Function
 
-class BuildTasksImpl extends BuildTasks {
+@CompileStatic
+final class BuildTasksImpl extends BuildTasks {
   final BuildContext buildContext
 
   BuildTasksImpl(BuildContext buildContext) {
@@ -35,6 +42,7 @@ class BuildTasksImpl extends BuildTasks {
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   void zipProjectSources() {
     buildContext.executeStep("Build sources zip archive", BuildOptions.SOURCES_ARCHIVE_STEP) {
       String targetFile = "$buildContext.paths.artifacts/sources.zip"
@@ -57,6 +65,7 @@ class BuildTasksImpl extends BuildTasks {
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   void zipSourcesOfModules(Collection<String> modules, String targetFilePath) {
     buildContext.executeStep("Build sources of modules archive", BuildOptions.SOURCES_ARCHIVE_STEP) {
       buildContext.messages.progress("Building archive of ${modules.size()} modules to $targetFilePath")
@@ -93,7 +102,7 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.messages.debug("Building provided modules list for the following modules: $modules")
       FileUtil.delete(new File(targetFilePath))
       // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
-      runApplicationStarter(buildContext, "$buildContext.paths.temp/builtinModules", modules, ['listBundledPlugins', targetFilePath])
+      runApplicationStarter(buildContext, Paths.get(buildContext.paths.temp, "builtinModules"), modules, ['listBundledPlugins', targetFilePath])
       if (!new File(targetFilePath).exists()) {
         buildContext.messages.error("Failed to build provided modules list: $targetFilePath doesn't exist")
       }
@@ -101,13 +110,14 @@ class BuildTasksImpl extends BuildTasks {
     })
   }
 
-  static void runApplicationStarter(BuildContext context,
-                                    String tempDir,
+  static void runApplicationStarter(@NotNull BuildContext context,
+                                    @NotNull Path tempDir,
                                     List<String> modules,
                                     List<String> arguments,
-                                    Map<String, Object> systemProperties = [:],
-                                    List<String> vmOptions = ["-ea", "-Xmx512m"]) {
-    context.ant.mkdir(dir: tempDir)
+                                    Map<String, Object> systemProperties = Collections.emptyMap(),
+                                    List<String> vmOptions = List.of("-ea", "-Xmx512m"),
+                                    List<String> pluginsToDisable = Collections.emptyList()) {
+    Files.createDirectories(tempDir)
 
     Set<String> ideClasspath = new LinkedHashSet<String>()
     context.messages.debug("Collecting classpath to run application starter '${arguments.first()}:")
@@ -119,18 +129,18 @@ class BuildTasksImpl extends BuildTasks {
       }
     }
 
-    Map<String, ?> ideaProperties = [
+    Map<String, Object> ideaProperties = [
       "java.awt.headless": true,
       "idea.home.path"   : context.paths.projectHome,
-      "idea.system.path" : "${tempDir}/system",
-      "idea.config.path" : "${tempDir}/config"]
-
+      "idea.system.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/system",
+      "idea.config.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/config"
+    ] as Map<String, Object>
     if (context.productProperties.platformPrefix != null) {
-      ideaProperties += ["idea.platform.prefix": context.productProperties.platformPrefix]
+      ideaProperties.put("idea.platform.prefix", context.productProperties.platformPrefix)
     }
 
-    def additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
-    additionalPluginPaths?.each { pluginPath ->
+    List<String> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+    for (String pluginPath : additionalPluginPaths) {
       File libFile = new File(pluginPath, "lib")
       libFile.list { _, name ->
         FileUtil.extensionEquals(name, "jar")
@@ -142,7 +152,7 @@ class BuildTasksImpl extends BuildTasks {
       }
     }
 
-    disableCompatibleIgnoredPlugins(context, "${tempDir}/config")
+    disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), pluginsToDisable)
 
     BuildUtils.runJava(
       context,
@@ -153,21 +163,22 @@ class BuildTasksImpl extends BuildTasks {
       arguments)
   }
 
-  private static void disableCompatibleIgnoredPlugins(BuildContext context, String configDir) {
-    String text = ""
-    context.productProperties.productLayout.compatiblePluginsToIgnore.each { moduleName ->
-      def pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")
-      text += JDOMUtil.load(pluginXml).getChildTextTrim("id") + "\n"
+  private static void disableCompatibleIgnoredPlugins(@NotNull BuildContext context,
+                                                      @NotNull Path configDir,
+                                                      @NotNull List<String> pluginsToDisable) {
+    Set<String> toDisable = new HashSet<>(pluginsToDisable)
+    for (String moduleName : context.productProperties.productLayout.compatiblePluginsToIgnore) {
+      Path pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")
+      toDisable.add(JDOMUtil.load(pluginXml).getChildTextTrim("id"))
     }
-    if (!text.isEmpty()) {
-      FileUtil.writeToFile(new File(configDir + "/disabled_plugins.txt"), text)
+    if (!toDisable.isEmpty()) {
+      Files.createDirectories(configDir)
+      Files.writeString(configDir.resolve("disabled_plugins.txt"), String.join("\n", toDisable))
     }
   }
 
-  File patchIdeaPropertiesFile() {
-    File originalFile = new File("$buildContext.paths.communityHome/bin/idea.properties")
-
-    String text = originalFile.text
+  private Path patchIdeaPropertiesFile() {
+    String text = Files.readString(buildContext.paths.communityHomeDir.resolve("bin/idea.properties"))
     if (!buildContext.shouldIDECopyJarsByDefault()) {
       text += """
 #---------------------------------------------------------------------
@@ -177,7 +188,7 @@ idea.jars.nocopy=true
 """
     }
     buildContext.productProperties.additionalIDEPropertiesFilePaths.each {
-      text += "\n" + new File(it).text
+      text += "\n" + Files.readString(Paths.get(it))
     }
 
     //todo[nik] introduce special systemSelectorWithoutVersion instead?
@@ -198,14 +209,14 @@ idea.fatal.error.notification=enabled
 #-----------------------------------------------------------------------
 idea.fatal.error.notification=disabled
 """)
-    File propertiesFile = new File(buildContext.paths.temp, "idea.properties")
-    propertiesFile.text = text
+    Path propertiesFile = Paths.get(buildContext.paths.temp, "idea.properties")
+    Files.writeString(propertiesFile, text)
     return propertiesFile
   }
 
-  File patchApplicationInfo() {
-    def sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
-    def targetFile = new File(buildContext.paths.temp, sourceFile.name)
+  @NotNull Path patchApplicationInfo() {
+    Path sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
+    Path targetFile = Paths.get(buildContext.paths.temp).resolve(sourceFile.fileName)
     def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
 
     def artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
@@ -216,12 +227,13 @@ idea.fatal.error.notification=disabled
         buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
       }
     }
-    BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
+    BuildUtils.copyAndPatchFile(sourceFile, targetFile,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
                                 "BUILTIN_PLUGINS_URL": builtinPluginsRepoUrl ?: ""])
     return targetFile
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   void layoutShared() {
     buildContext.messages.block("Copy files shared among all distributions") {
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/bin") {
@@ -242,7 +254,10 @@ idea.fatal.error.notification=disabled
       }
 
       if (buildContext.applicationInfo.svgRelativePath != null) {
-        buildContext.ant.copy(file: findBrandingResource(buildContext.applicationInfo.svgRelativePath), tofile: "$buildContext.paths.distAll/bin/${buildContext.productProperties.baseFileName}.svg")
+        Path from = findBrandingResource(buildContext.applicationInfo.svgRelativePath)
+        Path to = Paths.get(buildContext.paths.distAll, "bin/${buildContext.productProperties.baseFileName}.svg")
+        Files.createDirectories(to.parent)
+        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
       }
 
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
@@ -255,41 +270,49 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  static void generateBuildTxt(BuildContext buildContext, String targetDirectory) {
-    new File(targetDirectory, "build.txt").text = buildContext.fullBuildNumber
+  static void generateBuildTxt(@NotNull BuildContext buildContext, @NotNull Path targetDirectory) {
+    Files.writeString(targetDirectory.resolve("build.txt"), buildContext.fullBuildNumber)
   }
 
-  private File findBrandingResource(String relativePath) {
-    def inModule = buildContext.findFileInModuleSources(buildContext.productProperties.applicationInfoModule, relativePath)
-    if (inModule != null) return inModule
-    def inResources = buildContext.productProperties.brandingResourcePaths.collect { new File(it, relativePath) }.find { it.exists() }
-    if (inResources == null) {
-      buildContext.messages.error("Cannot find '$relativePath' in sources of '$buildContext.productProperties.applicationInfoModule' and in $buildContext.productProperties.brandingResourcePaths")
+  private @NotNull Path findBrandingResource(@NotNull String relativePath) {
+    String normalizedRelativePath = relativePath.startsWith("/") ? relativePath.substring(1) : relativePath
+    Path inModule = buildContext.findFileInModuleSources(buildContext.productProperties.applicationInfoModule, normalizedRelativePath)
+    if (inModule != null) {
+      return inModule
     }
-    return inResources
+
+    for (String brandingResourceDir : buildContext.productProperties.brandingResourcePaths) {
+      Path file = Paths.get(brandingResourceDir, normalizedRelativePath)
+      if (Files.exists(file)) {
+        return file
+      }
+    }
+    buildContext.messages.error("Cannot find '$normalizedRelativePath' in sources of '$buildContext.productProperties.applicationInfoModule' and in $buildContext.productProperties.brandingResourcePaths")
+    return null
   }
 
   private void copyLogXml() {
-    def src = new File("$buildContext.paths.communityHome/bin/log.xml")
-    def dst = new File("$buildContext.paths.distAll/bin/log.xml")
-    dst.parentFile.mkdirs()
-    src.filterLine { String it -> !it.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(dst.newWriter()).close()
+    Path src = buildContext.paths.communityHomeDir.resolve("bin/log.xml")
+    Path dst = Paths.get(buildContext.paths.distAll, "bin/log.xml")
+    Files.createDirectories(dst.parent)
+    Files.newBufferedWriter(dst).withCloseable {
+      src.filterLine { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(it)
+    }
   }
 
-  private static BuildTaskRunnable<String> createDistributionForOsTask(String taskName, Function<BuildContext, OsSpecificDistributionBuilder> factory) {
-    new BuildTaskRunnable<String>(taskName) {
-      @Override
-      String run(BuildContext context) {
-        def builder = factory.apply(context)
-        if (builder != null && context.shouldBuildDistributionForOS(builder.targetOs.osId)) {
-          return context.messages.block("Build $builder.targetOs.osName Distribution") {
-            def osSpecificDistDirectory = "$context.paths.buildOutputRoot/dist.$builder.targetOs.distSuffix".toString()
-            builder.copyFilesForOsDistribution(osSpecificDistDirectory)
-            builder.buildArtifacts(osSpecificDistDirectory)
-            osSpecificDistDirectory
-          }
-        }
+  private static @NotNull BuildTaskRunnable<Path> createDistributionForOsTask(@NotNull String taskName,
+                                                                              @NotNull Function<BuildContext, OsSpecificDistributionBuilder> factory) {
+    return BuildTaskRunnable.<Path>create(taskName) { BuildContext context ->
+      OsSpecificDistributionBuilder builder = factory.apply(context)
+      if (builder == null || !context.shouldBuildDistributionForOS(builder.targetOs.osId)) {
         return null
+      }
+
+      return context.messages.block("Build $builder.targetOs.osName Distribution") {
+        Path osSpecificDistDirectory = Paths.get(context.paths.buildOutputRoot, "dist.$builder.targetOs.distSuffix")
+        builder.copyFilesForOsDistribution(osSpecificDistDirectory)
+        builder.buildArtifacts(osSpecificDistDirectory)
+        osSpecificDistDirectory
       }
     }
   }
@@ -297,15 +320,15 @@ idea.fatal.error.notification=disabled
   @Override
   void compileModulesFromProduct() {
     checkProductProperties()
-    def patchedApplicationInfo = patchApplicationInfo()
+    Path patchedApplicationInfo = patchApplicationInfo()
     compileModulesForDistribution(patchedApplicationInfo)
   }
 
-  private DistributionJARsBuilder compileModulesForDistribution(File patchedApplicationInfo) {
+  private DistributionJARsBuilder compileModulesForDistribution(@NotNull Path patchedApplicationInfo) {
     def productLayout = buildContext.productProperties.productLayout
-    def moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
+    List<String> moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
-    compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
+    compileModules(moduleNames + ((buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: Collections.emptyList()) as List<String>) +
                    productLayout.mainModules + mavenArtifacts.additionalModules + mavenArtifacts.proprietaryModules,
                    buildContext.productProperties.modulesToCompileTests)
 
@@ -327,7 +350,7 @@ idea.fatal.error.notification=disabled
     return compilePlatformAndPluginModules(patchedApplicationInfo, pluginsToPublish)
   }
 
-  private DistributionJARsBuilder compilePlatformAndPluginModules(File patchedApplicationInfo, LinkedHashSet<PluginLayout> pluginsToPublish) {
+  private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Path patchedApplicationInfo, @NotNull Set<PluginLayout> pluginsToPublish) {
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
     compileModules(distributionJARsBuilder.modulesForPluginsToPublish)
 
@@ -343,7 +366,7 @@ idea.fatal.error.notification=disabled
     copyDependenciesFile()
     setupBundledMaven()
 
-    def patchedApplicationInfo = patchApplicationInfo()
+    Path patchedApplicationInfo = patchApplicationInfo()
     logFreeDiskSpace("before compilation")
     def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
     logFreeDiskSpace("after compilation")
@@ -351,11 +374,12 @@ idea.fatal.error.notification=disabled
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
       buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
         def mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
-        def ideModuleNames
+        List<String> ideModuleNames
         if (mavenArtifacts.forIdeModules) {
           def bundledPlugins = buildContext.productProperties.productLayout.bundledPluginModules as Set<String>
           ideModuleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
-        } else {
+        }
+        else {
           ideModuleNames = []
         }
         def moduleNames = ideModuleNames + mavenArtifacts.additionalModules
@@ -388,8 +412,8 @@ idea.fatal.error.notification=disabled
       setupJBre()
       layoutShared()
 
-      def propertiesFile = patchIdeaPropertiesFile()
-      List<BuildTaskRunnable<String>> tasks = new ArrayList<>()
+      Path propertiesFile = patchIdeaPropertiesFile()
+      List<BuildTaskRunnable<Path>> tasks = new ArrayList<>()
       if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_WINDOWS)) {
         tasks.add(createDistributionForOsTask("win", { BuildContext context ->
           context.windowsDistributionCustomizer?.
@@ -407,7 +431,7 @@ idea.fatal.error.notification=disabled
         }))
       }
 
-      List<String> paths = runInParallel(tasks, buildContext).findAll { it != null }
+      List<Path> paths = runInParallel(tasks, buildContext).findAll { it != null }
 
       if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
         if (buildContext.buildNumber == null) {
@@ -486,10 +510,10 @@ idea.fatal.error.notification=disabled
     ]
     String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
     if (prefix != null) {
-      args += "-Dintellij.build.bundled.jre.prefix=$prefix"
+      args += "-Dintellij.build.bundled.jre.prefix=" + prefix
     }
     if (buildContext.options.bundledJreBuild != null) {
-      args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
+      args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledJreBuild
     }
     buildContext.gradle.run('Setting up JetBrains JREs', args)
     logFreeDiskSpace("after downloading JREs")
@@ -501,7 +525,8 @@ idea.fatal.error.notification=disabled
     logFreeDiskSpace("after downloading Maven")
   }
 
-  static def unpackPty4jNative(BuildContext buildContext, String distDir, String pty4jOsSubpackageName) {
+  @CompileStatic(TypeCheckingMode.SKIP)
+  static def unpackPty4jNative(BuildContext buildContext, @NotNull Path distDir, String pty4jOsSubpackageName) {
     def pty4jNativeDir = "$distDir/lib/pty4j-native"
     def nativePkg = "resources/com/pty4j/native"
     def includedNativePkg = StringUtil.trimEnd(nativePkg + "/" + StringUtil.notNullize(pty4jOsSubpackageName), '/')
@@ -525,12 +550,12 @@ idea.fatal.error.notification=disabled
   //dbus-java is used only on linux for KWallet integration.
   //It relies on native libraries, causing notarization issues on mac.
   //So it is excluded from all distributions and manually re-included on linux.
-  static def addDbusJava(BuildContext buildContext, String distDir) {
-    def library = buildContext.findModule("intellij.platform.credentialStore").libraryCollection.findLibrary("dbus-java")
-    library.getFiles(JpsOrderRootType.COMPILED).each { f ->
-      buildContext.ant.copy(todir: "$distDir/lib") {
-        fileset(file: f.absolutePath)
-      }
+  static void addDbusJava(BuildContext buildContext, @NotNull Path distDir) {
+    JpsLibrary library = buildContext.findModule("intellij.platform.credentialStore").libraryCollection.findLibrary("dbus-java")
+    Path destLibDir = distDir.resolve("lib")
+    Files.createDirectories(destLibDir)
+    for (File file : library.getFiles(JpsOrderRootType.COMPILED)) {
+      Files.copy(file.toPath(), destLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
     }
   }
 
@@ -539,12 +564,13 @@ idea.fatal.error.notification=disabled
   }
 
 
-  private def copyDependenciesFile() {
-    def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
-    buildContext.ant.copy(file: buildContext.dependenciesProperties.file.absolutePath, tofile: outputFile)
-    buildContext.notifyArtifactBuilt(outputFile)
+  private void copyDependenciesFile() {
+    File outputFile = new File(buildContext.paths.artifacts, "dependencies.txt")
+    FileUtil.copy(buildContext.dependenciesProperties.file, outputFile)
+    buildContext.notifyArtifactBuilt(outputFile.toString())
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   private void scramble() {
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
       buildContext.proprietaryBuildTools.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
@@ -686,7 +712,7 @@ idea.fatal.error.notification=disabled
                                     "Assuming simple layout. Modules list: $unspecifiedLayoutPluginModules")
     }
 
-    def unknownBundledPluginModules = pluginModules.findAll { buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
+    List<String> unknownBundledPluginModules = pluginModules.findAll { buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
         "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules " +
@@ -695,10 +721,10 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private void checkPaths(Collection<String> paths, String fieldName) {
-    def nonExistingFiles = paths.findAll { it != null && !new File(it).exists() }
+  private void checkPaths(@NotNull Collection<String> paths, String fieldName) {
+    Collection<String> nonExistingFiles = paths.findAll { it != null && !Files.exists(Paths.get(it)) }
     if (!nonExistingFiles.empty) {
-      buildContext.messages.error("$fieldName contains non-existing path${nonExistingFiles.size() > 1 ? "s" : ""}: ${nonExistingFiles.join(",")}")
+      buildContext.messages.error("$fieldName contains non-existing path${nonExistingFiles.size() > 1 ? "s" : ""}: ${String.join(",", nonExistingFiles)}")
     }
   }
 
@@ -726,24 +752,24 @@ idea.fatal.error.notification=disabled
   static <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks, BuildContext buildContext) {
     if (!buildContext.options.runBuildStepsInParallel) {
       return tasks.collect {
-        it.run(buildContext)
+        it.task.apply(buildContext)
       }
     }
 
     try {
       return buildContext.messages.block("Run parallel tasks") {
-        buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
+        buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.name }}")
         def executorService = Executors.newCachedThreadPool()
         List<Future<V>> futures = tasks.collect { task ->
-          def childContext = buildContext.forkForParallelTask(task.taskName)
+          def childContext = buildContext.forkForParallelTask(task.name)
           executorService.submit({
             def start = System.currentTimeMillis()
             childContext.messages.onForkStarted()
             try {
-              return task.run(childContext)
+              return task.task.apply(childContext)
             }
             finally {
-              buildContext.messages.info("'$task.taskName' task finished in ${Formats.formatDuration(System.currentTimeMillis() - start)}")
+              buildContext.messages.info("'$task.name' task finished in ${Formats.formatDuration(System.currentTimeMillis() - start)}")
               childContext.messages.onForkFinished()
             }
           } as Callable<V>)
@@ -779,6 +805,7 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   void buildFullUpdaterJar() {
     String updaterModule = "intellij.platform.updater"
     def libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule)).productionOnly().runtimeOnly().libraries.collectMany {
@@ -812,8 +839,9 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  void buildUnpackedDistribution(String targetDirectory, boolean includeBinAndRuntime) {
-    buildContext.paths.distAll = targetDirectory
+  @CompileStatic(TypeCheckingMode.SKIP)
+  void buildUnpackedDistribution(@NotNull Path targetDirectory, boolean includeBinAndRuntime) {
+    buildContext.paths.distAll = targetDirectory.toString()
     OsFamily currentOs = SystemInfo.isWindows ? OsFamily.WINDOWS :
                          SystemInfo.isMac ? OsFamily.MACOS :
                          SystemInfo.isLinux ? OsFamily.LINUX : null
@@ -847,7 +875,7 @@ idea.fatal.error.notification=disabled
       builder.copyFilesForOsDistribution(targetDirectory)
       def jbrTargetDir = buildContext.bundledJreManager.extractJre(currentOs)
       if (currentOs == OsFamily.WINDOWS) {
-        buildContext.ant.move(todir: targetDirectory) {
+        buildContext.ant.move(todir: targetDirectory.toString()) {
           fileset(dir: jbrTargetDir)
         }
       }
@@ -860,7 +888,7 @@ idea.fatal.error.notification=disabled
 
       def executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       buildContext.ant.chmod(perm: "755") {
-        fileset(dir: targetDirectory) {
+        fileset(dir: targetDirectory.toString()) {
           executableFilesPatterns.each {
             include(name: it)
           }
@@ -868,27 +896,32 @@ idea.fatal.error.notification=disabled
       }
     }
     else {
-      copyResourceFiles(buildContext, SystemInfo.isMac ? "$targetDirectory/Resources" : targetDirectory)
+      copyResourceFiles(buildContext, SystemInfo.isMac ? targetDirectory.resolve("Resources") : targetDirectory)
       unpackPty4jNative(buildContext, targetDirectory, null)
     }
   }
 
-  static copyResourceFiles(BuildContext buildContext, String newDirPath) {
-    Path newDir = Paths.get(newDirPath)
+  static copyResourceFiles(@NotNull BuildContext buildContext, @NotNull Path newDir) {
     Files.createDirectories(newDir)
-
     for (Path file : buildContext.resourceFiles) {
-      Files.copy(file, newDir.resolve(file.fileName))
+      Files.copy(file, newDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
     }
   }
 
-  abstract static class BuildTaskRunnable<V> {
-    final String taskName
-
-    BuildTaskRunnable(String name) {
-      taskName = name
+  static void fixCrlf(@NotNull Path file) {
+    String data = Files.readString(file)
+    String convertedData = StringUtil.convertLineSeparators(data)
+    if (data != convertedData) {
+      Files.writeString(file, convertedData)
     }
+  }
 
-    abstract V run(BuildContext context)
+  static void copyInspectScript(@NotNull BuildContext buildContext, @NotNull Path distBinDir) {
+    String inspectScript = buildContext.productProperties.inspectCommandName
+    if (inspectScript != "inspect") {
+      Path targetPath = distBinDir.resolve("${inspectScript}.sh")
+      Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.COPY_ATTRIBUTES)
+      buildContext.patchInspectScript(targetPath)
+    }
   }
 }

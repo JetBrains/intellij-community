@@ -176,7 +176,7 @@ class BuildOptions {
    * {@link ProductModulesLayout#buildAllCompatiblePlugins} are built. In order to skip building all non-bundled plugins, set the property to
    * {@code none}.
    */
-  List<String> nonBundledPluginDirectoriesToInclude = StringUtil.split(System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", ""), ",") as List<String>
+  List<String> nonBundledPluginDirectoriesToInclude = StringUtil.split(System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", ""), ",")
 
   /**
    * Specifies JRE version to be bundled with distributions, 11 by default.

@@ -10,8 +10,10 @@ import com.jetbrains.plugin.blockmap.core.FileHash
 import groovy.io.FileType
 import groovy.json.JsonOutput
 import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
@@ -26,13 +28,15 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.function.Consumer
+import java.util.regex.Matcher
 import java.util.stream.Collectors
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -41,7 +45,8 @@ import java.util.zip.ZipOutputStream
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
  * non-bundled plugins (in {@link org.jetbrains.intellij.build.BuildPaths#artifacts artifacts}/plugins directory).
  */
-class DistributionJARsBuilder {
+@CompileStatic
+final class DistributionJARsBuilder {
   private static final boolean COMPRESS_JARS = false
   private static final String RESOURCES_INCLUDED = "resources.included"
   private static final String RESOURCES_EXCLUDED = "resources.excluded"
@@ -58,10 +63,11 @@ class DistributionJARsBuilder {
   private final Path patchedApplicationInfo
   private final LinkedHashSet<PluginLayout> pluginsToPublish
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   DistributionJARsBuilder(BuildContext buildContext,
-                          File patchedApplicationInfo,
-                          LinkedHashSet<PluginLayout> pluginsToPublish = []) {
-    this.patchedApplicationInfo = patchedApplicationInfo == null ? null : patchedApplicationInfo.toPath()
+                          @Nullable Path patchedApplicationInfo,
+                          Set<PluginLayout> pluginsToPublish = Collections.emptyList()) {
+    this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     this.pluginsToPublish = filterPluginsToPublish(pluginsToPublish)
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
@@ -232,15 +238,23 @@ class DistributionJARsBuilder {
     }
   }
 
-  LinkedHashSet<PluginLayout> filterPluginsToPublish(LinkedHashSet<PluginLayout> plugins) {
-    def toInclude = buildContext.options.nonBundledPluginDirectoriesToInclude as Set<String>
-    if (toInclude.isEmpty()) return plugins
-    if (toInclude.size() == 1 && toInclude.contains("none")) return new LinkedHashSet<PluginLayout>()
+  @NotNull Set<PluginLayout> filterPluginsToPublish(@NotNull Set<PluginLayout> plugins) {
+    if (plugins.isEmpty()) {
+      return plugins
+    }
+
+    Set<String> toInclude = new HashSet<>(buildContext.options.nonBundledPluginDirectoriesToInclude)
+    if (toInclude.isEmpty()) {
+      return plugins
+    }
+    if (toInclude.size() == 1 && toInclude.contains("none")) {
+      return new LinkedHashSet<PluginLayout>()
+    }
     return plugins.findAll { toInclude.contains(it.directoryName) }
   }
 
-  private static Set<String> getLibsToRemoveVersion() {
-    return ["Trove4j", "Log4J", "jna", "jetbrains-annotations-java5", "JDOM"].toSet()
+  private static @NotNull Set<String> getLibsToRemoveVersion() {
+    return Set.of("Trove4j", "Log4J", "jna", "jetbrains-annotations-java5", "JDOM")
   }
 
   private Set<String> getEnabledPluginModules() {
@@ -260,7 +274,7 @@ class DistributionJARsBuilder {
    * @return module names which are required to run necessary tools from build scripts
    */
   static List<String> getToolModules() {
-    ["intellij.java.rt", "intellij.platform.main", /*required to build searchable options index*/ "intellij.platform.updater"]
+    return List.of("intellij.java.rt", "intellij.platform.main", /*required to build searchable options index*/ "intellij.platform.updater")
   }
 
   Collection<String> getIncludedProjectArtifacts() {
@@ -269,11 +283,11 @@ class DistributionJARsBuilder {
 
   void buildJARs() {
     validateModuleStructure()
-    BuildTasksImpl.runInParallel(List.of(
-      createAsyncTask(BuildOptions.SVGICONS_PREBUILD_STEP, { SVGPreBuilder.prebuildSVGIcons(it) }),
-      createAsyncTask(BuildOptions.GENERATE_JAR_ORDER_STEP, { buildOrderFiles(it) }),
-      createAsyncTask(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) }),
-      createAsyncTask(BuildOptions.BROKEN_PLUGINS_LIST_STEP, { BrokenPluginsBuildFileService.buildFile(it) })
+    BuildTasksImpl.<Void>runInParallel(List.of(
+      BuildTaskRunnable.create(BuildOptions.SVGICONS_PREBUILD_STEP, { SVGPreBuilder.prebuildSVGIcons(it) }),
+      BuildTaskRunnable.create(BuildOptions.GENERATE_JAR_ORDER_STEP, { buildOrderFiles(it) }),
+      BuildTaskRunnable.create(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) }),
+      BuildTaskRunnable.create(BuildOptions.BROKEN_PLUGINS_LIST_STEP, { BrokenPluginsBuildFileService.buildFile(it) })
     ), buildContext)
     buildLib()
     buildBundledPlugins()
@@ -284,22 +298,11 @@ class DistributionJARsBuilder {
     reorderJARs()
   }
 
-  private static BuildTasksImpl.BuildTaskRunnable<Void> createAsyncTask(String taskName, Consumer<BuildContext> consumer) {
-    return new BuildTasksImpl.BuildTaskRunnable<Void>(taskName) {
-      @Override
-      Void run(BuildContext context) {
-        consumer.accept(context)
-        return null
-      }
-    }
-  }
-
   void reorderJARs() {
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
       def explicitOrderFile = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
-      def loadingOrderFilePath = explicitOrderFile != null ? explicitOrderFile : "$buildContext.paths.temp/jarOrder/order.txt"
-
-      if (loadingOrderFilePath != null && new File(loadingOrderFilePath).exists()) {
+      Path loadingOrderFilePath = explicitOrderFile == null ? Paths.get(buildContext.paths.temp, "jarOrder/order.txt") : Paths.get(explicitOrderFile)
+      if (Files.exists(loadingOrderFilePath)) {
         reorderJARs(loadingOrderFilePath)
       }
     }
@@ -311,16 +314,17 @@ class DistributionJARsBuilder {
    */
   static void buildOrderFiles(BuildContext buildContext) {
     buildContext.executeStep("Build jar order file", BuildOptions.GENERATE_JAR_ORDER_STEP, {
-      def directory = "$buildContext.paths.temp/jarOrder"
-      def modulesOrder = "$directory/modules-order.txt"
-      def classesOrder = "$directory/classes-order.txt"
+      Path directory = Paths.get(buildContext.paths.temp, "jarOrder")
+      Path modulesOrder = directory.resolveSibling("modules-order.txt")
+      Path classesOrder = directory.resolveSibling("classes-order.txt")
       List<String> modulesToIndex =  buildContext.productProperties.productLayout.mainModules + getModulesToCompile(buildContext)
       buildContext.messages.progress("Generating jar loading order for ${modulesToIndex.size()} modules")
-      FileUtil.delete(new File(modulesOrder))
-      FileUtil.delete(new File(classesOrder))
+      FileUtil.delete(modulesOrder)
+      FileUtil.delete(classesOrder)
       BuildTasksImpl.runApplicationStarter(buildContext, directory, modulesToIndex,
-                                           ['jarOrder', modulesOrder, classesOrder],
-                                           ["idea.log.classpath.info": true])
+                                           List.<String>of("jarOrder", modulesOrder.toString(), classesOrder.toString()),
+                                           Collections.<String, Object>singletonMap("idea.log.classpath.info", true),
+                                           List.of("-ea", "-Xmx768m"))
     })
   }
 
@@ -357,17 +361,20 @@ class DistributionJARsBuilder {
       def productLayout = buildContext.productProperties.productLayout
       def modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
       modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
-      def targetDirectory = getSearchableOptionsDir()
+      Path targetDirectory = getSearchableOptionsDir()
       buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
       buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
-      String targetFile = targetDirectory.absolutePath
       FileUtil.delete(targetDirectory)
       // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
       // It'll process all UI elements in Settings dialog and build index for them.
-      BuildTasksImpl.runApplicationStarter(buildContext, "$buildContext.paths.temp/searchableOptions", modulesToIndex, ['traverseUI', targetFile, 'true'])
-      def modules = targetDirectory.list()
+      BuildTasksImpl.runApplicationStarter(buildContext,
+                                           Paths.get(buildContext.paths.temp, "searchableOptions"),
+                                           modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
+                                           Collections.emptyMap(),
+                                           List.of("-ea", "-Xmx1024m"))
+      String[] modules = targetDirectory.toFile().list()
       if (modules == null || modules.length == 0) {
-        buildContext.messages.error("Failed to build searchable options index: $targetFile is empty")
+        buildContext.messages.error("Failed to build searchable options index: $targetDirectory is empty")
       }
       else {
         buildContext.messages.info("Searchable options are built successfully for $modules.length modules")
@@ -393,7 +400,8 @@ class DistributionJARsBuilder {
     platformModules + pluginsToPublish.collectMany(new LinkedHashSet()) { it.moduleJars.values() }
   }
 
-  void reorderJARs(String loadingOrderFilePath) {
+  @CompileStatic(TypeCheckingMode.SKIP)
+  void reorderJARs(@NotNull Path loadingOrderFilePath) {
     buildContext.messages.block("Reorder JARs") {
       String targetDirectory = buildContext.paths.distAll
       buildContext.messages.progress("Reordering *.jar files in $targetDirectory")
@@ -405,7 +413,7 @@ class DistributionJARsBuilder {
         .join("\n")
 
       buildContext.ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: true, failonerror: true) {
-        arg(value: loadingOrderFilePath)
+        arg(value: loadingOrderFilePath.toString())
         arg(value: targetDirectory)
         arg(value: targetDirectory)
         arg(value: ignoredJarsFile.parent)
@@ -424,10 +432,8 @@ class DistributionJARsBuilder {
     if (productProperties.generateLibrariesLicensesTable && !buildContext.options.buildStepsToSkip.
       contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
       String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      buildContext.ant.copy(file: getThirdPartyLibrariesHtmlFilePath(),
-                            tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.html")
-      buildContext.ant.copy(file: getThirdPartyLibrariesJsonFilePath(),
-                            tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.json")
+      FileUtil.copy(new File(getThirdPartyLibrariesHtmlFilePath()), new File(buildContext.paths.artifacts, "$artifactNamePrefix-third-party-libraries.html"))
+      FileUtil.copy(new File(getThirdPartyLibrariesJsonFilePath()), new File(buildContext.paths.artifacts, "$artifactNamePrefix-third-party-libraries.json"))
     }
 
     buildInternalUtilities()
@@ -449,6 +455,7 @@ class DistributionJARsBuilder {
     projectStructureMapping.generateJsonFile(targetFile)
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   void buildInternalUtilities() {
     if (buildContext.productProperties.scrambleMainJar) {
       createLayoutBuilder().layout("$buildContext.paths.buildOutputRoot/internal") {
@@ -500,22 +507,22 @@ class DistributionJARsBuilder {
                                    Map<String, String> pathToToJarName,
                                    Map<String, String> pluginModulesToJar,
                                    Map<String, String> libModulesToJar) {
-    def jarOrderTempDirectoryPath = "$buildContext.paths.temp/jarOrder"
-    def classesLoadingOrderFilePath = "$jarOrderTempDirectoryPath/classes-order.txt"
-    def finalOrder = "$jarOrderTempDirectoryPath/order.txt"
-    def classesFile = new File(classesLoadingOrderFilePath)
-    if (!classesFile.exists()) {
-      buildContext.messages.info("Failed to generate classes order file: $classesLoadingOrderFilePath doesn't exist")
-      return
-    }
-    def lines = classesFile.readLines()
-    if (lines.isEmpty()) {
-      buildContext.messages.info("Failed to generate classes order file: $classesLoadingOrderFilePath empty")
+    Path jarOrderTempDirectoryPath = buildContext.paths.tempDir.resolve("jarOrder")
+    Path classesLoadingOrderFile = jarOrderTempDirectoryPath.resolve("classes-order.txt")
+    Path finalOrder = jarOrderTempDirectoryPath.resolve("order.txt")
+    if (!Files.exists(classesLoadingOrderFile)) {
+      buildContext.messages.info("Failed to generate classes order file: $classesLoadingOrderFile doesn't exist")
       return
     }
 
-    def resultLines = new ArrayList<String>()
-    for (def line : lines) {
+    List<String> lines = Files.readAllLines(classesLoadingOrderFile)
+    if (lines.isEmpty()) {
+      buildContext.messages.info("Failed to generate classes order file: $classesLoadingOrderFile empty")
+      return
+    }
+
+    List<String> resultLines = new ArrayList<String>()
+    for (String line : lines) {
       def i = line.indexOf(':')
       if (-1 == i) continue
       def className = line.substring(0, i)
@@ -534,14 +541,15 @@ class DistributionJARsBuilder {
           resultLines.add(className + ":/lib/" + libJarName)
         }
         else {
-          def moduleJarName = pluginModulesToJar.get(moduleName)
-          if (moduleName == null) continue
-          resultLines.add("${className}:$moduleJarName")
+          String moduleJarName = pluginModulesToJar.get(moduleName)
+          if (moduleName == null) {
+            continue
+          }
+          resultLines.add(className + ":" + moduleJarName)
         }
       }
     }
-    def resultFile = new File(finalOrder)
-    FileUtil.writeToFile(resultFile, resultLines.join("\n"))
+    Files.writeString(finalOrder, resultLines.join("\n"))
     buildContext.messages.info("Completed generating classes order file. Before preparing: ${lines.size()} after: ${resultLines.size()}")
   }
 
@@ -560,8 +568,10 @@ class DistributionJARsBuilder {
     def pathToModuleName = new HashMap<String, String>()
     for (def moduleName in allModules) {
       def module = buildContext.findModule(moduleName)
-      if (module == null) continue
-      def classpath = (SystemInfo.isWindows) ? '/' + FileUtil.toSystemIndependentName(buildContext.getModuleOutputPath(module)) : buildContext.getModuleOutputPath(module);
+      if (module == null) {
+        continue
+      }
+      def classpath = SystemInfo.isWindows ? '/' + FileUtil.toSystemIndependentName(buildContext.getModuleOutputPath(module)) : buildContext.getModuleOutputPath(module)
       pathToModuleName.put(classpath, moduleName)
     }
     return pathToModuleName
@@ -572,7 +582,7 @@ class DistributionJARsBuilder {
     def libraryJarPathToJarName = new HashMap()
     buildContext.project.libraryCollection.libraries.each {
       def name = it.getName()
-      for (def libFile : it.getFiles(JpsOrderRootType.COMPILED)) {
+      for (File libFile : it.getFiles(JpsOrderRootType.COMPILED)) {
         def fileName = libFile.getName()
         def jarName = fileName
         if (libWithoutVersion.contains(name)) {
@@ -581,7 +591,7 @@ class DistributionJARsBuilder {
             jarName = candidate
           }
         }
-        def jarPath = (SystemInfo.isWindows) ? '/' + FileUtil.toSystemIndependentName(libFile.getPath()) : libFile.getPath();
+        def jarPath = (SystemInfo.isWindows) ? '/' + FileUtil.toSystemIndependentName(libFile.getPath()) : libFile.getPath()
         libraryJarPathToJarName.put(jarPath, jarName)
       }
     }
@@ -592,45 +602,52 @@ class DistributionJARsBuilder {
                                Map<String, String> pathToModuleName,
                                Map<String, String> pathToToJarName,
                                Map<String, String> libModulesToJar) {
-    def jarOrderTempDirectoryPath = "$buildContext.paths.temp/jarOrder"
-    def modulesLoadingOrderFilePath = "$jarOrderTempDirectoryPath/modules-order.txt"
-    def file = new File(modulesLoadingOrderFilePath)
-    if (!file.exists()) {
-      buildContext.messages.info("Failed to generate jar loading order file: $modulesLoadingOrderFilePath doesn't exist")
+    Path jarOrderTempDirectoryPath = buildContext.paths.tempDir.resolve("jarOrder")
+    Path modulesLoadingOrderFile = jarOrderTempDirectoryPath.resolve("modules-order.txt")
+    List<String> lines
+    try {
+      lines = Files.readAllLines(modulesLoadingOrderFile)
+    }
+    catch (NoSuchFileException ignored) {
+      buildContext.messages.info("Failed to generate jar loading order file: $modulesLoadingOrderFile doesn't exist")
+      return
     }
 
-    def lines = FileUtil.loadLines(file)
-
-    def jarFileNames = new LinkedHashSet()
-    for (def line : lines) {
-      def jarName
+    Set<String> jarFileNames = new LinkedHashSet<>()
+    for (String line : lines) {
+      String jarName
       if (line.endsWith(".jar")) {
         jarName = pathToToJarName.get(line)
       }
       else {
-        def moduleName = pathToModuleName.get(line)
+        String moduleName = pathToModuleName.get(line)
         jarName = moduleName != null ? libModulesToJar.get(moduleName) : null
       }
-      if (jarName != null) jarFileNames.add(jarName)
+      if (jarName != null) {
+        jarFileNames.add(jarName)
+      }
     }
 
     if (jarFileNames.isEmpty()) {
       buildContext.messages.warning("Jar order file is empty")
       return
     }
-    def bootstrap = "intellij.platform.bootstrap"
-    def newFile = new File(jarOrderTempDirectoryPath, bootstrap + "/com/intellij/ide/classpath-order.txt")
-    FileUtil.writeToFile(newFile, jarFileNames.join("\n"))
+
+    String bootstrap = "intellij.platform.bootstrap"
+    Path newFile = jarOrderTempDirectoryPath.resolve(bootstrap + "/com/intellij/ide/classpath-order.txt")
+    Files.writeString(newFile, jarFileNames.join("\n"))
     buildContext.messages.info("Completed generating jar file. Before preparing: ${lines.size()} after: ${jarFileNames.size()}")
     layoutBuilder.patchModuleOutput(bootstrap, "$jarOrderTempDirectoryPath/$bootstrap")
-    buildContext.messages.info("Add patch to apply jar order:" + newFile.path)
+    buildContext.messages.info("Add patch to apply jar order: $newFile")
   }
 
   private Map<String, String> getModuleToJarMap(BaseLayout layout, Map<String, String> moduleToJar = new HashMap<>(), String jarPrefix = "") {
-    for (def entry : layout.moduleJars.entrySet()) {
-      def jarName = entry.key
-      def fixedJarName = getActualModuleJarPath(jarName, entry.value, layout.explicitlySetJarPaths)
-      entry.value.forEach({ el -> moduleToJar.put(el, jarPrefix + fixedJarName) })
+    for (Map.Entry<String, Collection<String>> entry : layout.moduleJars.entrySet()) {
+      String jarName = entry.key
+      String fixedJarName = getActualModuleJarPath(jarName, entry.value, layout.explicitlySetJarPaths)
+      for (String  el : entry.value) {
+        moduleToJar.put(el, jarPrefix + fixedJarName)
+      }
     }
     return moduleToJar
   }
@@ -645,12 +662,11 @@ class DistributionJARsBuilder {
     String applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
     Path ideaDir = Paths.get(applicationInfoDir, "idea")
     Files.createDirectories(ideaDir)
-    Files.copy(patchedApplicationInfo, ideaDir.resolve(patchedApplicationInfo.fileName))
+    Files.copy(patchedApplicationInfo, ideaDir.resolve(patchedApplicationInfo.fileName), StandardCopyOption.REPLACE_EXISTING)
     layoutBuilder.patchModuleOutput(buildContext.productProperties.applicationInfoModule, applicationInfoDir)
 
     if (buildContext.productProperties.reassignAltClickToMultipleCarets) {
-      def patchedKeyMapDir = createKeyMapWithAltClickReassignedToMultipleCarets()
-      layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
+      layoutBuilder.patchModuleOutput("intellij.platform.resources", createKeyMapWithAltClickReassignedToMultipleCarets())
     }
     if (buildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
       buildContext.executeStep("Bundling a default version of feature usage statistics", BuildOptions.FUS_METADATA_BUNDLE_STEP) {
@@ -694,12 +710,11 @@ class DistributionJARsBuilder {
     processLayout(layoutBuilder, platform, buildContext.paths.distAll, projectStructureMapping, copyFiles, platform.moduleJars, [])
   }
 
-  static String getLibraryNameWithoutVersion(library) {
-    def matcher = library.name =~ LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN
+  static String getLibraryNameWithoutVersion(File library) {
+    Matcher matcher = library.name =~ LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN
     if (matcher.matches()) {
       return matcher.group(1) + ".jar"
     }
-
     return null
   }
 
@@ -742,6 +757,7 @@ class DistributionJARsBuilder {
     }
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   void buildNonBundledPlugins() {
     if (pluginsToPublish.isEmpty()) return
 
@@ -816,23 +832,19 @@ class DistributionJARsBuilder {
         .filter({ it -> Files.isRegularFile(it)} )
         .filter({ it -> it.toString().endsWith(".zip") })
         .collect(Collectors.toList())
-        .each { it ->
-          def blockMapFileName = "${it.toString()}.blockmap.zip"
-          def hashFileName = "${it.toString()}.hash.json"
-          def blockMapJson = "blockmap.json"
-          def algorithm = "SHA-256"
-          def file = it.toFile()
-          file.withInputStream { input ->
+        .forEach { Path it ->
+          Path blockMapFile = it.parent.resolve("${it.fileName}.blockmap.zip")
+          Path hashFile = it.parent.resolve("${it.fileName}.hash.json")
+          String blockMapJson = "blockmap.json"
+          String algorithm = "SHA-256"
+          new BufferedInputStream(Files.newInputStream(it)).withCloseable { input ->
             def blockMap = new BlockMap(input, algorithm)
-            new File(blockMapFileName).withOutputStream { output ->
+            new BufferedOutputStream(Files.newOutputStream(blockMapFile)).withCloseable { output ->
               writeBlockMapToZip(output, JsonOutput.toJson(blockMap).bytes, blockMapJson)
             }
           }
-          file.withInputStream { input ->
-            def fileHash = new FileHash(input, algorithm)
-            new File(hashFileName).withWriter { writer ->
-              writer.writeLine(JsonOutput.toJson(fileHash).toString())
-            }
+          new BufferedInputStream(Files.newInputStream(it)).withCloseable { input ->
+            Files.writeString(hashFile, JsonOutput.toJson(new FileHash(input, algorithm)))
           }
         }
     }
@@ -849,6 +861,7 @@ class DistributionJARsBuilder {
     }
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   private PluginRepositorySpec buildHelpPlugin(PluginLayout helpPlugin, String pluginsToPublishDir, String targetDir, LayoutBuilder layoutBuilder) {
     def directory = getActualPluginDirectoryName(helpPlugin, buildContext)
     def destFile = "${targetDir}/${directory}.zip"
@@ -895,12 +908,16 @@ class DistributionJARsBuilder {
         checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes)
         patchPluginXml(layoutBuilder, plugin)
       }
-      List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
-        File resourceFile = it.first.generateResources(buildContext)
-        resourceFile != null ? [Pair.create(resourceFile, it.second)] : []
+
+      List<Pair<File, String>> generatedResources = new ArrayList<>(plugin.resourceGenerators.size())
+      for (Pair<ResourcesGenerator, String> item : plugin.resourceGenerators) {
+        File resourceFile = item.first.generateResources(buildContext)
+        if (resourceFile != null) {
+          generatedResources.add(new Pair<>(resourceFile, item.second))
+        }
       }
 
-      final String targetDir = "$targetDirectory/${getActualPluginDirectoryName(plugin, buildContext)}"
+      String targetDir = "$targetDirectory/${getActualPluginDirectoryName(plugin, buildContext)}"
       processPluginLayout(plugin, layoutBuilder, targetDir, generatedResources, parentMapping, true)
       if (buildContext.proprietaryBuildTools.scrambleTool != null) {
         buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, plugin, targetDir)
@@ -914,15 +931,16 @@ class DistributionJARsBuilder {
   private void patchPluginXml(LayoutBuilder layoutBuilder, PluginLayout plugin) {
     def bundled = !pluginsToPublish.contains(plugin)
     def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
-    def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
-    if (!new File(pluginXmlPath).exists()) {
+    Path pluginXmlPath = Paths.get(moduleOutput, "META-INF/plugin.xml")
+    if (!Files.exists(pluginXmlPath)) {
       buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
     }
 
-    def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
-    def patchedPluginXmlFile = new File("$patchedPluginXmlDir/META-INF/plugin.xml")
-
-    buildContext.ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
+    Path patchedPluginXmlDir = Paths.get(buildContext.paths.temp, "patched-plugin-xml/$plugin.mainModule")
+    Path patchedPluginXmlMetaInfDir = patchedPluginXmlDir.resolve("META-INF")
+    Files.createDirectories(patchedPluginXmlMetaInfDir)
+    Path patchedPluginXmlFile = patchedPluginXmlMetaInfDir.resolve("plugin.xml")
+    Files.copy(pluginXmlPath, patchedPluginXmlFile, StandardCopyOption.REPLACE_EXISTING)
 
     def productLayout = buildContext.productProperties.productLayout
     def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
@@ -955,19 +973,19 @@ class DistributionJARsBuilder {
 
   private void addSearchableOptions(LayoutBuilder layoutBuilder) {
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
-      def searchableOptionsDir = getSearchableOptionsDir()
-      if (!searchableOptionsDir.exists()) {
+      Path searchableOptionsDir = getSearchableOptionsDir()
+      if (!Files.exists(searchableOptionsDir)) {
         buildContext.messages.error("There are no searchable options available. " +
                                     "Please ensure that you call DistributionJARsBuilder#buildSearchableOptions before this method.")
       }
       searchableOptionsDir.eachFile(FileType.DIRECTORIES) {
-        layoutBuilder.patchModuleOutput(it.name, FileUtil.toSystemIndependentName(it.absolutePath))
+        layoutBuilder.patchModuleOutput(it.fileName.toString(), it)
       }
     }
   }
 
-  private File getSearchableOptionsDir() {
-    new File(buildContext.paths.temp, "searchableOptions/result")
+  private @NotNull Path getSearchableOptionsDir() {
+    return buildContext.paths.tempDir.resolve("searchableOptions/result")
   }
 
   void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
@@ -1022,6 +1040,7 @@ class DistributionJARsBuilder {
    * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
    * @param additionalResources pairs of resources files and corresponding relative output paths
    */
+  @CompileStatic(TypeCheckingMode.SKIP)
   void processLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory,
                              ProjectStructureMapping mapping, boolean copyFiles,
                              MultiMap<String, String> moduleJars,
@@ -1207,9 +1226,9 @@ class DistributionJARsBuilder {
     new LayoutBuilder(buildContext, COMPRESS_JARS)
   }
 
-  private void setPluginVersionAndSince(File pluginXmlFile, String pluginVersion, CompatibleBuildRange compatibleBuildRange, boolean toPublish) {
+  private void setPluginVersionAndSince(@NotNull Path pluginXmlFile, String pluginVersion, CompatibleBuildRange compatibleBuildRange, boolean toPublish) {
     Pair<String, String> sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, buildContext.buildNumber)
-    def text = pluginXmlFile.text
+    def text = Files.readString(pluginXmlFile)
             .replaceFirst(
                     "<version>[\\d.]*</version>",
                     "<version>${pluginVersion}</version>")
@@ -1232,7 +1251,7 @@ class DistributionJARsBuilder {
               "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"/>",
               !toPublish ? "" :
               "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\" $eapAttribute />")
-      buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${pluginXmlFile.parentFile.parentFile.name} <product-descriptor/>")
+      buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${pluginXmlFile.parent.parent.fileName} <product-descriptor/>")
     }
 
     def anchor = text.contains("</id>") ? "</id>" : "</name>"
@@ -1242,7 +1261,7 @@ class DistributionJARsBuilder {
     if (!text.contains("<idea-version since-build")) {
       text = text.replace(anchor, "${anchor}\n  <idea-version since-build=\"${sinceUntil.first}\" until-build=\"${sinceUntil.second}\"/>")
     }
-    pluginXmlFile.text = text
+    Files.writeString(pluginXmlFile, text)
   }
 
   static Pair<String, String> getCompatiblePlatformVersionRange(CompatibleBuildRange compatibleBuildRange, String buildNumber) {
@@ -1271,19 +1290,19 @@ class DistributionJARsBuilder {
     Pair.create(sinceBuild, untilBuild)
   }
 
-  private File createKeyMapWithAltClickReassignedToMultipleCarets() {
-    def sourceFile = new File("${buildContext.getModuleOutputPath(buildContext.findModule("intellij.platform.resources"))}/keymaps/\$default.xml")
-    String defaultKeymapContent = sourceFile.text
+  private @NotNull Path createKeyMapWithAltClickReassignedToMultipleCarets() {
+    Path sourceFile = Paths.get(buildContext.getModuleOutputPath(buildContext.findModule("intellij.platform.resources")), "keymaps/\$default.xml")
+    String defaultKeymapContent = Files.readString(sourceFile)
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>",
                                                         "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
                                                         "<mouse-shortcut keystroke=\"alt button1\"/>")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>",
                                                         "<mouse-shortcut keystroke=\"alt shift button1\"/>")
-    def patchedKeyMapDir = new File(buildContext.paths.temp, "patched-keymap")
-    def targetFile = new File(patchedKeyMapDir, "keymaps/\$default.xml")
-    FileUtil.createParentDirs(targetFile)
-    targetFile.text = defaultKeymapContent
+    Path patchedKeyMapDir = Paths.get(buildContext.paths.temp, "patched-keymap")
+    Path targetFile = patchedKeyMapDir.resolve("keymaps/\$default.xml")
+    Files.createDirectories(targetFile)
+    Files.writeString(targetFile, defaultKeymapContent)
     return patchedKeyMapDir
   }
 }

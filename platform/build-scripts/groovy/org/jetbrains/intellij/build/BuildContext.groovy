@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BundledJreManager
 import org.jetbrains.intellij.build.impl.DependenciesProperties
@@ -57,7 +58,7 @@ abstract class BuildContext implements CompilationContext {
    */
   abstract boolean shouldIDECopyJarsByDefault()
 
-  abstract void patchInspectScript(String path)
+  abstract void patchInspectScript(@NotNull Path path)
 
   abstract String getAdditionalJvmArguments()
 
@@ -65,7 +66,7 @@ abstract class BuildContext implements CompilationContext {
 
   abstract JpsModule findApplicationInfoModule()
 
-  abstract File findFileInModuleSources(String moduleName, String relativePath)
+  abstract @Nullable Path findFileInModuleSources(String moduleName, String relativePath)
 
   abstract void signExeFile(String path)
 

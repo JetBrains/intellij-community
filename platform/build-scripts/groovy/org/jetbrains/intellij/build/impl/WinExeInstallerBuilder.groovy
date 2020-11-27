@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
@@ -9,7 +11,8 @@ import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 
-class WinExeInstallerBuilder {
+@CompileStatic
+final class WinExeInstallerBuilder {
   private final BuildContext buildContext
   private final AntBuilder ant
   private final WindowsDistributionCustomizer customizer
@@ -22,6 +25,7 @@ class WinExeInstallerBuilder {
     this.jreDirectoryPath = jreDirectoryPath
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   private void generateInstallationConfigFileForSilentMode() {
     def targetFilePath = "${buildContext.paths.artifacts}/silent.config"
     if (!new File(targetFilePath).exists()) {
@@ -55,9 +59,10 @@ class WinExeInstallerBuilder {
    * Returns list of file extensions with leading dot added
    */
   private List<String> getFileAssociations() {
-    customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
+    customizer.fileAssociations.collect {it.startsWith(".") ? it : ("." + it) }
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   String buildInstaller(String winDistPath, String additionalDirectoryToInclude, String suffix, boolean jre32BitVersionSupported) {
     if (!SystemInfo.isWindows && !SystemInfo.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")

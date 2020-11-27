@@ -1,21 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.ResourcesGenerator
 
+import java.nio.file.Path
 import java.util.function.BiFunction
 
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout extends BaseLayout {
+@CompileStatic
+final class PluginLayout extends BaseLayout {
   final String mainModule
   String directoryName
   private boolean doNotCreateSeparateJarForLocalizableResources
-  BiFunction<File, String, String> versionEvaluator = { pluginXmlFile, ideVersion -> ideVersion } as BiFunction<File, String, String>
+  BiFunction<Path, String, String> versionEvaluator = { pluginXmlFile, ideVersion -> ideVersion } as BiFunction<Path, String, String>
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
   Collection<String> pathsToScramble = []
@@ -154,7 +157,7 @@ class PluginLayout extends BaseLayout {
      *   <li> the second {@linkplain String} argument is the default version (build number of the IDE).
      * </ol>
      */
-    void withCustomVersion(BiFunction<File, String, String> versionEvaluator) {
+    void withCustomVersion(BiFunction<Path, String, String> versionEvaluator) {
       layout.versionEvaluator = versionEvaluator
     }
 
@@ -178,7 +181,7 @@ class PluginLayout extends BaseLayout {
      * Specifies a relative path to a plugin jar that should be scrambled.
      * Scrambling is performed by the {@link org.jetbrains.intellij.build.ProprietaryBuildTools#scrambleTool}
      * If scramble tool is not defined, scrambling will not be performed
-     * Multiple invications of this method will add corresponding paths to a list of paths to be scrambled
+     * Multiple invocations of this method will add corresponding paths to a list of paths to be scrambled
      *
      * @param relativePath - a path to a jar file relative to plugin root directory
      */

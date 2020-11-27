@@ -1,25 +1,21 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.pycharm
 
 import groovy.io.FileType
-import org.jetbrains.intellij.build.*
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
+import org.jetbrains.intellij.build.ApplicationInfoProperties
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.JetBrainsProductProperties
+
+import java.nio.file.Files
+import java.nio.file.Path
 
 import static org.jetbrains.intellij.build.pycharm.PyCharmBuildOptions.GENERATE_INDICES_AND_STUBS_STEP
 
+@CompileStatic
 abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
   protected String dependenciesPath
 
@@ -41,6 +37,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     def tasks = BuildTasks.create(context)
     tasks.zipSourcesOfModules(["intellij.python.community", "intellij.python.psi"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
@@ -74,11 +71,12 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     "PYCHARM"
   }
 
-  protected void unzipArchives(BuildContext context, File destination) {
-    File tempFolder = new File(context.paths.temp, "zips")
-    tempFolder.mkdirs()
-    tempFolder.deleteOnExit()
-    context.ant.copy(todir: tempFolder.absolutePath, failonerror: !context.options.isInDevelopmentMode) {
+  @CompileStatic(TypeCheckingMode.SKIP)
+  protected void unzipArchives(BuildContext context, Path destination) {
+    Path tempFolder = context.paths.tempDir.resolve("zips")
+    Files.createDirectories(tempFolder)
+    tempFolder.toFile().deleteOnExit()
+    context.ant.copy(todir: tempFolder.toString(), failonerror: !context.options.isInDevelopmentMode) {
       fileset(dir: "$context.paths.projectHome/python-distributions", erroronmissingdir: !context.options.isInDevelopmentMode) {
         include(name: "*.zip")
       }
@@ -88,12 +86,13 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     }
 
     tempFolder.eachFileRecurse(FileType.FILES) {
-      if (it.name.endsWith('.zip')) {
-        context.ant.unzip(src: it.absolutePath, dest: "${destination.absolutePath}/${it.name}")
+      if (it.fileName.toString().endsWith(".zip")) {
+        context.ant.unzip(src: it.toString(), dest: "${destination.toString()}/${it.fileName}")
       }
     }
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   protected List<Integer> getStubVersion(BuildContext context) {
     CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
@@ -115,6 +114,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     return [stubsVersion[0].trim().toInteger(), stubsVersion[1].trim().toInteger()]
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   protected void generateUniversalStubs(BuildContext context, File from, File to) {
     CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
@@ -135,6 +135,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     }
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   protected void generateIndices(BuildContext context, File from, File to) {
     CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
@@ -153,9 +154,10 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     }
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   protected void generateStubsAndIndices(BuildContext context, File temporaryIndexFolder) {
-    File folderWithUnzipContent = PyCharmBuildOptions.getTemporaryFolderForUnzip(context)
-    folderWithUnzipContent.mkdirs()
+    Path folderWithUnzipContent = PyCharmBuildOptions.getTemporaryFolderForUnzip(context)
+    Files.createDirectories(folderWithUnzipContent)
     unzipArchives(context, folderWithUnzipContent)
 
     boolean forceGenerate = false
@@ -202,6 +204,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     folderWithUnzipContent.deleteDir()
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   static void downloadMiniconda(BuildContext context, String targetDirectory, String osName) {
     final String installer = "Miniconda3-latest-$osName-x86_64.${if (osName == "Windows") "exe" else "sh"}"
 

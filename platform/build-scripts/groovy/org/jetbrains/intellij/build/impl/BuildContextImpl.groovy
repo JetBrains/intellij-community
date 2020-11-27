@@ -3,22 +3,27 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
+import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot
+import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.BiFunction
+import java.util.stream.Collectors
 
 @CompileStatic
 final class BuildContextImpl extends BuildContext {
@@ -56,8 +61,7 @@ final class BuildContextImpl extends BuildContext {
     this.linuxDistributionCustomizer = linuxDistributionCustomizer
     this.macDistributionCustomizer = macDistributionCustomizer
 
-    def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
-    applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
+    applicationInfo = new ApplicationInfoProperties(findApplicationInfoInSources(project, productProperties, messages))
     if (productProperties.customProductCode != null) {
       applicationInfo.productCode = productProperties.customProductCode
     }
@@ -88,19 +92,18 @@ final class BuildContextImpl extends BuildContext {
   }
 
   private String readSnapshotBuildNumber() {
-    return Files.readString(Paths.get(paths.communityHome, "build.txt")).trim()
+    return Files.readString(paths.communityHomeDir.resolve("build.txt")).trim()
   }
 
   private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome,
                                                                                               ProductProperties productProperties) {
     return { JpsProject project, BuildMessages messages ->
-      def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
-      def applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
+      ApplicationInfoProperties applicationInfo = new ApplicationInfoProperties(findApplicationInfoInSources(project, productProperties, messages))
       return "$projectHome/out/${productProperties.getOutputDirectoryName(applicationInfo)}"
     } as BiFunction<JpsProject, BuildMessages, String>
   }
 
-  static File findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
+  static @NotNull Path findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
     JpsModule module = project.modules.find { it.name == productProperties.applicationInfoModule }
     if (module == null) {
       messages.error("Cannot find required '${productProperties.applicationInfoModule}' module")
@@ -109,8 +112,9 @@ final class BuildContextImpl extends BuildContext {
     def appInfoFile = module.sourceRoots.collect { new File(it.file, appInfoRelativePath) }.find { it.exists() }
     if (appInfoFile == null) {
       messages.error("Cannot find $appInfoRelativePath in '$module.name' module")
+      return null
     }
-    return appInfoFile
+    return appInfoFile.toPath()
   }
 
   @Override
@@ -193,21 +197,35 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  File findFileInModuleSources(String moduleName, String relativePath) {
-    getSourceRootsWithPrefixes(findRequiredModule(moduleName)).collect {
-      new File(it.first, StringUtil.trimStart(relativePath, it.second))
-    }.find { it.exists() }
+  @Nullable Path findFileInModuleSources(String moduleName, String relativePath) {
+    for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName)) ) {
+      Path result = info.first.resolve(StringUtil.trimStart(StringUtil.trimStart(relativePath, info.second), "/"))
+      if (Files.exists(result)) {
+        return result
+      }
+    }
+    return null
   }
 
-  @SuppressWarnings(["GrUnresolvedAccess", "GroovyInArgumentCheck"])
-  @CompileDynamic
-  private static List<Pair<File, String>> getSourceRootsWithPrefixes(JpsModule module) {
-    module.sourceRoots.findAll { it.rootType in JavaModuleSourceRootTypes.PRODUCTION }.collect {
-      String prefix = it.properties instanceof JavaSourceRootProperties ? it.properties.packagePrefix.replace(".", "/") :
-                      it.properties.relativeOutputPath
-      if (!prefix.endsWith("/")) prefix += "/"
-      Pair.create(it.file, StringUtil.trimStart(prefix, "/"))
-    }
+  private static @NotNull List<Pair<Path, String>> getSourceRootsWithPrefixes(JpsModule module) {
+    return module.sourceRoots
+      .stream()
+      .filter({ JavaModuleSourceRootTypes.PRODUCTION.contains(it.rootType) })
+      .map({ JpsModuleSourceRoot moduleSourceRoot ->
+        String prefix
+        JpsElement properties = moduleSourceRoot.properties
+        if (properties instanceof JavaSourceRootProperties) {
+          prefix = ((JavaSourceRootProperties)properties).packagePrefix.replace(".", "/")
+        }
+        else {
+          prefix = ((JavaResourceRootProperties)properties).relativeOutputPath
+        }
+        if (!prefix.endsWith("/")) {
+          prefix += "/"
+        }
+        return new Pair<>(Paths.get(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), StringUtil.trimStart(prefix, "/"))
+      })
+      .collect(Collectors.toList())
   }
 
   @Override
@@ -288,13 +306,10 @@ final class BuildContextImpl extends BuildContext {
     return productProperties.productLayout.bundledPluginModules.contains("intellij.java.plugin")
   }
 
-  @CompileDynamic
   @Override
-  void patchInspectScript(String path) {
+  void patchInspectScript(@NotNull Path path) {
     //todo[nik] use placeholder in inspect.sh/inspect.bat file instead
-    ant.replace(file: path) {
-      replacefilter(token: " inspect ", value: " ${productProperties.inspectCommandName} ")
-    }
+    Files.writeString(path, Files.readString(path).replaceAll(" inspect ", " ${productProperties.inspectCommandName} "))
   }
 
   @Override

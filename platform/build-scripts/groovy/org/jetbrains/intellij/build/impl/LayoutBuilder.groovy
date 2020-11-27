@@ -1,16 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.Stack
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.apache.tools.ant.AntClassLoader
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleTestOutputEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement
+import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement
 import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
 import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement
 import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement
@@ -19,12 +28,15 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 
+import java.nio.file.Path
 import java.util.regex.Pattern
+
 /**
  * Use this class to pack output of modules and libraries into JARs and lay out them by directories. It delegates the actual work to
  * {@link jetbrains.antlayout.tasks.LayoutTask}.
  */
-class LayoutBuilder {
+@CompileStatic
+final class LayoutBuilder {
   public static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
 
   private final AntBuilder ant
@@ -32,6 +44,7 @@ class LayoutBuilder {
   private final MultiMap<String, String> moduleOutputPatches = MultiMap.createLinked()
   private final CompilationContext context
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   LayoutBuilder(CompilationContext context, boolean compressJars) {
     ant = context.ant
     this.context = context
@@ -57,6 +70,14 @@ class LayoutBuilder {
   }
 
   /**
+   * Contents of {@code pathToDirectoryWithPatchedFiles} will be used to patch the module output. Set 'preserveDuplicates' to {@code true}
+   * when calling {@link LayoutSpec#jar} and call {@link LayoutSpec#modulePatches} from its body to apply the patches to the JAR.
+   */
+  void patchModuleOutput(String moduleName, Path file) {
+    moduleOutputPatches.putValue(moduleName, FileUtil.toSystemIndependentName(file.toAbsolutePath().normalize().toString()))
+  }
+
+  /**
    * Creates the output layout accordingly to {@code data} in {@code targetDirectory}. Please note that {@code data} may refer to local
    * variables of its method only. It cannot refer to its fields or methods because data's 'owner' field is changed to support the internal DSL.
    */
@@ -64,6 +85,7 @@ class LayoutBuilder {
     process(targetDirectory, new ProjectStructureMapping(), true, data)
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   void process(String targetDirectory, ProjectStructureMapping mapping, boolean copyFiles, @DelegatesTo(LayoutSpec) Closure data) {
     def spec = new LayoutSpec(mapping, copyFiles)
     //we cannot set 'spec' as delegate because 'delegate' will be overwritten by AntBuilder
@@ -74,7 +96,7 @@ class LayoutBuilder {
     context.messages.debug("Finish creating layout in $targetDirectory.")
   }
 
-  class LayoutSpec {
+  final class LayoutSpec {
     final ProjectStructureMapping projectStructureMapping
     final Stack<String> currentPath = new Stack<>()
     private final boolean copyFiles
@@ -88,6 +110,7 @@ class LayoutBuilder {
      * Create a JAR file with name {@code relativePath} (it may also include parent directories names for the JAR) into the current place
      * in the layout. The content of the JAR is specified by {@code body}.
      */
+    @CompileStatic(TypeCheckingMode.SKIP)
     void jar(String relativePath, boolean preserveDuplicates = false, boolean mergeManifests = true, Closure body) {
       def directory = PathUtilRt.getParentPath(relativePath)
       if (directory == "") {
@@ -112,6 +135,7 @@ class LayoutBuilder {
      * Create a Zip file with name {@code relativePath} (it may also include parent directories names for the JAR) into the current place
      * in the layout. The content of the JAR is specified by {@code body}.
      */
+    @CompileStatic(TypeCheckingMode.SKIP)
     void zip(String relativePath, Closure body) {
       def directory = PathUtilRt.getParentPath(relativePath)
       if (directory == "") {
@@ -135,6 +159,7 @@ class LayoutBuilder {
      * Create a directory (or several nested directories) {@code relativePath} in the current place in the layout. The content of the
      * directory is specified by {@code body}.
      */
+    @CompileStatic(TypeCheckingMode.SKIP)
     void dir(String relativePath, Closure body) {
       def parent = PathUtilRt.getParentPath(relativePath)
       if (relativePath.empty) {
@@ -161,6 +186,7 @@ class LayoutBuilder {
      * Include the patched outputs of {@code moduleNames} modules to the current place in the layout. This method is supposed to be called
      * in the {@code body} of {@link #jar} with 'preserveDuplicates' set to {@code true}
      */
+    @CompileStatic(TypeCheckingMode.SKIP)
     void modulePatches(Collection<String> moduleNames, Closure body = {}) {
       moduleNames.each { String moduleName ->
         moduleOutputPatches.get(moduleName).each {
@@ -173,6 +199,7 @@ class LayoutBuilder {
     /**
      * Include production output of {@code moduleName} to the current place in the layout
      */
+    @CompileStatic(TypeCheckingMode.SKIP)
     void module(String moduleName, Closure body = {}) {
       projectStructureMapping.addEntry(new ModuleOutputEntry(getCurrentPathString(), moduleName))
       if (copyFiles) {
@@ -184,6 +211,7 @@ class LayoutBuilder {
     /**
      * Include test output of {@code moduleName} to the current place in the layout
      */
+    @CompileStatic(TypeCheckingMode.SKIP)
     void moduleTests(String moduleName, Closure body = {}) {
       projectStructureMapping.addEntry(new ModuleTestOutputEntry(getCurrentPathString(), moduleName))
       if (copyFiles) {
@@ -212,6 +240,7 @@ class LayoutBuilder {
     /**
      * Include output of a project artifact {@code artifactName} to the current place in the layout
      */
+    @CompileStatic(TypeCheckingMode.SKIP)
     void artifact(String artifactName) {
       def artifact = JpsArtifactService.instance.getArtifacts(context.project).find {it.name == artifactName}
       if (artifact == null) {
@@ -246,6 +275,7 @@ class LayoutBuilder {
      * @param removeVersionFromJarName if {@code true} versions will be removed from the JAR names. <strong>It may be used to temporary
      *      * keep names of JARs included into bootstrap classpath only.</strong>
      **/
+    @CompileStatic(TypeCheckingMode.SKIP)
     void jpsLibrary(JpsLibrary library, boolean removeVersionFromJarName = false) {
       library.getFiles(JpsOrderRootType.COMPILED).each {
         def matcher = it.name =~ JAR_NAME_WITH_VERSION_PATTERN
@@ -307,11 +337,11 @@ class LayoutBuilder {
       }
     }
 
-    private void addArtifactMapping(JpsArtifact artifact) {
-      def rootElement = artifact.getRootElement()
+    private void addArtifactMapping(@NotNull JpsArtifact artifact) {
+      JpsCompositePackagingElement rootElement = artifact.getRootElement()
       String artifactFilePath = getCurrentPathString()
-      if ((rootElement instanceof JpsArchivePackagingElement)) {
-        artifactFilePath += "/$rootElement.archiveName"
+      if (rootElement instanceof JpsArchivePackagingElement) {
+        artifactFilePath += "/" + rootElement + ".archiveName"
       }
       rootElement.children.each {
         if (it instanceof JpsProductionModuleOutputPackagingElement) {
@@ -321,7 +351,7 @@ class LayoutBuilder {
           projectStructureMapping.addEntry(new ModuleTestOutputEntry(artifactFilePath, it.moduleReference.moduleName))
         }
         else if (it instanceof JpsLibraryFilesPackagingElement) {
-          addLibraryMapping(it.libraryReference.resolve(), artifactFilePath)
+          addLibraryMapping(it.libraryReference.resolve(), artifactFilePath, null)
         }
       }
     }
