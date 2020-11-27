@@ -5,6 +5,7 @@ import circlet.client.api.CodeViewService
 import circlet.client.api.ProjectKey
 import circlet.client.codeView
 import com.intellij.diff.DiffContentFactoryImpl
+import com.intellij.diff.DiffVcsDataKeys
 import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
@@ -17,8 +18,10 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.space.vcs.review.details.*
+import git4idea.GitRevisionNumber
 import kotlinx.coroutines.asCoroutineDispatcher
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.runBlocking
@@ -98,8 +101,16 @@ internal class SpaceDiffRequestProducer(
       val diffContentFactory = DiffContentFactoryImpl.getInstanceEx()
       val titles = listOf(gitCommitChange.old?.commit, gitCommitChange.new?.commit)
       val documents = listOf(
-        oldFilePath?.let { diffContentFactory.create(project, leftFileText, it) } ?: diffContentFactory.createEmpty(),
-        newFilePath?.let { diffContentFactory.create(project, rightFileText, it) } ?: diffContentFactory.createEmpty()
+        oldFilePath?.let {
+          diffContentFactory.create(project, leftFileText, it).apply {
+            putUserData(DiffVcsDataKeys.REVISION_INFO, Pair.create(it, GitRevisionNumber(gitCommitChange.old!!.commit)))
+          }
+        } ?: diffContentFactory.createEmpty(),
+        newFilePath?.let {
+          diffContentFactory.create(project, rightFileText, it).apply {
+            putUserData(DiffVcsDataKeys.REVISION_INFO, Pair.create(it, GitRevisionNumber(gitCommitChange.new!!.commit)))
+          }
+        } ?: diffContentFactory.createEmpty()
       )
 
       val diffRequestData = SpaceReviewDiffRequestData(SequentialLifetimes(requestProducerLifetime),
