@@ -3,12 +3,15 @@ package com.intellij.ui.viewModel.extraction;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.viewModel.definition.ToolWindowViewModel;
+import com.intellij.ui.viewModel.definition.ToolWindowViewModelContent;
+import com.intellij.ui.viewModel.definition.ToolWindowViewModelDescription;
 
 public interface ToolWindowViewModelExtractor {
   ExtensionPointName<ToolWindowViewModelExtractor> EP_NAME = ExtensionPointName.create("com.intellij.toolWindowExtractor");
 
-  ToolWindowViewModel extractViewModel(ToolWindow window);
+  ToolWindowViewModelContent extractViewModel(ToolWindow window);
+
+  ToolWindowViewModelDescription extractDescription(ToolWindow window);
 
   boolean isApplicable(String toolWindowId);
 }

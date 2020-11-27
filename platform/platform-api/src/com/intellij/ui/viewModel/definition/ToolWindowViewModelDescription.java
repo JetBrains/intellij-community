@@ -5,16 +5,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public interface ToolWindowViewModel {
+public interface ToolWindowViewModelDescription {
   String getTitle();
 
   String getId();
-
-  @NotNull
-  ActionBarViewModel getActions();
-
-  @NotNull
-  TreeViewModel getTree();
 
   @NotNull
   Icon getIcon();

@@ -6,9 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.viewModel.definition.ToolWindowViewModel;
+import com.intellij.ui.viewModel.definition.ToolWindowViewModelContent;
+import com.intellij.ui.viewModel.definition.ToolWindowViewModelDescription;
 import com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -16,20 +18,22 @@ import java.util.List;
 public abstract class BackendToolWindowSynchronizer {
 
   private static final Logger myLogger = Logger.getInstance(BackendToolWindowSynchronizer.class);
+  private final Project myProject;
 
   public BackendToolWindowSynchronizer(Project project) {
+    myProject = project;
     project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener(){
       @Override
       public void toolWindowsRegistered(@NotNull List<String> ids,
                                         @NotNull ToolWindowManager toolWindowManager) {
         for (String id : ids) {
-          processToolWindow(id, toolWindowManager);
+          passRegisteredToolWindowDescription(id, toolWindowManager);
         }
       }
     });
   }
 
-  public void processToolWindow(String id, @NotNull ToolWindowManager toolWindowManager) {
+  public void passRegisteredToolWindowDescription(String id, @NotNull ToolWindowManager toolWindowManager) {
     final ToolWindowViewModelExtractor[] extractors = ToolWindowViewModelExtractor.EP_NAME.getExtensions();
     for (ToolWindowViewModelExtractor extractor : extractors) {
 
@@ -39,11 +43,30 @@ public abstract class BackendToolWindowSynchronizer {
 
       ToolWindow window = toolWindowManager.getToolWindow(id);
       myLogger.assertTrue(window != null,  String.format("Tool window with id %s could not be found", id));
-      ToolWindowViewModel toolWindowViewModel = extractor.extractViewModel(window);
+      ToolWindowViewModelDescription description = extractor.extractDescription(window);
 
-      passViewModel(toolWindowViewModel);
+      passToolWindowDescription(description);
     }
   }
 
-  public abstract void passViewModel(ToolWindowViewModel toolWindowViewModel);
+  @Nullable
+  public ToolWindowViewModelContent getContent(String id) {
+    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(id);
+
+    final ToolWindowViewModelExtractor[] extractors = ToolWindowViewModelExtractor.EP_NAME.getExtensions();
+    for (ToolWindowViewModelExtractor extractor : extractors) {
+
+      if (!extractor.isApplicable(id)) {
+        continue;
+      }
+
+      return extractor.extractViewModel(window);
+    }
+
+    return null;
+  }
+
+  public abstract void passToolWindowDescription(ToolWindowViewModelDescription toolWindowViewModel);
+
+
 }

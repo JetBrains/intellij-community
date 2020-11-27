@@ -23,7 +23,7 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
   private static final Logger myLogger = Logger.getInstance(MavenToolWindowViewModelExtractor.class);
 
   @Override
-  public ToolWindowViewModel extractViewModel(ToolWindow toolWindow) {
+  public ToolWindowViewModelContent extractViewModel(ToolWindow toolWindow) {
     Content mavenContent = toolWindow.getContentManager().getContents()[0];
     MavenProjectsNavigatorPanel mavenPanel = (MavenProjectsNavigatorPanel)mavenContent.getComponent();
     SimpleTree tree = mavenPanel.getTree();
@@ -35,8 +35,19 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
 
     DataContext context = DataManager.getInstance().getDataContext(mavenPanel);
     ActionBarViewModel actionBarViewModel = getFromDecoration(decoration, context);
-    return new SimpleToolWindowViewModel(actionBarViewModel, treeModel, decoration.getIcon(), toolWindow.getId(), toolWindow.getTitle());
+    return new SimpleToolWindowContent(actionBarViewModel, treeModel);
   }
+
+  @Override
+  public ToolWindowViewModelDescription extractDescription(ToolWindow toolWindow) {
+    ToolWindowEx toolWindowEx = (ToolWindowEx)toolWindow;
+
+    ToolWindowEx.ToolWindowDecoration decoration = toolWindowEx.getDecoration();
+    myLogger.assertTrue(decoration != null, String.format("couldn't extract decoration of the toolwindow with id %s", toolWindow.getId()));
+
+    return new SimpleToolWindowDescription(decoration.getIcon(), toolWindow.getId(), toolWindow.getTitle(), new ToolWindowPosition(toolWindow.getAnchor(), toolWindowEx.isSplitMode()));
+  }
+
 
   private static ActionBarViewModel getFromDecoration(ToolWindowEx.ToolWindowDecoration decoration,
                                                       DataContext context) {
