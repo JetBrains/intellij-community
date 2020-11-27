@@ -35,7 +35,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- groupId should be same to StatisticBase.GROUP_ID and version to StatisticBase.VERSION -->
-    <statistics.counterUsagesCollector groupId="ideFeaturesTrainer" version="4"/>
+    <statistics.counterUsagesCollector groupId="ideFeaturesTrainer" version="5"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
     <statistics.validation.customValidationRule
