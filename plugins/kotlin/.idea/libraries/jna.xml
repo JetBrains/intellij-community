@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="libraryTable">
   <library name="jna" type="repository">
-    <properties maven-id="net.java.dev.jna:jna-platform:5.6.0" />
+    <properties maven-id="org.jetbrains.intellij.deps.jna:jna-platform:5.6.1.2" />
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/intellij/lib/annotations/jna" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.6.0/jna-platform-5.6.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.6.0/jna-5.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jna/jna-platform/5.6.1.2/jna-platform-5.6.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jna/jna/5.6.1.2/jna-5.6.1.2.jar!/" />
     </CLASSES>
-    <JAVADOC />
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jna/jna-platform/5.6.1.2/jna-platform-5.6.1.2-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jna/jna/5.6.1.2/jna-5.6.1.2-javadoc.jar!/" />
+    </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.6.0/jna-platform-5.6.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.6.0/jna-5.6.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jna/jna-platform/5.6.1.2/jna-platform-5.6.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jna/jna/5.6.1.2/jna-5.6.1.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
