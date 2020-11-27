@@ -17,6 +17,7 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
+import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -105,6 +106,7 @@ public class FacetFinderImpl extends FacetFinder {
   @Override
   @NotNull
   public <F extends Facet<?> & FacetRootsProvider> List<F> findFacets(VirtualFile file, FacetTypeId<F> type) {
+    file = ModelBranchUtil.findOriginalFile(file);
     final Map<VirtualFile, List<Facet>> map = getRootToFacetsMap(type);
     if (!map.isEmpty()) {
       while (file != null) {
