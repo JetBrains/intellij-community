@@ -3,6 +3,8 @@ package com.intellij.vcs.test
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.vcs.TestVcsNotifier
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 import org.junit.Assert.assertEquals
 
@@ -12,14 +14,20 @@ fun assertHasNotification(type: NotificationType,
                           actions: List<String>?,
                           notifications: Collection<Notification>): Notification {
   val notification = notifications.find { type == it.type && title == it.title } ?: notifications.lastOrNull()
-  if (notification == null) {
-    throw AssertionError("No $type notification '${title}|${content}' was shown")
+  try {
+    if (notification == null) {
+      throw AssertionError("No $type notification '${title}|${content}' was shown")
+    }
+    assertEquals("Incorrect notification type: " + tos(notification), type, notification.type)
+    assertEquals("Incorrect notification title: " + tos(notification), title, notification.title)
+    assertEquals("Incorrect notification content: " + tos(notification), cleanupForAssertion(content), cleanupForAssertion(notification.content))
+    if (actions != null) {
+      assertOrderedEquals("Incorrect notification actions", notification.actions.map { it.templatePresentation.text }, actions)
+    }
   }
-  assertEquals("Incorrect notification type: " + tos(notification), type, notification.type)
-  assertEquals("Incorrect notification title: " + tos(notification), title, notification.title)
-  assertEquals("Incorrect notification content: " + tos(notification), cleanupForAssertion(content), cleanupForAssertion(notification.content))
-  if (actions != null) {
-    assertOrderedEquals("Incorrect notification actions", notification.actions.map { it.templatePresentation.text }, actions)
+  catch (e: Throwable) {
+    notifications.print()
+    throw e
   }
 
   return notification
@@ -54,4 +62,9 @@ fun cleanupForAssertion(content: String): String {
 
 private fun tos(notification: Notification): String {
   return "${notification.title}|${notification.content}"
+}
+
+private val LOG = logger<TestVcsNotifier>()
+private fun Collection<Notification>.print() {
+  LOG.warn("Available notifications: " + joinToString(separator = "\n", transform = Notification::toString))
 }
