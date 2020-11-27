@@ -187,7 +187,7 @@ class Delegator(
         }
     }
 
-    fun patchProjectModelFiles(projectRoot: File, _mode: Mode) {
+    fun patchProjectModelFiles(projectRoot: File, kotlinRoot: File, _mode: Mode) {
         val mode = if (forceMvnModeOnly) Mode.MVN else _mode
         val dotIdea = projectRoot.resolve(".idea")
         if (libraryLevel == LibraryLevel.PROJECT) {
@@ -195,7 +195,7 @@ class Delegator(
             check(libraryXml.exists())
             libraryXml.writeText(generateProjectLibraryImlContent(mode))
         }
-        val moduleIml = projectRoot.resolve("kotlin/kotlinc-delegator/$identifier/kotlinc-delegator.$identifier.iml")
+        val moduleIml = kotlinRoot.resolve("kotlinc-delegator/$identifier/kotlinc-delegator.$identifier.iml")
         check(moduleIml.exists())
         moduleIml.writeText(generateModuleImlContent(projectRoot, mode))
         dotIdea.walkTopDown().filter { it.extension == "xml" }.forEach { xml ->
@@ -206,25 +206,28 @@ class Delegator(
 
 fun main(args: Array<String>) {
     val mode = Mode.valueOf(args.single().toUpperCase())
-    val projectRoot = generateSequence(File(".").canonicalFile) { it.parentFile }.first { it.resolve("kotlin.kotlin-ide.iml").exists() }
-    val delegatorsDir = projectRoot.resolve("kotlin/kotlinc-delegator")
-    val realModules = delegatorsDir.listFiles()!!.filter { it.isDirectory && it.name != THIS_MODULE_NAME }
-    val delegators = getDelegators(projectRoot, mode)
-    check(delegators.size == realModules.size) {
-        "delegators size (${delegators.size}) and modules number (${realModules.size}) are expected to be equal"
+    val projectRootPublic = generateSequence(File(".").canonicalFile) { it.parentFile }.first { it.resolve("kotlin.intellij-kotlin.iml").exists() }
+    val projectRootPrivate = projectRootPublic.resolve("..").takeIf { it.resolve("kotlin.kotlin-ide.iml").exists() }
+    for ((projectRoot, kotlinRoot) in listOfNotNull(projectRootPublic to projectRootPublic, projectRootPrivate?.let { it to it.resolve("kotlin") })) {
+        val delegatorsDir = kotlinRoot.resolve("kotlinc-delegator")
+        val realModules = delegatorsDir.listFiles()!!.filter { it.isDirectory && it.name != THIS_MODULE_NAME }
+        val delegators = getDelegators(projectRoot, mode)
+        check(delegators.size == realModules.size) {
+            "delegators size (${delegators.size}) and modules number (${realModules.size}) are expected to be equal"
+        }
+        if (mode == Mode.SRC) {
+            println("--- Running kotlinc gradle! ---")
+            // jarsForIde task will produce artifacts-for-ide-to-modules-mapping
+            val exitCode = ProcessBuilder("./gradlew", "jarsForIde")
+                .directory(projectRoot.resolve("kotlinc"))
+                .inheritIO()
+                .start()
+                .waitFor()
+            check(exitCode == 0) { "kotlinc gradle failed with exitCode $exitCode" }
+            println("--- Ended running kotlinc gradle ---")
+        }
+        delegators.forEach { it.patchProjectModelFiles(projectRoot, kotlinRoot, mode) }
     }
-    if (mode == Mode.SRC) {
-        println("--- Running kotlinc gradle! ---")
-        // jarsForIde task will produce artifacts-for-ide-to-modules-mapping
-        val exitCode = ProcessBuilder("./gradlew", "jarsForIde")
-            .directory(projectRoot.resolve("kotlinc"))
-            .inheritIO()
-            .start()
-            .waitFor()
-        check(exitCode == 0) { "kotlinc gradle failed with exitCode $exitCode" }
-        println("--- Ended running kotlinc gradle ---")
-    }
-    delegators.forEach { it.patchProjectModelFiles(projectRoot, mode) }
 }
 
 fun String.trimMarginWithInterpolations(): String {
