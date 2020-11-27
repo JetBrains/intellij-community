@@ -23,6 +23,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.*;
@@ -273,7 +274,7 @@ public final class PluginManagerCore {
   }
 
   public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file, boolean append) throws IOException {
-    Files.createDirectories(file.getParent());
+    NioFiles.createDirectories(file.getParent());
     try (BufferedWriter writer = (append ? Files.newBufferedWriter(file, StandardOpenOption.APPEND, StandardOpenOption.CREATE) : Files.newBufferedWriter(file))) {
       writePluginsList(ids, writer);
     }
