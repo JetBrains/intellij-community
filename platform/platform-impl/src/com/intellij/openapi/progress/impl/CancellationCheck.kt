@@ -25,16 +25,19 @@ class CancellationCheck private constructor(
 
   private val statusRecord = ThreadLocal.withInitial { CanceledStatusRecord() }
   private val hook = CoreProgressManager.CheckCanceledHook {
-    checkCancellationDiff(statusRecord.get())
+    checkCancellationDiff(statusRecord.get(), null)
     false
   }
 
-  private fun checkCancellationDiff(record: CanceledStatusRecord) {
+  private fun checkCancellationDiff(record: CanceledStatusRecord, failure: Throwable?) {
     if (record.enabled) {
       val now = Clock.getTime()
       val diff = now - record.timestamp
       if (diff > thresholdMs()) {
-        val message = "${Thread.currentThread().name} last checkCanceled was $diff ms ago"
+        val message = buildString {
+          append("${Thread.currentThread().name} last checkCanceled was $diff ms ago")
+          if (failure != null) append(" ($failure)")
+        }
         val t = Throwable(message, record.lastCancellationCall.takeIf { trackTrace() })
         LOG.error(message, t)
       }
@@ -61,15 +64,18 @@ class CancellationCheck private constructor(
 
     enableCancellationTimer(record, true)
     try {
-      return block()
+      val r = try {
+        block()
+      }
+      catch (e: Throwable) {
+        checkCancellationDiff(record, e)
+        throw e
+      }
+      checkCancellationDiff(record, null)
+      return r
     }
     finally {
-      try {
-        checkCancellationDiff(record)
-      }
-      finally {
         enableCancellationTimer(record, false)
-      }
     }
   }
 
