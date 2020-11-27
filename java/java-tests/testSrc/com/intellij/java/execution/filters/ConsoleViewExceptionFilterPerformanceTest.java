@@ -45,6 +45,8 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
           for (int j = 0; j < 1_000; j++) {
             console.print(trace, ConsoleViewContentType.ERROR_OUTPUT);
           }
+          // Write action is necessary to apply filters right in the current thread
+          // see AsyncFilterRunner#highlightHyperlinks
           WriteAction.run(console::flushDeferredText);
         }
         console.getEditor().getDocument().setInBulkUpdate(false);
