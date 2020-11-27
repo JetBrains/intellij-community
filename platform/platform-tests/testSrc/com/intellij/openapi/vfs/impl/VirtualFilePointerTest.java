@@ -11,6 +11,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,7 +28,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.TestTimeOut;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SuperUserStatus;
@@ -1139,5 +1143,23 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(vFile.isCaseSensitive());
     assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
     myVirtualFilePointerManager.assertConsistency();
+  }
+
+  @Test
+  public void testCreateFilePointerFrom83AbbreviationAbominationUnderWindowsDoesntCrash() throws IOException {
+    IoTestUtil.assumeWindows();
+    myVirtualFilePointerManager.assertConsistency();
+
+    File file = new File(tempDir.getRoot(), "Documents And Settings/Absolutely All Users/x.txt");
+    assertFalse(file.exists());
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+    assertTrue(file.exists());
+    File _83Abomination = new File(tempDir.getRoot(), "Docume~1/Absolu~1/x.txt");
+    assumeTrue("This version of Windows doesn't support 8.3. abbreviated file names: " + SystemInfo.OS_NAME, _83Abomination.exists());
+    VirtualFilePointer p1 = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file.getPath()), disposable, null);
+    assertEquals(VfsUtilCore.pathToUrl(file.getPath()), p1.getUrl());
+    VirtualFilePointer p2 = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(_83Abomination.getPath()), disposable, null);
+    assertEquals(VfsUtilCore.pathToUrl(file.getPath()), p2.getUrl());
   }
 }
