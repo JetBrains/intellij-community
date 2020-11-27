@@ -73,9 +73,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                            boolean doRefresh,
                                            boolean ensureCanonicalName,
                                            @NotNull NewVirtualFileSystem delegate) {
-    if (doRefresh) {
-      updateCaseSensitivityIfUnknown(name);
-    }
+    updateCaseSensitivityIfUnknown(name);
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, delegate, isCaseSensitive());
 
     //noinspection UseVirtualFileEquals

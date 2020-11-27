@@ -3,9 +3,11 @@ package com.intellij.openapi.vfs.local;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -70,7 +72,20 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
     VirtualFile readme = createChildData(vDir, "readme.txt");
     IoTestUtil.setCaseSensitivity(dir, true);
     vDir.refresh(false, true);
-    VirtualFile README = createChildData(vDir, "README.TXT");  // fails with "already exists" exception
+    VirtualFile README = createChildData(vDir, "README.TXT");  // must not fail with "already exists" exception
+    assertTrue(vDir.isCaseSensitive());
+    assertNotEquals(readme, README);
+  }
+
+  @Test
+  public void testChangeCSAndCreateNewFileMustLeadToImmediateCSFlagUpdate() throws Exception {
+    File dir = myTempDir.newDirectory();
+    VirtualDirectoryImpl vDir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    assertNotNull(vDir);
+    assertEquals(FileAttributes.CaseSensitivity.UNKNOWN, vDir.getChildrenCaseSensitivity());
+    VirtualFile readme = createChildData(vDir, "readme.txt");
+    IoTestUtil.setCaseSensitivity(dir, true);
+    VirtualFile README = createChildData(vDir, "README.TXT");
     assertTrue(vDir.isCaseSensitive());
     assertNotEquals(readme, README);
   }
