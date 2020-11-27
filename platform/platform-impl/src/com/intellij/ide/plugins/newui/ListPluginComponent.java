@@ -35,9 +35,10 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /**
  * @author Alexander Lobas
@@ -807,7 +808,7 @@ public class ListPluginComponent extends JPanel {
       }
 
       DumbAwareAction action = keyCode == KeyEvent.VK_SPACE && event.getModifiersEx() == 0 ?
-                               createEnableDisableAction(selection) :
+                               new EnableDisableAction(getEnableDisableAction(selection), selection) :
                                keyCode == EventHandler.DELETE_CODE ?
                                new UninstallAction(selection) :
                                null;
@@ -836,21 +837,19 @@ public class ListPluginComponent extends JPanel {
     return myPlugin;
   }
 
-  private @NotNull ListPluginComponent.EnableDisableAction createEnableDisableAction(@NotNull List<ListPluginComponent> selection) {
-    boolean firstEnabled = selection.get(0).isEnabledState();
-    boolean setTrue = false;
+  private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<ListPluginComponent> selection) {
+    Iterator<ListPluginComponent> iterator = selection.iterator();
+    BooleanSupplier isGloballyEnabledGenerator = () ->
+      myPluginModel.getState(iterator.next().myPlugin) == PluginEnabledState.ENABLED;
 
-    for (ListIterator<ListPluginComponent> iterator = selection.listIterator(1); iterator.hasNext(); ) {
-      if (firstEnabled != iterator.next().isEnabledState()) {
-        setTrue = true;
-        break;
+    boolean firstDisabled = !isGloballyEnabledGenerator.getAsBoolean();
+    while (iterator.hasNext()) {
+      if (firstDisabled == isGloballyEnabledGenerator.getAsBoolean()) {
+        return PluginEnableDisableAction.ENABLE_GLOBALLY;
       }
     }
 
-    return new EnableDisableAction(
-      PluginEnableDisableAction.globally(setTrue || !firstEnabled),
-      selection
-    );
+    return PluginEnableDisableAction.globally(firstDisabled);
   }
 
   private final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> {
