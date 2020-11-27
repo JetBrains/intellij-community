@@ -402,20 +402,20 @@ public class FileUtilHeavyTest {
   @Test
   public void createDirectories() throws IOException {
     Path existingDir = tempDir.newDirectory("existing").toPath();
-    NioFileUtil.createDirectories(existingDir);
+    NioFiles.createDirectories(existingDir);
 
     Path nonExisting = tempDir.getRoot().toPath().resolve("d1/d2/d3/non-existing");
-    NioFileUtil.createDirectories(nonExisting);
+    NioFiles.createDirectories(nonExisting);
     assertThat(nonExisting).isDirectory();
 
     Path existingFile = tempDir.newFile("file").toPath();
     try {
-      NioFileUtil.createDirectories(existingFile);
+      NioFiles.createDirectories(existingFile);
       fail("`createDirectories()` over an existing file shall not pass");
     }
     catch (FileAlreadyExistsException ignored) { }
     try {
-      NioFileUtil.createDirectories(existingFile.resolve("dir"));
+      NioFiles.createDirectories(existingFile.resolve("dir"));
       fail("`createDirectories()` over an existing file shall not pass");
     }
     catch (FileAlreadyExistsException ignored) { }
@@ -424,17 +424,17 @@ public class FileUtilHeavyTest {
 
     Path endLink = tempDir.getRoot().toPath().resolve("end-link");
     IoTestUtil.createSymbolicLink(endLink, existingDir);
-    NioFileUtil.createDirectories(endLink);
+    NioFiles.createDirectories(endLink);
     assertThat(endLink).isDirectory().isSymbolicLink();
 
     Path middleLinkDir = endLink.resolve("d1/d2");
-    NioFileUtil.createDirectories(middleLinkDir);
+    NioFiles.createDirectories(middleLinkDir);
     assertThat(middleLinkDir).isDirectory();
 
     Path badLink = tempDir.getRoot().toPath().resolve("bad-link");
     IoTestUtil.createSymbolicLink(badLink, Paths.get("bad-target"));
     try {
-      NioFileUtil.createDirectories(badLink);
+      NioFiles.createDirectories(badLink);
       fail("`createDirectories()` over a dangling symlink shall not pass");
     }
     catch (FileAlreadyExistsException ignored) { }

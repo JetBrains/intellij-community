@@ -9,8 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
-public final class NioFileUtil {
-  private NioFileUtil() { }
+/**
+ * A utility class providing pieces missing from {@link Files java.nio.file.Files}.
+ */
+public final class NioFiles {
+  private NioFiles() { }
 
   /**
    * A drop-in replacement for {@link Files#createDirectories} that doesn't stumble upon symlinks - unlike the original.
