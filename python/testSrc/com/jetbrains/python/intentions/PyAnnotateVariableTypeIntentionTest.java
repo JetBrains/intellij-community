@@ -191,6 +191,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doNegativeTest();
   }
 
+  // EA-240096
+  public void testNotSuggestedForCyclicAugmentedAssignmentNotHavingPrecedingTarget() {
+    doNegativeTest();
+  }
+
   public void testAnnotationCaretAtReferenceEnd() {
     doAnnotationTest();
   }
