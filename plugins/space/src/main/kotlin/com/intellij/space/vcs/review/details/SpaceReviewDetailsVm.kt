@@ -21,7 +21,7 @@ import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.*
 
-abstract class SpaceReviewDetailsVm<R : CodeReviewRecord>(
+sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   final override val lifetime: Lifetime,
   val ideaProject: Project,
   val spaceProjectInfo: SpaceProjectInfo,

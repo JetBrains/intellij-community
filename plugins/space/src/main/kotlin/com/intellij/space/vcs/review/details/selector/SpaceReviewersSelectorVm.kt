@@ -15,8 +15,8 @@ import circlet.platform.client.XPagedListOnFlux
 import circlet.platform.client.resolveAll
 import circlet.platform.client.xTransformedPagedListOnFlux
 import com.intellij.space.vcs.review.details.CommitSetReviewDetailsVm
-import com.intellij.space.vcs.review.details.SpaceReviewDetailsVm
 import com.intellij.space.vcs.review.details.MergeRequestDetailsVm
+import com.intellij.space.vcs.review.details.SpaceReviewDetailsVm
 import com.intellij.space.vcs.review.details.SpaceReviewParticipantsVm
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
@@ -69,7 +69,6 @@ internal class SpaceReviewersSelectorVm(override val lifetime: Lifetime,
         is CommitSetReviewDetailsVm -> {
           projectService.getMembersWhoCanViewProject(batch, detailsVm.projectKey.identifier, text)
         }
-        else -> throw IllegalArgumentException("Unsupported review type")
       }
     }
   }
