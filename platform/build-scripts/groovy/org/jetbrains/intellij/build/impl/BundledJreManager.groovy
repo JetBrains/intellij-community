@@ -158,6 +158,9 @@ class BundledJreManager {
     if (buildContext.options.bundledJrePrefix != null) {
       prefix = buildContext.options.bundledJrePrefix
     }
+    else if (arch == JvmArchitecture.aarch64) {
+      prefix = 'jbr_nomod-'
+    }
     else if (arch == JvmArchitecture.x32 || buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
       prefix = 'jbr-'
     }

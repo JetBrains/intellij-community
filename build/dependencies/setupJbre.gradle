@@ -108,6 +108,9 @@ static def prefixes(Arch arch, String forcedPrefix) {
   else if (arch == Arch.x86) {
     ['jbr-']
   }
+  else if (arch == Arch.aarch64) {
+    ['jbr_nomod-']
+  }
   else {
     ['jbr_jcef-']
   }
