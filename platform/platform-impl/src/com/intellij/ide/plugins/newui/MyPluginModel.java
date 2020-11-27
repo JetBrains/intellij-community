@@ -240,13 +240,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
+    boolean result = true;
     ProjectPluginTrackerManager pluginTrackerManager = ProjectPluginTrackerManager.getInstance();
     for (Map.Entry<PluginEnableDisableAction, List<IdeaPluginDescriptor>> entry : descriptorsByAction.entrySet()) {
       if (!pluginTrackerManager.updatePluginsState(entry.getValue(), entry.getKey(), getProject(), parentComponent)) {
-        return false;
+        result = false;
       }
     }
-    return true;
+    return result;
   }
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
