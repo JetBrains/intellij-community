@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle.lineIndent;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -13,6 +14,6 @@ public final class LineIndentProviderEP {
 
   @Nullable
   public static LineIndentProvider findLineIndentProvider(@Nullable Language language) {
-    return EP_NAME.getExtensionList().stream().filter(provider -> provider.isSuitableFor(language)).findFirst().orElse(null);
+    return ContainerUtil.find(EP_NAME.getExtensionList(), provider -> provider.isSuitableFor(language));
   }
 }
