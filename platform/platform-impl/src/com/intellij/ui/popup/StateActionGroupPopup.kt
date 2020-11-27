@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.PillBorder
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.util.Condition
@@ -53,6 +54,7 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
     return object : PopupListElementRenderer<Any?>(popup) {
       private var stateLabel: JLabel? = null
       private var stateButton: JComponent? = null
+      private var shortcutLabel: JLabel? = null
 
       override fun createItemComponent(): JComponent {
         val panel = JPanel(BorderLayout())
@@ -66,6 +68,7 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
         stateButton = bt
 
         val myShortcutLabel = JLabel()
+        shortcutLabel = myShortcutLabel
         myShortcutLabel.border = JBUI.Borders.emptyRight(3)
         myShortcutLabel.foreground = UIManager.getColor("MenuItem.acceleratorForeground")
         rightPane.add(myShortcutLabel, BorderLayout.EAST)
@@ -106,6 +109,11 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
             button.isVisible = value?.let { vl ->
               if (vl is PopupFactoryImpl.ActionItem) {
                 val action = vl.action
+                var shortcutText = ""
+                if (action.shortcutSet.shortcuts.isNotEmpty()) {
+                  shortcutText = KeymapUtil.getShortcutText(action.shortcutSet.shortcuts.first())
+                }
+                shortcutLabel?.text = shortcutText
                 getState(action)?.let {
                   lb.foreground = UIUtil.getLabelForeground()
                   lb.text = it
