@@ -221,11 +221,12 @@ public class InstalledPluginsTableModel {
       PluginEnabledState oldState = enabledMap.get(pluginId);
 
       PluginEnabledState newState = oldState == null ?
-                                    PluginEnabledState.DISABLED :
-                                    Objects.requireNonNull(action.apply(oldState));
-
-      beforeHandler.accept(descriptor, Pair.create(action, newState));
-      enabledMap.put(pluginId, newState);
+                                    null :
+                                    action.apply(oldState);
+      if (newState != null) {
+        beforeHandler.accept(descriptor, Pair.create(action, newState));
+        enabledMap.put(pluginId, newState);
+      }
     }
   }
 
