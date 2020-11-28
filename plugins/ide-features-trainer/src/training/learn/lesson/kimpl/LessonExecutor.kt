@@ -22,7 +22,6 @@ import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
-import training.util.useNewLearningUi
 import java.awt.Component
 import kotlin.math.max
 
@@ -91,12 +90,10 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
 
     val taskProperties = LessonExecutorUtil.taskProperties(taskContent, project)
     addTaskAction(taskProperties, taskContent) {
-      if (useNewLearningUi) {
-        val taskInfo = taskActions[currentTaskIndex]
-        taskInfo.taskProperties?.messagesNumber?.let {
-          LessonManager.instance.removeInactiveMessages(it)
-          taskInfo.taskProperties?.messagesNumber = 0 // Here could be runtime messages
-        }
+      val taskInfo = taskActions[currentTaskIndex]
+      taskInfo.taskProperties?.messagesNumber?.let {
+        LessonManager.instance.removeInactiveMessages(it)
+        taskInfo.taskProperties?.messagesNumber = 0 // Here could be runtime messages
       }
       processTask(taskContent)
     }
@@ -126,7 +123,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
     get() = FileDocumentManager.getInstance().getFile(editor.document) ?: error("No Virtual File")
 
   fun startLesson() {
-    if (useNewLearningUi) addAllInactiveMessages()
+    addAllInactiveMessages()
     processNextTask(0)
   }
 
@@ -144,7 +141,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
     LessonManager.instance.clearRestoreMessage()
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (currentTaskIndex == taskActions.size) {
-      LessonManager.instance.passLesson(project, lesson)
+      LessonManager.instance.passLesson(lesson)
       disposeRecorders()
       return
     }

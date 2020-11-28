@@ -38,7 +38,6 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil
-import training.util.useNewLearningUi
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
@@ -199,12 +198,7 @@ object LessonUtil {
 }
 
 fun LessonContext.firstLessonCompletedMessage() {
-  if (useNewLearningUi) {
-    text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
-  }
-  else {
-    text(LessonsBundle.message("goto.action.propose.to.go.next"))
-  }
+  text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
 fun TaskContext.toolWindowShowed(toolWindowId: String) {

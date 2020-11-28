@@ -28,7 +28,6 @@ import java.awt.Desktop
 import java.net.URI
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import javax.swing.Icon
 
 fun createNamedSingleThreadExecutor(name: String): ExecutorService =
   Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(name).build())
@@ -59,15 +58,6 @@ const val trainerPluginConfigName: String = "ide-features-trainer.xml"
 val featureTrainerVersion: String by lazy {
   val featureTrainerPluginId = PluginManagerCore.getPluginByClassName(CourseManager::class.java.name)
   PluginManagerCore.getPlugin(featureTrainerPluginId)?.version ?: "UNKNOWN"
-}
-
-fun createAnAction(icon: Icon, action: (AnActionEvent) -> Unit): AnAction {
-  return object : AnAction(icon) {
-    override fun isDumbAware() = true
-    override fun actionPerformed(e: AnActionEvent) {
-      action(e)
-    }
-  }
 }
 
 fun clearTrainingProgress() {
@@ -102,9 +92,6 @@ fun findLanguageSupport(project: Project): LangSupport? {
 fun isLearningProject(project: Project, langSupport: LangSupport): Boolean {
   return FileUtil.pathsEqual(project.basePath, LangManager.getInstance().getLearningProjectPath(langSupport))
 }
-
-val useNewLearningUi: Boolean
-  get() = Registry.`is`("ide.features.trainer.new.ui", false)
 
 val switchOnExperimentalLessons: Boolean
   get() = Registry.`is`("ift.experimental.lessons", false)
