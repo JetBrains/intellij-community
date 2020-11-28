@@ -534,7 +534,15 @@ namespace intellij::ui::win::jni
                     thisCtxName
                 );
 
+            comResult = shortcutPropertiesNative->Commit();
+            if (FAILED(comResult))
+                continue;
+
             comResult = shortcutFileNative->Save(nullptr, TRUE);
+            if (FAILED(comResult))
+                continue;
+
+            comResult = shortcutFileNative->SaveCompleted(nullptr);
             if (FAILED(comResult))
                 continue;
 
