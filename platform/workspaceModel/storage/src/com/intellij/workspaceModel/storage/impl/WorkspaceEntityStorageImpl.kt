@@ -986,15 +986,10 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     var _message = "$message\n\nEntity source filter: $entitySourceFilter"
     _message += "\n\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
 
-    val property = System.getProperty("ide.new.project.model.store.dump.directory")
-    if (property != null) {
-      _message += "\nSaving store content at this path: $property"
-      serializeContentToFolder(Paths.get(property), left, right, resulting)
-      LOG.error(_message, e)
-    }
-    else {
-      LOG.error(_message, e, *createAttachmentsForReport(left, right, resulting))
-    }
+    val dumpDirectory = getStoreDumpDirectory()
+    _message += "\nSaving store content at: $dumpDirectory"
+    serializeContentToFolder(dumpDirectory, left, right, resulting)
+    LOG.error(_message, e, *createAttachmentsForReport(left, right, resulting))
   }
 
   private fun serializeContentToFolder(contentFolder: Path,
