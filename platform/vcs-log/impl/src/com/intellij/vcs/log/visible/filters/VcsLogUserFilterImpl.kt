@@ -37,29 +37,26 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
   override fun getUsers(root: VirtualFile) = users.flatMapTo(mutableSetOf()) { getUsers(root, it) }
 
   private fun getUsers(root: VirtualFile, name: String): Set<VcsUser> {
-    val users = mutableSetOf<VcsUser>()
-    if (VcsLogFilterObject.ME == name) {
-      val vcsUser = data[root]
-      if (vcsUser != null) {
-        users.addAll(getUsers(vcsUser.name)) // do not just add vcsUser, also add synonyms
-        val emailNamePart = VcsUserUtil.getNameFromEmail(vcsUser.email)
-        if (emailNamePart != null) {
-          val emails = users.map { user -> VcsUserUtil.emailToLowerCase(user.email) }.toSet()
-          for (candidateUser in getUsers(emailNamePart)) {
-            if (emails.contains(VcsUserUtil.emailToLowerCase(candidateUser.email))) {
-              users.add(candidateUser)
-            }
-          }
-        }
-      }
-      else {
-        LOG.warn("Can not resolve user name for root $root")
-      }
+    if (VcsLogFilterObject.ME != name) return getUsers(name)
+
+    val vcsUser = data[root]
+    if (vcsUser == null) {
+      LOG.warn("Can not resolve user name for root $root")
+      return emptySet()
     }
-    else {
-      users.addAll(getUsers(name))
+
+    val usersByName = getUsers(vcsUser.name)
+    val emailNamePart = VcsUserUtil.getNameFromEmail(vcsUser.email) ?: return usersByName
+
+    val emails = usersByName.map { user -> VcsUserUtil.emailToLowerCase(user.email) }.toSet()
+    val usersByEmail = getUsers(emailNamePart).filter { candidateUser ->
+      /*
+      ivan@ivanov.com and ivan@petrov.com have the same emailNamePart but they are different people
+      getUsers("ivan") will find both of them, so we filter results here
+      */
+      emails.contains(VcsUserUtil.emailToLowerCase(candidateUser.email))
     }
-    return users
+    return usersByName + usersByEmail
   }
 
   override fun getValuesAsText(): Collection<String> = users
