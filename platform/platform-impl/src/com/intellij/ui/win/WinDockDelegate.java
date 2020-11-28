@@ -48,8 +48,11 @@ public final class WinDockDelegate implements SystemDock.Delegate {
         ctx.setRecentTasksList(tasks);
       }).get();
     }
-    catch (final InterruptedException | ExecutionException e) {
+    catch (final InterruptedException e) {
       LOG.warn(e);
+    }
+    catch (final Throwable e) {
+      LOG.error(e);
     }
   }
 

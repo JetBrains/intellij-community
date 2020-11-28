@@ -60,5 +60,6 @@
 #include <propkey.h>        // PKEY_Title
 #include <propvarutil.h>    // InitPropVariantFromString
 #include <atlbase.h>        // CComPtr
+#include <winerror.h>       // HRESULT_FROM_WIN32, ERROR_* WinAPI defines
 
 #endif // ndef WINSHELLINTEGRATION_WINAPI_H
