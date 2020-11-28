@@ -482,6 +482,12 @@ done:
 FunctionEnd
 
 
+!macro CreateLauncherShortcut LNK_PATH TARGET_PATH
+  CreateShortcut `${LNK_PATH}` `${TARGET_PATH}` "" "" "" SW_SHOWNORMAL
+  WinShell::SetLnkAUMI `${LNK_PATH}` `${PRODUCT_APP_USER_MODEL_ID}`
+!macroend
+
+
 Function downloadJre
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $downloadJRE" "State"
   ${If} $R0 == 1
@@ -1221,15 +1227,13 @@ shortcuts:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $launcherShortcut" "State"
   StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" shortcut_for_exe_64 0
   StrCmp $R2 1 "" exe_64
-  CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
-                 "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
+  !insertmacro CreateLauncherShortcut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
   ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
 shortcut_for_exe_64:
   StrCmp $R2 1 "" add_to_path
-  CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" \
-                 "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
+  !insertmacro CreateLauncherShortcut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
   ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
 
 add_to_path:
@@ -1300,9 +1304,7 @@ skip_ipr:
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
-                 "$productLauncher" "" "" "" SW_SHOWNORMAL
-
+  !insertmacro CreateLauncherShortcut "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$productLauncher"
   StrCpy $7 "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
   ShellLink::GetShortCutWorkingDirectory $7
   Pop $0
