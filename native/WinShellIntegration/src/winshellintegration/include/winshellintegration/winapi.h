@@ -6,8 +6,6 @@
  * @author Nikita Provotorov
  */
 
-// TODO: make all defines in CMake
-
 #ifndef WINSHELLINTEGRATION_WINAPI_H
 #define WINSHELLINTEGRATION_WINAPI_H
 
