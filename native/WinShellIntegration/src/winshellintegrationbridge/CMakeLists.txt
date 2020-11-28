@@ -27,6 +27,12 @@ target_link_libraries(winshellintegrationbridge
     PRIVATE "Ole32.lib"
 )
 
+# to link statically against MSVC runtime library (if MSVC is used)
+set_target_properties(winshellintegration winshellintegrationbridge PROPERTIES
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+)
+
+# output binary name
 if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
     set_target_properties(winshellintegrationbridge PROPERTIES
         OUTPUT_NAME "winshellintegrationbridge64"
