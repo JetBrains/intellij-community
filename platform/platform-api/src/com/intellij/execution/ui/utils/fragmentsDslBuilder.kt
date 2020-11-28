@@ -46,7 +46,7 @@ import javax.swing.JComponent
 }
 
 @ApiStatus.Experimental
-@FragmentsDsl class Fragment<Settings, Component : JComponent>(private val component: Component) {
+@FragmentsDsl class Fragment<Settings : FragmentedSettings, Component : JComponent>(private val component: Component) {
   lateinit var id: String
   lateinit var reset: (Settings, Component) -> Unit
   lateinit var apply: (Settings, Component) -> Unit
@@ -68,7 +68,11 @@ import javax.swing.JComponent
 @FragmentsDsl class FragmentsBuilder<Settings : FragmentedSettings> {
   val fragments = arrayListOf<SettingsEditorFragment<Settings, *>>()
 
-  fun <Component : JComponent> by(
+  infix fun <Component : JComponent> Component.asFragment(
+    setup: Fragment<Settings, Component>.() -> Unit
+  ): SettingsEditorFragment<Settings, Component> = fragment(this, setup)
+
+  fun <Component : JComponent> fragment(
     component: Component,
     setup: Fragment<Settings, Component>.() -> Unit
   ): SettingsEditorFragment<Settings, Component> {
