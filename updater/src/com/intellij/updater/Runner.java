@@ -12,6 +12,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -37,7 +38,27 @@ public class Runner {
   public static void main(String[] args) {
     initLogger();
     try {
-      _main(args);
+      List<String> effectiveArgs = new ArrayList<>();
+      for (String arg : args) {
+        if (arg.startsWith("@")) {
+          FileInputStream fis = new FileInputStream(arg.substring(1));
+          try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));
+            while (true) {
+              String line = reader.readLine();
+              if (line == null) break;
+              effectiveArgs.add(line);
+            }
+          }
+          finally {
+            fis.close();
+          }
+        }
+        else {
+          effectiveArgs.add(arg);
+        }
+      }
+      _main(effectiveArgs.toArray(new String[0]));
     }
     catch (Throwable t) {
       logger().error("internal error", t);
