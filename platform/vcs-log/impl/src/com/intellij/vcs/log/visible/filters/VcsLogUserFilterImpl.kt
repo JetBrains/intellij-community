@@ -34,10 +34,10 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
     }
   }
 
-  override fun getUsers(root: VirtualFile) = users.flatMapTo(mutableSetOf()) { getUsers(root, it) }
+  override fun getUsers(root: VirtualFile) = users.flatMapTo(mutableSetOf()) { resolveUserName(root, it) }
 
-  private fun getUsers(root: VirtualFile, name: String): Set<VcsUser> {
-    if (VcsLogFilterObject.ME != name) return getUsers(name)
+  private fun resolveUserName(root: VirtualFile, name: String): Set<VcsUser> {
+    if (VcsLogFilterObject.ME != name) return resolveUserName(name)
 
     val vcsUser = data[root]
     if (vcsUser == null) {
@@ -45,14 +45,14 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
       return emptySet()
     }
 
-    val usersByName = getUsers(vcsUser.name)
+    val usersByName = resolveUserName(vcsUser.name)
     val emailNamePart = VcsUserUtil.getNameFromEmail(vcsUser.email) ?: return usersByName
 
     val emails = usersByName.map { user -> VcsUserUtil.emailToLowerCase(user.email) }.toSet()
-    val usersByEmail = getUsers(emailNamePart).filter { candidateUser ->
+    val usersByEmail = resolveUserName(emailNamePart).filter { candidateUser ->
       /*
       ivan@ivanov.com and ivan@petrov.com have the same emailNamePart but they are different people
-      getUsers("ivan") will find both of them, so we filter results here
+      resolveUserName("ivan") will find both of them, so we filter results here
       */
       emails.contains(VcsUserUtil.emailToLowerCase(candidateUser.email))
     }
@@ -70,7 +70,7 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
 
   override fun matches(commit: VcsCommitMetadata): Boolean {
     return users.any { name ->
-      val users = getUsers(commit.root, name)
+      val users = resolveUserName(commit.root, name)
       when {
         users.isNotEmpty() -> {
           users.contains(commit.author)
@@ -91,7 +91,7 @@ internal class VcsLogUserFilterImpl(private val users: Collection<String>,
     }
   }
 
-  private fun getUsers(name: String): Set<VcsUser> {
+  private fun resolveUserName(name: String): Set<VcsUser> {
     val standardName = VcsUserUtil.getNameInStandardForm(name)
     return allUsersByNames[standardName].union(allUsersByEmails[standardName])
   }
