@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
 import training.commands.kotlin.TaskContext
 import training.learn.CourseManager
-import training.learn.LearnBundle
 import training.learn.interfaces.Lesson
 import training.learn.interfaces.LessonType
 import training.learn.lesson.kimpl.KLesson
@@ -26,7 +25,6 @@ import training.ui.LessonMessagePane
 import training.ui.MessagePart
 import training.ui.views.LearnPanel
 import training.util.createNamedSingleThreadExecutor
-import training.util.useNewLearningUi
 import java.awt.Rectangle
 import java.util.concurrent.Executor
 
@@ -65,7 +63,7 @@ class LessonManager {
   }
 
   internal fun openLessonPassed(lesson: KLesson, project: Project) {
-    initLesson(null, lesson, project)
+    initLesson(null, lesson)
     learnPanel?.scrollToNewMessages = false
     OpenPassedContext(project).apply(lesson.lessonContent)
     learnPanel?.scrollRectToVisible(Rectangle(0, 0, 1, 1))
@@ -74,7 +72,7 @@ class LessonManager {
   }
 
   internal fun initDslLesson(editor: Editor?, cLesson: Lesson, lessonExecutor: LessonExecutor) {
-    initLesson(editor, cLesson, lessonExecutor.project)
+    initLesson(editor, cLesson)
     currentLessonExecutor = lessonExecutor
   }
 
@@ -90,7 +88,7 @@ class LessonManager {
     LearningUiHighlightingManager.clearHighlights()
   }
 
-  private fun initLesson(editor: Editor?, cLesson: Lesson, project: Project) {
+  private fun initLesson(editor: Editor?, cLesson: Lesson) {
     val learnPanel = learnPanel ?: return
     stopLesson()
     currentLesson = cLesson
@@ -100,35 +98,14 @@ class LessonManager {
     val module = cLesson.module
     val moduleName = module.name
     learnPanel.setModuleName(moduleName)
-    learnPanel.modulePanel.init(cLesson)
     if (cLesson.existedFile == null) {
       clearEditor(editor)
-    }
-
-    if (!useNewLearningUi) {
-      val nextLesson = CourseManager.instance.getNextNonPassedLesson(cLesson)
-      if (nextLesson != null) {
-        val buttonText: String? = if (nextLesson.module == cLesson.module) null else nextLesson.module.name
-        learnPanel.updateNextButtonAction(buttonText) {
-          try {
-            CourseManager.instance.openLesson(project, nextLesson)
-          }
-          catch (e: Exception) {
-            LOG.error(e)
-          }
-        }
-      }
-      else {
-        learnPanel.updateNextButtonAction(null, null)
-      }
-      learnPanel.updateButtonUi()
     }
   }
 
   fun addMessage(@Language("HTML") text: String, isInformer: Boolean = false) {
     val state = if (isInformer) LessonMessagePane.MessageState.INFORMER else LessonMessagePane.MessageState.NORMAL
     learnPanel?.addMessage(text, state)
-    if (!useNewLearningUi) LearningUiManager.activeToolWindow?.updateScrollPane()
   }
 
   fun addInactiveMessages(messages: List<String>) {
@@ -150,43 +127,13 @@ class LessonManager {
     learnPanel?.setPreviousMessagesPassed()
   }
 
-  fun passLesson(project: Project, cLesson: Lesson) {
+  fun passLesson(cLesson: Lesson) {
     cLesson.pass()
     LearningUiHighlightingManager.clearHighlights()
     val learnPanel = learnPanel ?: return
     learnPanel.setLessonPassed()
-    if (!useNewLearningUi) {
-      val nextLesson = CourseManager.instance.getNextNonPassedLesson(cLesson)
-      if (nextLesson != null) {
-        val text = if (nextLesson.module != cLesson.module)
-          LearnBundle.message("learn.ui.button.next.module") + " " + nextLesson.module.name
-        else null
-        learnPanel.setButtonNextAction(nextLesson, text) {
-          try {
-            CourseManager.instance.openLesson(project, nextLesson)
-          }
-          catch (e: Exception) {
-            LOG.error(e)
-          }
-        }
-      }
-      else {
-        learnPanel.setButtonNextAction(null, LearnBundle.message("learn.ui.course.completed.caption")) {
-          learnPanel.clearMessages()
-          learnPanel.setModuleName("")
-          learnPanel.setLessonName(LearnBundle.message("learn.ui.course.completed.caption"))
-          learnPanel.addMessage(LearnBundle.message("learn.ui.course.completed.description"))
-          learnPanel.hideNextButton()
-          learnPanel.revalidate()
-          learnPanel.repaint()
-        }
-      }
-    }
-    else {
-      learnPanel.makeNextButtonSelected()
-    }
+    learnPanel.makeNextButtonSelected()
     learnPanel.updateUI()
-    learnPanel.modulePanel.updateLessons(cLesson)
     stopLesson()
   }
 
@@ -228,7 +175,6 @@ class LessonManager {
                                    MessagePart(" ${proposalText} ", MessagePart.MessageType.TEXT_BOLD),
                                    MessagePart("Restore", MessagePart.MessageType.LINK).also { it.runnable = callback }
     ), LessonMessagePane.MessageState.RESTORE)
-    if (!useNewLearningUi) LearningUiManager.activeToolWindow?.updateScrollPane()
     shownRestoreNotification = notification
   }
 
