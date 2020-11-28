@@ -356,7 +356,22 @@ namespace intellij::ui::win::jni
             auto nativeTaskArgs = jStringToWideString(jEnv, jTaskArgs);
             auto nativeTaskDescription = jStringToWideString(jEnv, jTaskDescription);
 
-            // TODO: jEnv->DeleteLocalRef ?
+            // cleanup
+
+            jEnv->DeleteLocalRef(jTaskDescription);
+            ensureJNINoErrors(*jEnv);
+
+            jEnv->DeleteLocalRef(jTaskArgs);
+            ensureJNINoErrors(*jEnv);
+
+            jEnv->DeleteLocalRef(jTaskPath);
+            ensureJNINoErrors(*jEnv);
+
+            jEnv->DeleteLocalRef(jTaskClass);
+            ensureJNINoErrors(*jEnv);
+
+            jEnv->DeleteLocalRef(jTask);
+            ensureJNINoErrors(*jEnv);
 
             nativeTasks.emplace_back(
                 JumpTask::startBuilding(std::move(nativeTaskPath), std::move(nativeTaskDescription))
