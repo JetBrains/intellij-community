@@ -488,6 +488,12 @@ FunctionEnd
 !macroend
 
 
+!macro DeleteLauncherShortcut LNK_PATH
+  WinShell::UninstShortcut `${LNK_PATH}`
+  Delete `${LNK_PATH}`
+!macroend
+
+
 Function downloadJre
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $downloadJRE" "State"
   ${If} $R0 == 1
@@ -1830,7 +1836,7 @@ shortcuts:
   goto delete_caches
 
 remove_link:
-  Delete $7
+  !insertmacro DeleteLauncherShortcut "$7"
   ; Delete only if empty (last IDEA version is uninstalled)
   RMDir  "$SMPROGRAMS\$3"
 
@@ -1904,11 +1910,11 @@ continue_uninstall:
 desktop_shortcut_launcher32:
   IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" 0 desktop_shortcut_launcher64
     DetailPrint "remove desktop shortcut to launcher32: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
+    !insertmacro DeleteLauncherShortcut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
 desktop_shortcut_launcher64:
   IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" 0 registry
     DetailPrint "remove desktop shortcut to launcher64: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
-    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
+    !insertmacro DeleteLauncherShortcut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
 
 registry:
   StrCpy $0 "SHCTX"
