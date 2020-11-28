@@ -54,6 +54,6 @@ class CoverageClassFilterEditor extends ClassFilterEditor {
 
   @Override
   protected Icon getAddPatternButtonIcon() {
-    return AllIcons.ToolbarDecorator.AddFolder;
+    return AllIcons.Nodes.Package;
   }
 }
