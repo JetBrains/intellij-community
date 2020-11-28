@@ -27,9 +27,10 @@ target_link_libraries(winshellintegrationbridge
     PRIVATE "Ole32.lib"
 )
 
-# to link statically against MSVC runtime library (if MSVC is used)
+# forces to link dynamically to against exactly release version of MSVC runtime (msvcp140.dll), not debug version (msvcp140d.dll)
+# in both release and debug builds.
 set_target_properties(winshellintegration winshellintegrationbridge PROPERTIES
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    MSVC_RUNTIME_LIBRARY "MultiThreadedDLL"
 )
 
 # output binary name
