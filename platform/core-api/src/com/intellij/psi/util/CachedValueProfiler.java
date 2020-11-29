@@ -18,9 +18,9 @@ public final class CachedValueProfiler {
   private static final Logger LOG = Logger.getInstance(CachedValueProfiler.class);
 
   public interface EventConsumer {
-    void onFrameEnter(long frameId, long parentId, long time);
+    void onFrameEnter(long frameId, StackTraceElement place, long parentId, long time);
 
-    void onFrameExit(long frameId, long time);
+    void onFrameExit(long frameId, long start, long computed, long time);
 
     void onValueComputed(long frameId, StackTraceElement place, long start, long time);
 
@@ -52,22 +52,24 @@ public final class CachedValueProfiler {
   }
 
   public static final class Frame implements AutoCloseable {
-    final long time = currentTime();
+    final long start = currentTime();
     final long id = ourFrameId.incrementAndGet();
     final Frame parent;
 
     private final Map<CachedValueProvider.Result<?>, StackTraceElement> places = new HashMap<>();
-    private long timeComputed;
+    private long timeConfigured, timeComputed;
 
     Frame() {
       ThreadContext context = ourContext.get();
       parent = context.topFrame;
       context.topFrame = this;
-      if (context.consumer != null) {
-        context.consumer.onFrameEnter(id, parent == null ? 0 : parent.id, time);
-      }
+      if (context.consumer == null || context.consumer != ourEventConsumer) return;
+
+      StackTraceElement place = findCallerPlace();
+      context.consumer.onFrameEnter(id, place, parent == null ? 0 : parent.id, start);
+      timeConfigured = currentTime();
       ourFrameOverhead.count.incrementAndGet();
-      ourFrameOverhead.time.addAndGet(currentTime() - time);
+      ourFrameOverhead.overhead.addAndGet(timeConfigured - start);
     }
 
     @Override
@@ -81,14 +83,13 @@ public final class CachedValueProfiler {
       if (parent == null) {
         ourContext.remove(); // also releases ThreadContext.consumer reference
       }
-      if (context.consumer != null) {
-        //report place for aborted computations?
-        //StackTraceElement place = timeComputed != 0 ? null : findAnyPlace();
-        context.consumer.onFrameExit(id, currentTime());
-      }
+      if (context.consumer == null || context.consumer != ourEventConsumer) return;
 
+      context.consumer.onFrameExit(id, start, timeComputed, currentTime());
+      long cur = currentTime();
+      ourFrameOverhead.total.addAndGet(cur - start);
       if (timeComputed != 0) {
-        ourFrameOverhead.time.addAndGet(currentTime() - timeComputed);
+        ourFrameOverhead.overhead.addAndGet(cur - timeComputed);
       }
     }
 
@@ -107,18 +108,18 @@ public final class CachedValueProfiler {
   static void onResultCreated(@NotNull CachedValueProvider.Result<?> result, @Nullable Object original) {
     long time = currentTime();
     ThreadContext context = ourContext.get();
-    if (context.consumer == null) return;
+    if (context.consumer == null || context.consumer != ourEventConsumer) return;
 
     Frame frame = context.topFrame;
     if (frame == null) return;
 
-    StackTraceElement place = original == null ? findExactPlace() :
+    StackTraceElement place = original == null ? findComputationPlace() :
                               original instanceof CachedValueProvider.Result ? frame.places.get(original) :
-                              original instanceof Function ? findAnyPlace() : null;
+                              original instanceof Function ? findCallerPlace() : null;
     if (place == null) return;
 
     frame.places.put(result, place);
-    ourFrameOverhead.time.addAndGet(currentTime() - time);
+    ourFrameOverhead.overhead.addAndGet(currentTime() - time);
   }
 
   @Nullable
@@ -128,14 +129,14 @@ public final class CachedValueProfiler {
     if (context.consumer == null) return null;
 
     StackTraceElement place = frame.places.get(result);
-    if (place == null) place = findAnyPlace();
+    if (place == null) place = findCallerPlace();
 
-    context.consumer.onValueComputed(frame.id, place, frame.time, time);
+    context.consumer.onValueComputed(frame.id, place, frame.timeConfigured, time);
     return new ValueTracker(place, time);
   }
 
   @Nullable
-  private static StackTraceElement findExactPlace() {
+  static StackTraceElement findComputationPlace() {
     StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
     int idx, len;
     for (idx = 2, len = stackTrace.length; idx < len; idx ++) {
@@ -164,7 +165,8 @@ public final class CachedValueProfiler {
   }
 
   @NotNull
-  private static StackTraceElement findAnyPlace() {
+  static StackTraceElement findCallerPlace() {
+    // todo use StackWalker api
     StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
     for (int idx = 2, len = stackTrace.length; idx < len; idx++) {
       String className = stackTrace[idx].getClassName();
@@ -178,36 +180,34 @@ public final class CachedValueProfiler {
     return new StackTraceElement("unknown", "unknown", "", -1);
   }
 
-  private static long currentTime() {
+  static long currentTime() {
     return System.nanoTime();
   }
 
   public static final class ValueTracker {
-    public final StackTraceElement place;
-    public final long time;
+    final StackTraceElement place;
+    final long start;
 
     ValueTracker(@NotNull StackTraceElement place, long time) {
       this.place = place;
-      this.time = time;
+      this.start = time;
     }
 
     public void invalidate() {
       long time = currentTime();
       ThreadContext context = ourContext.get();
-      if (context.consumer != null) {
-        context.consumer.onValueInvalidated(context.topFrame == null ? 0 : context.topFrame.id, place, this.time, time);
-      }
-      ourTrackerOverhead.time.addAndGet(currentTime() - time);
+      if (context.consumer == null || context.consumer != ourEventConsumer) return;
+      context.consumer.onValueInvalidated(context.topFrame == null ? 0 : context.topFrame.id, place, start, time);
+      ourTrackerOverhead.overhead.addAndGet(currentTime() - time);
     }
 
     public void valueUsed() {
       long time = currentTime();
       ThreadContext context = ourContext.get();
-      if (context.consumer != null) {
-        context.consumer.onValueUsed(context.topFrame == null ? 0 : context.topFrame.id, place, this.time, time);
-      }
+      if (context.consumer == null || context.consumer != ourEventConsumer) return;
+      context.consumer.onValueUsed(context.topFrame == null ? 0 : context.topFrame.id, place, start, time);
       ourTrackerOverhead.count.incrementAndGet();
-      ourTrackerOverhead.time.addAndGet(currentTime() - time);
+      ourTrackerOverhead.overhead.addAndGet(currentTime() - time);
     }
   }
 
@@ -217,15 +217,18 @@ public final class CachedValueProfiler {
   }
 
   private static class Overhead {
-    final AtomicLong time = new AtomicLong();
+    final AtomicLong total = new AtomicLong();
+    final AtomicLong overhead = new AtomicLong();
     final AtomicLong count = new AtomicLong();
 
     String resetAndReport(String eventName) {
-      long delta = this.time.getAndSet(0);
-      long events = this.count.getAndSet(0);
+      long total = this.total.getAndSet(0);
+      long overhead = this.overhead.getAndSet(0);
+      long count = this.count.getAndSet(0);
       NumberFormat format = NumberFormat.getInstance(Locale.US);
-      return format.format(events) + " " + eventName + " calls, " +
-             format.format(delta) + " overhead ns (" + format.format(delta / events) + " ns/call)";
+      return format.format(count) + " " + eventName + " calls, " +
+             format.format(overhead) + " overhead ns (" + format.format(overhead / count) + " ns/call" +
+             (total == 0 ? "" : ", " + String.format("%.2f", overhead / (double)(total / 100)) + " %") + ")";
     }
   }
 

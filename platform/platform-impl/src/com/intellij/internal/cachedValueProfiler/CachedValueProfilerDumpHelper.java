@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -59,6 +60,10 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
 
   void close() {
     List<Runnable> runnables = myExecutor.shutdownNow();
+    try {
+      myExecutor.awaitTermination(200, TimeUnit.MILLISECONDS);
+    }
+    catch (InterruptedException ignore) { }
     for (Runnable runnable : runnables) {
       runnable.run();
     }
@@ -85,15 +90,15 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
   }
 
   @Override
-  public void onFrameEnter(long frameId, long parentId, long time) {
+  public void onFrameEnter(long frameId, StackTraceElement place, long parentId, long time) {
     if (myExecutor.isShutdown()) return;
-    myExecutor.execute(() -> myWriter.onFrameEnter(frameId, parentId, time));
+    myExecutor.execute(() -> myWriter.onFrameEnter(frameId, place, parentId, time));
   }
 
   @Override
-  public void onFrameExit(long frameId, long time) {
+  public void onFrameExit(long frameId, long start, long computed, long time) {
     if (myExecutor.isShutdown()) return;
-    myExecutor.execute(() -> myWriter.onFrameExit(frameId, time));
+    myExecutor.execute(() -> myWriter.onFrameExit(frameId, start, computed, time));
   }
 
   @Override
@@ -181,11 +186,12 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onFrameEnter(long frameId, long parentId, long time) {
+    public void onFrameEnter(long frameId, StackTraceElement place, long parentId, long time) {
       try {
         myWriter.beginObject();
         myWriter.name("type").value("frame-enter");
         myWriter.name("frame").value(frameId);
+        myWriter.name("place").value(placeToString(place));
         myWriter.name("parent").value(parentId);
         myWriter.name("time").value(time);
         myWriter.endObject();
@@ -196,11 +202,13 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onFrameExit(long frameId, long time) {
+    public void onFrameExit(long frameId, long start, long computed, long time) {
       try {
         myWriter.beginObject();
         myWriter.name("type").value("frame-exit");
         myWriter.name("frame").value(frameId);
+        myWriter.name("start").value(start);
+        myWriter.name("computed").value(computed);
         myWriter.name("time").value(time);
         myWriter.endObject();
       }
@@ -274,10 +282,10 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
 
       reader.beginArray();
       String type = "";
-      StackTraceElement place = null;
-      long frame = 0, parent = 0, start = 0, time = 0;
       Map<String, StackTraceElement> places = FactoryMap.create(CachedValueProfilerDumpHelper::placeFromString);
       while (reader.hasNext()) {
+        StackTraceElement place = null;
+        long frame = 0, parent = 0, start = 0, computed = 0, time = 0;
         reader.beginObject();
         while (reader.hasNext()) {
           String name = reader.nextName();
@@ -287,11 +295,12 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
           else if ("parent".equals(name)) parent = reader.nextLong();
           else if ("start".equals(name)) start = reader.nextLong();
           else if ("time".equals(name)) time = reader.nextLong();
+          else if ("computed".equals(name)) computed = reader.nextLong();
           else throw new IOException("unexpected: " + name);
         }
         reader.endObject();
-        if ("frame-enter".equals(type)) consumer.onFrameEnter(frame, parent, time);
-        else if ("frame-exit".equals(type)) consumer.onFrameExit(frame, time);
+        if ("frame-enter".equals(type)) consumer.onFrameEnter(frame, place, parent, time);
+        else if ("frame-exit".equals(type)) consumer.onFrameExit(frame, start, computed, time);
         else if ("value-computed".equals(type)) consumer.onValueComputed(frame, place, start, time);
         else if ("value-used".equals(type)) consumer.onValueUsed(frame, place, start, time);
         else if ("value-invalidated".equals(type)) consumer.onValueInvalidated(frame, place, start, time);
