@@ -83,6 +83,14 @@ public enum PluginEnableDisableAction {
     return myState.isPerProject();
   }
 
+  public boolean isEnable() {
+    return ordinal() / 3 == 0;
+  }
+
+  public boolean isDisable() {
+    return !isEnable();
+  }
+
   @Override
   public @NotNull @Nls String toString() {
     return IdeBundle.message(myPropertyKey);

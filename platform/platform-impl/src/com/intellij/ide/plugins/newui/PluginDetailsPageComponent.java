@@ -11,7 +11,6 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -96,8 +95,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private IdeaPluginDescriptor myUpdateDescriptor;
 
   private ListPluginComponent myShowComponent;
-  private boolean myRequiresRestart = true;
-  private boolean myPluginIsRequired = false;
 
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel, @NotNull LinkListener<Object> searchListener, boolean marketplace) {
     myPluginModel = pluginModel;
@@ -468,22 +465,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
         showPlugin(component);
       }
     }
-  }
-
-  @Override
-  public ActionCallback select(Integer key, boolean now) {
-    if (myPlugin instanceof IdeaPluginDescriptorImpl) {
-      IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)myPlugin);
-
-      if (descriptor != null) {
-        myPluginModel.appendOrUpdateDescriptor(descriptor);
-        myRequiresRestart = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor) != null;
-      }
-
-      myPluginIsRequired = myPluginModel.isRequiredPlugin(myPlugin);
-    }
-
-    return super.select(key, now);
   }
 
   private void showPlugin(@NotNull ListPluginComponent component) {
@@ -881,15 +862,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     @Override
     protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull PluginDetailsPageComponent component) {
       return myPlugin;
-    }
-
-    @Override
-    protected boolean isInvisibleFor(@NotNull PluginId pluginId) {
-      return super.isInvisibleFor(pluginId) ||
-             myRequiresRestart && myAction.isPerProject() ||
-             myPluginIsRequired &&
-             (myAction == PluginEnableDisableAction.DISABLE_FOR_PROJECT ||
-              myAction == PluginEnableDisableAction.DISABLE_FOR_PROJECT_ENABLE_GLOBALLY);
     }
   }
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.externalDependencies.DependencyOnPlugin;
+import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
@@ -81,7 +83,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private final Set<IdeaPluginDescriptorImpl> myDynamicPluginsToUninstall = new HashSet<>();
   private final Set<IdeaPluginDescriptorImpl> myPluginsToRemoveOnCancel = new HashSet<>();
 
-  private final @NotNull Map<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> myDiff = new HashMap<>();
+  private final Map<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> myDiff = new HashMap<>();
+  private final Map<PluginId, Boolean> myRequiredPluginsForProject = new HashMap<>();
+  private final Map<IdeaPluginDescriptorImpl, Boolean> myRequiresRestart = new HashMap<>();
+  private final Set<IdeaPluginDescriptor> myUninstalled = new HashSet<>();
 
   private final Set<PluginId> myErrorPluginsToDisable = new HashSet<>();
 
@@ -668,7 +673,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myDetailPanels.add(detailPanel);
   }
 
-  void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
+  private void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
     int index = view.indexOf(descriptor);
     if (index < 0) {
       view.add(descriptor);
@@ -812,6 +817,40 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   @NotNull PluginEnabledState getState(@NotNull PluginId pluginId) {
     PluginEnabledState state = getEnabledMap().get(pluginId);
     return state != null ? state : PluginEnabledState.ENABLED;
+  }
+
+  boolean isRequiredPluginForProject(@NotNull PluginId pluginId) {
+    Project project = getProject();
+    return project != null &&
+           myRequiredPluginsForProject.computeIfAbsent(
+             pluginId,
+             id -> ContainerUtil.exists(
+               getDependenciesOnPlugins(project),
+               id.getIdString()::equals
+             )
+           );
+  }
+
+  boolean requiresRestart(@NotNull IdeaPluginDescriptor descriptor) {
+    return myRequiresRestart.computeIfAbsent(
+      descriptor instanceof IdeaPluginDescriptorImpl ? (IdeaPluginDescriptorImpl)descriptor : null,
+      descriptorImpl -> {
+        IdeaPluginDescriptorImpl fullDescriptor = descriptorImpl == null ?
+                                                  null :
+                                                  PluginDescriptorLoader.tryLoadFullDescriptor(descriptorImpl);
+
+        return fullDescriptor == null ||
+               DynamicPlugins.checkCanUnloadWithoutRestart(fullDescriptor) != null;
+      }
+    );
+  }
+
+  boolean isUninstalled(@NotNull IdeaPluginDescriptor descriptor) {
+    return myUninstalled.contains(descriptor);
+  }
+
+  void addUninstalled(@NotNull IdeaPluginDescriptor descriptor) {
+    myUninstalled.add(descriptor);
   }
 
   public void changeEnableDisable(@NotNull Set<? extends IdeaPluginDescriptor> plugins,
@@ -1129,5 +1168,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
     return icon;
+  }
+
+  private static @NotNull List<String> getDependenciesOnPlugins(@NotNull Project project) {
+    return ContainerUtil.map(
+      ExternalDependenciesManager.getInstance(project).getDependencies(DependencyOnPlugin.class),
+      DependencyOnPlugin::getPluginId
+    );
   }
 }

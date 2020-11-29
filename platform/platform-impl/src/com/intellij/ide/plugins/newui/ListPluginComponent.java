@@ -173,7 +173,7 @@ public class ListPluginComponent extends JPanel {
       if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
         myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
-        myUninstalled = true;
+        myPluginModel.addUninstalled(myPlugin);
       }
       else {
         InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
@@ -472,8 +472,9 @@ public class ListPluginComponent extends JPanel {
       }
     }
     if (calcColor && !myMarketplace) {
-      boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || isEnabledState());
-      if (!enabled) {
+      boolean disabled = myPluginModel.isUninstalled(myPlugin) ||
+                         !MyPluginModel.isInstallingOrUpdate(myPlugin) && !isEnabledState();
+      if (disabled) {
         nameForeground = otherForeground = DisabledColor;
       }
     }
@@ -499,7 +500,7 @@ public class ListPluginComponent extends JPanel {
     Ref<@Nls String> enableAction = new Ref<>();
     String message = myOnlyUpdateMode ? null : myPluginModel.getErrorMessage(myPlugin, enableAction);
     boolean errors = message != null;
-    updateIcon(errors, myUninstalled || !isEnabledState());
+    updateIcon(errors, myPluginModel.isUninstalled(myPlugin) || !isEnabledState());
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null);
@@ -605,7 +606,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateEnabledState() {
-    if (!myUninstalled) {
+    if (!myPluginModel.isUninstalled(myPlugin)) {
       updateEnabledStateUI();
     }
 
@@ -623,7 +624,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
-    myUninstalled = true;
+    myPluginModel.addUninstalled(myPlugin);
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
   }
@@ -902,12 +903,6 @@ public class ListPluginComponent extends JPanel {
     @Override
     protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
       return component.myPlugin;
-    }
-
-    @Override
-    protected boolean isBundled(@NotNull ListPluginComponent component) {
-      return component.myUninstalled ||
-             super.isBundled(component);
     }
   }
 

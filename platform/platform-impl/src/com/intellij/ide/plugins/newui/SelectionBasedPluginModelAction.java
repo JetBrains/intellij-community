@@ -43,6 +43,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
   protected abstract @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull C component);
 
+  protected final @NotNull Set<? extends IdeaPluginDescriptor> getAllDescriptors() {
+    return map2SetNotNull(mySelection, this::getPluginDescriptor);
+  }
+
   static abstract class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
 
     protected final @NotNull PluginEnableDisableAction myAction;
@@ -63,21 +67,21 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      List<PluginId> pluginIds = mapNotNull(getAllDescriptors(), IdeaPluginDescriptor::getPluginId);
+      Set<? extends IdeaPluginDescriptor> descriptors = getAllDescriptors();
+      List<PluginId> pluginIds = mapNotNull(descriptors, IdeaPluginDescriptor::getPluginId);
+      List<PluginEnabledState> states = map(pluginIds, myPluginModel::getState);
 
       boolean isForceEnableAll = myAction == PluginEnableDisableAction.ENABLE_GLOBALLY &&
-                                 exists(pluginIds, pluginId -> getState(pluginId) != PluginEnabledState.ENABLED);
+                                 !all(states, PluginEnabledState.ENABLED::equals);
       boolean disabled = pluginIds.isEmpty() ||
-                         exists(pluginIds, this::isInvisibleFor) ||
+                         !all(states, myAction::isApplicable) ||
+                         myAction.isDisable() && exists(pluginIds, myPluginModel::isRequiredPluginForProject) ||
                          myAction.isPerProject() && (e.getProject() == null ||
                                                      !isPerProjectEnabled() ||
-                                                     exists(pluginIds, EnableDisableAction::isPluginExcluded));
+                                                     exists(pluginIds, EnableDisableAction::isPluginExcluded) ||
+                                                     exists(descriptors, myPluginModel::requiresRestart));
 
       e.getPresentation().setEnabledAndVisible(isForceEnableAll || !disabled);
-    }
-
-    private @NotNull PluginEnabledState getState(@NotNull PluginId pluginId) {
-      return myPluginModel.getState(pluginId);
     }
 
     @Override
@@ -86,14 +90,6 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
         getAllDescriptors(),
         myAction
       );
-    }
-
-    protected boolean isInvisibleFor(@NotNull PluginId pluginId) {
-      return !myAction.isApplicable(getState(pluginId));
-    }
-
-    private @NotNull Set<? extends IdeaPluginDescriptor> getAllDescriptors() {
-      return map2SetNotNull(mySelection, this::getPluginDescriptor);
     }
 
     private static boolean isPerProjectEnabled() {
@@ -123,16 +119,13 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       myUiParent = uiParent;
     }
 
-    protected boolean isBundled(@NotNull C component) {
-      IdeaPluginDescriptor descriptor = getPluginDescriptor(component);
-      return descriptor == null ||
-             descriptor.isBundled();
-    }
-
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean disabled = mySelection.isEmpty() ||
-                         exists(mySelection, this::isBundled);
+      Set<? extends IdeaPluginDescriptor> descriptors = getAllDescriptors();
+
+      boolean disabled = descriptors.isEmpty() ||
+                         exists(descriptors, IdeaPluginDescriptor::isBundled) ||
+                         exists(descriptors, myPluginModel::isUninstalled);
       e.getPresentation().setEnabledAndVisible(!disabled);
     }
 
