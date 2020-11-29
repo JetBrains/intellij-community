@@ -8,8 +8,6 @@
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javaslang-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javaslang-match-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javax.inject-1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-analysis.jar!/" />
-      <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-android-extensions-runtime.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-common.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-compiler-plugins-allopen.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-compiler-plugins-annotation-based-compiler-support.jar!/" />
@@ -42,7 +40,6 @@
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-jvm-debugger-util.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-jvm.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-line-indent-provider.jar!/" />
-      <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-live-templates.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-maven.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-native.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-parcelize.jar!/" />
@@ -86,8 +83,6 @@
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javaslang-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javaslang-match-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/javax.inject-1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-analysis.jar!/" />
-      <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-android-extensions-runtime.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-common.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-compiler-plugins-allopen.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-compiler-plugins-annotation-based-compiler-support.jar!/" />
@@ -120,7 +115,6 @@
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-jvm-debugger-util.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-jvm.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-line-indent-provider.jar!/" />
-      <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-live-templates.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-maven.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-native.jar!/" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/KotlinPlugin/lib/kotlin-parcelize.jar!/" />

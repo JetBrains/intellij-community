@@ -7,9 +7,6 @@
         <element id="archive" name="android-extensions-compiler-plugin-for-ide.jar">
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/1.4.20-release-335/android-extensions-compiler-plugin-for-ide-1.4.20-release-335.jar" path-in-jar="/" />
         </element>
-        <element id="archive" name="kotlin-android-extensions-runtime.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-android-extensions-runtime/1.4.20-release-335/kotlin-android-extensions-runtime-1.4.20-release-335.jar" path-in-jar="/" />
-        </element>
         <element id="archive" name="allopen-compiler-plugin-for-ide.jar">
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/1.4.20-release-335/allopen-compiler-plugin-for-ide-1.4.20-release-335.jar" path-in-jar="/" />
         </element>
@@ -116,9 +113,6 @@
         <element id="archive" name="kotlin-uast-kotlin-idea.jar">
           <element id="module-output" name="kotlin.uast.uast-kotlin-idea" />
         </element>
-        <element id="archive" name="kotlin-analysis.jar">
-          <element id="module-output" name="kotlin.analysis" />
-        </element>
         <element id="archive" name="kotlin-common.jar">
           <element id="module-output" name="kotlin.common" />
         </element>
@@ -150,9 +144,6 @@
         </element>
         <element id="archive" name="kotlin-jvm.jar">
           <element id="module-output" name="kotlin.jvm" />
-        </element>
-        <element id="archive" name="kotlin-live-templates.jar">
-          <element id="module-output" name="kotlin.live-templates" />
         </element>
         <element id="archive" name="kotlin-maven.jar">
           <element id="module-output" name="kotlin.maven" />
