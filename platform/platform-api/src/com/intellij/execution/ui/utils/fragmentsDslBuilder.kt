@@ -55,9 +55,10 @@ import javax.swing.JComponent
   @Nls(capitalization = Nls.Capitalization.Sentence) var name: String? = null
   @Nls(capitalization = Nls.Capitalization.Title) var group: String? = null
   @Nls var hint: String? = null
+  var commandLinePosition: Int = 0
 
   fun build(): SettingsEditorFragment<Settings, Component> {
-    return SettingsEditorFragment(id, name, group, component, reset, apply, visible).also {
+    return SettingsEditorFragment(id, name, group, component, commandLinePosition, reset, apply, visible).also {
       it.isRemovable = isRemovable
       it.setHint(hint)
     }
