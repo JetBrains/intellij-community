@@ -74,7 +74,7 @@ public class DefaultLogger extends Logger {
   }
 
   @Override
-  public void setLevel(Level level) { }
+  public void setLevel(@NotNull Level level) { }
 
   public static @NonNls String attachmentsToString(@Nullable Throwable t) {
     if (t != null) {

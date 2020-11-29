@@ -204,7 +204,7 @@ public abstract class Logger {
     return value || assertTrue(false, null);
   }
 
-  public abstract void setLevel(Level level);
+  public abstract void setLevel(@NotNull Level level);
 
   protected static Throwable checkException(@Nullable Throwable t) {
     return t instanceof ControlFlowException ? new Throwable(
