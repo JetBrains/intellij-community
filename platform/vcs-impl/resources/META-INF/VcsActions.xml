@@ -62,7 +62,10 @@
     </group>
 
     <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
-            icon="AllIcons.Actions.Refresh"/>
+            icon="AllIcons.Actions.Refresh">
+      <override-text place="MainMenu"/>
+      <override-text place="GoToAction" use-text-of-place="MainMenu"/>
+    </action>
 
     <!-- Main menu | Version Control -->
     <group id="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsGroupsActionGroup" popup="true">
