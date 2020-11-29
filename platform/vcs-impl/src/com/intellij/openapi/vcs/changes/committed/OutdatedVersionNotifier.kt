@@ -22,7 +22,7 @@ class OutdatedVersionNotifier : EditorNotifications.Provider<EditorNotificationP
   override fun getKey(): Key<EditorNotificationPanel> = KEY
 
   override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-    val cache = CommittedChangesCache.getInstance(project)
+    val cache = CommittedChangesCache.getInstanceIfCreated(project) ?: return null
     val (incomingChangeList, incomingChange) = cache.getIncomingChangeList(file) ?: return null
     if (!isIncomingChangesAvailable(incomingChangeList.vcs)) return null
 

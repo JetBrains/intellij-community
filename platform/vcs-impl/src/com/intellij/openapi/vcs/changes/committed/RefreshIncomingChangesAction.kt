@@ -7,15 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.committed.CacheSettingsDialog.showSettingsDialog
 
-private fun Project.getCommittedChangesCache(): CommittedChangesCache = CommittedChangesCache.getInstance(this)
-
 class RefreshIncomingChangesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     e.presentation.isEnabled =
       project != null &&
       ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { it.cachingCommittedChangesProvider != null } &&
-      !project.getCommittedChangesCache().isRefreshingIncomingChanges
+      CommittedChangesCache.getInstanceIfCreated(project)?.isRefreshingIncomingChanges != true
   }
 
   override fun actionPerformed(e: AnActionEvent) = doRefresh(e.project!!)
@@ -23,7 +21,7 @@ class RefreshIncomingChangesAction : DumbAwareAction() {
   companion object {
     @JvmStatic
     fun doRefresh(project: Project) {
-      val cache = project.getCommittedChangesCache()
+      val cache = CommittedChangesCache.getInstance(project)
 
       cache.hasCachesForAnyRoot { hasCaches ->
         if (!hasCaches && !showSettingsDialog(project)) return@hasCachesForAnyRoot
