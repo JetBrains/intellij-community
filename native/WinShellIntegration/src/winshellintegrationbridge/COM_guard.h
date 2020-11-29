@@ -13,9 +13,7 @@
     #define WIN32_LEAN_AND_MEAN
 #endif // ndef WIN32_LEAN_AND_MEAN
 #include <Windows.h>    // DWORD
-#include <memory>       // std::shared_ptr
 
-// TODO: make implementation is light-weight
 
 namespace intellij::ui::win::jni
 {
@@ -33,24 +31,19 @@ namespace intellij::ui::win::jni
         /// @exception other exceptions from std namespace - in case of some internal errors
         explicit COMGuard(DWORD initFlags) noexcept(false);
 
-        COMGuard(const COMGuard&) noexcept;
-        /// @warning COPIES the passed object, DOES NOT MOVE it (for avoiding "empty" COMGuard instances)
-        COMGuard(COMGuard&&) noexcept;
+        COMGuard(const COMGuard&) = delete;
+        COMGuard(COMGuard&&) = delete;
 
         ~COMGuard() noexcept;
 
     public: // assignments
-        COMGuard& operator=(const COMGuard&) noexcept;
-        /// @warning COPIES the passed object, DOES NOT MOVE it (for avoiding "empty" COMGuard instances)
-        COMGuard& operator=(COMGuard&&) noexcept;
+        COMGuard& operator=(const COMGuard&) = delete;
+        COMGuard& operator=(COMGuard&&) = delete;
 
     private:
-        struct Impl;
-
-        std::shared_ptr<Impl> impl_;
+        const DWORD initFlags_;
     };
 
 } // namespace intellij::ui::win::jni
-
 
 #endif // ndef WINSHELLINTEGRATIONBRIDGE_COM_GUARD_H
