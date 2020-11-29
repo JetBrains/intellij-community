@@ -5,7 +5,16 @@ if (NOT WIN32)
 endif()
 
 cmake_minimum_required(VERSION 3.15)    # 3.15 is required for the CMP0092 policy
-project(WinShellIntegration CXX)
+
+string(TIMESTAMP GENTIME_YEAR "%Y" UTC)
+string(TIMESTAMP GENTIME_DAY "%j" UTC)
+string(TIMESTAMP GENTIME_HOUR "%H" UTC)
+string(TIMESTAMP GENTIME_MINUTE "%M" UTC)
+
+project(WinShellIntegration
+    VERSION ${GENTIME_YEAR}.${GENTIME_DAY}.${GENTIME_HOUR}.${GENTIME_MINUTE}
+    LANGUAGES CXX
+)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

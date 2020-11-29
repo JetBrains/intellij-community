@@ -4,6 +4,15 @@ if (NOT JDK_PATH)
     message(SEND_ERROR "Path to the JDK is not specified. winshellintegrationbridge target will not be generated.")
 endif()
 
+# output binary name
+if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+    set(WSIBRIDGE_BINARY_NAME "winshellintegrationbridge64")
+else()
+    set(WSIBRIDGE_BINARY_NAME "winshellintegrationbridge")
+endif()
+
+configure_file("resources.rc.in" "${CMAKE_CURRENT_BINARY_DIR}/resources.rc" @ONLY)
+
 add_library(winshellintegrationbridge SHARED
     "COM_guard.h"
     "COM_guard.cpp"
@@ -15,6 +24,8 @@ add_library(winshellintegrationbridge SHARED
     "com_intellij_ui_win_WinShellIntegration_Bridge.cpp"
 
     "dllmain.cpp"
+
+    "${CMAKE_CURRENT_BINARY_DIR}/resources.rc"
 )
 
 target_include_directories(winshellintegrationbridge
@@ -33,18 +44,9 @@ set_target_properties(winshellintegration winshellintegrationbridge PROPERTIES
     MSVC_RUNTIME_LIBRARY "MultiThreadedDLL"
 )
 
-# output binary name
-if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
-    set_target_properties(winshellintegrationbridge PROPERTIES
-        OUTPUT_NAME "winshellintegrationbridge64"
-    )
-else()
-    set_target_properties(winshellintegrationbridge PROPERTIES
-        OUTPUT_NAME "winshellintegrationbridge"
-    )
-endif()
+set_target_properties(winshellintegrationbridge PROPERTIES
+    OUTPUT_NAME "${WSIBRIDGE_BINARY_NAME}"
+)
 
 include("${PROJECT_SOURCE_DIR}/src/build/EnableCompilerExtraWarnings.cmake")
 enable_target_compile_extra_warnings(winshellintegrationbridge)
-
-# TODO: insert copyrights to DLL->Properties->Details
