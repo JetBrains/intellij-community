@@ -91,7 +91,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private ChangeNotesPanel myChangeNotesPanel;
   private OneLineProgressIndicator myIndicator;
 
-  public IdeaPluginDescriptor myPlugin;
+  private @Nullable IdeaPluginDescriptor myPlugin;
   private IdeaPluginDescriptor myUpdateDescriptor;
 
   private ListPluginComponent myShowComponent;
@@ -103,6 +103,16 @@ public class PluginDetailsPageComponent extends MultiPanel {
     createPluginPanel();
     select(1, true);
     setEmptyState(EmptyState.NONE_SELECTED);
+  }
+
+  final @Nullable IdeaPluginDescriptor getPlugin() {
+    return myPlugin;
+  }
+
+  void setPlugin(@Nullable IdeaPluginDescriptor plugin) {
+    if (plugin != null) {
+      myPlugin = plugin;
+    }
   }
 
   public boolean isShowingPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
@@ -155,8 +165,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     header.add(myIconLabel, BorderLayout.WEST);
 
     myGearButton = SelectionBasedPluginModelAction.createGearButton(
-      EnableDisableAction::new,
-      () -> new UninstallAction()
+      this::createEnableDisableAction,
+      () -> createUninstallAction()
     );
     myGearButton.setBorder(JBUI.Borders.emptyLeft(5));
     myGearButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
@@ -449,7 +459,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
           syncLoading = false;
           startLoading();
           ProcessIOExecutorService.INSTANCE.execute(() -> {
-            component.myPlugin = MarketplaceRequests.getInstance().loadPluginDetails(node);
+            component.setPluginDescriptor(MarketplaceRequests.getInstance().loadPluginDetails(node));
 
             ApplicationManager.getApplication().invokeLater(() -> {
               if (myShowComponent == component) {
@@ -468,7 +478,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void showPlugin(@NotNull ListPluginComponent component) {
-    myPlugin = component.myPlugin;
+    myPlugin = component.getPluginDescriptor();
     myUpdateDescriptor = component.myUpdateDescriptor;
     showPlugin();
     select(0, true);
@@ -848,37 +858,23 @@ public class PluginDetailsPageComponent extends MultiPanel {
     return StringUtil.isEmptyOrSpaces(notes) ? null : notes;
   }
 
-  private final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> {
-
-    private EnableDisableAction(@NotNull PluginEnableDisableAction action) {
-      super(
-        null,
-        PluginDetailsPageComponent.this.myPluginModel,
-        action,
-        List.of(PluginDetailsPageComponent.this)
-      );
-    }
-
-    @Override
-    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull PluginDetailsPageComponent component) {
-      return myPlugin;
-    }
+  private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action) {
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(
+      null,
+      myPluginModel,
+      action,
+      List.of(this),
+      PluginDetailsPageComponent::getPlugin
+    );
   }
 
-  private final class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> {
-
-    private UninstallAction() {
-      super(
-        null,
-        PluginDetailsPageComponent.this.myPluginModel,
-        PluginDetailsPageComponent.this,
-        List.of(PluginDetailsPageComponent.this)
-      );
-    }
-
-    @Override
-    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull PluginDetailsPageComponent component) {
-      return myPlugin;
-    }
+  private @NotNull SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> createUninstallAction() {
+    return new SelectionBasedPluginModelAction.UninstallAction<>(
+      null,
+      myPluginModel,
+      this,
+      List.of(this),
+      PluginDetailsPageComponent::getPlugin
+    );
   }
 }

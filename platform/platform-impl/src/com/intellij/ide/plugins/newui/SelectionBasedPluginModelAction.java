@@ -29,37 +29,44 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
   protected final @NotNull MyPluginModel myPluginModel;
   protected final @NotNull List<C> mySelection;
+  private final @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> myPluginDescriptor;
 
   protected SelectionBasedPluginModelAction(@NotNull @Nls String text,
                                             @Nullable ShortcutSet shortcutSet,
                                             @NotNull MyPluginModel pluginModel,
-                                            @NotNull List<C> selection) {
+                                            @NotNull List<C> selection,
+                                            @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
     super(text);
     setShortcutSet(shortcutSet == null ? CustomShortcutSet.EMPTY : shortcutSet);
 
     myPluginModel = pluginModel;
     mySelection = selection;
+    myPluginDescriptor = pluginDescriptor;
   }
 
-  protected abstract @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull C component);
+  protected final @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull C component) {
+    return myPluginDescriptor.apply(component);
+  }
 
   protected final @NotNull Set<? extends IdeaPluginDescriptor> getAllDescriptors() {
     return map2SetNotNull(mySelection, this::getPluginDescriptor);
   }
 
-  static abstract class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
+  static final class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
 
-    protected final @NotNull PluginEnableDisableAction myAction;
+    private final @NotNull PluginEnableDisableAction myAction;
 
-    protected EnableDisableAction(@Nullable ShortcutSet shortcutSet,
-                                  @NotNull MyPluginModel pluginModel,
-                                  @NotNull PluginEnableDisableAction action,
-                                  @NotNull List<C> selection) {
+    EnableDisableAction(@Nullable ShortcutSet shortcutSet,
+                        @NotNull MyPluginModel pluginModel,
+                        @NotNull PluginEnableDisableAction action,
+                        @NotNull List<C> selection,
+                        @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
       super(
         action.toString(),
         shortcutSet,
         pluginModel,
-        selection
+        selection,
+        pluginDescriptor
       );
 
       myAction = action;
@@ -102,20 +109,23 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
     }
   }
 
-  static abstract class UninstallAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
+  static final class UninstallAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
 
     private final @NotNull JComponent myUiParent;
 
-    protected UninstallAction(@Nullable ShortcutSet shortcutSet,
-                              @NotNull MyPluginModel pluginModel,
-                              @NotNull JComponent uiParent,
-                              @NotNull List<C> selection) {
+    UninstallAction(@Nullable ShortcutSet shortcutSet,
+                    @NotNull MyPluginModel pluginModel,
+                    @NotNull JComponent uiParent,
+                    @NotNull List<C> selection,
+                    @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
       super(
         IdeBundle.message("plugins.configurable.uninstall.button"),
         shortcutSet,
         pluginModel,
-        selection
+        selection,
+        pluginDescriptor
       );
+
       myUiParent = uiParent;
     }
 
@@ -152,8 +162,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
   }
 
   static <C extends JComponent> void addActionsTo(@NotNull DefaultActionGroup group,
-                                                  @NotNull Function<@NotNull PluginEnableDisableAction, @NotNull ? extends EnableDisableAction<C>> createEnableDisableAction,
-                                                  @NotNull Producer<@NotNull ? extends UninstallAction<C>> createUninstallAction) {
+                                                  @NotNull Function<@NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
+                                                  @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
     PluginEnableDisableAction[] actions = PluginEnableDisableAction.values();
     for (int i = 0; i < actions.length; i++) {
       group.add(createEnableDisableAction.apply(actions[i]));
@@ -164,8 +174,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
     group.add(createUninstallAction.produce());
   }
 
-  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<@NotNull PluginEnableDisableAction, @NotNull ? extends EnableDisableAction<C>> createEnableDisableAction,
-                                                                     @NotNull Producer<@NotNull ? extends UninstallAction<C>> createUninstallAction) {
+  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<@NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
+                                                                     @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
     DefaultActionGroup result = new DefaultActionGroup();
     addActionsTo(
       result,

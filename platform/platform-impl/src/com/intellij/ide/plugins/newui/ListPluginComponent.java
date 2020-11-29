@@ -52,7 +52,7 @@ public class ListPluginComponent extends JPanel {
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
-  public IdeaPluginDescriptor myPlugin;
+  private @NotNull IdeaPluginDescriptor myPlugin;
   private boolean myUninstalled;
   private boolean myOnlyUpdateMode;
   public IdeaPluginDescriptor myUpdateDescriptor;
@@ -184,8 +184,8 @@ public class ListPluginComponent extends JPanel {
         else {
           if (Registry.is("ide.plugins.per.project", false)) {
             myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
-              newState -> new EnableDisableAction(newState, List.of(this)),
-              () -> new UninstallAction(List.of())
+              newState -> createEnableDisableAction(newState, List.of(this)),
+              () -> createUninstallAction(List.of())
             );
             myEnableDisableButton.setBorder(JBUI.Borders.emptyLeft(5));
             myEnableDisableButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
@@ -724,14 +724,14 @@ public class ListPluginComponent extends JPanel {
 
     SelectionBasedPluginModelAction.addActionsTo(
       group,
-      state -> new EnableDisableAction(
+      state -> createEnableDisableAction(
         state.isPerProject() ? null : new CustomShortcutSet(KeyEvent.VK_SPACE),
         state,
         selection
       ),
       () -> {
         ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
-        return new UninstallAction(
+        return createUninstallAction(
           deleteShortcutSet != null ? deleteShortcutSet : new CustomShortcutSet(EventHandler.DELETE_CODE),
           selection
         );
@@ -809,9 +809,9 @@ public class ListPluginComponent extends JPanel {
       }
 
       DumbAwareAction action = keyCode == KeyEvent.VK_SPACE && event.getModifiersEx() == 0 ?
-                               new EnableDisableAction(getEnableDisableAction(selection), selection) :
+                               createEnableDisableAction(getEnableDisableAction(selection), selection) :
                                keyCode == EventHandler.DELETE_CODE ?
-                               new UninstallAction(selection) :
+                               createUninstallAction(selection) :
                                null;
 
       if (action != null) {
@@ -833,9 +833,12 @@ public class ListPluginComponent extends JPanel {
     parent.repaint();
   }
 
-  @NotNull
-  public IdeaPluginDescriptor getPluginDescriptor() {
+  public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
     return myPlugin;
+  }
+
+  public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+    myPlugin = plugin;
   }
 
   private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<ListPluginComponent> selection) {
@@ -853,57 +856,43 @@ public class ListPluginComponent extends JPanel {
     return PluginEnableDisableAction.globally(firstDisabled);
   }
 
-  private final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> {
-
-    private EnableDisableAction(@NotNull PluginEnableDisableAction action,
-                                @NotNull List<ListPluginComponent> selection) {
-      this(
-        null,
-        action,
-        selection
-      );
-    }
-
-    private EnableDisableAction(@Nullable ShortcutSet shortcutSet,
-                                @NotNull PluginEnableDisableAction action,
-                                @NotNull List<ListPluginComponent> selection) {
-      super(
-        shortcutSet,
-        ListPluginComponent.this.myPluginModel,
-        action,
-        selection
-      );
-    }
-
-    @Override
-    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
-      return component.myPlugin;
-    }
+  private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
+                                                                                                                      @NotNull List<ListPluginComponent> selection) {
+    return createEnableDisableAction(
+      null,
+      action,
+      selection
+    );
   }
 
-  private final class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> {
+  private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@Nullable ShortcutSet shortcutSet,
+                                                                                                                      @NotNull PluginEnableDisableAction action,
+                                                                                                                      @NotNull List<ListPluginComponent> selection) {
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(
+      shortcutSet,
+      myPluginModel,
+      action,
+      selection,
+      ListPluginComponent::getPluginDescriptor
+    );
+  }
 
-    private UninstallAction(@NotNull List<ListPluginComponent> selection) {
-      this(
-        null,
-        selection
-      );
-    }
+  private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<ListPluginComponent> selection) {
+    return createUninstallAction(
+      null,
+      selection
+    );
+  }
 
-    private UninstallAction(@Nullable ShortcutSet shortcutSet,
-                            @NotNull List<ListPluginComponent> selection) {
-      super(
-        shortcutSet,
-        ListPluginComponent.this.myPluginModel,
-        ListPluginComponent.this,
-        selection
-      );
-    }
-
-    @Override
-    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
-      return component.myPlugin;
-    }
+  private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@Nullable ShortcutSet shortcutSet,
+                                                                                                              @NotNull List<ListPluginComponent> selection) {
+    return new SelectionBasedPluginModelAction.UninstallAction<>(
+      shortcutSet,
+      myPluginModel,
+      this,
+      selection,
+      ListPluginComponent::getPluginDescriptor
+    );
   }
 
   @NotNull

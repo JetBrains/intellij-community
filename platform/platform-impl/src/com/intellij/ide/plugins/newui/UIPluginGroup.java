@@ -21,7 +21,7 @@ public final class UIPluginGroup {
   public ListPluginComponent findComponent(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId pluginId = descriptor.getPluginId();
     for (ListPluginComponent component : plugins) {
-      if (pluginId == component.myPlugin.getPluginId()) {
+      if (pluginId == component.getPluginDescriptor().getPluginId()) {
         return component;
       }
     }

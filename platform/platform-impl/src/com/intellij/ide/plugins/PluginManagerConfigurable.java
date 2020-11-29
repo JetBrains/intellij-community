@@ -1212,7 +1212,8 @@ public class PluginManagerConfigurable
       public void performCopy(@NotNull DataContext dataContext) {
         StringBuilder result = new StringBuilder();
         for (ListPluginComponent pluginComponent : component.getSelection()) {
-          result.append(pluginComponent.myPlugin.getName()).append(" (").append(pluginComponent.myPlugin.getVersion()).append(")\n");
+          IdeaPluginDescriptor descriptor = pluginComponent.getPluginDescriptor();
+          result.append(descriptor.getName()).append(" (").append(descriptor.getVersion()).append(")\n");
         }
         CopyPasteManager.getInstance().setContents(new TextTransferable(result.substring(0, result.length() - 1)));
       }
@@ -1569,7 +1570,7 @@ public class PluginManagerConfigurable
       }
       else {
         for (ListPluginComponent component : group.ui.plugins) {
-          IdeaPluginDescriptor plugin = component.myPlugin;
+          IdeaPluginDescriptor plugin = component.getPluginDescriptor();
           if (myPluginModel.isEnabled(plugin) != myEnable) {
             descriptors.add(plugin);
           }

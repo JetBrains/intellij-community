@@ -264,43 +264,45 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public void addComponent(@NotNull ListPluginComponent component) {
+    IdeaPluginDescriptor descriptor = component.getPluginDescriptor();
     if (!component.isMarketplace()) {
-      if (myInstallingPlugins.contains(component.myPlugin) &&
-          (myInstalling == null || myInstalling.ui == null || myInstalling.ui.findComponent(component.myPlugin) == null)) {
+      if (myInstallingPlugins.contains(descriptor) &&
+          (myInstalling == null || myInstalling.ui == null || myInstalling.ui.findComponent(descriptor) == null)) {
         return;
       }
 
       myInstalledPluginComponents.add(component);
 
       List<ListPluginComponent> components =
-        myInstalledPluginComponentMap.computeIfAbsent(component.myPlugin.getPluginId(), __ -> new ArrayList<>());
+        myInstalledPluginComponentMap.computeIfAbsent(descriptor.getPluginId(), __ -> new ArrayList<>());
       components.add(component);
     }
     else {
       List<ListPluginComponent> components =
-        myMarketplacePluginComponentMap.computeIfAbsent(component.myPlugin.getPluginId(), __ -> new ArrayList<>());
+        myMarketplacePluginComponentMap.computeIfAbsent(descriptor.getPluginId(), __ -> new ArrayList<>());
       components.add(component);
     }
   }
 
   public void removeComponent(@NotNull ListPluginComponent component) {
+    PluginId pluginId = component.getPluginDescriptor().getPluginId();
     if (!component.isMarketplace()) {
       myInstalledPluginComponents.remove(component);
 
-      List<ListPluginComponent> components = myInstalledPluginComponentMap.get(component.myPlugin.getPluginId());
+      List<ListPluginComponent> components = myInstalledPluginComponentMap.get(pluginId);
       if (components != null) {
         components.remove(component);
         if (components.isEmpty()) {
-          myInstalledPluginComponentMap.remove(component.myPlugin.getPluginId());
+          myInstalledPluginComponentMap.remove(pluginId);
         }
       }
     }
     else {
-      List<ListPluginComponent> components = myMarketplacePluginComponentMap.get(component.myPlugin.getPluginId());
+      List<ListPluginComponent> components = myMarketplacePluginComponentMap.get(pluginId);
       if (components != null) {
         components.remove(component);
         if (components.isEmpty()) {
-          myMarketplacePluginComponentMap.remove(component.myPlugin.getPluginId());
+          myMarketplacePluginComponentMap.remove(pluginId);
         }
       }
     }
@@ -502,7 +504,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.myPlugin == descriptor) {
+      if (panel.getPlugin() == descriptor) {
         panel.showProgress();
       }
     }
@@ -529,7 +531,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     if (marketplaceComponents != null) {
       for (ListPluginComponent gridComponent : marketplaceComponents) {
         if (installedDescriptor != null) {
-          gridComponent.myPlugin = installedDescriptor;
+          gridComponent.setPluginDescriptor(installedDescriptor);
         }
         gridComponent.hideProgress(success, restartRequired);
       }
@@ -538,7 +540,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     if (installedComponents != null) {
       for (ListPluginComponent listComponent : installedComponents) {
         if (installedDescriptor != null) {
-          listComponent.myPlugin = installedDescriptor;
+          listComponent.setPluginDescriptor(installedDescriptor);
         }
         listComponent.hideProgress(success, restartRequired);
         listComponent.updateErrors();
@@ -546,9 +548,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
       if (panel.isShowingPlugin(descriptor)) {
-        if (installedDescriptor != null) {
-          panel.myPlugin = installedDescriptor;
-        }
+        panel.setPlugin(installedDescriptor);
         panel.hideProgress(success);
       }
     }
@@ -605,7 +605,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
     else {
       for (ListPluginComponent listComponent : myInstalling.ui.plugins) {
-        if (listComponent.myPlugin == descriptor) {
+        if (listComponent.getPluginDescriptor() == descriptor) {
           listComponent.clearProgress();
           return;
         }
@@ -752,7 +752,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   public List<IdeaPluginDescriptor> getInstalledDescriptors() {
     assert myInstalledPanel != null;
 
-    return myInstalledPanel.getGroups().stream().flatMap(group -> group.plugins.stream()).map(plugin -> plugin.myPlugin)
+    return myInstalledPanel
+      .getGroups()
+      .stream()
+      .flatMap(group -> group.plugins.stream())
+      .map(ListPluginComponent::getPluginDescriptor)
       .collect(Collectors.toList());
   }
 
@@ -1016,7 +1020,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
 
     for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.myPlugin == descriptor) {
+      if (panel.getPlugin() == descriptor) {
         panel.updateButtons();
       }
     }
