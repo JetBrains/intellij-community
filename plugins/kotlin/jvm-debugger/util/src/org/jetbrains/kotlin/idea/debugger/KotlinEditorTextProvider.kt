@@ -12,6 +12,7 @@ import com.intellij.debugger.impl.EditorTextProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -38,12 +39,12 @@ class KotlinEditorTextProvider : EditorTextProvider {
 
         fun <T> getElementInfo(expr: KtExpression, f: (PsiElement) -> T): T {
             var expressionText = f(expr)
-            if (expr is KtProperty) {
-                val nameIdentifier = expr.nameIdentifier
-                if (nameIdentifier != null) {
-                    expressionText = f(nameIdentifier)
-                }
+
+            val nameIdentifier = expr.getNameIdentifier()
+            if (nameIdentifier != null) {
+                expressionText = f(nameIdentifier)
             }
+
             return expressionText
         }
 
@@ -52,11 +53,9 @@ class KotlinEditorTextProvider : EditorTextProvider {
 
             val ktElement = PsiTreeUtil.getParentOfType(element, KtElement::class.java) ?: return null
 
-            if (ktElement is KtProperty) {
-                val nameIdentifier = ktElement.nameIdentifier
-                if (nameIdentifier == element) {
-                    return ktElement
-                }
+            val nameIdentifier = ktElement.getNameIdentifier()
+            if (nameIdentifier == element) {
+                return ktElement as? KtExpression
             }
 
             fun KtExpression.qualifiedParentOrSelf(isSelector: Boolean = true): KtExpression {
@@ -99,6 +98,13 @@ class KotlinEditorTextProvider : EditorTextProvider {
             }
 
         }
+
+        private fun KtElement.getNameIdentifier() =
+            if (this is KtProperty || this is KtParameter)
+                (this as PsiNameIdentifierOwner).nameIdentifier
+            else
+                null
+
 
         private val NOT_ACCEPTED_AS_CONTEXT_TYPES =
             arrayOf(KtUserType::class.java, KtImportDirective::class.java, KtPackageDirective::class.java, KtValueArgumentName::class.java)
