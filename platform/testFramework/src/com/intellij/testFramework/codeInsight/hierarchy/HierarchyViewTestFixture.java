@@ -49,8 +49,9 @@ public final class HierarchyViewTestFixture {
   private static void doHierarchyTest(@NotNull HierarchyTreeStructure treeStructure,
                                       @NotNull String expectedStructure,
                                       @Nullable File expectedFile) {
+    Element element;
     try {
-      checkHierarchyTreeStructure(treeStructure, JDOMUtil.load(expectedStructure));
+      element = JDOMUtil.load(expectedStructure);
     }
     catch (Throwable e) {
       String actual = dump(treeStructure, null, 0);
@@ -59,9 +60,9 @@ public final class HierarchyViewTestFixture {
                                         expectedStructure, actual,
                                         expectedFile == null ? null : expectedFile.getAbsolutePath());
       }
-      //noinspection CallToPrintStackTrace
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
+    checkHierarchyTreeStructure(treeStructure, element);
   }
 
   @NotNull
@@ -78,12 +79,12 @@ public final class HierarchyViewTestFixture {
                            int level,
                            @NotNull StringBuilder b) {
     if (level > 10) {
-      for (int i = 0; i < level; i++) b.append("  ");
+      b.append("  ".repeat(level));
       b.append("<Probably infinite part skipped>\n");
       return;
     }
     if (descriptor == null) descriptor = (HierarchyNodeDescriptor)treeStructure.getRootElement();
-    for (int i = 0; i < level; i++) b.append("  ");
+    b.append("  ".repeat(level));
     descriptor.update();
     b.append("<node text=\"").append(descriptor.getHighlightedText().getText()).append("\"")
       .append(treeStructure.getBaseDescriptor() == descriptor ? " base=\"true\"" : "");
@@ -95,7 +96,7 @@ public final class HierarchyViewTestFixture {
         HierarchyNodeDescriptor d = (HierarchyNodeDescriptor)o;
         dump(treeStructure, d, level + 1, b);
       }
-      for (int i = 0; i < level; i++) b.append("  ");
+      b.append("  ".repeat(level));
       b.append("</node>\n");
     }
     else {
@@ -103,8 +104,7 @@ public final class HierarchyViewTestFixture {
     }
   }
 
-  private static void checkHierarchyTreeStructure(@NotNull HierarchyTreeStructure treeStructure,
-                                                  @Nullable Element rootElement) {
+  private static void checkHierarchyTreeStructure(@NotNull HierarchyTreeStructure treeStructure, @Nullable Element rootElement) {
     HierarchyNodeDescriptor rootNodeDescriptor = (HierarchyNodeDescriptor)treeStructure.getRootElement();
     rootNodeDescriptor.update();
     if (rootElement == null || !NODE_ELEMENT_NAME.equals(rootElement.getName())) {
@@ -159,7 +159,7 @@ public final class HierarchyViewTestFixture {
 
     Iterator<Element> iterator = expectedChildren.iterator();
     for (Object child : children) {
-      checkNodeDescriptorRecursively(treeStructure, ((HierarchyNodeDescriptor)child), iterator.next());
+      checkNodeDescriptorRecursively(treeStructure, (HierarchyNodeDescriptor)child, iterator.next());
     }
   }
 }
