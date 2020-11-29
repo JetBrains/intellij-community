@@ -67,11 +67,11 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
         rightPane.add(bt, BorderLayout.CENTER)
         stateButton = bt
 
-        val myShortcutLabel = JLabel()
-        shortcutLabel = myShortcutLabel
-        myShortcutLabel.border = JBUI.Borders.emptyRight(3)
-        myShortcutLabel.foreground = UIManager.getColor("MenuItem.acceleratorForeground")
-        rightPane.add(myShortcutLabel, BorderLayout.EAST)
+        val shLabel = JLabel()
+        shortcutLabel = shLabel
+        shLabel.border = JBUI.Borders.emptyRight(3)
+        shLabel.foreground = UIManager.getColor("MenuItem.acceleratorForeground")
+        rightPane.add(shLabel, BorderLayout.EAST)
         panel.add(rightPane, BorderLayout.EAST)
         rightPane.border = JBUI.Borders.emptyLeft(5)
         return layoutComponent(panel)
