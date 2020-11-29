@@ -380,8 +380,11 @@ namespace intellij::ui::win::jni
             );
         }
 
-        for (const auto& task : nativeTasks)
+        for (auto iter = nativeTasks.crbegin(); iter != nativeTasks.crend(); ++iter)
+        {
+            const auto& task = *iter;
             Application::getInstance().registerRecentlyUsed(task, COM_IS_INITIALIZED_IN_THIS_THREAD);
+        }
     }
 
 
