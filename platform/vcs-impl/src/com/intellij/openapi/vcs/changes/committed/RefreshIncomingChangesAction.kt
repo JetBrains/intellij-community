@@ -4,13 +4,18 @@ package com.intellij.openapi.vcs.changes.committed
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.committed.CacheSettingsDialog.showSettingsDialog
 
 private fun Project.getCommittedChangesCache(): CommittedChangesCache = CommittedChangesCache.getInstance(this)
 
 class RefreshIncomingChangesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project?.getCommittedChangesCache()?.isRefreshingIncomingChanges == false
+    val project = e.project
+    e.presentation.isEnabled =
+      project != null &&
+      ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { it.cachingCommittedChangesProvider != null } &&
+      !project.getCommittedChangesCache().isRefreshingIncomingChanges
   }
 
   override fun actionPerformed(e: AnActionEvent) = doRefresh(e.project!!)
