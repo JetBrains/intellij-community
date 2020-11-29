@@ -1114,7 +1114,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     FileType image = Objects.requireNonNull(fileTypeManager.findFileTypeByName("Image"));
     PluginDescriptor pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(image.getClass().getName());
     assertTrue(pluginDescriptor.isBundled());
-    System.out.println("pluginDescriptor = " + pluginDescriptor);
+    LOG.debug("pluginDescriptor = " + pluginDescriptor);
 
     FileTypeBean bean = new FileTypeBean();
     bean.name = new MyImageFileType().getName();

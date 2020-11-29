@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.testFramework.exceptionCases.ThrowableErrorCase;
 
 /**
@@ -70,7 +71,8 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
   }
 
   public void testPopEmptySuite_DebugMode() throws Throwable {
-    // enable debug mode
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
     enableDebugMode();
 
     assertException(new ThrowableErrorCase() {
@@ -86,6 +88,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
   }
 
   public void testPopInconsistentSuite_DebugMode() throws Throwable {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
     enableDebugMode();
 
     final String suiteName = mySuite.getName();

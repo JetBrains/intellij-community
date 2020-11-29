@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
@@ -140,6 +141,8 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testIncompatibleAdapter() {
+    DefaultLogger.disableStderrDumping(disposable);
+
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.addExtensionAdapter(newStringAdapter());
     assertThatThrownBy(() -> {

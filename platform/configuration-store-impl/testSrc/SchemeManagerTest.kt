@@ -5,6 +5,7 @@ import com.intellij.configurationStore.schemeManager.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.Disposer
@@ -31,13 +32,12 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Function
 
-internal const val FILE_SPEC = "REMOTE"
-
 /**
  * Functionality without stream provider covered, ICS has own test suite
  */
 internal class SchemeManagerTest {
   companion object {
+    internal const val FILE_SPEC = "REMOTE"
     @JvmField
     @ClassRule
     val projectRule = ProjectRule()
@@ -50,6 +50,9 @@ internal class SchemeManagerTest {
   @Rule
   @JvmField
   val fsRule = InMemoryFsRule()
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
 
   private var localBaseDir: Path? = null
   private var remoteBaseDir: Path? = null
@@ -592,6 +595,7 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must be system-independent`() {
+    DefaultLogger.disableStderrDumping(disposableRule.disposable);
     assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
