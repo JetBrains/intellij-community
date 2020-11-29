@@ -353,6 +353,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       lafClassName = ourLafClassesAliases.get(lafClassName);
     }
 
+    if ("com.sun.java.swing.plaf.windows.WindowsLookAndFeel".equals(lafClassName)) {
+      return myDefaultLightLaf;
+    }
+
     if (themeId != null) {
       for (UIManager.LookAndFeelInfo l : myLaFs.getValue()) {
         if (l instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)l).getTheme().getId().equals(themeId)) {
