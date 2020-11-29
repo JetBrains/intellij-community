@@ -26,8 +26,14 @@ class LanguageDetector : StartupActivity.Background {
 
   companion object {
     private fun matchedLanguagePlugins(): List<FeatureImpl> {
+      val features = getFeatures(Locale.getDefault().toLanguageTag())
+      if (features.isNotEmpty()) return features
+
+      return getFeatures(Locale.getDefault().language)
+    }
+
+    private fun getFeatures(languageTag: String): List<FeatureImpl> {
       val build = MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests()
-      val languageTag = Locale.getDefault().toLanguageTag()
       val params = mapOf("featureType" to "com.intellij.locale", "implementationName" to languageTag, "build" to build)
       return MarketplaceRequests.getInstance().getFeatures(params)
     }
