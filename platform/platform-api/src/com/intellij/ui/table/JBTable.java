@@ -61,6 +61,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private boolean myEnableAntialiasing;
 
   private int myVisibleRowCount = 4;
+  private int myAdditionalRowsCount = 0;
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
@@ -201,6 +202,27 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     int oldValue = myVisibleRowCount;
     myVisibleRowCount = Math.max(0, visibleRowCount);
     firePropertyChange("visibleRowCount", oldValue, visibleRowCount);
+  }
+
+  public int getAdditionalRowsCount() {
+    return myAdditionalRowsCount;
+  }
+
+  public void setAdditionalRowsCount(int additionalRowsCount) {
+    int oldValue = myAdditionalRowsCount;
+    myAdditionalRowsCount = additionalRowsCount;
+    firePropertyChange("additionalRowsCount", oldValue, additionalRowsCount);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    if (myAdditionalRowsCount == 0) return size;
+    int additionalHeight = myAdditionalRowsCount * getRowHeight();
+    Container parent = getParent();
+    int visibleAreaHeight = parent instanceof JViewport ? parent.getSize().height : 0;
+    if (visibleAreaHeight > 0) additionalHeight = Math.min(visibleAreaHeight - rowHeight, additionalHeight);
+    return new Dimension(size.width, size.height + additionalHeight);
   }
 
   @Override
