@@ -4,8 +4,6 @@ package org.intellij.plugins.markdown.highlighting
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -22,14 +20,12 @@ class MarkdownNumberHighlightingAnnotator : Annotator {
     for (match in numberRegex.findAll(element.text)) {
       holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
         .range(TextRange.create(offset + match.range.first, offset + match.range.last + 1))
-        .textAttributes(numberTextAttributesKey)
+        .textAttributes(MarkdownHighlighterColors.NUMBER)
         .create()
     }
   }
 
   companion object {
-    private val numberTextAttributesKey =
-      TextAttributesKey.createTextAttributesKey("MARKDOWN_NUMBER", DefaultLanguageHighlighterColors.NUMBER)
     private val numberRegex = Regex("""\d(\d|_)*([.,]\d(\d|_)*)?""")
   }
 }

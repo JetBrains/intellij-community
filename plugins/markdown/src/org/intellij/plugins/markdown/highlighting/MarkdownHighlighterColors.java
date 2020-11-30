@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.highlighting;
 
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
@@ -53,5 +54,6 @@ public final class MarkdownHighlighterColors {
 
   public static final TextAttributesKey COMMENT_ATTR_KEY = createTextAttributesKey("MARKDOWN_COMMENT", LINE_COMMENT);
 
+  public static final TextAttributesKey NUMBER = createTextAttributesKey("MARKDOWN_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
   public static final TextAttributesKey DATE = createTextAttributesKey("MARKDOWN_DATE", STRING);
 }
