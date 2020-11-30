@@ -14,6 +14,17 @@ public class LombokExtensionMethodsHighlightingTest extends LightDaemonAnalyzerT
   public void testAssignability() { doTest(); }
   public void testConflictingOwnMethod() { doTest(); }
 
+  public void testExtensionMethodAutoboxing() { doTest(); }
+
+  /**
+   * RecursionManager$CachingPreventedException: Caching disabled due to recursion prevention, please get rid of cyclic dependencies
+   */
+  public void _testExtensionMethodFunctional() { doTest(); }
+  public void testExtensionMethodNames() { doTest(); }
+  public void testExtensionMethodPlain() { doTest(); }
+  public void testExtensionMethodSuppress() { doTest(); }
+  public void testExtensionMethodVarargs() { doTest(); }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
