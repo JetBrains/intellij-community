@@ -322,4 +322,8 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     });
     doTest();
   }
+  public void testGuavaFunction() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 }
