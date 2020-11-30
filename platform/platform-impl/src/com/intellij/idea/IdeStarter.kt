@@ -256,7 +256,7 @@ private fun postOpenUiTasks(app: Application) {
     // should not be executed neither in IDE main thread nor in EDT
     AppExecutorUtil.getAppExecutorService().execute {
       runActivity("patch system Shell links on Windows") {
-        WinShellIntegration.getInstance()!!.patchSystemShortcuts()
+        WinShellIntegration.getInstance()!!.launcherSystemShellLinksPatcher?.patchSystemShellLinks()
       }
     }
   }

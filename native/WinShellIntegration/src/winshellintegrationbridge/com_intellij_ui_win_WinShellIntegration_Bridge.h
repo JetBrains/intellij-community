@@ -42,10 +42,10 @@ JNIEXPORT void JNICALL Java_com_intellij_ui_win_WinShellIntegration_00024Bridge_
 
 /*
  * Class:     com_intellij_ui_win_WinShellIntegration_Bridge
- * Method:    findAndPatchShortcutNative
+ * Method:    findAndPatchShellLinkNative
  * Signature: (Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_intellij_ui_win_WinShellIntegration_00024Bridge_findAndPatchShortcutNative
+JNIEXPORT jstring JNICALL Java_com_intellij_ui_win_WinShellIntegration_00024Bridge_findAndPatchShellLinkNative
   (JNIEnv *, jobject, jstring, jobjectArray, jstring);
 
 #ifdef __cplusplus

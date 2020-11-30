@@ -388,20 +388,20 @@ namespace intellij::ui::win::jni
     }
 
 
-    jstring WinShellIntegrationBridge::findAndPatchShortcut(
+    jstring WinShellIntegrationBridge::findAndPatchShellLink(
         JNIEnv* jEnv,
         jobject jThis,
-        jstring jShortcutTargetPath,
-        jobjectArray jShortcutsPaths,
+        jstring jShellLinkTargetPath,
+        jobjectArray jShellLinksPaths,
         jstring jNewAppUserModelId) noexcept
     {
         try
         {
-            return getInstance().findAndPatchShortcutImpl(
+            return getInstance().findAndPatchShellLinkImpl(
                 jEnv,
                 jThis,
-                jShortcutTargetPath,
-                jShortcutsPaths,
+                jShellLinkTargetPath,
+                jShellLinksPaths,
                 jNewAppUserModelId
             );
         }
@@ -433,21 +433,21 @@ namespace intellij::ui::win::jni
         return nullptr;
     }
 
-    jstring WinShellIntegrationBridge::findAndPatchShortcutImpl(
+    jstring WinShellIntegrationBridge::findAndPatchShellLinkImpl(
         JNIEnv* jEnv,
         [[maybe_unused]] jobject jThis,
-        jstring jShortcutTargetPath,
-        jobjectArray jShortcutsPaths,
+        jstring jShellLinkTargetPath,
+        jobjectArray jShellLinksPaths,
         jstring jNewAppUserModelId) noexcept(false)
     {
         assert( (jEnv != nullptr) );
 
         ensureJNINoErrors(*jEnv);
 
-        const jsize shortcutsCount = jEnv->GetArrayLength(jShortcutsPaths);
+        const jsize shellLinksCount = jEnv->GetArrayLength(jShellLinksPaths);
         ensureJNINoErrors(*jEnv);
 
-        if (shortcutsCount < 1)
+        if (shellLinksCount < 1)
             return nullptr;
 
         const std::optional<WideString> newAppUserModelId = [jEnv, jNewAppUserModelId] {
@@ -458,8 +458,8 @@ namespace intellij::ui::win::jni
         }();
         ensureJNINoErrors(*jEnv);
 
-        CComPtr<IShellLinkW> shortcutNative;
-        auto comResult = shortcutNative.CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC);
+        CComPtr<IShellLinkW> shellLinkNative;
+        auto comResult = shellLinkNative.CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC);
         if (FAILED(comResult))
             errors::throwCOMException(
                 comResult,
@@ -468,8 +468,8 @@ namespace intellij::ui::win::jni
                 thisCtxName
             );
 
-        CComPtr<IPropertyStore> shortcutPropertiesNative;
-        comResult = shortcutNative.QueryInterface(&shortcutPropertiesNative);
+        CComPtr<IPropertyStore> shellLinkPropertiesNative;
+        comResult = shellLinkNative.QueryInterface(&shellLinkPropertiesNative);
         if (FAILED(comResult))
             errors::throwCOMException(
                 comResult,
@@ -478,8 +478,8 @@ namespace intellij::ui::win::jni
                 thisCtxName
             );
 
-        CComPtr<IPersistFile> shortcutFileNative;
-        comResult = shortcutNative.QueryInterface(&shortcutFileNative);
+        CComPtr<IPersistFile> shellLinkFileNative;
+        comResult = shellLinkNative.QueryInterface(&shellLinkFileNative);
         if (FAILED(comResult))
             errors::throwCOMException(
                 comResult,
@@ -488,28 +488,28 @@ namespace intellij::ui::win::jni
                 thisCtxName
             );
 
-        const std::filesystem::path shortcutTargetPath{ jStringToWideString(jEnv, jShortcutTargetPath) };
-        std::filesystem::path::string_type shortcutResolvedPathBuffer;
-        shortcutResolvedPathBuffer.resize(shortcutTargetPath.native().size() * 2, 0);
+        const std::filesystem::path shellLinkTargetPath{ jStringToWideString(jEnv, jShellLinkTargetPath) };
+        std::filesystem::path::string_type shellLinkResolvedPathBuffer;
+        shellLinkResolvedPathBuffer.resize(shellLinkTargetPath.native().size() * 2, 0);
 
-        for (jsize i = 0; i < shortcutsCount; ++i)
+        for (jsize i = 0; i < shellLinksCount; ++i)
         {
-            const auto jShortcutPath = static_cast<jstring>(jEnv->GetObjectArrayElement(jShortcutsPaths, i));
+            const auto jShellLinkPath = static_cast<jstring>(jEnv->GetObjectArrayElement(jShellLinksPaths, i));
             ensureJNINoErrors(*jEnv);
 
-            if (jShortcutPath == nullptr)
-                throw std::logic_error{std::to_string(i) + "th passed path to a shortcut is null"};
+            if (jShellLinkPath == nullptr)
+                throw std::logic_error{std::to_string(i) + "th passed path to a Shell link is null"};
 
-            const auto shortcutPath = jStringToWideString(jEnv, jShortcutPath);
+            const auto shellLinkPath = jStringToWideString(jEnv, jShellLinkPath);
             ensureJNINoErrors(*jEnv);
 
-            comResult = shortcutFileNative->Load(shortcutPath.c_str(), STGM_READWRITE);
+            comResult = shellLinkFileNative->Load(shellLinkPath.c_str(), STGM_READWRITE);
             if (FAILED(comResult))
                 continue;
 
-            comResult = shortcutNative->GetPath(
-                shortcutResolvedPathBuffer.data(),
-                static_cast<int>(shortcutResolvedPathBuffer.size()) - 1,
+            comResult = shellLinkNative->GetPath(
+                shellLinkResolvedPathBuffer.data(),
+                static_cast<int>(shellLinkResolvedPathBuffer.size()) - 1,
                 nullptr,
                 SLGP_RAWPATH
             );
@@ -518,12 +518,12 @@ namespace intellij::ui::win::jni
                 continue;
 
             std::error_code ec;
-            if (!std::filesystem::equivalent(shortcutTargetPath, shortcutResolvedPathBuffer.c_str(), ec))
+            if (!std::filesystem::equivalent(shellLinkTargetPath, shellLinkResolvedPathBuffer.c_str(), ec))
                 continue;
 
             {
-                PROPVARIANT shortcutAppUserModelIdProperty;
-                comResult = shortcutPropertiesNative->GetValue(PKEY_AppUserModel_ID, &shortcutAppUserModelIdProperty);
+                PROPVARIANT shellLinkAppUserModelIdProperty;
+                comResult = shellLinkPropertiesNative->GetValue(PKEY_AppUserModel_ID, &shellLinkAppUserModelIdProperty);
                 if (FAILED(comResult))
                     errors::throwCOMException(
                         comResult,
@@ -535,13 +535,13 @@ namespace intellij::ui::win::jni
                 const WCHAR *const newAppUserModelIdCStr = newAppUserModelId.has_value() ? newAppUserModelId->c_str()
                                                                                          : nullptr;
 
-                if (!compareUpdateWStringProperty(shortcutAppUserModelIdProperty, newAppUserModelIdCStr)) {
-                    (void)PropVariantClear(&shortcutAppUserModelIdProperty);
-                    return jShortcutPath;
+                if (!compareUpdateWStringProperty(shellLinkAppUserModelIdProperty, newAppUserModelIdCStr)) {
+                    (void)PropVariantClear(&shellLinkAppUserModelIdProperty);
+                    return jShellLinkPath;
                 }
 
-                comResult = shortcutPropertiesNative->SetValue(PKEY_AppUserModel_ID, shortcutAppUserModelIdProperty);
-                (void)PropVariantClear(&shortcutAppUserModelIdProperty);
+                comResult = shellLinkPropertiesNative->SetValue(PKEY_AppUserModel_ID, shellLinkAppUserModelIdProperty);
+                (void)PropVariantClear(&shellLinkAppUserModelIdProperty);
             }
 
             if (FAILED(comResult))
@@ -552,19 +552,19 @@ namespace intellij::ui::win::jni
                     thisCtxName
                 );
 
-            comResult = shortcutPropertiesNative->Commit();
+            comResult = shellLinkPropertiesNative->Commit();
             if (FAILED(comResult))
                 continue;
 
-            comResult = shortcutFileNative->Save(nullptr, TRUE);
+            comResult = shellLinkFileNative->Save(nullptr, TRUE);
             if (FAILED(comResult))
                 continue;
 
-            comResult = shortcutFileNative->SaveCompleted(nullptr);
+            comResult = shellLinkFileNative->SaveCompleted(nullptr);
             if (FAILED(comResult))
                 continue;
 
-            return jShortcutPath;
+            return jShellLinkPath;
         }
 
         return nullptr;

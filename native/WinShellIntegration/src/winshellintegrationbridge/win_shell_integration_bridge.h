@@ -34,18 +34,11 @@ namespace intellij::ui::win::jni
             jobjectArray jTasks
         ) noexcept;
 
-        static jint patchShortcutsIfResolvedTo(
+        static jstring findAndPatchShellLink(
             JNIEnv* jEnv,
             jobject jThis,
-            jstring jTargetPath,
-            jobjectArray jShortcutsPaths
-        ) noexcept;
-
-        static jstring findAndPatchShortcut(
-            JNIEnv* jEnv,
-            jobject jThis,
-            jstring jShortcutTargetPath,
-            jobjectArray jShortcutsPaths,
+            jstring jShellLinkTargetPath,
+            jobjectArray jShellLinksPaths,
             jstring jNewAppUserModelId
         ) noexcept;
 
@@ -75,11 +68,11 @@ namespace intellij::ui::win::jni
             jobjectArray jTasks
         ) noexcept(false);
 
-        jstring findAndPatchShortcutImpl(
+        jstring findAndPatchShellLinkImpl(
             JNIEnv* jEnv,
             jobject jThis,
-            jstring jShortcutTargetPath,
-            jobjectArray jShortcutsPaths,
+            jstring jShellLinkTargetPath,
+            jobjectArray jShellLinksPaths,
             jstring jNewAppUserModelId
         ) noexcept(false);
 

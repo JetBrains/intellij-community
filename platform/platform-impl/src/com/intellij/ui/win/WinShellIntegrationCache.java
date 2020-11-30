@@ -21,17 +21,17 @@ import java.util.function.BiConsumer;
 final class WinShellIntegrationCache {
   static final class IdeEntry {
     IdeEntry(@Nullable String appUserModelId,
-             @Nullable Path startMenuShortcutPath,
-             @Nullable Path taskbarShortcutPath) {
+             @Nullable Path startMenuShellLinkPath,
+             @Nullable Path taskbarShellLinkPath) {
       this.appUserModelId = appUserModelId;
-      this.startMenuShortcutPath = startMenuShortcutPath;
-      this.taskbarShortcutPath = taskbarShortcutPath;
+      this.startMenuShellLinkPath = startMenuShellLinkPath;
+      this.taskbarShellLinkPath = taskbarShellLinkPath;
     }
 
 
     final @Nullable String appUserModelId;
-    final @Nullable Path startMenuShortcutPath;
-    final @Nullable Path taskbarShortcutPath;
+    final @Nullable Path startMenuShellLinkPath;
+    final @Nullable Path taskbarShellLinkPath;
   }
 
 
@@ -69,18 +69,16 @@ final class WinShellIntegrationCache {
         continue;
       }
 
-      final @Nullable String startMenuShortcutPathStr = child.getChildText(IDE_STARTMENUSHORTCUTPATH_CHILD_NAME);
-      final @Nullable String taskbarShortcutPathStr = child.getChildText(IDE_TASKBARSHORTCUTPATH_CHILD_NAME);
+      final @Nullable String startMenuShellLinkPathStr = child.getChildText(IDE_STARTMENUSHELLLINKPATH_CHILD_NAME);
+      final @Nullable String taskbarShellLinkPathStr = child.getChildText(IDE_TASKBARSHELLLINKPATH_CHILD_NAME);
 
       final @NotNull Path idePath = Paths.get(idePathStr);
-      final @Nullable Path startMenuShortcutPath = (startMenuShortcutPathStr == null) ? null : Paths.get(startMenuShortcutPathStr);
-      final @Nullable Path taskbarShortcutPath = (taskbarShortcutPathStr == null) ? null : Paths.get(taskbarShortcutPathStr);
-
-      final @NotNull IdeEntry cacheEntry = new IdeEntry(appUserModelId, startMenuShortcutPath, taskbarShortcutPath);
+      final @Nullable Path startMenuShellLinkPath = (startMenuShellLinkPathStr == null) ? null : Paths.get(startMenuShellLinkPathStr);
+      final @Nullable Path taskbarShellLinkPath = (taskbarShellLinkPathStr == null) ? null : Paths.get(taskbarShellLinkPathStr);
 
       // keeping insertion order
       cacheEntries.remove(idePath);
-      cacheEntries.put(idePath, new IdeEntry(appUserModelId, startMenuShortcutPath, taskbarShortcutPath));
+      cacheEntries.put(idePath, new IdeEntry(appUserModelId, startMenuShellLinkPath, taskbarShellLinkPath));
 
       if (cacheEntries.size() > MAX_ENTRIES) {
         // removing oldest inserted entry
@@ -136,16 +134,16 @@ final class WinShellIntegrationCache {
       final var appUserModelIdSerialized = new Element(IDE_APPUSERMODELID_CHILD_NAME).setText(value.appUserModelId);
       entrySerialized.addContent(appUserModelIdSerialized);
 
-      if (value.startMenuShortcutPath != null) {
-        final var startMenuShortcutPathSerialized = new Element(IDE_STARTMENUSHORTCUTPATH_CHILD_NAME)
-                                                            .setText(value.startMenuShortcutPath.normalize().toString());
-        entrySerialized.addContent(startMenuShortcutPathSerialized);
+      if (value.startMenuShellLinkPath != null) {
+        final var startMenuShellLinkPathSerialized = new Element(IDE_STARTMENUSHELLLINKPATH_CHILD_NAME)
+                                                             .setText(value.startMenuShellLinkPath.normalize().toString());
+        entrySerialized.addContent(startMenuShellLinkPathSerialized);
       }
 
-      if (value.taskbarShortcutPath != null) {
-        final var taskbarShortcutPathSerialized = new Element(IDE_TASKBARSHORTCUTPATH_CHILD_NAME)
-                                                          .setText(value.taskbarShortcutPath.normalize().toString());
-        entrySerialized.addContent(taskbarShortcutPathSerialized);
+      if (value.taskbarShellLinkPath != null) {
+        final var taskbarShellLinkPathSerialized = new Element(IDE_TASKBARSHELLLINKPATH_CHILD_NAME)
+                                                           .setText(value.taskbarShellLinkPath.normalize().toString());
+        entrySerialized.addContent(taskbarShellLinkPathSerialized);
       }
 
       root.addContent(entrySerialized);
@@ -177,10 +175,9 @@ final class WinShellIntegrationCache {
 
   private static final @NotNull String CACHE_FILE_NAME = "cache.xml";
 
-
   private static final @NotNull String IDE_ENTRY_NAME = "ide";
   private static final @NotNull String IDE_PATH_ATTRIBUTE_NAME = "path";
   private static final @NotNull String IDE_APPUSERMODELID_CHILD_NAME = "AppUserModelID";
-  private static final @NotNull String IDE_STARTMENUSHORTCUTPATH_CHILD_NAME = "startMenuShortcutPath";
-  private static final @NotNull String IDE_TASKBARSHORTCUTPATH_CHILD_NAME = "taskbarShortcutPath";
+  private static final @NotNull String IDE_STARTMENUSHELLLINKPATH_CHILD_NAME = "startMenuShellLinkPath";
+  private static final @NotNull String IDE_TASKBARSHELLLINKPATH_CHILD_NAME = "taskbarShellLinkPath";
 }
