@@ -56,7 +56,7 @@ public class GradleJavaFrameworkSupportProvider extends GradleFrameworkSupportPr
       .addOther("test {\n" +
                 "    useJUnitPlatform()\n" +
                 "}")
-      .addDependencyNotation("testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'")
-      .addDependencyNotation("testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:1.6.0'");
+      .addDependencyNotation("testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'")
+      .addDependencyNotation("testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:1.7.0'");
   }
 }
