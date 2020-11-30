@@ -177,6 +177,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                            @NotNull K dataKey,
                                                            @NotNull GlobalSearchScope filter) {
+    if (LightEdit.owns(filter.getProject())) return Collections.emptyList();
     Set<VirtualFile> files = new HashSet<>();
     processValuesInScope(indexId, dataKey, false, filter, null, (file, value) -> {
       files.add(file);
@@ -354,6 +355,16 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                @NotNull Processor<? super VirtualFile> processor) {
     ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
     IntSet set = null;
+
+    if (filter instanceof GlobalSearchScope.FilesScope) {
+      set = new IntOpenHashSet();
+      for (VirtualFile file : (Iterable<VirtualFile>)filter) {
+        if (file instanceof VirtualFileWithId) {
+          set.add(((VirtualFileWithId)file).getId());
+        }
+      }
+    }
+
     //noinspection rawtypes
     for (AllKeysQuery query : queries) {
       @SuppressWarnings("unchecked")
@@ -364,7 +375,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         set = new IntOpenHashSet(queryResult);
       }
       else {
-        set.retainAll(queryResult);
+        set = queryResult;
       }
     }
     return set != null && processVirtualFiles(set, filter, processor);

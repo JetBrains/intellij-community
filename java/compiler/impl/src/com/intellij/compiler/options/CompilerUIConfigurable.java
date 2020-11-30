@@ -160,7 +160,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     myCbAssertNotNull.setSelected(configuration.isAddNotNullAssertions());
     myCbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
-    myCbParallelCompilation.setSelected(workspaceConfiguration.PARALLEL_COMPILATION);
+    myCbParallelCompilation.setSelected(configuration.isParallelCompilationEnabled());
     myCbRebuildOnDependencyChange.setSelected(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
     int heapSize = workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE;
     myHeapSizeField.setText(heapSize > 0 ? String.valueOf(heapSize) : "");
@@ -213,8 +213,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       if (!myDisabledSettings.contains(Setting.AUTO_MAKE)) {
         workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbEnableAutomake.isSelected();
       }
-      if (!myDisabledSettings.contains(Setting.PARALLEL_COMPILATION)) {
-        workspaceConfiguration.PARALLEL_COMPILATION = myCbParallelCompilation.isSelected();
+      if (!myDisabledSettings.contains(Setting.PARALLEL_COMPILATION) && configuration.isParallelCompilationEnabled() != myCbParallelCompilation.isSelected()) {
+        configuration.setParallelCompilationEnabled(myCbParallelCompilation.isSelected());
       }
       if (!myDisabledSettings.contains(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE)) {
         workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE = myCbRebuildOnDependencyChange.isSelected();
@@ -281,6 +281,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   @Override
   public boolean isModified() {
+    final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     boolean isModified = !myDisabledSettings.contains(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR)
                          && ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
@@ -289,7 +290,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     isModified |= !myDisabledSettings.contains(Setting.AUTO_MAKE)
                   && ComparingUtils.isModified(myCbEnableAutomake, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     isModified |= !myDisabledSettings.contains(Setting.PARALLEL_COMPILATION)
-                  && ComparingUtils.isModified(myCbParallelCompilation, workspaceConfiguration.PARALLEL_COMPILATION);
+                  && ComparingUtils.isModified(myCbParallelCompilation, configuration.isParallelCompilationEnabled());
     isModified |= !myDisabledSettings.contains(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE)
                   && ComparingUtils.isModified(myCbRebuildOnDependencyChange, workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
     isModified |= !myDisabledSettings.contains(Setting.HEAP_SIZE)

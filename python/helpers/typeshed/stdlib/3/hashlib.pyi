@@ -1,5 +1,3 @@
-# Stubs for hashlib
-
 import sys
 from _typeshed import ReadableBuffer
 from typing import AbstractSet, Optional
@@ -51,72 +49,75 @@ def pbkdf2_hmac(
     hash_name: str, password: ReadableBuffer, salt: ReadableBuffer, iterations: int, dklen: Optional[int] = ...
 ) -> bytes: ...
 
-if sys.version_info >= (3, 6):
-    class _VarLenHash(object):
-        digest_size: int
-        block_size: int
-        name: str
-        def __init__(self, data: ReadableBuffer = ...) -> None: ...
-        def copy(self) -> _VarLenHash: ...
-        def digest(self, __length: int) -> bytes: ...
-        def hexdigest(self, __length: int) -> str: ...
-        def update(self, __data: ReadableBuffer) -> None: ...
-    sha3_224 = _Hash
-    sha3_256 = _Hash
-    sha3_384 = _Hash
-    sha3_512 = _Hash
-    shake_128 = _VarLenHash
-    shake_256 = _VarLenHash
-    def scrypt(
-        password: ReadableBuffer,
-        *,
-        salt: Optional[ReadableBuffer] = ...,
-        n: Optional[int] = ...,
-        r: Optional[int] = ...,
-        p: Optional[int] = ...,
-        maxmem: int = ...,
-        dklen: int = ...,
-    ) -> bytes: ...
-    class _BlakeHash(_Hash):
-        MAX_DIGEST_SIZE: int
-        MAX_KEY_SIZE: int
-        PERSON_SIZE: int
-        SALT_SIZE: int
+class _VarLenHash(object):
+    digest_size: int
+    block_size: int
+    name: str
+    def __init__(self, data: ReadableBuffer = ...) -> None: ...
+    def copy(self) -> _VarLenHash: ...
+    def digest(self, __length: int) -> bytes: ...
+    def hexdigest(self, __length: int) -> str: ...
+    def update(self, __data: ReadableBuffer) -> None: ...
 
-        if sys.version_info >= (3, 9):
-            def __init__(
-                self,
-                __data: ReadableBuffer = ...,
-                *,
-                digest_size: int = ...,
-                key: ReadableBuffer = ...,
-                salt: ReadableBuffer = ...,
-                person: ReadableBuffer = ...,
-                fanout: int = ...,
-                depth: int = ...,
-                leaf_size: int = ...,
-                node_offset: int = ...,
-                node_depth: int = ...,
-                inner_size: int = ...,
-                last_node: bool = ...,
-                usedforsecurity: bool = ...,
-            ) -> None: ...
-        else:
-            def __init__(
-                self,
-                __data: ReadableBuffer = ...,
-                *,
-                digest_size: int = ...,
-                key: ReadableBuffer = ...,
-                salt: ReadableBuffer = ...,
-                person: ReadableBuffer = ...,
-                fanout: int = ...,
-                depth: int = ...,
-                leaf_size: int = ...,
-                node_offset: int = ...,
-                node_depth: int = ...,
-                inner_size: int = ...,
-                last_node: bool = ...,
-            ) -> None: ...
-    blake2b = _BlakeHash
-    blake2s = _BlakeHash
+sha3_224 = _Hash
+sha3_256 = _Hash
+sha3_384 = _Hash
+sha3_512 = _Hash
+shake_128 = _VarLenHash
+shake_256 = _VarLenHash
+
+def scrypt(
+    password: ReadableBuffer,
+    *,
+    salt: Optional[ReadableBuffer] = ...,
+    n: Optional[int] = ...,
+    r: Optional[int] = ...,
+    p: Optional[int] = ...,
+    maxmem: int = ...,
+    dklen: int = ...,
+) -> bytes: ...
+
+class _BlakeHash(_Hash):
+    MAX_DIGEST_SIZE: int
+    MAX_KEY_SIZE: int
+    PERSON_SIZE: int
+    SALT_SIZE: int
+
+    if sys.version_info >= (3, 9):
+        def __init__(
+            self,
+            __data: ReadableBuffer = ...,
+            *,
+            digest_size: int = ...,
+            key: ReadableBuffer = ...,
+            salt: ReadableBuffer = ...,
+            person: ReadableBuffer = ...,
+            fanout: int = ...,
+            depth: int = ...,
+            leaf_size: int = ...,
+            node_offset: int = ...,
+            node_depth: int = ...,
+            inner_size: int = ...,
+            last_node: bool = ...,
+            usedforsecurity: bool = ...,
+        ) -> None: ...
+    else:
+        def __init__(
+            self,
+            __data: ReadableBuffer = ...,
+            *,
+            digest_size: int = ...,
+            key: ReadableBuffer = ...,
+            salt: ReadableBuffer = ...,
+            person: ReadableBuffer = ...,
+            fanout: int = ...,
+            depth: int = ...,
+            leaf_size: int = ...,
+            node_offset: int = ...,
+            node_depth: int = ...,
+            inner_size: int = ...,
+            last_node: bool = ...,
+        ) -> None: ...
+
+blake2b = _BlakeHash
+blake2s = _BlakeHash

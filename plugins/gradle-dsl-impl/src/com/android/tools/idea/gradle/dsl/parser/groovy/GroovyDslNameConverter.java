@@ -46,7 +46,18 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GroovyDslNameConverter implements GradleDslNameConverter {
+public abstract class GroovyDslNameConverter implements GradleDslNameConverter {
+
+  @Override
+  public boolean isGroovy() {
+    return true;
+  }
+
+  @Override
+  public boolean isKotlin() {
+    return false;
+  }
+
   @NotNull
   @Override
   public String psiToName(@NotNull PsiElement element) {

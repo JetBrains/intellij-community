@@ -36,7 +36,6 @@
     <weigher key="completion" implementationClass="com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher" order="first"/>
 
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>
-    <referencesSearch implementation="com.jetbrains.python.psi.search.PyClassReferenceSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyKeywordArgumentSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
 
@@ -125,7 +124,6 @@
     <localInspection language="Python" shortName="PyAugmentAssignmentInspection" suppressId="PyAugmentAssignment" bundle="messages.PyPsiBundle" key="INSP.NAME.augment.assignment" groupKey="INSP.GROUP.python" enabledByDefault="false" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAugmentAssignmentInspection"/>
     <localInspection language="Python" shortName="PyBroadExceptionInspection" suppressId="PyBroadException" bundle="messages.PyPsiBundle" key="INSP.NAME.too.broad.exception.clauses" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyBroadExceptionInspection"/>
     <localInspection language="Python" shortName="PyByteLiteralInspection" suppressId="PyByteLiteral" bundle="messages.PyPsiBundle" key="INSP.NAME.byte.literal" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyByteLiteralInspection"/>
-    <localInspection language="Python" shortName="PyCallByClassInspection" suppressId="PyCallByClass" bundle="messages.PyPsiBundle" key="INSP.NAME.different.class.call" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyCallByClassInspection"/>
     <localInspection language="Python" shortName="PyCallingNonCallableInspection" suppressId="PyCallingNonCallable" bundle="messages.PyPsiBundle" key="INSP.NAME.calling.non.callable" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyCallingNonCallableInspection"/>
     <localInspection language="Python" shortName="PyComparisonWithNoneInspection" suppressId="PyComparisonWithNone" bundle="messages.PyPsiBundle" key="INSP.NAME.comparison.with.none" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyComparisonWithNoneInspection"/>
     <localInspection language="Python" shortName="PyDataclassInspection" suppressId="PyDataclass" bundle="messages.PyPsiBundle" key="INSP.NAME.dataclass.definition.and.usages" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDataclassInspection"/>
@@ -356,6 +354,11 @@
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyAnnotateVariableTypeIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyInvertIfConditionIntention</className>
       <category>Python</category>
     </intentionAction>
   </extensions>

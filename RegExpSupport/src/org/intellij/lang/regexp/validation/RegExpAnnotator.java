@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -235,21 +234,19 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpGroup(RegExpGroup group) {
     final RegExpPattern pattern = group.getPattern();
-    if (pattern != null) {
-      final RegExpBranch[] branches = pattern.getBranches();
-      if (isEmpty(branches) && group.getNode().getLastChildNode().getElementType() == RegExpTT.GROUP_END) {
-        // catches "()" as well as "(|)"
-        myHolder.newAnnotation(HighlightSeverity.WARNING, RegExpBundle.message("error.empty.group")).create();
-      }
-      else if (branches.length == 1) {
-        final RegExpAtom[] atoms = branches[0].getAtoms();
-        if (atoms.length == 1 && atoms[0] instanceof RegExpGroup) {
-          final RegExpGroup.Type type = group.getType();
-          if (type == RegExpGroup.Type.CAPTURING_GROUP || type == RegExpGroup.Type.ATOMIC || type == RegExpGroup.Type.NON_CAPTURING) {
-            final RegExpGroup innerGroup = (RegExpGroup)atoms[0];
-            if (group.isCapturing() == innerGroup.isCapturing()) {
-              myHolder.newAnnotation(HighlightSeverity.WARNING, RegExpBundle.message("error.redundant.group.nesting")).create();
-            }
+    final RegExpBranch[] branches = pattern.getBranches();
+    if (isEmpty(branches) && group.getNode().getLastChildNode().getElementType() == RegExpTT.GROUP_END) {
+      // catches "()" as well as "(|)"
+      myHolder.newAnnotation(HighlightSeverity.WARNING, RegExpBundle.message("error.empty.group")).create();
+    }
+    else if (branches.length == 1) {
+      final RegExpAtom[] atoms = branches[0].getAtoms();
+      if (atoms.length == 1 && atoms[0] instanceof RegExpGroup) {
+        final RegExpGroup.Type type = group.getType();
+        if (type == RegExpGroup.Type.CAPTURING_GROUP || type == RegExpGroup.Type.ATOMIC || type == RegExpGroup.Type.NON_CAPTURING) {
+          final RegExpGroup innerGroup = (RegExpGroup)atoms[0];
+          if (group.isCapturing() == innerGroup.isCapturing()) {
+            myHolder.newAnnotation(HighlightSeverity.WARNING, RegExpBundle.message("error.redundant.group.nesting")).create();
           }
         }
       }
@@ -293,7 +290,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   @Override
   public void visitRegExpNamedGroupRef(RegExpNamedGroupRef groupRef) {
-    if (!myLanguageHosts.supportsNamedGroupRefSyntax(groupRef)) {
+    if (!(groupRef.getParent() instanceof RegExpConditional) && !myLanguageHosts.supportsNamedGroupRefSyntax(groupRef)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR,
                              RegExpBundle.message("error.this.named.group.reference.syntax.is.not.supported.in.this.regex.dialect"))
         .create();
@@ -332,15 +329,29 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       myHolder.newAnnotation(HighlightSeverity.ERROR,
                              RegExpBundle.message("error.conditionals.are.not.supported.in.this.regex.dialect")).create();
     }
+    final RegExpAtom condition = conditional.getCondition();
+    if (!myLanguageHosts.supportConditionalCondition(condition)) {
+      if (condition instanceof RegExpGroup) {
+        myHolder.newAnnotation(HighlightSeverity.ERROR,
+                               RegExpBundle.message("error.lookaround.conditions.in.conditionals.not.supported.in.this.regex.dialect"))
+          .range(condition)
+          .create();
+      }
+      else if (condition != null) {
+        final ASTNode child = condition.getNode().getFirstChildNode();
+        final IElementType type = child.getElementType();
+        if (type == RegExpTT.QUOTED_CONDITION_BEGIN || type == RegExpTT.GROUP_BEGIN || type == RegExpTT.ANGLE_BRACKET_CONDITION_BEGIN) {
+          myHolder.newAnnotation(HighlightSeverity.ERROR,
+                                 RegExpBundle.message("error.this.kind.group.reference.condition.not.supported.in.this.regex.dialect"))
+            .range(condition)
+            .create();
+        }
+      }
+    }
   }
 
   private static boolean isEmpty(RegExpBranch[] branches) {
-    for (RegExpBranch branch : branches) {
-      if (branch.getAtoms().length > 0) {
-        return false;
-      }
-    }
-    return true;
+    return !ContainerUtil.exists(branches, branch -> branch.getAtoms().length > 0);
   }
 
   @Override

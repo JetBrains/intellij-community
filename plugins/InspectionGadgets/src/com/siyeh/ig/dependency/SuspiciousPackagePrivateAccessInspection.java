@@ -251,9 +251,8 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     public Set<String> modules = new LinkedHashSet<>();
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
+  public @NotNull JComponent createOptionsPanel() {
     JBTextArea component = new JBTextArea(5, 80);
     component.setText(MODULES_SETS_LOADED_TOGETHER.stream().map(it -> String.join(",", it.modules)).collect(Collectors.joining("\n")));
     component.getDocument().addDocumentListener(new DocumentAdapter() {

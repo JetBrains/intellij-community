@@ -52,6 +52,8 @@ import static java.awt.event.InputEvent.META_DOWN_MASK;
 
 public final class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
   public static final int RIGHT_PANEL_WEST_OFFSET = 13;
+  private static final float MAX_LEFT_PANEL_PROP = 0.9F;
+  private static final float DEFAULT_PROP = 0.33F;
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
   private final MyTextComponentWrapper mySearchFieldWrapper;
@@ -205,15 +207,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     JPanel rightPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     rightPanel.add(searchPair);
     rightPanel.add(myReplaceToolbarWrapper);
+    float initialProportion = maximizeLeftPanelOnResize? MAX_LEFT_PANEL_PROP : DEFAULT_PROP;
 
     if (showOnlySearchPanel) {
       add(leftPanel, BorderLayout.CENTER);
     }
     else {
-      mySplitter = new OnePixelSplitter(false, 0.75F);
+      mySplitter = new OnePixelSplitter(false, initialProportion);
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
       mySplitter.setOpaque(false);
       mySplitter.getDivider().setOpaque(false);
       add(mySplitter, BorderLayout.CENTER);
@@ -223,8 +225,20 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         rightPanel.setBorder(JBUI.Borders.emptyLeft(RIGHT_PANEL_WEST_OFFSET));
         rightPanel.setMinimumSize(new Dimension(mySearchActionsToolbar.getActions().size()
                                                 * ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + RIGHT_PANEL_WEST_OFFSET, 0));
+        mySearchActionsToolbar.addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent e) {
+            var minWidth = 0;
+            for(var component: rightPanel.getComponents()){
+              minWidth += component.getPreferredSize().width;
+            }
+            rightPanel.setMinimumSize(new Dimension(minWidth, 0));
+            mySplitter.updateUI();
+          }
+        });
         mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
         mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+        mySplitter.setResizeEnabled(false);
         mySplitter.setHonorComponentsMinimumSize(true);
         mySplitter.setHonorComponentsPreferredSize(false);
       }
@@ -235,6 +249,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         mySplitter.setHonorComponentsMinimumSize(true);
         mySplitter.setHonorComponentsPreferredSize(true);
       }
+
+      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
+
     }
 
     update("", "", false, false);
@@ -242,20 +259,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     // it's assigned after all action updates so that actions don't get access to uninitialized components
     myDataProviderDelegate = dataProvider;
     // A workaround to suppress editor-specific TabAction
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-        if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocus();
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this);
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-        if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocusBackward();
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)), this);
+    new TransferFocusAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this);
+    new TransferFocusBackwardAction()
+      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)), this);
   }
 
   public void resetUndoRedoActions() {
@@ -836,6 +842,22 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         return ((SearchTextArea)wrapped).getTextArea();
       }
       throw new AssertionError();
+    }
+  }
+
+  private class TransferFocusAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+      if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocus();
+    }
+  }
+
+  private class TransferFocusBackwardAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+      if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocusBackward();
     }
   }
 }

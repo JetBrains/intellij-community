@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -25,7 +26,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
-import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -93,6 +93,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String LITERAL_EXT = "typing_extensions.Literal";
   public static final String ANNOTATED = "typing.Annotated";
   public static final String ANNOTATED_EXT = "typing_extensions.Annotated";
+  public static final String TYPE_ALIAS = "typing.TypeAlias";
+  public static final String TYPE_ALIAS_EXT = "typing_extensions.TypeAlias";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
@@ -170,6 +172,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(LITERAL, LITERAL_EXT)
     .add(TYPED_DICT, TYPED_DICT_EXT)
     .add(ANNOTATED, ANNOTATED_EXT)
+    .add(TYPE_ALIAS, TYPE_ALIAS_EXT)
     .build();
 
   @Nullable
@@ -771,6 +774,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (literalType != null) {
         return literalType;
       }
+      final Ref<PyType> typeAliasType = getExplicitTypeAliasType(resolved);
+      if (typeAliasType != null) {
+        return typeAliasType;
+      }
       final PyType parameterizedType = getParameterizedType(resolved, context);
       if (parameterizedType != null) {
         return Ref.create(parameterizedType);
@@ -815,6 +822,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         context.getExpressionCache().remove(alias);
       }
     }
+  }
+
+  @Nullable
+  private static Ref<PyType> getExplicitTypeAliasType(@NotNull PsiElement resolved) {
+    if (resolved instanceof PyQualifiedNameOwner) {
+      String qualifiedName = ((PyQualifiedNameOwner)resolved).getQualifiedName();
+      if (TYPE_ALIAS.equals(qualifiedName) || TYPE_ALIAS_EXT.equals(qualifiedName)) {
+        return Ref.create();
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -1507,6 +1525,31 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return false;
   }
 
+  /**
+   * Checks whether the given assignment is type hinted with {@code typing.TypeAlias}.
+   * <p>
+   * It can be done either with a variable annotation or a type comment.
+   */
+  public static boolean isExplicitTypeAlias(@NotNull PyAssignmentStatement assignment, @NotNull TypeEvalContext context) {
+    PyExpression annotationValue = getAnnotationValue(assignment, context);
+    if (annotationValue instanceof PyReferenceExpression) {
+      Collection<String> qualifiedNames = resolveToQualifiedNames(annotationValue, context);
+      return qualifiedNames.contains(TYPE_ALIAS) || qualifiedNames.contains(TYPE_ALIAS_EXT);
+    }
+    PyTargetExpression target = as(ArrayUtil.getFirstElement(assignment.getTargets()), PyTargetExpression.class);
+    if (target != null) {
+      String typeCommentAnnotation = target.getTypeCommentAnnotation();
+      if (typeCommentAnnotation != null) {
+        PyExpression commentValue = toExpression(typeCommentAnnotation, assignment);
+        if (commentValue instanceof PyReferenceExpression) {
+          Collection<String> qualifiedNames = resolveToQualifiedNames(commentValue, context);
+          return qualifiedNames.contains(TYPE_ALIAS) || qualifiedNames.contains(TYPE_ALIAS_EXT);
+        }
+      }
+    }
+    return false;
+  }
+
   @NotNull
   private static String getOpenMode(@NotNull PyFunction function, @NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     final Map<PyExpression, PyCallableParameter> arguments =
@@ -1528,9 +1571,35 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return "r";
   }
 
-  public static boolean isInAnnotationOrTypeComment(@NotNull PsiElement element) {
-    return PsiTreeUtil.instanceOf(element.getContainingFile(), PyTypeHintFile.class, PyFunctionTypeAnnotationFile.class) ||
-           PsiTreeUtil.getParentOfType(PyPsiUtils.getRealContext(element), PyAnnotation.class, false, ScopeOwner.class) != null;
+  /**
+   * Detects whether the given element belongs to a self-evident type hint. Namely, these are:
+   * <ul>
+   *   <li>function and variable annotations</li>
+   *   <li>type comments</li>
+   *   <li>explicit type aliases marked with {@code TypeAlias}</li>
+   * </ul>
+   * Note that {@code element} can belong to their AST directly or be a part of an injection inside one of such elements.
+   */
+  public static boolean isInsideTypeHint(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    final PsiElement realContext = PyPsiUtils.getRealContext(element);
+
+    if (PsiTreeUtil.getParentOfType(realContext, PyAnnotation.class, false, ScopeOwner.class) != null) {
+      return true;
+    }
+
+    final PsiComment comment = PsiTreeUtil.getParentOfType(realContext, PsiComment.class, false, ScopeOwner.class);
+    if (comment != null && getTypeCommentValue(comment.getText()) != null) {
+      return true;
+    }
+
+    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(realContext, PyAssignmentStatement.class);
+    if (assignment != null &&
+        PsiTreeUtil.isAncestor(assignment.getAssignedValue(), realContext, false) &&
+        isExplicitTypeAlias(assignment, context)) {
+      return true;
+    }
+
+    return false;
   }
 
   static class Context {

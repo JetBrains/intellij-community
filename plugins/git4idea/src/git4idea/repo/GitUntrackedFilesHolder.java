@@ -279,7 +279,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     }
   }
 
-  public static boolean totalRefreshNeeded(@NotNull GitRepository repository, @NotNull String path) {
+  private static boolean totalRefreshNeeded(@NotNull GitRepository repository, @NotNull String path) {
     return indexChanged(repository, path) || externallyCommitted(repository, path) || headMoved(repository, path) ||
            headChanged(repository, path) || currentBranchChanged(repository, path) || gitignoreChanged(repository, path);
   }

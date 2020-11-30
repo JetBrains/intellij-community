@@ -5,12 +5,12 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.EventLogSystemEvents;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,23 +26,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
- * <p>Use it to record IDE events e.g. invoked action, opened dialog.</p><br/>
- *
- * To implement a new collector:
- * <ol>
- *   <li>Record events with {@link FUCounterUsageLogger#logEvent(Project, String, String)},
- *   {@link FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)},
- *   {@link FUCounterUsageLogger#logEvent(String, String)} or
- *   {@link FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)};
- *   </li>
- *   <li>Register collector in plugin.xml as {@code <statistics.counterUsagesCollector groupId="ID" version="1"/>};</li>
- *   <li>Specify collectors data scheme and implement custom validation rules if necessary.<br/>
- *   For more information see {@link SensitiveDataValidator};</li>
- *   <li>Create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a> with group data scheme and descriptions
- *   to register it on the server in statistic metadata repository</li>
- * </ol>
- *
+ * Please do not implement any new collectors using this API directly. Please refer to {@link EventLogGroup#registerEvent} for the new
+ * collector API.
+ * <p>
  * To test collector:
  * <ol>
  *  <li>
@@ -60,6 +46,9 @@ import java.util.concurrent.TimeUnit;
  */
 @ApiStatus.Internal
 public final class FUCounterUsageLogger {
+  private static final ExtensionPointName<CounterUsageCollectorEP> EP_NAME =
+    new ExtensionPointName<>("com.intellij.statistics.counterUsagesCollector");
+
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
   private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
 
@@ -75,10 +64,10 @@ public final class FUCounterUsageLogger {
   private final Map<String, EventLogGroup> myGroups = new HashMap<>();
 
   public FUCounterUsageLogger() {
-    for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensionList()) {
+    for (CounterUsageCollectorEP ep : EP_NAME.getExtensionList()) {
       registerGroupFromEP(ep);
     }
-    Extensions.getRootArea().getExtensionPoint(CounterUsageCollectorEP.EP_NAME).addExtensionPointListener(
+    ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(EP_NAME).addExtensionPointListener(
       new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull CounterUsageCollectorEP extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -102,13 +91,13 @@ public final class FUCounterUsageLogger {
     }
   }
 
-  public static List<FeatureUsagesCollector> instantiateCounterCollectors() {
-    List<FeatureUsagesCollector> result = new ArrayList<>();
-    for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensions()) {
+  public static @NotNull List<FeatureUsagesCollector> instantiateCounterCollectors() {
+    List<FeatureUsagesCollector> result = new ArrayList<>(EP_NAME.getPoint().size());
+    EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
       if (ep.implementationClass != null) {
-        result.add(ep.instantiateClass(ep.implementationClass, ApplicationManager.getApplication().getPicoContainer()));
+        result.add(ApplicationManager.getApplication().instantiateClass(ep.implementationClass, pluginDescriptor));
       }
-    }
+    });
     return result;
   }
 
@@ -141,7 +130,9 @@ public final class FUCounterUsageLogger {
    * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
    *
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
+   * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
+  @Deprecated
   public void logEvent(@Nullable Project project,
                        @NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId) {
@@ -163,7 +154,9 @@ public final class FUCounterUsageLogger {
    * @param groupId is used to simplify access to events, e.g. 'dialogs', 'intentions'.
    * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
    * @param data information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
+   * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
+  @Deprecated
   public void logEvent(@Nullable Project project,
                        @NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId,
@@ -190,7 +183,9 @@ public final class FUCounterUsageLogger {
    *
    * @see FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
+   * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
+  @Deprecated
   public void logEvent(@NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
@@ -213,7 +208,9 @@ public final class FUCounterUsageLogger {
    * @param data information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
    *
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
+   * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
+  @Deprecated
   public void logEvent(@NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId,
                        @NotNull FeatureUsageData data) {

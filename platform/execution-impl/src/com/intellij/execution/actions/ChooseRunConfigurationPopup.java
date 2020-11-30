@@ -30,6 +30,8 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -38,6 +40,7 @@ import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -83,19 +86,22 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     myPopup.showCenteredInCurrentWindow(myProject);
   }
 
-  private @Nullable String getAdText(final Executor alternateExecutor) {
+  private @Nullable @Nls String getAdText(final Executor alternateExecutor) {
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     if (alternateExecutor != null && !properties.isTrueValue(myAddKey)) {
-      return String
-        .format("Hold %s to %s", KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("SHIFT")), alternateExecutor.getActionName());
+      return ExecutionBundle.message("choose.run.configuration.popup.ad.text.hold",
+                                     KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("SHIFT")),
+                                     alternateExecutor.getActionName());
     }
 
     if (!properties.isTrueValue("run.configuration.edit.ad")) {
-      return String.format("Press %s to Edit", KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("F4")));
+      return ExecutionBundle.message("choose.run.configuration.popup.ad.text.edit",
+                                     KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("F4")));
     }
 
     if (!properties.isTrueValue("run.configuration.delete.ad")) {
-      return String.format("Press %s to Delete configuration", KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("DELETE")));
+      return ExecutionBundle.message("choose.run.configuration.popup.ad.text.delete",
+                                     KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("DELETE")));
     }
 
     return null;
@@ -296,7 +302,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       myValue = value;
     }
 
-    public T getValue() {
+    public @NlsActions.ActionText T getValue() {
       return myValue;
     }
 
@@ -406,7 +412,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     private ConfigurationListPopupStep(@NotNull final ChooseRunConfigurationPopup action,
                                        @NotNull final Project project,
                                        @NotNull final ExecutorProvider executorProvider,
-                                       @NotNull final String title) {
+                                       @NotNull @Nls final String title) {
       super(title, createSettingsList(project, executorProvider, true));
       myProject = project;
       myAction = action;
@@ -503,6 +509,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     @NotNull
     @Override
     public String getTextFor(ItemWrapper value) {
+      //noinspection DialogTitleCapitalization
       return value.getText();
     }
 
@@ -530,7 +537,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       return mySettings;
     }
 
-    public String getName() {
+    public @NlsContexts.ListItem String getName() {
       return Executor.shortenNameIfNeeded(mySettings.getName());
     }
 
@@ -648,14 +655,14 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
   }
 
   private abstract static class ActionWrapper extends Wrapper {
-    private final String myName;
+    private final @Nls String myName;
     private final Icon myIcon;
 
-    private ActionWrapper(String name, Icon icon) {
+    private ActionWrapper(@Nls String name, Icon icon) {
       this(name, icon, false);
     }
 
-    private ActionWrapper(String name, Icon icon, boolean addSeparatorAbove) {
+    private ActionWrapper(@Nls String name, Icon icon, boolean addSeparatorAbove) {
       super(addSeparatorAbove);
       myName = name;
       myIcon = icon;
@@ -879,9 +886,8 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return AllIcons.Nodes.Folder;
     }
 
@@ -918,7 +924,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     private final ChooseRunConfigurationPopup myPopup;
     private final ExecutorProvider myExecutorProvider;
 
-    private FolderStep(Project project, ExecutorProvider executorProvider, String folderName, List<ConfigurationActionsStep> children,
+    private FolderStep(Project project, ExecutorProvider executorProvider, @NlsSafe String folderName, List<ConfigurationActionsStep> children,
                        ChooseRunConfigurationPopup popup) {
       super(folderName, children, new ArrayList<>());
       myProject = project;

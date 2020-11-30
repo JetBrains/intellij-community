@@ -1,16 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.jediterm.terminal.ui.TerminalPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,15 +15,15 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 
 /**
- * Moves focus to editor on Escape key pressed, similarly to {@link com.intellij.openapi.wm.impl.InternalDecorator#init}.
+ * Moves focus to editor on Escape key pressed, similarly to {@link com.intellij.openapi.wm.impl.InternalDecorator#processKeyBinding}.
  * Respects ESC+F/ESC+B and other combinations with ESC.
  */
 public class TerminalEscapeKeyListener {
-  private final TerminalPanel myTerminalPanel;
+  private final JBTerminalPanel myTerminalPanel;
   private final AnAction myTerminalSwitchFocusToEditorAction;
   private boolean myShortcutPressed = false;
 
-  public TerminalEscapeKeyListener(@NotNull TerminalPanel terminalPanel) {
+  public TerminalEscapeKeyListener(@NotNull JBTerminalPanel terminalPanel) {
     myTerminalPanel = terminalPanel;
     myTerminalSwitchFocusToEditorAction = ActionManager.getInstance().getAction("Terminal.SwitchFocusToEditor");
   }
@@ -58,17 +55,26 @@ public class TerminalEscapeKeyListener {
   }
 
   private void switchFocusToEditorIfSuitable() {
-    if (!myTerminalPanel.getTerminalTextBuffer().isUsingAlternateBuffer()) {
-      DataContext dataContext = DataManager.getInstance().getDataContext(myTerminalPanel);
-      Project project = dataContext.getData(CommonDataKeys.PROJECT);
+    if (shouldSwitchFocusToEditor()) {
+      Project project = myTerminalPanel.getContextProject();
       if (project != null && !project.isDisposed()) {
-        if (JBTerminalWidget.isInTerminalToolWindow(dataContext) &&
-            !Registry.is("terminal.escape.moves.focus.to.editor")) {
-          return; // For example, vi key bindings configured in terminal
-        }
-        // Repeat logic of InternalDecorator#init from 8cf12b35fe3e44a32622f52a151ed2bf8880faba
+        // Repeat logic from com.intellij.openapi.wm.impl.InternalDecorator#processKeyBinding
         ToolWindowManager.getInstance(project).activateEditorComponent();
       }
     }
+  }
+
+  private boolean shouldSwitchFocusToEditor() {
+    if (myTerminalPanel.getTerminalTextBuffer().isUsingAlternateBuffer()) {
+      return false;
+    }
+    ToolWindow toolWindow = myTerminalPanel.getContextToolWindow();
+    if (toolWindow == null) {
+      return false;
+    }
+    if (JBTerminalWidget.isTerminalToolWindow(toolWindow) && !Registry.is("terminal.escape.moves.focus.to.editor")) {
+      return false; // For example, vi key bindings configured in terminal
+    }
+    return true;
   }
 }

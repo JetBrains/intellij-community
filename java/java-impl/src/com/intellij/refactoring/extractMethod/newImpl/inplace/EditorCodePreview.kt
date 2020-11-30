@@ -8,16 +8,52 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
 
-class EditorCodePreview(val editor: Editor): Disposable {
+class EditorCodePreview private constructor(val editor: Editor): Disposable {
 
-  val tracker = LocationTracker(editor.component)
+  companion object {
 
-  var popups: List<CodeFragmentPopup> = emptyList()
+    private val EDITOR_PREVIEW_KEY = Key<EditorCodePreview>("EditorCodePreview")
+
+    @JvmStatic
+    fun create(editor: Editor): EditorCodePreview {
+      require(getActivePreview(editor) == null)
+      val codePreview = EditorCodePreview(editor)
+      editor.putUserData(EDITOR_PREVIEW_KEY, codePreview)
+      return codePreview
+    }
+
+    fun getActivePreview(editor: Editor): EditorCodePreview? {
+      return editor.getUserData(EDITOR_PREVIEW_KEY)
+    }
+  }
+
+  private val tracker = LocationTracker(editor.component)
+
+  private var popups: List<CodeFragmentPopup> = emptyList()
+
+  private val documentListener = object : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      popups.forEach(CodeFragmentPopup::updateCodePreview)
+      updatePopupPositions()
+    }
+  }
+
+  var editorVisibleArea: Rectangle = editor.scrollingModel.visibleArea
+  private set
+
+  init {
+    tracker.subscribe { updatePopupPositions() }
+    Disposer.register(this, tracker)
+    Disposer.register(this, Disposable { editor.putUserData(EDITOR_PREVIEW_KEY, null) })
+    editor.scrollingModel.addVisibleAreaListener(VisibleAreaListener { updatePopupPositions() }, this)
+    editor.document.addDocumentListener(documentListener, this)
+  }
 
   fun addPreview(lines: IntRange, onClick: () -> Unit){
     val newPopup = CodeFragmentPopup(editor, lines, onClick)
@@ -26,24 +62,10 @@ class EditorCodePreview(val editor: Editor): Disposable {
     updatePopupPositions()
   }
 
-  val documentListener = object : DocumentListener {
-    override fun documentChanged(event: DocumentEvent) {
-      popups.forEach(CodeFragmentPopup::updateCodePreview)
-      updatePopupPositions()
-    }
-  }
-
   override fun dispose() {
   }
 
-  init {
-    tracker.subscribe { updatePopupPositions() }
-    Disposer.register(this, tracker)
-    editor.scrollingModel.addVisibleAreaListener(VisibleAreaListener { updatePopupPositions() }, this)
-    editor.document.addDocumentListener(documentListener, this)
-  }
-
-  fun updatePopupPositions() {
+  private fun updatePopupPositions() {
     var visibleArea = editor.scrollingModel.visibleArea
     var positions = popups.reversed()
       .map { popup ->
@@ -53,7 +75,12 @@ class EditorCodePreview(val editor: Editor): Disposable {
         position
       }
       .reversed()
-    if (visibleArea.height < 0) positions = popups.map { RelativePosition.Inside }
+    if (visibleArea.height < 0) {
+      positions = popups.map { RelativePosition.Inside }
+      editorVisibleArea = editor.scrollingModel.visibleArea
+    } else {
+      editorVisibleArea = visibleArea
+    }
     val popupsAndPositions = popups.zip(positions)
 
     popupsAndPositions
@@ -108,14 +135,9 @@ class EditorCodePreview(val editor: Editor): Disposable {
   private fun findLinesArea(editor: Editor, lines: IntRange): Rectangle {
     val visibleArea = editor.scrollingModel.visibleArea
     val y = editor.logicalPositionToXY(LogicalPosition(lines.first, 0)).y
-    val height = lines.length * editor.lineHeight
+    val lineNumber = lines.last - lines.first + 1
+    val height = lineNumber * editor.lineHeight
     return Rectangle(visibleArea.x, y, visibleArea.width, height)
-  }
-
-  fun findEditorLinesOf(rectangle: Rectangle): IntRange {
-    val start = editor.yToVisualLine(rectangle.y)
-    val end = editor.yToVisualLine(rectangle.y + rectangle.height)
-    return start..end
   }
 
 }

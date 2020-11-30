@@ -92,6 +92,12 @@ import org.junit.runners.Parameterized;
 @Ignore // Needs to be ignored so bazel doesn't try to run this class as a test and fail with "No tests found".
 @RunWith(Parameterized.class)
 public abstract class GradleFileModelTestCase extends HeavyPlatformTestCase {
+  public static final String FN_BUILD_GRADLE = "build.gradle";
+  public static final String FN_BUILD_GRADLE_KTS = "build.gradle.kts";
+  public static final String FN_SETTINGS_GRADLE = "settings.gradle";
+  public static final String FN_SETTINGS_GRADLE_KTS = "settings.gradle.kts";
+  public static final String FN_GRADLE_PROPERTIES = "gradle.properties";
+
   public static final ProjectSystemId GRADLE_SYSTEM_ID = new ProjectSystemId("GRADLE");
   protected static final String SUB_MODULE_NAME = "gradleModelTest";
   @NotNull private static final String GROOVY_LANGUAGE = "Groovy";

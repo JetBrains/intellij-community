@@ -29,6 +29,7 @@ public class ConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTest
   public void setUp() throws Exception {
     super.setUp();
     myFixture.addClass("package org.junit; public @interface Test{}");
+    myFixture.addClass("package junit.framework; public class TestCase{}");
     myFixture.addClass("package org.junit.runner; public @interface RunWith{ Class<?> value();}");
   }
 

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public final class FinishMarkAction extends BasicUndoableAction {
   private @NotNull final StartMarkAction myStartAction;
   private boolean myGlobal = false;
-  private String myCommandName;
+  private @NlsContexts.Command String myCommandName;
   private final DocumentReference myReference;
 
   private FinishMarkAction(DocumentReference reference, @NotNull StartMarkAction action) {
@@ -48,7 +48,7 @@ public final class FinishMarkAction extends BasicUndoableAction {
     myCommandName = commandName;
   }
 
-  public String getCommandName() {
+  public @NlsContexts.Command String getCommandName() {
     return myCommandName;
   }
 

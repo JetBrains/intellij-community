@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.actions.SpaceActionUtils
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogDataKeys
@@ -85,7 +85,7 @@ abstract class SpaceOpenInBrowserAction(@NlsActions.ActionText groupName: String
     internal fun getProjectAwareUrls(endpoint: (ProjectLocation) -> Location,
                                      context: DataContext): List<Pair<SpaceProjectInfo, String>>? {
       val project = context.getData(CommonDataKeys.PROJECT) ?: return null
-      val server = space.workspace.value?.client?.server?.removeSuffix("/") ?: return null
+      val server = SpaceWorkspaceComponent.getInstance().workspace.value?.client?.server?.removeSuffix("/") ?: return null
       val description = SpaceProjectContext.getInstance(project).context.value
 
       return description.reposInProject.keys.map {
@@ -129,7 +129,7 @@ class SpaceVcsOpenInBrowserActionGroup :
 
   override fun getData(dataContext: DataContext): List<OpenData>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
-    val server = space.workspace.value?.client?.server?.removeSuffix("/") ?: return null
+    val server = SpaceWorkspaceComponent.getInstance().workspace.value?.client?.server?.removeSuffix("/") ?: return null
 
     return getDataFromHistory(dataContext, project, server)
            ?: getDataFromLog(dataContext, project, server)

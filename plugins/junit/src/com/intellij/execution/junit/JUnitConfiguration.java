@@ -16,6 +16,11 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.target.LanguageRuntimeType;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -46,7 +51,9 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.lang.reflect.Field;
 import java.util.*;
 
-public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport implements InputRedirectAware {
+public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport
+  implements InputRedirectAware, TargetEnvironmentAwareRunProfile {
+
   public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
@@ -297,13 +304,15 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String getAlternativeJrePath() {
-    return ALTERNATIVE_JRE_PATH;
+    return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH) 
+                                        : null;
   }
 
   @Override
   public void setAlternativeJrePath(String path) {
-    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
-    ALTERNATIVE_JRE_PATH = path;
+    String collapsedPath = path != null ? new AlternativeJrePathConverter().toString(path) : null;
+    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, collapsedPath);
+    ALTERNATIVE_JRE_PATH = collapsedPath;
     ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
@@ -608,6 +617,28 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @Override
   public byte getTestFrameworkId() {
     return FRAMEWORK_ID;
+  }
+
+  @Override
+  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
+    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
+  }
+
+  @Nullable
+  @Override
+  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultTargetName() {
+    return getOptions().getRemoteTarget();
+  }
+
+  @Override
+  public void setDefaultTargetName(@Nullable String targetName) {
+    getOptions().setRemoteTarget(targetName);
   }
 
   public static class Data implements Cloneable {

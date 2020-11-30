@@ -366,15 +366,17 @@ public final class PsiLiteralUtil {
   }
 
   private static int parseEscapedBackSlash(@NotNull String str, int idx) {
-    int next = idx + 1;
-    if (next >= str.length() || str.charAt(next) != 'u') return -1;
-    while (str.charAt(next) == 'u') {
-      next++;
+    idx++;
+    int len = str.length();
+    if (idx >= len || str.charAt(idx) != 'u') return -1;
+    do {
+      idx++;
     }
-    if (next + 3 >= str.length()) return -1;
+    while (idx < len && str.charAt(idx) == 'u');
+    if (idx + 3 >= len) return -1;
     try {
-      int code = Integer.parseInt(str.substring(next, next + 4), 16);
-      if (code == '\\') return next + 4;
+      int code = Integer.parseInt(str.substring(idx, idx + 4), 16);
+      if (code == '\\') return idx + 4;
     }
     catch (NumberFormatException ignored) {
     }
@@ -538,9 +540,11 @@ public final class PsiLiteralUtil {
       return -1;
     }
     if (s.charAt(index - 4) != 'u') return -1;
-    index -= 5;
+    index -= 4;
     // 'u' can appear multiple times
-    while (index >= 0 && s.charAt(index) == 'u') index--;
+    do {
+      index--;
+    } while (index >= 0 && s.charAt(index) == 'u');
     if (index < 0 || s.charAt(index) != '\\') return -1;
     return index;
   }

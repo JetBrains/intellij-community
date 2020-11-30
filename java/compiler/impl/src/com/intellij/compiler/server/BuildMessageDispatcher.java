@@ -2,6 +2,7 @@
 package com.intellij.compiler.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -31,7 +32,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   }
 
   private final Map<UUID, SessionData> mySessionDescriptors = new ConcurrentHashMap<>(16, 0.75f, 1);
-  private final Set<UUID> myCanceledSessions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<UUID> myCanceledSessions = ContainerUtil.newConcurrentSet();
 
   public void registerBuildMessageHandler(@NotNull final RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {
     final BuilderMessageHandler wrappedHandler = new DelegatingMessageHandler() {

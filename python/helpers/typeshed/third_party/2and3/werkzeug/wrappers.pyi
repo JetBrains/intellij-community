@@ -110,7 +110,7 @@ _SelfT = TypeVar("_SelfT", bound=BaseResponse)
 class BaseResponse:
     charset: str
     default_status: int
-    default_mimetype: str
+    default_mimetype: Optional[str]
     implicit_sequence_conversion: bool
     autocorrect_location_header: bool
     automatically_set_content_length: bool

@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
-import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestPaths.failedTestVideoDirPath
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
@@ -341,10 +340,6 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
 
   fun findWelcomeFrame(timeout: org.fest.swing.timing.Timeout = Timeouts.minutes05): WelcomeFrameFixture {
     return WelcomeFrameFixture.find(robot(), timeout)
-  }
-
-  fun findNewProjectWizard(): NewProjectWizardFixture {
-    return NewProjectWizardFixture.find(robot())
   }
 
   fun findIdeFrame(projectName: String, projectPath: Path): IdeFrameFixture {

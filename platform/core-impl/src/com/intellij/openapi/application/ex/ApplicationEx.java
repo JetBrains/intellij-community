@@ -72,20 +72,6 @@ public interface ApplicationEx extends Application {
     setSaveAllowed(false);
   }
 
-  /**
-   * Executes {@code process} in a separate thread in the application thread pool (see {@link #executeOnPooledThread(Runnable)}).
-   * The process is run inside read action (see {@link #runReadAction(Runnable)})
-   * If run from EDT, it is guaranteed that no other read or write action is run before the process start running.
-   * If the process is running for too long, a progress window shown with {@code progressTitle} and a button with {@code cancelText}.
-   * @return true if process run successfully and was not canceled.
-   */
-  boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable Project project,
-                                                          @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                                          boolean canBeCanceled,
-                                                          @NlsContexts.Button String cancelText,
-                                                          JComponent parentComponent,
-                                                          @NotNull Runnable process);
-
   default void exit(@SuppressWarnings("unused") int flags) {
     exit();
   }
@@ -151,7 +137,7 @@ public interface ApplicationEx extends Application {
                                               boolean canBeCanceled,
                                               boolean shouldShowModalWindow,
                                               @Nullable Project project,
-                                              JComponent parentComponent,
+                                              @Nullable JComponent parentComponent,
                                               @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText);
 
   void assertIsDispatchThread(@Nullable JComponent component);
@@ -222,6 +208,10 @@ public interface ApplicationEx extends Application {
 
   @ApiStatus.Internal
   default boolean isExitInProgress() {
+    return false;
+  }
+
+  default boolean isLightEditMode() {
     return false;
   }
 }

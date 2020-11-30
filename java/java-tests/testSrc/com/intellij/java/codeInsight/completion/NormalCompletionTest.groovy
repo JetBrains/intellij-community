@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
@@ -16,7 +17,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
@@ -1505,6 +1505,7 @@ class XInternalError {}
     assert renderElement(items[0]).tailText == ' (java.lang)'
   }
 
+  @NeedsIndex.Full
   void testDuplicateInnerClass() {
     configure()
     def items = myFixture.lookupElements.findAll { it.lookupString == 'Inner' }
@@ -1572,7 +1573,7 @@ class XInternalError {}
   void testInnerChainedReturnType() { doTest() }
 
   private CommonCodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
+    return CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
   }
 
   void testCompatibleInterfacesCast() {

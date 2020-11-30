@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.cache.CacheManager
+import com.intellij.psi.impl.search.JavaFilesSearchScope
 import com.intellij.psi.impl.search.LowLevelSearchUtil
 import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.search.GlobalSearchScope
@@ -25,8 +26,10 @@ open class MemberUsageCollector {
       scope: GlobalSearchScope,
       usageExtractor: (PsiFile, Int) -> PsiElement?
     ): List<PsiElement>? {
-      val cacheManager = CacheManager.getInstance(containingFile.project)
-      val relatedFiles = cacheManager.getVirtualFilesWithWord(memberName, UsageSearchContext.IN_CODE, scope, true)
+      val project = containingFile.project
+      val cacheManager = CacheManager.getInstance(project)
+      val javaScope = scope.intersectWith(JavaFilesSearchScope(project))
+      val relatedFiles = cacheManager.getVirtualFilesWithWord(memberName, UsageSearchContext.IN_CODE, javaScope, true)
       val javaFiles = getJavaFiles(relatedFiles, containingFile) ?: return null
       val usages: MutableList<PsiElement> = mutableListOf()
       val searcher = StringSearcher(memberName, true, true, false)
@@ -52,7 +55,7 @@ open class MemberUsageCollector {
       val maxFilesSizeToProcess = Registry.intValue("ide.unused.symbol.calculation.maxFilesSizeToSearchUsagesIn", 524288)
       val filtered = mutableSetOf<VirtualFile>()
       for (relatedFile in relatedFiles) {
-        if (virtualFile == relatedFile || !containsJvmLanguage(relatedFile) || !fileIndexFacade.isInSource(relatedFile)) continue
+        if (virtualFile == relatedFile || !fileIndexFacade.isInSource(relatedFile)) continue
         nFiles += 1
         if (nFiles >= maxFilesToProcess) return null
         filesSize += relatedFile.length

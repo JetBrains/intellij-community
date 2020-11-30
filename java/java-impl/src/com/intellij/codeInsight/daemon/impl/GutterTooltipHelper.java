@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.registry.Registry;
@@ -43,10 +44,26 @@ public final class GutterTooltipHelper {
                                                              @NotNull String prefix,
                                                              boolean skipFirstMember,
                                                              @Nullable String actionId) {
+    return getTooltipText(elements, prefix, skipFirstMember, actionId, "press.to.navigate");
+  }
+
+  /**
+   * @param elements        a collection of elements to create a formatted tooltip text
+   * @param prefix          a text to insert before all elements
+   * @param skipFirstMember {@code true} to skip a method (or field) name in the link to element
+   * @param actionId        an action identifier to generate context help or {@code null} if not applicable
+   * @param pressMessageKey JavaBundle key to retrieve context help message with shortcut
+   */
+  @NotNull
+  public static <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
+                                                             @NotNull String prefix,
+                                                             boolean skipFirstMember,
+                                                             @Nullable String actionId, 
+                                                             @NotNull String pressMessageKey) {
     String firstDivider = getElementDivider(true, true, elements.size());
     String nextDivider = getElementDivider(false, true, elements.size());
     AtomicReference<String> reference = new AtomicReference<>(firstDivider); // optimization: calculate next divider only once
-    return getTooltipText(prefix, elements, e -> reference.getAndSet(nextDivider), e -> skipFirstMember, actionId);
+    return getTooltipText(prefix, elements, e -> reference.getAndSet(nextDivider), e -> skipFirstMember, actionId, pressMessageKey);
   }
 
   static String getElementDivider(boolean firstElement, boolean marginLeft, int elementsCount) {
@@ -68,7 +85,7 @@ public final class GutterTooltipHelper {
                                                              @NotNull Function<? super E, String> elementToPrefix,
                                                              @NotNull Predicate<? super E> skipFirstMemberOfElement,
                                                              @Nullable String actionId) {
-    return getTooltipText(null, elements, elementToPrefix, skipFirstMemberOfElement, actionId);
+    return getTooltipText(null, elements, elementToPrefix, skipFirstMemberOfElement, actionId, "press.to.navigate");
   }
 
   @NotNull
@@ -76,7 +93,8 @@ public final class GutterTooltipHelper {
                                                               @NotNull Collection<? extends E> elements,
                                                               @NotNull Function<? super E, String> elementToPrefix,
                                                               @NotNull Predicate<? super E> skipFirstMemberOfElement,
-                                                              @Nullable String actionId) {
+                                                              @Nullable String actionId, 
+                                                              @NotNull String pressMessageKey) {
     StringBuilder sb = new StringBuilder("<html><body><p>");
     if (prefix != null) sb.append(prefix);
     for (E element : elements) {
@@ -84,7 +102,7 @@ public final class GutterTooltipHelper {
       if (elementPrefix != null) sb.append(elementPrefix);
       appendElement(sb, element, skipFirstMemberOfElement.test(element));
     }
-    appendContextHelp(sb, actionId);
+    appendContextHelp(sb, actionId, pressMessageKey);
     sb.append("</p></body></html>");
     return sb.toString();
   }
@@ -136,7 +154,7 @@ public final class GutterTooltipHelper {
     sb.append("'><code>(").append(name).append(")</code></font>");
   }
 
-  private static void appendContextHelp(@NotNull StringBuilder sb, @Nullable String actionId) {
+  private static void appendContextHelp(@NotNull StringBuilder sb, @Nullable String actionId, String key) {
     if (actionId == null) return; // action id is not set
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action == null) return; // action is not exist
@@ -144,7 +162,7 @@ public final class GutterTooltipHelper {
     if (StringUtil.isEmpty(text)) return; // action have no shortcuts
     sb.append("</p><p style='margin-top:8px;'><font size='2' color='#");
     sb.append(toHex(CONTEXT_HELP_FOREGROUND));
-    sb.append("'>Press ").append(text).append(" to navigate</font>");
+    sb.append("'>").append(JavaBundle.message(key, text)).append("</font>");
   }
 
   private static boolean appendLink(@NotNull StringBuilder sb, @NotNull PsiElement element) {

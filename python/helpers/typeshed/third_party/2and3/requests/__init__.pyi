@@ -1,7 +1,5 @@
-# Stubs for requests (based on version 2.6.0, Python 3)
-
 import logging
-from typing import Any
+from typing import Any, Text
 
 from .api import (
     delete as delete,
@@ -16,6 +14,7 @@ from .api import (
 from .exceptions import (
     ConnectionError as ConnectionError,
     HTTPError as HTTPError,
+    ReadTimeout as ReadTimeout,
     RequestException as RequestException,
     Timeout as Timeout,
     TooManyRedirects as TooManyRedirects,
@@ -33,3 +32,5 @@ __version__: Any
 
 class NullHandler(logging.Handler):
     def emit(self, record): ...
+
+def check_compatibility(urllib3_version: Text, chardet_version: Text) -> None: ...

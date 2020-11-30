@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
 import java.io.File;
 import java.io.IOException;
 
-public class IdeaLicenseHelper {
+public final class IdeaLicenseHelper {
   private static final Logger LOG = Logger.getInstance(IdeaLicenseHelper.class);
 
   private static final @NonNls String IDEA_KEY_FILE_PATTERN = "idea\\d+\\.key";

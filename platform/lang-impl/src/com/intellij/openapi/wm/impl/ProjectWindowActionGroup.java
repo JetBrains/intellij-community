@@ -10,12 +10,15 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ModuleAttachProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -147,4 +150,19 @@ public final class ProjectWindowActionGroup extends DefaultActionGroup {
     }
     return result;
   }
+
+  @Override
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent event) {
+    AnAction[] children = super.getChildren(event);
+    Arrays.sort(children, SORT_BY_NAME);
+    return children;
+  }
+
+  private static @Nullable String getProjectName(AnAction action) {
+    return action instanceof ProjectWindowAction ? ((ProjectWindowAction)action).getProjectName() : null;
+  }
+
+  private static final Comparator<AnAction> SORT_BY_NAME = (action1, action2) -> {
+    return StringUtil.naturalCompare(getProjectName(action1), getProjectName(action2));
+  };
 }

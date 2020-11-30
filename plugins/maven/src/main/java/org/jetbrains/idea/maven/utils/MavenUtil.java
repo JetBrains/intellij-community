@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -101,7 +101,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
 
-public class MavenUtil {
+public final class MavenUtil {
   @ApiStatus.Experimental
   @NonNls public static final String MAVEN_NAME = "Maven";
   @NonNls public static final String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
@@ -470,7 +470,7 @@ public class MavenUtil {
       @Override
       public void run(@NotNull ProgressIndicator i) {
         try {
-          task.run(new MavenProgressIndicator(i, null));
+          task.run(new MavenProgressIndicator(project, i, null));
         }
         catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
@@ -509,7 +509,7 @@ public class MavenUtil {
                                                      ExecutorService executorService) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
-    final MavenProgressIndicator indicator = new MavenProgressIndicator(manager::getSyncConsole);
+    final MavenProgressIndicator indicator = new MavenProgressIndicator(project, manager::getSyncConsole);
 
     Runnable runnable = () -> {
       if (project.isDisposed()) return;

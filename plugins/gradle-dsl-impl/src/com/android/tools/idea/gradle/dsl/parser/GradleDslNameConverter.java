@@ -22,6 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface GradleDslNameConverter {
+
+  boolean isGroovy();
+
+  boolean isKotlin();
+
   /**
    * Converts Psi of an external language into a string suitable as input to GradleNameElement (with dotted notation indicating
    * hierarchy).  Implementors should perform syntactic analysis of the {@code element} as appropriate to the external language.

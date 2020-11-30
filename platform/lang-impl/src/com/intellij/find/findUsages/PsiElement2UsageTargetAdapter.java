@@ -36,6 +36,7 @@ import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -205,9 +206,8 @@ public class PsiElement2UsageTargetAdapter
     return UsageViewImpl.getShowUsagesWithSettingsShortcut();
   }
 
-  @NotNull
   @Override
-  public String getLongDescriptiveName() {
+  public @Nls @NotNull String getLongDescriptiveName() {
     SearchScope searchScope = myOptions.searchScope;
     String scopeString = searchScope.getDisplayName();
     PsiElement psiElement = getElement();
@@ -216,7 +216,7 @@ public class PsiElement2UsageTargetAdapter
            FindBundle.message("recent.find.usages.action.popup", StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
                               DescriptiveNameUtil.getDescriptiveName(psiElement),
                               scopeString
-    );
+           );
   }
 
   @Override

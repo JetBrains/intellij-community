@@ -39,6 +39,19 @@ public interface InlayModel {
   <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull T renderer);
 
   /**
+   * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer.
+   *
+   * @param relatesToPrecedingText whether element is associated with preceding or following text
+   *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   * @param priority if multiple elements are requested to be displayed for the same position, this parameter defines the relative
+   *    *                 positioning of such elements (larger priority value means the element will be rendered closer to the left)
+   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   *         is not supported by current editor instance.
+   */
+  @Nullable
+  <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset, boolean relatesToPrecedingText, int priority, @NotNull T renderer);
+
+  /**
    * Introduces a 'block' visual element at a given offset, its size and appearance is defined by the provided renderer. This element
    * will be displayed between lines of text.
    *

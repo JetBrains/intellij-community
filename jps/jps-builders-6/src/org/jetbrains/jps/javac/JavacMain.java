@@ -3,6 +3,7 @@ package org.jetbrains.jps.javac;
 
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -236,14 +237,14 @@ public final class JavacMain {
     catch(IllegalStateException e) {
       diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
     }
-    catch (CompilationCanceledException ignored) {
-      handleCancelException(diagnosticConsumer);
+    catch (CompilationCanceledException e) {
+      diagnosticConsumer.report(new JpsInfoDiagnostic(e.getMessage()));
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
       if (cause != null) {
         if (cause instanceof CompilationCanceledException) {
-          handleCancelException(diagnosticConsumer);
+          diagnosticConsumer.report(new JpsInfoDiagnostic(cause.getMessage()));
         }
         else {
           diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, buildCompilerErrorMessage(e)));
@@ -354,9 +355,12 @@ public final class JavacMain {
     return null;
   }
 
+  @Nls
   private static String buildCompilerErrorMessage(Throwable e) {
     return new Object() {
+      @Nls
       final StringBuilder buf = new StringBuilder();
+      @Nls
       String collectAllMessages(Throwable e, Set<Throwable> processed) {
         if (e != null && processed.add(e)) {
           final String msg = e.getMessage();
@@ -502,10 +506,6 @@ public final class JavacMain {
     return compilingTool instanceof JavacCompilerTool && (JAVA_RUNTIME_VERSION.startsWith("1.8.") || JAVA_RUNTIME_VERSION.startsWith("1.7.") || JAVA_RUNTIME_VERSION.startsWith("1.6."));
   }
 
-  private static void handleCancelException(DiagnosticOutputConsumer diagnosticConsumer) {
-    diagnosticConsumer.report(new JpsInfoDiagnostic("Compilation was canceled"));
-  }
-
   private static boolean isAnnotationProcessingEnabled(final Collection<String> options) {
     return !options.contains("-proc:none");
   }
@@ -649,7 +649,7 @@ public final class JavacMain {
     }
 
     @Override
-    public void reportMessage(final Diagnostic.Kind kind, String message) {
+    public void reportMessage(final Diagnostic.Kind kind, @Nls String message) {
       myOutConsumer.report(new PlainMessageDiagnostic(kind, message));
     }
 

@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -110,12 +109,9 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
       .filterMap(Language::getAssociatedFileType)
       .filterMap(FileType::getDefaultExtension)
       .first(), "txt");
-    String name = IdeBundle.message("template.unnamed");
     FileTemplate selected = getSelectedTemplate();
-    if (child) {
-      if (!(selected instanceof FileTemplateBase)) return;
-      name = ((FileTemplateBase)selected).getQualifiedName() + FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX + (selected.getChildren().length + 1);
-    }
+    if (!(selected instanceof FileTemplateBase)) return;
+    String name = child ? ((FileTemplateBase)selected).getChildName(selected.getChildren().length) : IdeBundle.message("template.unnamed");
     FileTemplate template = createTemplate(name, ext, "", child);
     if (child) {
       ((FileTemplateBase)selected).addChild(template);
@@ -164,12 +160,17 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     while (names.contains(name)) {
       name = MessageFormat.format(nameTemplate, ++i + " ", selected.getName());
     }
-    final FileTemplate newTemplate = new CustomFileTemplate(name, selected.getExtension());
+    final FileTemplateBase newTemplate = new CustomFileTemplate(name, selected.getExtension());
     newTemplate.setText(selected.getText());
     newTemplate.setFileName(selected.getFileName());
     newTemplate.setReformatCode(selected.isReformatCode());
     newTemplate.setLiveTemplateEnabled(selected.isLiveTemplateEnabled());
+    newTemplate.setChildren(ContainerUtil.map2Array(selected.getChildren(), FileTemplate.class, template -> template.clone()));
+    newTemplate.updateChildrenNames();
     myCurrentTab.addTemplate(newTemplate);
+    for (FileTemplate child : newTemplate.getChildren()) {
+      myCurrentTab.addTemplate(child);
+    }
     myModified = true;
     myCurrentTab.selectTemplate(newTemplate);
     fireListChanged();
@@ -303,7 +304,10 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(getSelectedTemplate() != null && !FileTemplateBase.isChild(getSelectedTemplate()) &&
+        e.getPresentation().setEnabled(getSelectedTemplate() != null &&
+                                       myCurrentTab != null &&
+                                       !isInternalTemplate(getSelectedTemplate().getName(), myCurrentTab.getTitle()) &&
+                                       !FileTemplateBase.isChild(getSelectedTemplate()) &&
                                        myCurrentTab == myTemplatesList);
       }
     };
@@ -337,9 +341,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
       }
     };
     group.add(addAction);
-    if (Registry.is("file.templates.multi")) {
-      group.add(addChildAction);
-    }
+    group.add(addChildAction);
     group.add(removeAction);
     group.add(cloneAction);
     group.add(resetAction);

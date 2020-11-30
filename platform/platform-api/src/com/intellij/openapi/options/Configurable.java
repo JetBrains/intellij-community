@@ -199,16 +199,15 @@ public interface Configurable extends UnnamedConfigurable {
    * Examples: postfix template configurable. If we have added a plugin with new postfix templates we have to re-create the configurable
    * (but only if the content of the configurable was loaded)
    *
-   * @apiNote if the configurable is not marked as dynamic=true it must not initialize EP-depend resources in the constructor. 
+   * @apiNote if the configurable is not marked as dynamic=true it must not initialize EP-depend resources in the constructor.
    * This interface also can be used with {@link ConfigurableProvider}.
-   * 
+   *
    */
   interface WithEpDependencies {
     /**
      * @return EPName-s that affect the configurable or configurable provider
      */
-    @NotNull
-    Collection<BaseExtensionPointName<?>> getDependencies();
+    @NotNull Collection<BaseExtensionPointName<?>> getDependencies();
   }
 
   default boolean isModified(@NotNull JTextField textField, @NotNull String value) {

@@ -65,7 +65,6 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
         FigureCanvasAgg.__init__(self, figure)
 
     def show(self):
-        self.figure.tight_layout()
         FigureCanvasAgg.draw(self)
 
         if matplotlib.__version__ < '1.2':

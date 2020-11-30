@@ -9,15 +9,18 @@ import javax.swing.JComponent
 
 class GradleDebugSettingsEditor : SettingsEditor<GradleRunConfiguration?>() {
   private val myScriptDebugCheckBox: JCheckBox = JCheckBox(GradleBundle.message("gradle.tasks.script.debugging"))
-  private val myDebugAllCheckBox: JCheckBox  = JCheckBox(GradleBundle.message("gradle.tasks.debugging.all"))
+  private val myReattachDebugProcess: JCheckBox = JCheckBox(GradleBundle.message("gradle.tasks.reattach.debug.process"))
+  private val myDebugAllCheckBox: JCheckBox = JCheckBox(GradleBundle.message("gradle.tasks.debugging.all"))
 
   override fun resetEditorFrom(s: GradleRunConfiguration) {
     myScriptDebugCheckBox.isSelected = s.isScriptDebugEnabled
+    myReattachDebugProcess.isSelected = s.isReattachDebugProcess
     myDebugAllCheckBox.isSelected = s.isDebugAllEnabled
   }
 
   override fun applyEditorTo(s: GradleRunConfiguration) {
     s.isScriptDebugEnabled = myScriptDebugCheckBox.isSelected
+    s.isReattachDebugProcess = myReattachDebugProcess.isSelected
     s.isDebugAllEnabled = myDebugAllCheckBox.isSelected
   }
 
@@ -27,7 +30,14 @@ class GradleDebugSettingsEditor : SettingsEditor<GradleRunConfiguration?>() {
         component(myScriptDebugCheckBox)
       }
       row {
-        component(myDebugAllCheckBox)
+        component(myReattachDebugProcess).apply {
+          comment(GradleBundle.message("gradle.tasks.reattach.debug.process.comment"))
+        }
+      }
+      row {
+        component(myDebugAllCheckBox).apply {
+          comment(GradleBundle.message("gradle.tasks.debugging.all.comment"))
+        }
       }
     }
 }

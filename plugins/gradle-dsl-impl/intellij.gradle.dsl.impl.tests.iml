@@ -14,14 +14,14 @@
     <orderEntry type="module" module-name="intellij.gradle.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.dsl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.dsl.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.dsl.kotlin.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="truth" level="project" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-plugin-android-compile-deps" level="project" />
+    <orderEntry type="module" module-name="intellij.android.kotlin-dependencies" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
-    <orderEntry type="module" module-name="android.sdktools.common" />
-    <orderEntry type="module" module-name="intellij.groovy.psi" />
+    <orderEntry type="module" module-name="intellij.groovy.psi" scope="TEST" />
   </component>
 </module>

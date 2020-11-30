@@ -16,7 +16,10 @@ import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 /**
@@ -239,7 +243,8 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               if (!realPath.equals(path.getText())) {
                 projectsWithLongPaths.add((ReopenProjectAction)value);
               }
-              if (!isPathValid((((ReopenProjectAction)value).getProjectPath()))) {
+              boolean isValid = !isPathValid((((ReopenProjectAction)value).getProjectPath()));
+              if (isValid) {
                 name.setForeground(UIUtil.getInactiveTextColor());
               }
               p.add(name, BorderLayout.NORTH);
@@ -248,23 +253,18 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
               String projectPath = ((ReopenProjectAction)value).getProjectPath();
               RecentProjectsManagerBase recentProjectsManage = RecentProjectsManagerBase.getInstanceEx();
-              Icon icon = recentProjectsManage.getProjectIcon(projectPath, StartupUiUtil.isUnderDarcula());
-              if (icon == null) {
-                if (StartupUiUtil.isUnderDarcula()) {
-                  //No dark icon for this project
-                  icon = recentProjectsManage.getProjectIcon(projectPath, false);
-                }
-              }
-              if (icon == null) {
-                icon = EmptyIcon.ICON_16;
-              }
-
+              Icon icon = recentProjectsManage.getProjectIcon(projectPath, StartupUiUtil.isUnderDarcula(), true);
               final JLabel projectIcon = new JLabel("", icon, SwingConstants.LEFT) {
                 @Override
                 protected void paintComponent(Graphics g) {
-                  getIcon().paintIcon(this, g, 0, 0);
+                  Icon icon = isEnabled() ? getIcon() : getDisabledIcon();
+                  icon.paintIcon(this, g, 0, 0);
                 }
               };
+              projectIcon.setDisabledIcon(IconUtil.desaturate(icon));
+              if (isValid) {
+                projectIcon.setEnabled(false);
+              }
               projectIcon.setBorder(JBUI.Borders.emptyRight(8));
               projectIcon.setVerticalAlignment(SwingConstants.CENTER);
               final NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
@@ -274,6 +274,20 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             }
             AccessibleContextUtil.setCombinedName(this, name, " - ", path);
             AccessibleContextUtil.setCombinedDescription(this, name, " - ", path);
+          }
+
+          private Icon getGray(Icon icon) {
+            final int w = icon.getIconWidth();
+            final int h = icon.getIconHeight();
+            GraphicsEnvironment ge =
+              GraphicsEnvironment.getLocalGraphicsEnvironment();
+            GraphicsDevice gd = ge.getDefaultScreenDevice();
+            GraphicsConfiguration gc = gd.getDefaultConfiguration();
+            BufferedImage image = gc.createCompatibleImage(w, h);
+            Graphics2D g2d = image.createGraphics();
+            icon.paintIcon(null, g2d, 0, 0);
+            Image gray = GrayFilter.createDisabledImage(image);
+            return new ImageIcon(gray);
           }
 
           @Override

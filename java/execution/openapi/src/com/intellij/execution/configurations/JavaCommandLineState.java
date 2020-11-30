@@ -3,15 +3,18 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +62,20 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
     targetProgressIndicator.addSystemLine(ExecutionBundle.message("progress.text.prepare.target.requirements"));
     myTargetEnvironmentRequest = request;
-    myCommandLine = createTargetedCommandLine(myTargetEnvironmentRequest, configuration);
+    Ref<TargetedCommandLineBuilder> commandLineRef = new Ref<>();
+    Ref<ExecutionException> exceptionRef = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        commandLineRef.set(createTargetedCommandLine(myTargetEnvironmentRequest, configuration));
+      }
+      catch (ExecutionException e) {
+        exceptionRef.set(e);
+      }
+    });
+    if(!exceptionRef.isNull()){
+      throw exceptionRef.get();
+    }
+    myCommandLine = commandLineRef.get();
   }
 
   @Override

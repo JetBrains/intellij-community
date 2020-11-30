@@ -327,4 +327,80 @@ class DiffBuilderTest {
     assertEquals(1, entitySourceIndex.index.size)
     assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
   }
+
+  @Test
+  fun `adding parent with child and shifting`() {
+    val parentAndChildProperty = "Bound"
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    target.addChildWithOptionalParentEntity(null, "Existing")
+
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = source.addParentEntity(parentAndChildProperty)
+    source.addChildWithOptionalParentEntity(parent, parentAndChildProperty)
+
+    target.addDiff(source)
+
+    val extractedParent = assertOneElement(target.entities(ParentEntity::class.java).toList())
+    val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
+    assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
+  }
+
+  @Test
+  fun `adding parent with child and shifting and later connecting`() {
+    val parentAndChildProperty = "Bound"
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    target.addChildWithOptionalParentEntity(null, "Existing")
+
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val child = source.addChildWithOptionalParentEntity(null, parentAndChildProperty)
+    val parent = source.addParentEntity(parentAndChildProperty)
+    source.modifyEntity(ModifiableParentEntity::class.java, parent) {
+      this.optionalChildren = this.optionalChildren + child
+    }
+
+    target.addDiff(source)
+
+    val extractedParent = assertOneElement(target.entities(ParentEntity::class.java).toList())
+    val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
+    assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
+  }
+
+  @Test
+  fun `adding parent with child and shifting and later child connecting`() {
+    val parentAndChildProperty = "Bound"
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    target.addChildWithOptionalParentEntity(null, "Existing")
+
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val child = source.addChildWithOptionalParentEntity(null, parentAndChildProperty)
+    val parent = source.addParentEntity(parentAndChildProperty)
+    source.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, child) {
+      this.optionalParent = parent
+    }
+
+    target.addDiff(source)
+
+    val extractedParent = assertOneElement(target.entities(ParentEntity::class.java).toList())
+    val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
+    assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
+  }
+
+  @Test
+  fun `removing non-existing entity while adding the new one`() {
+    val initial = WorkspaceEntityStorageBuilderImpl.create()
+    val toBeRemoved = initial.addSampleEntity("En1")
+
+    val source = WorkspaceEntityStorageBuilderImpl.from(initial)
+
+    initial.removeEntity(toBeRemoved)
+    val target = WorkspaceEntityStorageBuilderImpl.from(initial.toStorage())
+
+    // In the incorrect implementation remove event will remove added entity
+    source.addSampleEntity("En2")
+    source.removeEntity(toBeRemoved)
+
+    target.addDiff(source)
+
+    assertOneElement(target.entities(SampleEntity::class.java).toList())
+  }
 }

@@ -15,6 +15,7 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstallationInformation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageOperationTarget
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
+import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -48,8 +49,8 @@ object PackageOperationsConfirmationDialog {
 
     fun show(
         project: Project,
-        title: String,
-        actionTitle: String,
+        @Nls title: String,
+        @Nls actionTitle: String,
         onlyStable: Boolean,
         repositoryIds: List<String>,
         requests: List<PackageOperationTarget>

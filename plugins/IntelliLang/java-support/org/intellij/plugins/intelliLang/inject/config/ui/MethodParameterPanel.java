@@ -55,6 +55,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Enumeration;
 
 public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
@@ -88,6 +89,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       return document;
     }, "");
     myClassPanel.add(myClassField, BorderLayout.CENTER);
+    myParamsTable.setTableHeader(null);
     myParamsTable.getTree().setShowsRootHandles(true);
     myParamsTable.getTree().setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
@@ -202,11 +204,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private void refreshTreeStructure() {
     myRootNode.removeAllChildren();
     final ArrayList<PsiMethod> methods = new ArrayList<>(myData.keySet());
-    methods.sort((o1, o2) -> {
-      final int names = o1.getName().compareTo(o2.getName());
-      if (names != 0) return names;
-      return o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount();
-    });
+    methods.sort(Comparator.comparing(PsiMethod::getName).thenComparingInt(o -> o.getParameterList().getParametersCount()));
     for (PsiMethod method : methods) {
       final PsiParameter[] params = method.getParameterList().getParameters();
       final DefaultMutableTreeNode methodNode = new DefaultMutableTreeNode(method, true);

@@ -5,7 +5,6 @@ import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
@@ -49,16 +48,18 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
                              @NotNull Map<? extends PsiElement, String> allRenames,
                              @NotNull List<UsageInfo> result) {
     allRenames.forEach((key, value) -> {
-      for (IProperty property : ((PropertiesFile)key.getContainingFile()).getProperties()) {
-        if (Comparing.strEqual(value, property.getKey())) {
-          result.add(new UnresolvableCollisionUsageInfo(property.getPsiElement(), key) {
-            @Override
-            public String getDescription() {
-              return PropertiesBundle.message("rename.hides.existing.property.conflict", value);
-            }
-          });
+      final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(key.getContainingFile());
+      if (propertiesFile == null) return;
+
+      final IProperty property = propertiesFile.findPropertyByKey(value);
+      if (property == null) return;
+
+      result.add(new UnresolvableCollisionUsageInfo(property.getPsiElement(), key) {
+        @Override
+        public String getDescription() {
+          return PropertiesBundle.message("rename.hides.existing.property.conflict", value);
         }
-      }
+      });
     });
   }
 

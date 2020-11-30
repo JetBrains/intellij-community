@@ -110,7 +110,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
       int indent = 0;
       if (myInList) {
         final TreePath path = getTreeModelWrapper().getPathForRow(index);
-        indent = path == null ? 0 : (path.getPathCount() - 1 - (myShowRootNode ? 0 : 1)) * INDENT;
+        indent = (path.getPathCount() - 1 - (myShowRootNode ? 0 : 1)) * INDENT;
       }
 
       setIpad(new Insets(1, !myInList || myEditable ? 5 : 5 + indent, 1, 5));

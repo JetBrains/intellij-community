@@ -260,7 +260,8 @@ class InspectionPopupManager {
       boolean last = i == getAnalyzerStatus().getExpandedStatus().size() - 1;
       StatusItem item = getAnalyzerStatus().getExpandedStatus().get(i);
 
-      text.append(item.getText()).append(" ").append(item.getType());
+      String detailsText = item.getDetailsText();
+      text.append(detailsText != null ? detailsText : item.getText());
       if (!last) {
         text.append(", ");
       }
@@ -326,7 +327,7 @@ class InspectionPopupManager {
                                 FeatureUsageData data = new FeatureUsageData().
                                   addProject(myEditor.getProject()).
                                   addLanguage(level.getLangID()).
-                                  addData("level", inspectionsLevel.toString());
+                                  addData("level", inspectionsLevel.name());
 
                                 FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
                               },

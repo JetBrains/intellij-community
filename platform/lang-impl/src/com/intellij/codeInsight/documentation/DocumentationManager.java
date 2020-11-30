@@ -963,6 +963,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return new MyCollector(myProject, element, originalElement, null, onHover, false).getDocumentation();
   }
 
+  @NotNull
+  public Pair<@NlsSafe String, @Nullable DocumentationProvider> getDocumentationAndProvider(@NotNull PsiElement element,
+                                                                                            @Nullable PsiElement originalElement,
+                                                                                            boolean onHover) {
+    MyCollector collector = new MyCollector(myProject, element, originalElement, null, onHover, false);
+    return Pair.create(collector.getDocumentation(), collector.provider);
+  }
+
   @Nullable
   public JBPopup getDocInfoHint() {
     if (myDocInfoHintRef == null) return null;
@@ -1621,9 +1629,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @NotNull
   private static String getVcsStatus(Project project, VirtualFile file) {
     FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
-    return status != FileStatus.NOT_CHANGED ?
-           "<p><span class='grayed'>VCS Status:</span> <span color='" + ColorUtil.toHex(status.getColor()) + "'>" + status.getText() + "</span>" :
-           "";
+    Color color = status.getColor();
+    String colorAttr = color == null ? "" : "color='" + ColorUtil.toHex(color) + "'";
+    if (status == FileStatus.NOT_CHANGED || status == FileStatus.SUPPRESSED) return "";
+    return "<p><span class='grayed'>VCS Status:</span> <span" + colorAttr + ">" + status.getText() + "</span>";
   }
 
   private Optional<QuickSearchComponent> findQuickSearchComponent() {

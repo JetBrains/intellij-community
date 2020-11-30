@@ -7,7 +7,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -269,7 +268,14 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   private ComponentManager componentManager;
   private Project myProject;
 
-  public ConfigurableEP() {
+  @NonInjectable
+  public ConfigurableEP(@NotNull PluginDescriptor pluginDescriptor) {
+    this(ApplicationManager.getApplication());
+
+    setPluginDescriptor(pluginDescriptor);
+  }
+
+  protected ConfigurableEP() {
     this(ApplicationManager.getApplication());
   }
 
@@ -309,7 +315,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   @Nullable
   public final ConfigurableProvider instantiateConfigurableProvider() {
     return providerClass != null
-           ? componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(providerClass, pluginDescriptor)
+           ? componentManager.instantiateClass(providerClass, pluginDescriptor)
            : null;
   }
 
@@ -319,7 +325,12 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       return Class.forName(className, true, classLoader);
     }
     catch (Throwable t) {
-      LOG.error(new ExtensionInstantiationException(t, pluginDescriptor));
+      if (pluginDescriptor == null) {
+        LOG.error(t);
+      }
+      else {
+        LOG.error(new PluginException(t, pluginDescriptor.getPluginId()));
+      }
       return null;
     }
   }
@@ -341,7 +352,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       return null;
     }
     try {
-      return componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(treeRendererClass, pluginDescriptor);
+      return componentManager.instantiateClass(treeRendererClass, pluginDescriptor);
     }
     catch (ProcessCanceledException exception) {
       throw exception;
@@ -422,7 +433,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     @Override
     protected Object createElement() {
       try {
-        return componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(className, pluginDescriptor);
+        return componentManager.instantiateClass(className, pluginDescriptor);
       }
       catch (ProcessCanceledException exception) {
         throw exception;

@@ -1,5 +1,3 @@
-# Stubs for email.header (Python 3.4)
-
 from email.charset import Charset
 from typing import Any, List, Optional, Tuple, Union
 

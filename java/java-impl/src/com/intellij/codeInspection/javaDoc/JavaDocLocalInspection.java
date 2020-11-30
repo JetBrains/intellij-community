@@ -90,6 +90,10 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     return new AddUnknownTagToCustoms(this, tag);
   }
 
+  private static LocalQuickFix createRemoveTagWithoutDescriptionFix(@NotNull String tag) {
+    return new RemoveTagWithoutDescriptionFix(tag);
+  }
+
   public void setPackageOption(String modifier, String tags) {
     PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = modifier;
     PACKAGE_OPTIONS.REQUIRED_TAGS = tags;
@@ -793,6 +797,34 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     }
   }
 
+  private static class RemoveTagWithoutDescriptionFix implements LocalQuickFix {
+    private final String myTagName;
+
+    RemoveTagWithoutDescriptionFix(String tagName) {
+      myTagName = tagName;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return JavaBundle.message("quickfix.text.remove.javadoc.0", myTagName);
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return JavaBundle.message("quickfix.family.remove.javadoc.tag");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiDocTag tag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
+      if (tag != null) {
+        tag.delete();
+      }
+    }
+  }
+
   private final class ProblemHolderImpl implements JavadocHighlightUtil.ProblemHolder {
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
@@ -843,6 +875,11 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     @Override
     public LocalQuickFix registerTagFix(@NotNull String tag) {
       return createRegisterTagFix(tag);
+    }
+
+    @Override
+    public LocalQuickFix removeTagWithoutDescriptionFix(@NotNull String tag) {
+      return createRemoveTagWithoutDescriptionFix(tag);
     }
   }
 }

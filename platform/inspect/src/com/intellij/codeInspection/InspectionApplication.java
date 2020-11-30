@@ -7,6 +7,8 @@ import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.targets.QodanaConfig;
+import com.intellij.codeInspection.targets.QodanaProfile;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.diagnostic.ThreadDumper;
@@ -46,8 +48,12 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -69,7 +75,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.WritersKt.writeProjectDescription;
-import static com.intellij.codeInspection.targets.TargetsKt.runAnalysisByTargets;
+import static com.intellij.codeInspection.targets.QodanaKt.runAnalysisByQodana;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class InspectionApplication implements CommandLineInspectionProgressReporter {
@@ -80,12 +86,14 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   public String myOutPath;
   String mySourceDirectory;
   public String myStubProfile;
-  String myProfileName;
-  String myProfilePath;
+  public String myProfileName;
+  public String myProfilePath;
   public boolean myRunWithEditorSettings;
   public boolean myRunGlobalToolsOnly;
   boolean myAnalyzeChanges;
   boolean myPathProfiling;
+  boolean myQodanaRun;
+  public QodanaConfig myQodanaConfig;
   private int myVerboseLevel;
   private final Map<String, List<Range>> diffMap = new ConcurrentHashMap<>();
   private final MultiMap<Pair<String, Integer>, String> originalWarnings = MultiMap.createConcurrent();
@@ -239,34 +247,67 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     reportMessage(1, InspectionsBundle.message("inspection.done"));
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
+    myQodanaConfig = loadQodanaConfig(projectPath);
     myInspectionProfile = loadInspectionProfile(project);
+
     if (myInspectionProfile == null) return;
+    myQodanaConfig.updateToolsScopes(myInspectionProfile, project);
+
+    AnalysisScope scope = getAnalysisScope(project);
+    if (scope == null) return;
+    LOG.info("Used scope: " + scope.toString());
+    if (myQodanaRun) {
+      runAnalysisByQodana(this, projectPath, project, myInspectionProfile, scope);
+    } else {
+      runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
+    }
+
+  }
+
+  private QodanaConfig loadQodanaConfig(Path projectPath) {
+    if (myQodanaRun) {
+      QodanaConfig config = QodanaConfig.Companion.load(projectPath, this);
+      config.copyToLog(projectPath);
+      QodanaProfile profile = config.getProfile();
+      String name = profile.getName();
+      if (!name.isEmpty()) {
+        myProfileName = name;
+        return config;
+      }
+
+      String path = profile.getPath();
+      if (!path.isEmpty()) myProfilePath = path;
+      return config;
+    } else {
+      return QodanaConfig.EMPTY;
+    }
+  }
+
+  @Nullable
+  private AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+    SearchScope scope;
 
     if (myAnalyzeChanges) {
       List<VirtualFile> files = getChangedFiles(project);
-      runAnalysisOnScope(projectPath,
-                         parentDisposable, project, myInspectionProfile,
-                         new AnalysisScope(project, files));
+      scope = GlobalSearchScope.filesWithoutLibrariesScope(project, files);
     }
     else {
-      final AnalysisScope scope;
       if (myScopePattern != null) {
         try {
           PackageSet packageSet = PackageSetFactory.getInstance().compile(myScopePattern);
           NamedScope namedScope = new NamedScope("commandLineScope", AllIcons.Ide.LocalScope, packageSet);
-          scope = new AnalysisScope(GlobalSearchScopesCore.filterScope(project, namedScope), project);
+          scope = GlobalSearchScopesCore.filterScope(project, namedScope);
         }
         catch (ParsingException e) {
           LOG.error("Error of scope parsing", e);
           gracefulExit();
-          return;
+          return null;
         }
       }
       else if (mySourceDirectory == null) {
         final String scopeName = System.getProperty("idea.analyze.scope");
         final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
-        scope = namedScope != null ? new AnalysisScope(GlobalSearchScopesCore.filterScope(project, namedScope), project)
-                                   : new AnalysisScope(project);
+        scope = namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
       }
       else {
         mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
@@ -276,19 +317,16 @@ public final class InspectionApplication implements CommandLineInspectionProgres
           reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
           printHelp();
         }
-        PsiDirectory psiDirectory = ReadAction.compute(() -> {
-          assert vfsDir != null;
-          return PsiManager.getInstance(project).findDirectory(vfsDir);
-        });
-        scope = new AnalysisScope(Objects.requireNonNull(psiDirectory));
-      }
-      LOG.info("Used scope: " + scope.toString());
-      if (myTargets != null) {
-        runAnalysisByTargets(this, projectPath, project, myInspectionProfile, scope);
-      } else {
-        runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
+        scope = GlobalSearchScopesCore.directoriesScope(project, true, Objects.requireNonNull(vfsDir));
       }
     }
+    if (myQodanaConfig != null) {
+      SearchScope qodanaScope = myQodanaConfig.getGlobalScope(project);
+      if (qodanaScope != null) {
+        scope = qodanaScope.intersectWith(scope);
+      }
+    }
+    return new AnalysisScope(scope, project);
   }
 
   private void addRootChangesListener(Disposable parentDisposable, InspectionsReportConverter reportConverter) {
@@ -303,6 +341,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
   private void subscribeToRootChanges(Project project, InspectionsReportConverter reportConverter) {
     Path rootLogDir = Paths.get(myOutPath).resolve("log/projectStructureChanges");
+    //noinspection ResultOfMethodCallIgnored
     rootLogDir.toFile().mkdirs();
     AtomicInteger counter = new AtomicInteger(0);
     reportConverter.projectData(project, rootLogDir.resolve("state0"));
@@ -721,7 +760,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     });
   }
 
-  private @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
+  public @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
     InspectionProfileImpl inspectionProfile = null;
 
     //fetch profile by name from project file (project profiles can be disabled)
@@ -760,7 +799,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     return inspectionProfile;
   }
 
-  private @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
+  public  @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
     InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
     if (inspectionProfile != null) {
       reportMessage(1, "Loaded profile '" + inspectionProfile.getName() + "' from file '" + profilePath + "'");
@@ -768,7 +807,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     return inspectionProfile;
   }
 
-  private @Nullable InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
+  public @Nullable InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
     if (inspectionProfile != null) {

@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
@@ -50,7 +49,7 @@ public final class TemporaryCacheServerClient implements JpsServerClient {
 
   private TemporaryCacheServerClient() {
     byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9kMWxjNWs5bGVyZzZrbS5jbG91ZGZyb250Lm5ldA==");
-    stringThree = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
+    stringThree = new String(decodedBytes, StandardCharsets.UTF_8);
   }
 
   @NotNull

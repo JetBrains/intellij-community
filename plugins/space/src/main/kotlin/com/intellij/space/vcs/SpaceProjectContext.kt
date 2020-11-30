@@ -11,7 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import git4idea.GitUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -26,7 +26,7 @@ class SpaceProjectContext(project: Project) : Disposable {
 
   private val remoteUrls: MutableProperty<Set<GitRemoteUrlCoordinates>> = Property.createMutable(findRemoteUrls(project))
 
-  val context: Property<Context> = lifetime.mapInit(space.workspace, remoteUrls, EMPTY) { ws, urls ->
+  val context: Property<Context> = lifetime.mapInit(SpaceWorkspaceComponent.getInstance().workspace, remoteUrls, EMPTY) { ws, urls ->
     ws ?: return@mapInit EMPTY
     ws.client.connectionStatus.filter { it is ConnectionStatus.Connected }.awaitFirst(ws.lifetime)
     reloadProjectKeys(ws, urls)

@@ -2,6 +2,7 @@
 package com.intellij.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class CodeStyleFacade {
   public static CodeStyleFacade getInstance() {
-    return ServiceManager.getService(CodeStyleFacade.class);
+    return ApplicationManager.getApplication().getService(CodeStyleFacade.class);
   }
 
   public static CodeStyleFacade getInstance(@Nullable Project project) {
@@ -76,7 +77,6 @@ public abstract class CodeStyleFacade {
    *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
    * @return non-negative spacing between end- and start-line tokens after the join.
    */
-  @ApiStatus.Experimental
   public abstract int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit);
 
   /**

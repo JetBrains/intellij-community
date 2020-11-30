@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -79,7 +79,7 @@ public class GradleInstallationManager {
   }
 
   public static GradleInstallationManager getInstance() {
-    return ServiceManager.getService(GradleInstallationManager.class);
+    return ApplicationManager.getApplication().getService(GradleInstallationManager.class);
   }
 
   @Nullable private Ref<File> myCachedGradleHomeFromPath;
@@ -630,7 +630,7 @@ public class GradleInstallationManager {
     }
     else if (distributionType == DistributionType.DEFAULT_WRAPPED) {
       WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(settings.getExternalProjectPath());
-      GradleInstallationManager installationManager = ServiceManager.getService(GradleInstallationManager.class);
+      GradleInstallationManager installationManager = ApplicationManager.getApplication().getService(GradleInstallationManager.class);
       File gradleHome = installationManager.getWrappedGradleHome(settings.getExternalProjectPath(), wrapperConfiguration);
       if (gradleHome != null) {
         String gradleVersion = getGradleVersion(gradleHome.getPath());

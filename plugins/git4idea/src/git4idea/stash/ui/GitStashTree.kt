@@ -38,6 +38,7 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
 
   init {
     isKeepTreeState = true
+    isScrollToSelection = false
     setEmptyText(GitBundle.message("stash.empty.text"))
 
     doubleClickHandler = Processor { e ->
@@ -99,10 +100,10 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
             modelBuilder.insertChanges(stashData.changeList.changes, stashNode)
           }
           is GitStashCache.StashData.Error -> {
-            modelBuilder.insertSubtreeRoot(ChangesBrowserNode.createObject(stashData.error.localizedMessage), stashNode)
+            modelBuilder.insertSubtreeRoot(ChangesBrowserStringNode(stashData.error.localizedMessage), stashNode)
           }
           null -> {
-            modelBuilder.insertSubtreeRoot(ChangesBrowserNode.createObject(IdeBundle.message("treenode.loading")), stashNode)
+            modelBuilder.insertSubtreeRoot(ChangesBrowserStringNode(IdeBundle.message("treenode.loading")), stashNode)
           }
         }
       }

@@ -281,7 +281,7 @@ public abstract class LRUPopupBuilder<T> {
     final Map<VirtualFile, Language> oldMapping = new HashMap<>();
     for (VirtualFile file : sortedFiles) {
       oldMapping.put(file, mappings.getMapping(file));
-      if (ScratchUtil.hasMatchingExtension(project, file)) {
+      if (ScratchImplUtil.hasMatchingExtension(project, file)) {
         matchedExtensions.add(file);
       }
     }
@@ -306,7 +306,7 @@ public abstract class LRUPopupBuilder<T> {
 
     for (VirtualFile file : matchedExtensions) {
       try {
-        ScratchUtil.updateFileExtension(project, file);
+        ScratchImplUtil.updateFileExtension(project, file);
       }
       catch (IOException ignored) {
       }

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiReplacementUtil {
+public final class PsiReplacementUtil {
 
   /**
    * Consider to use {@link #replaceExpression(PsiExpression, String, CommentTracker)} to preserve comments

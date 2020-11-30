@@ -113,7 +113,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @NotNull
   private static ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected, @NotNull Runnable onSdkSelected) {
-    final ComboBox<Object> result = new ComboBox<Object>() {
+    final ComboBox<Object> result = new ComboBox<>() {
       @Override
       public void setSelectedItem(Object item) {
         if (getShowAll().equals(item)) {
@@ -331,7 +331,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     items.add(PySdkListCellRenderer.SEPARATOR);
     items.add(getShowAll());
 
-    mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
+    mySdkCombo.setRenderer(new PySdkListCellRenderer());
     final Sdk selection = selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName());
     mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
     // The call of `setSelectedItem` is required to notify `PyPathMappingsUiProvider` about initial setting of `Sdk` via `setModel` above

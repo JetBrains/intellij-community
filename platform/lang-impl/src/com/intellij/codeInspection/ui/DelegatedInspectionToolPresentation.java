@@ -28,6 +28,6 @@ public class DelegatedInspectionToolPresentation extends DefaultInspectionToolPr
     if (refElement == null || descriptors.length == 0) {
       return;
     }
-    exportResults(descriptors, refElement, (element) -> myDelegate.consume(element));
+    exportResults(descriptors, refElement, (element) -> myDelegate.consume(element, myToolWrapper));
   }
 }

@@ -78,7 +78,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
-  private var partialChangeListsEnabled : Boolean = false
+  private var partialChangeListsEnabled: Boolean = false
   private val documentsInDefaultChangeList = HashSet<Document>()
   private var clmFreezeCounter: Int = 0
 
@@ -132,11 +132,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       MyEditorFactoryListener().install(this)
       onEverythingChanged()
 
-      val states = project.service<PartialLineStatusTrackerManagerState>().getStatesAndClear()
-      if (states.isNotEmpty()) {
-        ChangeListManager.getInstance(project).invokeAfterUpdate({ restoreTrackersForPartiallyChangedFiles(states) },
-                                                                 InvokeAfterUpdateMode.SILENT, null, null)
-      }
+      PartialLineStatusTrackerManagerState.restoreState(project)
     }
   }
 
@@ -251,7 +247,11 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         val isLoading = loader.hasRequestFor(document)
         if (isLoading) {
           log("checkIfTrackerCanBeReleased - isLoading", data.tracker.virtualFile)
-          return
+          if (data.tracker.hasPendingPartialState() ||
+              fileStatesAwaitingRefresh.containsKey(data.tracker.virtualFile)) {
+            log("checkIfTrackerCanBeReleased - has pending state", data.tracker.virtualFile)
+            return
+          }
         }
       }
 
@@ -725,7 +725,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       if (provider != ChangelistsLocalStatusTrackerProvider) return
 
       val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
-      if (changeList != null && !changeList.isDefault) {
+      val inAnotherChangelist = changeList != null && !ActiveChangeListTracker.getInstance(project).isActiveChangeList(changeList)
+      if (inAnotherChangelist) {
         log("Tracker install from DocumentListener: ", virtualFile)
 
         val tracker = synchronized(LOCK) {
@@ -769,16 +770,15 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         expireInactiveRangesDamagedNotifications()
 
         EditorFactory.getInstance().allEditors
-          .filterIsInstance(EditorEx::class.java)
-          .forEach {
-            it.gutterComponentEx.repaint()
-          }
+          .forEach { if (it is EditorEx) it.gutterComponentEx.repaint() }
       }
     }
 
     override fun changeListAvailabilityChanged() {
-      updatePartialChangeListsAvailability()
-      updateTrackingSettings()
+      runInEdt(ModalityState.any()) {
+        updatePartialChangeListsAvailability()
+        updateTrackingSettings()
+      }
     }
   }
 
@@ -915,9 +915,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
 
-  @RequiresEdt
   internal fun collectPartiallyChangedFilesStates(): List<ChangelistsLocalLineStatusTracker.FullState> {
-    ApplicationManager.getApplication().assertIsWriteThread()
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     val result = mutableListOf<ChangelistsLocalLineStatusTracker.FullState>()
     synchronized(LOCK) {
       for (data in trackers.values) {
@@ -934,7 +933,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   @RequiresEdt
-  private fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<ChangelistsLocalLineStatusTracker.State>) {
+  internal fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<ChangelistsLocalLineStatusTracker.State>) {
     runWriteAction {
       synchronized(LOCK) {
         if (isDisposed) return@runWriteAction
@@ -1279,7 +1278,8 @@ private object ChangelistsLocalStatusTrackerProvider : BaseRevisionStatusTracker
         status != FileStatus.NOT_CHANGED) return false
 
     val change = ChangeListManager.getInstance(project).getChange(file)
-    return change != null && change.javaClass == Change::class.java &&
+    return change == null ||
+           change.javaClass == Change::class.java &&
            (change.type == Change.Type.MODIFICATION || change.type == Change.Type.MOVED) &&
            change.afterRevision is CurrentContentRevision
   }

@@ -106,6 +106,7 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
   companion object {
     const val PROP_OPTIONS = "OptionActions"
     const val PROP_OPTION_TOOLTIP = "OptionTooltip"
+    const val PLACE = "ActionPlace"
 
     @JvmStatic
     fun getDefaultShowPopupShortcut() = DEFAULT_SHOW_POPUP_SHORTCUT

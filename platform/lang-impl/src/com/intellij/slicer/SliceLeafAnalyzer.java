@@ -19,7 +19,6 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.SingletonSet;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -162,7 +161,7 @@ public final class SliceLeafAnalyzer {
         }
       });
     }, () -> {
-      return ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
+      return ConcurrentCollectionFactory.createConcurrentIdentityMap();
     });
   }
 
@@ -213,7 +212,7 @@ public final class SliceLeafAnalyzer {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
     AtomicInteger depth = new AtomicInteger();
     boolean printToLog = LOG.isTraceEnabled();
-    WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
+    WalkingState<SliceNode> walkingState = new WalkingState<>(guide) {
       @Override
       public void elementStarted(@NotNull SliceNode element) {
         depth.incrementAndGet();

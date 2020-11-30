@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.util.ColorProgressBar;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -111,7 +112,8 @@ public class TestStatusLine extends NonOpaquePanel {
 
     formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
 
-    myState.append(" – " + StringUtil.formatDuration(duration, "\u2009"), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    @NlsSafe String fragment = " – " + StringUtil.formatDuration(duration, "\u2009");
+    myState.append(fragment, SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
   private void formatCounts(int failuresCount, int ignoredTestsCount, int passedCount, int testsTotal) {

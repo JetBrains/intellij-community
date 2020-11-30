@@ -105,7 +105,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   @Override
   public void setComponent(JComponent component) {
     JComponent currentComponent = getComponent();
-    Container parent = currentComponent == null ? null : currentComponent.getParent();
+    Container parent = currentComponent.getParent();
     if (parent != null) {
       parent.remove(currentComponent);
       parent.add(component);

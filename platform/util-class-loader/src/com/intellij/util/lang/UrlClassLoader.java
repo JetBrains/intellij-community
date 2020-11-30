@@ -26,6 +26,8 @@ import java.util.*;
  */
 public class UrlClassLoader extends ClassLoader {
   static final String CLASS_EXTENSION = ".class";
+  private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<Boolean>();
+  private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
@@ -77,8 +79,6 @@ public class UrlClassLoader extends ClassLoader {
     }
     catch (MalformedURLException ignore) { }
   }
-
-  private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
   @NotNull
   protected ClassPath getClassPath() {
@@ -212,7 +212,12 @@ public class UrlClassLoader extends ClassLoader {
     @NotNull
     public Builder noPreload() { myPreload = false; return this; }
     @NotNull
-    public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+    public Builder allowBootstrapResources() {
+      return allowBootstrapResources(true);
+    }
+
+    @NotNull
+    public Builder allowBootstrapResources(boolean allowBootstrapResources) { myAllowBootstrapResources = allowBootstrapResources; return this; }
     @NotNull
     public Builder setLogErrorOnMissingJar(boolean log) { myErrorOnMissingJar = log; return this; }
 
@@ -257,12 +262,12 @@ public class UrlClassLoader extends ClassLoader {
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urlsFromAppClassLoader(parent).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories()
+           .allowBootstrapResources(Boolean.parseBoolean(System.getProperty("idea.allow.bootstrap.resources", "true")))
            .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
            .autoAssignUrlsWithProtectionDomain());
 
     // without this ToolProvider.getSystemJavaCompiler() does not work in jdk 9+
     try {
-      //noinspection JavaReflectionMemberAccess
       Field f = ClassLoader.class.getDeclaredField("classLoaderValueMap");
       f.setAccessible(true);
       f.set(this, f.get(parent));
@@ -306,7 +311,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   /**
-   * Use {@link UrlUtilRt#internProtocol(URL)}
+   * @deprecated Use {@link UrlUtilRt#internProtocol(URL)}
    */
   @Deprecated
   @Nullable
@@ -316,23 +321,23 @@ public class UrlClassLoader extends ClassLoader {
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
-  public void addURL(@NotNull URL url) {
+  public final void addURL(@NotNull URL url) {
     getClassPath().addURL(UrlUtilRt.internProtocol(url));
     myURLs.add(url);
   }
 
   @NotNull
-  public List<URL> getUrls() {
+  public final List<URL> getUrls() {
     return Collections.unmodifiableList(myURLs);
   }
 
-  public boolean hasLoadedClass(String name) {
+  public final boolean hasLoadedClass(String name) {
     Class<?> aClass = findLoadedClass(name);
     return aClass != null && aClass.getClassLoader() == this;
   }
 
   @Override
-  protected Class<?> findClass(final String name) throws ClassNotFoundException {
+  protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
     Class<?> clazz = _findClass(name);
     if (clazz == null) {
       throw new ClassNotFoundException(name);
@@ -340,14 +345,14 @@ public class UrlClassLoader extends ClassLoader {
     return clazz;
   }
 
-  @Nullable
-  protected final Class<?> _findClass(@NotNull String name) {
-    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
-    if (res == null) {
+  protected @Nullable final Class<?> _findClass(@NotNull String name) {
+    Resource resource = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
+    if (resource == null) {
       return null;
     }
+
     try {
-      return defineClass(name, res);
+      return defineClass(name, resource);
     }
     catch (IOException e) {
       LoggerRt.getInstance(UrlClassLoader.class).error(e);
@@ -404,13 +409,13 @@ public class UrlClassLoader extends ClassLoader {
     return defineClass(name, b, 0, b.length, protectionDomain);
   }
 
-  private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<Boolean>();
-
   @Override
   public URL findResource(String name) {
-    if (ourSkipFindingResource.get() != null) return null;
+    if (ourSkipFindingResource.get() != null) {
+      return null;
+    }
     Resource res = findResourceImpl(name);
-    return res != null ? res.getURL() : null;
+    return res == null ? null : res.getURL();
   }
 
   @Nullable
@@ -430,14 +435,17 @@ public class UrlClassLoader extends ClassLoader {
       ourSkipFindingResource.set(Boolean.TRUE);
       try {
         InputStream stream = super.getResourceAsStream(name);
-        if (stream != null) return stream;
-      } finally {
+        if (stream != null) {
+          return stream;
+        }
+      }
+      finally {
         ourSkipFindingResource.set(null);
       }
     }
     try {
       Resource res = findResourceImpl(name);
-      return res != null ? res.getInputStream() : null;
+      return res == null ? null : res.getInputStream();
     }
     catch (IOException e) {
       return null;
@@ -452,7 +460,7 @@ public class UrlClassLoader extends ClassLoader {
   // called by a parent class on Java 7+
   @NotNull
   protected Object getClassLoadingLock(String className) {
-    return myClassLoadingLocks != null ? myClassLoadingLocks.getOrCreateLock(className) : this;
+    return myClassLoadingLocks == null ? this : myClassLoadingLocks.getOrCreateLock(className);
   }
 
   /**

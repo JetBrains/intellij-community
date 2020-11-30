@@ -52,5 +52,5 @@ REGEXP_FILE
                           PsiElement(GROUP_END)(')')
                     PsiElement(GROUP_END)(')')
               PsiElement(GROUP_END)(')')
-        PsiErrorElement:Unclosed group
+        PsiErrorElement:')' expected
           <empty list>

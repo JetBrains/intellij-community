@@ -215,7 +215,14 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
   private void assertEnvOutput(@NotNull LinkedHashMap<String, String> envs) {
     assertNotEmpty(envs.keySet());
     List<String> command = ContainerUtil.concat(Collections.singletonList("printenv"), new ArrayList<>(envs.keySet()));
-    assertWslCommandOutput(StringUtil.join(envs.values(), "\n") + "\n", (String)null, envs, command);
+    String expectedOut = StringUtil.join(envs.values(), "\n") + "\n";
+    assertWslCommandOutput(expectedOut, (String)null, envs, command);
+    assertWslCommandOutput(expectedOut,
+                           new WSLCommandLineOptions().setLaunchWithWslExe(false).setPassEnvVarsUsingInterop(true),
+                           envs, command);
+    assertWslCommandOutput(expectedOut,
+                           new WSLCommandLineOptions().setLaunchWithWslExe(true).setPassEnvVarsUsingInterop(true),
+                           envs, command);
   }
 
   private void assertPwdOutputInDirectory(@NotNull String directoryName) throws IOException {
@@ -276,12 +283,7 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
                                       @NotNull Map<String, String> envs,
                                       @NotNull List<String> command) {
     assertNotEmpty(command);
-    GeneralCommandLine commandLine = new GeneralCommandLine(command) {
-      @Override
-      protected @NotNull ProcessBuilder buildProcess(@NotNull ProcessBuilder builder) {
-        return super.buildProcess(builder);
-      }
-    };
+    GeneralCommandLine commandLine = new GeneralCommandLine(command);
     commandLine.getEnvironment().putAll(envs);
 
     try {

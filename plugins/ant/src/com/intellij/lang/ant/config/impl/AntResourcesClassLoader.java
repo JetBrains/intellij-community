@@ -3,6 +3,7 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 import java.util.HashSet;
@@ -13,9 +14,13 @@ import java.util.Set;
  * @author Eugene Zhuravlev
 */
 public final class AntResourcesClassLoader extends UrlClassLoader {
-  static { if (registerAsParallelCapable()) markParallelCapable(AntResourcesClassLoader.class); }
-
   private final Set<String> myMisses = new HashSet<>();
+
+  static {
+    if (registerAsParallelCapable()) {
+      markParallelCapable(AntResourcesClassLoader.class);
+    }
+  }
 
   public AntResourcesClassLoader(final List<URL> urls, final ClassLoader parentLoader, final boolean canLockJars, final boolean canUseCache) {
     super(build().urls(urls).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload());
@@ -37,7 +42,7 @@ public final class AntResourcesClassLoader extends UrlClassLoader {
   }
 
   @Override
-  protected Class<?> findClass(String name) throws ClassNotFoundException {
+  protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
     ProgressManager.checkCanceled();
     try {
       return super.findClass(name);

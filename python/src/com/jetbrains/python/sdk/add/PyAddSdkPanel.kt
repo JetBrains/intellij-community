@@ -95,7 +95,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
     }
 
     @JvmStatic
-    fun validateSdkComboBox(field: PySdkPathChoosingComboBox, defaultButtonName: @NlsContexts.Button String): ValidationInfo? {
+    fun validateSdkComboBox(field: PySdkPathChoosingComboBox, @NlsContexts.Button defaultButtonName: String): ValidationInfo? {
       return when (val sdk = field.selectedSdk) {
         null -> ValidationInfo(PySdkBundle.message("python.sdk.field.is.empty"), field)
         is PySdkToInstall -> {
@@ -155,7 +155,8 @@ fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
 fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
                              existingSdks: List<Sdk>,
                              module: Module?,
-                             context: UserDataHolder) {
+                             context: UserDataHolder,
+                             callback: () -> Unit = {}) {
   addInterpretersAsync(
     sdkComboBox,
     { findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall() },
@@ -171,6 +172,7 @@ fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
           else -> items.getOrNull(0)
         }
       }
+      callback()
     }
   )
 }

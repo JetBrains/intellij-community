@@ -2,11 +2,10 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,13 +21,14 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 import java.util.List;
 
 public class MavenServerConnector implements @NotNull Disposable {
-
+  public static final Logger LOG = Logger.getInstance(MavenServerConnector.class);
 
   private final RemoteMavenServerLogger myLogger = new RemoteMavenServerLogger();
   private final RemoteMavenServerDownloadListener
@@ -44,7 +44,7 @@ public class MavenServerConnector implements @NotNull Disposable {
   private final MavenDistribution myDistribution;
   private final String myVmOptions;
 
-  private MavenServerRemoteProcessSupport mySupport;
+  private MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport mySupport;
   private MavenServer myMavenServer;
 
 
@@ -93,7 +93,7 @@ public class MavenServerConnector implements @NotNull Disposable {
     VirtualFile jdkOpts = mvn.findChild("jvm.config");
     if (jdkOpts == null) return settings.importingSettings.getVmOptionsForImporter();
     try {
-      return new String(jdkOpts.contentsToByteArray(true), CharsetToolkit.UTF8_CHARSET);
+      return new String(jdkOpts.contentsToByteArray(true), StandardCharsets.UTF_8);
     }
     catch (IOException e) {
       MavenLog.LOG.warn(e);
@@ -149,7 +149,17 @@ public class MavenServerConnector implements @NotNull Disposable {
         System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
       }
 
-      mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+      MavenRemoteProcessSupportFactory[] factories = MavenRemoteProcessSupportFactory.MAVEN_SERVER_SUPPORT_EP_NAME.getExtensions();
+      List<MavenRemoteProcessSupportFactory> aFactories = ContainerUtil.filter(factories, factory -> factory.isApplicable(myProject));
+      if (aFactories.size() > 1) {
+        LOG.warn("More than one MavenRemoteProcessSupportFactory is applicable: " + aFactories);
+      }
+      else if (aFactories.size() == 1) {
+        mySupport = aFactories.get(0).create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+      }
+      else {
+        mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+      }
       myMavenServer = mySupport.acquire(this, "");
       myLoggerExported = MavenRemoteObjectWrapper.doWrapAndExport(myLogger) != null;
       if (!myLoggerExported) throw new RemoteException("Cannot export logger object");
@@ -206,7 +216,14 @@ public class MavenServerConnector implements @NotNull Disposable {
 
   @NotNull
   public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
-    return perform(() -> myMavenServer.interpolateAndAlignModel(model, basedir, MavenRemoteObjectWrapper.ourToken));
+    return perform(() -> {
+      MavenModel m = myMavenServer.interpolateAndAlignModel(model, basedir, MavenRemoteObjectWrapper.ourToken);
+      RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(basedir.getPath());
+      if (transformer != RemotePathTransformerFactory.Transformer.ID) {
+        new MavenBuildPathsChange((String s) -> transformer.toIdePath(s)).perform(m);
+      }
+      return m;
+    });
   }
 
   public MavenModel assembleInheritance(final MavenModel model, final MavenModel parentModel) {
@@ -236,7 +253,8 @@ public class MavenServerConnector implements @NotNull Disposable {
         return r.execute();
       }
       catch (RemoteException e) {
-        MavenServerRemoteProcessSupport processSupport = mySupport;
+        last = e;
+        MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport processSupport = mySupport;
         if (processSupport != null) {
           processSupport.stopAll(false);
         }

@@ -19,6 +19,7 @@ import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,7 +63,7 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
           commonParent = null;
         }
       }
-      renderer.append(files.size() + " " + (commonName != null ? commonName : firstFile.getFileType().getDefaultExtension()) + " files");
+      renderer.append(ProjectBundle.message("comment.0.1.files", files.size(), commonName != null ? commonName : firstFile.getFileType().getDefaultExtension()));
       if (commonParent != null) {
         appendDirectoryPath(renderer, commonParent);
       }

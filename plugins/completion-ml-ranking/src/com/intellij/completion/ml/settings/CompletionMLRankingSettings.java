@@ -8,6 +8,7 @@ import com.intellij.completion.ml.sorting.RankingSupport;
 import com.intellij.internal.ml.completion.RankingModelProvider;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,7 +31,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
 
   @NotNull
   public static CompletionMLRankingSettings getInstance() {
-    return ServiceManager.getService(CompletionMLRankingSettings.class);
+    return ApplicationManager.getApplication().getService(CompletionMLRankingSettings.class);
   }
 
   public boolean isRankingEnabled() {

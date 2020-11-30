@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -118,8 +119,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     NewVirtualFile file = (NewVirtualFile)virtualFile;
     try {
       byte[] bytes = file.contentsToByteArray();
-      byte[] contentWithStrippedBom = new byte[bytes.length - bom.length];
-      System.arraycopy(bytes, bom.length, contentWithStrippedBom, 0, contentWithStrippedBom.length);
+      byte[] contentWithStrippedBom = Arrays.copyOfRange(bytes, bom.length, bytes.length);
       WriteAction.runAndWait(() -> file.setBinaryContent(contentWithStrippedBom));
     }
     catch (IOException ex) {

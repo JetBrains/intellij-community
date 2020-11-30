@@ -131,7 +131,12 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   private static void highlightOverrideText(DomElementAnnotationHolder holder, OverrideText overrideText) {
     if (!DomUtil.hasXml(overrideText.getText())) return;
 
-    holder.createProblem(overrideText.getText(), DevKitBundle.message("inspections.plugin.xml.i18n.key"));
+    DomElement parent = overrideText.getParent();
+    PropertiesFile propertiesFile = DescriptorI18nUtil.findBundlePropertiesFile(parent);
+
+    holder.createProblem(overrideText, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                         DevKitBundle.message("inspections.plugin.xml.i18n.name"),
+                         null, new ActionOrGroupQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null, parent instanceof Action));
   }
 
   private static void highlightActionOrGroup(@NotNull DomElementAnnotationHolder holder, @NotNull ActionOrGroup actionOrGroup) {
@@ -403,7 +408,13 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         String description = tag.getAttributeValue("description");
         tag.setAttribute("description", null);
 
-        String id = tag.getAttributeValue("id");
+        String id;
+        if (tag.getName().equals("override-text")) {
+          id = Objects.requireNonNull(tag.getParentTag()).getAttributeValue("id") + "." + tag.getAttributeValue("place");
+        }
+        else {
+          id = tag.getAttributeValue("id");
+        }
 
         List<PropertiesFile> propertiesFiles = Collections.singletonList(propertiesFile);
         @NonNls String actionOrGroupPrefix = isAction ? "action." : "group.";

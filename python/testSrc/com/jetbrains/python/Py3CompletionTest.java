@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -475,6 +476,17 @@ public class Py3CompletionTest extends PyTestCase {
   // EA-232631
   public void testFStringLikeCompletionNotAvailableInStringElementsInSyntacticallyIllegalPosition() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+  }
+
+  // PY-45459
+  public void testFStringLikeCompletionAvailableRightAfterOpeningBrace() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.configureByFile(getTestName(true) + ".py");
+      LookupElement[] variants = myFixture.completeBasic();
+      assertNotNull(variants);
+      assertTrue(variants.length > 0);
+      assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("my_expr")));
+    });
   }
 
   @Override

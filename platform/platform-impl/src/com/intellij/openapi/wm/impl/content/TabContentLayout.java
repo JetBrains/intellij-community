@@ -219,7 +219,7 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
   @Override
   public int getMinimumWidth() {
     int result = 0;
-    if (myIdLabel != null) {
+    if (myIdLabel != null && isIdVisible()) {
       result += myIdLabel.getPreferredSize().width;
       Insets insets = myIdLabel.getInsets();
       if (insets != null) {

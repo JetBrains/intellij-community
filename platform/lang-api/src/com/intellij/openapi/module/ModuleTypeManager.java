@@ -6,6 +6,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public abstract class ModuleTypeManager {
   public static ModuleTypeManager getInstance() {
     return ApplicationManager.getApplication().getService(ModuleTypeManager.class);
@@ -21,7 +23,7 @@ public abstract class ModuleTypeManager {
   @ApiStatus.Internal
   public abstract void unregisterModuleType(ModuleType<?> type);
 
-  public abstract ModuleType<?>[] getRegisteredTypes();
+  public abstract @NotNull List<ModuleType<?>> getRegisteredTypes();
 
   public abstract ModuleType<?> findByID(@Nullable String moduleTypeID);
 

@@ -1,5 +1,3 @@
-# Stubs for ctypes.util
-
 import sys
 from typing import Optional
 

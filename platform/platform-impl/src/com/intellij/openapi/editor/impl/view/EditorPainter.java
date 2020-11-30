@@ -934,14 +934,14 @@ public final class EditorPainter implements TextDrawingCallback {
       boolean rounded = borderDescriptor.effectType == EffectType.ROUNDED_BOX;
       int margin = borderDescriptor.effectType == EffectType.SLIGHTLY_WIDER_BOX ? 1 : 0;
       myGraphics.setColor(borderDescriptor.effectColor);
-      VisualPosition startPosition = myView.offsetToVisualPosition(startOffset, true, false);
-      VisualPosition endPosition = myView.offsetToVisualPosition(endOffset, false, true);
-      if (startPosition.line == endPosition.line) {
-        int y = myView.visualLineToY(startPosition.line) + myYShift;
+      int startVisualLine = myView.offsetToVisualLine(startOffset, false);
+      int endVisualLine = myView.offsetToVisualLine(endOffset, true);
+      if (startVisualLine == endVisualLine) {
+        int y = myView.visualLineToY(startVisualLine) + myYShift;
         FloatList ranges = adjustedLogicalRangeToVisualRanges(startOffset, endOffset);
         for (int i = 0; i < ranges.size() - 1; i += 2) {
           float startX = myCorrector.singleLineBorderStart(ranges.getFloat(i));
-          if (startX - margin >= myCorrector.startX(startPosition.line)) {
+          if (startX - margin >= myCorrector.startX(startVisualLine)) {
             startX -= margin;
           }
           float endX = myCorrector.singleLineBorderEnd(ranges.getFloat(i + 1)) + margin;
@@ -950,17 +950,17 @@ public final class EditorPainter implements TextDrawingCallback {
       }
       else {
         FloatList leadingRanges = adjustedLogicalRangeToVisualRanges(
-          startOffset, myView.visualPositionToOffset(new VisualPosition(startPosition.line, Integer.MAX_VALUE, true)));
+          startOffset, myView.visualPositionToOffset(new VisualPosition(startVisualLine, Integer.MAX_VALUE, true)));
         FloatList trailingRanges = adjustedLogicalRangeToVisualRanges(
-          myView.visualPositionToOffset(new VisualPosition(endPosition.line, 0)), endOffset);
+          myView.visualPositionToOffset(new VisualPosition(endVisualLine, 0)), endOffset);
         if (!leadingRanges.isEmpty() && !trailingRanges.isEmpty()) {
-          int minX = Math.min(myCorrector.minX(startPosition.line, endPosition.line), (int)leadingRanges.getFloat(0));
-          int maxX = Math.max(myCorrector.maxX(startPosition.line, endPosition.line), (int)trailingRanges.getFloat(trailingRanges.size() - 1));
-          boolean containsInnerLines = endPosition.line > startPosition.line + 1;
+          int minX = Math.min(myCorrector.minX(startVisualLine, endVisualLine), (int)leadingRanges.getFloat(0));
+          int maxX = Math.max(myCorrector.maxX(startVisualLine, endVisualLine), (int)trailingRanges.getFloat(trailingRanges.size() - 1));
+          boolean containsInnerLines = endVisualLine > startVisualLine + 1;
           int lineHeight = myLineHeight - 1;
-          int leadingTopY = myView.visualLineToY(startPosition.line) + myYShift;
+          int leadingTopY = myView.visualLineToY(startVisualLine) + myYShift;
           int leadingBottomY = leadingTopY + lineHeight;
-          int trailingTopY = myView.visualLineToY(endPosition.line) + myYShift;
+          int trailingTopY = myView.visualLineToY(endVisualLine) + myYShift;
           int trailingBottomY = trailingTopY + lineHeight;
           float start = 0;
           float end = 0;
@@ -1101,7 +1101,17 @@ public final class EditorPainter implements TextDrawingCallback {
           if (startOffset == endOffset) {
             lastX = fragment.getEndX();
             Inlay inlay = fragment.getCurrentInlay();
-            if (inlay != null && !inlay.isRelatedToPrecedingText()) continue;
+            if (inlay != null) {
+              if (startOffset == minOffset && inlay.isRelatedToPrecedingText()) {
+                float x = fragment.getStartX();
+                result.add(x);
+                result.add(x);
+                break;
+              }
+              else {
+                continue;
+              }
+            }
             if (startOffset >= minOffset && startOffset < maxOffset) {
               float x = fragment.offsetToX(startOffset);
               result.add(x);

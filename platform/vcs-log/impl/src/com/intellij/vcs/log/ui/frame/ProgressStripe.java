@@ -18,7 +18,6 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -28,9 +27,12 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ProgressStripe extends JBPanel {
+  private final JComponent myTargetComponent;
+  private final Disposable myDisposable;
+  private final int myStartDelayMs;
+
   @NotNull
   private final JBPanel myPanel;
-  private final NotNullComputable<MyLoadingDecorator> myCreateLoadingDecorator;
   protected MyLoadingDecorator myDecorator;
 
   public ProgressStripe(@NotNull JComponent targetComponent, @NotNull Disposable parent, int startDelayMs) {
@@ -39,28 +41,34 @@ public class ProgressStripe extends JBPanel {
     myPanel.setOpaque(false);
     myPanel.add(targetComponent);
 
-    myCreateLoadingDecorator = () -> {
-      Disposable disposable = Disposer.newDisposable();
-      Disposer.register(parent, disposable);
-      return new MyLoadingDecorator(targetComponent, myPanel, disposable, startDelayMs);
-    };
+    myTargetComponent = targetComponent;
+    myDisposable = parent;
+    myStartDelayMs = startDelayMs;
+
     createLoadingDecorator();
   }
 
   @Override
   public void updateUI() {
     super.updateUI();
-    if (myCreateLoadingDecorator != null) {
-      if (myDecorator != null) {
-        remove(myDecorator.getComponent());
-        myDecorator.dispose();
-      }
+
+    // can be null in super constructor.
+    // can be disposed during dispose sequence (ThreeComponentsSplitter can trigger updateUI while removing contents of other toolwindows).
+    if (myDisposable != null && !Disposer.isDisposed(myDisposable)) {
       createLoadingDecorator();
     }
   }
 
   private void createLoadingDecorator() {
-    myDecorator = myCreateLoadingDecorator.compute();
+    if (myDecorator != null) {
+      remove(myDecorator.getComponent());
+      Disposer.dispose(myDecorator.getDisposable());
+    }
+
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(myDisposable, disposable);
+    myDecorator = new MyLoadingDecorator(myTargetComponent, myPanel, disposable, myStartDelayMs);
+
     add(myDecorator.getComponent(), BorderLayout.CENTER);
     myDecorator.setLoadingText("");
   }
@@ -106,8 +114,9 @@ public class ProgressStripe extends JBPanel {
       return result;
     }
 
-    public void dispose() {
-      Disposer.dispose(myDisposable);
+    @NotNull
+    public Disposable getDisposable() {
+      return myDisposable;
     }
   }
 }

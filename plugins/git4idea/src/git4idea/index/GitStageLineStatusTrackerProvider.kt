@@ -17,9 +17,11 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitContentRevision
 import git4idea.GitUtil
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitSubmodule
 import git4idea.util.GitFileUtils
 import java.nio.charset.Charset
 
@@ -30,7 +32,7 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
 
   override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
     if (!file.isInLocalFileSystem) return false
-    if (!isStageAvailable(project)) return false
+    if (!isStagingAreaAvailable(project)) return false
     if (!stageLineStatusTrackerRegistryOption().asBoolean()) return false
 
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file)
@@ -44,7 +46,8 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
         !status.has(ContentVersion.STAGED) ||
         !status.has(ContentVersion.LOCAL)) return null
 
-    val root = VcsUtil.getVcsRootFor(project, file) ?: return null
+    val filePath = VcsUtil.getFilePath(file)
+    if (GitContentRevision.getRepositoryIfSubmodule(project, filePath) != null) return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
 
     return GitStageLineStatusTracker(project, file, document)
@@ -70,6 +73,7 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     val file = info.virtualFile
     val filePath = VcsUtil.getFilePath(file)
     val status = GitStageTracker.getInstance(project).status(file) ?: return null
+    if (GitContentRevision.getRepositoryIfSubmodule(project, filePath) != null) return null
 
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return null
 

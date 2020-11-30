@@ -100,7 +100,7 @@ internal class SpaceSetGitHttpPasswordDialog(
         }
         catch (e: RpcException) {
           log.error(e, e.failure.message())
-          setErrorText(e.failure.message())
+          setErrorText(e.failure.message()) // NON-NLS
         }
         catch (e: Exception) {
           log.error(e, "Unable to set password")
@@ -113,9 +113,9 @@ internal class SpaceSetGitHttpPasswordDialog(
     }
   }
 
-  override fun createCenterPanel(): JComponent? = panel {
+  override fun createCenterPanel(): JComponent = panel {
     row(SpaceBundle.message("set.http.password.dialog.username.label")) {
-      JBTextField(me.username)().component.apply {
+      JBTextField(me.username)().component.apply { // NON-NLS
         isEditable = false
       }
     }

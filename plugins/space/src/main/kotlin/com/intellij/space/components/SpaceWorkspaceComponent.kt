@@ -7,7 +7,7 @@ import circlet.client.api.impl.tombstones.registerArenaTombstones
 import circlet.code.api.CodeReviewArena
 import circlet.code.api.CodeReviewParticipantsArena
 import circlet.common.oauth.IdeaOAuthConfig
-import circlet.permission.FeatureFlagsVmPersistenceKey
+import circlet.permissions.FeatureFlagsVmPersistenceKey
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.api.oauth.toTokenInfo
 import circlet.platform.api.serialization.ExtendableSerializationRegistry
@@ -20,6 +20,7 @@ import circlet.workspaces.WorkspaceManager
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.space.auth.SpaceAuthNotifier
@@ -56,15 +57,17 @@ import java.util.concurrent.CancellationException
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
-internal val space: SpaceWorkspaceComponent
-  get() = service()
-
 /**
  * The main plugin's component that allows to log in to the Space server or disconnect from it.
  * If possible, the component is automatically authorized when the app starts
  */
-@Service
+@Service(Level.APP)
 internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by LifetimedDisposableImpl() {
+  companion object {
+    internal fun getInstance(): SpaceWorkspaceComponent = service()
+    private val LOG: KLogger = logger<SpaceWorkspaceComponent>()
+  }
+
   private val workspacesLifetimes = SequentialLifetimes(lifetime)
 
   private val manager = mutableProperty<WorkspaceManager?>(null)
@@ -72,8 +75,6 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
   val workspace: Property<Workspace?> = map(manager) { wm ->
     wm?.workspace?.value
   }
-
-  private val settings = SpaceSettings.getInstance()
 
   val loginState: MutableProperty<SpaceLoginState> = mutableProperty(getInitialState())
 
@@ -83,8 +84,9 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
     // sign in automatically on application startup.
     launch(wsLifetime, Ui) {
-      if (autoSignIn(wsLifetime) == AutoSignInResult.NOT_AUTHORIZED) {
-        SpaceAuthNotifier.notifyDisconnected()
+      val signInResult = autoSignIn(wsLifetime)
+      if (signInResult == AutoSignInResult.NOT_AUTHORIZED) {
+        authFailed()
       }
     }
 
@@ -92,7 +94,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
       System.setProperty("space_server_for_script_definition", ws?.client?.server?.let { "$it/system/maven" } ?: "not_set")
 
       loginState.value = if (ws == null) {
-        SpaceLoginState.Disconnected(settings.serverSettings.server)
+        SpaceLoginState.Disconnected(SpaceSettings.getInstance().serverSettings.server)
       }
       else {
         SpaceLoginState.Connected(ws.client.server, ws)
@@ -118,11 +120,11 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
 
   override suspend fun authFailed() {
-    SpaceAuthNotifier.authCheckFailedNotification()
-    manager.value?.signOut(false)
+    signOut()
+    SpaceAuthNotifier.authFailed()
   }
 
-  suspend fun signIn(lifetime: Lifetime, server: String): OAuthTokenResponse {
+  private suspend fun signIn(lifetime: Lifetime, server: String): OAuthTokenResponse {
     LOG.assert(manager.value == null, "manager.value == null")
 
     val lt = workspacesLifetimes.next()
@@ -149,7 +151,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     if (response is OAuthTokenResponse.Success) {
       LOG.info { "A personal token was received" }
       newManager.signInWithToken(response.toTokenInfo())
-      settings.serverSettings = SpaceServerSettings(true, server)
+      SpaceSettings.getInstance().serverSettings = SpaceServerSettings(true, server)
       manager.value = newManager
     }
     return response
@@ -163,9 +165,10 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
             connectLt.terminate()
             loginState.value = SpaceLoginState.Disconnected(serverName)
           }
-          when (val response = space.signIn(connectLt, serverName)) {
+          when (val response = signIn(connectLt, serverName)) {
             is OAuthTokenResponse.Error -> {
-              loginState.value = SpaceLoginState.Disconnected(serverName, response.description)
+              val error = response.description // NON-NLS
+              loginState.value = SpaceLoginState.Disconnected(serverName, error)
             }
           }
         }
@@ -190,6 +193,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     oldManager?.signOut(true)
     workspacesLifetimes.clear()
     manager.value = null
+    val settings = SpaceSettings.getInstance()
     settings.serverSettings = settings.serverSettings.copy(enabled = false)
   }
 
@@ -227,10 +231,6 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     NOT_AUTHORIZED_BEFORE,
     NOT_AUTHORIZED,
     AUTHORIZED
-  }
-
-  companion object {
-    private val LOG: KLogger = logger<SpaceWorkspaceComponent>()
   }
 }
 

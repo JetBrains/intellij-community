@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ public class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
   @Override
   public @NotNull Set<MetricEvent> getMetrics() {
     Set<MetricEvent> result = new HashSet<>();
-    StatusBarWidgetSettings settings = ServiceManager.getService(StatusBarWidgetSettings.class);
+    StatusBarWidgetSettings settings = ApplicationManager.getApplication().getService(StatusBarWidgetSettings.class);
     StatusBarWidgetFactory.EP_NAME.processWithPluginDescriptor((factory, plugin) -> {
       PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoByDescriptor(plugin);
       if (pluginInfo.isSafeToReport()) {

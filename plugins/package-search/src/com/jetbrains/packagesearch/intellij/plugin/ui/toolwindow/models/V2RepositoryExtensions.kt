@@ -2,7 +2,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.api.model.V2Repository
-import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependencyRepository
+import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import org.jetbrains.annotations.Nls
 
 fun V2Repository?.asList() =
     if (this != null) {
@@ -15,8 +16,8 @@ fun V2Repository?.asList() =
 fun V2Repository.isEquivalentTo(repository: UnifiedDependencyRepository): Boolean {
 
     // URL matching
-    if (!repository.url.isNullOrBlank()) {
-        val normalizedRepositoryUrl = repository.url!!.trimEnd('/')
+    if (repository.url.isNotBlank()) {
+        val normalizedRepositoryUrl = repository.url.trimEnd('/')
 
         if (this.url.trimEnd('/').equals(normalizedRepositoryUrl, true)) {
             return true
@@ -45,6 +46,7 @@ fun V2Repository.isEquivalentTo(repository: UnifiedDependencyRepository): Boolea
     return false
 }
 
+@Nls
 fun V2Repository.localizedName() = when (this.id) {
     "maven_central" -> PackageSearchBundle.message("packagesearch.repository.known.id.maven_central")
     "gmaven" -> PackageSearchBundle.message("packagesearch.repository.known.id.google")

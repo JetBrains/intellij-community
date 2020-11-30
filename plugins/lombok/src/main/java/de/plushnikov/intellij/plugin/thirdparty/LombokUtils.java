@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * @author ProjectLombok Team
  * @author Plushnikov Michail
  */
-public class LombokUtils {
+public final class LombokUtils {
   public static final String LOMBOK_INTERN_FIELD_MARKER = "$";
 
   /* NB: 'notnull' is not part of the pattern because there are lots of @NotNull annotations out there that are crappily named and actually mean
@@ -33,7 +33,16 @@ Various problems with spring have also been reported. See issue #287, issue #271
     final String psiFieldName = psiField.getName();
     final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
 
-    return LombokUtils.toGetterName(accessorsInfo, psiFieldName, isBoolean);
+    return toGetterName(accessorsInfo, psiFieldName, isBoolean);
+  }
+
+  public static String getSetterName(@NotNull PsiField psiField) {
+    return getSetterName(psiField, PsiType.BOOLEAN.equals(psiField.getType()));
+  }
+
+  public static String getSetterName(@NotNull PsiField psiField, boolean isBoolean) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    return toSetterName(accessorsInfo, psiField.getName(), isBoolean);
   }
 
   /**

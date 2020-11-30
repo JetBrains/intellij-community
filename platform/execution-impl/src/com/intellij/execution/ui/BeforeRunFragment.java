@@ -17,9 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunConfigurationEditorFragment<S, JComponent> {
-  private final BeforeRunComponent myComponent;
-  private final Key<?> myKey;
-  private RunnerAndConfigurationSettingsImpl mySettings;
+  private final BeforeRunComponent myBeforeRunComponent;
 
   public static <S extends RunConfigurationBase<?>> List<SettingsEditorFragment<S, ?>> createGroup() {
     List<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
@@ -42,22 +40,17 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     return list;
   }
 
-  public static <S extends RunConfigurationBase<?>> BeforeRunFragment<S> createBeforeRun(@NotNull BeforeRunComponent component, Key<?> key) {
-    return new BeforeRunFragment<>(component, key);
+  public static <S extends RunConfigurationBase<?>> BeforeRunFragment<S> createBeforeRun(@NotNull BeforeRunComponent component, Key<?> buildTaskKey) {
+    return new BeforeRunFragment<>(component, buildTaskKey);
   }
 
-  private BeforeRunFragment(@NotNull BeforeRunComponent component, Key<?> key) {
+  private BeforeRunFragment(@NotNull BeforeRunComponent beforeRunComponent, Key<?> buildTaskKey) {
     super("beforeRunTasks", ExecutionBundle.message("run.configuration.before.run.task"),
-          ExecutionBundle.message("run.configuration.before.run.group"), wrap(component), -2);
-    myComponent = component;
-    myKey = key;
-    component.myChangeListener = () -> fireEditorStateChanged();
+          ExecutionBundle.message("run.configuration.before.run.group"), wrap(beforeRunComponent), -2,
+          s -> ContainerUtil.exists(s.getManager().getBeforeRunTasks(s.getConfiguration()), task -> task.getProviderId() != buildTaskKey));
+    myBeforeRunComponent = beforeRunComponent;
+    beforeRunComponent.myChangeListener = () -> fireEditorStateChanged();
     setActionHint(ExecutionBundle.message("specify.tasks.to.be.performed.before.starting.the.application"));
-  }
-
-  @Override
-  public boolean isInitiallyVisible(S s) {
-    return ContainerUtil.exists(mySettings.getManager().getBeforeRunTasks(s), task -> task.getProviderId() != myKey);
   }
 
   private static JComponent wrap(BeforeRunComponent component) {
@@ -80,20 +73,19 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
   public void toggle(boolean selected) {
     super.setSelected(selected);
     if (selected) {
-      myComponent.showPopup();
+      myBeforeRunComponent.showPopup();
     }
   }
 
   @Override
-  public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
-    mySettings = s;
-    myComponent.reset(mySettings);
+  public void doReset(@NotNull RunnerAndConfigurationSettingsImpl s) {
+    myBeforeRunComponent.reset(s);
   }
 
   @Override
   public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
     if (isSelected()) {
-      myComponent.apply(s);
+      myBeforeRunComponent.apply(s);
     }
     else {
       s.getManager().setBeforeRunTasks(s.getConfiguration(), Collections.<BeforeRunTask<?>>emptyList());

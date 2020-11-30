@@ -40,7 +40,7 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
   private var selectingItem = false
 
-  private var myPlaceHolder: String? = null
+  @Nls private var myPlaceHolder: String? = null
 
   init {
     isEditable = true
@@ -51,6 +51,7 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
   override fun setSelectedItem(anObject: Any?) {
     selectingItem = true
     super.setSelectedItem(anObject)
+    editor.item = anObject
     selectingItem = false
   }
 
@@ -138,10 +139,8 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
       private fun collectItems(): List<E> {
         val items = mutableListOf<E>()
-        if (model.size != 0) {
-          for (i in 0 until model.size) {
-            items += model.getElementAt(i)
-          }
+        for (i in 0 until model.size) {
+          items += model.getElementAt(i)
         }
         return items
       }

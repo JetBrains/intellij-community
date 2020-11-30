@@ -21,9 +21,4 @@ public abstract class FilteredPackageSet extends AbstractPackageSet {
   public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     return contains(file, project);
   }
-
-  @Override
-  public boolean contains(@NotNull VirtualFile file, NamedScopesHolder holder) {
-    return holder != null && contains(file, holder.getProject(), holder);
-  }
 }

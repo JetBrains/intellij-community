@@ -165,7 +165,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
       Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
       //noinspection deprecation
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project);
       activity.end();
 
       ProjectLoadHelper.registerComponents(project);

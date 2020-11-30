@@ -32,7 +32,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processors;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +40,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 
-public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
+public final class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   public boolean CURRENT_FILE = true;
   public boolean MODULE_WITH_DEPENDENCIES = false;
 
@@ -186,7 +185,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);
       for (final PsiFile file : psiFilesWithDuplicates) {
         CharSequence text = file.getViewProvider().getContents();
-        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, offset -> {
+        LowLevelSearchUtil.processTexts(text, 0, text.length(), searcher, offset -> {
           PsiElement element = file.findElementAt(offset);
           if (element != null && element.getParent() instanceof Property) {
             final Property property = (Property)element.getParent();
@@ -301,7 +300,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     if (words.isEmpty()) return;
     words.sort((o1, o2) -> o2.length() - o1.length());
     for (String word : words) {
-      final Set<PsiFile> files = new THashSet<>();
+      final Set<PsiFile> files = new HashSet<>();
       searchHelper.processAllFilesWithWord(word, scope, Processors.cancelableCollectProcessor(files), true);
       if (resultFiles.isEmpty()) {
         resultFiles.addAll(files);

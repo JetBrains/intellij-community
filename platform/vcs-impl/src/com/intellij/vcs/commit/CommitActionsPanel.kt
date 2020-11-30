@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent.CTRL_DOWN_MASK
 import java.awt.event.InputEvent.META_DOWN_MASK
@@ -76,7 +77,7 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   //  See CheckinProjectPanel.getCommitActionName() usages.
   override var defaultCommitActionName: String
     get() = (defaultCommitAction.getValue(Action.NAME) as? String).orEmpty()
-    set(value) {
+    set(@Nls value) {
       defaultCommitAction.putValue(Action.NAME, value)
       primaryCommitActionsToolbar.updateActionsImmediately()
     }

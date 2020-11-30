@@ -262,6 +262,7 @@ public class PluginGroups {
         "Remote Access:com.jetbrains.plugins.webDeployment,org.jetbrains.plugins.remote-run",
         "Task Management:com.intellij.tasks,com.intellij.tasks.timeTracking",
         "org.jetbrains.plugins.terminal",
+        "org.jetbrains.plugins.emojipicker",
         "com.intellij.diagram",
         "org.jetbrains.plugins.yaml",
         "XSLT and XPath:XPathView,XSLT-Debugger"

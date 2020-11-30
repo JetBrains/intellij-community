@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
@@ -85,7 +84,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
     settings.setScriptParameters("--quiet");
     ExternalSystemProgressNotificationManager notificationManager =
-      ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
     StringBuilder gradleClasspath = new StringBuilder();
     ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
@@ -489,9 +488,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertEquals(1, unresolvableDep.size());
     LibraryOrderEntry unresolvableEntry = unresolvableDep.iterator().next();
     assertEquals(DependencyScope.COMPILE, unresolvableEntry.getScope());
-    String[] unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
-    assertEquals(1, unresolvableEntryUrls.length);
-    assertUnresolvedEntryUrl(unresolvableEntryUrls[0], "some:unresolvable-lib:0.1");
+    assertEmpty(unresolvableEntry.getUrls(OrderRootType.CLASSES));
 
     assertModuleLibDep("project.test", depName, depJar.getUrl());
     assertModuleLibDepScope("project.test", depName, DependencyScope.COMPILE);
@@ -515,12 +512,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       unresolvableEntry = unresolvableDep.iterator().next();
       assertTrue(unresolvableEntry.isModuleLevel());
     }
-    unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
-    assertEquals(0, unresolvableEntryUrls.length);
-  }
-
-  private static void assertUnresolvedEntryUrl(String entryUrl, String artifactNotation) {
-    assertTrue(entryUrl.contains("Could not find " + artifactNotation) || entryUrl.contains("Could not resolve " + artifactNotation));
+    assertEmpty(unresolvableEntry.getUrls(OrderRootType.CLASSES));
   }
 
   @Test

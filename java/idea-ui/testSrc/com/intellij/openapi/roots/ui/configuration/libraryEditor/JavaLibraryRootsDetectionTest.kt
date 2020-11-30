@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.NativeLibraryOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.impl.LibraryRootsDetectorImpl
 import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.directoryContent
@@ -84,5 +85,10 @@ class JavaLibraryRootsDetectionTest : LightPlatformTestCase() {
     val type = assertOneElement(root.types)
     assertEquals(expectedType, type.type)
     assertEquals(jarDirectory, type.isJarDirectory)
+  }
+
+  override fun tearDown() {
+    JarFileSystemImpl.cleanupForNextTest()
+    super.tearDown()
   }
 }

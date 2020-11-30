@@ -47,7 +47,7 @@ public class TypeAnnotationContainer {
    */
   public @NotNull TypeAnnotationContainer forArrayElement() {
     if (isEmpty()) return this;
-    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(Builder.ARRAY_ELEMENT));
+    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(Collector.ARRAY_ELEMENT));
     return list.isEmpty() ? EMPTY : new TypeAnnotationContainer(list);
   }
 
@@ -57,7 +57,7 @@ public class TypeAnnotationContainer {
    */
   public @NotNull TypeAnnotationContainer forEnclosingClass() {
     if (isEmpty()) return this;
-    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(Builder.ENCLOSING_CLASS));
+    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(Collector.ENCLOSING_CLASS));
     return list.isEmpty() ? EMPTY : new TypeAnnotationContainer(list);
   }
 
@@ -67,7 +67,7 @@ public class TypeAnnotationContainer {
    */
   public @NotNull TypeAnnotationContainer forBound() {
     if (isEmpty()) return this;
-    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(Builder.WILDCARD_BOUND));
+    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(Collector.WILDCARD_BOUND));
     return list.isEmpty() ? EMPTY : new TypeAnnotationContainer(list);
   }
 
@@ -101,7 +101,9 @@ public class TypeAnnotationContainer {
         List<PsiAnnotation> result = new ArrayList<>();
         for (TypeAnnotationEntry entry : myList) {
           if (entry.myPath.length == 0) {
-            result.add(new ClsTypeAnnotationImpl(parent, entry.myText));
+            PsiAnnotation anno = parent instanceof PsiCompiledElement ? new ClsTypeAnnotationImpl(parent, entry.myText) :
+                                 JavaPsiFacade.getElementFactory(parent.getProject()).createAnnotationFromText(entry.myText, parent);
+            result.add(anno);
           }
         }
         return result.toArray(PsiAnnotation.EMPTY_ARRAY);
@@ -182,7 +184,7 @@ public class TypeAnnotationContainer {
     return StringUtil.join(myList, "\n");
   }
   
-  public static class Builder {
+  public static class Collector {
     public static final byte ARRAY_ELEMENT = 0;
     public static final byte ENCLOSING_CLASS = 1;
     public static final byte WILDCARD_BOUND = 2;
@@ -191,7 +193,7 @@ public class TypeAnnotationContainer {
     private final @NotNull ArrayList<TypeAnnotationEntry> myList = new ArrayList<>();
     protected final @NotNull TypeInfo myTypeInfo;
 
-    public Builder(@NotNull TypeInfo info) {
+    public Collector(@NotNull TypeInfo info) {
       myTypeInfo = info;
     }
     
@@ -199,7 +201,7 @@ public class TypeAnnotationContainer {
       myList.add(new TypeAnnotationEntry(path, text));
     }
 
-    public void build() {
+    public void install() {
       if (myList.isEmpty()) {
         myTypeInfo.setTypeAnnotations(EMPTY);
       }
@@ -231,7 +233,7 @@ public class TypeAnnotationContainer {
     }
 
     public TypeAnnotationEntry forTypeArgument(int index) {
-      if (myPath.length > 1 && myPath[0] == Builder.TYPE_ARGUMENT && myPath[1] == index) {
+      if (myPath.length > 1 && myPath[0] == Collector.TYPE_ARGUMENT && myPath[1] == index) {
         return new TypeAnnotationEntry(Arrays.copyOfRange(myPath, 2, myPath.length), myText);
       }
       return null;
@@ -243,16 +245,16 @@ public class TypeAnnotationContainer {
       int pos = 0;
       while (pos < myPath.length) {
         switch (myPath[pos]) {
-          case Builder.ARRAY_ELEMENT:
+          case Collector.ARRAY_ELEMENT:
             result.append('[');
             break;
-          case Builder.ENCLOSING_CLASS:
+          case Collector.ENCLOSING_CLASS:
             result.append('.');
             break;
-          case Builder.WILDCARD_BOUND:
+          case Collector.WILDCARD_BOUND:
             result.append('*');
             break;
-          case Builder.TYPE_ARGUMENT:
+          case Collector.TYPE_ARGUMENT:
             result.append(myPath[++pos]).append(';');
             break;
         }

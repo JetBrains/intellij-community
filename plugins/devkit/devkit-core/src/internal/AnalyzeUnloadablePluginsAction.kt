@@ -171,7 +171,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     analyzePluginFile(ideaPlugin, analysisErrors, components, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
 
     fun analyzeDependencies(ideaPlugin: IdeaPlugin) {
-      for (dependency in ideaPlugin.dependencies) {
+      for (dependency in ideaPlugin.depends) {
         val configFileName = dependency.configFile.stringValue ?: continue
         val depIdeaPlugin = resolvePluginDependency(dependency)
         if (depIdeaPlugin == null) {
@@ -189,7 +189,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val nonDynamicEPsInOptionalDependencies = mutableMapOf<String, MutableSet<String>>()
     val serviceOverridesInDependencies = mutableListOf<String>()
     for (descriptor in allPlugins.mapNotNull { DescriptorUtil.getIdeaPlugin(it) }) {
-      for (dependency in descriptor.dependencies) {
+      for (dependency in descriptor.depends) {
         if (dependency.optional.value == true && dependency.value == ideaPlugin) {
           val depIdeaPlugin = resolvePluginDependency(dependency)
           if (depIdeaPlugin == null) {

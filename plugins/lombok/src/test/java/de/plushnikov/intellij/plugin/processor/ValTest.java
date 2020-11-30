@@ -102,8 +102,7 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
     verifyLocalVariableType("java.util.Set<java.lang.String>");
   }
 
-  // TODO ignore this test for current IntelliJ versions
-  public void _testIssue802GenericTypeParamShouldNotBecomeObjectAfterMappingOuterCollection() {
+  public void testIssue802GenericTypeParamShouldNotBecomeObjectAfterMappingOuterCollection() {
     PsiFile file = myFixture.configureByText("a.java",
       "import lombok.val;\n" +
         "import java.util.Optional;\n" +

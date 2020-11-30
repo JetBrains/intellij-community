@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.sh.ShBundle;
 import com.intellij.terminal.TerminalExecutionConsole;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseDataReader;
@@ -60,7 +61,13 @@ public class ShRunConfigurationProfileState implements RunProfileState {
   }
 
   private ExecutionResult buildExecutionResult() throws ExecutionException {
-    GeneralCommandLine commandLine = createCommandLine();
+    GeneralCommandLine commandLine;
+    if (myRunConfiguration.isExecuteScriptFile()) {
+      commandLine = createCommandLineForFile();
+    }
+    else {
+      commandLine = createCommandLineForScript();
+    }
     ProcessHandler processHandler = createProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
     ConsoleView console = new TerminalExecutionConsole(myProject, processHandler);
@@ -95,7 +102,23 @@ public class ShRunConfigurationProfileState implements RunProfileState {
   }
 
   @NotNull
-  private GeneralCommandLine createCommandLine() throws ExecutionException {
+  private GeneralCommandLine createCommandLineForScript() {
+    PtyCommandLine commandLine = new PtyCommandLine();
+    if (!SystemInfo.isWindows) {
+      commandLine.getEnvironment().put("TERM", "xterm-256color"); //NON-NLS
+    }
+    commandLine.withConsoleMode(false);
+    commandLine.withInitialColumns(120);
+    commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
+    commandLine.setWorkDirectory(myRunConfiguration.getScriptWorkingDirectory());
+    commandLine.withExePath(ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh"));
+    commandLine.withParameters("-c");
+    commandLine.withParameters(myRunConfiguration.getScriptText());
+    return commandLine;
+  }
+
+  @NotNull
+  private GeneralCommandLine createCommandLineForFile() throws ExecutionException {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(myRunConfiguration.getScriptPath());
     if (virtualFile == null || virtualFile.getParent() == null) {
       throw new ExecutionException(ShBundle.message("error.message.cannot.determine.shell.script.parent.directory"));
@@ -140,23 +163,28 @@ public class ShRunConfigurationProfileState implements RunProfileState {
 
   @NotNull
   private String buildCommand() {
-    final WSLDistribution wslDistribution = ShRunConfiguration.getWSLDistributionIfNeeded(myRunConfiguration.getInterpreterPath(),
-                                                                                          myRunConfiguration.getScriptPath());
-    final List<String> commandLine = new ArrayList<>();
+    if (myRunConfiguration.isExecuteScriptFile()) {
+      final WSLDistribution wslDistribution = ShRunConfiguration.getWSLDistributionIfNeeded(myRunConfiguration.getInterpreterPath(),
+                                                                                            myRunConfiguration.getScriptPath());
+      final List<String> commandLine = new ArrayList<>();
+      addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs());
+      addIfPresent(commandLine, adaptPathForExecution(myRunConfiguration.getInterpreterPath(), null));
+      addIfPresent(commandLine, myRunConfiguration.getInterpreterOptions());
+      commandLine.add(adaptPathForExecution(myRunConfiguration.getScriptPath(), wslDistribution));
+      addIfPresent(commandLine, myRunConfiguration.getScriptOptions());
 
-
-    addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs());
-    addIfPresent(commandLine, adaptPathForExecution(myRunConfiguration.getInterpreterPath(), null));
-    addIfPresent(commandLine, myRunConfiguration.getInterpreterOptions());
-    commandLine.add(adaptPathForExecution(myRunConfiguration.getScriptPath(), wslDistribution));
-    addIfPresent(commandLine, myRunConfiguration.getScriptOptions());
-
-    if (wslDistribution != null) {
-      return wslDistribution
-        .patchCommandLine(new GeneralCommandLine(commandLine), myProject, wslDistribution.getWslPath(myRunConfiguration.getScriptWorkingDirectory()), false)
-        .getCommandLineString();
-    }
-    else {
+      if (wslDistribution != null) {
+        return wslDistribution
+          .patchCommandLine(new GeneralCommandLine(commandLine), myProject,
+                            wslDistribution.getWslPath(myRunConfiguration.getScriptWorkingDirectory()), false)
+          .getCommandLineString();
+      }
+      else {
+        return String.join(" ", commandLine);
+      }
+    } else {
+      final List<String> commandLine = new ArrayList<>();
+      addIfPresent(commandLine, myRunConfiguration.getScriptText());
       return String.join(" ", commandLine);
     }
   }

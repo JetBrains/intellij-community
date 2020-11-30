@@ -13,7 +13,9 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.fileTypes.FileType;
@@ -107,9 +109,15 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       postProcessEnabledRanges((PsiFile) formatted, formatted.getTextRange(), settingsForFile);
     }
     else {
+      boolean brokenProcFound = false;
       for (PostFormatProcessor postFormatProcessor : PostFormatProcessor.EP_NAME.getExtensionList()) {
         try {
           result = postFormatProcessor.processElement(result, settingsForFile);
+          if (!result.isValid() && !brokenProcFound) {
+            LOG.error(new RuntimeExceptionWithAttachments(String.format("PSI crash detected: processor=%s, result=%s", postFormatProcessor,
+                                                                        result), new Attachment("text", result.getText())));
+            brokenProcFound = true;
+          }
         }
         catch (ProcessCanceledException e) {
           throw e;

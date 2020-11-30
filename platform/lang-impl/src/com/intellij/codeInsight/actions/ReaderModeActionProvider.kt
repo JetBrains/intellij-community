@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions
 
+import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.matchMode
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.lang.LangBundle
@@ -11,12 +13,17 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.NotNullProducer
@@ -39,7 +46,7 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
           else {
             if (project.isInitialized) {
               val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.virtualFile
-              e.presentation.isEnabledAndVisible = ReaderModeFileEditorListener.matchMode(project, file)
+              e.presentation.isEnabledAndVisible = matchMode(project, file, editor)
             }
             else {
               e.presentation.isEnabledAndVisible = false
@@ -49,9 +56,10 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
       }
   }
 
-  private class ReaderModeAction(private val editor: Editor) : DumbAwareAction(LangBundle.messagePointer("action.ReaderModeProvider.text"),
-                                                                       LangBundle.messagePointer("action.ReaderModeProvider.description"),
-                                                                       null), CustomComponentAction {
+  private class ReaderModeAction(private val editor: Editor) : DumbAwareToggleAction(
+    LangBundle.messagePointer("action.ReaderModeProvider.text"),
+    LangBundle.messagePointer("action.ReaderModeProvider.description"),
+    null), CustomComponentAction {
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
       object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
         override fun iconTextSpace() = JBUI.scale(2)
@@ -82,14 +90,43 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
             font = FontUIResource(font.deriveFont(font.style, font.size - JBUIScale.scale(2).toFloat()))
           }
         }
-      }.apply {
-        foreground = JBColor(NotNullProducer { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor })
+      }.also {
+        it.foreground = JBColor(NotNullProducer { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor })
         if (!SystemInfo.isWindows) {
-          font = FontUIResource(font.deriveFont(font.style, font.size - JBUIScale.scale(2).toFloat()))
+          it.font = FontUIResource(it.font.deriveFont(it.font.style, it.font.size - JBUIScale.scale(2).toFloat()))
+        }
+
+        editor.project?.let { p ->
+          if (!ReaderModeSettings.instance(p).enabled) return@let
+
+          val connection = p.messageBus.connect(p)
+          val gotItTooltip = GotItTooltip("reader.mode.got.it", LangBundle.message("text.reader.mode.got.it.popup"), p)
+                              .withHeader(LangBundle.message("title.reader.mode.got.it.popup"))
+
+          if (gotItTooltip.canShow()) {
+            connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
+              override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
+                fileEditors.find { fe -> if (fe is PsiAwareTextEditorImpl) editor == fe.editor else false }?.let { _ ->
+                  gotItTooltip.setOnBalloonCreated { balloon ->
+                    balloon.addListener(object: JBPopupListener {
+                      override fun onClosed(event: LightweightWindowEvent) {
+                        connection.disconnect()
+                      }
+                    })}.
+                  show(it, GotItTooltip.BOTTOM_MIDDLE)
+                }
+              }
+            })
+          }
         }
       }
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun isSelected(e: AnActionEvent): Boolean {
+      val project = e.project ?: return false
+      return ReaderModeSettings.instance(project).enabled
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
       val project = e.project ?: return
 
       ReaderModeSettings.instance(project).enabled = !ReaderModeSettings.instance(project).enabled

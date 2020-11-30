@@ -14,7 +14,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -147,7 +150,9 @@ public abstract class DumbService {
         r.run();
         return true;
       });
-      if (success) break;
+      if (success) {
+        break;
+      }
     }
   }
 

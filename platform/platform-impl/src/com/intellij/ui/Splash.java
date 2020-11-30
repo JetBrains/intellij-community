@@ -31,6 +31,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.Base64;
+import java.util.Collections;
 
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
@@ -82,7 +83,7 @@ public final class Splash extends Window {
         if (StartupUiUtil.isUnderDarcula()) {
           flags |= ImageLoader.USE_CACHE;
         }
-        Image image = ImageLoader.loadFromUrl(Splash.class.getResource(progressTailIconName).toString(), null, flags, null, ScaleContext.create());
+        Image image = ImageLoader.loadFromUrl(Splash.class.getResource(progressTailIconName).toString(), null, flags, ScaleContext.create());
         if (image != null) {
           progressTail = new JBImageIcon(image);
         }
@@ -149,7 +150,7 @@ public final class Splash extends Window {
   }
 
   static @Nullable Image doLoadImage(@NotNull String path) {
-    return ImageLoader.load(path, null, Splash.class, null, ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(), !path.endsWith(".svg"));
+    return ImageLoader.load(path, Collections.emptyList(), Splash.class, null, ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(), !path.endsWith(".svg"));
   }
 
   @Override

@@ -182,7 +182,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           task()
         }
       }
-      return moduleRef.get()
+      val module = moduleRef.get()
+      if (module == null) {
+        LOG.error("No extension configured a module for $baseDir; extensions = ${EP_NAME.extensionList}")
+      }
+      return module
     }
 
     @JvmStatic

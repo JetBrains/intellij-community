@@ -195,7 +195,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
         String oldText = getText();
         try {
           setPreferredSize(null);
-          setText("W.");
+          setText(Bookmark.toString('W', true));  // the widest char in 0..9 and A..Z
           setPreferredSize(getPreferredSize());
         } finally {
           setText(oldText);

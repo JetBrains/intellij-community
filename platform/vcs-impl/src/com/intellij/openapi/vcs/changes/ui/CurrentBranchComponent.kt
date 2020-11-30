@@ -22,6 +22,7 @@ import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchStateProvider
 import com.intellij.vcs.branch.LinkedBranchData
 import com.intellij.vcsUtil.VcsUtil.getFilePath
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Dimension
 import java.beans.PropertyChangeListener
@@ -85,6 +86,7 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
       else emptySet()
   }
 
+  @Nls
   private fun getText(branches: Collection<BranchData>): String {
     val distinct = branches.distinctBy { it.branchName }
     return when (distinct.size) {
@@ -94,6 +96,7 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
     }
   }
 
+  @Nls
   private fun getTooltip(branches: Collection<BranchData>): String? {
     val distinct = branches.distinctBy { it.branchName to (it as? LinkedBranchData)?.linkedBranchName }
     return when (distinct.size) {
@@ -103,6 +106,7 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
     }
   }
 
+  @Nls
   private fun getMultiTooltip(branch: BranchData): String {
     val linkedBranchPart = if (branch is LinkedBranchData && branch.branchName != null) {
       branch.linkedBranchName?.let { " ${rightArrow()} $it" } ?: VcsBundle.message("changes.no.tracking.branch.suffix")
@@ -138,9 +142,11 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
     fun getCurrentBranch(project: Project, path: FilePath) =
       getProviders(project).asSequence().mapNotNull { it.getCurrentBranch(path) }.firstOrNull()
 
+    @Nls
     fun getPresentableText(branch: BranchData) = if (branch is LinkedBranchData) branch.branchName ?: "!"
     else branch.branchName.orEmpty()
 
+    @Nls
     fun getSingleTooltip(branch: BranchData) = if (branch is LinkedBranchData && branch.branchName != null)
       branch.linkedBranchName?.let { "${branch.branchName} ${rightArrow()} $it" } ?: VcsBundle.message("changes.no.tracking.branch")
     else null

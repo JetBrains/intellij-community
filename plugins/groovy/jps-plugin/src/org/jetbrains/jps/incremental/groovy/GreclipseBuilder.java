@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.groovy;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +47,7 @@ import java.util.*;
 public class GreclipseBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(GreclipseBuilder.class);
   private static final Key<Boolean> COMPILER_VERSION_INFO = Key.create("_greclipse_compiler_info_");
-  public static final String ID = "Groovy-Eclipse";
+  public static final @NlsSafe String ID = "Groovy-Eclipse";
   private static final Object ourGlobalEnvironmentLock = new String("GreclipseBuilder lock");
 
   private String myGreclipseJar;

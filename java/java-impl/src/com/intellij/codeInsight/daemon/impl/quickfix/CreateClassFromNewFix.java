@@ -133,7 +133,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     }
 
     templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
-    return supConstructor;
+    return null;
   }
 
   private static void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {

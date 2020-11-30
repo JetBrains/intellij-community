@@ -200,7 +200,7 @@ class FindInProjectTask {
       if (pair == null) return true;
 
       Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile,
-                                                                            __ -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+                                                                            __ -> ContainerUtil.newConcurrentSet());
       PsiFile psiFile = pair.first;
       VirtualFile sourceVirtualFile = pair.second;
       AtomicBoolean projectFileUsagesFound = new AtomicBoolean();
@@ -271,27 +271,24 @@ class FindInProjectTask {
 
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            ProgressManager.checkCanceled();
-            if (virtualFile.isDirectory() || !virtualFile.isValid() ||
-                !myFileMask.value(virtualFile) ||
-                globalCustomScope != null && !globalCustomScope.contains(virtualFile)) {
-              return;
-            }
+        ReadAction.run(() -> {
+          ProgressManager.checkCanceled();
+          if (virtualFile.isDirectory() || !virtualFile.isValid() ||
+              !myFileMask.value(virtualFile) ||
+              globalCustomScope != null && !globalCustomScope.contains(virtualFile)) {
+            return;
+          }
 
-            if (skipIndexed && ContainerUtil.find(mySearchers, p -> p.isCovered(virtualFile)) != null) {
-              return;
-            }
+          if (skipIndexed && ContainerUtil.find(mySearchers, p -> p.isCovered(virtualFile)) != null) {
+            return;
+          }
 
-            Pair.NonNull<PsiFile, VirtualFile> pair = findFile(virtualFile);
-            if (pair == null) return;
-            VirtualFile sourceVirtualFile = pair.second;
+          Pair.NonNull<PsiFile, VirtualFile> pair = findFile(virtualFile);
+          if (pair == null) return;
+          VirtualFile sourceVirtualFile = pair.second;
 
-            if (sourceVirtualFile != null && !alreadySearched.contains(sourceVirtualFile)) {
-              result.add(sourceVirtualFile);
-            }
+          if (sourceVirtualFile != null && !alreadySearched.contains(sourceVirtualFile)) {
+            result.add(sourceVirtualFile);
           }
         });
         return true;
@@ -326,11 +323,18 @@ class FindInProjectTask {
     else {
       boolean success = myFileIndex.iterateContent(iterator);
       if (success && globalCustomScope != null && globalCustomScope.isSearchInLibraries()) {
-        final VirtualFile[] librarySources = ReadAction.compute(() -> {
-          OrderEnumerator enumerator = myModule == null ? OrderEnumerator.orderEntries(myProject) : OrderEnumerator.orderEntries(myModule);
-          return enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
+        Pair<VirtualFile[], VirtualFile[]> libraryRoots = ReadAction.compute(() -> {
+          OrderEnumerator enumerator = (myModule == null ? OrderEnumerator.orderEntries(myProject) : OrderEnumerator.orderEntries(myModule))
+            .withoutModuleSourceEntries()
+            .withoutDepModules();
+          return Pair.create(enumerator.getSourceRoots(), enumerator.getClassesRoots());
         });
-        iterateAll(librarySources, globalCustomScope, iterator);
+
+        VirtualFile[] sourceRoots = libraryRoots.getFirst();
+        iterateAll(sourceRoots, globalCustomScope, iterator);
+
+        VirtualFile[] classRoots = libraryRoots.getSecond();
+        iterateAll(classRoots, globalCustomScope, iterator);
       }
     }
 

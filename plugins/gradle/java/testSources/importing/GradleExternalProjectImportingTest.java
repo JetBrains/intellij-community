@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.fixtures.BuildViewTestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,9 @@ public class GradleExternalProjectImportingTest extends GradleImportingTestCase 
 
   @Test
   public void testProjectImportUsingNonRootProjectPath() throws Exception {
+    // reuse generated wrapper for root project
+    FileUtil.copyDir(file("gradle"), file("../gradle"));
+
     createProjectSubFile("../settings.gradle", "rootProject.name = 'root'\n" +
                                                "include 'project', 'another_project'");
     createProjectSubFile("../build.gradle", "allprojects { apply plugin: 'java' }");

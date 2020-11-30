@@ -3,8 +3,9 @@
 # pytype has its own version of these files, and thus doesn't mind if it
 # can't parse the typeshed version:
 stdlib/2/__builtin__.pyi
+stdlib/2/builtins.pyi
 stdlib/2/typing.pyi
-stdlib/2and3/builtins.pyi
+stdlib/3/builtins.pyi
 stdlib/3/typing.pyi
 
 # third_party stubs with constructs that pytype doesn't yet support:
@@ -15,5 +16,3 @@ third_party/2and3/attr/converters.pyi
 third_party/2and3/attr/filters.pyi
 third_party/2and3/attr/validators.pyi
 third_party/2and3/pynamodb/models.pyi
-third_party/3/six/__init__.pyi
-third_party/3/six/moves/__init__.pyi

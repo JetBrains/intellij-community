@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -20,10 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -167,9 +161,17 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       throw new ExecutionException(message, o.cause);
     }
     else if (info == null || info.handler == null) {
-      throw new ExecutionException("Unable to acquire remote proxy for: " + getName(target));
+      throw new ExecutionException(ExecutionBundle.message("dialog.remote.process.unable.to.acquire.remote.proxy.for", getName(target)));
+    }
+    publishPort(info.port);
+    if (info.servicePort != -1) {
+      publishPort(info.servicePort);
     }
     return acquire(info);
+  }
+
+  protected void publishPort(int port) throws ExecutionException {
+
   }
 
   @NotNull
@@ -245,7 +247,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     processHandler.startNotify();
   }
 
-  protected abstract RunProfileState getRunProfileState(@NotNull Target target, @NotNull Parameters configuration, @NotNull Executor executor)
+  protected abstract RunProfileState getRunProfileState(@NotNull Target target,
+                                                        @NotNull Parameters configuration,
+                                                        @NotNull Executor executor)
     throws ExecutionException;
 
   private boolean getExistingInfo(@NotNull Ref<RunningInfo> ref, @NotNull Pair<Target, Parameters> key) {
@@ -342,7 +346,17 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
               if (text.startsWith(prefix)) {
                 String pair = text.substring(prefix.length()).trim();
                 int idx = pair.indexOf("/");
-                result = new RunningInfo(info.handler, Integer.parseInt(pair.substring(0, idx)), pair.substring(idx + 1));
+                int port = Integer.parseInt(pair.substring(0, idx));
+
+                int idxEnd = pair.indexOf("#");
+                if (idxEnd > 0) {
+                  String name = pair.substring(idx + 1, idxEnd);
+                  int servicePort = Integer.parseInt(pair.substring(idxEnd + 1));
+                  result = new RunningInfo(info.handler, port, name, servicePort);
+                }
+                else {
+                  result = new RunningInfo(info.handler, port, pair.substring(idx + 1));
+                }
                 myProcMap.put(key, result);
                 myProcMap.notifyAll();
               }
@@ -374,7 +388,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   protected void onProcessTerminated(ProcessEvent event) {}
 
-  protected void sendDataAfterStart(ProcessHandler handler){}
+  protected void sendDataAfterStart(ProcessHandler handler) {}
 
   @NotNull
   private static String getLocalHost() {
@@ -422,7 +436,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   @NotNull
-  protected ThrowableComputable<@Nullable EntryPoint, Exception> acquireInProcessFactory(Target target, Parameters configuration) throws Exception {
+  protected ThrowableComputable<@Nullable EntryPoint, Exception> acquireInProcessFactory(Target target, Parameters configuration)
+    throws Exception {
     return () -> null;
   }
 
@@ -452,12 +467,18 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   private static class RunningInfo extends Info {
     final int port;
     final String name;
+    final int servicePort; //port number when was exported with RemoteServer.start(knownPort=true), -1 otherwise
     Object entryPointHardRef;
 
     RunningInfo(ProcessHandler handler, int port, String name) {
+      this(handler, port, name, -1);
+    }
+
+    RunningInfo(ProcessHandler handler, int port, String name, int servicePort) {
       super(handler);
       this.port = port;
       this.name = name;
+      this.servicePort = servicePort;
     }
 
     @Override
@@ -468,7 +489,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   private static class FailedInfo extends RunningInfo {
     final Throwable cause;
-    final String stderr;
+    final @NlsSafe String stderr;
 
     FailedInfo(Throwable cause, String stderr) {
       super(null, -1, null);

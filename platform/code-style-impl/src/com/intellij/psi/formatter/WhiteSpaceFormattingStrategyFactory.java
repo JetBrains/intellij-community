@@ -66,11 +66,6 @@ public final class WhiteSpaceFormattingStrategyFactory {
       return strategies;
     }
     final Collection<Language> languages = Language.getRegisteredLanguages();
-    if (languages == null) {
-      final List<WhiteSpaceFormattingStrategy> result = Collections.emptyList();
-      myCachedStrategies.set(new PatchedWeakReference<>(result));
-      return result;
-    }
 
     Set<WhiteSpaceFormattingStrategy> result = new HashSet<>(SHARED_STRATEGIES);
     final LanguageWhiteSpaceFormattingStrategy languageStrategy = LanguageWhiteSpaceFormattingStrategy.INSTANCE;

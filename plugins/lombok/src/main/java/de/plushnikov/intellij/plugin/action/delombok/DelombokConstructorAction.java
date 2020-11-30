@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
@@ -8,12 +8,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class DelombokConstructorAction extends AbstractDelombokAction {
 
+  @Override
   @NotNull
   protected DelombokHandler createHandler() {
     return new DelombokHandler(
-      ServiceManager.getService(AllArgsConstructorProcessor.class),
-      ServiceManager.getService(NoArgsConstructorProcessor.class),
-      ServiceManager.getService(RequiredArgsConstructorProcessor.class));
+      ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class),
+      ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class),
+      ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class));
   }
 
 }

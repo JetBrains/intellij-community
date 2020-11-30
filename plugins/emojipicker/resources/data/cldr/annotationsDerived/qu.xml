@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<!-- Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file. -->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="qu"/>
+	</identity>
+	<annotations>
+		<annotation cp="¤" type="tts">Mana riqsisqa Qullqi</annotation>
+		<annotation cp="֏" type="tts">Dram Armenio</annotation>
+		<annotation cp="؋" type="tts">Afgani Afgano</annotation>
+		<annotation cp="৳" type="tts">Taka Bangladesí</annotation>
+		<annotation cp="฿" type="tts">Baht Tailandés</annotation>
+		<annotation cp="៛" type="tts">Riel Camboyano</annotation>
+		<annotation cp="₡" type="tts">Colón Costarricense</annotation>
+		<annotation cp="₦" type="tts">Naira Nigeriano</annotation>
+		<annotation cp="₪" type="tts">Nuevo Séquel</annotation>
+		<annotation cp="₫" type="tts">Dong Vietnamita</annotation>
+		<annotation cp="₭" type="tts">Kip Laosiano</annotation>
+		<annotation cp="₮" type="tts">Tugrik Mongol</annotation>
+		<annotation cp="₲" type="tts">Guaraní Paraguayo</annotation>
+		<annotation cp="₴" type="tts">Grivna</annotation>
+		<annotation cp="₵" type="tts">Cedi Ganés</annotation>
+		<annotation cp="₸" type="tts">Tenge Kazajo</annotation>
+		<annotation cp="₺" type="tts">Lira Turca</annotation>
+		<annotation cp="₼" type="tts">Manat Azerbaiyano</annotation>
+		<annotation cp="₾" type="tts">Lari Georgiano</annotation>
+	</annotations>
+</ldml>

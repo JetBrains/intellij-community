@@ -29,8 +29,7 @@ abstract class BaseBusConnection implements MessageBusImpl.MessageHandlerHolder 
       }
       else {
         int size = list.length;
-        newList = new Object[size + 2];
-        System.arraycopy(list, 0, newList, 0, size);
+        newList = Arrays.copyOf(list, size + 2);
         newList[size] = topic;
         newList[size + 1] = handler;
       }

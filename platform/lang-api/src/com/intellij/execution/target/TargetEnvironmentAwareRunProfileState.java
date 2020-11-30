@@ -2,8 +2,11 @@
 package com.intellij.execution.target;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessOutputType;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +25,12 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
                                       @NotNull TargetProgressIndicator targetProgressIndicator)
     throws ExecutionException;
 
+  default void prepareTargetToCommandExecution(ExecutionEnvironment env, Runnable runOnSuccessOnAWT) throws ExecutionException {
+    ExecutionManager executionManager = ExecutionManager.getInstance(env.getProject());
+    executionManager.executePreparationTasks(env, this).onSuccess((Object o) -> {
+      ApplicationManager.getApplication().invokeLater(runOnSuccessOnAWT);
+    });
+  }
 
   interface TargetProgressIndicator {
     TargetProgressIndicator EMPTY = new TargetProgressIndicator() {
@@ -30,6 +39,14 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
 
       @Override
       public boolean isCanceled() {
+        return false;
+      }
+
+      @Override
+      public void stop() { }
+
+      @Override
+      public boolean isStopped() {
         return false;
       }
     };
@@ -41,5 +58,15 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
     }
 
     boolean isCanceled();
+
+    void stop();
+
+    boolean isStopped();
+
+    default void stopWithErrorMessage(@NotNull String text) {
+      addText(text, ProcessOutputType.STDERR);
+      addText("\n", ProcessOutputType.STDERR);
+      stop();
+    }
   }
 }

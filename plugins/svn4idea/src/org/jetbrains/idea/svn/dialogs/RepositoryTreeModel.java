@@ -12,6 +12,7 @@ import org.jetbrains.idea.svn.dialogs.browserCache.*;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -71,8 +72,7 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
 
   public TreeNode[] getPathToSubRoot(final TreeNode node) {
     final TreeNode[] path = getPathToRoot(node);
-    final TreeNode[] result = new TreeNode[path.length - 1];
-    System.arraycopy(path, 1, result, 0, path.length - 1);
+    final TreeNode[] result = Arrays.copyOfRange(path, 1, path.length);
     return result;
   }
 
@@ -131,8 +131,7 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
 
     TreeNode[] oldPath = getPathToRoot(oldNode);
     if (! (oldPath[0] instanceof RepositoryTreeNode)) {
-      final TreeNode[] result = new TreeNode[oldPath.length - 1];
-      System.arraycopy(oldPath, 1, result, 0, oldPath.length - 1);
+      final TreeNode[] result = Arrays.copyOfRange(oldPath, 1, oldPath.length);
       oldPath = result;
     }
 

@@ -9,7 +9,7 @@ class CannotUnloadPluginException(value: String) : ProcessCanceledException(Runt
 interface DynamicPluginListener {
   companion object {
     @JvmField
-    val TOPIC = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
+    val TOPIC = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
   }
 
   @JvmDefault

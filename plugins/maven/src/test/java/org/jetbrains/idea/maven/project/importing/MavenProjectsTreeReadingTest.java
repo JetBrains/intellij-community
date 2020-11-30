@@ -394,11 +394,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: project m deleted: <none> ", l.log);
     l.log = "";
 
-    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
     assertEquals("", l.log);
     l.log = "";
 
-    myTree.updateAll(true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(true, getMavenGeneralSettings(), getMavenProgressIndicator());
     assertEquals("updated: project m deleted: <none> ", l.log);
   }
 
@@ -424,11 +424,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: project m deleted: <none> ", l.log);
     l.log = "";
 
-    myTree.update(Collections.singletonList(myProjectPom), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.update(Collections.singletonList(myProjectPom), false, getMavenGeneralSettings(), getMavenProgressIndicator());
     assertEquals("", l.log);
     l.log = "";
 
-    myTree.update(Collections.singletonList(myProjectPom), true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.update(Collections.singletonList(myProjectPom), true, getMavenGeneralSettings(), getMavenProgressIndicator());
     assertEquals("updated: project deleted: <none> ", l.log);
     l.log = "";
   }
@@ -634,7 +634,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                 getMavenGeneralSettings(),
                                 embeddersManager,
                                 NULL_MAVEN_CONSOLE,
-                                EMPTY_MAVEN_PROCESS
+                                getMavenProgressIndicator()
       );
     }
     finally {
@@ -685,18 +685,18 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                 getMavenGeneralSettings(),
                                 embeddersManager,
                                 NULL_MAVEN_CONSOLE,
-                                EMPTY_MAVEN_PROCESS
+                                getMavenProgressIndicator()
       );
-      myProjectResolver.resolvePlugins(parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myProjectResolver.resolvePlugins(parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
       myProjectResolver
-        .resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+        .resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
     }
     finally {
       embeddersManager.releaseInTests();
     }
 
     assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
-    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
     assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
   }
 
@@ -1547,13 +1547,13 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addListener(l);
 
     myTree.addManagedFilesWithProfiles(Collections.singletonList(myProjectPom), MavenExplicitProfiles.NONE);
-    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
 
     assertEquals("updated: parent m1 m2 deleted: <none> ", l.log);
     l.log = "";
 
     myTree.removeManagedFiles(Arrays.asList(myProjectPom));
-    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
 
     assertEquals("updated: <none> deleted: m1 m2 parent ", l.log);
   }
@@ -1864,7 +1864,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     try {
       myProjectResolver = new MavenProjectResolver(myTree);
       myProjectResolver
-        .resolve(myProject, parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+        .resolve(myProject, parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
     }
     finally {
       embeddersManager.releaseInTests();
@@ -1942,7 +1942,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                 getMavenGeneralSettings(),
                                 embeddersManager,
                                 NULL_MAVEN_CONSOLE,
-                                EMPTY_MAVEN_PROCESS
+                                getMavenProgressIndicator()
       );
     }
     finally {
@@ -2050,7 +2050,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                 getMavenGeneralSettings(),
                                 embeddersManager,
                                 NULL_MAVEN_CONSOLE,
-                                EMPTY_MAVEN_PROCESS
+                                getMavenProgressIndicator()
       );
     }
     finally {
@@ -2231,7 +2231,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
       myProjectResolver = new MavenProjectResolver(myTree);
-      myProjectResolver.resolve(myProject, project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myProjectResolver.resolve(myProject, project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
     }
     finally {
       embeddersManager.releaseInTests();

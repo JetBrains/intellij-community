@@ -13,6 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class ProjectManagerEx extends ProjectManager {
   public static ProjectManagerEx getInstanceEx() {
@@ -51,6 +52,8 @@ public abstract class ProjectManagerEx extends ProjectManager {
   }
 
   public abstract @Nullable Project openProject(@NotNull Path projectStoreBaseDir, @NotNull OpenProjectTask options);
+
+  public abstract @NotNull CompletableFuture<@Nullable Project> openProjectAsync(@NotNull Path projectStoreBaseDir, @NotNull OpenProjectTask options);
 
   public abstract @NotNull Project loadProject(@NotNull Path path);
 

@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import kotlin.math.round
 
@@ -43,11 +44,11 @@ class FilePredictionNextCandidatesAction : AnAction() {
       return
     }
 
+    val file: PsiFile? = CommonDataKeys.PSI_FILE.getData(e.dataContext)
     val title = FilePredictionBundle.message("file.prediction.predict.next.files.process.title")
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, false) {
       override fun run(indicator: ProgressIndicator) {
         val predictor = FileUsagePredictorProvider.getFileUsagePredictor(getCandidatesProvider())
-        val file: PsiFile? = CommonDataKeys.PSI_FILE.getData(e.dataContext)
         val limit: Int = Registry.get("filePrediction.action.calculate.candidates").asInteger()
         val candidates = predictor.predictNextFile(project, file?.virtualFile, limit)
         ApplicationManager.getApplication().invokeLater {
@@ -127,7 +128,7 @@ class FilePredictionNextCandidatesAction : AnAction() {
 
 private data class FileCandidatePresentation(val file: VirtualFile?,
                                              val icon: Icon?,
-                                             val presentableName: String,
+                                             @Nls val presentableName: String,
                                              val original: FilePredictionCandidate)
 
 private class FilePredictionCustomCandidateProvider(private val providers: List<FilePredictionCandidateProvider>) : CompositeCandidateProvider() {

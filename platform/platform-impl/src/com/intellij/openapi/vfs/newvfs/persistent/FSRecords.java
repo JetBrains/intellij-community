@@ -57,7 +57,7 @@ public final class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  private static final int VERSION = 56 +
+  private static final int VERSION = 57 +
                                      (WE_HAVE_CONTENT_HASHES ? 0x10 : 0) +
                                      (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0x37 : 0) +
                                      (bulkAttrReadSupport ? 0x27 : 0) +
@@ -976,9 +976,12 @@ public final class FSRecords {
       else {
         toSave = result;
       }
-
-      updateSymlinksForNewChildren(parentId, children, toSave);
-      doSaveChildren(parentId, toSave);
+      // optimization: when converter returned unchanged children (see e.g. PersistentFSImpl.findChildInfo())
+      // then do not save them back again unnecessarily
+      if (!toSave.equals(children)) {
+        updateSymlinksForNewChildren(parentId, children, toSave);
+        doSaveChildren(parentId, toSave);
+      }
       return toSave;
     }
     catch (ProcessCanceledException e) {

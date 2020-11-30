@@ -39,7 +39,10 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList().forEach(it -> mainListModel.addElement(it.createWelcomeTab(this)));
 
     JBList<WelcomeScreenTab> tabList = createListWithTabs(mainListModel);
-    tabList.addListSelectionListener(e -> centralPanel.select(tabList.getSelectedValue(), true));
+    tabList.addListSelectionListener(e -> {
+      centralPanel.select(tabList.getSelectedValue(), true);
+      WelcomeScreenEventCollector.logTabSelected(tabList.getSelectedValue());
+    });
     tabList.getAccessibleContext().setAccessibleName(message("welcome.screen.welcome.screen.categories.accessible.name"));
 
     JComponent logoComponent = createSmallLogo();
@@ -62,9 +65,19 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     if (!mainListModel.isEmpty()) {
       tabList.setSelectedIndex(0);
       JComponent firstShownPanel = mainListModel.get(0).getAssociatedComponent();
-      UiNotifyConnector.doWhenFirstShown(firstShownPanel, () -> IdeFocusManager.getGlobalInstance()
-        .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(firstShownPanel), true));
+      UiNotifyConnector.doWhenFirstShown(firstShownPanel, () -> {
+                                           IdeFocusManager.getGlobalInstance()
+                                             .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(firstShownPanel), true);
+                                           WelcomeScreenEventCollector.logWelcomeScreenShown();
+                                         }
+      );
     }
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    WelcomeScreenEventCollector.logWelcomeScreenHide();
   }
 
   @NotNull
@@ -118,7 +131,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
-      JComponent keyComponent = value.getKeyComponent();
+      JComponent keyComponent = value.getKeyComponent(list);
       JPanel wrappedPanel = JBUI.Panels.simplePanel(keyComponent);
       UIUtil.setBackgroundRecursively(wrappedPanel, isSelected ? UIUtil.getListSelectionBackground(cellHasFocus): getMainTabListBackground());
       UIUtil.setForegroundRecursively(wrappedPanel, UIUtil.getListForeground(isSelected, cellHasFocus));
@@ -130,20 +143,25 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   }
 
   public abstract static class DefaultWelcomeScreenTab implements WelcomeScreenTab, Accessible {
-
-    private final JComponent myKeyComponent;
+    protected final JComponent myKeyComponent;
     private JComponent myAssociatedComponent;
     private final JBLabel myLabel;
+    private final WelcomeScreenEventCollector.TabType myType;
 
     public DefaultWelcomeScreenTab(@NotNull @Nls String tabName) {
+      this(tabName, WelcomeScreenEventCollector.TabType.TabNavOther);
+    }
+
+    DefaultWelcomeScreenTab(@NotNull @Nls String tabName, @NotNull WelcomeScreenEventCollector.TabType tabType) {
       myLabel = new JBLabel(tabName);
+      myType = tabType;
       myKeyComponent = JBUI.Panels.simplePanel().addToLeft(myLabel).withBackground(getMainTabListBackground())
         .withBorder(JBUI.Borders.empty(8, 0));
     }
 
     @Override
     @NotNull
-    public JComponent getKeyComponent() {
+    public JComponent getKeyComponent(@NotNull JComponent parent) {
       return myKeyComponent;
     }
 
@@ -154,6 +172,10 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
         myAssociatedComponent = buildComponent();
       }
       return myAssociatedComponent;
+    }
+
+    WelcomeScreenEventCollector.TabType getType() {
+      return myType;
     }
 
     @Override

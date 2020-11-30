@@ -69,6 +69,12 @@ class RecordBuilder {
     myRecordText.append(fieldAccessor.getText());
   }
 
+  void addModifierList(@NotNull PsiModifierList modifierList) {
+    modifierList.setModifierProperty(PsiModifier.STATIC, false);
+    modifierList.setModifierProperty(PsiModifier.FINAL, false);
+    addPsiElement(modifierList);
+  }
+
   void addPsiElement(@NotNull PsiElement psiElement) {
     myRecordText.append(psiElement.getText());
   }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
   }
   
   @NotNull
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
@@ -59,7 +60,7 @@ public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
   }
 
   @Nullable
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return myDescription;
   }
 

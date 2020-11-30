@@ -25,12 +25,14 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import org.jdom.Attribute
 import org.jdom.Element
+import org.jdom.JDOMException
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
+import java.io.IOException
 import java.io.StringReader
 import java.nio.file.Paths
 import java.util.*
@@ -95,20 +97,34 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                virtualFileManager: VirtualFileUrlManager): ModuleEntity? {
     if (skipLoadingIfFileDoesNotExist && !fileUrl.toPath().exists()) return null
 
-    val moduleOptions = readModuleOptions(reader)
-    val (externalSystemOptions, externalSystemId) = readExternalSystemOptions(reader, moduleOptions)
+    val moduleOptions: Map<String?, String?>
+    val customRootsSerializer: CustomModuleRootsSerializer?
+    val customDir: String?
+    val externalSystemOptions: Map<String?, String?>
+    val externalSystemId: String?
+    val entitySource = try {
+      moduleOptions = readModuleOptions(reader)
+      val pair = readExternalSystemOptions(reader, moduleOptions)
+      externalSystemOptions = pair.first
+      externalSystemId = pair.second
 
-    val customRootsSerializer = moduleOptions[JpsProjectLoader.CLASSPATH_ATTRIBUTE]?.let { customSerializerId ->
-      val serializer = CUSTOM_ROOTS_SERIALIZER_EP.extensions().filter { it.id == customSerializerId }.findAny().orElse(null)
-      if (serializer == null) {
-        LOG.warn("Classpath storage provider $customSerializerId not found")
+      customRootsSerializer = moduleOptions[JpsProjectLoader.CLASSPATH_ATTRIBUTE]?.let { customSerializerId ->
+        val serializer = CUSTOM_ROOTS_SERIALIZER_EP.extensions().filter { it.id == customSerializerId }.findAny().orElse(null)
+        if (serializer == null) {
+          LOG.warn("Classpath storage provider $customSerializerId not found")
+        }
+        return@let serializer
       }
-      return@let serializer
+
+      customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
+      customRootsSerializer?.createEntitySource(fileUrl, internalEntitySource, customDir, virtualFileManager)
+                         ?: createEntitySource(externalSystemId)
+    }
+    catch (e: JDOMException) {
+      builder.addModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), internalEntitySource)
+      throw e
     }
 
-    val customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
-    val entitySource = customRootsSerializer?.createEntitySource(fileUrl, internalEntitySource, customDir, virtualFileManager)
-                       ?: createEntitySource(externalSystemId)
     val moduleEntity = builder.addModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), entitySource)
     val moduleGroup = modulePath.group
     if (moduleGroup != null) {
@@ -363,6 +379,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       if (serializer != null) {
         val customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
         serializer.saveRoots(module, entities, writer, customDir, fileUrl, storage, virtualFileManager)
+        writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
       }
       else {
         LOG.warn("Classpath storage provider $customSerializerId not found")

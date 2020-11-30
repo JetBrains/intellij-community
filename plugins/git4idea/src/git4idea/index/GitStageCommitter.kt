@@ -6,19 +6,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.AbstractCommitter
+import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcsUtil.VcsFileUtil
+import git4idea.GitUtil
 import git4idea.GitUtil.getRepositoryForFile
 import git4idea.checkin.GitCommitOptions
 import git4idea.checkin.GitPushAfterCommitDialog
 import git4idea.checkin.GitRepositoryCommitter
 import git4idea.checkin.isPushAfterCommit
-import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.repo.GitRepository
+import git4idea.repo.isSubmodule
 import git4idea.util.GitFileUtils.addPaths
 
-internal class GitStageCommitState(val roots: Collection<VirtualFile>, val commitMessage: String)
+internal class GitStageCommitState(val roots: Set<VirtualFile>, val commitMessage: String)
 
 internal class GitStageCommitter(
   project: Project,
@@ -31,7 +34,9 @@ internal class GitStageCommitter(
   val failedRoots = mutableMapOf<VirtualFile, VcsException>()
 
   override fun commit() {
-    for (root in commitState.roots) {
+    val roots = commitState.roots + commitContext.commitWithoutChangesRoots.map { it.path }
+
+    for (root in roots) {
       try {
         val toStageInRoot = toStage[root]
         if (toStageInRoot?.isNotEmpty() == true) {
@@ -65,8 +70,14 @@ internal class GitStageCommitter(
   override fun onFailure() = Unit
 
   override fun onFinish() {
+    for (repository in successfulRepositories) {
+      GitUtil.getRepositoryManager(project).updateRepository(repository.root)
+      if (repository.isSubmodule()) {
+        VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root.parent)
+      }
+    }
+
     VcsFileUtil.markFilesDirty(project, commitState.roots)
-    GitIndexFileSystemRefresher.refreshRoots(project, commitState.roots)
   }
 
   @Throws(VcsException::class)

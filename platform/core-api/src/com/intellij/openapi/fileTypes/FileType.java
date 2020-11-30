@@ -5,11 +5,13 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.nio.charset.Charset;
 
 /**
  * <p>Describes a filetype.</p>
@@ -19,6 +21,10 @@ import javax.swing.*;
  * can be used for non-static mapping.</p>
  *
  * <p>Use {@link LanguageFileType} for files having {@link com.intellij.lang.Language} support.</p>
+ *
+ * <p>Use {@link CharsetHintSupplied} to force single encoding for all files with corresponding file type.
+ * It helps to avoid excess content loading on charset detection.
+ * </p>
  *
  * @see com.intellij.openapi.fileTypes.FileTypes
  * @see INativeFileType
@@ -68,5 +74,50 @@ public interface FileType extends Scheme {
    * @param content File content.
    * @return The character set name, in the format supported by {@link java.nio.charset.Charset} class.
    */
-  @NonNls @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content);
+  default @NonNls @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+    // TODO see MetadataJsonFileType (it's actually text but tries indexing itself as binary)
+    // if (isBinary()) {
+    //   throw new UnsupportedOperationException();
+    // }
+    CharsetHint hint = getCharsetHint();
+    if (hint instanceof CharsetHint.ForcedCharset) {
+      return ((CharsetHint.ForcedCharset)hint).getCharset().name();
+    }
+    return null;
+  }
+
+  /**
+   * A method to specify how {@link FileType}'s charset is evaluated for corresponding files. There are possible cases:
+   * <ul>
+   *   <li>In cases when charset is always the same for every file of a given file type, one could use {@link CharsetHint.ForcedCharset}.</li>
+   *   <li>When file type can be determined using only the file's binary content then {@link CharsetHint#CONTENT_DEPENDENT_CHARSET} could be used.</li>
+   *   <li>Charset may depends on sibling file's. For example, JSP charset can be evaluated using <i>web.xml</i>.
+   *     In this case {@link CharsetHint#NO_HINT} should be used.</li>
+   * </ul>
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  default CharsetHint getCharsetHint() {
+    return CharsetHint.NO_HINT;
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.NonExtendable
+  interface CharsetHint {
+    final class ForcedCharset implements CharsetHint {
+      @NotNull
+      private final Charset myCharset;
+
+      @NotNull
+      public ForcedCharset(@NotNull Charset charset) {myCharset = charset;}
+
+      @NotNull
+      public Charset getCharset() {
+        return myCharset;
+      }
+    }
+
+    CharsetHint CONTENT_DEPENDENT_CHARSET = new CharsetHint() {};
+    CharsetHint NO_HINT = new CharsetHint() {};
+  }
 }

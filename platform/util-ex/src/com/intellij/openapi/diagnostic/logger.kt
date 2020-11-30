@@ -35,18 +35,19 @@ inline fun Logger.debugOrInfoIfTestMode(e: Exception? = null, lazyMessage: () ->
   }
 }
 
+/** Consider using [Result.getOrLogException] for more straight-forward API instead. */
 inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
-  try {
-    return runnable()
-  }
-  catch (e: ProcessCanceledException) {
-    throw e
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    error(e)
-    return null
-  }
+  return kotlin.runCatching {
+    runnable()
+  }.getOrLogException(this)
+}
+
+fun <T> Result<T>.getOrLogException(logger: Logger): T? {
+  return onFailure { e ->
+    when (e) {
+      is ProcessCanceledException,
+      is CancellationException -> throw e
+      else -> logger.error(e)
+    }
+  }.getOrNull()
 }

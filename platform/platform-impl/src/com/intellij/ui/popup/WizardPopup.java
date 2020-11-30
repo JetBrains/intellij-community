@@ -55,6 +55,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final ActionMap myActionMap = new ActionMap();
   private final InputMap myInputMap = new InputMap();
 
+  private boolean myKeyPressedReceived;
+
   /**
    * @deprecated use {@link #WizardPopup(Project, JBPopup, PopupStep)}
    */
@@ -343,20 +345,18 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final boolean dispatch(KeyEvent event) {
-    if (event.getID() != KeyEvent.KEY_PRESSED &&
-        event.getID() != KeyEvent.KEY_RELEASED &&
-        event.getID() != KeyEvent.KEY_TYPED) {
-      // do not dispatch these events to Swing
-      event.consume();
-      return true;
-    }
-
     if (event.getID() == KeyEvent.KEY_PRESSED) {
+      myKeyPressedReceived = true;
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
       if (proceedKeyEvent(event, stroke)) return true;
     }
+    else if (!myKeyPressedReceived) {
+      // key was pressed while this popup wasn't active, ignore the event
+      return false;
+    }
 
     if (event.getID() == KeyEvent.KEY_RELEASED) {
+      myKeyPressedReceived = false;
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), true);
       return proceedKeyEvent(event, stroke);
     }
@@ -386,7 +386,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public Rectangle getBounds() {
-    return new Rectangle(getContent().getLocationOnScreen(), getContent().getSize());
+    JComponent content = isDisposed() ? null : getContent();
+    return content == null ? null : new Rectangle(content.getLocationOnScreen(), content.getSize());
   }
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {

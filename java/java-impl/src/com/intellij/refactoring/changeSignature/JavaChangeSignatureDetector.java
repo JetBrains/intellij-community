@@ -2,7 +2,6 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -49,9 +48,9 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   }
 
   @Override
-  public TextRange getHighlightingRange(@NotNull DetectedJavaChangeInfo changeInfo) {
+  public @NotNull TextRange getHighlightingRange(@NotNull DetectedJavaChangeInfo changeInfo) {
     PsiMethod method = changeInfo.getMethod();
-    return method != null ? getSignatureRange(method) : null;
+    return getSignatureRange(method);
   }
 
   @Override
@@ -141,7 +140,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     return currentInfo.createNextInfo(method, delegate);
   }
 
-  public static TextRange getSignatureRange(PsiMethod method) {
+  public static @NotNull TextRange getSignatureRange(@NotNull PsiMethod method) {
     int endOffset = method.getThrowsList().getTextRange().getEndOffset();
     int startOffset = method.getTextRange().getStartOffset();
     return new TextRange(startOffset, endOffset);

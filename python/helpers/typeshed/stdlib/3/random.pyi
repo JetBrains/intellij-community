@@ -1,11 +1,3 @@
-# Stubs for random
-# Ron Murawski <ron@horizonchess.com>
-# Updated by Jukka Lehtosalo
-
-# based on http://docs.python.org/3.2/library/random.html
-
-# ----- random classes -----
-
 import _random
 import sys
 from typing import AbstractSet, Any, Callable, Iterable, List, MutableSequence, Optional, Sequence, Tuple, TypeVar, Union
@@ -18,21 +10,20 @@ class Random(_random.Random):
     def getstate(self) -> Tuple[Any, ...]: ...
     def setstate(self, state: Tuple[Any, ...]) -> None: ...
     def getrandbits(self, __k: int) -> int: ...
-    def randrange(self, start: int, stop: Union[int, None] = ..., step: int = ...) -> int: ...
+    def randrange(self, start: int, stop: Optional[int] = ..., step: int = ...) -> int: ...
     def randint(self, a: int, b: int) -> int: ...
     if sys.version_info >= (3, 9):
         def randbytes(self, n: int) -> bytes: ...
     def choice(self, seq: Sequence[_T]) -> _T: ...
-    if sys.version_info >= (3, 6):
-        def choices(
-            self,
-            population: Sequence[_T],
-            weights: Optional[Sequence[float]] = ...,
-            *,
-            cum_weights: Optional[Sequence[float]] = ...,
-            k: int = ...,
-        ) -> List[_T]: ...
-    def shuffle(self, x: MutableSequence[Any], random: Union[Callable[[], float], None] = ...) -> None: ...
+    def choices(
+        self,
+        population: Sequence[_T],
+        weights: Optional[Sequence[float]] = ...,
+        *,
+        cum_weights: Optional[Sequence[float]] = ...,
+        k: int = ...,
+    ) -> List[_T]: ...
+    def shuffle(self, x: MutableSequence[Any], random: Optional[Callable[[], float]] = ...) -> None: ...
     if sys.version_info >= (3, 9):
         def sample(
             self, population: Union[Sequence[_T], AbstractSet[_T]], k: int, *, counts: Optional[Iterable[_T]] = ...
@@ -67,17 +58,14 @@ if sys.version_info >= (3, 9):
     def randbytes(n: int) -> bytes: ...
 
 def choice(seq: Sequence[_T]) -> _T: ...
-
-if sys.version_info >= (3, 6):
-    def choices(
-        population: Sequence[_T],
-        weights: Optional[Sequence[float]] = ...,
-        *,
-        cum_weights: Optional[Sequence[float]] = ...,
-        k: int = ...,
-    ) -> List[_T]: ...
-
-def shuffle(x: MutableSequence[Any], random: Union[Callable[[], float], None] = ...) -> None: ...
+def choices(
+    population: Sequence[_T],
+    weights: Optional[Sequence[float]] = ...,
+    *,
+    cum_weights: Optional[Sequence[float]] = ...,
+    k: int = ...,
+) -> List[_T]: ...
+def shuffle(x: MutableSequence[Any], random: Optional[Callable[[], float]] = ...) -> None: ...
 
 if sys.version_info >= (3, 9):
     def sample(population: Union[Sequence[_T], AbstractSet[_T]], k: int, *, counts: Optional[Iterable[_T]] = ...) -> List[_T]: ...

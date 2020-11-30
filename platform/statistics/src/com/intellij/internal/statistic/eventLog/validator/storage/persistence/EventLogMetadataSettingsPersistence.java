@@ -11,13 +11,16 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @State(name = "EventLogWhitelist", storages = @Storage(StoragePathMacros.CACHE_FILE))
 public class EventLogMetadataSettingsPersistence implements PersistentStateComponent<Element> {
   private final Map<String, Long> myLastModifications = new HashMap<>();
   private final Map<String, EventsSchemePathSettings> myRecorderToPathSettings = new HashMap<>();
+  private final Map<String, EventLogExternalOptions> myOptions = new HashMap<>();
 
   private static final String MODIFY = "update";
   private static final String RECORDER_ID = "recorder-id";
@@ -25,9 +28,26 @@ public class EventLogMetadataSettingsPersistence implements PersistentStateCompo
   private static final String PATH = "path";
   private static final String CUSTOM_PATH = "custom-path";
   private static final String USE_CUSTOM_PATH = "use-custom-path";
+  private static final String OPTIONS = "options";
+  private static final String OPTION = "option";
+  private static final String OPTION_NAME = "name";
+  private static final String OPTION_VALUE = "value";
 
   public static EventLogMetadataSettingsPersistence getInstance() {
     return ApplicationManager.getApplication().getService(EventLogMetadataSettingsPersistence.class);
+  }
+
+  @Nullable
+  public String getOptionValue(@NotNull String recorderId, @NotNull String name) {
+    EventLogExternalOptions options = myOptions.get(recorderId);
+    return options != null ? options.get(name) : null;
+  }
+
+  public void setOptionValue(@NotNull String recorderId, @NotNull String name, @NotNull String value) {
+    if (!myOptions.containsKey(recorderId)) {
+      myOptions.put(recorderId, new EventLogExternalOptions());
+    }
+    myOptions.get(recorderId).put(name, value);
   }
 
   public long getLastModified(@NotNull String recorderId) {
@@ -66,6 +86,14 @@ public class EventLogMetadataSettingsPersistence implements PersistentStateCompo
         if (customPath == null) continue;
         boolean useCustomPath = parseUseCustomPath(path);
         myRecorderToPathSettings.put(recorder, new EventsSchemePathSettings(customPath, useCustomPath));
+      }
+    }
+
+    myOptions.clear();
+    for (Element options : element.getChildren(OPTIONS)) {
+      String recorderId = options.getAttributeValue(RECORDER_ID);
+      if (recorderId != null) {
+        myOptions.put(recorderId, new EventLogExternalOptions().deserialize(options));
       }
     }
   }
@@ -108,6 +136,53 @@ public class EventLogMetadataSettingsPersistence implements PersistentStateCompo
       element.addContent(path);
     }
 
+    for (Map.Entry<String, EventLogExternalOptions> entry : myOptions.entrySet()) {
+      Element options = new Element(OPTIONS);
+      options.setAttribute(RECORDER_ID, entry.getKey());
+      for (Element option : entry.getValue().serialize()) {
+        options.addContent(option);
+      }
+      element.addContent(options);
+    }
+
     return element;
+  }
+
+  private static class EventLogExternalOptions {
+    private final Map<String, String> myOptions = new HashMap<>();
+
+    public void put(@NotNull String key, @NotNull String value) {
+      myOptions.put(key, value);
+    }
+
+    @Nullable
+    public String get(@NotNull String key) {
+      return myOptions.get(key);
+    }
+
+    @NotNull
+    public List<Element> serialize() {
+      List<Element> result = new ArrayList<>();
+      for (Map.Entry<String, String> entry : myOptions.entrySet()) {
+        Element option = new Element(OPTION);
+        option.setAttribute(OPTION_NAME, entry.getKey());
+        option.setAttribute(OPTION_VALUE, entry.getValue());
+        result.add(option);
+      }
+      return result;
+    }
+
+    @NotNull
+    public EventLogExternalOptions deserialize(@NotNull Element root) {
+      myOptions.clear();
+      for (Element option : root.getChildren(OPTION)) {
+        String name = option.getAttributeValue(OPTION_NAME);
+        String value = option.getAttributeValue(OPTION_VALUE);
+        if (name != null && value != null) {
+          myOptions.put(name, value);
+        }
+      }
+      return this;
+    }
   }
 }

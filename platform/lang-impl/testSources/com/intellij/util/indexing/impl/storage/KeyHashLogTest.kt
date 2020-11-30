@@ -5,11 +5,13 @@ import com.intellij.util.indexing.IdFilter
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.io.EnumeratorStringDescriptor
 import junit.framework.TestCase
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Files
 
 class KeyHashLogTest {
   companion object {
@@ -75,6 +77,22 @@ class KeyHashLogTest {
   }
 
   @Test
+  fun testKeyMovedToAnotherFile() {
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      it.addKeyHashToVirtualFileMapping("qwe", 2)
+      it.addKeyHashToVirtualFileMapping("qwe", -1)
+
+      val hashes = it.getSuitableKeyHashes(setOf(2, 1).toFilter(), project)
+      TestCase.assertEquals(setOf("qwe").toHashes(), hashes)
+
+      val hashes1 = it.getSuitableKeyHashes(setOf(2).toFilter(), project)
+      TestCase.assertEquals(setOf("qwe").toHashes(), hashes1)
+    }
+  }
+
+  @Test
   fun testCompaction() {
     val dir = temporaryDirectory.createDir()
     KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
@@ -93,6 +111,48 @@ class KeyHashLogTest {
       TestCase.assertFalse(it.isRequiresCompaction)
       val hashes = it.getSuitableKeyHashes(setOf(1).toFilter(), project)
       TestCase.assertEquals(setOf("qwe").toHashes(), hashes)
+    }
+  }
+
+  @Test
+  fun testCompactionSwapsAllFiles() {
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      it.removeKeyHashToVirtualFileMapping("qwe", 1)
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+
+      it.getSuitableKeyHashes(setOf(1).toFilter(), project)
+      TestCase.assertTrue(it.isRequiresCompaction)
+    }
+
+    val beforeCompactionMainFileBytes: ByteArray
+    val beforeCompactionLenFileBytes: ByteArray
+
+    Files.newDirectoryStream(dir).use {
+      val dirMap = it.groupBy { p -> p.fileName.toString() }
+      UsefulTestCase.assertSize(3, dirMap.entries)
+
+      beforeCompactionMainFileBytes = Files.readAllBytes(dirMap["keyHashLog.project"]!!.first())
+      beforeCompactionLenFileBytes = Files.readAllBytes(dirMap["keyHashLog.project.len"]!!.first())
+      UsefulTestCase.assertTrue(dirMap.containsKey("keyHashLog.project.require.compaction"))
+    }
+
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      TestCase.assertFalse(it.isRequiresCompaction)
+      val hashes = it.getSuitableKeyHashes(setOf(1).toFilter(), project)
+      TestCase.assertEquals(setOf("qwe").toHashes(), hashes)
+    }
+
+    Files.newDirectoryStream(dir).use {
+      val dirMap = it.groupBy { p -> p.fileName.toString() }
+      UsefulTestCase.assertSize(2, dirMap.entries)
+
+      val afterCompactionMainFileBytes = Files.readAllBytes(dirMap["keyHashLog.project"]!!.first())
+      val afterCompactionLenFileBytes = Files.readAllBytes(dirMap["keyHashLog.project.len"]!!.first())
+
+      UsefulTestCase.assertFalse(beforeCompactionMainFileBytes.contentEquals(afterCompactionMainFileBytes))
+      UsefulTestCase.assertFalse(beforeCompactionLenFileBytes.contentEquals(afterCompactionLenFileBytes))
     }
   }
 

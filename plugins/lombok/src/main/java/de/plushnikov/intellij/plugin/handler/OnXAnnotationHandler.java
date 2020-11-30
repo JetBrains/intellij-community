@@ -3,15 +3,14 @@ package de.plushnikov.intellij.plugin.handler;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import lombok.*;
-import lombok.experimental.Wither;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
 
-public class OnXAnnotationHandler {
+public final class OnXAnnotationHandler {
   private static final Pattern UNDERSCORES = Pattern.compile("__*");
   private static final Pattern CANNOT_RESOLVE_SYMBOL_UNDERSCORES_MESSAGE = Pattern.compile("Cannot resolve symbol '__*'");
   private static final Pattern CANNOT_RESOLVE_METHOD_UNDERSCORES_MESSAGE = Pattern.compile("Cannot resolve method '(onMethod|onConstructor|onParam)_+'");
@@ -20,14 +19,14 @@ public class OnXAnnotationHandler {
   private static final String CANNOT_FIND_METHOD_VALUE_MESSAGE = "Cannot find method 'value'";
 
   private static final Collection<String> ONXABLE_ANNOTATIONS = Arrays.asList(
-    Getter.class.getCanonicalName(),
-    Setter.class.getCanonicalName(),
-    With.class.getCanonicalName(),
-    Wither.class.getCanonicalName(),
-    NoArgsConstructor.class.getCanonicalName(),
-    RequiredArgsConstructor.class.getCanonicalName(),
-    AllArgsConstructor.class.getCanonicalName(),
-    EqualsAndHashCode.class.getCanonicalName()
+    LombokClassNames.GETTER,
+    LombokClassNames.SETTER,
+    LombokClassNames.WITH,
+    LombokClassNames.WITHER,
+    LombokClassNames.NO_ARGS_CONSTRUCTOR,
+    LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
+    LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+    LombokClassNames.EQUALS_AND_HASHCODE
   );
   private static final Collection<String> ONX_PARAMETERS = Arrays.asList(
     "onConstructor",

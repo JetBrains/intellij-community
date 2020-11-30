@@ -2,9 +2,11 @@ REGEXP_FILE
   RegExpPatternImpl: <(?(name)yes-pattern|no-pattern)>
     RegExpBranchImpl: <(?(name)yes-pattern|no-pattern)>
       RegExpConditionalImpl: <(?(name)yes-pattern|no-pattern)>
-        PsiElement(PYTHON_COND_REF)('(?(')
-        PsiElement(NAME)('name')
-        PsiElement(GROUP_END)(')')
+        PsiElement(CONDITIONAL)('(?')
+        RegExpNamedGroupRefImpl: <(name)>
+          PsiElement(GROUP_BEGIN)('(')
+          PsiElement(NAME)('name')
+          PsiElement(GROUP_END)(')')
         RegExpBranchImpl: <yes-pattern>
           RegExpCharImpl: <y>
             PsiElement(CHARACTER)('y')

@@ -2,8 +2,8 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.lang.XmlCodeFoldingSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -14,7 +14,7 @@ public final class XmlFoldingSettings implements XmlCodeFoldingSettings, Persist
   private final XmlFoldingSettings.State myState = new State();
 
   public static XmlFoldingSettings getInstance() {
-    return ServiceManager.getService(XmlFoldingSettings.class);
+    return ApplicationManager.getApplication().getService(XmlFoldingSettings.class);
   }
 
   @Override

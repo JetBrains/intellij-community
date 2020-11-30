@@ -11,9 +11,8 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.div
 import com.intellij.util.io.write
-import junit.framework.TestCase
 import org.junit.Assert.assertArrayEquals
-import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
 
 class FileContentImplTest : HeavyPlatformTestCase() {
@@ -79,9 +78,9 @@ class FileContentImplTest : HeavyPlatformTestCase() {
   fun `test bom is truncated from getContent()`() {
     val text = "哇你居然翻译了这篇中文文本"
     for (charset in listOf(
-      CharsetToolkit.UTF8_CHARSET,
-      CharsetToolkit.UTF_16LE_CHARSET,
-      CharsetToolkit.UTF_16BE_CHARSET,
+      StandardCharsets.UTF_8,
+      StandardCharsets.UTF_16LE,
+      StandardCharsets.UTF_16BE,
       CharsetToolkit.UTF_32LE_CHARSET,
       CharsetToolkit.UTF_32BE_CHARSET
     )) {

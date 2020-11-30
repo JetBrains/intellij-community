@@ -2,17 +2,18 @@
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.serialization.PropertyMapping;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class FileCollectionDependencyNodeImpl extends AbstractDependencyNode implements FileCollectionDependencyNode {
 
-  private final String displayName;
+  private final @Nls String displayName;
   private final String path;
 
-  @PropertyMapping({"id", "displayName", "path"}) //NON-NLS
+  @PropertyMapping({"id", "displayName", "path"})
   public FileCollectionDependencyNodeImpl(long id, @NotNull String displayName, @NotNull String path) {
     super(id);
-    this.displayName = displayName;
+    this.displayName = displayName; //NON-NLS
     this.path = path;
   }
 

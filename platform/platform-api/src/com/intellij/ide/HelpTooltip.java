@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -35,6 +36,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -229,6 +231,20 @@ public class HelpTooltip {
       hidePopup(true);
       linkAction.run();
     });
+    return this;
+  }
+
+  /**
+   * Enables link in the tooltip below description and sets BrowserUtil.browse action for it.
+   * It's then painted with a small arrow button.
+   *
+   * @param linkLabel text to show in the link.
+   * @param url URL to browse.
+   * @return {@code this}
+   */
+  public HelpTooltip setBrowserLink(@NlsContexts.LinkLabel String linkLabel, URL url) {
+    link = new LinkLabel<>(linkLabel, AllIcons.Ide.External_link_arrow, (__, ___) -> BrowserUtil.browse(url));
+    link.setHorizontalTextPosition(SwingConstants.LEFT);
     return this;
   }
 

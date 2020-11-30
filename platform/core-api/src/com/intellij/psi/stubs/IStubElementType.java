@@ -20,15 +20,15 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
   public IStubElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
     super(debugName, language);
     if (!isLazilyRegistered()) {
-      checkNotInstantiatedTooLate();
+      checkNotInstantiatedTooLate(getClass());
     }
   }
 
-  public static void checkNotInstantiatedTooLate() {
+  public static void checkNotInstantiatedTooLate(@NotNull Class<?> aClass) {
     if (ourInitializedStubs) {
       LOG.error("All stub element types should be created before index initialization is complete.\n" +
-                "Please add the class containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
-                "Registered extensions: " + Arrays.toString(StubElementTypeHolderEP.EP_NAME.getExtensions()));
+                "Please add the " + aClass.getName() + " containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
+                "Registered extensions: " + StubElementTypeHolderEP.EP_NAME.getExtensionList());
     }
   }
 
@@ -50,11 +50,11 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
 
   static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
     List<StubFieldAccessor> result = new ArrayList<>();
-    for (StubElementTypeHolderEP bean : StubElementTypeHolderEP.EP_NAME.getExtensionList()) {
-      result.addAll(bean.initializeOptimized());
-    }
+    StubElementTypeHolderEP.EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
+      bean.initializeOptimized(pluginDescriptor, result);
+    });
 
-    Set<String> lazyIds = new HashSet<>();
+    Set<String> lazyIds = new HashSet<>(result.size());
     for (StubFieldAccessor accessor : result) {
       lazyIds.add(accessor.externalId);
     }

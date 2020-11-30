@@ -36,7 +36,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
   private final TerminalWorkingDirectoryManager myWorkingDirectoryManager;
   private ToolWindow myTerminalToolWindow;
   private TerminalArrangementState myState;
-  private final Set<String> myTrackingCommandHistoryFileNames = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<String> myTrackingCommandHistoryFileNames = ContainerUtil.newConcurrentSet();
 
   public TerminalArrangementManager() {
     myWorkingDirectoryManager = new TerminalWorkingDirectoryManager();

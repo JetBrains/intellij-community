@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.OSProcessUtil;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -10,7 +11,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,7 +70,7 @@ public final class PerformanceWatcher implements Disposable {
 
   public static @NotNull PerformanceWatcher getInstance() {
     LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
-    return ServiceManager.getService(PerformanceWatcher.class);
+    return ApplicationManager.getApplication().getService(PerformanceWatcher.class);
   }
 
   public PerformanceWatcher() {
@@ -132,6 +132,7 @@ public final class PerformanceWatcher implements Disposable {
               IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachments);
               IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
               IdeaFreezeReporter.report(event);
+              LifecycleUsageTriggerCollector.onCrashDetected();
               break;
             }
           }

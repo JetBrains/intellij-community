@@ -32,7 +32,7 @@ public final class DiscoveredTestDataHolder {
   private final PersistentStringEnumerator myClassEnumerator;
   private final PersistentStringEnumerator myMethodEnumerator;
   private final PersistentStringEnumerator myPathEnumerator;
-  private final PersistentEnumeratorDelegate<TestId> myTestEnumerator;
+  private final PersistentEnumerator<TestId> myTestEnumerator;
   private final PersistentObjectSeq myConstructedDataFiles = new PersistentObjectSeq();
 
   private boolean myDisposed;
@@ -67,7 +67,7 @@ public final class DiscoveredTestDataHolder {
       PersistentStringEnumerator classNameEnumerator;
       PersistentStringEnumerator methodEnumerator;
       PersistentStringEnumerator pathEnumerator;
-      PersistentEnumeratorDelegate<TestId> testEnumerator;
+      PersistentEnumerator<TestId> testEnumerator;
 
       int iterations = 0;
 
@@ -92,7 +92,7 @@ public final class DiscoveredTestDataHolder {
           pathEnumerator = new PersistentStringEnumerator(pathEnumeratorFile, true);
           myConstructedDataFiles.add(pathEnumerator);
 
-          testEnumerator = new PersistentEnumeratorDelegate<>(testNameEnumeratorFile, TestId.DESCRIPTOR, 1024 * 4);
+          testEnumerator = new PersistentEnumerator<>(testNameEnumeratorFile, TestId.DESCRIPTOR, 1024 * 4);
           myConstructedDataFiles.add(testEnumerator);
 
           break;

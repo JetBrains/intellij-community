@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Reader;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public final class CharArrayUtil {
@@ -107,7 +106,7 @@ public final class CharArrayUtil {
    */
   public static char @NotNull [] fromSequence(@NotNull CharSequence seq) {
     char[] underlying = fromSequenceWithoutCopying(seq);
-    return underlying != null ? Arrays.copyOf(underlying, underlying.length) : fromSequence(seq, 0, seq.length());
+    return underlying != null ? underlying.clone() : fromSequence(seq, 0, seq.length());
   }
 
   /**

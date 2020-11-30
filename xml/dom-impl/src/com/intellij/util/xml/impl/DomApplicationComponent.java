@@ -4,7 +4,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
@@ -21,7 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -93,7 +95,7 @@ public final class DomApplicationComponent {
   }
 
   public static DomApplicationComponent getInstance() {
-    return ServiceManager.getService(DomApplicationComponent.class);
+    return ApplicationManager.getApplication().getService(DomApplicationComponent.class);
   }
 
   public synchronized int getCumulativeVersion(boolean forStubs) {
@@ -146,9 +148,8 @@ public final class DomApplicationComponent {
     }
   }
 
-  void initDescription(DomFileDescription<?> description) {
-    Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
-    for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
+  void initDescription(@NotNull DomFileDescription<?> description) {
+    for (Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : description.getImplementations().entrySet()) {
       registerImplementation(entry.getKey(), entry.getValue(), null);
     }
 

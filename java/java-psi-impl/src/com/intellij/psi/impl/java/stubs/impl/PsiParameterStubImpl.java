@@ -44,7 +44,7 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
 
   @Override
   @NotNull
-  public TypeInfo getType(boolean doResolve) {
+  public TypeInfo getType() {
     return myType;
   }
 

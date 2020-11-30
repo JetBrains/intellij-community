@@ -26,7 +26,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.actions.SpaceActionUtils
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.CloneType
 import com.intellij.space.settings.SpaceSettings
@@ -50,7 +50,6 @@ import libraries.coroutines.extra.launch
 import libraries.klogging.KLogger
 import libraries.klogging.logger
 import runtime.Ui
-import java.util.*
 
 class SpaceShareProjectAction : DumbAwareAction() {
   private val log: KLogger = logger<SpaceShareProjectAction>()
@@ -143,7 +142,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
         VcsNotifier.getInstance(project).notifySuccess(
           "space.project.shared.successfully",
           SpaceBundle.message("share.project.success.notification.title"),
-          formatLink(url, repoInfo.name),
+          formatLink(url, repoInfo.name), // NON-NLS
           NotificationListener.URL_OPENING_LISTENER
         )
       }
@@ -151,6 +150,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
   }
 
   private suspend fun checkAndSetGitHttpPassword(): SpaceHttpPasswordState {
+    val space = SpaceWorkspaceComponent.getInstance()
     val client = space.workspace.value?.client ?: return SpaceHttpPasswordState.NotSet
     val me = space.workspace.value?.me?.value ?: return SpaceHttpPasswordState.NotSet
     val td = client.td
@@ -187,7 +187,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
     val result = Git.getInstance().init(project, root)
     if (!result.success()) {
       VcsNotifier.getInstance(project).notifyError("space.git.repo.init.error",
-                                                   GitBundle.getString("initializing.title"),
+                                                   GitBundle.message("initializing.title"),
                                                    result.errorOutputAsHtmlString)
       log.info { "Failed to create empty git repo: " + result.errorOutputAsJoinedString }
       return false
@@ -264,8 +264,8 @@ class SpaceShareProjectAction : DumbAwareAction() {
     }
     catch (e: VcsException) {
       log.warn(e)
-      val repositoryLink = formatLink(url, "'$name'")
-      notifyError(project, wrapInHtmlLines(
+      val repositoryLink = formatLink(url, "'$name'") // NON-NLS
+      notifyError(project, wrapInHtmlLines( // NON-NLS
         SpaceBundle.message("share.project.error.notification.initial.commit.failed.message", repositoryLink),
         *e.messages
       ))
@@ -307,14 +307,14 @@ class SpaceShareProjectAction : DumbAwareAction() {
     indicator.text = SpaceBundle.message("share.project.action.progress.title.pushing.title")
 
     val currentBranch = repository.currentBranch
-    val repositoryLink = formatLink(url, "'$name'")
+    val repositoryLink = formatLink(url, "'$name'") // NON-NLS
     if (currentBranch == null) {
       notifyError(project, SpaceBundle.message("share.project.error.notification.no.current.branch.message", repositoryLink))
       return false
     }
     val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
     if (!result.success()) {
-      notifyError(project, wrapInHtmlLines(
+      notifyError(project, wrapInHtmlLines( // NON-NLS
         SpaceBundle.message("share.project.error.notification.push.failed.message", repositoryLink),
         result.errorOutputAsHtmlString
       ))

@@ -38,9 +38,10 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   }
 
   @Override
-  public RegExpPattern getPattern() {
+  public @NotNull RegExpPattern getPattern() {
     final ASTNode node = getNode().findChildByType(RegExpElementTypes.PATTERN);
-    return node != null ? (RegExpPattern)node.getPsi() : null;
+    assert node != null;
+    return (RegExpPattern)node.getPsi();
   }
 
   @Override
@@ -126,5 +127,10 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException();
+  }
+
+  @Override
+  public int getTextOffset() {
+    return getFirstChild().getNextSibling().getTextOffset();
   }
 }

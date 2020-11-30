@@ -6,8 +6,10 @@ import com.intellij.diagnostic.report.MemoryReportReason;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.internal.DebugAttachDetector;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,7 +24,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 
 final class LowMemoryNotifier implements Disposable {
-  private static final String PERFORMANCE = "performance";
   private static final int UI_RESPONSE_LOGGING_INTERVAL_MS = 100_000;
   private static final int TOLERABLE_UI_LATENCY = 100;
 
@@ -46,12 +47,10 @@ final class LowMemoryNotifier implements Disposable {
           final long currentTime = System.currentTimeMillis();
           if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
             myPreviousLoggedUIResponse = currentTime;
-            FUCounterUsageLogger.getInstance()
-              .logEvent(PERFORMANCE, "ui.latency", new FeatureUsageData().addData("duration_ms", latencyMs));
+            UILatencyLogger.LATENCY.log(latencyMs);
           }
           if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
-            FUCounterUsageLogger.getInstance()
-              .logEvent(PERFORMANCE, "ui.lagging", new FeatureUsageData().addData("duration_ms", latencyMs));
+            UILatencyLogger.LAGGING.log(latencyMs);
           }
         }
       });
@@ -86,5 +85,17 @@ final class LowMemoryNotifier implements Disposable {
   @Override
   public void dispose() {
     myWatcher.stop();
+  }
+
+  public static final class UILatencyLogger extends CounterUsagesCollector {
+    private static final EventLogGroup GROUP = new EventLogGroup("performance", 57);
+
+    private static final EventId1<Long> LATENCY = GROUP.registerEvent("ui.latency", EventFields.Long("duration_ms"));
+    private static final EventId1<Long> LAGGING = GROUP.registerEvent("ui.lagging", EventFields.Long("duration_ms"));
+
+    @Override
+    public EventLogGroup getGroup() {
+      return GROUP;
+    }
   }
 }

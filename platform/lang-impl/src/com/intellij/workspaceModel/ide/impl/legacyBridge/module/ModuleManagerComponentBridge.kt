@@ -7,7 +7,7 @@ import com.intellij.configurationStore.saveComponentManager
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.components.stateStore
@@ -25,11 +25,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
+import com.intellij.util.io.div
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
@@ -42,18 +42,13 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsCha
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.Callable
 import kotlin.collections.HashSet
 
 @Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
-  val outOfTreeModulesPath: String =
-    FileUtilRt.toSystemIndependentName(File(PathManager.getTempPath(), "outOfTreeProjectModules-${project.locationHash}").path)
-
   private val LOG = Logger.getInstance(javaClass)
 
   internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
@@ -332,7 +327,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   private fun loadModules(entities: List<ModuleEntity>) {
     LOG.debug { "Loading modules for ${entities.size} entities" }
     val fileSystem = LocalFileSystem.getInstance()
-    entities.forEach { module -> fileSystem.refreshAndFindFileByNioFile(getModuleFilePath(module)) }
+    entities.forEach { module -> getModuleFilePath(module)?.let { fileSystem.refreshAndFindFileByNioFile(it) } }
 
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
     try {
@@ -530,14 +525,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
   }
 
-  internal fun getModuleFilePath(moduleEntity: ModuleEntity): Path {
-    val entitySource = (moduleEntity.entitySource as? JpsFileDependentEntitySource)?.originalSource ?: moduleEntity.entitySource
-    val directoryPath = when (entitySource) {
-      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.presentableUrl
-      // TODO Is this fallback fake path ok?
-      else -> outOfTreeModulesPath
-    }
-    return Paths.get(directoryPath, "${moduleEntity.name}.iml")
+  internal fun getModuleFilePath(moduleEntity: ModuleEntity): Path? {
+    val entitySource = ((moduleEntity.entitySource as? JpsFileDependentEntitySource)?.originalSource ?: moduleEntity.entitySource)
+                       as? JpsFileEntitySource.FileInDirectory ?: return null
+    return entitySource.directory.toPath() / "${moduleEntity.name}.iml"
   }
 
   fun createModuleInstance(moduleEntity: ModuleEntity,
@@ -555,12 +546,14 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     )
 
     module.init {
-      try {
-        val moduleStore = module.stateStore as ModuleStore
-        moduleStore.setPath(modulePath, null, isNew)
-      }
-      catch (t: Throwable) {
-        logger<ModuleManagerComponentBridge>().error(t)
+      if (modulePath != null) {
+        try {
+          val moduleStore = module.stateStore as ModuleStore
+          moduleStore.setPath(modulePath, null, isNew)
+        }
+        catch (t: Throwable) {
+          logger<ModuleManagerComponentBridge>().error(t)
+        }
       }
     }
 
@@ -600,6 +593,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       get() = getExternalMapping(INDEX_ID)
     internal val WorkspaceEntityStorageDiffBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(INDEX_ID)
+
+    @JvmStatic
     fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) =
       moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
 
@@ -611,6 +606,31 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
     private val dependencyComparatorValue = CachedValue { storage ->
       DFSTBuilder(buildModuleGraph(storage, true)).comparator()
+    }
+
+    @JvmStatic
+    fun changeModuleEntitySource(module: ModuleBridge, moduleEntityStore: WorkspaceEntityStorage, newSource: EntitySource,
+                                 moduleDiff: WorkspaceEntityStorageDiffBuilder?) {
+      val oldEntitySource = moduleEntityStore.findModuleEntity(module)?.entitySource ?: return
+      fun changeSources(diffBuilder: WorkspaceEntityStorageDiffBuilder, storage: WorkspaceEntityStorage) {
+        val entitiesMap = storage.entitiesBySource { it == oldEntitySource }
+        entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
+          if (it !is FacetEntity) {
+            diffBuilder.changeSource(it, newSource)
+          }
+        }
+      }
+
+      if (moduleDiff != null) {
+        changeSources(moduleDiff, moduleEntityStore)
+      }
+      else {
+        WriteAction.runAndWait<RuntimeException> {
+          WorkspaceModel.getInstance(module.project).updateProjectModel { builder ->
+            changeSources(builder, builder)
+          }
+        }
+      }
     }
 
     private fun buildModuleGraph(storage: WorkspaceEntityStorage, includeTests: Boolean): Graph<Module> {

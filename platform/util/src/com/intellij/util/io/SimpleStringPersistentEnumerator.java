@@ -67,6 +67,10 @@ public final class SimpleStringPersistentEnumerator {
     writeStorageToDisk(myState, myFile);
   }
 
+  public synchronized boolean isEmpty() {
+    return myState.isEmpty();
+  }
+
   @NotNull
   public String dumpToString() {
     return myState

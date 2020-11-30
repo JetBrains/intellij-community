@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public abstract class NewRunConfigurationTreePopupFactory {
   //This method is supposed to be called just once for each node, the result goes to cache
   public abstract NodeDescriptor[] createChildElements(@NotNull Project project, @NotNull NodeDescriptor nodeDescriptor);
 
-  public Pair<Icon, String> createIconAndText(@NotNull Object element) {
+  public Pair<Icon, @Nls String> createIconAndText(@NotNull Object element) {
     if (element instanceof ConfigurationFactory) {
       return Pair.create(((ConfigurationFactory)element).getIcon(), ((ConfigurationFactory)element).getName());
     }
@@ -64,7 +65,7 @@ public abstract class NewRunConfigurationTreePopupFactory {
       return (NodeDescriptor)element;
     }
 
-    Pair<Icon, String> iconAndText = createIconAndText(element);
+    Pair<Icon, @Nls String> iconAndText = createIconAndText(element);
     SimpleTextAttributes attributes =
       (!project.isDefault() && DumbService.getInstance(project).isDumb() && !isEditableInDumbMode(element)) ?
       SimpleTextAttributes.GRAYED_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;

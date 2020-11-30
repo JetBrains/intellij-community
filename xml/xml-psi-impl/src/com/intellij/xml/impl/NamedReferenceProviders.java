@@ -3,8 +3,8 @@ package com.intellij.xml.impl;
 
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReferenceProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.xml.XmlNamedReferenceHost;
 import com.intellij.util.ObjectUtils;
@@ -25,7 +25,7 @@ final class NamedReferenceProviders {
 
   @NotNull
   static NamedReferenceProviders getInstance() {
-    return ServiceManager.getService(NamedReferenceProviders.class);
+    return ApplicationManager.getApplication().getService(NamedReferenceProviders.class);
   }
 
 

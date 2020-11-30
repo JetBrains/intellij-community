@@ -28,7 +28,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
   }
 
   @Override
-  public Result apply(VirtualFile fileToPatch,
+  public Result apply(@NotNull VirtualFile fileToPatch,
                       ApplyPatchContext context,
                       @NotNull Project project,
                       FilePath pathBeforeRename,
@@ -38,6 +38,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
       LOG.debug("apply patch called for : " + fileToPatch.getPath());
     }
     if (myPatch.isNewFile()) {
+      // File was already created by PathsVerifier.CheckAdded.check(), now set its content
       applyCreate(project, fileToPatch, commitContext);
     }
     else if (myPatch.isDeletedFile()) {

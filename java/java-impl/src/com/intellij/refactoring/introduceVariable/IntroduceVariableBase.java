@@ -287,20 +287,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (text.charAt(correctedOffset) == ';') {//initially caret on the end of line
         correctedOffset--;
       }
-      if (correctedOffset < 0 || text.charAt(correctedOffset) != ')' && text.charAt(correctedOffset) != '.') {
+      if (correctedOffset < 0 || text.charAt(correctedOffset) != ')' && text.charAt(correctedOffset) != '.' && text.charAt(correctedOffset) != '}') {
         correctedOffset = offset;
       }
     }
     final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
     final List<PsiExpression> expressions = new ArrayList<>();
-    /*for (PsiElement element : statementsInRange) {
-      if (element instanceof PsiExpressionStatement) {
-        final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
-        if (expression.getType() != PsiType.VOID) {
-          expressions.add(expression);
-        }
-      }
-    }*/
     PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
     while (expression != null) {
       if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) &&
@@ -902,7 +894,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
       if (containerParent instanceof PsiLambdaExpression) {
         PsiParameter[] parameters = ((PsiLambdaExpression)containerParent).getParameterList().getParameters();
-        if (Arrays.stream(parameters).anyMatch(vars::contains)) {
+        if (ContainerUtil.exists(parameters, vars::contains)) {
           break;
         }
       }
@@ -1296,8 +1288,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       };
       PsiElement physical = getPhysicalElement(expr);
       TreeMap<PsiElement, List<PsiExpression>> groupByBlock =
-        StreamEx.of(myOccurrences).groupingBy(e -> PsiTreeUtil.findCommonParent(e, physical),
-                                              () -> new TreeMap<>(treeOrder), Collectors.toList());
+        StreamEx.of(myOccurrences)
+          .map(place -> (PsiExpression)getPhysicalElement(place))
+          .groupingBy(e -> PsiTreeUtil.findCommonParent(e, physical),
+                      () -> new TreeMap<>(treeOrder), Collectors.toList());
       LOG.assertTrue(!groupByBlock.isEmpty());
       List<PsiExpression> currentOccurrences = new ArrayList<>();
       Map<String, Integer> counts = new HashMap<>();

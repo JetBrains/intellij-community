@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.xml.XmlFile;
@@ -530,6 +530,6 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
 
   @NotNull
   private HtmlCodeStyleSettings getHtmlSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(HtmlCodeStyleSettings.class);
+    return CodeStyle.getSettings(getProject()).getCustomSettings(HtmlCodeStyleSettings.class);
   }
 }

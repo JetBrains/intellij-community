@@ -304,8 +304,8 @@ public final class JavaSdkImpl extends JavaSdk {
       String msg = "Paths checked:\n";
       for (String p : pathsChecked) {
         File f = new File(p);
-        //noinspection StringConcatenationInLoop yeah I know, it's more readable this way
-        msg += p + "; exists: " + f.exists() + "; siblings: " + Arrays.toString(f.getParentFile().list()) + "\n";
+        File parentFile = f.getParentFile();
+        msg += p + "; exists: " + f.exists() + (parentFile == null ? null : "; siblings: " + Arrays.toString(parentFile.list())) + "\n";
       }
       LOG.error("JDK annotations not found", msg);
       return false;

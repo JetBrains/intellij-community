@@ -5,15 +5,16 @@ import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -48,6 +49,7 @@ import java.util.*;
 )
 public final class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
+  private static final ExtensionPointName<DefaultLiveTemplateEP> EP_NAME = new ExtensionPointName<>("com.intellij.defaultLiveTemplates");
 
   @NonNls public static final String USER_GROUP_NAME = "user";
   @NonNls private static final String TEMPLATE_SET = "templateSet";
@@ -285,8 +287,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       }
     }, ApplicationManager.getApplication());
 
-    DefaultLiveTemplateEP.EP_NAME.addChangeListener(mySchemeManager::reload,
-                                                    ApplicationManager.getApplication());
+    EP_NAME.addChangeListener(mySchemeManager::reload, ApplicationManager.getApplication());
   }
 
   private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
@@ -299,7 +300,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   }
 
   public static TemplateSettings getInstance() {
-    return ServiceManager.getService(TemplateSettings.class);
+    return ApplicationManager.getApplication().getService(TemplateSettings.class);
   }
 
   boolean differsFromDefault(@NotNull TemplateImpl t) {
@@ -491,13 +492,21 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         loadDefaultLiveTemplatesFromProvider(provider);
       }
 
-      for (DefaultLiveTemplateEP ep : DefaultLiveTemplateEP.EP_NAME.getExtensionList()) {
-        String file = ep.getFile();
-        if (file == null) continue;
-        ClassLoader pluginClassLoader = ep.getPluginDescriptor().getPluginClassLoader();
-        readDefTemplate(pluginClassLoader, file, !ep.getHidden(), pluginClassLoader,
-                        PluginInfoDetectorKt.getPluginInfoByDescriptor(ep.getPluginDescriptor()));
-      }
+      EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
+        String file = ep.file;
+        if (file == null) {
+          return;
+        }
+
+        try {
+          ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+          readDefTemplate(pluginClassLoader, file, !ep.hidden, pluginClassLoader,
+                          PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
+        }
+        catch (Exception e) {
+          LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
+        }
+      });
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -507,7 +516,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
   }
 
-  private void loadDefaultLiveTemplatesFromProvider(DefaultLiveTemplatesProvider provider) throws JDOMException, IOException {
+  private void loadDefaultLiveTemplatesFromProvider(DefaultLiveTemplatesProvider provider) throws JDOMException {
     for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
       readDefTemplate(provider, defTemplate, true, provider.getClass().getClassLoader(),
                       PluginInfoDetectorKt.getPluginInfo(provider.getClass()));

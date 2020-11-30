@@ -190,9 +190,8 @@ public class Splitter extends JPanel implements Splittable {
     final int childCount = getComponentCount();
     LOG.assertTrue(childCount >= 1);
     if (childCount > 3) {
-      throw new IllegalStateException("" + childCount);
+      throw new IllegalStateException(String.valueOf(childCount));
     }
-    LOG.assertTrue(childCount <= 3);
     if (childCount == 1) {
       setFirstComponent((JComponent)comp);
     }
@@ -462,10 +461,9 @@ public class Splitter extends JPanel implements Splittable {
       return;
     }
     if (proportion < .0f || proportion > 1.0f) {
-      throw new IllegalArgumentException("Wrong proportion: " + proportion);
+      LOG.warn("Wrong proportion: " + proportion);
     }
-    if (proportion < myMinProp) proportion = myMinProp;
-    if (proportion > myMaxProp) proportion = myMaxProp;
+    proportion = MathUtil.clamp(proportion, myMinProp, myMaxProp);
     float oldProportion = myProportion;
     myProportion = proportion;
     firePropertyChange(PROP_PROPORTION, new Float(oldProportion), new Float(myProportion));

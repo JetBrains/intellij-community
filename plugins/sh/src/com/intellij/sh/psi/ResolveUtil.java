@@ -8,7 +8,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ResolveUtil {
+public final class ResolveUtil {
   public static boolean processChildren(@NotNull PsiElement element,
                                  @NotNull PsiScopeProcessor processor,
                                  @NotNull ResolveState substitutor,

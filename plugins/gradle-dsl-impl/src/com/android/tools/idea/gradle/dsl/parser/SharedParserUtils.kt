@@ -18,20 +18,20 @@ package com.android.tools.idea.gradle.dsl.parser
 import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement.APPLY_BLOCK_NAME
-import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement.EXT
 import com.android.tools.idea.gradle.dsl.parser.build.SubProjectsDslElement
 import com.android.tools.idea.gradle.dsl.parser.configurations.ConfigurationDslElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslClosure
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement
+import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement.EXT
 import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFile
 import com.android.tools.idea.gradle.dsl.parser.repositories.FlatDirRepositoryDslElement
 import com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement
 import com.android.tools.idea.gradle.dsl.parser.settings.ProjectPropertiesDslElement
 import com.google.common.collect.Lists
 import com.intellij.psi.PsiElement
-import java.util.ArrayList
+import java.util.*
 
 /**
  * Set of classes whose properties should not be merged into each other.
@@ -110,7 +110,7 @@ private fun createNewElementForFileOrSubProject(resultElement: GradlePropertiesD
 /**
  * Get the parent dsl element with a valid psi
  */
-internal fun getNextValidParent(element: GradleDslElement): GradleDslElement? {
+fun getNextValidParent(element: GradleDslElement): GradleDslElement? {
   var element : GradleDslElement? = element
   var psi = element?.psiElement
   while (element != null && (psi == null || !psi.isValid)) {
@@ -122,7 +122,7 @@ internal fun getNextValidParent(element: GradleDslElement): GradleDslElement? {
   return element
 }
 
-internal fun removePsiIfInvalid(element: GradleDslElement?) {
+fun removePsiIfInvalid(element: GradleDslElement?) {
   if (element == null) return
 
   if (element.psiElement != null && !element.psiElement!!.isValid) {
@@ -138,7 +138,7 @@ internal fun removePsiIfInvalid(element: GradleDslElement?) {
  * @param startElement starting element
  * @return the last non-null psi element in the tree starting at node startElement.
  */
-internal fun findLastPsiElementIn(startElement: GradleDslElement): PsiElement? {
+fun findLastPsiElementIn(startElement: GradleDslElement): PsiElement? {
   val psiElement = startElement.psiElement
   if (psiElement != null) {
     return psiElement
@@ -160,7 +160,7 @@ internal fun findLastPsiElementIn(startElement: GradleDslElement): PsiElement? {
  * returning an instance containing the name and whether this is a method call an assignment or unknown (see
  * [GradleDslNameConverter.externalNameForParent])
  */
-internal fun maybeTrimForParent(element: GradleDslElement, converter: GradleDslNameConverter): ExternalNameInfo {
+fun maybeTrimForParent(element: GradleDslElement, converter: GradleDslNameConverter): ExternalNameInfo {
   val name = element.nameElement
   // TODO(b/151607418): this is only an approximation to the scope in which this element is being written: a proper calculation should have
   //  separate understanding of lexical scope from the position the element holds in the model hierarchy, and compute trimming relative

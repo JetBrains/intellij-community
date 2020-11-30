@@ -48,8 +48,7 @@ public final class TestsLocationProviderUtil {
     if (fileName == null) {
       return Collections.emptyList();
     }
-    final List<VirtualFile> target = findFilesClosestToTarget(folders, collectCandidates(project, fileName, true), MIN_PROXIMITY_THRESHOLD);
-    return target.isEmpty() && file != null ? Collections.singletonList(file) : target;
+    return findFilesClosestToTarget(folders, collectCandidates(project, fileName, true), MIN_PROXIMITY_THRESHOLD);
   }
 
   /**
@@ -59,9 +58,9 @@ public final class TestsLocationProviderUtil {
    * @param minProximityThreshold
    * @return
    */
-  public static List<VirtualFile> findFilesClosestToTarget(@NotNull final List<String> targetParentFolders,
-                                                           final List<? extends FileInfo> candidates,
-                                                           final int minProximityThreshold) {
+  public static @NotNull List<VirtualFile> findFilesClosestToTarget(@NotNull final List<String> targetParentFolders,
+                                                                    final @NotNull List<? extends FileInfo> candidates,
+                                                                    final int minProximityThreshold) {
     // let's find all files with similar relative path
 
     if (candidates.isEmpty()) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.TreeExpander
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 internal class HighlightingPanel(project: Project, state: ProblemsViewState)
@@ -64,10 +66,20 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
     updateToolWindowContent()
   }
 
-  override fun fileOpened(manager: FileEditorManager, file: VirtualFile) = updateCurrentFile()
-  override fun fileClosed(manager: FileEditorManager, file: VirtualFile) = updateCurrentFile()
-  override fun selectionChanged(event: FileEditorManagerEvent) = updateCurrentFile()
+  override fun fileOpened(manager: FileEditorManager, file: VirtualFile) = updateCurrentFileIfLocalId()
+  override fun fileClosed(manager: FileEditorManager, file: VirtualFile) = updateCurrentFileIfLocalId()
+  override fun selectionChanged(event: FileEditorManagerEvent) = updateCurrentFileIfLocalId()
 
+  /**
+   * CWM-768: If a new editor is selected from a CodeWithMe client,
+   * then this view should ignore such event
+   */
+  private fun updateCurrentFileIfLocalId() {
+    if (ClientId.isCurrentlyUnderLocalId) {
+      updateCurrentFile()
+    }
+  }
+  
   private fun updateCurrentFile() {
     currentFile = findCurrentFile()
   }
@@ -148,4 +160,4 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
   }
 }
 
-private data class Status(val title: String, val details: String = "", val request: Boolean = false)
+private data class Status(@Nls val title: String, @Nls val details: String = "", val request: Boolean = false)

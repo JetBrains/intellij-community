@@ -5,6 +5,8 @@ import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -91,6 +93,18 @@ object ExecUtil {
   @Throws(ExecutionException::class)
   fun execAndGetOutput(commandLine: GeneralCommandLine, timeoutInMilliseconds: Int): ProcessOutput =
     CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
+
+  @JvmStatic
+  fun execAndGetOutput(commandLine: GeneralCommandLine, stdin: String): String =
+    CapturingProcessHandler(commandLine).also { processHandler ->
+      processHandler.addProcessListener(object : ProcessAdapter() {
+        override fun startNotified(event: ProcessEvent) {
+          processHandler.processInput.writer(commandLine.charset).use {
+            it.write(stdin)
+          }
+        }
+      })
+    }.runProcess().stdout
 
   @JvmStatic
   fun execAndReadLine(commandLine: GeneralCommandLine): String? =
@@ -219,7 +233,7 @@ object ExecUtil {
     execAndGetOutput(sudoCommand(commandLine, prompt))
 
   @NlsSafe
-  private fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"")}\""
+  private fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
 
   @JvmStatic
   fun escapeUnixShellArgument(arg: String): String = "'${arg.replace("'", "'\"'\"'")}'"

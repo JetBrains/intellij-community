@@ -15,26 +15,35 @@
  */
 package com.android.tools.idea.gradle.dsl.model.repositories;
 
+import static com.android.tools.idea.gradle.dsl.model.repositories.FlatDirRepositoryModel.FLAT_DIR_ATTRIBUTE_NAME;
+import static com.android.tools.idea.gradle.dsl.model.repositories.GoogleDefaultRepositoryModelImpl.GOOGLE_DEFAULT_REPO_URL;
+import static com.android.tools.idea.gradle.dsl.model.repositories.GoogleDefaultRepositoryModelImpl.GOOGLE_METHOD_NAME;
+import static com.android.tools.idea.gradle.dsl.model.repositories.GoogleDefaultRepositoryModelImpl.URL;
+import static com.android.tools.idea.gradle.dsl.model.repositories.MavenCentralRepositoryModel.MAVEN_CENTRAL_METHOD_NAME;
+import static com.android.tools.idea.gradle.dsl.parser.repositories.FlatDirRepositoryDslElement.FLAT_DIR;
+import static com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement.GOOGLE;
+import static com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement.JCENTER;
+import static com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement.MAVEN;
+import static com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement.MAVEN_CENTRAL;
+
 import com.android.tools.idea.gradle.dsl.api.repositories.RepositoriesModel;
 import com.android.tools.idea.gradle.dsl.api.repositories.RepositoryModel;
 import com.android.tools.idea.gradle.dsl.model.GradleDslBlockModel;
-import com.android.tools.idea.gradle.dsl.parser.elements.*;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpressionMap;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslMethodCall;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
 import com.android.tools.idea.gradle.dsl.parser.repositories.FlatDirRepositoryDslElement;
 import com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement;
 import com.android.tools.idea.gradle.dsl.parser.repositories.RepositoriesDslElement;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.android.tools.idea.gradle.dsl.model.repositories.FlatDirRepositoryModel.FLAT_DIR_ATTRIBUTE_NAME;
-import static com.android.tools.idea.gradle.dsl.model.repositories.GoogleDefaultRepositoryModelImpl.*;
-import static com.android.tools.idea.gradle.dsl.model.repositories.MavenCentralRepositoryModel.MAVEN_CENTRAL_METHOD_NAME;
-import static com.android.tools.idea.gradle.dsl.parser.repositories.FlatDirRepositoryDslElement.FLAT_DIR;
-import static com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RepositoriesModelImpl extends GradleDslBlockModel implements RepositoriesModel {
 
@@ -140,7 +149,7 @@ public class RepositoriesModelImpl extends GradleDslBlockModel implements Reposi
    * @param url address to use.
    */
   @Override
-  public void addMavenRepositoryByUrl(@NotNull String url, @NotNull String name) {
+  public void addMavenRepositoryByUrl(@NotNull String url, @Nullable String name) {
     // Check if it is already there
     if (containsMavenRepositoryByUrl(url)) {
       return;
@@ -164,12 +173,31 @@ public class RepositoriesModelImpl extends GradleDslBlockModel implements Reposi
     List<MavenRepositoryDslElement> elements = myDslElement.getPropertyElements(MavenRepositoryDslElement.class);
     for (MavenRepositoryDslElement element : elements) {
       String urlElement = element.getLiteral(URL, String.class);
-      if (repositoryUrl.equals(urlElement)) {
+      if (repositoryUrl.equalsIgnoreCase(urlElement)) {
         return true;
       }
     }
     return false;
   }
+
+  /**
+   *  removes repository by URL
+   * @param repositoryUrl the URL of the repository to be removed.
+   * @return {@code true} if there is a repository using {@code repositoryUrl} as URL, {@code false} otherwise.
+   */
+  @Override
+  public boolean removeRepositoryByUrl(@NotNull String repositoryUrl) {
+    List<MavenRepositoryDslElement> elements = myDslElement.getPropertyElements(MavenRepositoryDslElement.class);
+    for (MavenRepositoryDslElement element : elements) {
+      String urlElement = element.getLiteral(URL, String.class);
+      if (repositoryUrl.equalsIgnoreCase(urlElement)) {
+        myDslElement.removeProperty(element);
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   /**
    * Look for Google Maven repository. If Gradle version is 4 or newer, look for it by method call and url.
@@ -190,5 +218,4 @@ public class RepositoriesModelImpl extends GradleDslBlockModel implements Reposi
     }
     return containsMavenRepositoryByUrl(GOOGLE_DEFAULT_REPO_URL);
   }
-
 }

@@ -77,12 +77,12 @@ public class FindByXPathAction extends AnAction {
         }
 
         final UsageViewPresentation presentation = new UsageViewPresentation();
-        presentation.setTargetsNodeText(settings.MATCH_RECURSIVELY ? "XPath Pattern" : "XPath Expression");
+        presentation.setTargetsNodeText(settings.MATCH_RECURSIVELY ? XPathBundle.message("list.item.xpath.pattern")
+                                                                   : XPathBundle.message("list.item.xpath.expression"));
         presentation.setCodeUsages(false);
         presentation.setCodeUsagesString(XPathBundle.message("list.item.found.matches.in", scope.getName()));
         presentation.setNonCodeUsagesString(XPathBundle.message("list.item.result"));
         presentation.setUsagesString("results matching '" + expression + '\'');
-        presentation.setUsagesWord(XPathBundle.message("match"));
         presentation.setTabText(StringUtil.shortenTextWithEllipsis(XPathBundle.message("tab.title.xpath", expression), 60, 0, true));
         presentation.setScopeText(scope.getName());
 

@@ -2,13 +2,14 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,9 +24,10 @@ import java.util.List;
 public class GetterFieldProcessor extends AbstractFieldProcessor {
 
   public GetterFieldProcessor() {
-    super(PsiMethod.class, Getter.class);
+    super(PsiMethod.class, LombokClassNames.GETTER);
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     final PsiClass psiClass = psiField.getContainingClass();
@@ -43,18 +45,18 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
 
     final boolean lazy = isLazyGetter(psiAnnotation);
     if (null == methodVisibility && lazy) {
-      builder.addWarning("'lazy' does not work with AccessLevel.NONE.");
+      builder.addWarning(LombokBundle.message("inspection.message.lazy.does.not.work.with.access.level.none"));
     }
 
     if (result && lazy) {
       if (!psiField.hasModifierProperty(PsiModifier.FINAL) || !psiField.hasModifierProperty(PsiModifier.PRIVATE)) {
-        builder.addError("'lazy' requires the field to be private and final",
-          PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
-          PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
+        builder.addError(LombokBundle.message("inspection.message.lazy.requires.field.to.be.private.final"),
+                         PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
+                         PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
         result = false;
       }
-      if (null == psiField.getInitializer()) {
-        builder.addError("'lazy' requires field initialization.");
+      if (!psiField.hasInitializer()) {
+        builder.addError(LombokBundle.message("inspection.message.lazy.requires.field.initialization"));
         result = false;
       }
     }
@@ -88,7 +90,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 0)) {
           final String setterMethodName = LombokUtils.getGetterName(psiField);
 
-          builder.addWarning("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName);
+          builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.similar.name.s.already.exists"), setterMethodName, methodName);
           result = false;
         }
       }
@@ -99,7 +101,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
   private boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (AccessorsInfo.build(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
-      builder.addWarning("Not generating getter for this field: It does not fit your @Accessors prefix list.");
+      builder.addWarning(LombokBundle.message("inspection.message.not.generating.getter.for.this.field"));
       result = false;
     }
     return result;
@@ -127,7 +129,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     PsiModifierList modifierList = methodBuilder.getModifierList();
     copyAnnotations(psiField, modifierList,
       LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
-    addOnXAnnotations(PsiAnnotationSearchUtil.findAnnotation(psiField, Getter.class), modifierList, "onMethod");
+    addOnXAnnotations(PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.GETTER), modifierList, "onMethod");
     return methodBuilder;
   }
 

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
@@ -44,7 +45,7 @@ import static com.intellij.patterns.StandardPatterns.or;
  * User: dcheryasov
  */
 @SuppressWarnings({"InstanceVariableOfConcreteClass"})
-public class PyKeywordCompletionContributor extends CompletionContributor {
+public class PyKeywordCompletionContributor extends CompletionContributor implements DumbAware {
   /**
    * Matches places where a keyword-based statement might be appropriate.
    */

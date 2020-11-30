@@ -38,7 +38,7 @@ import java.io.File
  */
 object PyTypeShed {
   private const val ONLY_SUPPORTED_PY2_MINOR = 7
-  private val SUPPORTED_PY3_MINORS = LanguageLevel.SUPPORTED_LEVELS.filter { it.isPy3K }.map { it.minor }
+  private val SUPPORTED_PY3_MINORS = LanguageLevel.SUPPORTED_LEVELS.filter { it.isPy3K }.map { it.minorVersion }
 
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
@@ -80,16 +80,22 @@ object PyTypeShed {
    * Returns the list of roots in typeshed for the specified Python language [level].
    */
   fun findRootsForLanguageLevel(level: LanguageLevel): List<String> {
-    val minors = when (level.major) {
+    val majorVersion = level.majorVersion
+    val minorVersion = level.minorVersion
+
+    val minors = when (majorVersion) {
       2 -> listOf(ONLY_SUPPORTED_PY2_MINOR)
-      3 -> SUPPORTED_PY3_MINORS.reversed().filter { it <= level.minor }
+      3 -> SUPPORTED_PY3_MINORS.reversed().filter { it <= minorVersion }
       else -> return emptyList()
     }
-    return minors.map { "stdlib/${level.major}.$it" } +
-           listOf("stdlib/${level.major}",
-                  "stdlib/2and3",
-                  "third_party/${level.major}",
-                  "third_party/2and3")
+
+    return minors.map { "stdlib/$majorVersion.$it" } +
+      listOf(
+        "stdlib/$majorVersion",
+        "stdlib/2and3",
+        "third_party/$majorVersion",
+        "third_party/2and3"
+      )
   }
 
   /**
@@ -124,10 +130,4 @@ object PyTypeShed {
   fun isInThirdPartyLibraries(file: VirtualFile): Boolean = "third_party" in file.path
 
   fun isInStandardLibrary(file: VirtualFile): Boolean = "stdlib" in file.path
-
-  private val LanguageLevel.major: Int
-    get() = this.version / 10
-
-  private val LanguageLevel.minor: Int
-    get() = this.version % 10
 }

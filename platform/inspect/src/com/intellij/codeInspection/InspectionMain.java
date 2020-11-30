@@ -82,6 +82,8 @@ public class InspectionMain implements ApplicationStarter {
         }
         else if ("-changes".equals(arg)) {
           myApplication.myAnalyzeChanges = true;
+        } else if ("-qodana".equals(arg)) {
+          myApplication.myQodanaRun = true;
         }
         else {
           System.err.println("unexpected argument: " + arg);

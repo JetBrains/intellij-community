@@ -39,6 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
+  // this logger is for low-level focus-related requests (performed by JDK and our custom low-level mechanisms)
+  public static final Logger FOCUS_REQUESTS_LOG = Logger.getInstance("Focus requests");
 
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
@@ -121,16 +123,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @DirtyUI
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    Window window = ComponentUtil.getWindow(c);
-    if ((window == null || window.isAutoRequestFocus()) &&
-        (ApplicationManager.getApplication().isActive() || !Registry.is("suppress.focus.stealing.active.window.checks"))) {
-      logFocusRequest(c, project, false);
-      c.requestFocus();
-    }
-    else {
-      logFocusRequest(c, project, true);
-      c.requestFocusInWindow();
-    }
+    logFocusRequest(c, project, true);
+    c.requestFocusInWindow();
     return ActionCallback.DONE;
   }
 

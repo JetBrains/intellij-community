@@ -2,8 +2,8 @@
 package com.intellij.ide.impl
 
 import com.intellij.codeInsight.actions.ReaderModeProvider
-import com.intellij.codeInsight.actions.ReaderModeSettings
 import com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider
+import com.intellij.codeInsight.actions.ReaderModeSettings
 import com.intellij.codeInsight.hints.InlayHintsPassFactory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project

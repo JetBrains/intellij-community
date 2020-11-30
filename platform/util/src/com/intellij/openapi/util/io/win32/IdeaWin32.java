@@ -27,7 +27,7 @@ public final class IdeaWin32 {
 
   static {
     IdeaWin32 instance = null;
-    if (SystemInfo.isWin2kOrNewer && SystemProperties.getBooleanProperty("idea.use.native.fs.for.win", true)) {
+    if (SystemInfo.isWindows && SystemProperties.getBooleanProperty("idea.use.native.fs.for.win", true)) {
       try {
         if (!loadBundledLibrary()) {
           NativeLibraryLoader.loadPlatformLibrary("IdeaWin32");
@@ -48,7 +48,7 @@ public final class IdeaWin32 {
     if (bundled == null) return false;
     byte[] content = FileUtil.loadBytes(bundled.openStream());
     CRC32 crc32 = new CRC32();
-    crc32.update(content);
+    crc32.update(content, 0, content.length);
     long hash = Math.abs(crc32.getValue());
     File file = new File(FileUtil.getTempDirectory(), name + '.' + hash + ".dll");
     if (!file.exists()) FileUtil.writeToFile(file, content);

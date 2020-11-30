@@ -16,6 +16,9 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphAlgorithms;
+import com.intellij.util.graph.GraphGenerator;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -23,12 +26,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 
 @Service
 public final class PluginManager {
@@ -202,11 +205,7 @@ public final class PluginManager {
 
   @SuppressWarnings("MethodMayBeStatic")
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
-    List<IdeaPluginDescriptorImpl> result = PluginManagerCore.ourLoadedPlugins;
-    if (result == null) {
-      return null;
-    }
-
+    List<IdeaPluginDescriptorImpl> result = PluginManagerCore.getLoadedPlugins(null);
     for (IdeaPluginDescriptor plugin : result) {
       if (id == plugin.getPluginId()) {
         return plugin;
@@ -228,18 +227,46 @@ public final class PluginManager {
     PluginManagerCore.doSetPlugins(list);
   }
 
+  public boolean processAllBackwardDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                                boolean withOptionalDeps,
+                                                @NotNull Function<? super IdeaPluginDescriptor, FileVisitResult> consumer) {
+    Map<PluginId, IdeaPluginDescriptorImpl> idMap = new HashMap<>();
+    Collection<IdeaPluginDescriptorImpl> allPlugins = PluginManagerCore.getAllPlugins();
+    for (IdeaPluginDescriptorImpl plugin : allPlugins) {
+      idMap.put(plugin.getPluginId(), plugin);
+    }
+
+    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = PluginManagerCore
+      .createPluginIdGraph(allPlugins,
+                           idMap::get,
+                           withOptionalDeps,
+                           PluginManagerCore.findPluginByModuleDependency(PluginManagerCore.ALL_MODULES_MARKER) != null);
+    Graph<IdeaPluginDescriptorImpl> graph = GraphGenerator.generate(semiGraph);
+    Set<IdeaPluginDescriptorImpl> dependencies = new LinkedHashSet<>();
+    GraphAlgorithms.getInstance().collectOutsRecursively(graph, rootDescriptor, dependencies);
+    for (IdeaPluginDescriptorImpl dependency : dependencies) {
+      if (dependency == rootDescriptor) {
+        continue;
+      }
+      if (consumer.apply(dependency) == FileVisitResult.TERMINATE) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public @NotNull Disposable createDisposable(@NotNull Class<?> requestor) {
     ClassLoader classLoader = requestor.getClassLoader();
     if (!(classLoader instanceof PluginAwareClassLoader)) {
       return Disposer.newDisposable();
     }
 
-    PluginId pluginId = ((PluginAwareClassLoader)classLoader).getPluginId();
+    int classLoaderId = ((PluginAwareClassLoader)classLoader).getInstanceId();
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return new PluginAwareDisposable() {
       @Override
-      public @NotNull PluginId getPluginId() {
-        return pluginId;
+      public int getClassLoaderId() {
+        return classLoaderId;
       }
 
       @Override
@@ -254,6 +281,6 @@ public final class PluginManager {
   }
 
   interface PluginAwareDisposable extends Disposable {
-    @NotNull PluginId getPluginId();
+    int getClassLoaderId();
   }
 }

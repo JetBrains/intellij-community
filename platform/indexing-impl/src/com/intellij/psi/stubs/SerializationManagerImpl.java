@@ -9,6 +9,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -35,11 +36,11 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
   private volatile boolean mySerializersLoaded;
 
-  @SuppressWarnings("unused") // used from componentSets/Lang.xml:14
   public SerializationManagerImpl() {
-    this(FileBasedIndex.USE_IN_MEMORY_INDEX ? null : new File(PathManager.getIndexRoot(), "rep.names").toPath(), false);
+    this(FileBasedIndex.USE_IN_MEMORY_INDEX ? null : PathManager.getIndexRoot().toPath().resolve("rep.names"), false);
   }
 
+  @NonInjectable
   public SerializationManagerImpl(@Nullable Path nameStorageFile, boolean unmodifiable) {
     myFile = nameStorageFile;
     myUnmodifiable = unmodifiable;
@@ -79,6 +80,24 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
         PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(lastValue);
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public Map<String, Integer> dumpNameStorage() {
+    assert myUnmodifiable;
+    assert myNameStorage instanceof PersistentStringEnumerator;
+    try {
+      Collection<String> stubNames = ((PersistentStringEnumerator)myNameStorage).getAllDataObjects(null);
+      Map<String, Integer> dump = new HashMap<>();
+      for (String name : stubNames) {
+        dump.put(name, myNameStorage.tryEnumerate(name));
+      }
+      return dump;
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return Collections.emptyMap();
   }
 
   @Override
@@ -163,7 +182,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   @Override
-  protected void registerSerializer(@NotNull String externalId, Supplier<ObjectStubSerializer<?, Stub>> lazySerializer) {
+  protected void registerSerializer(@NotNull String externalId, Supplier<ObjectStubSerializer<?, ? extends Stub>> lazySerializer) {
     try {
       myStubSerializationHelper.assignId(lazySerializer, externalId);
     }
@@ -221,11 +240,11 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       final IElementType[] stubElementTypes = IElementType.enumerate(type -> type instanceof StubSerializer);
       for (IElementType type : stubElementTypes) {
         if (type instanceof StubFileElementType &&
-            StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType)type).getExternalId())) {
+            StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType<?>)type).getExternalId())) {
           continue;
         }
 
-        registerSerializer((StubSerializer)type);
+        registerSerializer((StubSerializer<?>)type);
       }
       for (StubFieldAccessor lazySerializer : lazySerializers) {
         registerSerializer(lazySerializer.externalId, lazySerializer);

@@ -3,7 +3,41 @@
   <id>Lombook Plugin</id>
   <name>Lombok</name>
   <vendor>JetBrains</vendor>
-  <description><![CDATA[A plugin that adds first-class support for Project Lombok]]></description>
+  <resource-bundle>messages.LombokBundle</resource-bundle>
+  <description><![CDATA[
+<h1>IntelliJ Lombok plugin</h1>
+<br/>
+<b>A plugin that adds first-class support for Project Lombok</b>
+<br/>
+<b>Features</b>
+<ul>
+  <li><a href="https://projectlombok.org/features/GetterSetter.html">@Getter and @Setter</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/FieldNameConstants">@FieldNameConstants</a></li>
+  <li><a href="https://projectlombok.org/features/ToString.html">@ToString</a></li>
+  <li><a href="https://projectlombok.org/features/EqualsAndHashCode.html">@EqualsAndHashCode</a></li>
+  <li><a href="https://projectlombok.org/features/Constructor.html">@AllArgsConstructor, @RequiredArgsConstructor and
+    @NoArgsConstructor</a></li>
+  <li><a href="https://projectlombok.org/features/Log.html">@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog,
+    @JBossLog, @Flogger, @CustomLog</a></li>
+  <li><a href="https://projectlombok.org/features/Data.html">@Data</a></li>
+  <li><a href="https://projectlombok.org/features/Builder.html">@Builder</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/SuperBuilder">@SuperBuilder</a></li>
+  <li><a href="https://projectlombok.org/features/Builder.html#singular">@Singular</a></li>
+  <li><a href="https://projectlombok.org/features/Delegate.html">@Delegate</a></li>
+  <li><a href="https://projectlombok.org/features/Value.html">@Value</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/Accessors.html">@Accessors</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/Wither.html">@Wither</a></li>
+  <li><a href="https://projectlombok.org/features/With.html">@With</a></li>
+  <li><a href="https://projectlombok.org/features/SneakyThrows.html">@SneakyThrows</a></li>
+  <li><a href="https://projectlombok.org/features/val.html">@val</a></li>
+  <li><a href="https://projectlombok.org/features/var.html">@var</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/var.html">experimental @var</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/UtilityClass.html">@UtilityClass</a></li>
+  <li><a href="https://projectlombok.org/features/configuration.html">Lombok config system</a></li>
+  <li>Code inspections</li>
+  <li>Refactoring actions (lombok and delombok)</li>
+</ul>
+<br/>]]></description>
   <category>Tools Integration</category>
 
   <depends>com.intellij.modules.lang</depends>
@@ -108,7 +142,8 @@
 
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
-    <projectConfigurable instance="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
+    <projectConfigurable groupId="language"
+                         instance="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
 
     <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>
 
@@ -215,14 +250,21 @@
       <className>de.plushnikov.intellij.plugin.intention.valvar.from.ReplaceVarWithExplicitTypeIntentionAction</className>
       <category>Lombok</category>
     </intentionAction>
+    <intentionAction>
+      <className>de.plushnikov.intellij.plugin.intention.ReplaceWithLombokAnnotationAction</className>
+      <category>Lombok</category>
+    </intentionAction>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"
                                                   implementationClass="de.plushnikov.intellij.plugin.extension.postfix.LombokPostfixTemplateProvider"/>
+    <codeInsight.externalLibraryResolver implementation="de.plushnikov.intellij.plugin.resolver.LombokExternalLibraryResolver"/>
+
+    <buildProcess.parametersProvider implementation="de.plushnikov.intellij.plugin.jps.LombokBuildProcessParametersProvider"/>
   </extensions>
 
   <actions>
     <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
-           icon="/icons/lombok.png" popup="true">
+           icon="LombokIcons.Lombok" popup="true">
 
       <action id="defaultLombokData" class="de.plushnikov.intellij.plugin.action.lombok.LombokDataAction"
               text="Default @Data"
@@ -261,7 +303,7 @@
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
     <group id="DelombokActionGroup" text="Delombok" description="Refactor code removing lombok annotations"
-           icon="/icons/delombok.png" popup="true">
+           icon="LombokIcons.Lombok" popup="true">
       <action id="delombokAny" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEverythingAction"
               text="All lombok annotations"
               description="Action to replace all lombok annotations with vanilla java methods">

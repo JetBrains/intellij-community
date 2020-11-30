@@ -12,6 +12,7 @@ import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -29,6 +30,7 @@ import org.jdom.Document
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
+import java.net.URL
 import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -37,7 +39,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 import java.util.function.Predicate
-import kotlin.collections.HashSet
 
 class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                      processor: SchemeProcessor<T, MUTABLE_SCHEME>,
@@ -109,25 +110,35 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     directory.refresh(true, false)
   }
 
-  override fun loadBundledScheme(resourceName: String, requestor: Any) {
+  override fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?) {
     try {
-      @Suppress("DEPRECATION")
-      val url = when (requestor) {
-        is com.intellij.openapi.extensions.AbstractExtensionPointBean -> requestor.loaderForClass.getResource(resourceName)
-        is TempUIThemeBasedLookAndFeelInfo -> File(resourceName).toURI().toURL()
-        is UITheme -> DecodeDefaultsUtil.getDefaults(requestor.providerClassLoader, resourceName)
-        else -> DecodeDefaultsUtil.getDefaults(requestor, resourceName)
+      val bytes: ByteArray
+      if (pluginDescriptor == null) {
+        @Suppress("DEPRECATION")
+        val url: URL? = when (requestor) {
+          is TempUIThemeBasedLookAndFeelInfo -> File(resourceName).toURI().toURL()
+          is UITheme -> DecodeDefaultsUtil.getDefaults(requestor.providerClassLoader, resourceName)
+          else -> DecodeDefaultsUtil.getDefaults(requestor, resourceName)
+        }
+
+        if (url == null) {
+          LOG.error("Cannot read scheme from $resourceName")
+          return
+        }
+        bytes = URLUtil.openStream(url).readAllBytes()
+      }
+      else {
+        val stream = pluginDescriptor.pluginClassLoader.getResourceAsStream(resourceName.removePrefix("/"))
+        if (stream == null) {
+          LOG.error("Cannot found scheme $resourceName in ${pluginDescriptor.pluginClassLoader}")
+          return
+        }
+        bytes = stream.readAllBytes()
       }
 
-      if (url == null) {
-        LOG.error("Cannot read scheme from $resourceName")
-        return
-      }
-
-      val bytes = URLUtil.openStream(url).readBytes()
       lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
-        val fileName = PathUtilRt.getFileName(url.path)
+        val fileName = PathUtilRt.getFileName(resourceName)
         val extension = getFileExtension(fileName, true)
         val externalInfo = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
 

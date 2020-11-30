@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -16,16 +17,23 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.Stack;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.GradleScript;
 import org.gradle.util.GUtil;
+import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -279,5 +287,43 @@ public final class GradleUtil {
     if (projectNode == null) return null;
     BooleanFunction<DataNode<ModuleData>> predicate = node -> projectPath.equals(node.getData().getLinkedExternalProjectPath());
     return ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, predicate);
+  }
+
+  /**
+   * @deprecated to be removed in the next release
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  public static boolean isCustomSerializationEnabled(@NotNull GradleVersion gradleVersion) {
+    return Registry.is("gradle.tooling.custom.serializer", true) && gradleVersion.compareTo(GradleVersion.version("3.0")) >= 0;
+  }
+
+  public static @NotNull GradleVersion getGradleVersion(Project project, PsiFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null) {
+      String filePath = virtualFile.getPath();
+      return getGradleVersion(project, filePath);
+    }
+    return GradleVersion.current();
+  }
+
+  public static @NotNull GradleVersion getGradleVersion(Project project, String filePath) {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
+    if (manager instanceof GradleManager) {
+      GradleManager gradleManager = (GradleManager)manager;
+      String externalProjectPath = gradleManager.getAffectedExternalProjectPath(filePath, project);
+      if (externalProjectPath != null) {
+        GradleSettings settings = GradleSettings.getInstance(project);
+        GradleProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
+        if (projectSettings != null) {
+          return projectSettings.resolveGradleVersion();
+        }
+      }
+    }
+    return GradleVersion.current();
+  }
+
+  public static boolean isSupportedImplementationScope(@NotNull GradleVersion gradleVersion) {
+    return gradleVersion.getBaseVersion().compareTo(GradleVersion.version("3.4")) >= 0;
   }
 }

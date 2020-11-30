@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.utils.formatAbsolute
 import com.intellij.space.utils.toLocalDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
@@ -41,7 +42,7 @@ internal class DetailedInfoPanel(detailsVm: CrDetailsVm<out CodeReviewRecord>) {
     }
 
     detailsVm.createdBy.forEach(detailsVm.lifetime) {
-      infoLabel.text = "created by ${it!!.englishFullName()} ${detailsVm.createdAt.value.toLocalDateTime().formatAbsolute()}"
+      infoLabel.text = SpaceBundle.message("review.label.created.by.user.at.time", it!!.englishFullName(), detailsVm.createdAt.value.toLocalDateTime().formatAbsolute())
     }
 
     detailsVm.title.forEach(detailsVm.lifetime) {
@@ -56,7 +57,7 @@ internal class DetailedInfoPanel(detailsVm: CrDetailsVm<out CodeReviewRecord>) {
 
       val projectKeyComponent = SimpleColoredComponent().apply {
         ipad = JBUI.insetsLeft(0)
-        append(detailsVm.projectKey.key)
+        append(detailsVm.projectKey.key) // NON-NLS
         append(" / ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
 
@@ -132,8 +133,8 @@ internal class DetailedInfoPanel(detailsVm: CrDetailsVm<out CodeReviewRecord>) {
     )
     return NonOpaquePanel(layout).apply {
       val repo = detailsVm.repository.value
-      val target = detailsVm.targetBranchInfo.value?.displayName
-      val source = detailsVm.sourceBranchInfo.value?.displayName
+      val target = detailsVm.targetBranchInfo.value?.displayName // NON-NLS
+      val source = detailsVm.sourceBranchInfo.value?.displayName // NON-NLS
 
       add(JLabel("$repo: "))
       add(JLabel(target), CC())

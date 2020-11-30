@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -220,7 +221,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   }
 
   @NotNull
-  private static <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @NotNull String description, @Nullable Icon icon) {
+  private static <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @NotNull @Nls String description, @Nullable Icon icon) {
     return new ExternalSystemNodeDescriptor<>(element, element.toString(), description, icon);
   }
 

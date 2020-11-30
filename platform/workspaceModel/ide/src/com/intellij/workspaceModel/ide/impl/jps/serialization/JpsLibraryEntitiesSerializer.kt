@@ -1,11 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -78,6 +82,19 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
     for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
       val source = createEntitySource(libraryTag) ?: continue
       val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
+
+      val libraryId = LibraryId(name, libraryTableId)
+      val existingLibraryEntity = builder.resolve(libraryId)
+      if (existingLibraryEntity != null) {
+        logger<JpsLibraryEntitiesSerializer>().error("""Error during entities loading
+          |Entity with this library id already exists.
+          |Library id: $libraryId
+          |fileUrl: ${fileUrl.presentableUrl}
+          |library table id: $libraryTableId
+          |internal entity source: $internalEntitySource
+        """.trimMargin())
+      }
+
       loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager)
     }
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.ui.UtilUiBundle;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
@@ -207,14 +208,14 @@ public class ThreeStateCheckBox extends JCheckBox {
       return super.getAccessibleName();
     }
 
-    private String addStateDescription(String name) {
+    private @Nls String addStateDescription(@Nls String name) {
       switch(getState()) {
         case SELECTED:
-          return AccessibleContextUtil.combineAccessibleStrings(name, "checked");
+          return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message("accessible.checkbox.name.checked"));
         case NOT_SELECTED:
-          return AccessibleContextUtil.combineAccessibleStrings(name, "not checked");
+          return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message("accessible.checkbox.name.not.checked"));
         case DONT_CARE:
-          return AccessibleContextUtil.combineAccessibleStrings(name, "partially checked");
+          return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message("accessible.checkbox.name.partially.checked"));
         default:
           return name;
       }

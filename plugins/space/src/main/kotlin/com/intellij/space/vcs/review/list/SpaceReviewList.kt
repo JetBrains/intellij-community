@@ -77,7 +77,9 @@ private class SpaceOpenCodeReviewDetailsAction : DumbAwareAction(SpaceBundle.mes
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val data = e.getData(SpaceReviewListDataKeys.SELECTED_REVIEW) ?: return
-    e.getData(SpaceReviewDataKeys.SELECTED_REVIEW_VM)?.selectedReview?.value = data
-    openReviewInEditor(project, data)
+    val selectedReviewVm = e.getData(SpaceReviewDataKeys.SELECTED_REVIEW_VM) ?: return
+    selectedReviewVm.selectedReview.value = data
+
+    openReviewInEditor(project, selectedReviewVm.workspace, selectedReviewVm.projectInfo, data)
   }
 }

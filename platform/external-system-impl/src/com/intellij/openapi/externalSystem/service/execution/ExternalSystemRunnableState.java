@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -113,6 +114,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       }
     }
     return myForkSocket;
+  }
+
+  public boolean isReattachDebugProcess() {
+    return myConfiguration.isReattachDebugProcess();
+  }
+
+  public boolean isDebugServerProcess() {
+    return myConfiguration.isDebugServerProcess();
   }
 
   @Nullable
@@ -218,8 +227,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
             DataProvider dataProvider = BuildConsoleUtils.getDataProvider(id, progressListener);
-            FailureResult failureResult =
-              ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject, dataProvider);
+            FailureResult failureResult = ExternalSystemUtil.createFailureResult(
+              executionName + " " + BuildBundle.message("build.status.failed"), e, id.getProjectSystemId(), myProject, dataProvider);
             eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                  BuildBundle.message("build.status.failed"), failureResult));
             processHandler.notifyProcessTerminated(1);

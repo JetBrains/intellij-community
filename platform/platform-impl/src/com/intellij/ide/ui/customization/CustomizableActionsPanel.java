@@ -84,10 +84,12 @@ public class CustomizableActionsPanel {
 
   private ActionToolbarImpl createToolbar() {
     ActionGroup addGroup = new DefaultActionGroup(new AddActionActionTreeSelectionAction()/*, new AddGroupAction()*/, new AddSeparatorAction());
+    addGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.add.action.group"));
     addGroup.getTemplatePresentation().setIcon(AllIcons.General.Add);
     addGroup.setPopup(true);
     ActionGroup restoreGroup = new DefaultActionGroup(new RestoreSelectionAction(), new RestoreAllAction());
     restoreGroup.setPopup(true);
+    restoreGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
     restoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(addGroup, new RemoveAction(), new EditIconAction(), new MoveUpAction(), new MoveDownAction(), restoreGroup), true);
@@ -279,14 +281,15 @@ public class CustomizableActionsPanel {
         else if (userObject instanceof Pair) {
           String actionId = (String)((Pair)userObject).first;
           AnAction action = ActionManager.getInstance().getAction(actionId);
-          append(action != null ? action.getTemplatePresentation().getText() : actionId);
+          String text = action != null ? action.getTemplatePresentation().getText() : null;
+          append(StringUtil.isNotEmpty(text) ? text : actionId);
           icon = (Icon)((Pair)userObject).second;
         }
         else if (userObject instanceof Separator) {
           append("-------------");
         }
         else if (userObject instanceof QuickList) {
-          append(((QuickList)userObject).getName());
+          append(((QuickList)userObject).getDisplayName());
           icon = null; // AllIcons.Actions.QuickList;
         }
         else if (userObject != null) {

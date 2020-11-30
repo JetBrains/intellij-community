@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -123,6 +124,21 @@ class BuildTasksImpl extends BuildTasks {
       ideaProperties += ["idea.platform.prefix": context.productProperties.platformPrefix]
     }
 
+    def additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+    additionalPluginPaths?.each { pluginPath ->
+      File libFile = new File(pluginPath, "lib")
+      libFile.list { _, name ->
+        FileUtil.extensionEquals(name, "jar")
+      }.each { jarName ->
+        File jarFile = new File(libFile, jarName)
+        if (ideClasspath.add(jarFile.absolutePath)) {
+          context.messages.debug(" $jarFile from plugin ${libFile.parentFile.name}")
+        }
+      }
+    }
+
+    disableCompatibleIgnoredPlugins(context, "${tempDir}/config")
+
     BuildUtils.runJava(
       context,
       vmOptions,
@@ -130,6 +146,17 @@ class BuildTasksImpl extends BuildTasks {
       ideClasspath,
       "com.intellij.idea.Main",
       arguments)
+  }
+
+  private static void disableCompatibleIgnoredPlugins(BuildContext context, String configDir) {
+    String text = ""
+    context.productProperties.productLayout.compatiblePluginsToIgnore.each { moduleName ->
+      def pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")
+      text += JDOMUtil.load(pluginXml).getChildTextTrim("id") + "\n"
+    }
+    if (!text.isEmpty()) {
+      FileUtil.writeToFile(new File(configDir + "/disabled_plugins.txt"), text)
+    }
   }
 
   File patchIdeaPropertiesFile() {
@@ -214,6 +241,12 @@ idea.fatal.error.notification=disabled
       }
 
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
+
+      buildContext.productProperties.getAdditionalPluginPaths(buildContext)?.each { pluginPath ->
+        buildContext.ant.copy(todir: "$buildContext.paths.distAll/plugins/${new File(pluginPath).name}") {
+          fileset(dir: pluginPath)
+        }
+      }
     }
   }
 
@@ -369,7 +402,7 @@ idea.fatal.error.notification=disabled
         }))
       }
 
-      List<String> paths = runInParallel(tasks).findAll { it != null }
+      List<String> paths = runInParallel(tasks, buildContext).findAll { it != null }
 
       if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
         if (buildContext.buildNumber == null) {
@@ -425,7 +458,7 @@ idea.fatal.error.notification=disabled
   @Override
   void buildNonBundledPlugins(List<String> mainPluginModules) {
     checkProductProperties()
-    checkPluginModules(mainPluginModules, "mainPluginModules")
+    checkPluginModules(mainPluginModules, "mainPluginModules", buildContext.productProperties.productLayout.allNonTrivialPlugins)
     copyDependenciesFile()
     def pluginsToPublish = new LinkedHashSet<PluginLayout>(
       DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
@@ -566,15 +599,17 @@ idea.fatal.error.notification=disabled
     }
 
     List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
-    checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules")
-    checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish")
+    checkPluginDuplicates(nonTrivialPlugins)
+
+    checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", nonTrivialPlugins)
+    checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", nonTrivialPlugins)
 
     if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
       buildContext.messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
                                     "layout.compatiblePluginsToIgnore property will be ignored ($layout.compatiblePluginsToIgnore)")
     }
     if (layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
-      checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore")
+      checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", nonTrivialPlugins)
     }
 
     if (!buildContext.shouldBuildDistributions() && layout.buildAllCompatiblePlugins) {
@@ -592,12 +627,20 @@ idea.fatal.error.notification=disabled
     checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
-    def allBundledPlugins = layout.bundledPluginModules as Set<String>
-    nonTrivialPlugins.findAll { allBundledPlugins.contains(it.mainModule) }.each { plugin ->
+    nonTrivialPlugins.each { plugin ->
       checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries.collect {it.libraryName}, "'$plugin.mainModule' plugin")
       checkArtifacts(plugin.includedArtifacts.keySet(), "'$plugin.mainModule' plugin")
+    }
+  }
+
+  private void checkPluginDuplicates(List<PluginLayout> nonTrivialPlugins) {
+    def pluginsGroupedByMainModule = nonTrivialPlugins.groupBy { it.mainModule }.values()
+    for (List<PluginLayout> duplicatedPlugins : pluginsGroupedByMainModule) {
+      if (duplicatedPlugins.size() > 1) {
+        buildContext.messages.warning("Duplicated plugin description in productLayout.allNonTrivialPlugins: ${duplicatedPlugins[0].mainModule}")
+      }
     }
   }
 
@@ -624,11 +667,20 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private void checkPluginModules(List<String> pluginModules, String fieldName) {
+  private void checkPluginModules(List<String> pluginModules, String fieldName, List<PluginLayout> pluginLayoutList) {
     if (pluginModules == null) {
       return
     }
     checkModules(pluginModules, fieldName)
+
+    def unspecifiedLayoutPluginModules = pluginModules.findAll { mainModuleName ->
+      pluginLayoutList.find { it.mainModule == mainModuleName } == null
+    }
+    if (!unspecifiedLayoutPluginModules.empty) {
+      buildContext.messages.info("No plugin layout specified in productProperties.productLayout.allNonTrivialPlugins for following plugin main modules. " +
+                                    "Assuming simple layout. Modules list: $unspecifiedLayoutPluginModules")
+    }
+
     def unknownBundledPluginModules = pluginModules.findAll { buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
@@ -666,7 +718,7 @@ idea.fatal.error.notification=disabled
     CompilationTasks.create(buildContext).compileModules(moduleNames, includingTestsInModules)
   }
 
-  private <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks) {
+  static <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks, BuildContext buildContext) {
     if (!buildContext.options.runBuildStepsInParallel) {
       return tasks.collect {
         it.run(buildContext)
@@ -818,7 +870,7 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private abstract static class BuildTaskRunnable<V> {
+  abstract static class BuildTaskRunnable<V> {
     final String taskName
 
     BuildTaskRunnable(String name) {

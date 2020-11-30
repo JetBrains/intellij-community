@@ -237,4 +237,12 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     return modules.length == 1 ? modules[0] : null;
   }
+
+  public String getProjectPathOnTarget() {
+    return getOptions().getProjectPathOnTarget();
+  }
+
+  public void setProjectPathOnTarget(String path) {
+    getOptions().setProjectPathOnTarget(path);
+  }
 }

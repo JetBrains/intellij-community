@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,13 +39,13 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.LanguageSubstitutor;
-import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.impl.rules.UsageType;
@@ -69,7 +70,7 @@ import java.util.function.BiConsumer;
 
 @State(name = "ScratchFileService", storages = @Storage(value = "scratches.xml", roamingType = RoamingType.DISABLED))
 public class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>, Disposable {
-  @SuppressWarnings("HardCodedStringLiteral") private static final RootType NO_ROOT_TYPE = new RootType("", "NO_ROOT_TYPE") {};
+  private static final RootType NO_ROOT_TYPE = new RootType("", "NO_ROOT_TYPE") {};
 
   private final LightDirectoryIndex<RootType> myIndex;
   private final MyLanguages myScratchMapping = new MyLanguages();
@@ -133,7 +134,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     });
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener);
 
-    RootType.ROOT_EP.addExtensionPointListener(new ExtensionPointListener<RootType>() {
+    RootType.ROOT_EP.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull RootType rootType, @NotNull PluginDescriptor pluginDescriptor) {
         myIndex.resetIndex();
@@ -182,7 +183,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   @NotNull
   @Override
   public PerFileMappings<Language> getScratchesMapping() {
-    return new PerFileMappings<Language>() {
+    return new PerFileMappings<>() {
       @Override
       public void setMapping(@Nullable VirtualFile file, @Nullable Language value) {
         myScratchMapping.setMapping(file, value == null ? null : value.getID());
@@ -231,23 +232,30 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     }
   }
 
-  // TODO new way of scratch language substitution will be needed
+  public static class Detector implements FileTypeRegistry.FileTypeDetector {
+
+    @Override
+    public @Nullable FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
+      if (firstCharsIfText == null) return null;
+      FileType byName = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+      RootType rootType = byName != UnknownFileType.INSTANCE ? null : findRootType(file);
+      return rootType != null ? PlainTextFileType.INSTANCE : null;
+    }
+  }
+
   public static class Substitutor extends LanguageSubstitutor {
+
     @Nullable
     @Override
     public Language getLanguage(@NotNull VirtualFile file, @NotNull Project project) {
-        return substituteLanguage(project, file);
+      return substituteLanguage(project, file);
     }
 
     @Nullable
     public static Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
-      RootType rootType = ScratchFileService.getInstance().getRootType(file);
+      RootType rootType = findRootType(file instanceof LightVirtualFile? ((LightVirtualFile)file).getOriginalFile() : file);
       if (rootType == null) return null;
-      Language language = rootType.substituteLanguage(project, file);
-      Language adjusted = language != null ? language : getLanguageByFileName(file);
-      Language result = adjusted != null && adjusted != PlainTextLanguage.INSTANCE ?
-                        LanguageSubstitutors.getInstance().substituteLanguage(adjusted, file, project) : adjusted;
-      return result == Language.ANY ? null : result;
+      return rootType.substituteLanguage(project, file);
     }
   }
 
@@ -258,7 +266,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       if (project == null || file == null) return null;
       if (!ScratchUtil.isScratch(file)) return null;
 
-      Language language = LanguageUtil.getLanguageForPsi(project, file);
+      Language language = LanguageUtil.getLanguageForPsi(project, file, fileType);
       return language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
     }
   }
@@ -393,11 +401,6 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
         return dir.findOrCreateChildData(LocalFileSystem.getInstance(), fileNameExt);
       }
     });
-  }
-
-  @Nullable
-  private static Language getLanguageByFileName(@Nullable VirtualFile file) {
-    return file == null ? null : LanguageUtil.getFileTypeLanguage(FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence()));
   }
 
   public static class UseScopeExtension extends UseScopeEnlarger {

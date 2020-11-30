@@ -82,7 +82,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     myLog.setEditable(false);
 
 
-    myState = ServiceManager.getService(PlaybackDebuggerState.class);
+    myState = ApplicationManager.getApplication().getService(PlaybackDebuggerState.class);
 
     final DefaultActionGroup controlGroup = new DefaultActionGroup();
     controlGroup.add(new RunOnFameActivationAction());

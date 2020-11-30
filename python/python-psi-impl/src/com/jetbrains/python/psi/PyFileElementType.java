@@ -30,7 +30,6 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.PythonParser;
-import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.parsing.console.PyConsoleParser;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import com.jetbrains.python.parsing.console.PythonConsoleLexer;
@@ -63,7 +62,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public int getStubVersion() {
     // Don't forget to update versions of indexes that use the updated stub-based elements
-    return 81;
+    return 82;
   }
 
   @Nullable
@@ -92,9 +91,6 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
       if (parser instanceof PyParser) {
         final PythonParser pythonParser = (PythonParser)parser;
         pythonParser.setLanguageLevel(languageLevel);
-        if (languageLevel == LanguageLevel.PYTHON26 && psi.getContainingFile().getName().equals("__builtin__.py")) {
-          pythonParser.setFutureFlag(StatementParsing.FUTURE.PRINT_FUNCTION);
-        }
       }
       return parser.parse(this, builder).getFirstChildNode();
     }

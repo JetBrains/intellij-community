@@ -31,17 +31,15 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
-  @NonNls private static final String ROOT_NODE_VALUE = "root";
-
-  public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
-  public static final Object LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
-  public static final Object LOGICALLY_LOCKED_TAG = new Tag("changes.nodetitle.logicallt.locked.folders");
-  public static final Object UNVERSIONED_FILES_TAG = new Tag("changes.nodetitle.unversioned.files");
-  public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Tag("changes.nodetitle.modified.without.editing");
-  public static final Object SWITCHED_FILES_TAG = new Tag("changes.nodetitle.switched.files");
-  public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
-  public static final Object LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
+public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
+  public static final Tag IGNORED_FILES_TAG = new VcsBundleTag("changes.nodetitle.ignored.files");
+  public static final Tag LOCKED_FOLDERS_TAG = new VcsBundleTag("changes.nodetitle.locked.folders");
+  public static final Tag LOGICALLY_LOCKED_TAG = new VcsBundleTag("changes.nodetitle.logicallt.locked.folders");
+  public static final Tag UNVERSIONED_FILES_TAG = new VcsBundleTag("changes.nodetitle.unversioned.files");
+  public static final Tag MODIFIED_WITHOUT_EDITING_TAG = new VcsBundleTag("changes.nodetitle.modified.without.editing");
+  public static final Tag SWITCHED_FILES_TAG = new VcsBundleTag("changes.nodetitle.switched.files");
+  public static final Tag SWITCHED_ROOTS_TAG = new VcsBundleTag("changes.nodetitle.switched.roots");
+  public static final Tag LOCALLY_DELETED_NODE_TAG = new VcsBundleTag("changes.nodetitle.locally.deleted.files");
 
   protected static final int CONFLICTS_SORT_WEIGHT = 0;
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
@@ -73,7 +71,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
 
   @NotNull
   public static ChangesBrowserNode createRoot() {
-    ChangesBrowserNode root = createObject(ROOT_NODE_VALUE);
+    ChangesBrowserNode root = new ChangesBrowserRootNode();
     root.markAsHelperNode();
     return root;
   }
@@ -105,38 +103,12 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
 
   @NotNull
   public static ChangesBrowserNode createLockedFolders(@NotNull Project project) {
-    return new ChangesBrowserLockedFoldersNode(project, LOCKED_FOLDERS_TAG);
+    return new ChangesBrowserLockedFoldersNode(project);
   }
 
   @NotNull
   public static ChangesBrowserNode createLocallyDeleted(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
-  }
-
-  @NotNull
-  public static ChangesBrowserNode createObject(@NotNull Object userObject) {
-    return new ChangesBrowserNode<>(userObject);
-  }
-
-  @Deprecated
-  @NotNull
-  public static ChangesBrowserNode create(@NotNull Project project, @NotNull Object userObject) {
-    if (userObject instanceof Change) {
-      return new ChangesBrowserChangeNode(project, (Change)userObject, null);
-    }
-    if (userObject instanceof VirtualFile) {
-      return new ChangesBrowserFileNode(project, (VirtualFile) userObject);
-    }
-    if (userObject instanceof FilePath) {
-      return new ChangesBrowserFilePathNode((FilePath) userObject);
-    }
-    if (userObject == LOCKED_FOLDERS_TAG) {
-      return new ChangesBrowserLockedFoldersNode(project, userObject);
-    }
-    if (userObject instanceof ChangesBrowserLogicallyLockedFile) {
-      return (ChangesBrowserNode) userObject;
-    }
-    return new ChangesBrowserNode<>(userObject);
   }
 
   @Override
@@ -300,9 +272,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @Nls
-  public String getTextPresentation() {
-    return userObject == null ? "" : userObject.toString();
-  }
+  public abstract String getTextPresentation();
 
   @Override
   public T getUserObject() {
@@ -406,13 +376,36 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return true;
   }
 
-  private static class Tag {
-    @PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull private final String myKey;
+  public interface Tag {
+    @Nls
+    @Override
+    String toString();
+  }
 
-    Tag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
+  public static class TagImpl implements Tag {
+    private final @NotNull @Nls String myValue;
+
+    public TagImpl(@NotNull @Nls String value) {
+      myValue = value;
+    }
+
+    @Nls
+    @Override
+    public String toString() {
+      return myValue;
+    }
+  }
+
+  public static class VcsBundleTag implements Tag {
+    @PropertyKey(resourceBundle = VcsBundle.BUNDLE)
+    @NotNull
+    private final String myKey;
+
+    public VcsBundleTag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
       myKey = key;
     }
 
+    @Nls
     @Override
     public String toString() {
       return VcsBundle.message(myKey);

@@ -54,6 +54,7 @@ public class ResolveResultList extends ArrayList<RatedResolveResult> {
 
 
   public static List<PsiElement> getElements(@NotNull List<? extends ResolveResult> from) {
+    if (from.isEmpty()) return Collections.emptyList();
     return Lists.transform(from, res -> res != null ? res.getElement() : null);
   }
 

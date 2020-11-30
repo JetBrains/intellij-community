@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
+
 /**
  * Reports some project lifecycle events.
  */
@@ -24,6 +26,14 @@ public interface ProjectLifecycleListener {
    */
   @Deprecated
   default void beforeProjectLoaded(@NotNull Project project) {
+  }
+
+  /**
+   * @deprecated Deprecated for performance and stability reasons. Please find another solution.
+   */
+  @Deprecated
+  default void beforeProjectLoaded(@NotNull Path projectPath, @NotNull Project project) {
+    beforeProjectLoaded(project);
   }
 
   /**

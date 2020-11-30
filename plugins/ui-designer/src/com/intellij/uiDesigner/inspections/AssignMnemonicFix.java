@@ -69,7 +69,7 @@ public class AssignMnemonicFix extends QuickFix {
     // try upper-case and word start characters
     for(int i=0; i<value.length(); i++) {
       final char ch = value.charAt(i);
-      if (i == 0 || Character.isUpperCase(ch) || (i > 0 && value.charAt(i-1) == ' ')) {
+      if (i == 0 || Character.isUpperCase(ch) || value.charAt(i - 1) == ' ') {
         if (Character.isLetter(ch) && usedMnemonics.indexOf(StringUtil.toUpperCase(String.valueOf(ch))) < 0) {
           variants.add(value.substring(0, i) + "&" + value.substring(i));
         }

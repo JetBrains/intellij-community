@@ -12,7 +12,9 @@ internal class SpaceReviewCommitListPanel(detailsDetailsVm: CrDetailsVm<out Code
   init {
     val commitsBrowser = OnePixelSplitter(true, "space.review.commit.list", 0.7f).apply {
       firstComponent = SpaceReviewCommitListFactory.createCommitList(detailsDetailsVm)
-      secondComponent = SpaceReviewChangesTreeFactory.create(detailsDetailsVm.ideaProject, detailsDetailsVm)
+      secondComponent = SpaceReviewChangesTreeFactory.create(detailsDetailsVm.ideaProject,
+                                                             detailsDetailsVm.changesVm,
+                                                             detailsDetailsVm.spaceDiffVm)
     }
     view.add(commitsBrowser, BorderLayout.CENTER)
   }

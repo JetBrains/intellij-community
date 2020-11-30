@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,11 +41,13 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,9 +78,9 @@ public class ExternalSystemNotificationManager implements Disposable {
 
   public ExternalSystemNotificationManager(final @NotNull Project project) {
     myProject = project;
-    myNotifications = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    myNotifications = ContainerUtil.newConcurrentSet();
     myUniqueNotifications = new ConcurrentHashMap<>();
-    initializedExternalSystem = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    initializedExternalSystem = ContainerUtil.newConcurrentSet();
     myMessageCounter = new MessageCounter();
     myUpdateQueue = new MergingUpdateQueue(getClass() + " updates", 500, true, null, this, null, false);
   }
@@ -91,11 +94,11 @@ public class ExternalSystemNotificationManager implements Disposable {
    *
    * @return {@link NotificationData} or null for not user-friendly errors.
    */
-  public @Nullable NotificationData createNotification(@NotNull String title,
-                                             @NotNull Throwable error,
-                                             @NotNull ProjectSystemId externalSystemId,
-                                             @NotNull Project project,
-                                             @NotNull DataProvider dataProvider) {
+  public @Nullable NotificationData createNotification(@NotNull @NotificationTitle String title,
+                                                       @NotNull Throwable error,
+                                                       @NotNull ProjectSystemId externalSystemId,
+                                                       @NotNull Project project,
+                                                       @NotNull DataProvider dataProvider) {
     if (isInternalError(error, externalSystemId)) {
       return null;
     }
@@ -420,8 +423,10 @@ public class ExternalSystemNotificationManager implements Disposable {
 
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static @NotNull String getContentDisplayName(final @NotNull NotificationSource notificationSource,
-                                                      final @NotNull ProjectSystemId externalSystemId) {
+  public static @NotNull @Nls String getContentDisplayName(
+    final @NotNull NotificationSource notificationSource,
+    final @NotNull ProjectSystemId externalSystemId
+  ) {
     final String contentDisplayName;
     switch (notificationSource) {
       case PROJECT_SYNC:

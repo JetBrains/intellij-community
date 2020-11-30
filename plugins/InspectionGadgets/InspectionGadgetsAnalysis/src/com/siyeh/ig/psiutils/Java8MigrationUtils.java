@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class Java8MigrationUtils {
+public final class Java8MigrationUtils {
   @Nullable
   private static Java8MigrationUtils.MapCheckCondition tryExtract(PsiExpression fullCondition,
                                                                   @Nullable PsiStatement statement,

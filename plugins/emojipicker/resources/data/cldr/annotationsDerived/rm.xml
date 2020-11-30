@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<!-- Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file. -->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="rm"/>
+	</identity>
+	<annotations>
+		<annotation cp="¤" type="tts">valuta nunenconuschenta</annotation>
+		<annotation cp="֏" type="tts">dram armen</annotation>
+		<annotation cp="؋" type="tts">afgani afgan</annotation>
+		<annotation cp="৳" type="tts">taka bangladais</annotation>
+		<annotation cp="฿" type="tts">baht tailandais</annotation>
+		<annotation cp="៛" type="tts">riel cambodschan</annotation>
+		<annotation cp="₡" type="tts">colon da la Costa Rica</annotation>
+		<annotation cp="₦" type="tts">naira nigeriana</annotation>
+		<annotation cp="₧" type="tts">peseta spagnola</annotation>
+		<annotation cp="₪" type="tts">nov schekel israelian</annotation>
+		<annotation cp="₫" type="tts">dong vietnamais</annotation>
+		<annotation cp="₭" type="tts">kip laot</annotation>
+		<annotation cp="₮" type="tts">tugrik mongolic</annotation>
+		<annotation cp="₲" type="tts">guarani paraguaian</annotation>
+		<annotation cp="₴" type="tts">hryvnia ucranaisa</annotation>
+		<annotation cp="₵" type="tts">cedi ghanais</annotation>
+		<annotation cp="₸" type="tts">tenge kasac</annotation>
+		<annotation cp="₺" type="tts">lira tirca</annotation>
+		<annotation cp="₼" type="tts">manat aserbaidschan</annotation>
+		<annotation cp="₾" type="tts">lari georgian</annotation>
+	</annotations>
+</ldml>

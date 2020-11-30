@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,9 @@ public final class ProblemDescriptorUtil {
   public static final int NONE = 0x00000000;
   static final int APPEND_LINE_NUMBER = 0x00000001;
   public static final int TRIM_AT_TREE_END = 0x00000004;
+
+  @NonNls private static final String LOC_REFERENCE = "#loc";
+  @NonNls private static final String REF_REFERENCE = "#ref";
 
   @MagicConstant(flags = {NONE, APPEND_LINE_NUMBER, TRIM_AT_TREE_END})
   @interface FlagConstant {
@@ -76,17 +80,17 @@ public final class ProblemDescriptorUtil {
 
     if ((flags & APPEND_LINE_NUMBER) != 0 &&
         descriptor instanceof ProblemDescriptor &&
-        !message.contains("#ref") &&
-        message.contains("#loc")) {
+        !message.contains(REF_REFERENCE) &&
+        message.contains(LOC_REFERENCE)) {
       final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
       if (lineNumber >= 0) {
-        message = StringUtil.replace(message, "#loc", "(" + AnalysisBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
+        message = StringUtil.replace(message, LOC_REFERENCE, "(" + AnalysisBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
       }
     }
     message = unescapeTags(message);
-    message = StringUtil.replace(message, "#loc ", "");
-    message = StringUtil.replace(message, " #loc", "");
-    message = StringUtil.replace(message, "#loc", "");
+    message = StringUtil.replace(message, LOC_REFERENCE + " ", "");
+    message = StringUtil.replace(message, " " + LOC_REFERENCE, "");
+    message = StringUtil.replace(message, LOC_REFERENCE, "");
 
     if ((flags & TRIM_AT_TREE_END) != 0) {
       if (XmlStringUtil.isWrappedInHtml(message)) {
@@ -99,9 +103,9 @@ public final class ProblemDescriptorUtil {
       }
     }
 
-    if (message.contains("#ref")) {
+    if (message.contains(REF_REFERENCE)) {
       String ref = extractHighlightedText(descriptor, element);
-      message = StringUtil.replace(message, "#ref", ref);
+      message = StringUtil.replace(message, REF_REFERENCE, ref);
     }
 
     message = StringUtil.replace(message, "#end", "");

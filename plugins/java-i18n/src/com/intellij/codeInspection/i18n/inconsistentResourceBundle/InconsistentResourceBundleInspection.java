@@ -12,33 +12,29 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
+public final class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
   private static final Key<Set<ResourceBundle>> VISITED_BUNDLES_KEY = Key.create("VISITED_BUNDLES_KEY");
 
   private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders =
-    new NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]>() {
-    @Override
-    protected InconsistentResourceBundleInspectionProvider @NotNull [] compute() {
-      return new InconsistentResourceBundleInspectionProvider[] {
-        new PropertiesKeysConsistencyInspectionProvider(),
-        new DuplicatedPropertiesInspectionProvider(),
-        new MissingTranslationsInspectionProvider(),
-        new PropertiesPlaceholdersInspectionProvider(),
-        new InconsistentPropertiesEndsInspectionProvider(),
-      };
-    }
-  };
+    new NotNullLazyValue<>() {
+      @Override
+      protected InconsistentResourceBundleInspectionProvider @NotNull [] compute() {
+        return new InconsistentResourceBundleInspectionProvider[]{
+          new PropertiesKeysConsistencyInspectionProvider(),
+          new DuplicatedPropertiesInspectionProvider(),
+          new MissingTranslationsInspectionProvider(),
+          new PropertiesPlaceholdersInspectionProvider(),
+          new InconsistentPropertiesEndsInspectionProvider(),
+        };
+      }
+    };
   private final Map<String, Boolean> mySettings = new LinkedHashMap<>();
 
 
@@ -49,8 +45,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
+  public @NotNull JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(new OptionAccessor() {
       @Override
       public boolean getOption(String optionName) {
@@ -97,7 +92,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   public void inspectionStarted(@NotNull InspectionManager manager,
                                 @NotNull GlobalInspectionContext globalContext,
                                 @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.putUserData(VISITED_BUNDLES_KEY, Collections.newSetFromMap(new ConcurrentHashMap<>()));
+    globalContext.putUserData(VISITED_BUNDLES_KEY, ContainerUtil.newConcurrentSet());
   }
 
   @Override
@@ -122,9 +117,9 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
       }
     }
     final Map<PropertiesFile, Map<String, String>> propertiesFilesNamesMaps = FactoryMap.create(key -> key.getNamesMap());
-    Map<PropertiesFile, Set<String>> keysUpToParent = new THashMap<>();
+    Map<PropertiesFile, Set<String>> keysUpToParent = new HashMap<>();
     for (PropertiesFile f : files) {
-      Set<String> keys = new THashSet<>(propertiesFilesNamesMaps.get(f).keySet());
+      Set<String> keys = new HashSet<>(propertiesFilesNamesMaps.get(f).keySet());
       PropertiesFile parent = parents.get(f);
       while (parent != null) {
         keys.addAll(propertiesFilesNamesMaps.get(parent).keySet());

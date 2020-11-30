@@ -1,4 +1,3 @@
-# undocumented
 from typing import Any, List, Sequence, Tuple, TypeVar
 
 _T = TypeVar("_T")

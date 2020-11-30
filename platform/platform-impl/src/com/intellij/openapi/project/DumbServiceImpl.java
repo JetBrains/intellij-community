@@ -56,6 +56,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Consumer;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker, DumbServiceBalloon.Service {
   private static final ExtensionPointName<StartupActivity.RequiredForSmartMode> REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
@@ -68,7 +69,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private volatile Throwable myDumbStart;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
-
 
   private final Deque<Runnable> myRunWhenSmartQueue = new ArrayDeque<>(5);
   private final Project myProject;
@@ -102,12 +102,30 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         myRunWhenSmartQueue.removeIf(runnable -> {
+          if (runnable instanceof RunnableDelegate) {
+            runnable = ((RunnableDelegate)runnable).task;
+          }
           ClassLoader classLoader = runnable.getClass().getClassLoader();
           return classLoader instanceof PluginAwareClassLoader &&
                  ((PluginAwareClassLoader)classLoader).getPluginId().equals(pluginDescriptor.getPluginId());
         });
       }
     });
+  }
+
+  private static final class RunnableDelegate implements Runnable {
+    final Runnable task;
+    private final Consumer<Runnable> executor;
+
+    private RunnableDelegate(@NotNull Runnable task, @NotNull Consumer<Runnable> executor) {
+      this.task = task;
+      this.executor = executor;
+    }
+
+    @Override
+    public void run() {
+      executor.accept(task);
+    }
   }
 
   void queueStartupActivitiesRequiredForSmartMode() {
@@ -219,7 +237,25 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> unsafeRunWhenSmart(runnable));
+    StartupManager.getInstance(myProject).runAfterOpened(() -> doUnsafeRunWhenSmart(runnable));
+  }
+
+  private void doUnsafeRunWhenSmart(@NotNull Runnable runnable) {
+    synchronized (myRunWhenSmartQueue) {
+      if (isDumb()) {
+        Runnable executor = ClientId.decorateRunnable(runnable);
+        myRunWhenSmartQueue.addLast(executor == runnable ? runnable : new RunnableDelegate(runnable, it -> executor.run()));
+        return;
+      }
+    }
+
+    Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      app.invokeLater(() -> doUnsafeRunWhenSmart(runnable), ModalityState.NON_MODAL, myProject.getDisposed());
+    }
   }
 
   @Override
@@ -477,16 +513,17 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void smartInvokeLater(final @NotNull Runnable runnable) {
+  public void smartInvokeLater(@NotNull Runnable runnable) {
     smartInvokeLater(runnable, ModalityState.defaultModalityState());
   }
 
   @Override
-  public void smartInvokeLater(final @NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+  public void smartInvokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (isDumb()) {
         runWhenSmart(() -> smartInvokeLater(runnable, modalityState));
-      } else {
+      }
+      else {
         runnable.run();
       }
     }, modalityState, myProject.getDisposed());

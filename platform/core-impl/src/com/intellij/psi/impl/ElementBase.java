@@ -114,7 +114,15 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       PsiFile file = ((PsiElement)this).getContainingFile();
       if (file != null) {
         if (!isNativeFileType(file.getFileType())) {
-          return file.getFileType().getIcon();
+          try {
+            return file.getFileType().getIcon();
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
       }
     }

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -128,7 +129,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         myStatus.setIcon(AllIcons.Nodes.PluginJB);
       }
 
-      String downloads;
+      @NlsSafe String downloads;
       if (myPluginDescriptor instanceof PluginNode && (downloads = ((PluginNode)myPluginDescriptor).getDownloads()) != null) {
         if (downloads.length() > 3) {
           downloads = new DecimalFormat("#,###").format(Integer.parseInt(downloads));

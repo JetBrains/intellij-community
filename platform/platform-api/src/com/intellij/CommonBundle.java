@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
+import com.intellij.ide.IdeDeprecatedMessagesBundle;
 import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,14 +25,14 @@ public final class CommonBundle extends DynamicBundle {
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (!INSTANCE.containsKey(key)) {
-      return UtilBundle.message(key, params);
+      return IdeDeprecatedMessagesBundle.message(key, params);
     }
     return INSTANCE.getMessage(key, params);
   }
 
   public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (!INSTANCE.containsKey(key)) {
-      return () -> UtilBundle.message(key, params);
+      return () -> IdeDeprecatedMessagesBundle.message(key, params);
     }
     return INSTANCE.getLazyMessage(key, params);
   }

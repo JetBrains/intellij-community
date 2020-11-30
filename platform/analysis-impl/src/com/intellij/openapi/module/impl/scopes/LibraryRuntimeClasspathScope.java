@@ -10,23 +10,22 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ObjectIntHashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
+public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
   private final ObjectIntHashMap<VirtualFile> myEntries = new ObjectIntHashMap<>();
 
   public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final Set<Sdk> processedSdk = new THashSet<>();
-    final Set<Library> processedLibraries = new THashSet<>();
-    final Set<Module> processedModules = new THashSet<>();
+    final Set<Sdk> processedSdk = new HashSet<>();
+    final Set<Library> processedLibraries = new HashSet<>();
+    final Set<Module> processedModules = new HashSet<>();
     final Condition<OrderEntry> condition = orderEntry -> {
       if (orderEntry instanceof ModuleOrderEntry) {
         final Module module = ((ModuleOrderEntry)orderEntry).getModule();
@@ -67,7 +66,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
                             @NotNull Condition<? super OrderEntry> condition) {
     if (!processedModules.add(module)) return;
 
-    ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<ObjectIntHashMap<VirtualFile>>() {
+    ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<>() {
       @Override
       public ObjectIntHashMap<VirtualFile> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry libraryOrderEntry,
                                                                   final ObjectIntHashMap<VirtualFile> value) {

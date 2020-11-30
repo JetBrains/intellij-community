@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
@@ -101,7 +100,8 @@ class ExternalSystemModulePropertyManagerImpl(private val module: Module) : Exte
     store.unlinkExternalOptions()
   }
 
-  override fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?) {
+  override fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?,
+                                  modelsProvider: IdeModifiableModelsProvider?) {
     // clear maven option, must be first
     store.isMavenized = false
 
@@ -119,14 +119,14 @@ class ExternalSystemModulePropertyManagerImpl(private val module: Module) : Exte
   }
 
   override fun setLinkedProjectPath(path: String?) {
-    state.linkedProjectPath = path
+    store.linkedProjectPath = path
   }
 
   override fun setRootProjectPath(path: String?) {
-    state.rootProjectPath = path
+    store.rootProjectPath = path
   }
 
-  override fun setExternalModuleType(type: String?) {
+  override fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider?) {
     store.externalSystemModuleType = type
   }
 }

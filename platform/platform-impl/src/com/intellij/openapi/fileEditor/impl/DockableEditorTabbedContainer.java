@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
@@ -28,10 +30,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import static com.intellij.ide.actions.DragEditorTabsFusEventFields.SAME_WINDOW;
 import static javax.swing.SwingConstants.*;
 
 public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable {
@@ -132,6 +137,8 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     EditorWindow window = null;
     final EditorTabbedContainer.DockableEditor dockableEditor = (EditorTabbedContainer.DockableEditor)content;
     VirtualFile file = dockableEditor.getFile();
+    Integer dragStartLocation = file.getUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY);
+    boolean sameWindow = myCurrentOver != null && dragStartLocation != null && dragStartLocation == System.identityHashCode(myCurrentOver);
     int dropSide = getCurrentDropSide();
     if (myCurrentOver != null) {
       final DataProvider provider = myCurrentOver.getDataProvider();
@@ -141,33 +148,59 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       if (window != null && dropSide != -1 && dropSide != CENTER) {
         window.split(dropSide == BOTTOM || dropSide == TOP ? JSplitPane.VERTICAL_SPLIT : JSplitPane.HORIZONTAL_SPLIT,
                      true, file, false, dropSide != LEFT && dropSide != TOP);
+        recordDragStats(dropSide, false);
         return;
       }
     }
-
+    boolean dropIntoNewlyCreatedWindow = false;
     if (window == null || window.isDisposed()) {
-      window = mySplitters.getOrCreateCurrentWindow(file);
+      dropIntoNewlyCreatedWindow = true;
+      window = mySplitters.getOrCreateCurrentWindow(file);//drag outside
     }
 
     Boolean dropInBetweenPinnedTabs = null;
     if (myCurrentOver != null) {
 
       int index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
-      if (index >= 0 && index < myCurrentOver.getTabCount() - 1) {
-        dropInBetweenPinnedTabs = myCurrentOver.getTabAt(index).isPinned();
+      if (index >= 0 && index <= myCurrentOver.getTabCount()) {
+        TabInfo tabInfo = index == myCurrentOver.getTabCount() ? null : myCurrentOver.getTabAt(index);
+        if (file.getUserData(EditorWindow.DRAG_START_PINNED_KEY) == Boolean.TRUE) {
+          dropInBetweenPinnedTabs = index == 0 || (tabInfo != null && tabInfo.isPinned()) || myCurrentOver.getTabAt(index - 1).isPinned();
+        }
+        else {
+          dropInBetweenPinnedTabs = tabInfo != null ? tabInfo.isPinned() : null;
+        }
       }
       file.putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
       Integer dragStartIndex = file.getUserData(EditorWindow.DRAG_START_INDEX_KEY);
-      Integer dragStartLocation = file.getUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY);
-      boolean isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && dragStartLocation != null &&
-                                         dragStartLocation == System.identityHashCode(myCurrentOver);
+      boolean isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && sameWindow;
       if (!isDroppedToOriginalPlace) {
         file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, dropInBetweenPinnedTabs);
       }
     }
-
+    recordDragStats(dropIntoNewlyCreatedWindow? -1  : CENTER, sameWindow);
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
     window.setFilePinned(file, Objects.requireNonNullElseGet(dropInBetweenPinnedTabs, dockableEditor::isPinned));
+  }
+
+  private void recordDragStats(int dropSide, boolean sameWindow) {
+    String actionId = null;
+    switch (dropSide) {
+      case -1: actionId = "OpenElementInNewWindow";break;
+      case TOP: actionId = "SplitVertically";break;
+      case LEFT: actionId = "SplitHorizontally"; break;
+      case BOTTOM: actionId = "MoveTabDown"; break;
+      case RIGHT: actionId = "MoveTabRight";break;
+      case CENTER: return;// This drag-n-drop gesture cannot be mapped to any action (drop to some exact tab index)
+    }
+    if (actionId != null && mySplitters != null) {
+      AnActionEvent event = AnActionEvent.createFromInputEvent(
+        new MouseEvent(mySplitters, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false,
+                       MouseEvent.BUTTON1), ActionPlaces.EDITOR_TAB, null, DataContext.EMPTY_CONTEXT);
+      ActionsCollectorImpl.recordActionInvoked(myProject, ActionManager.getInstance().getAction(actionId), event,
+                                               Collections.singletonList(ActionsEventLogGroup.ADDITIONAL.with(
+                                                 new ObjectEventData(SAME_WINDOW.with(sameWindow)))));
+    }
   }
 
   @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1})

@@ -80,7 +80,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     myModuleSdks.putAll(moduleSdks);
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, distinctSdks);
-    guessLanguageLevelWithCaching(project);
+    guessLanguageLevelWithCaching(project, distinctSdks);
   }
 
   @Override
@@ -97,7 +97,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
   @Override
   @NotNull
   public String getDefaultValue() {
-    return LanguageLevel.toPythonVersion(LanguageLevel.getDefault());
+    return LanguageLevel.getDefault().toPythonVersion();
   }
 
   @Override
@@ -138,11 +138,11 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
   @NotNull
   public String getImmediateValue(@NotNull Module module) {
     if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
-      return LanguageLevel.toPythonVersion(LanguageLevel.FORCE_LANGUAGE_LEVEL);
+      return LanguageLevel.FORCE_LANGUAGE_LEVEL.toPythonVersion();
     }
 
     final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    return LanguageLevel.toPythonVersion(PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk));
+    return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk).toPythonVersion();
   }
 
   @Override
@@ -171,7 +171,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
       try {
         final int oldLevelOrdinal = DataInputOutputUtil.readINT(iStream);
         if (oldLevelOrdinal == level.ordinal()) return;
-        oldLanguageLevel = Arrays.stream(LanguageLevel.values()).filter(it -> it.ordinal() == oldLevelOrdinal).findFirst().orElse(null);
+        oldLanguageLevel = ContainerUtil.find(LanguageLevel.values(), it -> it.ordinal() == oldLevelOrdinal);
       }
       finally {
         iStream.close();
@@ -211,7 +211,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
   public void afterRootsChanged(@NotNull final Project project) {
     final Map<Module, Sdk> moduleSdks = getPythonModuleSdks(project);
     final Set<Sdk> distinctSdks = StreamEx.ofValues(moduleSdks).nonNull().collect(Collectors.toCollection(LinkedHashSet::new));
-    final boolean needToReparseOpenFiles = StreamEx.of(moduleSdks.entrySet()).anyMatch((entry -> {
+    final boolean needToReparseOpenFiles = ContainerUtil.exists(moduleSdks.entrySet(), (entry -> {
       final Module module = entry.getKey();
       final Sdk newSdk = entry.getValue();
       final Sdk oldSdk = myModuleSdks.get(module);
@@ -221,7 +221,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     myModuleSdks.putAll(moduleSdks);
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, distinctSdks);
-    guessLanguageLevelWithCaching(project);
+    guessLanguageLevelWithCaching(project, distinctSdks);
 
     if (needToReparseOpenFiles) {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -235,17 +235,14 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
 
   @NotNull
   private static Map<Module, Sdk> getPythonModuleSdks(@NotNull Project project) {
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    if (moduleManager == null) return Collections.emptyMap();
+
     final Map<Module, Sdk> result = new LinkedHashMap<>();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (isPythonModule(module)) {
-        result.put(module, PythonSdkUtil.findPythonSdk(module));
-      }
+    for (Module module : moduleManager.getModules()) {
+      result.put(module, PythonSdkUtil.findPythonSdk(module));
     }
     return result;
-  }
-
-  private static boolean isPythonModule(@NotNull final Module module) {
-    return PyModuleService.getInstance().isPythonModule(module);
   }
 
   private void updateSdkLanguageLevels(@NotNull Project project, @NotNull Set<Sdk> sdks) {
@@ -275,11 +272,11 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
   }
 
   @NotNull
-  private static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
+  private static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project, @NotNull Collection<@Nullable Sdk> pythonModuleSdks) {
     LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(project.getUserData(KEY));
     if (languageLevel == null) {
-      languageLevel = guessLanguageLevel(project);
-      project.putUserData(KEY, LanguageLevel.toPythonVersion(languageLevel));
+      languageLevel = guessLanguageLevel(pythonModuleSdks);
+      project.putUserData(KEY, languageLevel.toPythonVersion());
     }
 
     return languageLevel;
@@ -290,22 +287,18 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
   }
 
   @NotNull
-  private static LanguageLevel guessLanguageLevel(@NotNull Project project) {
-    final ModuleManager moduleManager = ModuleManager.getInstance(project);
-    if (moduleManager != null) {
-      LanguageLevel maxLevel = null;
-      for (Module projectModule : moduleManager.getModules()) {
-        final Sdk sdk = PythonSdkUtil.findPythonSdk(projectModule);
-        if (sdk != null) {
-          final LanguageLevel level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
-          if (maxLevel == null || maxLevel.isOlderThan(level)) {
-            maxLevel = level;
-          }
+  private static LanguageLevel guessLanguageLevel(@NotNull Collection<@Nullable Sdk> pythonModuleSdks) {
+    LanguageLevel maxLevel = null;
+    for (Sdk sdk : pythonModuleSdks) {
+      if (sdk != null) {
+        final LanguageLevel level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
+        if (maxLevel == null || maxLevel.isOlderThan(level)) {
+          maxLevel = level;
         }
       }
-      if (maxLevel != null) {
-        return maxLevel;
-      }
+    }
+    if (maxLevel != null) {
+      return maxLevel;
     }
     return LanguageLevel.getDefault();
   }
@@ -331,7 +324,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     final Sdk sdk = virtualFile instanceof LightVirtualFile ? null : getFileSdk(project, virtualFile);
     if (sdk != null) return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
 
-    return guessLanguageLevelWithCaching(project);
+    return guessLanguageLevelWithCaching(project, getPythonModuleSdks(project).values());
   }
 
   private final class UpdateRootTask implements Runnable {
@@ -366,7 +359,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
               propertiesUpdater.findAndUpdateValue(
                 file,
                 PythonLanguageLevelPusher.this,
-                LanguageLevel.toPythonVersion(myLanguageLevel)
+                myLanguageLevel.toPythonVersion()
               );
             }
             if (myShouldSuppressSizeLimit) {
@@ -394,7 +387,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
   }
 
   public static void specifyFileLanguageLevel(@NotNull VirtualFile file, @Nullable LanguageLevel languageLevel) {
-    file.putUserData(KEY, LanguageLevel.toPythonVersion(languageLevel));
+    file.putUserData(KEY, languageLevel == null ? null : languageLevel.toPythonVersion());
   }
 
   @Nullable
@@ -403,6 +396,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
 
     final LanguageLevel specified = LanguageLevel.fromPythonVersion(file.getUserData(KEY));
     if (file.isDirectory()) {
+      // no need to check parent since UpdateRootTask pushes language level into all directories under roots
       return specified;
     }
     else {
@@ -410,6 +404,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     }
   }
 
+  @TestOnly
   public void flushLanguageLevelCache() {
     myModuleSdks.clear();
   }

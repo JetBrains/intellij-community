@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -8,7 +9,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -88,7 +88,7 @@ public class HintManagerImpl extends HintManager {
   }
 
   public static HintManagerImpl getInstanceImpl() {
-    return (HintManagerImpl)ServiceManager.getService(HintManager.class);
+    return (HintManagerImpl)ApplicationManager.getApplication().getService(HintManager.class);
   }
 
   public HintManagerImpl() {
@@ -746,7 +746,7 @@ public class HintManagerImpl extends HintManager {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-    AccessibleContextUtil.setName(component, "Hint");
+    AccessibleContextUtil.setName(component, IdeBundle.message("information.hint.accessible.context.name"));
     LightweightHint hint = new LightweightHint(component);
     Point p = getHintPosition(hint, editor, position);
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false, position);

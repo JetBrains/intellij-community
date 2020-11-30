@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+
+Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file.
+-->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="yo"/>
+		<territory type="BJ"/>
+	</identity>
+	<annotations>
+		<annotation cp="¤" type="tts">owóníná àìmɔ̀</annotation>
+		<annotation cp="֏" type="tts">Dírààmù Àmɛ́níà</annotation>
+		<annotation cp="৳" type="tts">Tákà Báńgíládɛ̀ɛ̀shì</annotation>
+		<annotation cp="៛" type="tts">Ráyò Kàm̀bɔ́díà</annotation>
+		<annotation cp="₡" type="tts">Kólɔ́ɔ̀nì Kosita Ríkà</annotation>
+		<annotation cp="₪" type="tts">Shékélì Tuntun Ísírɛ̀ɛ̀lì</annotation>
+		<annotation cp="₴" type="tts">Ɔrifiníyà Yukiréníà</annotation>
+		<annotation cp="₸" type="tts">Tɛngé Kasakísítàànì</annotation>
+		<annotation cp="₺" type="tts">Lírà Tɔ́kì</annotation>
+		<annotation cp="₾" type="tts">Lárì Jɔ́jíà</annotation>
+	</annotations>
+</ldml>

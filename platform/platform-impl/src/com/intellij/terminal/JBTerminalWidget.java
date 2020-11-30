@@ -3,12 +3,9 @@ package com.intellij.terminal;
 
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -68,7 +65,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
                           @NotNull Disposable parent) {
     super(columns, lines, settingsProvider);
     mySettingsProvider = settingsProvider;
-    myCompositeFilterWrapper = new CompositeFilterWrapper(project, console);
+    myCompositeFilterWrapper = new CompositeFilterWrapper(project, console, this);
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
     Disposer.register(parent, this);
@@ -119,6 +116,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
     Disposer.register(this, panel);
     return panel;
+  }
+
+  @Override
+  public @NotNull JBTerminalPanel getTerminalPanel() {
+    return (JBTerminalPanel)super.getTerminalPanel();
   }
 
   @Override
@@ -198,12 +200,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   private boolean isInTerminalToolWindow() {
-    return isInTerminalToolWindow(DataManager.getInstance().getDataContext(myTerminalPanel));
+    return isTerminalToolWindow(getTerminalPanel().getContextToolWindow());
   }
 
-  static boolean isInTerminalToolWindow(@NotNull DataContext dataContext) {
-    ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
-    return toolWindow != null && "Terminal".equals(toolWindow.getId());
+  static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {
+    return toolWindow != null && "Terminal".equals(toolWindow.getId()); // TerminalToolWindowFactory.TOOL_WINDOW_ID is not visible here
   }
 
   @Override

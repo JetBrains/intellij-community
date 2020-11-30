@@ -4,8 +4,6 @@ package com.intellij.ide.plugins;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,9 +34,6 @@ public final class PluginUtilImpl implements PluginUtil {
   public static @Nullable PluginId doFindPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
-    }
-    if (t instanceof ExtensionInstantiationException) {
-      return ((ExtensionInstantiationException)t).getExtensionOwnerId();
     }
 
     PluginId bundledId = null;
@@ -116,13 +111,6 @@ public final class PluginUtilImpl implements PluginUtil {
             return id;
           }
         }
-      }
-    }
-    else if (t instanceof ExtensionException) {
-      String className = ((ExtensionException)t).getExtensionClass().getName();
-      PluginId id = PluginManagerCore.getPluginByClassName(className);
-      if (id != null) {
-        return id;
       }
     }
 

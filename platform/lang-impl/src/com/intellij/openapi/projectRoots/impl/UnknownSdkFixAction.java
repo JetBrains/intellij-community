@@ -36,10 +36,10 @@ public interface UnknownSdkFixAction {
   void applySuggestionAsync(@Nullable Project project);
 
   /**
-   * Applies suggestions under a modal progress, e.g. as a part of
-   * the {@link UnknownSdkModalNotification}.
+   * Applies suggestions under a given progress
    */
-  void applySuggestionBlocking(@NotNull ProgressIndicator indicator);
+  @NotNull
+  Sdk applySuggestionBlocking(@NotNull ProgressIndicator indicator);
 
   /**
    * Attaches a listener to the instance. Events are not fired before

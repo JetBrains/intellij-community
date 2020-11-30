@@ -179,7 +179,7 @@ public class TypeInfo {
     TypeInfo info = new TypeInfo(text, arrayCount, isEllipsis);
     if (hasAnnotation) {
       // TODO: support bounds, generics and enclosing types
-      TypeAnnotationContainer.Builder builder = new TypeAnnotationContainer.Builder(info);
+      TypeAnnotationContainer.Collector collector = new TypeAnnotationContainer.Collector(info);
       int nestingLevel = arrayCount;
       for (LighterASTNode child : tree.getChildren(typeElement)) {
         IElementType tokenType = child.getTokenType();
@@ -192,12 +192,12 @@ public class TypeInfo {
         else if (tokenType == JavaElementType.ANNOTATION) {
           String anno = LightTreeUtil.toFilteredString(tree, child, null);
           byte[] typePath = new byte[nestingLevel];
-          Arrays.fill(typePath, TypeAnnotationContainer.Builder.ARRAY_ELEMENT);
-          builder.add(typePath, anno);
+          Arrays.fill(typePath, TypeAnnotationContainer.Collector.ARRAY_ELEMENT);
+          collector.add(typePath, anno);
         }
       }
       
-      builder.build();
+      collector.install();
     }
     return info;
   }

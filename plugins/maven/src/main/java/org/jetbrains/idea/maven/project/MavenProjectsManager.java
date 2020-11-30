@@ -5,9 +5,6 @@ import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.EventLog;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,7 +13,6 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -33,7 +29,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValueProvider;
@@ -81,9 +76,6 @@ import java.util.stream.Collectors;
 public final class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable {
   private static final int IMPORT_DELAY = 1000;
-  private static final String NON_MANAGED_POM_NOTIFICATION_GROUP_ID = "Maven: non-managed pom.xml";
-  private static final NotificationGroup NON_MANAGED_POM_NOTIFICATION_GROUP =
-    NotificationGroup.balloonGroup(NON_MANAGED_POM_NOTIFICATION_GROUP_ID);
 
   private final ReentrantLock initLock = new ReentrantLock();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
@@ -135,7 +127,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myModificationTracker = new MavenModificationTracker(this);
     myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
-    myProgressListener = ServiceManager.getService(myProject, SyncViewManager.class);
+    myProgressListener = myProject.getService(SyncViewManager.class);
     MavenRehighlighter.install(project, this);
     Disposer.register(this, this::projectClosed);
   }
@@ -576,21 +568,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     else {
       myWatcher.addManagedFilesWithProfiles(files, profiles);
     }
-
-    MavenUtil.invokeLater(myProject, () -> {
-      Project project = myProject;
-      if (project == null || !project.isDefault() && !project.isDisposed()) {
-        for (Notification notification : (project == null ? EventLog.getLogModel(null).getNotifications() : EventLog.getNotifications(project))) {
-          if (NON_MANAGED_POM_NOTIFICATION_GROUP_ID.equals(notification.getGroupId())) {
-            for (VirtualFile file : files) {
-              if (StringUtil.startsWith(notification.getContent(), file.getPresentableUrl())) {
-                notification.expire();
-              }
-            }
-          }
-        }
-      }
-    });
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
@@ -833,6 +810,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     doScheduleUpdateProjects(null, false, forceImportAndResolve);
   }
 
+  @ApiStatus.Internal
+  public AsyncPromise<Void> forceUpdateProjects() {
+    return doScheduleUpdateProjects(null, true, true);
+  }
+
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
     return doScheduleUpdateProjects(projects, true, true);
   }
@@ -895,28 +877,42 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
-    MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false,
-                              indicator -> {
-                                if (myReadingProcessor != null) {
-                                  myReadingProcessor.waitForCompletion();
-                                }
-                                if (myArtifactsDownloadingProcessor != null) {
-                                  myArtifactsDownloadingProcessor.waitForCompletion();
-                                }
-                                if (myFoldersResolvingProcessor != null) {
-                                  myFoldersResolvingProcessor.waitForCompletion();
-                                }
-                                if (myPluginsResolvingProcessor != null) {
-                                  myPluginsResolvingProcessor.waitForCompletion();
-                                }
-                                if (myResolvingProcessor != null) {
-                                  myResolvingProcessor.waitForCompletion();
-                                }
-                                if (myPostProcessor != null) {
-                                  myPostProcessor.waitForCompletion();
-                                }
-                                console.finishImport();
-                              });
+    waitForImportCompletion().onProcessed(o -> {
+      console.finishImport();
+    });
+  }
+
+  @ApiStatus.Internal
+  public Promise<?> waitForImportCompletion() {
+    AsyncPromise<?> promise = new AsyncPromise<>();
+    MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false, indicator -> {
+      if (myReadingProcessor != null) {
+        myReadingProcessor.waitForCompletion();
+      }
+      if (myArtifactsDownloadingProcessor != null) {
+        myArtifactsDownloadingProcessor.waitForCompletion();
+      }
+      if (myFoldersResolvingProcessor != null) {
+        myFoldersResolvingProcessor.waitForCompletion();
+      }
+      if (myPluginsResolvingProcessor != null) {
+        myPluginsResolvingProcessor.waitForCompletion();
+      }
+      if (myResolvingProcessor != null) {
+        myResolvingProcessor.waitForCompletion();
+      }
+      if (myPostProcessor != null) {
+        myPostProcessor.waitForCompletion();
+      }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        MavenProgressIndicator.MavenProgressTracker mavenProgressTracker = myProject.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
+        if (mavenProgressTracker != null) {
+          mavenProgressTracker.waitForProgressCompletion();
+        }
+        promise.setResult(null);
+      });
+    });
+    return promise;
   }
 
   private AsyncPromise<List<Module>> scheduleResolve() {
@@ -1182,7 +1178,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public void waitForImportFinishCompletion() {
-    completeMavenSyncOnImportCompletion(mySyncConsole);
+    completeMavenSyncOnImportCompletion(getSyncConsole());
   }
 
 
@@ -1318,7 +1314,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return result;
   }
 
-  private List<VirtualFile> collectAllAvailablePomFiles() {
+  @ApiStatus.Internal
+  public List<VirtualFile> collectAllAvailablePomFiles() {
     List<VirtualFile> result = new ArrayList<>(getFileToModuleMapping(new MavenDefaultModelsProvider(myProject)).keySet());
     MavenUtil.streamPomFiles(myProject, myProject.getBaseDir()).forEach(result::add);
     return result;

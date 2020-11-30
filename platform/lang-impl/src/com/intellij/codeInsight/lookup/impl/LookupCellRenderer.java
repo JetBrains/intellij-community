@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
@@ -14,7 +15,6 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.Alarm;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleAlarm;
@@ -92,7 +93,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
   private final List<ItemPresentationCustomizer> myCustomizers = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public LookupCellRenderer(LookupImpl lookup) {
+  public LookupCellRenderer(LookupImpl lookup, @NotNull JComponent editorComponent) {
     EditorColorsScheme scheme = lookup.getTopLevelEditor().getColorsScheme();
     myNormalFont = scheme.getFont(EditorFontType.PLAIN);
     myBoldFont = scheme.getFont(EditorFontType.BOLD);
@@ -120,8 +121,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     myBoldMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myBoldFont);
     myAsyncRendering = new AsyncRendering(myLookup);
 
-    myLookupWidthUpdateAlarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50);
-    Disposer.register(lookup, myLookupWidthUpdateAlarm);
+    myLookupWidthUpdateAlarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50, lookup, Alarm.ThreadToUse.SWING_THREAD,
+                                               ModalityState.stateForComponent(editorComponent));
 
     myShrinkLookup = Registry.is("ide.lookup.shrink");
   }

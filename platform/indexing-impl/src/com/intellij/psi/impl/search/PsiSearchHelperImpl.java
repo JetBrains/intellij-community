@@ -631,7 +631,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         CharSequence text = ReadAction.compute(() -> psiFile.getViewProvider().getContents());
 
-        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, index -> {
+        LowLevelSearchUtil.processTexts(text, 0, text.length(), searcher, index -> {
           boolean isReferenceOK = myDumbService.runReadActionInSmartMode(() -> {
             PsiReference referenceAt = psiFile.findReferenceAt(index);
             return referenceAt == null || useScope == null || !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile);

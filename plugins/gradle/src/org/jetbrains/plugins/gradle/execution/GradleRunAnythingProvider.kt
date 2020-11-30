@@ -12,11 +12,11 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.task.TaskData
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findProjectData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.StringUtil.substringBeforeLast
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -28,11 +28,8 @@ import org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.*
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import org.jetbrains.plugins.gradle.util.GradleUtil
-import org.jetbrains.plugins.gradle.util.getGradleFqnTaskName
-import org.jetbrains.plugins.gradle.util.getGradleTasksMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import javax.swing.Icon
 
@@ -42,7 +39,7 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   override fun getHelpGroupTitle() = "Gradle"
 
-  override fun getCompletionGroupTitle() = "Gradle tasks"
+  override fun getCompletionGroupTitle() = GradleBundle.message("popup.title.gradle.tasks")
 
   override fun getHelpCommandPlaceholder() = "gradle <taskName...> <--option-name...>"
 
@@ -163,7 +160,7 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   private fun fetchTasks(project: Project): Map<String, MultiMap<String, TaskData>> {
     return CachedValuesManager.getManager(project).getCachedValue(project) {
-      CachedValueProvider.Result.create(getGradleTasksMap(project), ProjectRootManager.getInstance(project))
+      CachedValueProvider.Result.create(getGradleTasksMap(project), ExternalProjectsDataStorage.getInstance(project))
     }
   }
 

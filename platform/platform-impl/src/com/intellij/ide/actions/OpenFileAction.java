@@ -26,11 +26,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectAttachProcessor;
@@ -44,6 +44,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction;
 
@@ -83,7 +84,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
         presentation.setEnabledAndVisible(false);
         return;
       }
-      if (Registry.is("use.tabbed.welcome.screen")) {
+      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
         presentation.setIcon(AllIcons.Welcome.Open);
         presentation.setSelectedIcon(AllIcons.Welcome.OpenSelected);
         presentation.setText(ActionsBundle.message("action.Tabbed.WelcomeScreen.OpenProject.text"));
@@ -144,24 +145,28 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
 
   // public for testing
   @ApiStatus.Internal
-  public static @Nullable Project openExistingDir(@NotNull Path file, @Nullable Project currentProject) {
-    Project openedProject;
+  public static @NotNull CompletableFuture<@Nullable Project> openExistingDir(@NotNull Path file, @Nullable Project currentProject) {
     boolean canAttach = ProjectAttachProcessor.canAttachToProject();
     boolean preferAttach = currentProject != null && canAttach && PlatformUtils.isDataGrip() && !ProjectUtil.isValidProjectPath(file);
     if (preferAttach && PlatformProjectOpenProcessor.attachToProject(currentProject, file, null)) {
-      return null;
+      return CompletableFuture.completedFuture(null);
     }
-    else if (canAttach) {
+
+    CompletableFuture<Project> projectFuture;
+    if (canAttach) {
       OpenProjectTask options = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject);
-      openedProject = ProjectManagerEx.getInstanceEx().openProject(file, options);
+      projectFuture = ProjectManagerEx.getInstanceEx().openProjectAsync(file, options);
     }
     else {
-      openedProject = ProjectUtil.openOrImport(file, OpenProjectTask.withProjectToClose(currentProject));
+      projectFuture = ProjectUtil.openOrImportAsync(file, OpenProjectTask.withProjectToClose(currentProject));
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      FileChooserUtil.setLastOpenedFile(openedProject, file);
-    }
-    return openedProject;
+
+    return projectFuture.thenApply(project -> {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        FileChooserUtil.setLastOpenedFile(project, file);
+      }
+      return project;
+    });
   }
 
   @Messages.YesNoCancelResult

@@ -21,6 +21,7 @@ import com.intellij.ui.InplaceButton
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.IconUtil
+import com.intellij.util.castSafelyTo
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -32,6 +33,7 @@ import git4idea.branch.GitRebaseParams
 import git4idea.config.GitRebaseSettings
 import git4idea.config.GitVersionSpecialty.REBASE_MERGES_REPLACES_PRESERVE_MERGES
 import git4idea.i18n.GitBundle
+import git4idea.merge.GIT_REF_PROTOTYPE_VALUE
 import git4idea.merge.createRepositoryField
 import git4idea.merge.createSouthPanelWithOptionsDropDown
 import git4idea.merge.dialog.*
@@ -178,7 +180,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun findRef(refName: String): GitReference? {
-    val predicate: (GitReference) -> Boolean = { ref -> ref.name == refName }
+    val predicate: (GitReference) -> Boolean = { ref -> ref.name == refName || ref.fullName == refName }
     return localBranches.find(predicate)
            ?: remoteBranches.find(predicate)
            ?: getTags().find(predicate)
@@ -279,7 +281,7 @@ internal class GitRebaseDialog(private val project: Project,
 
             if (getSelectedRepo().root == root) {
               UIUtil.invokeLaterIfNeeded {
-                addRefsToOntoAndFrom(tagsInRepo)
+                addRefsToOntoAndFrom(tagsInRepo, replace = false)
               }
             }
           }
@@ -299,11 +301,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateBranches() {
-    branchField.removeAllItems()
-    for (b in localBranches) {
-      branchField.addItem(b.name)
-    }
-    branchField.item = null
+    branchField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.update(localBranches.map { it.name })
 
     updateBaseFields()
   }
@@ -315,18 +313,20 @@ internal class GitRebaseDialog(private val project: Project,
     upstreamField.removeAllItems()
     ontoField.removeAllItems()
 
-    addRefsToOntoAndFrom(localBranches)
-    addRefsToOntoAndFrom(remoteBranches)
-    addRefsToOntoAndFrom(getTags())
+    addRefsToOntoAndFrom(localBranches + remoteBranches + getTags(), replace = true)
 
     upstreamField.item = upstream
     ontoField.item = onto
   }
 
-  private fun addRefsToOntoAndFrom(refs: Collection<GitReference>) = refs.forEach { gitRef ->
-    val ref = PresentableRef(gitRef)
-    upstreamField.addItem(ref)
-    ontoField.addItem(ref)
+  private fun addRefsToOntoAndFrom(refs: Collection<GitReference>, replace: Boolean = true) {
+    val existingRefs = upstreamField.model.castSafelyTo<MutableCollectionComboBoxModel<PresentableRef>>()?.items?.toSet() ?: emptySet()
+    val newRefs = refs.map { PresentableRef(it) }.toSet()
+
+    val result = (if (replace) newRefs else existingRefs + newRefs).toList()
+
+    upstreamField.model.castSafelyTo<MutableCollectionComboBoxModel<PresentableRef>>()?.update(result)
+    ontoField.model.castSafelyTo<MutableCollectionComboBoxModel<PresentableRef>>()?.update(result)
   }
 
   private fun showRootField() = roots.size > 1
@@ -430,6 +430,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun createOntoField() = ComboBoxWithAutoCompletion<PresentableRef>(MutableCollectionComboBoxModel(), project).apply {
+    prototypeDisplayValue = PresentableRef(GitLocalBranch(GIT_REF_PROTOTYPE_VALUE))
     isVisible = false
     setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) 220 else 310))
     setPlaceholder(GitBundle.message("rebase.dialog.new.base"))
@@ -438,6 +439,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun createUpstreamField() = ComboBoxWithAutoCompletion<PresentableRef>(MutableCollectionComboBoxModel(), project).apply {
+    prototypeDisplayValue = PresentableRef(GitLocalBranch(GIT_REF_PROTOTYPE_VALUE))
     setMinimumAndPreferredWidth(JBUI.scale(185))
     setPlaceholder(GitBundle.message("rebase.dialog.target"))
     @Suppress("UsePropertyAccessSyntax")
@@ -453,6 +455,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun createBranchField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
+    prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     setPlaceholder(GitBundle.message("rebase.dialog.branch.field"))
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
@@ -502,6 +505,9 @@ internal class GitRebaseDialog(private val project: Project,
     else {
       selectedOptions -= option
     }
+    if (option == GitRebaseOption.ONTO) {
+      moveNewBaseValue()
+    }
     if (option in REBASE_FLAGS) {
       updateUpstreamField()
       optionsPanel.rerender(selectedOptions intersect REBASE_FLAGS)
@@ -509,6 +515,21 @@ internal class GitRebaseDialog(private val project: Project,
     }
     else {
       updateUi()
+    }
+  }
+
+  private fun moveNewBaseValue() {
+    val gitRefMapper = { source: ComboBoxWithAutoCompletion<PresentableRef> ->
+      source.getText()?.let { findRef(it) }?.let { PresentableRef(it) } ?: source.item
+    }
+
+    if (GitRebaseOption.ONTO in selectedOptions) {
+      ontoField.item = gitRefMapper(upstreamField)
+      upstreamField.item = null
+    }
+    else {
+      upstreamField.item = gitRefMapper(ontoField)
+      ontoField.item = null
     }
   }
 

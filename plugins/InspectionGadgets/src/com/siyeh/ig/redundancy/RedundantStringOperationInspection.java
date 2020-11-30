@@ -546,23 +546,15 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                .expressionsAreEquivalent(stringExpression, argCall.getMethodExpression().getQualifierExpression());
     }
 
-    @NotNull
     private ProblemDescriptor getProblem(PsiMethodCallExpression call, @NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
+      PsiElement anchor = call.getMethodExpression().getReferenceNameElement();
+      if (anchor == null) {
+        return null;
+      }
       String name = call.getMethodExpression().getReferenceName();
-      return myManager.createProblemDescriptor(call, getRange(call), InspectionGadgetsBundle.message(key),
+      return myManager.createProblemDescriptor(anchor, (TextRange)null, InspectionGadgetsBundle.message(key),
                                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
                                                new RemoveRedundantStringCallFix(name, FixType.REPLACE_WITH_QUALIFIER));
-    }
-
-    @NotNull
-    private static TextRange getRange(PsiMethodCallExpression call) {
-      PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
-      if (nameElement != null) {
-        TextRange callRange = call.getTextRange();
-        return new TextRange(nameElement.getTextRange().getStartOffset(), callRange.getEndOffset()).shiftLeft(
-          callRange.getStartOffset());
-      }
-      return call.getTextRange();
     }
 
     /**

@@ -333,6 +333,7 @@ public final class CompilerTester {
              text.contains("illegal reflective") ||
              text.contains("Picked up") ||
              text.contains("consider reporting this to the maintainers") ||
+             text.contains("Errors occurred while compiling module") ||
              text.startsWith("Using Groovy-Eclipse");
     }
 

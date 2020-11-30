@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,7 +173,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
     return null;
   }
 
-  private static final Set<String> ourReportedInconsistencies = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<String> ourReportedInconsistencies = ContainerUtil.newConcurrentSet();
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   @Override

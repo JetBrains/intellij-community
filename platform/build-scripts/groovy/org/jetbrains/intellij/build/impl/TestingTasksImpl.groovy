@@ -10,11 +10,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.types.Path
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.TestingOptions
-import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -49,6 +45,10 @@ class TestingTasksImpl extends TestingTasks {
     checkOptions()
 
     def compilationTasks = CompilationTasks.create(context)
+    def projectArtifacts = options.beforeRunProjectArtifacts?.split(";")?.toList()
+    if (projectArtifacts) {
+      compilationTasks.buildProjectArtifacts(projectArtifacts)
+    }
     def runConfigurations = options.testConfigurations?.split(";")?.collect { String name ->
       def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
       JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
@@ -185,7 +185,7 @@ class TestingTasksImpl extends TestingTasks {
           "org.jetbrains.instrumentation.trace.file": getTestDiscoveryTraceFilePath(),
           "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
           "test.discovery.exclude.class.patterns"   : options.testDiscoveryExcludePatterns,
-          "test.discovery.affected.roots"           : FileUtilRt.toSystemDependentName(context.paths.projectHome),
+          // "test.discovery.affected.roots"           : FileUtilRt.toSystemDependentName(context.paths.projectHome),
           "test.discovery.excluded.roots"           : excludeRoots.collect { FileUtilRt.toSystemDependentName(it) }.join(";"),
         ] as Map<String, String>)
     }

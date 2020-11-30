@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.run;
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -48,10 +49,19 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
 
     ParametersList vm = javaParameters.getVMParametersList();
 
-    if (PsiUtil.isIdeaProject(project) && !vm.hasProperty(SYSTEM_CL_PROPERTY)) {
-      String qualifiedName = UrlClassLoader.class.getName();
-      if (loaderValid(project, module, qualifiedName, jdk)) {
-        vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
+    if (PsiUtil.isIdeaProject(project)) {
+      if (!vm.hasProperty(SYSTEM_CL_PROPERTY)) {
+        String qualifiedName = UrlClassLoader.class.getName();
+        if (loaderValid(project, module, qualifiedName, jdk)) {
+          vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
+        }
+      }
+      String basePath = project.getBasePath();
+      if (!vm.hasProperty(PathManager.PROPERTY_SYSTEM_PATH)) {
+        vm.addProperty(PathManager.PROPERTY_SYSTEM_PATH, new File(basePath, "system/test").getAbsolutePath());
+      }
+      if (!vm.hasProperty(PathManager.PROPERTY_CONFIG_PATH)) {
+        vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, new File(basePath, "config/test").getAbsolutePath());
       }
     }
 
@@ -82,7 +92,7 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
 
     File sandboxHome = getSandboxPath(jdk);
     if (sandboxHome != null) {
-      if (!vm.hasProperty("idea.home.path")) {
+      if (!vm.hasProperty(PathManager.PROPERTY_HOME_PATH)) {
         File homeDir = new File(sandboxHome, "test");
         FileUtil.createDirectory(homeDir);
         String buildNumber = IdeaJdk.getBuildNumber(jdk.getHomePath());
@@ -97,10 +107,10 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
         else {
           LOG.warn("Cannot determine build number for " + jdk.getHomePath());
         }
-        vm.defineProperty("idea.home.path", homeDir.getAbsolutePath());
+        vm.defineProperty(PathManager.PROPERTY_HOME_PATH, homeDir.getAbsolutePath());
       }
-      if (!vm.hasProperty("idea.plugins.path")) {
-        vm.defineProperty("idea.plugins.path", new File(sandboxHome, "plugins").getAbsolutePath());
+      if (!vm.hasProperty(PathManager.PROPERTY_PLUGINS_PATH)) {
+        vm.defineProperty(PathManager.PROPERTY_PLUGINS_PATH, new File(sandboxHome, "plugins").getAbsolutePath());
       }
     }
 

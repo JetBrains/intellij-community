@@ -5,7 +5,6 @@ import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -41,7 +40,7 @@ import static git4idea.config.GitExecutableProblemHandlersKt.showUnsupportedVers
  */
 public class GitExecutableManager {
   public static GitExecutableManager getInstance() {
-    return ServiceManager.getService(GitExecutableManager.class);
+    return ApplicationManager.getApplication().getService(GitExecutableManager.class);
   }
 
   private static final Logger LOG = Logger.getInstance(GitExecutableManager.class);

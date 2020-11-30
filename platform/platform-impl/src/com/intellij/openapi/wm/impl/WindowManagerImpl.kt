@@ -93,7 +93,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
         // Cannot mark as dirty and compute later, because to convert user space info to device space,
         // we need graphicsConfiguration, but we can get graphicsConfiguration only from frame,
         // but later, when getStateModificationCount or getState is called, may be no frame at all.
-        defaultFrameInfoHelper.updateFrameInfo(frameHelper)
+        defaultFrameInfoHelper.updateFrameInfo(frameHelper, frame)
       }
       else if (!project.isDisposed) {
         ProjectFrameBounds.getInstance(project).markDirty(if (isMaximized(extendedState)) null else bounds)
@@ -302,6 +302,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     frame.addComponentListener(frameStateListener)
   }
 
+  /**
+   * This method is not used in a normal conditions. Only in case of violation and early access to ToolWindowManager.
+   */
   fun allocateFrame(project: Project,
                     projectFrameHelperFactory: Supplier<out ProjectFrameHelper> = Supplier {
                       ProjectFrameHelper(createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = null), null)
@@ -323,15 +326,13 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return frame
   }
 
-  private fun allocateNewFrame(project: Project, frame: ProjectFrameHelper) {
-    frame.init()
+  private fun allocateNewFrame(project: Project, frameHelper: ProjectFrameHelper) {
+    frameHelper.init()
 
-    var frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace()
-    if (frameInfo?.bounds == null) {
-      val lastFocusedProject = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project
-      if (lastFocusedProject != null) {
-        frameInfo = ProjectFrameBounds.getInstance(lastFocusedProject).getActualFrameInfoInDeviceSpace(frame, this)
-      }
+    var frameInfo: FrameInfo? = null
+    val lastFocusedProjectFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project?.let { getFrameHelper(it) }
+    if (lastFocusedProjectFrame != null) {
+      frameInfo = getFrameInfoByFrameHelper(lastFocusedProjectFrame)
       if (frameInfo?.bounds == null) {
         frameInfo = defaultFrameInfoHelper.info
       }
@@ -344,19 +345,19 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       }
       val bounds = frameInfo.bounds
       if (bounds != null) {
-        frame.frame!!.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds)
+        frameHelper.frame!!.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds)
       }
     }
 
-    frame.setProject(project)
-    projectToFrame.put(project, frame)
-    val uiFrame = frame.frame!!
+    frameHelper.setProject(project)
+    projectToFrame.put(project, frameHelper)
+    val uiFrame = frameHelper.frame!!
     if (frameInfo != null) {
       uiFrame.extendedState = frameInfo.extendedState
     }
     uiFrame.isVisible = true
     if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
-      frame.toggleFullScreen(true)
+      frameHelper.toggleFullScreen(true)
     }
 
     uiFrame.addComponentListener(frameStateListener)
@@ -476,6 +477,12 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   override fun isFullScreenSupportedInCurrentOS() = isFullScreenSupportedInCurrentOs()
+
+  override fun updateDefaultFrameInfoOnProjectClose(project: Project) {
+    val frameHelper = getFrameHelper(project) ?: return
+    val frameInfo = getFrameInfoByFrameHelper(frameHelper) ?: return
+    defaultFrameInfoHelper.copyFrom(frameInfo)
+  }
 }
 
 private fun calcAlphaModelSupported(): Boolean {
@@ -544,4 +551,8 @@ private fun getIdeFrame(component: Component): IdeFrame? {
     is IdeFrame -> component
     else -> null
   }
+}
+
+private fun getFrameInfoByFrameHelper(frameHelper: ProjectFrameHelper): FrameInfo? {
+  return updateFrameInfo(frameHelper, frameHelper.frame ?: return null, null, null)
 }

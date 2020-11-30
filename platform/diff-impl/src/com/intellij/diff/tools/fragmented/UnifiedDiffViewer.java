@@ -82,6 +82,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
   @NotNull private final UnifiedDiffPanel myPanel;
+  @NotNull private final OnesideContentPanel myContentPanel;
 
   @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
@@ -123,13 +124,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
 
-    OnesideContentPanel contentPanel = new OnesideContentPanel(myEditor.getComponent());
-    contentPanel.setTitle(createTitles());
+    myContentPanel = new OnesideContentPanel(myEditor.getComponent());
     if (getProject() != null) {
-      contentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
+      myContentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
     }
 
-    myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
+    myPanel = new UnifiedDiffPanel(myProject, myContentPanel, this, myContext);
 
     myFoldingModel = new MyFoldingModel(getProject(), myEditor, this);
     myMarkupUpdater = new MarkupUpdater(getContents());
@@ -154,7 +154,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     installEditorListeners();
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
-    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
+    myContentPanel.setTitle(createTitles());
 
     new UiNotifyConnector(getComponent(), new Activatable() {
       @Override
@@ -193,7 +194,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @Nullable
   protected JComponent createTitles() {
-    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, Arrays.asList(myEditor, myEditor));
+    List<JComponent> titles = DiffUtil.createTextTitles(this, myRequest, Arrays.asList(myEditor, myEditor));
     assert titles.size() == 2;
 
     titles = ContainerUtil.skipNulls(titles);
@@ -424,7 +425,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       clearDiffPresentation();
 
 
-      if (isContentsEqual) {
+      if (isContentsEqual &&
+          !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
         boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
         boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));

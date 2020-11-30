@@ -132,10 +132,9 @@ public final class AppUIUtil {
 
     @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
     Image image = ImageLoader.loadFromResource(fallbackSmallIconUrl, AppUIUtil.class);
-    //noinspection ConstantConditions
+    assert image != null : "Can't load '" + fallbackSmallIconUrl + "'";
     icon = new JBImageIcon(image);
-    scaleIconToSize(icon, size);
-    return icon;
+    return scaleIconToSize(icon, size);
   }
 
   public static @Nullable Icon loadApplicationIcon(@NotNull ScaleContext ctx, int size) {
@@ -159,12 +158,8 @@ public final class AppUIUtil {
     return null;
   }
 
-  private static @Nullable Icon loadApplicationIcon(String svgPath, ScaleContext scaleContext, int size) {
-    if (svgPath == null) {
-      return null;
-    }
-
-    Icon icon = IconLoader.findIcon(svgPath, AppUIUtil.class);
+  private static @Nullable Icon loadApplicationIcon(@NotNull String svgPath, ScaleContext scaleContext, int size) {
+    Icon icon = IconLoader.findIcon(svgPath, AppUIUtil.class.getClassLoader());
     if (icon == null) {
       getLogger().info("Cannot load SVG application icon from " + svgPath);
       return null;
@@ -188,10 +183,12 @@ public final class AppUIUtil {
   public static void invokeLaterIfProjectAlive(@NotNull Project project, @NotNull Runnable runnable) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      runnable.run();
+      if (project.isOpen() && !project.isDisposed()) {
+        runnable.run();
+      }
     }
     else {
-      application.invokeLater(runnable, o -> !project.isOpen() || project.isDisposed());
+      application.invokeLater(runnable, __ -> !project.isOpen() || project.isDisposed());
     }
   }
 
@@ -483,5 +480,14 @@ public final class AppUIUtil {
 
   public static boolean isInFullscreen(@Nullable Window window) {
     return window instanceof IdeFrame && ((IdeFrame)window).isInFullScreen();
+  }
+
+  public static Object adjustFractionalMetrics(Object defaultValue) {
+    if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) return defaultValue;
+
+    GraphicsConfiguration gc =
+      GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+
+    return (JBUIScale.sysScale(gc) == 1.0f)? RenderingHints.VALUE_FRACTIONALMETRICS_OFF : defaultValue;
   }
 }

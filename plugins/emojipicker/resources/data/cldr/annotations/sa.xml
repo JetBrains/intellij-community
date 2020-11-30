@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="sa"/>
+	</identity>
+	<annotations>
+		<annotation cp="‾">उपरितन रेखा</annotation>
+		<annotation cp="‾" type="tts">उपरितन रेखा</annotation>
+		<annotation cp="‽">प्रश्न वाचक</annotation>
+		<annotation cp="‽" type="tts">प्रश्न वाचक</annotation>
+		<annotation cp="‸">हंसपद चिन्ह</annotation>
+		<annotation cp="‸" type="tts">हंसपद चिन्ह</annotation>
+		<annotation cp="⁂">त्रि तारक चिह्न</annotation>
+		<annotation cp="⁂" type="tts">त्रि तारक चिह्न</annotation>
+		<annotation cp="¬">नकार:</annotation>
+		<annotation cp="¬" type="tts">नकार:</annotation>
+		<annotation cp="|">ऊर्ध्वाधर रेखा</annotation>
+		<annotation cp="|" type="tts">ऊर्ध्वाधर रेखा</annotation>
+		<annotation cp="~">समरुप</annotation>
+		<annotation cp="~" type="tts">समरुप</annotation>
+		<annotation cp="≥">बृहत् व समतुल्य</annotation>
+		<annotation cp="≥" type="tts">बृहत् व समतुल्य</annotation>
+	</annotations>
+</ldml>

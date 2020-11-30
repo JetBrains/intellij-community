@@ -107,7 +107,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       }
       previous = configuration;
     }
-    if (sorted) myWriteSorted = sorted; // write sorted if already sorted
+    if (sorted) {
+      myWriteSorted = true; // write sorted if already sorted
+    }
   }
 
   @Override

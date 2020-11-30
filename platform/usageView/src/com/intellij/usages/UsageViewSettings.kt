@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.util.PathUtil
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -22,7 +23,7 @@ open class UsageViewSettings(
   companion object {
     @JvmStatic
     val instance: UsageViewSettings
-      get() = ServiceManager.getService(UsageViewSettings::class.java)
+      get() = ApplicationManager.getApplication().getService(UsageViewSettings::class.java)
   }
 
   @JvmField
@@ -100,7 +101,7 @@ open class UsageViewSettings(
    * Compact middle directories option for directories usage grouping
    */
   @get:OptionTag("COMPACT_MIDDLE_DIRECTORIES")
-  var isCompactMiddleDirectories by property(true)
+  var isCompactMiddleDirectories by property(false)
 
   @get:OptionTag("GROUP_BY_SCOPE")
   var isGroupByScope by property(isGroupByScope)

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
+import com.intellij.util.DocumentUtil
 
 class TransposeAction : EditorAction(TransposeHandler()) {
   private class TransposeHandler : EditorWriteActionHandler(true) {
@@ -16,20 +17,25 @@ class TransposeAction : EditorAction(TransposeHandler()) {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
       val caret = caret ?: editor.caretModel.currentCaret
       val line = caret.logicalPosition.line
-      if (caret.offset < editor.document.getLineEndOffset(line) - editor.document.getLineSeparatorLength(line)) {
-        val characterBeforeCaret = editor.document.charsSequence[caret.offset - 1]
-        val characterAfterCaret = editor.document.charsSequence[caret.offset]
-        editor.document.replaceString(caret.offset - 1, caret.offset + 1, "$characterAfterCaret$characterBeforeCaret")
-        caret.moveToOffset(caret.offset + 1)
+      val document = editor.document
+      if (caret.offset < document.getLineEndOffset(line)) {
+        val offsetBeforeCaret = DocumentUtil.getPreviousCodePointOffset(document, caret.offset)
+        val offsetAfterCaret = DocumentUtil.getNextCodePointOffset(document, caret.offset)
+        val codepointBeforeCaret = document.charsSequence.subSequence(offsetBeforeCaret, caret.offset)
+        val codepointAfterCaret = document.charsSequence.subSequence(caret.offset, offsetAfterCaret)
+        document.replaceString(offsetBeforeCaret, offsetAfterCaret, "$codepointAfterCaret$codepointBeforeCaret")
+        caret.moveToOffset(offsetAfterCaret)
       }
-      else if (caret.offset >= 2) {
+      else {
         // when the caret is at EOL, swap two last characters of the line and don't move caret
-        val characterBeforeCaret = editor.document.charsSequence[caret.offset - 2]
-        val characterAfterCaret = editor.document.charsSequence[caret.offset - 1]
-        editor.document.replaceString(caret.offset - 2, caret.offset, "$characterAfterCaret$characterBeforeCaret")
+        val offsetBeforeCaret = DocumentUtil.getPreviousCodePointOffset(document, caret.offset)
+        val offset2BeforeCaret = DocumentUtil.getPreviousCodePointOffset(document, offsetBeforeCaret)
+        if (offset2BeforeCaret >= 0) {
+          val codepoint2BeforeCaret = document.charsSequence.subSequence(offset2BeforeCaret, offsetBeforeCaret)
+          val codepointBeforeCaret = document.charsSequence.subSequence(offsetBeforeCaret, caret.offset)
+          document.replaceString(offset2BeforeCaret, caret.offset, "$codepointBeforeCaret$codepoint2BeforeCaret")
+        }
       }
     }
-
-
   }
 }

@@ -24,10 +24,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -210,7 +207,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       case UNKNOWN:
         runWithCycleCheck(instruction, () -> {
           for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
-            PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, initialTypes, descriptor);
+            var initialTypesWithNullizedDescriptorType = new HashMap<VariableDescriptor, DFAType>(initialTypes);
+            initialTypesWithNullizedDescriptorType.putIfAbsent(descriptor, DFAType.create(null));
+            PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, initialTypesWithNullizedDescriptorType, descriptor);
             if (upperBoundByWrites != PsiType.NULL) {
               DFAType existingType = state.getVariableType(descriptor);
               if (existingType == null) existingType = DFAType.create(null);

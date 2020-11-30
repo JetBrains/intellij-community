@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColorUtil;
@@ -28,8 +29,10 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,9 +76,14 @@ public final class ExecutionUtil {
 
     String description = e.getMessage();
     HyperlinkListener listener = null;
-    if (isProcessNotCreated(e) && !PropertiesComponent.getInstance(project).isTrueValue(PROPERTY_DYNAMIC_CLASSPATH)) {
-      description = ExecutionBundle.message("dialog.message.command.line.too.long.notification");
-      listener = event -> PropertiesComponent.getInstance(project).setValue(PROPERTY_DYNAMIC_CLASSPATH, "true");
+    if (isProcessNotCreated(e)) {
+      String exePath = ((ProcessNotCreatedException)e).getCommandLine().getExePath();
+      if ((SystemInfoRt.isWindows ? exePath.endsWith("java.exe") : exePath.endsWith("java")) &&
+          !PropertiesComponent.getInstance(project).isTrueValue(PROPERTY_DYNAMIC_CLASSPATH)) {
+        LOG.warn("Java configuration should implement `ConfigurationWithCommandLineShortener` and provide UI to configure shortening method", e);
+        description = ExecutionBundle.message("dialog.message.command.line.too.long.notification");
+        listener = event -> PropertiesComponent.getInstance(project).setValue(PROPERTY_DYNAMIC_CLASSPATH, "true");
+      }
     }
 
     handleExecutionError(project, toolWindowId, taskName, e, description, listener);
@@ -84,7 +92,7 @@ public final class ExecutionUtil {
   public static boolean isProcessNotCreated(@NotNull Throwable e) {
     if (e instanceof ProcessNotCreatedException) {
       String description = e.getMessage();
-      return (description.contains("87") || description.contains("111") || description.contains("206")) &&
+      return (description.contains("87") || description.contains("111") || description.contains("206") || description.contains("error=7,")) &&
              ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString().length() > 1024 * 32;
     }
     return false;
@@ -100,7 +108,7 @@ public final class ExecutionUtil {
 
     if (StringUtil.isEmptyOrSpaces(description)) {
       LOG.warn("Execution error without description", e);
-      description = "Unknown error";
+      description = ExecutionBundle.message("dialog.message.unknown.error");
     }
 
     String fullMessage = title + ":<br>" + description;
@@ -283,5 +291,11 @@ public final class ExecutionUtil {
         return base != null ? base.getIconHeight() : emptyIconHeight;
       }
     });
+  }
+
+  @Nls
+  public static String getExecutorName(@NotNull Executor executor) {
+    //noinspection HardCodedStringLiteral
+    return ObjectUtils.notNull(ExecutionBundle.message("executor." + executor.getId() + ".name"), executor.getId());
   }
 }

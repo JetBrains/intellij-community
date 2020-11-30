@@ -10,6 +10,7 @@ import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.ArrayUtil;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
@@ -139,10 +140,7 @@ public class SubstitutorComputer {
       PsiType[] argTypes = myArgumentTypes;
       if (method instanceof GrGdkMethod) {
         //type inference should be performed from static method
-        PsiType[] newArgTypes = PsiType.createArray(argTypes.length + 1);
-        newArgTypes[0] = myThisType.getValue();
-        System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
-        argTypes = newArgTypes;
+        argTypes = ArrayUtil.prepend(myThisType.getValue(), argTypes);
 
         method = ((GrGdkMethod)method).getStaticMethod();
         LOG.assertTrue(method.isValid());

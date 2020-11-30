@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.macro;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 
@@ -23,7 +24,7 @@ import com.intellij.openapi.editor.VisualPosition;
  */
 public class SelectionEndColumnMacro extends EditorMacro {
   public SelectionEndColumnMacro() {
-    super("SelectionEndColumn", "Selected text end column number");
+    super("SelectionEndColumn", ExecutionBundle.message("ide.macro.selected.text.end.column.number"));
   }
 
   @Override

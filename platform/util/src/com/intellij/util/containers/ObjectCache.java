@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EventListener;
 import java.util.Iterator;
 
@@ -306,9 +307,7 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
       myListeners = new DeletedPairsListener[1];
     }
     else {
-      DeletedPairsListener[] newListeners = new DeletedPairsListener[myListeners.length + 1];
-      System.arraycopy(myListeners, 0, newListeners, 0, myListeners.length);
-      myListeners = newListeners;
+      myListeners = Arrays.copyOf(myListeners, myListeners.length + 1);
     }
     myListeners[myListeners.length - 1] = listener;
   }

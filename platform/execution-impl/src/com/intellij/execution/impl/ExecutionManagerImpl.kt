@@ -57,6 +57,7 @@ import java.awt.BorderLayout
 import java.io.OutputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Function
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
@@ -65,6 +66,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   companion object {
     val LOG = logger<ExecutionManagerImpl>()
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
+
     @JvmField
     val EXECUTION_SESSION_ID_KEY = Key.create<Any>("EXECUTION_SESSION_ID_KEY")
 
@@ -581,6 +583,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       try {
         processHandler.startNotify()
         val targetProgressIndicator = object : TargetEnvironmentAwareRunProfileState.TargetProgressIndicator {
+          @Volatile
+          var stopped = false
 
           override fun addText(text: String, key: Key<*>) {
             processHandler.notifyTextAvailable(text, key)
@@ -589,6 +593,12 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           override fun isCanceled(): Boolean {
             return false
           }
+
+          override fun stop() {
+            stopped = true
+          }
+
+          override fun isStopped(): Boolean = stopped
         }
         promise.setResult(environment.prepareTargetEnvironment(currentState, targetProgressIndicator))
       }
@@ -596,6 +606,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         LOG.warn(t)
         promise.setError(ExecutionBundle.message("message.error.happened.0", t.localizedMessage))
         processHandler.notifyTextAvailable(t.localizedMessage, ProcessOutputType.STDERR)
+        processHandler.notifyTextAvailable("\n", ProcessOutputType.STDERR)
       }
       finally {
         val exitCode = if (promise.isSucceeded) 0 else -1
@@ -683,18 +694,13 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   }
 
   fun getRunning(executorIds: List<String>): Map<String, List<RunnerAndConfigurationSettings>> {
-    val result = HashMap<String, SmartList<RunnerAndConfigurationSettings>>()
+    val result = HashMap<String, MutableList<RunnerAndConfigurationSettings>>()
     for (entry in runningConfigurations) {
       val id = entry.executor.id
-      if(executorIds.contains(id)) {
+      if (executorIds.contains(id)) {
         val processHandler = entry.descriptor.processHandler
-        if (processHandler != null && !processHandler.isProcessTerminated) {
-          val list = result[id] ?: kotlin.run {
-            val smartList = SmartList<RunnerAndConfigurationSettings>()
-            result[id] = smartList
-            smartList
-          }
-          list.add(entry.settings)
+        if (processHandler != null && !processHandler.isProcessTerminated && entry.settings != null) {
+          result.computeIfAbsent(id, Function { SmartList() }).add(entry.settings)
         }
       }
     }
@@ -887,7 +893,7 @@ private data class RunningConfigurationEntry(val descriptor: RunContentDescripto
                                              val settings: RunnerAndConfigurationSettings?,
                                              val executor: Executor)
 
-private class TargetPrepareComponent(val console: ConsoleView) : JPanel(BorderLayout()) {
+private class TargetPrepareComponent(val console: ConsoleView) : JPanel(BorderLayout()), Disposable {
   init {
     add(console.component, BorderLayout.CENTER)
   }
@@ -897,5 +903,9 @@ private class TargetPrepareComponent(val console: ConsoleView) : JPanel(BorderLa
   fun isPreparationFinished() = finished
   fun setPreparationFinished() {
     finished = true
+  }
+
+  override fun dispose() {
+    Disposer.dispose(console)
   }
 }

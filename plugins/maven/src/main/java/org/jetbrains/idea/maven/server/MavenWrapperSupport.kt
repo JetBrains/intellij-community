@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -20,21 +24,18 @@ import java.security.MessageDigest
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
-import kotlin.collections.HashMap
-
 
 @State(name = "MavenWrapperMapping",
        storages = [Storage(value = "maven.wrapper.mapping.xml", roamingType = RoamingType.PER_OS)])
-class MavenWrapperMapping : PersistentStateComponent<MavenWrapperMapping.State> {
+internal class MavenWrapperMapping : PersistentStateComponent<MavenWrapperMapping.State> {
   internal var myState = State()
 
   class State {
+    @JvmField
     val mapping = HashMap<String, String>()
   }
 
-  override fun getState(): State? {
-    return myState
-  }
+  override fun getState() = myState
 
   override fun loadState(state: State) {
     myState.mapping.putAll(state.mapping)
@@ -43,26 +44,25 @@ class MavenWrapperMapping : PersistentStateComponent<MavenWrapperMapping.State> 
   companion object {
     @JvmStatic
     fun getInstance(): MavenWrapperMapping {
-      return ServiceManager.getService(MavenWrapperMapping::class.java)
+      return ApplicationManager.getApplication().getService(MavenWrapperMapping::class.java)
     }
   }
 }
 
-class MavenWrapperSupport {
+private const val DISTS_DIR = "wrapper/dists"
 
-  private val myMapping = MavenWrapperMapping.getInstance()
-  val DISTS_DIR = "wrapper/dists"
-
+internal class MavenWrapperSupport {
   @Throws(IOException::class)
   fun downloadAndInstallMaven(urlString: String, indicator: ProgressIndicator?): MavenDistribution {
-    val cachedHome = myMapping.myState.mapping.get(urlString)
+    val mapping = MavenWrapperMapping.getInstance()
+    val cachedHome = mapping.myState.mapping.get(urlString)
     if (cachedHome != null) {
       val file = File(cachedHome)
       if (file.isDirectory) {
         return MavenDistribution(file, urlString)
       }
       else {
-        myMapping.myState.mapping.remove(urlString)
+        mapping.myState.mapping.remove(urlString)
       }
     }
 
@@ -77,15 +77,14 @@ class MavenWrapperSupport {
         .saveToFile(partFile, indicator)
       FileUtil.rename(partFile, zipFile)
     }
+
     if (!zipFile.isFile) {
       throw RuntimeException(SyncBundle.message("cannot.download.zip.from", urlString))
     }
     val home = unpackZipFile(zipFile, indicator).canonicalFile
-    myMapping.myState.mapping[urlString] = home.absolutePath
+    mapping.myState.mapping[urlString] = home.absolutePath
     return MavenDistribution(home, urlString)
-
   }
-
 
   private fun unpackZipFile(zipFile: File, indicator: ProgressIndicator?): File {
     unzip(zipFile, indicator)
@@ -145,11 +144,9 @@ class MavenWrapperSupport {
         zip.parentFile.listFiles { it -> it.name != zip.name }?.forEach { FileUtil.delete(it) }
       }
     }
-
   }
 
-
-  fun getZipFile(distributionUrl: String): File {
+  private fun getZipFile(distributionUrl: String): File {
     val baseName: String = getDistName(distributionUrl)
     val distName: String = FileUtil.getNameWithoutExtension(baseName)
     val md5Hash: String = getMd5Hash(distributionUrl)
@@ -179,13 +176,8 @@ class MavenWrapperSupport {
 
   companion object {
     @JvmStatic
-    fun hasWrapperConfigured(baseDir: VirtualFile): Boolean {
-      return UseWrapperAction.canUseWrapper() && !getWrapperDistributionUrl(baseDir).isNullOrEmpty()
-    }
-
-    @JvmStatic
     fun getWrapperDistributionUrl(baseDir: VirtualFile?): String? {
-      if (UseWrapperAction.canUseWrapper()) return null
+      if (!UseWrapperAction.canUseWrapper()) return null
       val wrapperProperties = baseDir?.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties") ?: return null
 
       val properties = Properties()

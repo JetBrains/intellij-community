@@ -6,8 +6,10 @@ import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollec
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
+import com.intellij.openapi.fileTypes.FileType
 import org.jetbrains.annotations.NonNls
 
+@Suppress("FunctionName")
 object EventFields {
   /**
    * Creates a field that will be validated by global regexp rule
@@ -160,7 +162,7 @@ object EventFields {
   @JvmField
   val AnonymizedPath = object : PrimitiveEventField<String?>() {
     override val validationRule: List<String>
-      get() = listOf("{util#hash}")
+      get() = listOf("{regexp#hash}")
 
     override val name = "file_path"
     override fun addData(fuData: FeatureUsageData, value: String?) {
@@ -176,6 +178,25 @@ object EventFields {
 
     override fun addData(fuData: FeatureUsageData, value: Language?) {
       fuData.addLanguage(value)
+    }
+  }
+
+  @JvmField
+  val FileType = object : PrimitiveEventField<FileType?>() {
+    override val name = "file_type"
+    override val validationRule: List<String>
+      get() = listOf("{util#file_type}")
+
+    override fun addData(fuData: FeatureUsageData, value: FileType?) {
+      value?.let {
+        val type = getPluginInfo(it.javaClass)
+        if (type.isSafeToReport()) {
+          fuData.addData("file_type", it.name)
+        }
+        else {
+          fuData.addData("file_type", "third.party")
+        }
+      }
     }
   }
 

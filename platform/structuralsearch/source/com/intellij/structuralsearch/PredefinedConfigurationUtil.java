@@ -42,7 +42,7 @@ public final class PredefinedConfigurationUtil {
    */
   @Deprecated
   @NotNull
-  public static Configuration createSearchTemplateInfo(@NotNull String name,
+  public static Configuration createSearchTemplateInfo(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                        @NonNls @NotNull String criteria,
                                                        @NotNull String category,
                                                        @NotNull LanguageFileType fileType,

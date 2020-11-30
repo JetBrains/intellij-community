@@ -29,7 +29,7 @@ object SerializationRoundTripChecker {
   fun verifyPSerializationRoundTrip(storage: WorkspaceEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
     storage as WorkspaceEntityStorageImpl
 
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager, true)
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
 
     val stream = ByteArrayOutputStream()
     serializer.serializeCache(stream, storage)
@@ -67,8 +67,8 @@ object SerializationRoundTripChecker {
     assertMapsEqual(expected.refs.oneToManyContainer, actual.refs.oneToManyContainer)
     assertMapsEqual(expected.refs.abstractOneToOneContainer, actual.refs.abstractOneToOneContainer)
     assertMapsEqual(expected.refs.oneToAbstractManyContainer, actual.refs.oneToAbstractManyContainer)
-    assertMapsEqual(expected.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo, actual.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo)
-    assertMapsEqual(expected.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo, actual.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo)
+    assertMapsEqual(expected.indexes.virtualFileIndex.entityId2VirtualFileUrl, actual.indexes.virtualFileIndex.entityId2VirtualFileUrl)
+    assertMapsEqual(expected.indexes.virtualFileIndex.vfu2EntityId, actual.indexes.virtualFileIndex.vfu2EntityId)
     // Just checking that all properties have been asserted
     assertEquals(4, RefsTable::class.memberProperties.size)
 

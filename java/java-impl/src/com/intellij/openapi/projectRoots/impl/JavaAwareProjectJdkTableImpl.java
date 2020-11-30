@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.JavaVersion;
@@ -20,7 +19,7 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   private static final String DEFAULT_JDK_CONFIGURED = "defaultJdkConfigured";
 
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {
-    return (JavaAwareProjectJdkTableImpl)ServiceManager.getService(ProjectJdkTable.class);
+    return (JavaAwareProjectJdkTableImpl)ApplicationManager.getApplication().getService(ProjectJdkTable.class);
   }
 
   private Sdk myInternalJdk;
@@ -36,7 +35,7 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
     JavaSdk javaSdk = JavaSdk.getInstance();
     List<Sdk> jdks = getSdksOfType(javaSdk);
     if (jdks.isEmpty()) {
-      String homePath = ServiceManager.getService(DefaultJdkConfigurator.class).guessJavaHome(); 
+      String homePath = ApplicationManager.getApplication().getService(DefaultJdkConfigurator.class).guessJavaHome();
       if (homePath != null && javaSdk.isValidSdkHome(homePath)) {
         String suggestedName = JdkUtil.suggestJdkName(javaSdk.getVersionString(homePath));
         if (suggestedName != null) {

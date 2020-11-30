@@ -2,7 +2,6 @@
 
 package com.intellij.tools;
 
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.ui.Messages;
@@ -204,13 +203,8 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
       Object object = ((CheckedTreeNode)value).getUserObject();
 
       if (object instanceof ToolsGroup) {
-        final String groupName = ((ToolsGroup)object).getName();
-        if (groupName != null) {
-          getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        }
-        else {
-          getTextRenderer().append(ToolsBundle.message("tools.node.group.name.unnamed.group"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        }
+        final String groupName = ((ToolsGroup<?>)object).getName();
+        getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
       else if (object instanceof Tool) {
         getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

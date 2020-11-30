@@ -1,8 +1,9 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -11,9 +12,6 @@ import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Singular;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -28,24 +26,19 @@ import java.util.List;
  */
 public class BuilderProcessor extends AbstractClassProcessor {
 
-  static final String SINGULAR_CLASS = Singular.class.getName();
-  static final String BUILDER_DEFAULT_CLASS = Builder.Default.class.getCanonicalName();
+  static final String SINGULAR_CLASS = LombokClassNames.SINGULAR;
+  static final String BUILDER_DEFAULT_CLASS = LombokClassNames.BUILDER_DEFAULT;
 
   public BuilderProcessor() {
-    super(PsiMethod.class, Builder.class);
+    super(PsiMethod.class, LombokClassNames.BUILDER);
   }
 
   private BuilderHandler getBuilderHandler() {
-    return ServiceManager.getService(BuilderHandler.class);
+    return ApplicationManager.getApplication().getService(BuilderHandler.class);
   }
 
   private AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
-    return ServiceManager.getService(AllArgsConstructorProcessor.class);
-  }
-
-  @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
+    return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
   }
 
   @NotNull
@@ -62,8 +55,10 @@ public class BuilderProcessor extends AbstractClassProcessor {
     return true;//builderHandler.validate(psiClass, psiAnnotation, builder);
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, AllArgsConstructor.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+      LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR, LombokClassNames.NO_ARGS_CONSTRUCTOR)) {
       // Create all args constructor only if there is no declared constructors and no lombok constructor annotations
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       if (definedConstructors.isEmpty()) {
@@ -71,7 +66,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
       }
     }
 
-    BuilderHandler builderHandler = getBuilderHandler();
+    final BuilderHandler builderHandler = getBuilderHandler();
     final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, null);
     final PsiClass builderClass = psiClass.findInnerClassByName(builderClassName, false);
     if (null != builderClass) {

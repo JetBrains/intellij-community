@@ -2,10 +2,12 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -64,24 +66,25 @@ public final class ScriptFileUtil {
   }
 
   @NotNull
-  public static File copyToTempFile(@NotNull String path) throws CantRunException {
+  public static File copyToTempFile(@NotNull @NlsSafe String path) throws CantRunException {
     VirtualFile virtualFile = findScriptFileByPath(path);
     if (virtualFile == null) {
-      throw new CantRunException("File not found: " + path);
+      throw new CantRunException(ExecutionBundle.message("script.exception.file.not.found", path));
     }
     File ioFile;
     try {
       ioFile = FileUtil.createTempFile(virtualFile.getName(), "", true);
     }
     catch (IOException e) {
-      throw new CantRunException("Cannot create temporary file " + virtualFile.getName(), e);
+      throw new CantRunException(ExecutionBundle.message("script.exception.can.not.create.temp.file", virtualFile.getName()), e);
     }
     try {
       copyFile(virtualFile, ioFile);
       return ioFile;
     }
     catch (IOException e) {
-      throw new CantRunException("Cannot write temp file " + virtualFile.getPath() + " to " + ioFile.getAbsolutePath(), e);
+      throw new CantRunException(
+        ExecutionBundle.message("script.exception.can.not.write.temp.file", virtualFile.getPath(), ioFile.getAbsolutePath()), e);
     }
   }
 

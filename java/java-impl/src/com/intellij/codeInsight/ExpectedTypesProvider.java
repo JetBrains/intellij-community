@@ -32,6 +32,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.testFrameworks.AssertHint;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1032,8 +1033,7 @@ public final class ExpectedTypesProvider {
 
       final PsiExpression[] leftArgs;
       if (index <= args.length - 1) {
-        leftArgs = new PsiExpression[index];
-        System.arraycopy(args, 0, leftArgs, 0, index);
+        leftArgs = Arrays.copyOf(args, index);
         if (forCompletion) {
           args[index] = null;
         }
@@ -1047,11 +1047,19 @@ public final class ExpectedTypesProvider {
       Set<ExpectedTypeInfo> set = new LinkedHashSet<>();
       for (CandidateInfo candidateInfo : methodCandidates) {
         PsiMethod method = (PsiMethod)candidateInfo.getElement();
+        PsiTypeParameter returnTypeParameter = getReturnTypeParameterNotMentionedPreviously(index, method);
         PsiSubstitutor substitutor;
         if (candidateInfo instanceof MethodCandidateInfo) {
           MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
           substitutor = info.inferSubstitutorFromArgs(policy, args);
           if (!info.isStaticsScopeCorrect() && !method.hasModifierProperty(PsiModifier.STATIC) || info.getInferenceErrorMessage() != null) continue;
+          if (forCompletion && returnTypeParameter != null) {
+            PsiType substituted = substitutor.substitute(returnTypeParameter);
+            if (substituted instanceof PsiClassType) {
+              // Relax return type substitution
+              substitutor = substitutor.put(returnTypeParameter, PsiWildcardType.createExtends(method.getManager(), substituted));
+            }
+          }
         }
         else {
           substitutor = candidateInfo.getSubstitutor();
@@ -1092,6 +1100,18 @@ public final class ExpectedTypesProvider {
       }
 
       return set.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
+    }
+
+    @Nullable
+    private static PsiTypeParameter getReturnTypeParameterNotMentionedPreviously(int index, PsiMethod method) {
+      PsiTypeParameter returnTypeParameter = ObjectUtils.tryCast(PsiUtil.resolveClassInClassTypeOnly(method.getReturnType()), PsiTypeParameter.class);
+      if (returnTypeParameter == null || returnTypeParameter.getOwner() != method) return null;
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      for (int i = 0; i < index && i < parameters.length; i++) {
+        PsiType prevParameterType = parameters[i].getType();
+        if (PsiTypesUtil.mentionsTypeParameters(prevParameterType, Set.of(returnTypeParameter))) return null;
+      }
+      return returnTypeParameter;
     }
 
     private static CandidateInfo @NotNull [] selectCandidateChosenOnCompletion(@Nullable PsiElement call, CandidateInfo @NotNull [] candidates) {
@@ -1188,26 +1208,22 @@ public final class ExpectedTypesProvider {
 
     @Nullable
     private static PsiType getDefaultType(@NotNull final PsiMethod method, final PsiSubstitutor substitutor, @NotNull final PsiType parameterType,
-                                          @NotNull final PsiExpression argument, PsiExpression @NotNull [] args, int index) {
+                                          @NotNull final PsiExpression argument, @Nullable PsiExpression @NotNull [] args, int index) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return parameterType;
 
       PsiType hardcoded = HardcodedDefaultTypesKt.getDefaultType(method, substitutor, index, argument);
       if (hardcoded != null) return hardcoded;
 
-      @NonNls final String name = method.getName();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(containingClass.getProject());
-      int argCount = Math.max(index + 1, args.length);
-      if (("assertEquals".equals(name) || "assertNotEquals".equals(name) || "assertSame".equals(name) || "assertNotSame".equals(name)) &&
-          method.getParameterList().getParametersCount() == argCount) {
-        if (argCount == 2 ||
-            argCount == 3 && method.getParameterList().getParameters()[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-          int other = index == argCount - 1 ? index - 1 : index + 1;
-          if (args.length > other) {
-            ExpectedTypeInfo info = getEqualsType(args[other]);
-            if (info != null && parameterType.isAssignableFrom(info.getDefaultType())) {
-              return info.getDefaultType();
-            }
+      PsiMethodCallExpression call = ObjectUtils.tryCast(argument.getParent().getParent(), PsiMethodCallExpression.class);
+      AssertHint assertHint = AssertHint.createAssertEqualsLikeHintForCompletion(call, args, method, index);
+      if (assertHint != null) {
+        PsiExpression other = assertHint.getOtherExpression(argument);
+        if (other != null) {
+          ExpectedTypeInfo info = getEqualsType(other);
+          if (info != null && parameterType.isAssignableFrom(info.getDefaultType())) {
+            return info.getDefaultType();
           }
         }
       }

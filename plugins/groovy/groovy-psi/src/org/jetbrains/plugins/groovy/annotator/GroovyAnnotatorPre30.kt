@@ -95,17 +95,15 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
 
   override fun visitInExpression(expression: GrInExpression) {
     super.visitInExpression(expression)
-    val negation = expression.negationToken
-    if (negation != null) {
-      error(negation, message("unsupported.negated.in"))
+    if (GrInExpression.isNegated(expression)) {
+      error(expression.operationToken, message("unsupported.negated.in"))
     }
   }
 
   override fun visitInstanceofExpression(expression: GrInstanceOfExpression) {
     super.visitInstanceofExpression(expression)
-    val negation = expression.negationToken
-    if (negation != null) {
-      error(negation, message("unsupported.negated.instanceof"))
+    if (GrInstanceOfExpression.isNegated(expression)) {
+      error(expression.operationToken, message("unsupported.negated.instanceof"))
     }
   }
 

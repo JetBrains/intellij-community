@@ -10,6 +10,7 @@ import com.intellij.remoteServer.impl.runtime.log.TerminalHandlerBase;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.log.TerminalHandler;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
@@ -59,7 +60,7 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   @Override
-  public TerminalListener createTerminal(final String pipeName,
+  public TerminalListener createTerminal(@Nls String pipeName,
                                          OutputStream terminalInput,
                                          InputStream terminalOutput,
                                          InputStream stderr) {

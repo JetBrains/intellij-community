@@ -78,6 +78,7 @@ import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.PersistentHashMapImpl
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
@@ -977,8 +978,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     try {
       MapIndexStorage<String, String> storage = assertInstanceOf(index, MapReduceIndex.class).getStorage()
       PersistentHashMap<String, UpdatableValueContainer<String>> map = storage.getIndexMap()
-      assertTrue(map.getReadOnly())
-      assertTrue(map.getValueStorage().isReadOnly())
+      assertTrue(PersistentHashMapImpl.unwrap(map).getReadOnly())
+      assertTrue(PersistentHashMapImpl.unwrap(map).getValueStorage().isReadOnly())
     }
     finally {
       index.dispose()
@@ -1171,6 +1172,28 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       assert !findClass('Foo')
     }
+  }
+
+  void "test every directory and file are marked as indexed in open project"() {
+    VirtualFile foo = myFixture.addFileToProject('src/main/a.java', 'class Foo {}').virtualFile
+    VirtualFile main = foo.parent
+    VirtualFile src = main.parent
+
+    def scope = GlobalSearchScope.allScope(getProject())
+    assertEquals(foo, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "a.java", scope)))
+    assertEquals(main, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "main", scope)))
+    assertEquals(src, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "src", scope)))
+
+    // content-less indexes has been passed
+    // now all directories are indexed
+
+    assertFalse(((VirtualFileSystemEntry)foo).isFileIndexed())
+    assertTrue(((VirtualFileSystemEntry)main).isFileIndexed())
+    assertTrue(((VirtualFileSystemEntry)src).isFileIndexed())
+
+    assert findClass("Foo") // ensure content dependent indexes are passed
+
+    assertTrue(((VirtualFileSystemEntry)foo).isFileIndexed())
   }
 
   void "test stub updating index stamp"() {

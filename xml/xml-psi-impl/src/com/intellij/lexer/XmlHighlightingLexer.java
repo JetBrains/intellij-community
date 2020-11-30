@@ -13,7 +13,7 @@ public class XmlHighlightingLexer extends DelegateLexer {
   public IElementType getTokenType() {
     IElementType tokenType = getDelegate().getTokenType();
 
-    if (tokenType == null) return tokenType;
+    if (tokenType == null) return null;
 
     tokenType = fixWrongTokenTypes(tokenType);
 

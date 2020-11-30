@@ -38,12 +38,12 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   }
 
   final override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
-    @Suppress("DEPRECATION")
-    if (component is com.intellij.openapi.components.SettingsSavingComponent) {
+    if (component is @Suppress("DEPRECATION") com.intellij.openapi.components.SettingsSavingComponent) {
       settingsSavingComponents.add(component)
     }
     else if (component is SettingsSavingComponent) {
-      asyncSettingsSavingComponents.drop()
+      @Suppress("UNUSED_VARIABLE") //this is needed to work around bug in Kotlin compiler (KT-42826)
+      val result = asyncSettingsSavingComponents.drop()
     }
 
     super.initComponent(component, serviceDescriptor, pluginId)

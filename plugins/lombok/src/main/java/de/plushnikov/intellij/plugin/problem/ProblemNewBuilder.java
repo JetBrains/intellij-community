@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.problem;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -10,7 +11,7 @@ import java.util.Set;
  * @author Plushnikov Michail
  */
 public class ProblemNewBuilder implements ProblemBuilder {
-  private Set<LombokProblem> problems;
+  private final Set<LombokProblem> problems;
 
   public ProblemNewBuilder() {
     this(1);
@@ -24,31 +25,38 @@ public class ProblemNewBuilder implements ProblemBuilder {
     return problems;
   }
 
-  public void addWarning(String message) {
+  @Override
+  public void addWarning(@InspectionMessage String message) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  public void addWarning(String message, Object... params) {
+  @Override
+  public void addWarning(@InspectionMessage String message, Object... params) {
     addProblem(String.format(message, params), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  public void addError(String message) {
+  @Override
+  public void addError(@InspectionMessage String message) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR);
   }
 
-  public void addError(String message, Object... params) {
+  @Override
+  public void addError(@InspectionMessage String message, Object... params) {
     addProblem(String.format(message, params), ProblemHighlightType.GENERIC_ERROR);
   }
 
-  public void addWarning(String message, LocalQuickFix... quickFixes) {
+  @Override
+  public void addWarning(@InspectionMessage String message, LocalQuickFix... quickFixes) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes);
   }
 
-  public void addError(String message, LocalQuickFix... quickFixes) {
+  @Override
+  public void addError(@InspectionMessage String message, LocalQuickFix... quickFixes) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR, quickFixes);
   }
 
-  public void addProblem(String message, ProblemHighlightType highlightType, LocalQuickFix... quickFixes) {
+  @Override
+  public void addProblem(@InspectionMessage String message, ProblemHighlightType highlightType, LocalQuickFix... quickFixes) {
     problems.add(new LombokProblem(message, highlightType, quickFixes));
   }
 }

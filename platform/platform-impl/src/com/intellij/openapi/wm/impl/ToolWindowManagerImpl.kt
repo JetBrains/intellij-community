@@ -411,7 +411,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
       if (toolWindowPane == null) {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
-          LOG.warn("ProjectFrameAllocator is not used - use ProjectManager.openProject to open project in a correct way")
+          LOG.error("ProjectFrameAllocator is not used - use ProjectManager.openProject to open project in a correct way")
         }
 
         val toolWindowsPane = init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
@@ -615,7 +615,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                  source: ToolWindowEventSource? = null) {
     LOG.debug { "activateToolWindow($entry)" }
 
-    ToolWindowCollector.getInstance().recordActivation(entry.id, info, source)
+    if (source != null) {
+      ToolWindowCollector.getInstance().recordActivation(entry.id, info, source)
+    }
 
     if (!entry.toolWindow.isAvailable) {
       // Tool window can be "logically" active but not focused. For example,
@@ -1033,6 +1035,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
 
+    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow)
+
     val button = StripeButton(toolWindowPane, toolWindow)
     val entry = ToolWindowEntry(button, toolWindow, disposable)
     idToEntry[task.id] = entry
@@ -1058,7 +1062,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
 
-    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow)
     return entry
   }
 

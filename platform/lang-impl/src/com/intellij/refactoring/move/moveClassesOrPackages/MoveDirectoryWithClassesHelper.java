@@ -3,7 +3,6 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -12,8 +11,6 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -64,12 +61,12 @@ public abstract class MoveDirectoryWithClassesHelper {
                            Project project) {
       for (PsiFile file : filesToMove) {
         for (PsiReference reference : ReferencesSearch.search(file)) {
-          result.add(new MyUsageInfo(reference, file));
+          result.add(new MoveDirectoryUsageInfo(reference, file));
         }
       }
       for (PsiDirectory psiDirectory : directoriesToMove) {
         for (PsiReference reference : ReferencesSearch.search(psiDirectory)) {
-          result.add(new MyUsageInfo(reference, psiDirectory));
+          result.add(new MoveDirectoryUsageInfo(reference, psiDirectory));
         }
       }
     }
@@ -77,10 +74,10 @@ public abstract class MoveDirectoryWithClassesHelper {
     @Override
     public void postProcessUsages(UsageInfo[] usages, Function<PsiDirectory, PsiDirectory> newDirMapper) {
       for (UsageInfo usage : usages) {
-        if (usage instanceof MyUsageInfo) {
+        if (usage instanceof MoveDirectoryUsageInfo) {
           PsiReference reference = usage.getReference();
           if (reference != null) {
-            PsiFileSystemItem file = ((MyUsageInfo)usage).myFile;
+            PsiFileSystemItem file = ((MoveDirectoryUsageInfo)usage).getTargetFileItem();
             if (file instanceof PsiDirectory) {
               file = newDirMapper.fun((PsiDirectory)file);
             }
@@ -118,25 +115,6 @@ public abstract class MoveDirectoryWithClassesHelper {
 
     @Override
     public void afterMove(PsiElement newElement) {
-    }
-
-    private static class MyUsageInfo extends UsageInfo {
-      private final @NotNull PsiFileSystemItem myFile;
-
-      MyUsageInfo(@NotNull PsiReference reference, @NotNull PsiFileSystemItem file) {
-        super(reference);
-        myFile = file;
-      }
-
-      @Override
-      @Nullable
-      public PsiReference getReference() {
-        PsiElement element = getElement();
-        if (element == null) return null;
-        final ProperTextRange rangeInElement = getRangeInElement();
-        PsiReference reference = rangeInElement != null ? element.findReferenceAt(rangeInElement.getStartOffset()) : element.getReference();
-        return reference != null && reference.getRangeInElement().equals(rangeInElement) ? reference : null;
-      }
     }
   }
 }

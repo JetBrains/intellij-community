@@ -3,11 +3,13 @@ package de.plushnikov.intellij.plugin.quickfix;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,15 +29,18 @@ public class ChangeAnnotationParameterQuickFix extends LocalQuickFixOnPsiElement
     myNewValue = newValue;
   }
 
+  @Override
   @NotNull
+  @IntentionName
   public String getText() {
     if (null == myNewValue) {
-      return String.format("Remove annotation parameter '%s'", myName);
+      return LombokBundle.message("intention.name.remove.annotation.parameter.s", myName);
     } else {
-      return String.format("Set annotation parameter '%s = %s'", myName, myNewValue);
+      return LombokBundle.message("intention.name.set.annotation.parameter.s.s", myName, myNewValue);
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
@@ -93,6 +98,7 @@ public class ChangeAnnotationParameterQuickFix extends LocalQuickFixOnPsiElement
     return result;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

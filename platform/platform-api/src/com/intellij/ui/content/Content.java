@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 public interface Content extends UserDataHolder, ComponentContainer {
   String PROP_DISPLAY_NAME = "displayName";
   String PROP_ICON = "icon";
+  String PROP_PINNED = "pinned";
   String PROP_ACTIONS = "actions";
   String PROP_DESCRIPTION = "description";
   String PROP_COMPONENT = "component";

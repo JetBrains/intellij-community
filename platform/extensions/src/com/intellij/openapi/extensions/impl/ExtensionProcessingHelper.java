@@ -35,7 +35,7 @@ public final class ExtensionProcessingHelper {
       catch (ProcessCanceledException e) {
         throw e;
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         ExtensionPointImpl.LOG.error(e);
       }
     }

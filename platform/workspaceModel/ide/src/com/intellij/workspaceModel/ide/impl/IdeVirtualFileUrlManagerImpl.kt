@@ -9,7 +9,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
@@ -57,9 +59,13 @@ class IdeVirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUr
   }
 
   override fun getParentVirtualUrl(vfu: VirtualFileUrl): VirtualFileUrl? {
-    val fileUrl = vfu.url
-    val index = fileUrl.lastIndexOf('/')
-    return if (index >= 0) fromUrl(fileUrl.substring(0, index)) else null
+    val url = vfu.url
+    val parent = vfu.toPath().parent ?: return null
+    val protocolEnd = url.indexOf(URLUtil.SCHEME_SEPARATOR)
+    if (protocolEnd == -1) return null
+    val protocol = url.substring(0, protocolEnd)
+    val systemIndependentName = FileUtil.toSystemIndependentName(parent.toString())
+    return fromUrl("$protocol${URLUtil.SCHEME_SEPARATOR}$systemIndependentName")
   }
 
   @TestOnly

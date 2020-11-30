@@ -25,9 +25,12 @@ public class PropertiesJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
   public int tryJoinLines(@NotNull final Document doc, @NotNull final PsiFile psiFile, int start, final int end) {
     if (!(psiFile instanceof PropertiesFile)) return -1;
-    // strip continuation char
+    // strip continuation char and two leading whitespaces
     if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(doc.getText().substring(0, start + 1))) {
-      doc.deleteString(start, start + 1);
+      final String text = doc.getText().substring(start + 1);
+      final int leadingWhitespaces = EnterInPropertiesFileHandler.getLeadingWhitespacesNumber(text);
+
+      doc.deleteString(start, start + 1 + leadingWhitespaces);
       start--;
     }
     return start + 1;

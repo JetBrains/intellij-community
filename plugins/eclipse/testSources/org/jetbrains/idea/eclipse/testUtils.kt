@@ -7,6 +7,9 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil
+import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -28,7 +31,7 @@ internal fun checkLoadSaveRoundTrip(testDataDirs: List<Path>,
                                     tempDirectory: TempDirectory,
                                     setupPathVariables: Boolean = false,
                                     imlFilePaths: List<Pair<String, String>>) {
-  loadEditSaveAndCheck(testDataDirs, tempDirectory, setupPathVariables, imlFilePaths, {}, {})
+  loadEditSaveAndCheck(testDataDirs, tempDirectory, setupPathVariables, imlFilePaths, ::forceSave, {})
 }
 
 internal fun checkEmlFileGeneration(testDataDirs: List<Path>,
@@ -48,8 +51,7 @@ internal fun checkConvertToStandardStorage(testDataDirs: List<Path>,
   fun edit(project: Project) {
     val moduleName = imlFilePaths.first().second.substringAfterLast('/')
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: error("Cannot find module '$moduleName'")
-    module.clearOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE)
-    module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE)
+    ClasspathStorage.setStorageType(ModuleRootManager.getInstance(module), ClassPathStorageUtil.DEFAULT_STORAGE)
   }
 
   fun updateExpectedDir(projectDir: Path) {
@@ -105,13 +107,6 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
       loadProject(projectDir) { project ->
         runWriteActionAndWait {
           edit(project)
-          ModuleManager.getInstance(project).modules.forEach {
-            it.moduleFile!!.delete(this)
-            it.stateStore.clearCaches()
-          }
-          if (WorkspaceModel.isEnabled) {
-            JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
-          }
         }
         project.stateStore.save(true)
         projectDir.assertMatches(directoryContentOf(originalProjectDir), filePathFilter = { path ->
@@ -127,5 +122,15 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
     junitUrls.keys.forEach {
       PathMacros.getInstance().setMacro(it, null)
     }
+  }
+}
+
+private fun forceSave(project: Project) {
+  ModuleManager.getInstance(project).modules.forEach {
+    it.moduleFile!!.delete(project)
+    it.stateStore.clearCaches()
+  }
+  if (WorkspaceModel.isEnabled) {
+    JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.Nullability;
@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class ReorderingUtils {
+public final class ReorderingUtils {
   /**
    * Checks whether it's safe to extract given subexpression from the ancestor expression moving it forward
    * without changing the program semantics.
@@ -178,7 +178,7 @@ public class ReorderingUtils {
     }
     return false;
   }
-  
+
   private abstract static class ExceptionProblem {
     final PsiExpression myOperand;
 
@@ -188,7 +188,7 @@ public class ReorderingUtils {
 
     abstract boolean isNecessaryCheck(PsiExpression condition, boolean negated);
   }
-  
+
   static final class NullDereferenceExceptionProblem extends ExceptionProblem {
     private NullDereferenceExceptionProblem(PsiExpression operand) {
       super(operand);
@@ -213,7 +213,7 @@ public class ReorderingUtils {
       }
       return hasContract(condition, myOperand, ContractReturnValue.returnBoolean(negated));
     }
-    
+
     static NullDereferenceExceptionProblem from(PsiExpression expression) {
       NullabilityProblemKind.NullabilityProblem<?> problem = NullabilityProblemKind.fromContext(expression, Collections.emptyMap());
       if (problem != null && problem.thrownException() != null) {
@@ -222,7 +222,7 @@ public class ReorderingUtils {
       return null;
     }
   }
-  
+
   static final class ClassCastExceptionProblem extends ExceptionProblem {
     private ClassCastExceptionProblem(PsiExpression operand) {
       super(operand);
@@ -237,7 +237,7 @@ public class ReorderingUtils {
       }
       return false;
     }
-    
+
     static ClassCastExceptionProblem from(PsiExpression expression) {
       if (expression instanceof PsiTypeCastExpression) {
         return new ClassCastExceptionProblem(((PsiTypeCastExpression)expression).getOperand());
@@ -245,7 +245,7 @@ public class ReorderingUtils {
       return null;
     }
   }
-  
+
   static final class ArrayIndexExceptionProblem extends ExceptionProblem {
     private ArrayIndexExceptionProblem(PsiExpression operand) {
       super(operand);
@@ -272,7 +272,7 @@ public class ReorderingUtils {
       return null;
     }
   }
-  
+
   static final class ContractFailExceptionProblem extends ExceptionProblem {
     private final DfaValueFactory myFactory;
     private final List<DfaRelation> myConditions;
@@ -329,7 +329,7 @@ public class ReorderingUtils {
       }
       return false;
     }
-    
+
     static ContractFailExceptionProblem from(PsiExpression expression) {
       if (expression instanceof PsiCallExpression) {
         PsiCallExpression call = (PsiCallExpression)expression;

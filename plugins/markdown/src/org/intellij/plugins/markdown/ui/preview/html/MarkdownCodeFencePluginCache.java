@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.ui.preview.html;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,11 +33,11 @@ public class MarkdownCodeFencePluginCache implements Disposable {
 
   @NotNull private final Alarm myAlarm = new Alarm(this);
   @NotNull private final Collection<MarkdownCodeFencePluginCacheCollector> myCodeFencePluginCaches =
-    Collections.newSetFromMap(new ConcurrentHashMap<>());
-  @NotNull private final Collection<File> myAdditionalCacheToDelete = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    ContainerUtil.newConcurrentSet();
+  @NotNull private final Collection<File> myAdditionalCacheToDelete = ContainerUtil.newConcurrentSet();
 
   public static MarkdownCodeFencePluginCache getInstance() {
-    return ServiceManager.getService(MarkdownCodeFencePluginCache.class);
+    return ApplicationManager.getApplication().getService(MarkdownCodeFencePluginCache.class);
   }
 
   public MarkdownCodeFencePluginCache() {

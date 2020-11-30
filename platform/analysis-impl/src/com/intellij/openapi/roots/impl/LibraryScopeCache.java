@@ -16,7 +16,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +35,7 @@ public final class LibraryScopeCache {
 
   private final Project myProject;
   private final ConcurrentMap<Module[], GlobalSearchScope> myLibraryScopes =
-    ConcurrentCollectionFactory.createMap(new TObjectHashingStrategy<Module[]>() {
+    ConcurrentCollectionFactory.createMap(new TObjectHashingStrategy<>() {
       @Override
       public int computeHashCode(Module[] object) {
         return Arrays.hashCode(object);
@@ -146,8 +145,8 @@ public final class LibraryScopeCache {
   }
 
   private @NotNull GlobalSearchScope calcLibraryUseScope(@NotNull List<? extends OrderEntry> entries) {
-    Set<Module> modulesWithLibrary = new THashSet<>(entries.size());
-    Set<Module> modulesWithSdk = new THashSet<>(entries.size());
+    Set<Module> modulesWithLibrary = new HashSet<>(entries.size());
+    Set<Module> modulesWithSdk = new HashSet<>(entries.size());
     for (OrderEntry entry : entries) {
       (entry instanceof JdkOrderEntry ? modulesWithSdk : modulesWithLibrary).add(entry.getOwnerModule());
     }

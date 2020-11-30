@@ -734,12 +734,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       disposeErrorPanel();
       MyErrorPanel panel = new MyErrorPanel();
       myEditor.getVerticalScrollBar().setPersistentUI(panel);
-      rebuildErrorStripeMarksModel();
     }
     else {
-      myErrorStripeMarkersModel.clear();
       myEditor.getVerticalScrollBar().setPersistentUI(JBScrollBar.createUI(null));
     }
+    myErrorStripeMarkersModel.setActive(val);
   }
 
   private @Nullable MyErrorPanel getErrorPanel() {
@@ -793,6 +792,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   @Override
   public void dispose() {
+    myErrorStripeMarkersModel.dispose();
     disposeErrorPanel();
 
     if (myErrorStripeRenderer instanceof Disposable) {
@@ -823,22 +823,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   public void rebuild() {
-    rebuildErrorStripeMarksModel();
-  }
-
-  private void rebuildErrorStripeMarksModel() {
-    ErrorStripeMarkersModel errorStripeMarkersModel = myErrorStripeMarkersModel;
-    errorStripeMarkersModel.clear();
-
-    int textLength = myEditor.getDocument().getTextLength();
-    processRangeHighlightersOverlappingWith(0, textLength, ex -> {
-      errorStripeMarkersModel.afterAdded(ex, false);
-      return true;
-    });
-    myEditor.getFilteredDocumentMarkupModel().processRangeHighlightersOverlappingWith(0, textLength, ex -> {
-      errorStripeMarkersModel.afterAdded(ex, true);
-      return true;
-    });
+    myErrorStripeMarkersModel.rebuild();
   }
 
   void repaint() {
@@ -1359,6 +1344,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         final Object tooltipObject = highlighter.getErrorStripeTooltip();
         if (tooltipObject == null) continue;
 
+        //noinspection HardCodedStringLiteral
         final String text = tooltipObject instanceof HighlightInfo ? ((HighlightInfo)tooltipObject).getToolTip() : tooltipObject.toString();
         if (text == null) continue;
 

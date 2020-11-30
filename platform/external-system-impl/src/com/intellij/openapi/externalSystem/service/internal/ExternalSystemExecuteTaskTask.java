@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
@@ -110,7 +110,6 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
         ));
       }
     }
-    assert result != null;
     return result;
   }
 
@@ -118,7 +117,8 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   @Override
   protected void doExecute() throws Exception {
     ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
-      (ExternalSystemProgressNotificationManagerImpl)ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+      (ExternalSystemProgressNotificationManagerImpl)ApplicationManager.getApplication()
+        .getService(ExternalSystemProgressNotificationManager.class);
     ExternalSystemTaskId id = getId();
     String projectPath = getExternalProjectPath();
 
@@ -132,7 +132,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
         executionAware.prepareExecution(this, projectPath, false, progressNotificationListener, getIdeProject());
       }
 
-      final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
+      final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
       settings = ExternalSystemApiUtil.getExecutionSettings(getIdeProject(),
                                                             projectPath,
                                                             getExternalSystemId());
@@ -162,7 +162,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   @Override
   protected boolean doCancel() throws Exception {
-    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
+    final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
     RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
 

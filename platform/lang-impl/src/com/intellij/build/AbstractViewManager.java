@@ -68,7 +68,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
         return buildsView;
       }
     };
-    myPinnedViews = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    myPinnedViews = ContainerUtil.newConcurrentSet();
   }
 
   @Override

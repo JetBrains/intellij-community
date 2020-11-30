@@ -1,4 +1,3 @@
-import sys
 from _typeshed import SupportsRead
 from typing import IO, Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
@@ -34,14 +33,8 @@ def dump(
     sort_keys: bool = ...,
     **kwds: Any,
 ) -> None: ...
-
-if sys.version_info >= (3, 6):
-    _LoadsString = Union[str, bytes]
-else:
-    _LoadsString = str
-
 def loads(
-    s: _LoadsString,
+    s: Union[str, bytes],
     *,
     cls: Optional[Type[JSONDecoder]] = ...,
     object_hook: Optional[Callable[[Dict[Any, Any]], Any]] = ...,
@@ -52,7 +45,7 @@ def loads(
     **kwds: Any,
 ) -> Any: ...
 def load(
-    fp: SupportsRead[_LoadsString],
+    fp: SupportsRead[Union[str, bytes]],
     *,
     cls: Optional[Type[JSONDecoder]] = ...,
     object_hook: Optional[Callable[[Dict[Any, Any]], Any]] = ...,

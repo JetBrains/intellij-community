@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle.presentation;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,8 +69,7 @@ public class CodeStyleSettingPresentation {
     myUiName = newName;
   }
 
-  @NotNull
-  public String getValueUiName(@NotNull Object value) {
+  public @NotNull @NlsSafe String getValueUiName(@NotNull Object value) {
     return value.toString();
   }
 

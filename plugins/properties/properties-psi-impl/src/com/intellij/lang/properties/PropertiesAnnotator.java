@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -42,6 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class PropertiesAnnotator implements Annotator {
+  private static final ExtensionPointName<DuplicatePropertyKeyAnnotationSuppressor>
+    EP_NAME = ExtensionPointName.create("com.intellij.properties.duplicatePropertyKeyAnnotationSuppressor");
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
@@ -50,7 +53,8 @@ public class PropertiesAnnotator implements Annotator {
     PropertiesFile propertiesFile = property.getPropertiesFile();
     Collection<IProperty> others = propertiesFile.findPropertiesByKey(property.getUnescapedKey());
     ASTNode keyNode = ((PropertyImpl)property).getKeyNode();
-    if (others.size() != 1) {
+    if (others.size() != 1 &&
+      EP_NAME.findFirstSafe(suppressor -> suppressor.suppressAnnotationFor(property)) == null) {
       holder.newAnnotation(HighlightSeverity.ERROR,PropertiesBundle.message("duplicate.property.key.error.message")).range(keyNode)
       .withFix(PropertiesQuickFixFactory.getInstance().createRemovePropertyFix(property)).create();
     }

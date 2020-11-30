@@ -169,7 +169,9 @@
   <action id="PinActiveTab">
     <keyboard-shortcut first-keystroke="alt meta P" />
   </action>
-  <action id="SwitchHeaderSource"/>
+  <action id="SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="control meta O"/>
+  </action>
 
 <!--  Rider-specific actions-->
   <action id="RiderNewSolution">

@@ -197,6 +197,8 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
           super.update(painter, index, myTreeModel.getStripe(object, myTree.isExpanded(index)));
         }
       });
+    } else {
+      SwingUtilities.updateComponentTreeUI(myScrollPane);
     }
     return myScrollPane;
   }

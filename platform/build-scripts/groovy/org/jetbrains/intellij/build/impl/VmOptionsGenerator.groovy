@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.ProductProperties
 class VmOptionsGenerator {
   static final List<String> COMMON_VM_OPTIONS =
     [
-      '-XX:+UseConcMarkSweepGC',
+      '-XX:+UseG1GC',
       '-XX:SoftRefLRUPolicyMSPerMB=50',
       '-XX:CICompilerCount=2',
       '-XX:+HeapDumpOnOutOfMemoryError',

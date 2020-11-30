@@ -8,7 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -150,7 +150,7 @@ public class BackgroundImageDialog extends DialogWrapper {
 
   @NotNull
   private static JComponent createFramePreview() {
-    EditorEmptyTextPainter painter = ServiceManager.getService(EditorEmptyTextPainter.class);
+    EditorEmptyTextPainter painter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
     JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
       @Override
       protected void paintComponent(Graphics g) {

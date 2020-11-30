@@ -54,13 +54,6 @@ public class PatchFileType implements FileType {
     return false;
   }
 
-  @Override
-  @Nullable
-  @NonNls
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    return null;
-  }
-
   public static boolean isPatchFile(@Nullable VirtualFile vFile) {
     return vFile != null && FileTypeRegistry.getInstance().isFileOfType(vFile, INSTANCE);
   }

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -92,17 +93,17 @@ public final class TooltipController {
     }
   }
 
-  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull String text, boolean alignToRight, @NotNull TooltipGroup group) {
+  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull @NlsContexts.Tooltip String text, boolean alignToRight, @NotNull TooltipGroup group) {
     TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text);
     showTooltip(editor, p, tooltipRenderer, alignToRight, group);
   }
 
-  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull String text, int currentWidth, boolean alignToRight, @NotNull TooltipGroup group) {
+  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull @NlsContexts.Tooltip String text, int currentWidth, boolean alignToRight, @NotNull TooltipGroup group) {
     TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text, currentWidth);
     showTooltip(editor, p, tooltipRenderer, alignToRight, group);
   }
 
-  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull String text, int currentWidth, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint hintHint) {
+  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull @NlsContexts.Tooltip String text, int currentWidth, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint hintHint) {
     TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text, currentWidth);
     showTooltip(editor, p, tooltipRenderer, alignToRight, group, hintHint);
   }

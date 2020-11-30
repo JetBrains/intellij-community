@@ -15,6 +15,7 @@
  */
 package com.jetbrains.commandInterface.command;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public interface Command extends CommandExecutor {
    * @return command name
    */
   @NotNull
-  String getName();
+  @NlsSafe String getName();
 
   /**
    * @param tryCutOutArguments Try to remove information about arguments from help text (i.e. "[file] removes file" -> "removes file").

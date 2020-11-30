@@ -17,7 +17,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.plugins.pipelines.utils.ObservableQueue
 import com.intellij.space.plugins.pipelines.viewmodel.LogData
@@ -44,7 +44,6 @@ private val log = logger<SpaceKtsModelBuilder>()
 
 @Service
 class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by LifetimedDisposableImpl(), KLogging() {
-
   private val persistentState = ScriptKtsPersistentState(project)
 
   private val _model = mutableProperty<ScriptModelHolder?>(null)
@@ -180,7 +179,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
           val jarFile = File(outputFolder, "compiledJar.jar")
 
           // Primary option is to download from currently connected server, fallback on the public maven
-          val server = space.workspace.value?.client?.server?.let { embeddedMavenServer(it) } ?: publicMavenServer
+          val server = SpaceWorkspaceComponent.getInstance().workspace.value?.client?.server?.let { embeddedMavenServer(it) } ?: publicMavenServer
 
           val configuration = AutomationCompilerConfiguration.Remote(server = server)
 
@@ -215,7 +214,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
           val validationResult = scriptConfig.validate()
 
           if (validationResult is ProjectConfigValidationResult.Failed) {
-            val message = validationResult.errorMessage()
+            val message = validationResult.errorMessage() // NON-NLS
             logData.error(message)
             _config.value = null
             _error.value = message

@@ -2,7 +2,6 @@
 package com.intellij.java.navigation
 
 import com.intellij.ide.actions.searcheverywhere.*
-import com.intellij.ide.actions.searcheverywhere.mixed.SearchEverywhereUIMixedResults
 import com.intellij.ide.util.gotoByName.GotoActionTest
 import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.actionSystem.ActionManager
@@ -25,7 +24,7 @@ import static com.intellij.testFramework.PlatformTestUtil.waitForFuture
 class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
   static final int SEARCH_TIMEOUT = 50_000
 
-  SearchEverywhereUIBase mySearchUI
+  SearchEverywhereUI mySearchUI
 
   private SEParam mixingResultsFlag
   private SEParam twoTabsFlag
@@ -241,18 +240,16 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     assert waitForFuture(future, SEARCH_TIMEOUT) == [file4, file3, file5, file2, file1, file6]
   }
 
-  private SearchEverywhereUIBase createTestUI(List<SearchEverywhereContributor<Object>> contributors) {
+  private SearchEverywhereUI createTestUI(List<SearchEverywhereContributor<Object>> contributors) {
     def map = new HashMap<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor>()
     contributors.forEach({map.put(it, null)})
     return createTestUI(map)
   }
 
-  private SearchEverywhereUIBase createTestUI(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributorsMap) {
+  private SearchEverywhereUI createTestUI(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributorsMap) {
     if (mySearchUI != null) Disposer.dispose(mySearchUI)
 
-    def mixingEnabled = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
-    mySearchUI = mixingEnabled ? new SearchEverywhereUIMixedResults(project, contributorsMap)
-                               : new SearchEverywhereUI(project, contributorsMap)
+    mySearchUI = new SearchEverywhereUI(project, contributorsMap)
     def tab = contributorsMap.size() > 1
       ? SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
       : contributorsMap.keySet().find().getSearchProviderId()

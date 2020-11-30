@@ -14,8 +14,11 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.vcsUtil.VcsFileUtil
-import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitContentRevision
 import git4idea.index.ui.GitFileStatusNode
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
+import java.util.*
 
 class GitAddAction : StagingAreaOperationAction(GitAddOperation)
 class GitResetAction : StagingAreaOperationAction(GitResetOperation)
@@ -33,13 +36,41 @@ fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, oper
   FileDocumentManager.getInstance().saveAllDocuments()
 
   runProcess(project, operation.progressTitle, true) {
-    val paths = nodes.map { it.filePath }
+    val repositoryManager = GitRepositoryManager.getInstance(project)
+
+    val submodulesByRoot = mutableMapOf<GitRepository, MutableList<GitFileStatusNode>>()
+    val pathsByRoot = mutableMapOf<GitRepository, MutableList<GitFileStatusNode>>()
+    for (node in nodes) {
+      val filePath = node.filePath
+      val submodule = GitContentRevision.getRepositoryIfSubmodule(project, filePath)
+      if (submodule != null) {
+        val list = submodulesByRoot.computeIfAbsent(submodule.parent) { ArrayList() }
+        list.add(node)
+      }
+      else {
+        val repo = repositoryManager.getRepositoryForFileQuick(filePath)
+        if (repo != null) {
+          val list = pathsByRoot.computeIfAbsent(repo) { ArrayList() }
+          list.add(node)
+        }
+      }
+    }
 
     val exceptions = mutableListOf<VcsException>()
-    VcsUtil.groupByRoots(project, paths) { it }.forEach { (vcsRoot, paths) ->
+    pathsByRoot.forEach { (repo, nodes) ->
       try {
-        operation.processPaths(project, vcsRoot.path, paths)
-        VcsFileUtil.markFilesDirty(project, paths)
+        operation.processPaths(project, repo.root, nodes)
+        VcsFileUtil.markFilesDirty(project, nodes.map { it.filePath })
+      }
+      catch (ex: VcsException) {
+        exceptions.add(ex)
+      }
+    }
+
+    submodulesByRoot.forEach { (repo, submodules) ->
+      try {
+        operation.processPaths(project, repo.root, submodules)
+        VcsFileUtil.markFilesDirty(project, submodules.mapNotNull { it.filePath.parentPath })
       }
       catch (ex: VcsException) {
         exceptions.add(ex)

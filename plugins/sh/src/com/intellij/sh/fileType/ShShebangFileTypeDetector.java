@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.sh.parser.ShShebangParserUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -34,6 +35,7 @@ public final class ShShebangFileTypeDetector implements DocumentListener, Dispos
   public void documentChanged(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile instanceof LightVirtualFile) return;
     Project project = ProjectUtil.guessProjectForFile(virtualFile);
     if (project == null) return;
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);

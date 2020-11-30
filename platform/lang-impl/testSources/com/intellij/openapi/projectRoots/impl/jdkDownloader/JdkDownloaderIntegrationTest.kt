@@ -16,6 +16,9 @@ class JdkDownloaderIntegrationTest : BasePlatformTestCase() {
         val data = JdkListDownloader.getInstance().downloadForUI(null)
         Assert.assertTrue(data.isNotEmpty())
         Assert.assertTrue(data.all { it.sharedIndexAliases.isNotEmpty() })
+
+        //IDEA-253533
+        buildJdkDownloaderModel(data)
       }
       if (result.isSuccess) return
       lastError = result.exceptionOrNull()!!

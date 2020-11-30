@@ -10,9 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @ApiStatus.Internal
 public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
@@ -45,7 +43,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
     Element effectiveElement = shouldDeserializeInstance(extensionElement) ? extensionElement : null;
-    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement, InterfaceExtensionImplementationClassResolver.INSTANCE);
   }
 
   @Override
@@ -54,11 +52,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
                             @NotNull List<Element> elements,
                             @NotNull List<Runnable> priorityListenerCallbacks,
                             @NotNull List<Runnable> listenerCallbacks) {
-    Set<String> implementationClassNames = new HashSet<>();
-    for (Element element : elements) {
-      implementationClassNames.add(element.getAttributeValue("implementation"));
-    }
-    unregisterExtensions((x, adapter) -> !implementationClassNames.contains(adapter.getAssignableToClassName()), false, priorityListenerCallbacks, listenerCallbacks);
+    unregisterExtensions(adapter -> adapter.getPluginDescriptor() != pluginDescriptor, false, priorityListenerCallbacks, listenerCallbacks);
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {

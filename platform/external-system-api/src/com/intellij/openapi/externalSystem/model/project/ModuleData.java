@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serialization.Property;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.ArrayUtil;
@@ -89,7 +90,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @NotNull
   @Override
-  public String getId() {
+  public @NlsSafe String getId() {
     return id;
   }
 
@@ -186,7 +187,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   @Nullable
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return description;
   }
 
@@ -393,7 +394,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     return getId();
   }
 

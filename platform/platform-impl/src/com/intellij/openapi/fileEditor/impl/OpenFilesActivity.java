@@ -16,10 +16,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.openapi.wm.ToolWindowId.DATABASE_VIEW;
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
 final class OpenFilesActivity implements StartupActivity {
@@ -73,6 +75,10 @@ final class OpenFilesActivity implements StartupActivity {
       if (null == manager.getActiveToolWindowId()) {
         ToolWindow window = manager.getToolWindow(PROJECT_VIEW);
         if (window != null) window.activate(null);
+        if (PlatformUtils.isDataGrip()) {
+          ToolWindow databaseView = manager.getToolWindow(DATABASE_VIEW);
+          if (databaseView != null) databaseView.activate(null);
+        }
       }
     });
   }

@@ -11,7 +11,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class CastMethodArgumentFix extends MethodArgumentFix implements HighPriorityAction {
   private final @IntentionName String myText;
@@ -68,7 +67,7 @@ public final class CastMethodArgumentFix extends MethodArgumentFix implements Hi
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     return new CastMethodArgumentFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
                                      myArgumentFixerActionFactory);
   }

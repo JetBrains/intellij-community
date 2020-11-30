@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -82,6 +83,10 @@ public final class XDebuggerInlayUtil {
             new XDebuggerTreeCreator(project, session.getDebugProcess().getEditorsProvider(), session.getCurrentPosition(), ((XDebugSessionImpl)session).getValueMarkers());
 
           Consumer<Inlay> onClick = (inlay) -> {
+            InlineDebugRenderer inlayRenderer = (InlineDebugRenderer)inlay.getRenderer();
+            if (inlayRenderer.myPopupIsShown) {
+              return;
+            }
             String name = "valueName";
             if (container instanceof XNamedValue) {
               name = ((XNamedValue)container).getName();
@@ -89,7 +94,10 @@ public final class XDebuggerInlayUtil {
             Pair<XValue, String> descriptor = Pair.create(container, name);
             Rectangle bounds = inlay.getBounds();
             Point point = new Point(bounds.x, bounds.y + bounds.height);
+
+            inlayRenderer.myPopupIsShown = true;
             XDebuggerTreeInlayPopup.showTreePopup(creator, descriptor, valueNode, e, point, position, session, () -> {
+              ApplicationManager.getApplication().invokeLater(() -> { inlayRenderer.myPopupIsShown = false; });
             });
           };
 

@@ -365,8 +365,7 @@ public class TreeModelBuilder {
   }
 
 
-  @Nullable
-  private PackageDependenciesNode getModuleNode(Module module, ScopeType scopeType) {
+  private @NotNull PackageDependenciesNode getModuleNode(Module module, ScopeType scopeType) {
     if (module == null || !myShowModules) {
       return getRootNode(scopeType);
     }

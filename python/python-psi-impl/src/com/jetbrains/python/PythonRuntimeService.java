@@ -1,7 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
@@ -58,6 +58,6 @@ public class PythonRuntimeService {
   }
 
   public static PythonRuntimeService getInstance() {
-    return ServiceManager.getService(PythonRuntimeService.class);
+    return ApplicationManager.getApplication().getService(PythonRuntimeService.class);
   }
 }

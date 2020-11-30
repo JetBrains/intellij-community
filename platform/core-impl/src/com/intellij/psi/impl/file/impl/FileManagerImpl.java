@@ -255,13 +255,13 @@ public final class FileManagerImpl implements FileManager {
   @NotNull
   public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, boolean eventSystemEnabled) {
     FileType fileType = file.getFileType();
-    Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), file);
+    Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), file, fileType);
     FileViewProviderFactory factory = language == null
                                       ? FileTypeFileViewProviders.INSTANCE.forFileType(fileType)
                                       : LanguageFileViewProviders.INSTANCE.forLanguage(language);
     FileViewProvider viewProvider = factory == null ? null : factory.createFileViewProvider(file, language, myManager, eventSystemEnabled);
 
-    return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled) : viewProvider;
+    return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled, fileType) : viewProvider;
   }
 
   /** @deprecated Left for plugin compatibility */

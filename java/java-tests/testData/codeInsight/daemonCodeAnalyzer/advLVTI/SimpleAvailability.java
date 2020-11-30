@@ -3,7 +3,7 @@ import java.util.function.Function;
 class Main {
     private static void localVariableDeclaration() {
         var a = 1;
-        <error descr="'var' is not allowed in a compound declaration">var b = 2</error>, <error descr="'var' is not allowed in a compound declaration">c = 3.0;</error>
+        <error descr="'var' is not allowed in a compound declaration">var b = 2</error>, <error descr="'var' is not allowed in a compound declaration">c;</error>
         <error descr="'var' is not allowed as an element type of an array">var</error> d[] = new int[4];
         var d1 = new int[] {4};
         var d2 = new int[4];

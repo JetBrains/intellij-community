@@ -21,10 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -79,14 +76,16 @@ public final class WSLUtil {
     final List<WSLDistribution> result = new ArrayList<>(descriptors.size() + 1 /* LEGACY_WSL */);
 
     for (WslDistributionDescriptor descriptor: descriptors) {
+      String executablePathStr = descriptor.getExecutablePath();
+      if (executablePathStr != null) {
+        Path executablePath = Paths.get(executablePathStr);
+        if (!executablePath.isAbsolute()) {
+          executablePath = executableRoot.resolve(executablePath);
+        }
 
-      Path executablePath = Paths.get(descriptor.getExecutablePath());
-      if (!executablePath.isAbsolute()) {
-        executablePath = executableRoot.resolve(executablePath);
-      }
-
-      if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
-        result.add(new WSLDistribution(descriptor, executablePath));
+        if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
+          result.add(new WSLDistribution(descriptor, executablePath));
+        }
       }
     }
 

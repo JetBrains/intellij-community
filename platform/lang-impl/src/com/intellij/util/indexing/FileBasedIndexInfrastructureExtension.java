@@ -24,20 +24,17 @@ public interface FileBasedIndexInfrastructureExtension {
    */
   void processIndexingProject(@NotNull Project project, @NotNull ProgressIndicator indexingIndicator);
 
-  /**
-   * This notification is sent when the indexing is started and there are no files detected to index
-   */
-  void noFilesFoundToProcessIndexingProject(@NotNull Project project, @NotNull ProgressIndicator indexingIndicator);
-
   interface FileIndexingStatusProcessor {
     /**
-     * Serves as an optimization when time-consuming {@link FileIndexingStatusProcessor#processUpToDateFile(VirtualFile, int, ID)}
+     * Serves as an optimization when time-consuming {@link FileIndexingStatusProcessor#processUpToDateFile(IndexedFile, int, ID)}
      * should not be called because takes no effect.
      */
     boolean shouldProcessUpToDateFiles();
 
     /**
      * Processes up to date file for given content-dependent index while "scanning files to index" in progress.
+     * @return true if the up-to-date file has been reviewed and it its indexing must be skipped,
+     * false if the up-to-date file must be re-indexed because previously associated data is not valid anymore.
      */
     boolean processUpToDateFile(@NotNull IndexedFile file, int inputId, @NotNull ID<?, ?> indexId);
 

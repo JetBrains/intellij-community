@@ -234,7 +234,12 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     throws EvaluateException {
     if (element == null || !element.isValid() || DumbService.isDumb(element.getProject())) return null;
 
-    if (!locationMatches(element, proxy.location())) return null;
+    try {
+      if (!locationMatches(element, proxy.location())) return null;
+    }
+    catch (IllegalArgumentException iea) {
+      throw new EvaluateException(iea.getMessage(), iea);
+    }
     PsiElement anchor = getAnchor(element);
     if (anchor == null) return null;
     PsiElement body = getCodeBlock(anchor);

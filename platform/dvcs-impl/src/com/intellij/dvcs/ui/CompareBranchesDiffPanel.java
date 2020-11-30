@@ -45,6 +45,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +79,7 @@ public class CompareBranchesDiffPanel extends JPanel {
 
     myLabel = new JEditorPane() {
       @Override
-      public void setText(String t) {
+      public void setText(@Nls String t) {
         super.setText(t);
         getPreferredSize();
       }

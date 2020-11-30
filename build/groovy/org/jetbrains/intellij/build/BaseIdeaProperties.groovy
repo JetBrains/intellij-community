@@ -29,6 +29,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.properties",
     "intellij.properties.resource.bundle.editor",
     "intellij.terminal",
+    "intellij.emojipicker",
     "intellij.textmate",
     "intellij.editorconfig",
     "intellij.settingsRepository",
@@ -38,8 +39,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.repository.search",
     "intellij.maven.model",
     "intellij.maven",
+    "intellij.externalSystem.dependencyUpdater",
     "intellij.gradle",
+    "intellij.gradle.dependencyUpdater",
     "intellij.gradle.dsl.impl",
+    "intellij.gradle.dsl.kotlin.impl",
     "intellij.gradle.java",
     "intellij.gradle.java.maven",
     "intellij.vcs.git",
@@ -72,7 +76,8 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.filePrediction",
     "intellij.markdown",
     "intellij.webp",
-    "intellij.grazie"
+    "intellij.grazie",
+    "intellij.featuresTrainer",
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     ""                                                          : "11",

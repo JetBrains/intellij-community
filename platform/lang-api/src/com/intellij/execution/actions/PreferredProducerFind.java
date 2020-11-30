@@ -2,6 +2,7 @@
 
 package com.intellij.execution.actions;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.LocatableConfiguration;
@@ -10,7 +11,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConfigurationFromContextWrapper;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.SmartList;
@@ -67,7 +67,7 @@ final class PreferredProducerFind {
         throw e;
       }
       catch (Throwable e) {
-        LOG.error(new ExtensionException(prototype.getClass(), e));
+        LOG.error(PluginException.createByClass(e, prototype.getClass()));
         continue;
       }
 

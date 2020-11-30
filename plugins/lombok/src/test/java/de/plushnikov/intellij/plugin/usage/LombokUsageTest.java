@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.usage;
 
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.usageView.UsageInfo;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -25,25 +24,16 @@ public class LombokUsageTest extends AbstractLombokLightCodeInsightTestCase {
   }
 
   public void testFindUsageWither() {
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
-
     final Collection<UsageInfo> usages = loadTestClass();
     assertUsages(usages, "findUsageWither.withBar", "findUsageWither.getBar");
   }
 
   public void testFindUsageBuilder() {
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
-
     final Collection<UsageInfo> usages = loadTestClass();
     assertUsages(usages, "FindUsageBuilder.builder().bar", "findUsageBuilder.getBar");
   }
 
   public void testFindUsageSingularBuilder() {
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
-
     final Collection<UsageInfo> usages = loadTestClass();
     assertUsages(usages, "FindUsageSingularBuilder.builder().bar", "FindUsageSingularBuilder.builder().bars",
       "FindUsageSingularBuilder.builder().clearBars", "findUsageBuilder.getBars");

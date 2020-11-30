@@ -14,7 +14,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.*;
+
+import static java.lang.Math.min;
 
 /**
  * @author Konstantin Bulenkov
@@ -57,7 +62,7 @@ public final class ImageUtil {
 
   /**
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
-   * @see #createImage(GraphicsConfiguration, double, double, int, PaintUtil.RoundingMode)
+   * @see #createImage(ScaleContext, double, double, int, PaintUtil.RoundingMode)
    */
   public static @NotNull BufferedImage createImage(ScaleContext context, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
     if (StartupUiUtil.isJreHiDPI(context)) {
@@ -255,5 +260,49 @@ public final class ImageUtil {
       return new JBHiDPIScaledImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
     }
     return image;
+  }
+
+  @NotNull
+  public static BufferedImage createCircleImage(@NotNull BufferedImage image) {
+    int size = min(image.getWidth(), image.getHeight());
+    Area avatarOvalArea = new Area(new Ellipse2D.Double(0.0, 0.0, size, size));
+
+    return createImageByMask(image, avatarOvalArea);
+  }
+
+  @NotNull
+  public static BufferedImage createRoundedImage(@NotNull BufferedImage image, double arc) {
+    int size = min(image.getWidth(), image.getHeight());
+    Area avatarOvalArea = new Area(new RoundRectangle2D.Double(0.0, 0.0, size, size, arc, arc));
+    return createImageByMask(image, avatarOvalArea);
+  }
+
+  @NotNull
+  public static BufferedImage createImageByMask(@NotNull BufferedImage image, @NotNull Area area) {
+    int size = min(image.getWidth(), image.getHeight());
+    BufferedImage mask = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g2 = mask.createGraphics();
+    applyQualityRenderingHints(g2);
+    g2.fill(area);
+
+    BufferedImage shapedImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+    g2 = shapedImage.createGraphics();
+    applyQualityRenderingHints(g2);
+    g2.drawImage(image, 0, 0, null);
+    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_IN));
+    g2.drawImage(mask, 0, 0, null);
+    g2.dispose();
+
+    return shapedImage;
+  }
+
+  public static void applyQualityRenderingHints(@NotNull Graphics2D g2) {
+    g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+    g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+    g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
   }
 }

@@ -1,5 +1,3 @@
-# Stubs for email.headerregistry (Python 3.4)
-
 from datetime import datetime as _datetime
 from email.errors import MessageDefect
 from email.policy import Policy

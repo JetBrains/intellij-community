@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -40,10 +39,7 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
-import com.intellij.util.Alarm;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.EDT;
@@ -66,6 +62,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -84,7 +81,7 @@ public final class IdeEventQueue extends EventQueue {
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
   private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
-  private static final boolean ourActionAwareTypeaheadEnabled = !SystemInfo.isMac && SystemProperties.getBooleanProperty("action.aware.typeAhead", true);
+  private static final boolean ourActionAwareTypeaheadEnabled = !SystemInfo.isMac && SystemProperties.getBooleanProperty("action.aware.typeAhead", false);
   private static final boolean ourTypeAheadSearchEverywhereEnabled =
     SystemProperties.getBooleanProperty("action.aware.typeAhead.searchEverywhere", false);
   private static final boolean ourSkipTypedEvent = SystemProperties.getBooleanProperty("skip.typed.event", true);
@@ -126,6 +123,7 @@ public final class IdeEventQueue extends EventQueue {
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Runnable> myReady = new HashSet<>();
+  private final HoverService myHoverService = new HoverService();
   private boolean myKeyboardBusy;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
@@ -413,6 +411,7 @@ public final class IdeEventQueue extends EventQueue {
       }
 
       checkForTimeJump(startedAt);
+      myHoverService.process(e);
 
       if (!appIsLoaded()) {
         try {
@@ -603,7 +602,7 @@ public final class IdeEventQueue extends EventQueue {
     if (manager == null) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        ourProgressManager = manager = ServiceManager.getService(ProgressManager.class);
+        ourProgressManager = manager = ApplicationManager.getApplication().getService(ProgressManager.class);
       }
     }
     return manager;
@@ -827,7 +826,7 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (e instanceof ComponentEvent && myWindowManager != null) {
+    if (e instanceof ComponentEvent && myWindowManager != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myWindowManager.dispatchComponentEvent((ComponentEvent)e);
     }
 
@@ -1022,44 +1021,46 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Predicate<? super AWTEvent> exitCondition) {
+  public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Future<?> exitCondition, @NotNull Predicate<? super AWTEvent> isCancelEvent) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
     }
-    AWTEvent event;
-    do {
+    while (!exitCondition.isDone()) {
       try {
-        event = getNextEvent();
-        boolean eventOk = true;
-        if (event instanceof InputEvent) {
-          final Object s = event.getSource();
-          if (s instanceof Component) {
-            Component c = (Component)s;
-            Window modalWindow = SwingUtilities.windowForComponent(modalComponent);
-            while (c != null && c != modalWindow) c = c.getParent();
-            if (c == null) {
-              eventOk = false;
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("pumpEventsForHierarchy.consumed: " + event);
-              }
-              ((InputEvent)event).consume();
-            }
-          }
-        }
-
-        if (eventOk) {
+        AWTEvent event = getNextEvent();
+        boolean consumed = consumeUnrelatedEvent(modalComponent, event);
+        if (!consumed) {
           dispatchEvent(event);
         }
       }
       catch (Throwable e) {
         LOG.error(e);
-        event = null;
       }
     }
-    while (!exitCondition.test(event));
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy.exit(" + modalComponent + ", " + exitCondition + ")");
     }
+  }
+
+  // return true if consumed
+  private static boolean consumeUnrelatedEvent(@NotNull Component modalComponent, @NotNull AWTEvent event) {
+    boolean consumed = false;
+    if (event instanceof InputEvent) {
+      Object s = event.getSource();
+      if (s instanceof Component) {
+        Component c = (Component)s;
+        Window modalWindow = SwingUtilities.windowForComponent(modalComponent);
+        while (c != null && c != modalWindow) c = c.getParent();
+        if (c == null) {
+          consumed = true;
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("pumpEventsForHierarchy.consumed: " + event);
+          }
+          ((InputEvent)event).consume();
+        }
+      }
+    }
+    return consumed;
   }
 
   @FunctionalInterface

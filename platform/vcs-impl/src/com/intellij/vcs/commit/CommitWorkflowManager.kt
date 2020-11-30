@@ -5,8 +5,7 @@ import com.intellij.application.subscribe
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager.getApplication
-import com.intellij.openapi.application.ConfigImportHelper.isConfigImported
-import com.intellij.openapi.application.ConfigImportHelper.isFirstSession
+import com.intellij.openapi.application.ConfigImportHelper.*
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -32,7 +31,7 @@ private val appSettings get() = VcsApplicationSettings.getInstance()
 
 internal class NonModalCommitCustomization : ApplicationInitializedListener {
   override fun componentsInitialized() {
-    if (!isFirstSession() || isConfigImported()) return
+    if (!isNewUser()) return
 
     PropertiesComponent.getInstance().setValue(KEY, true)
     appSettings.COMMIT_FROM_LOCAL_CHANGES = true
@@ -96,7 +95,7 @@ class CommitWorkflowManager(private val project: Project) {
 
   companion object {
     @JvmField
-    val SETTINGS: Topic<SettingsListener> = Topic.create("Commit Workflow Settings", SettingsListener::class.java)
+    val SETTINGS: Topic<SettingsListener> = Topic(SettingsListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
 
     @JvmStatic
     fun getInstance(project: Project): CommitWorkflowManager = project.service()

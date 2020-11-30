@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console.pydev;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -196,8 +197,7 @@ public final class FastStringBuffer {
      * @return a new char array with the contents of this buffer.
      */
     public char[] toCharArray() {
-        char[] v = new char[count];
-        System.arraycopy(value, 0, v, 0, count);
+        char[] v = Arrays.copyOf(value, count);
         return v;
     }
 

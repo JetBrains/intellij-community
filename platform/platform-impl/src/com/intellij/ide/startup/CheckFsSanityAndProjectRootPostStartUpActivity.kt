@@ -3,10 +3,6 @@ package com.intellij.ide.startup
 
 import com.intellij.configurationStore.checkUnknownMacros
 import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationListener
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -71,16 +67,6 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
     }
 
     LOG.info("$path case-sensitivity: expected=$expected actual=$actual")
-    if (actual != expected) {
-      // IDE=true -> FS=false -> prefix='in'
-      val prefix = if (expected) 1 else 0
-      val title = ApplicationBundle.message("fs.case.sensitivity.mismatch.title")
-      val text = ApplicationBundle.message("fs.case.sensitivity.mismatch.message", prefix)
-      Notifications.Bus.notify(
-        Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, text,
-                     NotificationType.WARNING,
-                     NotificationListener.URL_OPENING_LISTENER), project)
-    }
     ProjectFsStatsCollector.caseSensitivity(project, actual)
   }
 

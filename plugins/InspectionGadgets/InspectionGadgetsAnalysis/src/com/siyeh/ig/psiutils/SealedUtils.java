@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class SealedUtils {
+public final class SealedUtils {
 
   private SealedUtils() {}
 

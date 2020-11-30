@@ -18,8 +18,14 @@ class ActivateFindToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.FIN
   }
 
   override fun setupEmptyText(project: Project, statusText: StatusText) {
-    val shortcut = ActionManager.getInstance().getKeyboardShortcut(IdeActions.ACTION_FIND_USAGES)
-    val shortcutText = shortcut?.let { " (${KeymapUtil.getShortcutText(shortcut)})"} ?: ""
-    statusText.appendText(LangBundle.message("status.text.find.toolwindow.empty.state", shortcutText));
+    appendWithActionShortcut(statusText, "status.text.find.toolwindow.empty.state.1", IdeActions.ACTION_FIND_USAGES)
+    statusText.appendLine("")
+    appendWithActionShortcut(statusText, "status.text.find.toolwindow.empty.state.2", IdeActions.ACTION_FIND_IN_PATH)
+  }
+
+  private fun appendWithActionShortcut(statusText: StatusText, key: String, actionId: String) {
+    val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
+    val shortcutText = shortcut?.let { " (${KeymapUtil.getShortcutText(shortcut)})" } ?: ""
+    statusText.appendLine(LangBundle.message(key, shortcutText));
   }
 }

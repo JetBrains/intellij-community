@@ -18,7 +18,8 @@ package com.intellij.framework.detection.impl.ui;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetectionContext;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ScrollPaneFactory;
@@ -33,6 +34,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class DetectedFrameworksComponent {
   private JPanel myMainPanel;
@@ -52,7 +54,7 @@ public class DetectedFrameworksComponent {
     };
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     myGroupByComboBox.setModel(new EnumComboBoxModel<>(GroupByOption.class));
-    myGroupByComboBox.setRenderer(SimpleListCellRenderer.create("", value -> StringUtil.toLowerCase(value.name())));
+    myGroupByComboBox.setRenderer(SimpleListCellRenderer.create("", GroupByOption::getPresentableName));
     myGroupByComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -98,5 +100,17 @@ public class DetectedFrameworksComponent {
     getTree().processUncheckedNodes(node -> node.disableDetection(excludesConfiguration));
   }
 
-  public enum GroupByOption { TYPE, DIRECTORY }
+  public enum GroupByOption {
+    TYPE(ProjectBundle.messagePointer("list.item.group.by.type")),
+    DIRECTORY(ProjectBundle.messagePointer("list.item.group.by.directory"));
+    private final Supplier<@NlsContexts.ListItem String> myPresentableName;
+
+    GroupByOption(Supplier<String> presentableName) {
+      myPresentableName = presentableName;
+    }
+
+    @NlsContexts.ListItem String getPresentableName() {
+      return myPresentableName.get();
+    }
+  }
 }

@@ -15,6 +15,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.PersistentHashMapBuilder
 import java.io.File
 import java.io.FileFilter
 import java.io.IOException
@@ -57,7 +58,7 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
 
             myPrebuiltIndexStorage = openIndexStorage(indexesRoot)
 
-            LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage?.baseFile?.toAbsolutePath())
+            LOG.info("Using prebuilt $indexName from $myPrebuiltIndexStorage")
           }
           else {
             LOG.info("Prebuilt $indexName indices are missing for $dirName")
@@ -84,7 +85,7 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
           return myPrebuiltIndexStorage!!.get(hashCode)
         }
         catch (e: Exception) {
-          LOG.error("Error reading prebuilt stubs from " + myPrebuiltIndexStorage!!.baseFile, e)
+          LOG.error("Error reading prebuilt stubs from $myPrebuiltIndexStorage", e)
           corrupted = true
         }
       }
@@ -98,14 +99,12 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
   }
 
   open fun openIndexStorage(indexesRoot: File): PersistentHashMap<HashCode, Value>? {
-    return object : PersistentHashMap<HashCode, Value>(
-      File(indexesRoot, "$indexName.input"),
+    return PersistentHashMapBuilder.newBuilder(
+      File(indexesRoot, "$indexName.input").toPath(),
       HashCodeDescriptor.instance,
-      indexExternalizer) {
-      override fun isReadOnly(): Boolean {
-        return true
-      }
-    }
+      indexExternalizer)
+      .readonly()
+      .build()
   }
 
   protected abstract fun getIndexRoot(): File

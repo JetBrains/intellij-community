@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.ExecutionException
@@ -77,7 +77,7 @@ class PyAddNewCondaEnvPanel(
     layout = BorderLayout()
 
     // https://docs.conda.io/projects/conda/en/latest/user-guide/install/
-    val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS.asReversed().filter { it != LanguageLevel.PYTHON39 }.map { it.toString() }
+    val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS.asReversed().filter { it < LanguageLevel.PYTHON39 }.map { it.toString() }
 
     languageLevelsField = ComboBox(supportedLanguageLevels.toTypedArray()).apply {
       selectedItem = if (itemCount > 0) getItemAt(0) else null
@@ -103,7 +103,7 @@ class PyAddNewCondaEnvPanel(
 
   override fun getOrCreateSdk(): Sdk? {
     val condaPath = condaPathField.text
-    val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.creating.conda.environment.sentence"), false) {
+    val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.creating.conda.environment.title"), false) {
       override fun compute(indicator: ProgressIndicator): String {
         indicator.isIndeterminate = true
         return PyCondaPackageManagerImpl.createVirtualEnv(condaPath, pathField.text, selectedLanguageLevel)

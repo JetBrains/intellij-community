@@ -39,9 +39,9 @@ import com.android.tools.idea.gradle.dsl.api.ext.PropertyType.PROPERTIES_FILE
 import com.android.tools.idea.gradle.dsl.api.ext.PropertyType.REGULAR
 import com.android.tools.idea.gradle.dsl.api.ext.PropertyType.VARIABLE
 import com.android.tools.idea.gradle.dsl.model.GradleFileModelTestCase
-import com.android.utils.FileUtils.toSystemIndependentPath
 import com.intellij.openapi.vfs.VirtualFile
 import org.junit.Test
+import java.io.File
 
 class GradleDslFileTest : GradleFileModelTestCase() {
   @Test
@@ -179,4 +179,13 @@ class GradleDslFileTest : GradleFileModelTestCase() {
   }
 
   fun getFile(file: VirtualFile, files: Set<GradleFileModel>) = files.first { toSystemIndependentPath(file.path) == it.virtualFile.path }
+
+  companion object {
+    fun toSystemIndependentPath(path: String): String {
+      if (File.separatorChar != '/') {
+        return path.replace(File.separatorChar, '/')
+      }
+      return path
+    }
+  }
 }

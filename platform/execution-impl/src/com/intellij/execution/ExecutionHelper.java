@@ -63,7 +63,7 @@ public final class ExecutionHelper {
   public static void showErrors(
     @NotNull final Project myProject,
     @NotNull final List<? extends Exception> errors,
-    @NotNull final String tabDisplayName,
+    @NotNull final @NlsContexts.TabTitle String tabDisplayName,
     @Nullable final VirtualFile file) {
     showExceptions(myProject, errors, Collections.emptyList(), tabDisplayName, file);
   }
@@ -108,18 +108,26 @@ public final class ExecutionHelper {
         openMessagesView(errorTreeView, myProject, tabDisplayName);
       }
       catch (NullPointerException e) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Exceptions occurred:");
-        for (final Exception exception : errors) {
-          builder.append("\n");
-          builder.append(exception.getMessage());
+        String errorText = "";
+        if (!errors.isEmpty()) {
+          StringBuilder builder = new StringBuilder();
+          for (final Exception exception : errors) {
+            builder.append("\n");
+            builder.append(exception.getMessage());
+          }
+          errorText = ExecutionBundle.message("exception.error.text") + builder;
         }
-        builder.append("Warnings occurred:");
-        for (final Exception exception : warnings) {
-          builder.append("\n");
-          builder.append(exception.getMessage());
+        String warningText = "";
+        if (!warnings.isEmpty()) {
+          StringBuilder builder = new StringBuilder();
+          for (final Exception exception : warnings) {
+            builder.append("\n");
+            builder.append(exception.getMessage());
+          }
+          warningText = ExecutionBundle.message("warning.error.text") + builder;
         }
-        Messages.showErrorDialog(builder.toString(), ExecutionBundle.message("execution.error"));
+        Messages.showErrorDialog(errorText + (errorText.isEmpty() || warningText.isEmpty() ? "" : "\n") + warningText,
+                                 ExecutionBundle.message("execution.error"));
         return;
       }
 
@@ -149,7 +157,7 @@ public final class ExecutionHelper {
 
   public static void showOutput(@NotNull final Project myProject,
                                 @NotNull final ProcessOutput output,
-                                @NotNull final String tabDisplayName,
+                                @NotNull final @NlsContexts.TabTitle String tabDisplayName,
                                 @Nullable final VirtualFile file,
                                 final boolean activateWindow) {
     final String stdout = output.getStdout();

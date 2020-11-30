@@ -129,6 +129,12 @@ public class SensitiveDataValidator {
     return myRulesStorage;
   }
 
+  public boolean isGroupAllowed(@NotNull EventLogGroup group) {
+    if (TestModeValidationRule.isTestModeEnabled()) return true;
+    if (myRulesStorage.isUnreachable()) return true;
+    return myRulesStorage.getGroupRules(group.getId()) != null;
+  }
+
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
                                         @NotNull EventContext context) {
     if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA.getDescription();
@@ -180,8 +186,8 @@ public class SensitiveDataValidator {
                                    @Nullable EventGroupRules groupRules,
                                    @NotNull String key,
                                    @NotNull Object entryValue) {
-    if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA;
-    if (groupRules == null) return UNDEFINED_RULE;
+    if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA.getDescription();
+    if (groupRules == null) return UNDEFINED_RULE.getDescription();
     return groupRules.validateEventData(key, entryValue, context);
   }
 
@@ -206,6 +212,11 @@ public class SensitiveDataValidator {
     @Override
     public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
       return context.eventData;
+    }
+
+    @Override
+    public boolean isGroupAllowed(@NotNull EventLogGroup group) {
+      return true;
     }
   }
 }

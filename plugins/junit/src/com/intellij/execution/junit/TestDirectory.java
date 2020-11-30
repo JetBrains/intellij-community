@@ -15,6 +15,7 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -68,6 +69,17 @@ class TestDirectory extends TestPackage {
         return validModules.toArray(Module.EMPTY_ARRAY);
       }
     };
+  }
+
+  @Override
+  protected Module getModuleWithTestsToFilter(Module module) {
+    try {
+      PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
+      return ModuleUtilCore.findModuleForPsiElement(directory);
+    }
+    catch (CantRunException e) {
+      return module;
+    }
   }
 
   @Override

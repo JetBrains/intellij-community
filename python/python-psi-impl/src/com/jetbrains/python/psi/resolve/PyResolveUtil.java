@@ -17,10 +17,7 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -32,13 +29,12 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
@@ -459,5 +455,31 @@ public final class PyResolveUtil {
       if (!(target instanceof PyFunction)) rate += 50;
     }
     return rate;
+  }
+
+  @Nullable
+  public static PsiElement resolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
+    final PsiElement element = reference.getElement();
+
+    final var context = resolveContext.getTypeEvalContext();
+    final var call = context.maySwitchToAST(element) ? PyCallExpressionNavigator.getPyCallExpressionByCallee(element) : null;
+    if (call != null && element instanceof PyTypedElement) {
+      final var type = PyUtil.as(context.getType((PyTypedElement)element), PyClassType.class);
+
+      if (type != null && type.isDefinition()) {
+        final var cls = type.getPyClass();
+
+        final var constructor = ContainerUtil.find(
+          PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(type, call, resolveContext)),
+          it -> it instanceof PyPossibleClassMember && ((PyPossibleClassMember)it).getContainingClass() == cls
+        );
+
+        if (constructor != null) {
+          return constructor;
+        }
+      }
+    }
+
+    return reference.resolve();
   }
 }

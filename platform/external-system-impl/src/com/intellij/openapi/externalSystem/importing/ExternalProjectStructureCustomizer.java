@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.project.Identifiable;
 import com.intellij.openapi.util.Couple;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public abstract class ExternalProjectStructureCustomizer {
   public abstract Icon suggestIcon(@NotNull DataNode node, @NotNull ExternalSystemUiAware uiAware);
 
   @NotNull
-  public Couple<String> getRepresentationName(@NotNull DataNode node) {
+  public Couple<@Nls String> getRepresentationName(@NotNull DataNode node) {
     return Couple.of(node.getKey().toString(), null);
   }
 }

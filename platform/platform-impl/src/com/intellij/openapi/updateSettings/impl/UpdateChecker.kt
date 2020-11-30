@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.BrokenPluginsService
@@ -25,11 +26,13 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Pair.pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrameUpdater
+import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -44,9 +47,12 @@ import java.net.HttpURLConnection
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
+import kotlin.concurrent.withLock
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
@@ -55,8 +61,15 @@ object UpdateChecker {
   private val LOG = logger<UpdateChecker>()
 
   private const val DISABLED_UPDATE = "disabled_update.txt"
+  private const val PRODUCT_DATA_TTL_MS = 300_000L
 
   private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
+
+  private val updateUrl: String
+    get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
+
+  private val productDataLock = ReentrantLock()
+  private var productDataCache: SoftReference<Product>? = null
 
   private var ourDisabledToUpdatePlugins: MutableSet<PluginId>? = null
   private val ourUpdatedPlugins = hashMapOf<PluginId, PluginDownloader>()
@@ -68,9 +81,6 @@ object UpdateChecker {
    */
   @Suppress("MemberVisibilityCanBePrivate")
   val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
-
-  private val updateUrl: String
-    get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
 
   init {
     UpdateRequestParameters.addParameter("build", ApplicationInfo.getInstance().build.asString())
@@ -110,9 +120,7 @@ object UpdateChecker {
     val fromSettings = customSettings != null
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
-      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !fromSettings,
-                                                                             fromSettings || WelcomeFrame.getInstance() != null, true,
-                                                                             settings, indicator, null)
+      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !fromSettings, fromSettings, true, settings, indicator, null)
 
       override fun isConditionalModal(): Boolean = fromSettings
       override fun shouldStartInBackground(): Boolean = !fromSettings
@@ -174,37 +182,59 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    val updateInfo = try {
-      var updateUrl = Urls.newFromEncoded(updateUrl)
-      if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
-        updateUrl = UpdateRequestParameters.amendUpdateRequest(updateUrl)
+    val (product, error) = getProductData()
+    return when {
+      product != null && settings.isPlatformUpdateEnabled -> {
+        UpdateStrategy(ApplicationInfo.getInstance().build, product, settings).checkForUpdates()
       }
-      LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
-      HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
+      error is JDOMException -> {
+        // corrupted content, don't bother telling user
+        LOG.info(error)
+        CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
+      }
+      error != null -> {
+        LOG.info(error)
+        CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, error)
+      }
+      else -> CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
-    catch (e: JDOMException) {
-      // corrupted content, don't bother telling user
-      LOG.info(e)
-      null
-    }
-    catch (e: Exception) {
-      LOG.info(e)
-      return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
-    }
-
-    if (updateInfo == null || !settings.isPlatformUpdateEnabled) {
-      return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
-    }
-
-    val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, settings)
-    return strategy.checkForUpdates()
   }
 
   @JvmStatic
+  fun getProductData(): Pair<Product?, Exception?> {
+    productDataLock.withLock {
+      val cached = SoftReference.dereference(productDataCache)
+      if (cached != null) return pair(cached, null)
+
+      try {
+        val product = loadUpdatesData()?.get(ApplicationInfo.getInstance().build.productCode)
+        if (product != null) {
+          productDataCache = SoftReference(product)
+          AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
+        }
+        return pair(product, null)
+      }
+      catch (e: Exception) {
+        return pair(null, e)
+      }
+    }
+  }
+
   @Throws(IOException::class, JDOMException::class)
-  fun getUpdatesInfo(): UpdatesInfo? {
-    val updateUrl = Urls.newFromEncoded(updateUrl)
-    return HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
+  private fun loadUpdatesData(): UpdatesInfo? {
+    var url = Urls.newFromEncoded(updateUrl)
+    if (url.scheme != URLUtil.FILE_PROTOCOL) {
+      url = UpdateRequestParameters.amendUpdateRequest(url)
+    }
+    LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", url)
+    return HttpRequests.request(url).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
+  }
+
+  private fun clearProductDataCache() {
+    if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // longer means loading now, no much sense in clearing
+      productDataCache = null
+      productDataLock.unlock()
+    }
   }
 
   /**
@@ -371,7 +401,7 @@ object UpdateChecker {
         LOG.error(onceInstalled.toString(), e)
       }
 
-      //noinspection SSBasedInspection
+      @Suppress("SSBasedInspection")
       onceInstalled.toFile().deleteOnExit()
     }
 
@@ -490,7 +520,7 @@ object UpdateChecker {
     }
   }
 
-  private fun getAllUpdatedPlugins(checkPluginsUpdateResult: CheckPluginsUpdateResult): List<PluginDownloader>? {
+  private fun getAllUpdatedPlugins(checkPluginsUpdateResult: CheckPluginsUpdateResult): List<PluginDownloader> {
     val notIgnored: (PluginDownloader) -> Boolean = { downloader -> !PluginUpdateDialog.isIgnored(downloader.descriptor) }
     val updatedPlugins = checkPluginsUpdateResult.availableUpdates?.filterTo(ArrayList(), notIgnored)
     val updatedDisabledPlugins = checkPluginsUpdateResult.availableDisabledUpdates.filter(notIgnored)
@@ -515,7 +545,7 @@ object UpdateChecker {
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
-        UpdateInfoDialog(updatedChannel, newBuild, checkForUpdateResult.patches, showSettingsLink, updatedPlugins,
+        UpdateInfoDialog(project, updatedChannel, newBuild, checkForUpdateResult.patches, showSettingsLink, updatedPlugins,
                          checkPluginsUpdateResult.incompatiblePlugins).show()
       }
 
@@ -525,6 +555,8 @@ object UpdateChecker {
         runnable.invoke()
       }
       else {
+        SettingsEntryPointAction.newPlatformUpdate(checkForUpdateResult, checkPluginsUpdateResult.incompatiblePlugins)
+
         IdeUpdateUsageTriggerCollector.trigger("notification.shown")
         val title = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName,
                                       newBuild.version)
@@ -537,48 +569,43 @@ object UpdateChecker {
     }
 
     var updateFound = false
-
-    if (updatedPlugins != null && updatedPlugins.isNotEmpty()) {
+    if (updatedPlugins.isNotEmpty()) {
       updateFound = true
 
       ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
 
+      val runnable = { PluginUpdateDialog(project, updatedPlugins, checkPluginsUpdateResult.customRepositoryPlugins).show() }
+
       if (showDialog || !canEnableNotifications()) {
-        PluginUpdateDialog(
-          project,
-          updatedPlugins,
-          checkPluginsUpdateResult.customRepositoryPlugins
-        ).show()
+        runnable.invoke()
       }
       // don't show notification if all updated plugins is disabled
       else if (updatedPlugins.size != updatedPlugins.count { downloader -> PluginManagerCore.isDisabled(downloader.id) }) {
-        val runnable = { PluginManagerConfigurable.showPluginConfigurable(project, updatedPlugins.map { it.descriptor }) }
+        SettingsEntryPointAction.newPluginsUpdate(updatedPlugins, checkPluginsUpdateResult.customRepositoryPlugins)
 
-        val ideFrame = WelcomeFrame.getInstance()
-        if (ideFrame is WelcomeFrameUpdater) {
-          ideFrame.showPluginUpdates(runnable)
-        }
-        else {
-          val names = updatedPlugins.joinToString { downloader -> StringUtil.wrapWithDoubleQuote(downloader.pluginName) }
-          val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names) else IdeBundle.message("updates.plugins.ready.short.title.available")
-          val message = if (updatedPlugins.size == 1) "" else names
-          showNotification(project, title, message, runnable, { notification ->
-            notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.link.title")
-            val text = if (updatedPlugins.size == 1) IdeBundle.message("plugins.configurable.update.button") else IdeBundle.message("plugin.manager.update.all")
-            notification.actions.add(0, object : NotificationAction(text) {
-              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                notification.expire()
-                PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?)
-              }
-            })
-            notification.addAction(object : NotificationAction(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
-              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                notification.expire()
-                PluginUpdateDialog.ignorePlugins(updatedPlugins.map { downloader -> downloader.descriptor })
-              }
-            })
-          }, NotificationUniqueType.PLUGINS, "plugins.update.available")
-        }
+
+        val names = updatedPlugins.joinToString { downloader -> StringUtil.wrapWithDoubleQuote(downloader.pluginName) }
+        val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names)
+        else IdeBundle.message("updates.plugins.ready.short.title.available")
+        val message = if (updatedPlugins.size == 1) "" else names
+
+        showNotification(project, title, message, runnable, { notification ->
+          notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.link.title")
+          val text = if (updatedPlugins.size == 1) IdeBundle.message("plugins.configurable.update.button")
+          else IdeBundle.message("plugin.manager.update.all")
+          notification.actions.add(0, object : NotificationAction(text) {
+            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+              notification.expire()
+              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
+            }
+          })
+          notification.addAction(object : NotificationAction(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
+            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+              notification.expire()
+              PluginUpdateDialog.ignorePlugins(updatedPlugins.map { downloader -> downloader.descriptor })
+            }
+          })
+        }, NotificationUniqueType.PLUGINS, "plugins.update.available")
       }
     }
 
@@ -616,9 +643,6 @@ object UpdateChecker {
   }
 
   private fun canEnableNotifications(): Boolean {
-    if (WelcomeFrame.getInstance() is WelcomeFrameUpdater) {
-      return true
-    }
     return NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS && NotificationsConfigurationImpl.getSettings(
       getNotificationGroup().displayId).displayType != NotificationDisplayType.NONE
   }
@@ -631,7 +655,8 @@ object UpdateChecker {
                                notificationType: NotificationUniqueType,
                                notificationDisplayId: String) {
     val content = if (message.isEmpty()) "" else XmlStringUtil.wrapInHtml(message)
-    val notification = getNotificationGroup().createNotification(title, content, NotificationType.INFORMATION, null, notificationDisplayId)
+    val type = if (notificationType == NotificationUniqueType.PLATFORM) NotificationType.IDE_UPDATE else NotificationType.INFORMATION
+    val notification = getNotificationGroup().createNotification(title, content, type, null, notificationDisplayId)
     notification.collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
     notification.addAction(object : NotificationAction(IdeBundle.message("updates.notification.update.action")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
@@ -718,7 +743,7 @@ object UpdateChecker {
     }
     else {
       val updateInfo = UpdatesInfo(JDOMUtil.load(updateInfoText))
-      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo)
+      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel
       newBuild = checkForUpdateResult.newBuild

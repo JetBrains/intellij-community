@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 
 /**
  * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
@@ -186,7 +187,7 @@ abstract class ProductProperties {
    */
   List<String> additionalModulesRequiredForScrambling = []
 
-  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.JCEF
+  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.DCEVM
 
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
@@ -206,4 +207,15 @@ abstract class ProductProperties {
    * the same sources
    */
   String getOutputDirectoryName(ApplicationInfoProperties applicationInfo) { applicationInfo.productName.toLowerCase() }
+
+  /**
+   * Paths to externally built plugins to be included into the IDE. They will be copied into the build, as well as included into
+   * the IDE classpath when launching it to build search index, jar order, etc
+   */
+  List<String> getAdditionalPluginPaths(BuildContext context) { null }
+
+  /**
+   * @return custom properties for {@link org.jetbrains.intellij.build.impl.productInfo.ProductInfoData}
+   */
+  List<CustomProperty> generateCustomPropertiesForProductInfo() { [] }
 }

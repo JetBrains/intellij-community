@@ -28,8 +28,9 @@ import java.util.function.Predicate;
 
 public final class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
-  private static final Comparator<Inlay> INLINE_ELEMENTS_COMPARATOR = Comparator.comparingInt((Inlay i) -> i.getOffset())
-    .thenComparing(i -> i.isRelatedToPrecedingText());
+  private static final Comparator<InlineInlayImpl> INLINE_ELEMENTS_COMPARATOR = Comparator.comparingInt((InlineInlayImpl i) -> i.getOffset())
+    .thenComparing(i -> i.isRelatedToPrecedingText())
+    .thenComparing(i -> -i.myPriority);
   private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator.comparingInt(i -> -i.myPriority);
   private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_COMPARATOR = Comparator.comparing((BlockInlayImpl i) -> i.getPlacement())
     .thenComparing(i -> i.getPlacement() == Inlay.Placement.ABOVE_LINE ? i.myPriority : -i.myPriority);
@@ -125,11 +126,20 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
                                                                            boolean relatesToPrecedingText,
                                                                            @NotNull T renderer) {
+    return addInlineElement(offset, relatesToPrecedingText, 0, renderer);
+  }
+
+  @Nullable
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           int priority,
+                                                                           @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     Document document = myEditor.getDocument();
     if (DocumentUtil.isInsideSurrogatePair(document, offset)) return null;
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
-    InlineInlayImpl<T> inlay = new InlineInlayImpl<>(myEditor, offset, relatesToPrecedingText, renderer);
+    InlineInlayImpl<T> inlay = new InlineInlayImpl<>(myEditor, offset, relatesToPrecedingText, priority, renderer);
     notifyAdded(inlay);
     return inlay;
   }
@@ -177,7 +187,9 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   @NotNull
   @Override
   public List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
-    return getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> true, INLINE_ELEMENTS_COMPARATOR);
+    List<InlineInlayImpl<?>> range = getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> true, INLINE_ELEMENTS_COMPARATOR);
+    //noinspection unchecked
+    return (List)range;
   }
 
   @NotNull

@@ -22,7 +22,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.changes.onChangeListAvailabilityChanged
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -302,7 +304,13 @@ internal class GitVcsPanel(private val project: Project) :
       }
     }
     row {
-      checkBox(cdCommitOnCherryPick)
+      checkBox(cdCommitOnCherryPick).enableIf(object : ComponentPredicate() {
+        override fun addListener(listener: (Boolean) -> Unit) {
+          onChangeListAvailabilityChanged(project, this@GitVcsPanel.disposable!!, false, { listener(invoke()) })
+        }
+
+        override fun invoke(): Boolean = ChangeListManager.getInstance(project).areChangeListsEnabled()
+      })
     }
     row {
       checkBox(cdAddCherryPickSuffix(project))

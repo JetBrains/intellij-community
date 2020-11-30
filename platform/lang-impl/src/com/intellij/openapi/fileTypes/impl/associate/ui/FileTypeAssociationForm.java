@@ -4,13 +4,11 @@ package com.intellij.openapi.fileTypes.impl.associate.ui;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationPreferences;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.CheckBoxList;
-import com.intellij.ui.CheckBoxListListener;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -46,7 +44,7 @@ public class FileTypeAssociationForm {
   public FileTypeAssociationForm() {
     myTopPanel.setPreferredSize(JBDimension.create(new Dimension(800, 600)));
     myTopPanel.setBorder(JBUI.Borders.empty());
-    myScrollPane.setBorder(JBUI.Borders.empty());
+    myScrollPane.setBorder(JBUI.Borders.customLine(JBColor.border()));
     myDescLabel.setText(
       FileTypesBundle.message("filetype.associate.dialog.label", ApplicationInfo.getInstance().getFullApplicationName()));
     myBottomInfoLabel.setText(FileTypesBundle.message("filetype.associate.info.label"));
@@ -98,12 +96,18 @@ public class FileTypeAssociationForm {
       }
     });
     myFileTypesList = checkBoxList;
+    if (!myFileTypesList.isEmpty()) myFileTypesList.setSelectedIndex(0);
     // noinspection rawtypes,unchecked,unchecked
     new ListSpeedSearch<>(myFileTypesList, (Function<Object, String>)o -> ((MyFileTypeItem)o).getText());
   }
 
   public JPanel getTopPanel() {
     return myTopPanel;
+  }
+
+  @Nullable
+  JComponent getPreferredFocusedComponent() {
+    return myFileTypesList;
   }
 
   public List<MyFileTypeItem> createItems() {
@@ -155,6 +159,7 @@ public class FileTypeAssociationForm {
     return !(fileType instanceof NativeFileType) &&
            !(fileType instanceof UserBinaryFileType) &&
            !(fileType instanceof ArchiveFileType) &&
+           !(fileType instanceof FakeFileType) &&
            (!(fileType instanceof OSFileIdeAssociation) ||
             ((OSFileIdeAssociation)fileType).isFileAssociationAllowed());
   }

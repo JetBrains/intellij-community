@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.space.chat.model.api.SpaceChatHeaderDetails
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.testFramework.LightVirtualFile
 import icons.SpaceIcons
@@ -21,7 +22,8 @@ internal class SpaceChatFile(
   @NlsSafe path: String,
   @NlsContexts.TabTitle val displayName: String,
   val channelsVm: ChannelsVm,
-  val chatRecord: Ref<M2ChannelRecord>
+  val chatRecord: Ref<M2ChannelRecord>,
+  val headerDetails: SpaceChatHeaderDetails
 ) : LightVirtualFile(path, SpaceChatFileType.instance, "") {
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
@@ -55,13 +57,11 @@ private class SpaceChatFileType private constructor(): FileType {
 
   override fun getDefaultExtension(): String = ""
 
-  override fun getIcon(): Icon? = SpaceIcons.Main
+  override fun getIcon(): Icon = SpaceIcons.Main
 
   override fun isBinary(): Boolean = true
 
   override fun isReadOnly(): Boolean = true
-
-  override fun getCharset(file: VirtualFile, content: ByteArray): String? = null
 
   companion object {
     val instance = SpaceChatFileType()

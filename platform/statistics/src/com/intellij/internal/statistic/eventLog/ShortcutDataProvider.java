@@ -63,6 +63,7 @@ public final class ShortcutDataProvider {
     if (event == null) return null;
 
     String res = getMouseButtonText(event.getButton());
+    if (event.getID() == MouseEvent.MOUSE_DRAGGED) res += "Drag";
 
     int clickCount = event.getClickCount();
     if (clickCount > 1) {

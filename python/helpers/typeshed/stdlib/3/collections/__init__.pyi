@@ -1,13 +1,15 @@
 import sys
 import typing
 from typing import (
-    AbstractSet as Set,
+    AbstractSet,
     Any,
+    AsyncGenerator as AsyncGenerator,
     AsyncIterable as AsyncIterable,
     AsyncIterator as AsyncIterator,
     Awaitable as Awaitable,
     ByteString as ByteString,
     Callable as Callable,
+    Collection as Collection,
     Container as Container,
     Coroutine as Coroutine,
     Dict,
@@ -36,8 +38,7 @@ from typing import (
     overload,
 )
 
-if sys.version_info >= (3, 6):
-    from typing import AsyncGenerator as AsyncGenerator, Collection as Collection
+Set = AbstractSet
 
 _S = TypeVar("_S")
 _T = TypeVar("_T")
@@ -55,7 +56,7 @@ if sys.version_info >= (3, 7):
         defaults: Optional[Iterable[Any]] = ...,
     ) -> Type[Tuple[Any, ...]]: ...
 
-elif sys.version_info >= (3, 6):
+else:
     def namedtuple(
         typename: str,
         field_names: Union[str, Iterable[str]],
@@ -65,14 +66,9 @@ elif sys.version_info >= (3, 6):
         module: Optional[str] = ...,
     ) -> Type[Tuple[Any, ...]]: ...
 
-else:
-    def namedtuple(
-        typename: str, field_names: Union[str, Iterable[str]], verbose: bool = ..., rename: bool = ...
-    ) -> Type[Tuple[Any, ...]]: ...
-
 class UserDict(MutableMapping[_KT, _VT]):
     data: Dict[_KT, _VT]
-    def __init__(self, dict: Optional[Mapping[_KT, _VT]] = ..., **kwargs: _VT) -> None: ...
+    def __init__(self, __dict: Optional[Mapping[_KT, _VT]] = ..., **kwargs: _VT) -> None: ...
     def __len__(self) -> int: ...
     def __getitem__(self, key: _KT) -> _VT: ...
     def __setitem__(self, key: _KT, item: _VT) -> None: ...
@@ -192,9 +188,6 @@ class UserString(Sequence[str]):
     def upper(self: _UserStringT) -> _UserStringT: ...
     def zfill(self: _UserStringT, width: int) -> _UserStringT: ...
 
-# Technically, deque only derives from MutableSequence in 3.5 (before then, the insert and index
-# methods did not exist).
-# But in practice it's not worth losing sleep over.
 class deque(MutableSequence[_T], Generic[_T]):
     @property
     def maxlen(self) -> Optional[int]: ...
@@ -268,13 +261,13 @@ class Counter(Dict[_T, int], Generic[_T]):
     def __add__(self, other: Counter[_T]) -> Counter[_T]: ...
     def __sub__(self, other: Counter[_T]) -> Counter[_T]: ...
     def __and__(self, other: Counter[_T]) -> Counter[_T]: ...
-    def __or__(self, other: Counter[_T]) -> Counter[_T]: ...
+    def __or__(self, other: Counter[_T]) -> Counter[_T]: ...  # type: ignore
     def __pos__(self) -> Counter[_T]: ...
     def __neg__(self) -> Counter[_T]: ...
     def __iadd__(self, other: Counter[_T]) -> Counter[_T]: ...
     def __isub__(self, other: Counter[_T]) -> Counter[_T]: ...
     def __iand__(self, other: Counter[_T]) -> Counter[_T]: ...
-    def __ior__(self, other: Counter[_T]) -> Counter[_T]: ...
+    def __ior__(self, other: Counter[_T]) -> Counter[_T]: ...  # type: ignore
 
 class _OrderedDictKeysView(KeysView[_KT], Reversible[_KT]):
     def __reversed__(self) -> Iterator[_KT]: ...

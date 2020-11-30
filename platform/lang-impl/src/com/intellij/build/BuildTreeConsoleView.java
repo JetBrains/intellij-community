@@ -57,6 +57,7 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -118,7 +119,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final ExecutionNode myBuildProgressRootNode;
   private final Set<Predicate<? super ExecutionNode>> myNodeFilters;
   private final ProblemOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
-  private final Set<BuildEvent> myDeferredEvents = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<BuildEvent> myDeferredEvents = ContainerUtil.newConcurrentSet();
 
   public BuildTreeConsoleView(@NotNull Project project,
                               @NotNull BuildDescriptor buildDescriptor,
@@ -128,7 +129,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor
                         ? (DefaultBuildDescriptor)buildDescriptor
                         : new DefaultBuildDescriptor(buildDescriptor);
-    myNodeFilters = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    myNodeFilters = ContainerUtil.newConcurrentSet();
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
     myNavigateToTheFirstErrorLocation = project.getService(BuildWorkspaceConfiguration.class).isShowFirstErrorInEditor();
 
@@ -373,6 +374,10 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         else if (event instanceof OutputBuildEvent && parentNode != null) {
           myConsoleViewHandler.addOutput(parentNode, buildId, event);
         }
+        else if (event instanceof PresentableBuildEvent) {
+          currentNode =
+            addAsPresentableEventNode((PresentableBuildEvent)event, structureChanged, parentNode, eventId, buildProgressRootNode);
+        }
       }
 
       if (isProgress) {
@@ -438,7 +443,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       myExpandedFirstMessage.set(true);
       Runnable finalSelectErrorTask = selectErrorNodeTask;
       myTreeModel.invalidate(getRootElement(), true).onProcessed(p -> finalSelectErrorTask.run());
-    } else {
+    }
+    else {
       if (isMessageEvent && myExpandedFirstMessage.compareAndSet(false, true)) {
         ExecutionNode finalCurrentNode = currentNode;
         myTreeModel.invalidate(getRootElement(), false).onProcessed(p -> {
@@ -448,18 +454,32 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     }
   }
 
+  @NotNull
+  private ExecutionNode addAsPresentableEventNode(@NotNull PresentableBuildEvent event,
+                                                  @NotNull SmartHashSet<ExecutionNode> structureChanged,
+                                                  @Nullable ExecutionNode parentNode,
+                                                  @NotNull Object eventId,
+                                                  @NotNull ExecutionNode buildProgressRootNode) {
+    ExecutionNode executionNode = new ExecutionNode(myProject, parentNode, parentNode == buildProgressRootNode, this::isCorrectThread);
+    BuildEventPresentationData presentationData = event.getPresentationData();
+    executionNode.applyFrom(presentationData);
+    nodesMap.put(eventId, executionNode);
+    if (parentNode != null) {
+      structureChanged.add(parentNode);
+      parentNode.add(executionNode);
+    }
+    myConsoleViewHandler.maybeAddExecutionConsole(executionNode, presentationData);
+    return executionNode;
+  }
+
   @ApiStatus.Internal
   @TestOnly
-  public @Nullable String getSelectedNodeConsoleText() {
+  public @Nullable ExecutionConsole getSelectedNodeConsole() {
     ExecutionConsole console = myConsoleViewHandler.getCurrentConsole();
     if (console instanceof ConsoleViewImpl) {
       ((ConsoleViewImpl)console).flushDeferredText();
-      return ((ConsoleViewImpl)console).getText();
     }
-    if (myConsoleViewHandler.myView.isViewVisible(ConsoleViewHandler.EMPTY_CONSOLE_NAME)) {
-      return "";
-    }
-    return null;
+    return console;
   }
 
   private static EventResult calculateDerivedResult(DerivedResult result, ExecutionNode node) {
@@ -699,7 +719,18 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         }
       }
 
-      relativePath = isEmpty(parentsPath) ? filePath : getRelativePath(parentsPath, filePath);
+      if (isEmpty(parentsPath)) {
+        File userHomeDir = new File(SystemProperties.getUserHome());
+        if (FileUtil.isAncestor(userHomeDir, new File(filePath), true)) {
+          relativePath = FileUtil.getLocationRelativeToUserHome(filePath, false);
+        }
+        else {
+          relativePath = filePath;
+        }
+      }
+      else {
+        relativePath = getRelativePath(parentsPath, filePath);
+      }
       Path path = Paths.get(relativePath);
       String nodeName = path.getFileName().toString();
       Path pathParent = path.getParent();
@@ -840,6 +871,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     private @Nullable ExecutionNode myExecutionNode;
     private @NotNull final List<Filter> myExecutionConsoleFilters;
     private final BuildProgressStripe myPanelWithProgress;
+    private final DefaultActionGroup myConsoleToolbarActionGroup;
+    private final ActionToolbar myToolbar;
 
     ConsoleViewHandler(@NotNull Project project,
                        @NotNull Tree tree,
@@ -872,16 +905,10 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       JComponent consoleComponent = emptyConsole.getComponent();
       consoleComponent.setFocusable(true);
       myPanel.add(myView.getComponent(), BorderLayout.CENTER);
-      DefaultActionGroup consoleActionsGroup = new DefaultActionGroup();
-      consoleActionsGroup.add(new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
-        @Override
-        protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
-          return ConsoleViewHandler.this.getEditor();
-        }
-      });
-      consoleActionsGroup.add(new ScrollEditorToTheEndAction(this));
-      final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("BuildConsole", consoleActionsGroup, false);
-      myPanel.add(toolbar.getComponent(), BorderLayout.EAST);
+      myConsoleToolbarActionGroup = new DefaultActionGroup();
+      myToolbar = ActionManager.getInstance().createActionToolbar("BuildConsole", myConsoleToolbarActionGroup, false);
+      showTextConsoleToolbarActions();
+      myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
       tree.addTreeSelectionListener(e -> {
         TreePath path = e.getPath();
         if (path == null || !e.isAddedPath()) {
@@ -890,6 +917,41 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         TreePath selectionPath = tree.getSelectionPath();
         setNode(selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null);
       });
+    }
+
+    private void showTextConsoleToolbarActions() {
+      myConsoleToolbarActionGroup.copyFromGroup(createDefaultTextConsoleToolbar());
+      updateToolbarActionsImmediately();
+    }
+
+    private void showCustomConsoleToolbarActions(@Nullable ActionGroup actionGroup) {
+      if (actionGroup instanceof DefaultActionGroup) {
+        myConsoleToolbarActionGroup.copyFromGroup((DefaultActionGroup)actionGroup);
+      }
+      else if (actionGroup != null) {
+        myConsoleToolbarActionGroup.copyFrom(actionGroup);
+      }
+      else {
+        myConsoleToolbarActionGroup.removeAll();
+      }
+      updateToolbarActionsImmediately();
+    }
+
+    private void updateToolbarActionsImmediately() {
+      invokeLaterIfNeeded(() -> myToolbar.updateActionsImmediately());
+    }
+
+    @NotNull
+    private DefaultActionGroup createDefaultTextConsoleToolbar() {
+      DefaultActionGroup textConsoleToolbarActionGroup = new DefaultActionGroup();
+      textConsoleToolbarActionGroup.add(new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
+        @Override
+        protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
+          return ConsoleViewHandler.this.getEditor();
+        }
+      });
+      textConsoleToolbarActionGroup.add(new ScrollEditorToTheEndAction(this));
+      return textConsoleToolbarActionGroup;
     }
 
     private void updateProgressBar(long total, long progress) {
@@ -920,7 +982,16 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           deferredNodeOutput.remove(nodeConsoleViewName);
           deferredOutput.forEach(consumer -> consumer.accept((BuildTextConsoleView)view));
         }
+        else {
+          deferredNodeOutput.remove(nodeConsoleViewName);
+        }
         myView.showView(nodeConsoleViewName, false);
+        if (view instanceof PresentableBuildEventExecutionConsole) {
+          showCustomConsoleToolbarActions(((PresentableBuildEventExecutionConsole)view).myActions);
+        }
+        else {
+          showTextConsoleToolbarActions();
+        }
         myPanel.setVisible(true);
         return true;
       }
@@ -938,6 +1009,17 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         return true;
       }
       return true;
+    }
+
+    public void maybeAddExecutionConsole(@NotNull ExecutionNode node, @NotNull BuildEventPresentationData presentationData) {
+      invokeLaterIfNeeded(() -> {
+        ExecutionConsole executionConsole = presentationData.getExecutionConsole();
+        if (executionConsole == null) return;
+        String nodeConsoleViewName = getNodeConsoleViewName(node);
+        PresentableBuildEventExecutionConsole presentableEventView =
+          new PresentableBuildEventExecutionConsole(executionConsole, presentationData.consoleToolbarActions());
+        myView.addView(presentableEventView, nodeConsoleViewName);
+      });
     }
 
     private void addOutput(@NotNull ExecutionNode node, @NotNull String text, boolean stdOut) {
@@ -1002,6 +1084,32 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     public void clear() {
       myPanel.setVisible(false);
+    }
+
+    private static class PresentableBuildEventExecutionConsole implements ExecutionConsole {
+      private final ExecutionConsole myExecutionConsole;
+      private final @Nullable ActionGroup myActions;
+
+      private PresentableBuildEventExecutionConsole(@NotNull ExecutionConsole executionConsole,
+                                                    @Nullable ActionGroup toolbarActions) {
+        myExecutionConsole = executionConsole;
+        myActions = toolbarActions;
+      }
+
+      @Override
+      public @NotNull JComponent getComponent() {
+        return myExecutionConsole.getComponent();
+      }
+
+      @Override
+      public JComponent getPreferredFocusableComponent() {
+        return myExecutionConsole.getPreferredFocusableComponent();
+      }
+
+      @Override
+      public void dispose() {
+        Disposer.dispose(myExecutionConsole);
+      }
     }
   }
 

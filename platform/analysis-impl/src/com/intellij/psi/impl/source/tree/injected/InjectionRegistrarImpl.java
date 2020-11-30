@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -399,7 +400,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
   }
 
   private static final Key<ASTNode> TREE_HARD_REF = Key.create("TREE_HARD_REF");
-  private static ASTNode keepTreeFromChameleoningBack(PsiFile psiFile) {
+  private static @NotNull ASTNode keepTreeFromChameleoningBack(@NotNull PsiFile psiFile) {
     // need to keep tree reachable to avoid being garbage-collected (via WeakReference in PsiFileImpl)
     // and then being reparsed from wrong (escaped) document content
     ASTNode node = psiFile.getNode();
@@ -410,9 +411,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     psiFile.putUserData(TREE_HARD_REF, node);
 
     // just to use child variable
-    if (child == null) {
-      assert node != null;
-    }
+    Reference.reachabilityFence(child);
     return node;
   }
 

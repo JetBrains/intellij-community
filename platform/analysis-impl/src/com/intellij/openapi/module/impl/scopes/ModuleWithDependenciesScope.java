@@ -53,7 +53,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     Set<VirtualFile> roots = new LinkedHashSet<>();
     if (hasOption(CONTENT)) {
       Set<Module> modules = calcModules();
-      myModules = new THashSet<>(modules);
+      myModules = new HashSet<>(modules);
       for (Module m : modules) {
         for (ContentEntry entry : ModuleRootManager.getInstance(m).getContentEntries()) {
           ContainerUtil.addIfNotNull(roots, branch == null ? entry.getFile() : branch.findFileByUrl(entry.getUrl()));

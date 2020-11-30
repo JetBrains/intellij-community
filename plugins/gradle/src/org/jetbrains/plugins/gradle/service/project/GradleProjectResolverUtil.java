@@ -22,8 +22,6 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
@@ -46,6 +44,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -380,12 +379,12 @@ public final class GradleProjectResolverUtil {
       // skip already processed libraries
       Set<LibraryData> libsCache = context.getUserData(LIBRARIES_CACHE);
       if (libsCache == null) {
-        libsCache = context.putUserDataIfAbsent(LIBRARIES_CACHE, new THashSet<>(ContainerUtil.identityStrategy()));
+        libsCache = context.putUserDataIfAbsent(LIBRARIES_CACHE, Collections.newSetFromMap(new IdentityHashMap<>()));
       }
       if (!libsCache.add(libraryData)) return;
 
       pathsCache = context.getUserData(PATHS_CACHE);
-      if (pathsCache == null) pathsCache = context.putUserDataIfAbsent(PATHS_CACHE, new THashMap<>());
+      if (pathsCache == null) pathsCache = context.putUserDataIfAbsent(PATHS_CACHE, new HashMap<>());
     }
 
     for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
@@ -394,7 +393,7 @@ public final class GradleProjectResolverUtil {
       // take already processed paths from cache
       Map<LibraryPathType, List<String>> collectedPaths = pathsCache == null ? null : pathsCache.get(path);
       if (collectedPaths == null) {
-        collectedPaths = new THashMap<>();
+        collectedPaths = new HashMap<>();
         if (pathsCache != null) {
           pathsCache.put(path, collectedPaths);
         }
@@ -439,7 +438,7 @@ public final class GradleProjectResolverUtil {
     final boolean[] sourceFound = {sourceResolved};
     final boolean[] docFound = {docResolved};
 
-    Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         if (binaryFileParent.equals(dir)) {
@@ -759,9 +758,6 @@ public final class GradleProjectResolverUtil {
         String libraryName = mergedDependency.getId().getPresentableName();
         final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, true);
         final String failureMessage = ((UnresolvedExternalDependency)mergedDependency).getFailureMessage();
-        if (failureMessage != null) {
-          library.addPath(LibraryPathType.BINARY, failureMessage);
-        }
 
         boolean isOfflineWork = resolverCtx.getSettings() != null && resolverCtx.getSettings().isOfflineWork();
         BuildIssue buildIssue = new UnresolvedDependencySyncIssue(libraryName, failureMessage, resolverCtx.getProjectPath(), isOfflineWork);
@@ -840,7 +836,9 @@ public final class GradleProjectResolverUtil {
   public static Stream<GradleProjectResolverExtension> createProjectResolvers(@Nullable ProjectResolverContext projectResolverContext) {
     return GradleProjectResolverExtension.EP_NAME.extensions().map(extension -> {
       try {
-        GradleProjectResolverExtension resolverExtension = extension.getClass().newInstance();
+        Constructor<? extends GradleProjectResolverExtension> constructor = extension.getClass().getDeclaredConstructor();
+        constructor.setAccessible(true);
+        GradleProjectResolverExtension resolverExtension = constructor.newInstance();
         if (projectResolverContext != null) {
           resolverExtension.setProjectResolverContext(projectResolverContext);
         }

@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.InsertHandler
@@ -27,7 +28,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
@@ -39,6 +39,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+
 /**
  * @author spleaner
  */
@@ -326,7 +327,7 @@ class Foo {
   }
 
   void "_testIterForceBraces"() {
-    def settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
+    def settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
 
     try {

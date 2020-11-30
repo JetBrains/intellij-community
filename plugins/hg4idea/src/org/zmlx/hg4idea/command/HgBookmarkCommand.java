@@ -26,7 +26,7 @@ import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static java.util.Collections.singletonList;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
-public class HgBookmarkCommand {
+public final class HgBookmarkCommand {
 
   public static void createBookmarkAsynchronously(@NotNull List<? extends HgRepository> repositories, @NotNull @NlsSafe String name, boolean isActive) {
     final Project project = Objects.requireNonNull(ContainerUtil.getFirstItem(repositories)).getProject();

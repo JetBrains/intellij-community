@@ -4,6 +4,7 @@ package com.intellij.lang.properties.references;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.ide.util.TreeFileChooserFactory;
@@ -478,7 +479,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       return false;
     }
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(FileUtil.toSystemIndependentName(path));
-    if (fileType != PropertiesFileType.INSTANCE && fileType != StdFileTypes.XML) {
+    if (fileType != PropertiesFileType.INSTANCE && fileType != XmlFileType.INSTANCE) {
       String message = PropertiesBundle.message("i18nize.cant.create.properties.file.because.its.name.is.associated",
                                                 getPropertiesFilePath(), fileType.getDescription());
       Messages.showErrorDialog(myProject, message, PropertiesBundle.message("i18nize.error.creating.properties.file"));
@@ -502,7 +503,6 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
           }
           else {
             FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
-            LOG.assertTrue(template != null);
             return (PsiFile)FileTemplateUtil.createFromTemplate(template, file.getName(), null, psiManager.findDirectory(dir));
           }
         }

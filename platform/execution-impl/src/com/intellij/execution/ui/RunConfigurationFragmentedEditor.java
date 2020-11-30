@@ -14,11 +14,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,9 +79,9 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       RunConfigurationEditorFragment<Settings, JComponent> fragment =
         new RunConfigurationEditorFragment<>(executor.getId() + ".config", executor.getStartActionText(),
                                              ExecutionBundle.message("run.configuration.startup.connection.rab.title"),
-                                             component, 0) {
+                                             component, 0, settings -> false) {
           @Override
-          public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
+          public void doReset(@NotNull RunnerAndConfigurationSettingsImpl s) {
             if (configEditor != null) {
               configEditor.resetFrom(s.getConfigurationSettings(runner));
             }
@@ -140,7 +138,13 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
                                                 : null);
   }
 
-  public void targetChanged(String targetName) {}
+  public void targetChanged(String targetName) {
+    SettingsEditorFragment<Settings, ?> targetPathFragment =
+      ContainerUtil.find(getFragments(), fragment -> TargetPathFragment.ID.equals(fragment.getId()));
+    if (targetPathFragment != null) {
+      targetPathFragment.setSelected(targetName != null);
+    }
+  }
 
   @Override
   protected void initFragments(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
@@ -160,11 +164,17 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   }
 
   private void checkGotIt(SettingsEditorFragment<Settings, ?> fragment) {
-    if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isInitiallyVisible(mySettings)) {
-      JComponent component = fragment.getEditorComponent();
-      new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()), fragment).
-        withHeader(ExecutionBundle.message("gotIt.popup.title")).
-        showAt(Balloon.Position.below, new RelativePoint(component, new Point(GotItTooltip.ARROW_SHIFT, component.getHeight())));
+    if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isTag()) {
+      //noinspection unchecked
+      Settings clone = (Settings)mySettings.clone();
+      fragment.applyEditorTo(clone);
+      if (!fragment.isInitiallyVisible(clone)) {
+        JComponent component = fragment.getEditorComponent();
+        new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()),
+                         fragment).
+          withHeader(ExecutionBundle.message("gotIt.popup.title")).
+          show(component, (c) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
+      }
     }
   }
 }

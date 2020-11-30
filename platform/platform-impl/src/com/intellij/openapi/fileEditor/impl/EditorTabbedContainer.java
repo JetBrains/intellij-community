@@ -36,6 +36,7 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
+import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
@@ -143,8 +144,13 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   }
 
   @NotNull
-  public static DockableEditor createDockableEditor(Project project, Image image, VirtualFile file, Presentation presentation, EditorWindow window) {
-    return new DockableEditor(project, image, file, presentation, window.getSize(), window.isFilePinned(file));
+  public static DockableEditor createDockableEditor(Project project,
+                                                    Image image,
+                                                    VirtualFile file,
+                                                    Presentation presentation,
+                                                    EditorWindow window,
+                                                    boolean isNorthPanelAvailable) {
+    return new DockableEditor(project, image, file, presentation, window.getSize(), window.isFilePinned(file), isNorthPanelAvailable);
   }
 
   @NotNull
@@ -175,9 +181,12 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     myTabs.getTabAt(index).setDefaultForeground(color);
   }
 
+  void setStyleAt(int index, @SimpleTextAttributes.StyleAttributeConstant int style) {
+    myTabs.getTabAt(index).setDefaultStyle(style);
+  }
+
   void setWaveColor(int index, @Nullable Color color) {
     TabInfo tab = myTabs.getTabAt(index);
-    tab.setDefaultStyle(color == null ? SimpleTextAttributes.STYLE_PLAIN : SimpleTextAttributes.STYLE_WAVED);
     tab.setDefaultWaveColor(color);
   }
 
@@ -471,7 +480,11 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       myFile.putUserData(EditorWindow.DRAG_START_PINNED_KEY, isPinnedAtStart);
       Presentation presentation = new Presentation(info.getText());
       presentation.setIcon(info.getIcon());
-      mySession = getDockManager().createDragSession(mouseEvent, createDockableEditor(myProject, img, myFile, presentation, myWindow));
+      EditorWithProviderComposite windowFileComposite = myWindow.findFileComposite(myFile);
+      FileEditor[] editors = windowFileComposite != null ? windowFileComposite.getEditors() : FileEditor.EMPTY_ARRAY;
+      boolean isNorthPanelAvailable = DockManagerImpl.isNorthPanelAvailable(editors);
+      mySession = getDockManager()
+        .createDragSession(mouseEvent, createDockableEditor(myProject, img, myFile, presentation, myWindow, isNorthPanelAvailable));
     }
 
     private DockManager getDockManager() {
@@ -522,15 +535,32 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     private final Presentation myPresentation;
     private final Dimension myPreferredSize;
     private final boolean myPinned;
+    private final boolean myNorthPanelAvailable;
     private final VirtualFile myFile;
 
-    public DockableEditor(Project project, Image img, VirtualFile file, Presentation presentation, Dimension preferredSize, boolean isFilePinned) {
+    public DockableEditor(Project project,
+                          Image img,
+                          VirtualFile file,
+                          Presentation presentation,
+                          Dimension preferredSize,
+                          boolean isFilePinned) {
+      this(project, img, file, presentation, preferredSize, isFilePinned, DockManagerImpl.isNorthPanelVisible(UISettings.getInstance()));
+    }
+
+    public DockableEditor(Project project,
+                          Image img,
+                          VirtualFile file,
+                          Presentation presentation,
+                          Dimension preferredSize,
+                          boolean isFilePinned,
+                          boolean isNorthPanelAvailable) {
       myImg = img;
       myFile = file;
       myPresentation = presentation;
       myContainer = new DockableEditorTabbedContainer(project);
       myPreferredSize = preferredSize;
       myPinned = isFilePinned;
+      myNorthPanelAvailable = isNorthPanelAvailable;
     }
 
     @NotNull
@@ -570,6 +600,10 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     public boolean isPinned() {
       return myPinned;
+    }
+
+    public boolean isNorthPanelAvailable() {
+      return myNorthPanelAvailable;
     }
   }
 

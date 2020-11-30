@@ -133,7 +133,8 @@ public final class GitUpdateProcess {
       return GitUpdateResult.NOT_READY;
     }
 
-    if (!fetchAndNotify(myRepositories)) {
+    Collection<GitRepository> repositoriesToFetch = myUpdateConfig != null ? trackedBranches.keySet() : myRepositories;
+    if (!fetchAndNotify(repositoriesToFetch)) {
       return GitUpdateResult.NOT_READY;
     }
 

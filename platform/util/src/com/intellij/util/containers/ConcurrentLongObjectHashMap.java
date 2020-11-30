@@ -247,8 +247,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
     }
   }
 
-  static <V> boolean casTabAt(Node<V>[] tab, int i,
-                                 Node<V> c, Node<V> v) {
+  static <V> boolean casTabAt(Node<V> @NotNull [] tab, int i, Node<V> c, @NotNull Node<V> v) {
     try {
       return (boolean)compareAndSwapObjectHandle.invokeExact((Object)tab, ((long)i << ASHIFT) + ABASE, (Object)c, (Object)v);
     }
@@ -2779,28 +2778,34 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       putObjectVolatileHandle = publicLookup
         .findVirtual(unsafe.getClass(), "putObjectVolatile", MethodType.methodType(void.class, Object.class, long.class, Object.class))
         .bindTo(unsafe);
+      assert putObjectVolatileHandle != null;
       getObjectVolatileHandle = publicLookup
         .findVirtual(unsafe.getClass(), "getObjectVolatile", MethodType.methodType(Object.class, Object.class, long.class))
         .bindTo(unsafe);
+      assert getObjectVolatileHandle != null;
       compareAndSwapObjectHandle = publicLookup
         .findVirtual(unsafe.getClass(), "compareAndSwapObject", MethodType.methodType(boolean.class, Object.class, long.class, Object.class, Object.class))
         .bindTo(unsafe);
+      assert compareAndSwapObjectHandle != null;
       compareAndSwapIntHandle = publicLookup
         .findVirtual(unsafe.getClass(), "compareAndSwapInt", MethodType.methodType(boolean.class, Object.class, long.class, int.class, int.class))
         .bindTo(unsafe);
+      assert compareAndSwapIntHandle != null;
       compareAndSwapLongHandle = publicLookup
         .findVirtual(unsafe.getClass(), "compareAndSwapLong", MethodType.methodType(boolean.class, Object.class, long.class, long.class, long.class))
         .bindTo(unsafe);
+      assert compareAndSwapLongHandle != null;
       getAndAddIntHandle = publicLookup
         .findVirtual(unsafe.getClass(), "getAndAddInt", MethodType.methodType(int.class, Object.class, long.class, int.class))
         .bindTo(unsafe);
+      assert getAndAddIntHandle != null;
     }
     catch (Throwable t) {
       throw new Error(t);
     }
   }
 
-  private static boolean compareAndSwapInt(Object object, long offset, int expected, int value) {
+  private static boolean compareAndSwapInt(@NotNull Object object, long offset, int expected, int value) {
     try {
       return (boolean)compareAndSwapIntHandle.invokeExact(object, offset, expected, value);
     }
@@ -2809,7 +2814,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
     }
   }
 
-  private static boolean compareAndSwapLong(Object object, long offset, long expected, long value) {
+  private static boolean compareAndSwapLong(@NotNull Object object, long offset, long expected, long value) {
     try {
       return (boolean)compareAndSwapLongHandle.invokeExact(object, offset, expected, value);
     }

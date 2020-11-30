@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.collect.ImmutableList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -174,7 +175,7 @@ enum class JdkPackageType(@NonNls val type: String) {
       val decompressor = Decompressor.Zip(archiveFile)
       return when {
         SystemInfo.isWindows -> decompressor
-        else -> decompressor.withUnixPermissionsAndSymlinks()
+        else -> decompressor.withZipExtensions()
       }
     }
   },
@@ -352,6 +353,7 @@ object JdkListParser {
   }
 }
 
+@Service
 class JdkListDownloader : JdkListDownloaderBase() {
   companion object {
     @JvmStatic

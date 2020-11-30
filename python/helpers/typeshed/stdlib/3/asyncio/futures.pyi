@@ -11,6 +11,9 @@ if sys.version_info < (3, 8):
 if sys.version_info >= (3, 7):
     from contextvars import Context
 
+if sys.version_info >= (3, 9):
+    from types import GenericAlias
+
 _T = TypeVar("_T")
 _S = TypeVar("_S")
 
@@ -30,8 +33,6 @@ class Future(Awaitable[_T], Iterable[_T]):
     _exception: BaseException
     _blocking = False
     _log_traceback = False
-    if sys.version_info < (3, 6):
-        _tb_logger: Type[_TracebackLogger]
     def __init__(self, *, loop: Optional[AbstractEventLoop] = ...) -> None: ...
     def __repr__(self) -> str: ...
     def __del__(self) -> None: ...
@@ -58,5 +59,7 @@ class Future(Awaitable[_T], Iterable[_T]):
     def __await__(self) -> Generator[Any, None, _T]: ...
     @property
     def _loop(self) -> AbstractEventLoop: ...
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
 def wrap_future(future: Union[_ConcurrentFuture[_T], Future[_T]], *, loop: Optional[AbstractEventLoop] = ...) -> Future[_T]: ...

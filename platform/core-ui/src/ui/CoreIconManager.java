@@ -49,8 +49,9 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   }
 
   @Override
-  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags) {
-    return new IconWithToolTipImpl(path, IconLoader.loadRasterizedIcon(path, aClass, cacheKey, flags));
+  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags) {
+    assert !path.isEmpty() && path.charAt(0) != '/';
+    return new IconWithToolTipImpl(path, IconLoader.loadRasterizedIcon(path, classLoader, cacheKey, flags));
   }
 
   private static final class IconWithToolTipImpl extends IconLoader.CachedImageIcon implements IconWithToolTip {
@@ -92,16 +93,6 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
       }
     }
     iconLayers.add(new IconLayer(flagMask, icon));
-  }
-
-  @Override
-  public @NotNull Icon createOverlayIcon(Icon @NotNull ... icons) {
-    LayeredIcon icon = new LayeredIcon(icons.length);
-    int i = 0;
-    for (Icon ic : icons) {
-      icon.setIcon(ic, i++);
-    }
-    return icon;
   }
 
   @Override

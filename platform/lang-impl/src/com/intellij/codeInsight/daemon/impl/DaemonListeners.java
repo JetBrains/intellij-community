@@ -36,7 +36,10 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
+import com.intellij.openapi.editor.ex.ErrorStripeEvent;
+import com.intellij.openapi.editor.ex.ErrorStripeListener;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -56,7 +59,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -96,8 +101,8 @@ public final class DaemonListeners implements Disposable {
 
   private static final Key<Boolean> DAEMON_INITIALIZED = Key.create("DAEMON_INITIALIZED");
 
-  public static DaemonListeners getInstance(Project project) {
-    return project.getComponent(DaemonListeners.class);
+  public static DaemonListeners getInstance(@NotNull Project project) {
+    return project.getService(DaemonListeners.class);
   }
 
   public DaemonListeners(@NotNull Project project) {
@@ -674,8 +679,8 @@ public final class DaemonListeners implements Disposable {
       }
     }
 
-    LineMarkerInfo info = LineMarkersUtil.getLineMarkerInfo(highlighter);
-    if (info.getClass().getClassLoader() == pluginClassLoader) {
+    LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
+    if (info != null && info.getClass().getClassLoader() == pluginClassLoader) {
       return true;
     }
 

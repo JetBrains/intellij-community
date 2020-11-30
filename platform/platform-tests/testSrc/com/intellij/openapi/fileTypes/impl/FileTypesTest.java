@@ -62,7 +62,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -79,7 +78,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myFileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
     myOldIgnoredFilesList = myFileTypeManager.getIgnoredFilesList();
     FileTypeManagerImpl.reDetectAsync(true);
-    ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.THROW);
+    ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.THROW);
     Assume.assumeTrue("Test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage which is created on each HelmYamlFileType registration which happens a lot in this class",
                       StdFileTypes.JSPX == StdFileTypes.PLAIN_TEXT);
   }
@@ -87,7 +86,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.LOG_ERROR);
+      ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.LOG_ERROR);
       FileTypeManagerImpl.reDetectAsync(false);
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
       myFileTypeManager.clearForTests();
@@ -301,7 +300,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertNotNull(project);
     assertFalse(project.equals(PlainTextFileType.INSTANCE));
 
-    final Set<VirtualFile> detectorCalled = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    final Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Nullable
       @Override
@@ -380,7 +379,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   private void doReassignTest(@NotNull FileType fileType, @NotNull String newExtension) {
     FileType oldFileType = myFileTypeManager.getFileTypeByExtension(newExtension);
     try {
-      ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.IGNORE);
+      ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.IGNORE);
       DefaultLogger.disableStderrDumping(getTestRootDisposable());
       myFileTypeManager.getRegisteredFileTypes(); // ensure pending file types empty
 
@@ -518,7 +517,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed
   public void testRemappingToInstalledPluginExtension() throws WriteExternalException, InvalidDataException {
-    ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.IGNORE);
+    ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.IGNORE);
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin"));
 
     Element element = myFileTypeManager.getState();
@@ -708,7 +707,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     final UserBinaryFileType stuffType = new UserBinaryFileType(){};
     stuffType.setName("stuffType");
 
-    final Set<VirtualFile> detectorCalled = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    final Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
 
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Nullable
@@ -857,11 +856,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
       assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
 
-      manager.setEncoding(file, CharsetToolkit.US_ASCII_CHARSET);
+      manager.setEncoding(file, StandardCharsets.US_ASCII);
       UIUtil.dispatchAllInvocationEvents();
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals(CharsetToolkit.US_ASCII_CHARSET, file.getCharset());
+      assertEquals(StandardCharsets.US_ASCII, file.getCharset());
 
       manager.setEncoding(file, StandardCharsets.UTF_8);
       UIUtil.dispatchAllInvocationEvents();
@@ -869,11 +868,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(StandardCharsets.UTF_8, file.getCharset());
 
-      manager.setEncoding(file, CharsetToolkit.US_ASCII_CHARSET);
+      manager.setEncoding(file, StandardCharsets.US_ASCII);
       UIUtil.dispatchAllInvocationEvents();
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals(CharsetToolkit.US_ASCII_CHARSET, file.getCharset());
+      assertEquals(StandardCharsets.US_ASCII, file.getCharset());
 
       manager.setEncoding(file, StandardCharsets.UTF_8);
       UIUtil.dispatchAllInvocationEvents();
@@ -1110,12 +1109,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     public boolean isBinary() {
       return false;
     }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   public void testPluginWhichOverridesBundledFileTypeMustWin() {
@@ -1134,7 +1127,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.setPluginDescriptor(new DefaultPluginDescriptor(PluginId.getId("myTestPlugin"), PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID).getPluginClassLoader()));
     Disposable disposable = Disposer.newDisposable();
     Disposer.register(getTestRootDisposable(), disposable);
-    ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.IGNORE);
+    ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.IGNORE);
     ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerImpl.EP_NAME.getPoint().registerExtension(bean, disposable));
 
     assertInstanceOf(fileTypeManager.findFileTypeByName(bean.name), MyImageFileType.class);
@@ -1190,12 +1183,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     public boolean isReadOnly() {
       return true;
     }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   public void testHashBangPatternsCanBeConfiguredDynamically() {
@@ -1245,12 +1232,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     public boolean isBinary() {
       return false;
     }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   private static class MyHaskellFileType implements FileType {
@@ -1286,12 +1267,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override
     public boolean isBinary() {
       return false;
-    }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
     }
   }
 

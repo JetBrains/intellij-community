@@ -405,6 +405,16 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     return result;
   }
 
+  @Override
+  public @NotNull Promise<Void> extract(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    AsyncPromise<Void> result = new AsyncPromise<>();
+    myModel.getInvoker().invoke(() -> AppUIUtil.invokeLaterIfProjectAlive(myProject, () ->
+      promiseFindView(contributorClass, result,
+                      serviceView -> serviceView.extract(service, contributorClass),
+                      null)));
+    return result;
+  }
+
   @NotNull
   Promise<Void> select(@NotNull VirtualFile virtualFile) {
     AsyncPromise<Void> result = new AsyncPromise<>();
@@ -572,7 +582,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     else if (!contributors.isEmpty()) {
       String servicesToolWindowId = getToolWindowId();
       Collection<ServiceViewContributor<?>> servicesContributors =
-        myGroups.computeIfAbsent(servicesToolWindowId, __ -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+        myGroups.computeIfAbsent(servicesToolWindowId, __ -> ContainerUtil.newConcurrentSet());
       servicesContributors.addAll(contributors);
     }
   }

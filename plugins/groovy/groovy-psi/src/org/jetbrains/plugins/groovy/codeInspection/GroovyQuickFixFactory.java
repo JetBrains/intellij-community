@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 
 public abstract class GroovyQuickFixFactory {
   public static GroovyQuickFixFactory getInstance() {
-    return ServiceManager.getService(GroovyQuickFixFactory.class);
+    return ApplicationManager.getApplication().getService(GroovyQuickFixFactory.class);
   }
 
   public abstract IntentionAction createDynamicMethodFix(GrReferenceExpression expression, PsiType[] types);

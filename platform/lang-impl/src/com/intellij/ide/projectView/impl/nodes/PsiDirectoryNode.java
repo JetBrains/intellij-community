@@ -136,8 +136,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     setupIcon(data, psiDirectory);
   }
 
+  protected static boolean canRealModuleNameBeHidden() {
+    return Registry.is("ide.hide.real.module.name");
+  }
+
   private static boolean moduleNameMatchesDirectoryName(@NotNull Module module, @NotNull VirtualFile directoryFile, @NotNull ProjectFileIndex fileIndex) {
-    if (Registry.is("ide.hide.real.module.name")) return true;
+    if (canRealModuleNameBeHidden()) return true;
     String moduleName = module.getName();
     String directoryName = directoryFile.getName();
     if (moduleName.equalsIgnoreCase(directoryName)) {
@@ -163,9 +167,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
     if (PlatformUtils.isAppCode()) {
       final Icon icon = IconUtil.getIcon(virtualFile, 0, myProject);
-      if (icon != null) {
-        data.setIcon(icon);
-      }
+      data.setIcon(icon);
     }
     else {
       Icon icon = CompoundIconProvider.findIcon(psiDirectory, 0);
@@ -244,8 +246,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       }
     }
     if (super.canRepresent(element)) return true;
+    PsiDirectory directory = getValue();
+    Object owner = getParentValue();
+    if (file == null || directory == null || !(owner instanceof PsiDirectory)) return false;
     return ProjectViewDirectoryHelper.getInstance(getProject())
-      .canRepresent(element, getValue(), getParentValue(), getSettings());
+      .canRepresent(file, directory, (PsiDirectory)owner, getSettings());
   }
 
   @Override

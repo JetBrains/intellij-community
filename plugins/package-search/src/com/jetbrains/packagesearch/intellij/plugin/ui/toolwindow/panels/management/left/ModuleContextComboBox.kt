@@ -5,9 +5,12 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsActions.ActionText
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchToolWindowModel
+import org.jetbrains.annotations.Nls
 import javax.swing.JLabel
 
 class ModuleContextComboBox(viewModel: PackageSearchToolWindowModel) : ContextComboBoxBase(viewModel) {
@@ -37,7 +40,7 @@ class ModuleContextComboBox(viewModel: PackageSearchToolWindowModel) : ContextCo
                 createSelectAction(it, it.getFullName())
             }
 
-    private fun createSelectAction(projectModule: ProjectModule?, title: String) =
+    private fun createSelectAction(projectModule: ProjectModule?, @ActionText title: String) =
         object : AnAction(title, title, projectModule?.moduleType?.icon ?: AllIcons.General.ProjectStructure) {
             override fun actionPerformed(e: AnActionEvent) {
                 viewModel.selectedProjectModule.set(projectModule)

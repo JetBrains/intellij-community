@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.User32Ex;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +50,7 @@ public class WinFocusStealer implements AWTEventListener {
    * by {@code BringWindowToTop} call)
    */
   public static void setFocusStealingEnabled(boolean value) {
-    WinFocusStealer stealer = ServiceManager.getService(WinFocusStealer.class);
+    WinFocusStealer stealer = ApplicationManager.getApplication().getService(WinFocusStealer.class);
     if (stealer != null) stealer.update(value); // the service is null on non-Windows machines
   }
 

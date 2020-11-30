@@ -46,7 +46,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
       @NotNull
       @Override
       protected PsiTypeElement compute() {
-        return new ClsTypeElementImpl(ClsMethodImpl.this, getStub().getReturnTypeText(false));
+        return new ClsTypeElementImpl(ClsMethodImpl.this, getStub().getReturnTypeText());
       }
     };
 

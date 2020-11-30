@@ -20,8 +20,10 @@ import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
@@ -145,7 +147,15 @@ internal class LibraryBridgeImpl(
 
   private fun checkDisposed() {
     if (isDisposed) {
-      val message = "library $entityId already disposed: $stackTrace"
+      val libraryEntity = entityStorage.cachedValue(librarySnapshotCached).libraryEntity
+      val isDisposedGlobally = WorkspaceModel.getInstance(project).entityStorage.current.libraryMap.getDataByEntity(libraryEntity)?.isDisposed
+      val message = """
+        Library $entityId already disposed:
+        Library id: $libraryId
+        Entity: ${libraryEntity.run { "$name, $this" }}
+        Is disposed in project model: $isDisposedGlobally
+        Stack trace: $stackTrace
+        """.trimIndent()
       try {
         throwDisposalError(message)
       }

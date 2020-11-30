@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiDocumentManager;
@@ -32,6 +33,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public abstract class CodeInsightUtilCore extends FileModificationService {
+
+  private static final Logger LOG = Logger.getInstance(CodeInsightUtilCore.class);
+
   public static <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
                                                             int startOffset,
                                                             int endOffset,
@@ -121,7 +125,7 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     }
 
     private boolean parse(@NotNull String chars, @NotNull StringBuilder outChars) {
-      assert mySourceOffsets == null || mySourceOffsets.length == chars.length() + 1;
+      LOG.assertTrue(mySourceOffsets == null || mySourceOffsets.length == chars.length() + 1);
       if (chars.indexOf('\\') < 0) {
         outChars.append(chars);
         if (mySourceOffsets != null) Arrays.setAll(mySourceOffsets, i -> i);
@@ -197,16 +201,17 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
       int len = s.length();
       int start = index - 1;
       // uuuuu1234 is valid too
-      while (index < len && s.charAt(index) == 'u') {
+      do {
         index++;
       }
+      while (index < len && s.charAt(index) == 'u');
       if (index + 4 > len) return -1;
       try {
-        int code = Integer.parseInt(s.substring(index, index + 4), 16);
-        //line separators are invalid here
-        if (code == 0x000a || code == 0x000d) return -1;
         char c = s.charAt(index);
         if (c == '+' || c == '-') return -1;
+        int code = Integer.parseInt(s.substring(index, index + 4), 16);
+        // line separators are invalid here
+        if (code == 0x000a || code == 0x000d) return -1;
         char escapedChar = (char)code;
         if (escapedChar == '\\') {
           if (isAfterEscapedBackslash) {
@@ -253,7 +258,7 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
       return true;
     }
 
-    private static boolean parseEscapedChar(char c, StringBuilder outChars) {
+    private static boolean parseEscapedChar(char c, @NotNull StringBuilder outChars) {
       switch (c) {
         case 'b':
           outChars.append('\b');

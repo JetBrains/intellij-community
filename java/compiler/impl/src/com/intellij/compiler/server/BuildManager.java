@@ -20,12 +20,17 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -390,7 +395,7 @@ public final class BuildManager implements Disposable {
   }
 
   public static BuildManager getInstance() {
-    return ServiceManager.getService(BuildManager.class);
+    return ApplicationManager.getApplication().getService(BuildManager.class);
   }
 
   public void notifyFilesChanged(final Collection<? extends File> paths) {
@@ -1136,8 +1141,8 @@ public final class BuildManager implements Disposable {
     if (shouldGenerateIndex != null) {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
     }
-    cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + config.PARALLEL_COMPILATION);
-    if (config.PARALLEL_COMPILATION) {
+    cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + projectConfig.isParallelCompilationEnabled());
+    if (projectConfig.isParallelCompilationEnabled()) {
       final boolean allowParallelAutomake = Registry.is("compiler.automake.allow.parallel", true);
       if (!allowParallelAutomake) {
         cmdLine.addParameter("-D" + GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION + "=false");
@@ -1177,6 +1182,7 @@ public final class BuildManager implements Disposable {
         yourKitProfilerService.copyYKLibraries(workDirectory);
         String yjpagent = workDirectory.resolve(yourKitProfilerService.getYKAgentFullName()).toAbsolutePath().toString();
         cmdLine.addParameter("-agentpath:" + yjpagent + "=disablealloc,delay=10000,sessionname=ExternalBuild");
+        showSnapshotNotificationAfterFinish(project);
       }
       catch (IOException e) {
         LOG.warn(e);
@@ -1340,6 +1346,27 @@ public final class BuildManager implements Disposable {
     }
 
     return processHandler;
+  }
+
+  private static void showSnapshotNotificationAfterFinish(@NotNull Project project) {
+    MessageBusConnection busConnection = project.getMessageBus().connect(Disposer.newDisposable());
+    busConnection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
+      @Override
+      public void buildFinished(@NotNull Project project, @NotNull UUID sessionId, boolean isAutomake) {
+        busConnection.disconnect();
+        File snapshotDir = new File(SystemProperties.getUserHome(), "snapshots");
+        Notification notification =
+          new Notification("build.profiler", JavaCompilerBundle.message("notification.title.cpu.snapshot.build.has.been.captured"), "", NotificationType.INFORMATION);
+        notification.addAction(new AnAction(JavaCompilerBundle.message("action.show.snapshot.location.text")) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            RevealFileAction.openDirectory(snapshotDir);
+            notification.expire();
+          }
+        });
+        Notifications.Bus.notify(notification, project);
+      }
+    });
   }
 
   private static boolean shouldIncludeEclipseCompiler(CompilerConfiguration config) {

@@ -70,7 +70,7 @@ public class MarkGeneratedSourceRootAction extends MarkRootActionBase {
   private static boolean isJavaModule(Module module) {
     ModuleType moduleType = ModuleType.get(module);
     //this additional check can be removed when we get rid of PluginModuleType
-    return moduleType instanceof JavaModuleType || moduleType != null && "PLUGIN_MODULE".equals(moduleType.getId());
+    return moduleType instanceof JavaModuleType || "PLUGIN_MODULE".equals(moduleType.getId());
   }
 
   @Override

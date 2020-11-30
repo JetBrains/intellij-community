@@ -218,10 +218,7 @@ public class HgBranchPopupActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
-        e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription(HgBundle.message("action.hg4idea.bookmark.not.possible.before.commit"));
-      }
+      DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, myRepositories, HgBundle.message("action.not.possible.in.fresh.repo.new.bookmark"));
     }
 
     @Override

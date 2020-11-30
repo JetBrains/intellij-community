@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
@@ -876,18 +877,8 @@ public final class UIUtil {
     return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static @Nls @NotNull String removeMnemonic(@Nls @NotNull String s) {
-    if (s.indexOf('&') != -1) {
-      s = StringUtil.replace(s, "&", "");
-    }
-    if (s.indexOf('_') != -1) {
-      s = StringUtil.replace(s, "_", "");
-    }
-    if (s.indexOf(MNEMONIC) != -1) {
-      s = StringUtil.replace(s, String.valueOf(MNEMONIC), "");
-    }
-    return s;
+    return TextWithMnemonic.parse(s).getText();
   }
 
   public static int getDisplayMnemonicIndex(@NotNull String s) {
@@ -1931,7 +1922,7 @@ public final class UIUtil {
   /**
    * @param component to check whether it can be focused or not
    * @return {@code true} if component is not {@code null} and can be focused
-   * @see Component#isRequestFocusAccepted(boolean, boolean, sun.awt.CausedFocusEvent.Cause)
+   * @see Component#isRequestFocusAccepted(boolean, boolean, FocusEvent.Cause) 
    */
   public static boolean isFocusable(@Nullable Component component) {
     return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.generate.template.toString;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ public final class ToStringTemplatesManager extends TemplatesManager {
   private static final String DEFAULT_STRING_JOINER = "/org/jetbrains/java/generate/template/toString/StringJoiner.vm";
 
   public static TemplatesManager getInstance() {
-    return ServiceManager.getService(ToStringTemplatesManager.class);
+    return ApplicationManager.getApplication().getService(ToStringTemplatesManager.class);
   }
 
   @Override

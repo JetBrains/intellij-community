@@ -283,4 +283,6 @@ public interface RunnerAndConfigurationSettings {
    * @return the folder name, or null if the configuration is displayed on the top level.
    */
   @Nullable String getFolderName();
+
+  @NlsSafe String toString();
 }

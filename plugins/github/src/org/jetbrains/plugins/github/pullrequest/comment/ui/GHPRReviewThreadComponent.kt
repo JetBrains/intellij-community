@@ -27,6 +27,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Cursor
@@ -217,7 +218,7 @@ object GHPRReviewThreadComponent {
                      }, null)
     }
 
-    return ToggleableContainer.create(
+    val content = ToggleableContainer.create(
       toggleModel,
       { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
       {
@@ -227,6 +228,11 @@ object GHPRReviewThreadComponent {
                                                              onCancel = { toggleModel.value = false })
       }
     )
+    return JPanel().apply {
+      isOpaque = false
+      layout = MigLayout(LC().insets("0"))
+      add(content, CC().width("${GithubUIUtil.getPRTimelineWidth() + GithubUIUtil.avatarSize.get()}"))
+    }
   }
 
   private fun createThreadActionsComponent(model: GHPRReviewThreadModel,

@@ -319,10 +319,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
 
   private static <E> Object @NotNull [] createArrayAdd(Object @NotNull [] elements, E e) {
     int len = elements.length;
-    Object[] newElements = new Object[len + 1];
-    if (len != 0) {
-      System.arraycopy(elements, 0, newElements, 0, len);
-    }
+    Object[] newElements = Arrays.copyOf(elements, len + 1);
     newElements[len] = e;
     return newElements;
   }

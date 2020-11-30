@@ -15,7 +15,7 @@ public interface WelcomeScreenTab {
    * @return component presents list item on the {@link WelcomeScreen} tab view
    */
   @NotNull
-  JComponent getKeyComponent();
+  JComponent getKeyComponent(@NotNull JComponent parent);
 
   /**
    * @return component shown when related key component is selected

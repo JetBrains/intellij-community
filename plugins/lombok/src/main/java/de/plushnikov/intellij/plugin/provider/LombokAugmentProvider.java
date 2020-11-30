@@ -1,8 +1,7 @@
 package de.plushnikov.intellij.plugin.provider;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -10,11 +9,12 @@ import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
+import de.plushnikov.intellij.plugin.processor.method.ExtensionMethodsHelper;
 import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     log.debug("LombokAugmentProvider created");
 
     modifierProcessors = LombokProcessorManager.getLombokModifierProcessors();
-    valProcessor = ServiceManager.getService(ValProcessor.class);
+    valProcessor = ApplicationManager.getApplication().getService(ValProcessor.class);
   }
 
   @NotNull
@@ -57,20 +57,14 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   /**
    * This method should be available in the next IntelliJ 203 Release
    */
-  //  @Override
+  @Override
   public boolean canInferType(@NotNull PsiTypeElement typeElement) {
-    if (!valProcessor.isEnabled(typeElement.getProject())) {
-      return false;
-    }
     return valProcessor.canInferType(typeElement);
   }
 
   @Nullable
   @Override
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
-    if (!valProcessor.isEnabled(typeElement.getProject())) {
-      return null;
-    }
     return valProcessor.inferType(typeElement);
   }
 
@@ -87,9 +81,8 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       return emptyResult;
     }
-    // skip processing if plugin is disabled
-    final Project project = element.getProject();
-    if (!ProjectSettings.isLombokEnabledInProject(project)) {
+    // skip processing if disabled, or no lombok library is present
+    if (!LombokProjectValidatorActivity.hasLombokLibrary(element.getProject())) {
       return emptyResult;
     }
 
@@ -166,5 +159,15 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       }
     }
     return result;
+  }
+
+  @Override
+  protected List<PsiMethod> getExtensionMethods(@NotNull PsiClass aClass,
+                                                @NotNull String nameHint,
+                                                @NotNull PsiElement context) {
+    if (!LombokProjectValidatorActivity.hasLombokLibrary(context.getProject())) {
+      return Collections.emptyList();
+    }
+    return ExtensionMethodsHelper.getExtensionMethods(aClass, nameHint, context);
   }
 }

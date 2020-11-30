@@ -45,6 +45,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -376,6 +377,7 @@ public class InspectionValidatorWrapper implements Validator {
 
   @Override
   @NotNull
+  @Nls
   public String getDescription() {
     return myValidator.getDescription();
   }

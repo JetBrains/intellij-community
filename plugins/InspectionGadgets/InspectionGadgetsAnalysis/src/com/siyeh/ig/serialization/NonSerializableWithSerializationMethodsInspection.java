@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DelegatingFixFactory;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,33 +45,15 @@ public class NonSerializableWithSerializationMethodsInspection extends BaseInspe
     final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
     final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
     final PsiClass aClass = (PsiClass)infos[2];
-    if (aClass instanceof PsiAnonymousClass) {
-      if (hasReadObject && hasWriteObject) {
-        return InspectionGadgetsBundle.message(
-          "non.serializable.anonymous.with.readwriteobject.problem.descriptor.both");
-      }
-      else if (hasWriteObject) {
-        return InspectionGadgetsBundle.message(
-          "non.serializable.anonymous.with.readwriteobject.problem.descriptor.write");
-      }
-      else {
-        return InspectionGadgetsBundle.message(
-          "non.serializable.anonymous.with.readwriteobject.problem.descriptor.read");
-      }
+    final int ordinal = ClassUtils.getTypeOrdinal(aClass);
+    if (hasReadObject && hasWriteObject) {
+      return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.problem.descriptor.both", ordinal);
+    }
+    else if (hasWriteObject) {
+      return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.problem.descriptor.write", ordinal);
     }
     else {
-      if (hasReadObject && hasWriteObject) {
-        return InspectionGadgetsBundle.message(
-          "non.serializable.class.with.readwriteobject.problem.descriptor.both");
-      }
-      else if (hasWriteObject) {
-        return InspectionGadgetsBundle.message(
-          "non.serializable.class.with.readwriteobject.problem.descriptor.write");
-      }
-      else {
-        return InspectionGadgetsBundle.message(
-          "non.serializable.class.with.readwriteobject.problem.descriptor.read");
-      }
+      return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.problem.descriptor.read", ordinal);
     }
   }
 
@@ -84,7 +66,7 @@ public class NonSerializableWithSerializationMethodsInspection extends BaseInspe
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
+      if (aClass.isAnnotationType()) {
         return;
       }
       final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);

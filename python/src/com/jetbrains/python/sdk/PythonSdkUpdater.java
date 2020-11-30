@@ -137,7 +137,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         Trigger.LOG.debug("Starting SDK refresh for '" + mySdkKey + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        updateLocalSdkVersionAndPaths(sdk, null, myProject);
+        updateLocalSdkVersionAndPaths(sdk, myProject);
         generateSkeletons(sdk, indicator);
         refreshPackages(sdk, indicator);
       }
@@ -185,11 +185,11 @@ public class PythonSdkUpdater implements StartupActivity.Background {
           .notify(myProject);
       }
       catch (InvalidSdkException e) {
-        if (PythonSdkUtil.isRemote(mySdkKey)) {
+        if (PythonSdkUtil.isRemote(PythonSdkUtil.findSdkByKey(mySdkKey))) {
           PythonSdkType.notifyRemoteSdkSkeletonsFail(e, () -> {
             Sdk revalidatedSdk = PythonSdkUtil.findSdkByKey(mySdkKey);
             if (revalidatedSdk != null) {
-              update(revalidatedSdk, null, myProject, null);
+              update(revalidatedSdk, myProject, null);
             }
           });
         }
@@ -228,14 +228,11 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
-  public static boolean update(@NotNull Sdk sdk,
-                               @Nullable SdkModificator sdkModificator,
-                               @Nullable Project project,
-                               @Nullable Component ownerComponent) {
+  public static boolean update(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
     if (!Registry.is("python.use.new.sdk.updater")) {
-      return PythonSdkUpdaterOld.update(sdk, sdkModificator, project, ownerComponent);
+      return PythonSdkUpdaterOld.update(sdk, project, ownerComponent);
     }
-    return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, sdkModificator, project);
+    return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
   }
 
   /**
@@ -248,36 +245,31 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * Since this method blocks for the first phase of an update, it's not allowed to call it on threads holding a read or write action.
    * The only exception is made for EDT, in which case a modal progress indicator will be displayed during this first synchronous step.
    * <p>
-   * This method emulates the legacy behavior of {@link #update(Sdk, SdkModificator, Project, Component)} and is likely to be removed
+   * This method emulates the legacy behavior of {@link #update(Sdk, Project, Component)} and is likely to be removed
    * or changed in future. Unless you're sure that a synchronous update is necessary you should rather use
    * {@link #scheduleUpdate(Sdk, Project)} directly.
    *
-   * @param sdkModificator if null then it tries to get an SDK modifier from the SDK table, falling back to the modifier of the SDK
-   *                       passed as an argument accessed from the AWT thread
    * @return false if there was an immediate problem updating the SDK. Other problems are reported as log entries and balloons.
    * @see #scheduleUpdate(Sdk, Project)
    */
   @ApiStatus.Internal
-  public static boolean updateVersionAndPathsSynchronouslyAndScheduleRemaining(@NotNull Sdk sdk,
-                                                                               @Nullable SdkModificator sdkModificator,
-                                                                               @Nullable Project project) {
+  public static boolean updateVersionAndPathsSynchronouslyAndScheduleRemaining(@NotNull Sdk sdk, @Nullable Project project) {
     if (!Registry.is("python.use.new.sdk.updater")) {
-      return PythonSdkUpdaterOld.update(sdk, sdkModificator, project, null);
+      return PythonSdkUpdaterOld.update(sdk, project, null);
     }
 
-    SdkModificator effectiveModificator = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
     Application application = ApplicationManager.getApplication();
     try {
       // This is not optimal but already happens in many contexts including possible external usages, e.g. during a new SDK generation.
       if (application.isDispatchThread()) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          updateLocalSdkVersionAndPaths(sdk, effectiveModificator, project);
+          updateLocalSdkVersionAndPaths(sdk, project);
           return null;
         }, PyBundle.message("sdk.gen.updating.interpreter"), false, project);
       }
       else {
         LOG.assertTrue(!application.isReadAccessAllowed(), "Synchronous SDK update should not be run under read action");
-        updateLocalSdkVersionAndPaths(sdk, effectiveModificator, project);
+        updateLocalSdkVersionAndPaths(sdk, project);
       }
     }
     catch (InvalidSdkException e) {
@@ -315,7 +307,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   @ApiStatus.Experimental
   public static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project) {
     if (!Registry.is("python.use.new.sdk.updater")) {
-      PythonSdkUpdaterOld.update(sdk, null, project, null);
+      PythonSdkUpdaterOld.update(sdk, project, null);
       return;
     }
     scheduleUpdate(sdk, project, new PyUpdateSdkRequestData());
@@ -347,32 +339,34 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   }
 
   /**
-   * Updates the SDK as {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining(Sdk, SdkModificator, Project)} describes, but
+   * Updates the SDK as {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining(Sdk, Project)} describes, but
    * shows an error message if the first synchronous part of the update fails.
    *
-   * @see #updateVersionAndPathsSynchronouslyAndScheduleRemaining(Sdk, SdkModificator, Project)
+   * @see #updateVersionAndPathsSynchronouslyAndScheduleRemaining(Sdk, Project)
    */
   @ApiStatus.Internal
-  public static void updateOrShowError(@NotNull Sdk sdk,
-                                       @Nullable SdkModificator sdkModificator,
-                                       @Nullable Project project,
-                                       @Nullable Component ownerComponent) {
+  public static void updateOrShowError(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
     if (!Registry.is("python.use.new.sdk.updater")) {
-      PythonSdkUpdaterOld.updateOrShowError(sdk, sdkModificator, project, ownerComponent);
+      PythonSdkUpdaterOld.updateOrShowError(sdk, project, ownerComponent);
       return;
     }
-    boolean versionAndPathsUpdated = updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, sdkModificator, project);
+    boolean versionAndPathsUpdated = updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
     if (!versionAndPathsUpdated) {
-      Messages.showErrorDialog(project,
-                               PyBundle.message("python.sdk.cannot.setup.sdk", getSdkPresentableName(sdk)),
-                               PyBundle.message("python.sdk.invalid.python.sdk"));
+      ApplicationManager.getApplication().invokeLater(
+        () ->
+          Messages.showErrorDialog(
+            project,
+            PyBundle.message("python.sdk.cannot.setup.sdk", getSdkPresentableName(sdk)),
+            PyBundle.message("python.sdk.invalid.python.sdk")
+          )
+      );
     }
   }
 
-  private static void updateLocalSdkVersionAndPaths(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable Project project)
+  private static void updateLocalSdkVersionAndPaths(@NotNull Sdk sdk, @Nullable Project project)
     throws InvalidSdkException {
-    updateLocalSdkVersion(sdk, sdkModificator);
-    updateLocalSdkPaths(sdk, sdkModificator, project);
+    updateLocalSdkVersion(sdk);
+    updateLocalSdkPaths(sdk, project);
   }
 
   /**
@@ -380,13 +374,12 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * <p>
    * May be invoked from any thread. May freeze the current thread while evaluating the run-time Python version.
    */
-  private static void updateLocalSdkVersion(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator) {
+  private static void updateLocalSdkVersion(@NotNull Sdk sdk) {
     if (!PythonSdkUtil.isRemote(sdk)) {
-      final SdkModificator modificatorToRead = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
       ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.version"));
       final String versionString = sdk.getSdkType().getVersionString(sdk);
-      if (!StringUtil.equals(versionString, modificatorToRead.getVersionString())) {
-        changeSdkModificator(sdk, sdkModificator, modificatorToWrite -> {
+      if (!StringUtil.equals(versionString, sdk.getVersionString())) {
+        changeSdkModificator(sdk, modificatorToWrite -> {
           modificatorToWrite.setVersionString(versionString);
           return true;
         });
@@ -399,12 +392,12 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * <p>
    * May be invoked from any thread. May freeze the current thread while evaluating sys.path.
    */
-  private static void updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable Project project)
+  private static void updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable Project project)
     throws InvalidSdkException {
     if (!PythonSdkUtil.isRemote(sdk)) {
       final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
       final List<VirtualFile> localSdkPaths = getLocalSdkPaths(sdk, project);
-      commitSdkPathsIfChanged(sdk, sdkModificator, localSdkPaths, forceCommit);
+      commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
     }
   }
 
@@ -419,7 +412,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     if (PythonSdkUtil.isRemote(sdk)) {
       final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
       final List<VirtualFile> remoteSdkPaths = getRemoteSdkPaths(sdk, project);
-      commitSdkPathsIfChanged(sdk, null, remoteSdkPaths, forceCommit);
+      commitSdkPathsIfChanged(sdk, remoteSdkPaths, forceCommit);
     }
   }
 
@@ -590,13 +583,11 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
    */
   private static void commitSdkPathsIfChanged(@NotNull Sdk sdk,
-                                              @Nullable final SdkModificator sdkModificator,
                                               @NotNull final List<VirtualFile> sdkPaths,
                                               boolean forceCommit) {
-    final SdkModificator modificatorToRead = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
-    final List<VirtualFile> currentSdkPaths = Arrays.asList(modificatorToRead.getRoots(OrderRootType.CLASSES));
+    final List<VirtualFile> currentSdkPaths = Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
     if (forceCommit || !Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
-      changeSdkModificator(sdk, sdkModificator, effectiveModificator -> {
+      changeSdkModificator(sdk, effectiveModificator -> {
         effectiveModificator.removeAllRoots();
         for (VirtualFile sdkPath : sdkPaths) {
           effectiveModificator.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
@@ -611,14 +602,10 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * <p>
    * You may invoke it from any threads. Blocks until the commit is done in the AWT thread.
    */
-  private static void changeSdkModificator(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator,
-                                           @NotNull Processor<? super SdkModificator> processor) {
-    final String key = PythonSdkType.getSdkKey(sdk);
+  private static void changeSdkModificator(@NotNull Sdk sdk, @NotNull Processor<? super SdkModificator> processor) {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final Sdk sdkInsideInvoke = PythonSdkUtil.findSdkByKey(key);
-      final SdkModificator effectiveModificator = sdkModificator != null ? sdkModificator :
-                                                  sdkInsideInvoke != null ? sdkInsideInvoke.getSdkModificator() : sdk.getSdkModificator();
+      final SdkModificator effectiveModificator = sdk.getSdkModificator();
       if (processor.process(effectiveModificator)) {
         effectiveModificator.commitChanges();
       }
@@ -630,7 +617,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    */
   @NotNull
   private static Set<Sdk> getPythonSdks(@NotNull Project project) {
-    final Set<Sdk> pythonSdks = new LinkedHashSet<Sdk>();
+    final Set<Sdk> pythonSdks = new LinkedHashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
@@ -676,4 +663,5 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       }
       return null;
     }
-  }}
+  }
+}

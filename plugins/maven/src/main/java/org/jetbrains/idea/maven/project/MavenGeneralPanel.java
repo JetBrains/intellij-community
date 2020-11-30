@@ -2,12 +2,14 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
@@ -119,7 +121,7 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   }
 
   @ApiStatus.Internal
-  public void applyTargetEnvironmentConfiguration(@Nullable String targetName) {
-    mavenPathsForm.apply(targetName);
+  public void applyTargetEnvironmentConfiguration(@NotNull Project project, @Nullable String targetName) {
+    mavenPathsForm.apply(project, targetName);
   }
 }

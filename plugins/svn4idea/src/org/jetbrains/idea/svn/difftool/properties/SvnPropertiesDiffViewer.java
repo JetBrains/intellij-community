@@ -256,7 +256,7 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
         for (LineFragment fragment : diffChange.getFragments()) {
           if (!handler.process(Side.LEFT.getStartLine(fragment) + shift1, Side.LEFT.getEndLine(fragment) + shift1,
                                Side.RIGHT.getStartLine(fragment) + shift2, Side.RIGHT.getEndLine(fragment) + shift2,
-                               DiffUtil.getLineDiffType(fragment).getColor(getEditor1()))) {
+                               DiffUtil.getLineDiffType(fragment))) {
             return;
           }
         }

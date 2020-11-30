@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -40,7 +41,9 @@ public final class VfsUtil extends VfsUtilCore {
 
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
-    file.setBinaryContent(text.getBytes(charset.name()));
+    try (OutputStream stream = file.getOutputStream(file)) {
+      stream.write(text.getBytes(charset));
+    }
   }
 
   public static byte @NotNull [] toByteArray(@NotNull VirtualFile file, @NotNull String text) throws IOException {
@@ -49,7 +52,7 @@ public final class VfsUtil extends VfsUtilCore {
     }
 
     Charset charset = file.getCharset();
-    return text.getBytes(charset.name());
+    return text.getBytes(charset);
   }
 
   /**
@@ -96,15 +99,14 @@ public final class VfsUtil extends VfsUtilCore {
    * @param toDir     directory to make a copy in
    * @throws IOException if file failed to be copied
    */
+  @NotNull
   public static VirtualFile copy(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
     if (file.isDirectory()) {
       VirtualFile newDir = toDir.createChildDirectory(requestor, file.getName());
       copyDirectory(requestor, file, newDir, null);
       return newDir;
     }
-    else {
-      return copyFile(requestor, file, toDir);
-    }
+    return copyFile(requestor, file, toDir);
   }
 
   /**
@@ -166,7 +168,7 @@ public final class VfsUtil extends VfsUtilCore {
     return ancestor;
   }
 
-  public static @Nullable VirtualFile findRelativeFile(@Nullable VirtualFile base, String ... path) {
+  public static @Nullable VirtualFile findRelativeFile(@Nullable VirtualFile base, String @NotNull ... path) {
     VirtualFile file = base;
 
     for (String pathElement : path) {
@@ -278,14 +280,13 @@ public final class VfsUtil extends VfsUtilCore {
     }
   }
 
+  @NotNull
   public static String getUrlForLibraryRoot(@NotNull File libraryRoot) {
     String path = FileUtil.toSystemIndependentName(libraryRoot.getAbsolutePath());
     if (FileTypeRegistry.getInstance().getFileTypeByFileName(libraryRoot.getName()) == ArchiveFileType.INSTANCE) {
       return VirtualFileManager.constructUrl(StandardFileSystems.JAR_PROTOCOL, path + URLUtil.JAR_SEPARATOR);
     }
-    else {
-      return VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), path);
-    }
+    return VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), path);
   }
 
   public static @NotNull String getNextAvailableName(@NotNull VirtualFile dir,

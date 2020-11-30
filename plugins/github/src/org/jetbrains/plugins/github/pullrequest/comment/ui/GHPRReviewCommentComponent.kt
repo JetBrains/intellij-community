@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
@@ -84,9 +86,11 @@ object GHPRReviewCommentComponent {
       add(resolvedLabel, CC().hideMode(3).alignX("left"))
       add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
       add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
-      add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX())
+      add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX().maxWidth("${getMaxWidth()}"))
     }
   }
+
+  private fun getMaxWidth() = GithubUIUtil.getPRTimelineWidth() - GithubUIUtil.avatarSize.get() + AllIcons.Actions.Close.iconWidth
 
   private class Controller(private val model: GHPRReviewCommentModel,
                            private val titlePane: HtmlEditorPane,
@@ -104,19 +108,19 @@ object GHPRReviewCommentComponent {
     private fun update() {
       bodyPane.setBody(model.body)
 
-      val href = model.authorLinkUrl?.let { """href='${it}'""" }.orEmpty()
-      //language=HTML
-      val authorName = """<a $href>${model.authorUsername ?: "unknown"}</a>"""
+      val authorLink = HtmlBuilder()
+        .appendLink(model.authorLinkUrl.orEmpty(), model.authorUsername ?: GithubBundle.message("user.someone"))
+        .toString()
 
       when (model.state) {
         GHPullRequestReviewCommentState.PENDING -> {
           pendingLabel.isVisible = true
-          titlePane.text = authorName
+          titlePane.setBody(authorLink)
         }
         GHPullRequestReviewCommentState.SUBMITTED -> {
           pendingLabel.isVisible = false
-          titlePane.text = GithubBundle.message("pull.request.review.commented", authorName,
-                                                GithubUIUtil.formatActionDate(model.dateCreated))
+          titlePane.setBody(GithubBundle.message("pull.request.review.commented", authorLink,
+                                                 GithubUIUtil.formatActionDate(model.dateCreated)))
         }
       }
 

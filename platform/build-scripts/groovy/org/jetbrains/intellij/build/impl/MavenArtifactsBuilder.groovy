@@ -33,7 +33,7 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 class MavenArtifactsBuilder {
   /** second component of module names which describes a common group rather than a specific framework and therefore should be excluded from artifactId */
   private static final Set<String> COMMON_GROUP_NAMES = ["platform", "vcs", "tools", "clouds"] as Set<String>
-  private final BuildContext buildContext
+  protected final BuildContext buildContext
 
   MavenArtifactsBuilder(BuildContext buildContext) {
     this.buildContext = buildContext
@@ -203,7 +203,7 @@ class MavenArtifactsBuilder {
                                                       Set<JpsModule> computationInProgress) {
     if (results.containsKey(module)) return results[module]
     if (nonMavenizableModules.contains(module)) return null
-    if (!module.name.startsWith("intellij.")) {
+    if (shouldSkipModule(module.name, false)) {
       buildContext.messages.warning("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
       return null
     }
@@ -219,6 +219,7 @@ class MavenArtifactsBuilder {
     scopedDependencies(module).each { dependency, scope ->
       if (dependency instanceof JpsModuleDependency) {
         def depModule = (dependency as JpsModuleDependency).module
+        if (shouldSkipModule(depModule.name, true)) return
         if (computationInProgress.contains(depModule)) {
           /*
            It's forbidden to have compile-time circular dependencies in IntelliJ project, but there are some cycles with runtime scope
@@ -255,9 +256,18 @@ class MavenArtifactsBuilder {
       nonMavenizableModules << module
       return null
     }
-    def artifactData = new MavenArtifactData(generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber), dependencies)
+    def artifactData = new MavenArtifactData(generateMavenCoordinatesForModule(module), dependencies)
     results[module] = artifactData
     return artifactData
+  }
+
+  protected boolean shouldSkipModule(String moduleName, boolean moduleIsDependency) {
+    if (moduleIsDependency) return false
+    return !moduleName.startsWith("intellij.")
+  }
+
+  protected MavenCoordinates generateMavenCoordinatesForModule(JpsModule module) {
+    return generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber)
   }
 
   static boolean isOptionalDependency(JpsLibrary library) {

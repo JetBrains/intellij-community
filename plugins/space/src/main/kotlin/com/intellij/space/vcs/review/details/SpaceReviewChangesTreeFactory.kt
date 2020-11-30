@@ -2,52 +2,46 @@
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.GitCommitChangeType
+import circlet.client.api.GitFile
 import circlet.client.api.isDirectory
 import circlet.code.api.ChangeInReview
-import circlet.code.api.CodeReviewRecord
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
+import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.FontUtil
+import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
+import runtime.reactive.Property
 import javax.swing.JComponent
 
 internal object SpaceReviewChangesTreeFactory {
   fun create(project: Project,
-             detailsDetailsVm: CrDetailsVm<out CodeReviewRecord>): JComponent {
+             changesVm: SpaceReviewChangesVm,
+             spaceDiffVm: Property<SpaceDiffVm>): JComponent {
 
     val tree = object : ChangesTree(project, false, false) {
       init {
-        when (detailsDetailsVm) {
-          is MergeRequestDetailsVm -> {
-            detailsDetailsVm.changes.forEach(detailsDetailsVm.lifetime) { changes ->
-              val builder = TreeModelBuilder(project, grouping)
-              val repoNode = RepositoryNode(detailsDetailsVm.repository.value, detailsDetailsVm.repoInfo != null)
+        changesVm.changes.forEach(changesVm.lifetime) {
+          it ?: return@forEach
+          val builder = TreeModelBuilder(project, grouping)
 
-              changes?.let { addChanges(builder, repoNode, it) }
-              updateTreeModel(builder.build())
+          it.forEach { (repo, changesWithDiscussion) ->
+            val repoNode = RepositoryNode(repo, true)
 
-              if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
-            }
-          }
-          is CommitSetReviewDetailsVm -> {
-            detailsDetailsVm.changesByRepos.forEach(detailsDetailsVm.lifetime) { map ->
-              val builder = TreeModelBuilder(project, grouping)
+            val changes = changesWithDiscussion.changesInReview
+            addChanges(builder, repoNode, changes)
+            updateTreeModel(builder.build())
 
-              map?.forEach { repoName, changes ->
-                val repoNode = RepositoryNode(repoName, detailsDetailsVm.reposInCurrentProject.value?.get(repoName) != null)
-                addChanges(builder, repoNode, changes)
-              }
-
-              updateTreeModel(builder.build())
-
-              if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
-            }
+            if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
           }
         }
       }
@@ -56,7 +50,21 @@ internal object SpaceReviewChangesTreeFactory {
       }
 
       override fun getData(dataId: String) = super.getData(dataId) ?: VcsTreeModelData.getData(project, this, dataId)
+    }
+    tree.doubleClickHandler = Processor { e ->
+      if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
 
+      val spaceDiffFile = SpaceDiffFile(spaceDiffVm.value, changesVm)
+      FileEditorManager.getInstance(project).openFile(spaceDiffFile, true)
+      true
+    }
+
+    tree.addSelectionListener {
+      VcsTreeModelData.selected(tree).userObjectsStream().findFirst().ifPresent {
+        if (it is ChangeInReview) {
+          changesVm.selectedChange.value = it
+        }
+      }
     }
     return ScrollPaneFactory.createScrollPane(tree, true)
   }
@@ -77,11 +85,9 @@ internal object SpaceReviewChangesTreeFactory {
   }
 }
 
-private val addedLinesTextAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.ADDED.color)
-private val removedLinesTextAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.DELETED.color)
-
-internal class RepositoryNode(@NlsSafe val repositoryName: String, val inCurrentProject: Boolean) : ChangesBrowserNode<String>(
-  repositoryName) {
+internal class RepositoryNode(@NlsSafe val repositoryName: String,
+                              val inCurrentProject: Boolean)
+  : ChangesBrowserStringNode(repositoryName) {
   init {
     markAsHelperNode()
   }
@@ -101,8 +107,10 @@ internal class ReviewChangeNode(private val changeInReview: ChangeInReview)
     super.render(renderer, selected, expanded, hasFocus)
     changeInReview.change.diffSize?.let { diffSize ->
       val (added, removed) = diffSize
-      if (added != 0) renderer.append("${FontUtil.spaceAndThinSpace()}+$added", addedLinesTextAttributes)
-      if (removed != 0) renderer.append("${FontUtil.spaceAndThinSpace()}-${removed}", removedLinesTextAttributes)
+      if (added != 0) renderer.append("${FontUtil.spaceAndThinSpace()}+$added",
+                                      SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.ADDED.color))
+      if (removed != 0) renderer.append("${FontUtil.spaceAndThinSpace()}-${removed}",
+                                        SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.DELETED.color))
     }
   }
 
@@ -115,7 +123,7 @@ private fun getFileStatus(changeInReview: ChangeInReview): FileStatus = when (ch
   GitCommitChangeType.MODIFIED -> FileStatus.MODIFIED
 }
 
-private fun getFilePath(changeInReview: ChangeInReview): FilePath {
+fun getFilePath(changeInReview: ChangeInReview): FilePath {
   val path = when (changeInReview.change.changeType) {
     GitCommitChangeType.ADDED, GitCommitChangeType.MODIFIED -> changeInReview.change.new!!.path
     GitCommitChangeType.DELETED -> changeInReview.change.old!!.path
@@ -127,3 +135,20 @@ private fun getFilePath(changeInReview: ChangeInReview): FilePath {
   }
   return RemoteFilePath(path, isDirectory)
 }
+
+internal fun GitFile?.getFilePath(): FilePath? {
+  this ?: return null
+  return RemoteFilePath(path.trimStart('/', '\\'), isDirectory())
+}
+
+internal fun getChangeFilePathInfo(changeInReview: ChangeInReview): ChangeFilePathInfo =
+  when (changeInReview.change.changeType) {
+    GitCommitChangeType.ADDED ->
+      ChangeFilePathInfo(null, changeInReview.change.new.getFilePath())
+    GitCommitChangeType.MODIFIED ->
+      ChangeFilePathInfo(changeInReview.change.old.getFilePath(), changeInReview.change.new.getFilePath())
+    GitCommitChangeType.DELETED ->
+      ChangeFilePathInfo(changeInReview.change.old.getFilePath(), null)
+  }
+
+internal data class ChangeFilePathInfo(val old: FilePath?, val new: FilePath?)

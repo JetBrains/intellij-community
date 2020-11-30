@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.recorder.compile
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.recorder.GuiRecorderManager
 import com.intellij.testGuiFramework.recorder.ui.Notifier
 import com.intellij.util.download.DownloadableFileService
+import com.intellij.util.lang.UrlClassLoader
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException
@@ -75,10 +77,10 @@ internal class LocalCompiler {
     catch (cfe: ClassNotFoundException) {
       classLoadersArray = arrayOf(ApplicationManager::class.java.classLoader, this.javaClass.classLoader)
     }
-    val pluginClassLoader = PluginClassLoader(listOf(testUrl), classLoadersArray, DefaultPluginDescriptor("SubGuiScriptRecorder"), null as Path?)
+    val pluginClassLoader = PluginClassLoader(UrlClassLoader.build().urls(testUrl).allowLock().useCache(), classLoadersArray, DefaultPluginDescriptor("SubGuiScriptRecorder"), null as Path?, PluginManagerCore::class.java.classLoader, null)
     val currentTest = pluginClassLoader.loadClass(TEST_CLASS_NAME)
                       ?: throw Exception("Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
-    val testCase = currentTest.newInstance()
+    val testCase = currentTest.getDeclaredConstructor().newInstance()
     val testMethod = currentTest.getMethod(ScriptWrapper.TEST_METHOD_NAME)
     GuiRecorderManager.state = GuiRecorderManager.States.RUNNING
     try {

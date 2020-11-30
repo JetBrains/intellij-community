@@ -37,6 +37,7 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
   private final String myFavoritesListName;
 
   public AddToFavoritesAction(String choosenList) {
+    //noinspection HardCodedStringLiteral
     getTemplatePresentation().setText(choosenList, false);
     myFavoritesListName = choosenList;
   }

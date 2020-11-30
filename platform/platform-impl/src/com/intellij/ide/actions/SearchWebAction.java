@@ -22,8 +22,12 @@ public class SearchWebAction extends AnAction implements DumbAware {
     }
     provider.performCopy(dataContext);
     String string = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    if (StringUtil.isNotEmpty(string)) {
-      BrowserUtil.browse("http://www.google.com/search?q=" + URLUtil.encodeURIComponent(string));
+    search(string);
+  }
+
+  public static void search(String term) {
+    if (StringUtil.isNotEmpty(term)) {
+      BrowserUtil.browse("http://www.google.com/search?q=" + URLUtil.encodeURIComponent(term));
     }
   }
 

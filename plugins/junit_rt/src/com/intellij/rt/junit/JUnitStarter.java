@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.junit;
 
 import com.intellij.rt.execution.junit.RepeatCount;
@@ -15,7 +15,7 @@ import java.util.List;
  *  @see com.intellij.execution.junit.JUnitConfiguration#JUNIT_START_CLASS
  *  @noinspection HardCodedStringLiteral
  */
-public class JUnitStarter {
+public final class JUnitStarter {
   public static final int VERSION = 5;
   public static final String IDE_VERSION = "-ideVersion";
 

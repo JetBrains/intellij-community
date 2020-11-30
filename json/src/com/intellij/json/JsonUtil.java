@@ -73,9 +73,8 @@ public final class JsonUtil {
     return -1;
   }
 
-  @Contract(value = "null -> null")
-  @Nullable
-  public static JsonObject getTopLevelObject(@Nullable JsonFile jsonFile) {
+  @Contract("null -> null")
+  public static @Nullable JsonObject getTopLevelObject(@Nullable JsonFile jsonFile) {
     return jsonFile != null ? ObjectUtils.tryCast(jsonFile.getTopLevelValue(), JsonObject.class) : null;
   }
 

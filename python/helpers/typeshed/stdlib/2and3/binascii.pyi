@@ -1,7 +1,3 @@
-# Stubs for binascii
-
-# Based on http://docs.python.org/3.2/library/binascii.html
-
 import sys
 from typing import Text, Union
 

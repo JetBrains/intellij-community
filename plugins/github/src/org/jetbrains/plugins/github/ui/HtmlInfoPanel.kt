@@ -5,6 +5,7 @@ import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.Cursor
 import javax.swing.event.HyperlinkEvent
@@ -34,7 +35,7 @@ class HtmlInfoPanel : Wrapper() {
     isVisible = false
   }
 
-  fun setInfo(text: String?, severity: Severity = Severity.INFO, linkActivationListener: ((HyperlinkEvent) -> Unit)? = null) {
+  fun setInfo(@Nls text: String?, severity: Severity = Severity.INFO, linkActivationListener: ((HyperlinkEvent) -> Unit)? = null) {
     if (text == null) {
       errorPane.text = ""
       currentSeverity = null

@@ -18,11 +18,11 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -110,14 +110,16 @@ public final class PluginInstaller {
     StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath()));
   }
 
-  public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent, IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+  public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent,
+                                               @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
+                                               boolean isUpdate) {
     DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
       .withUpdate(isUpdate)
       .withWaitForClassloaderUnload(true);
 
-    boolean uninstalledWithoutRestart = parentComponent != null
-      ? DynamicPlugins.unloadPluginWithProgress(null, parentComponent, (IdeaPluginDescriptorImpl)pluginDescriptor, options)
-      : DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, options);
+    boolean uninstalledWithoutRestart = parentComponent != null ?
+                                        DynamicPlugins.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
+                                        DynamicPlugins.unloadPlugin(pluginDescriptor, options);
 
     if (uninstalledWithoutRestart) {
       try {
@@ -141,7 +143,7 @@ public final class PluginInstaller {
   }
 
   /**
-   * @deprecated Use {@link #installAfterRestart(File, boolean, Path, IdeaPluginDescriptor)}
+   * @deprecated Use {@link #installAfterRestart(Path, boolean, Path, IdeaPluginDescriptor)}
    */
   @Deprecated
   public static void installAfterRestart(@NotNull File sourceFile,
@@ -328,7 +330,7 @@ public final class PluginInstaller {
         }
       }
 
-      if (file.toString().endsWith(".zip") && UpdateSettings.getInstance().isKeepPluginsArchive()) {
+      if (file.toString().endsWith(".zip") && Registry.is("ide.plugins.keep.archive")) {
         File tempFile = MarketplacePluginDownloadService.INSTANCE.getPluginTempFile();
         FileUtil.copy(file.toFile(), tempFile);
         MarketplacePluginDownloadService.INSTANCE.renameFileToZipRoot(tempFile);

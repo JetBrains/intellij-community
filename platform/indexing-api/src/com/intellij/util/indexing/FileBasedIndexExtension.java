@@ -125,4 +125,16 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
   public boolean needsForwardIndexWhenSharing() {
     return true;
   }
+
+  /**
+   * Whether this index is safe to be shared with the Shared Indexes plugin.
+   *
+   * This is a way to exclude wrongly implemented indexes from the shared indexes to avoid possible bugs.
+   * Any index can be implemented in a shareable way, so this method will be removed at some point.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public boolean canBeShared() {
+    return true;
+  }
 }

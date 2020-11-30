@@ -28,7 +28,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class AddMethodBodyFix implements IntentionAction {
   private final PsiMethod myMethod;
@@ -76,7 +75,7 @@ public final class AddMethodBodyFix implements IntentionAction {
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     return new AddMethodBodyFix(PsiTreeUtil.findSameElementInCopy(myMethod, target));
   }
 }

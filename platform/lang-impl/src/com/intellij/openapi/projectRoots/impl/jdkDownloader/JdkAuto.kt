@@ -97,7 +97,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
     return object : UnknownSdkLookup {
       val lazyDownloadModel: List<JdkItem> by lazy {
         indicator.pushState()
-        indicator.text = ProjectBundle.message("progress.title.downloading.jdk.list")
+        indicator.text = ProjectBundle.message("progress.text.downloading.jdk.list")
         try {
           JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator)
         } catch(e: ProcessCanceledException) {

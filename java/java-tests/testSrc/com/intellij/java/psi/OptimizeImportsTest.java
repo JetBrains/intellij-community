@@ -45,6 +45,17 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testStaticImportsToOptimize() { doTest(); }
   public void testStaticImportsToOptimizeMixed() { doTest(); }
   public void testStaticImportsToOptimize2() { doTest(); }
+  public void testStaticImportsToPreserve() {
+    myFixture.addClass("package pack.sample;\n" +
+                       "\n" +
+                       "public interface Sample {\n" +
+                       "    String Foo = \"FOO\";\n" +
+                       "    enum Type {\n" +
+                       "        T\n" +
+                       "    }\n" +
+                       "}\n");
+    doTest();
+  }
   public void testEmptyImportList() { doTest(); }
   public void testIDEADEV10716() { doTest(); }
   public void testUnresolvedImports() { doTest(); }

@@ -19,8 +19,12 @@ fun main(args: Array<String>) {
 }
 
 internal abstract class IconsClasses {
-  open val homePath: String get() = PathManager.getHomePath()
-  open val modules: List<JpsModule> get() = jpsProject(homePath).modules
+  open val homePath: String
+    get() = PathManager.getHomePath()
+
+  open val modules: List<JpsModule>
+    get() = jpsProject(homePath).modules
+
   open fun generator(home: Path, modules: List<JpsModule>) = IconsClassGenerator(home, modules)
 }
 

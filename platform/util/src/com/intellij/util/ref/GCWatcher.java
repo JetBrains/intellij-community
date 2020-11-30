@@ -17,9 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A utility to garbage-collect specified objects in tests. Create a GCWatcher using {@link #tracking} or {@link #fromClearedRef}
@@ -29,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class GCWatcher {
   private final ReferenceQueue<Object> myQueue = new ReferenceQueue<>();
-  private final Set<Reference<?>> myReferences = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Reference<?>> myReferences = ContainerUtil.newConcurrentSet();
 
   private GCWatcher(@NotNull Collection<?> objects) {
     for (Object o : objects) {

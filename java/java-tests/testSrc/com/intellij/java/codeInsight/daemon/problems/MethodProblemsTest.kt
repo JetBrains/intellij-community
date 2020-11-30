@@ -142,6 +142,43 @@ internal class MethodProblemsTest : ProjectProblemsViewTest() {
     }
   }
 
+  fun testAddExceptionAndRemoveFromThrowsList() {
+    val targetClass = myFixture.addClass("""
+      package foo;
+      
+      import java.io.IOException;
+
+      public class A {
+        public void foo() {}
+      }
+    """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+      package foo;
+      
+      public class B {
+        public void test(A a) {
+          a.foo();
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { method, factory ->
+        val exceptionRef = factory.createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_EXCEPTION, method.resolveScope)
+        method.throwsList.add(exceptionRef)
+      }
+
+      assertTrue(hasReportedProblems<PsiMethod>(refClass))
+
+      changeMethod(targetClass) { method, factory ->
+        method.throwsList.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
+      }
+
+      assertFalse(hasReportedProblems<PsiMethod>(refClass))
+    }
+  }
+
   fun testChangeOverrideMethodAndThenRemoveExtend() {
     myFixture.addClass("""
       package foo;

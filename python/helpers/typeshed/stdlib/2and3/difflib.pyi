@@ -1,5 +1,3 @@
-# Based on https://docs.python.org/2.7/library/difflib.html and https://docs.python.org/3.2/library/difflib.html
-
 import sys
 from typing import (
     Any,
@@ -18,6 +16,9 @@ from typing import (
     Union,
     overload,
 )
+
+if sys.version_info >= (3, 9):
+    from types import GenericAlias
 
 _T = TypeVar("_T")
 
@@ -53,6 +54,8 @@ class SequenceMatcher(Generic[_T]):
     def ratio(self) -> float: ...
     def quick_ratio(self) -> float: ...
     def real_quick_ratio(self) -> float: ...
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
 # mypy thinks the signatures of the overloads overlap, but the types still work fine
 @overload

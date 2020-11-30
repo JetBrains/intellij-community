@@ -69,7 +69,7 @@ public final class DomExtenderEP implements PluginAware {
 
     if (myExtender == null) {
       try {
-        myExtender = project.instantiateExtensionWithPicoContainerOnlyIfNeeded(extenderClassName, pluginDescriptor);
+        myExtender = project.instantiateClass(extenderClassName, pluginDescriptor);
       }
       catch (ProcessCanceledException e) {
         throw e;

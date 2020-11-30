@@ -4,19 +4,21 @@ package com.intellij.spi;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.spi.SPILanguage;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
-public final class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
+public final class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, FileType {
   public static final SPIFileType INSTANCE = new SPIFileType();
 
   private SPIFileType() {
@@ -54,15 +56,13 @@ public final class SPIFileType extends LanguageFileType implements FileTypeIdent
     return "";
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.FileTypes.Text;
   }
 
-  @Nullable
   @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return CharsetToolkit.UTF8;
+  public @NotNull CharsetHint getCharsetHint() {
+    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 }

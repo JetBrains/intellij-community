@@ -117,7 +117,9 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   private boolean ignoreInference(@NotNull PsiModifierListOwner owner, @Nullable String annotationFQN) {
     if (annotationFQN == null) return true;
     if (owner instanceof PsiMethod && PsiUtil.canBeOverridden((PsiMethod)owner)) {
-      return true;
+      if (!(owner instanceof PsiMethodImpl) || !JavaSourceInference.canInferFromSource((PsiMethodImpl)owner)) {
+        return true;
+      }
     }
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && HardcodedContracts.hasHardcodedContracts(owner)) {
       return true;

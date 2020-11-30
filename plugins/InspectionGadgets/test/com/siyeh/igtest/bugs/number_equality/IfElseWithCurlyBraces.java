@@ -86,7 +86,7 @@ public class IfElseWithCurlyBraces {
     }
   }
 
-  boolean isNoteffectivelyFinal(Double v1, Double v2) {
+  boolean isNotEffectivelyFinal(Double v1, Double v2) {
     if (v1 == null || v2 == null) {
       v2 = 3.14;
       return v1 <warning descr="Number objects are compared using '==', not 'equals()'">==</warning> v2;

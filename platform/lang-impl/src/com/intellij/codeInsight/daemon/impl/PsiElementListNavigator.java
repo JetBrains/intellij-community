@@ -212,7 +212,7 @@ public final class PsiElementListNavigator {
       final IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(initialTargetsList);
       afterPopupBuilderCreated(builder);
       if (myListRenderer instanceof PsiElementListCellRenderer) {
-        ((PsiElementListCellRenderer)myListRenderer).installSpeedSearch(builder);
+        ((PsiElementListCellRenderer)myListRenderer).installSpeedSearch(builder, true);
       }
 
       IPopupChooserBuilder<T> popupChooserBuilder = builder.

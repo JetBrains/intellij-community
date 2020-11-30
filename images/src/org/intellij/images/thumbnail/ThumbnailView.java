@@ -19,10 +19,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.intellij.images.ImagesBundle;
 import org.intellij.images.search.TagFilter;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public interface ThumbnailView extends Disposable, ImageComponentDecorator {
   DataKey<ThumbnailView> DATA_KEY = DataKey.create(ThumbnailView.class.getName());
 
-  String TOOLWINDOW_ID = ImagesBundle.message("thumbnails.toolwindow.name");
+  @NonNls String TOOLWINDOW_ID = "Thumbnails";
 
   @NotNull
   Project getProject();

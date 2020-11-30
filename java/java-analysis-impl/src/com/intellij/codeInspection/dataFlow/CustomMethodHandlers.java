@@ -136,7 +136,8 @@ final class CustomMethodHandlers {
     .register(anyOf(
       instanceCall("java.util.Random", "nextInt").parameterTypes("int"),
       instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int"),
-      instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int", "int")), CustomMethodHandlers::randomNextInt);
+      instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int", "int")), CustomMethodHandlers::randomNextInt)
+    .register(staticCall(JAVA_UTIL_ARRAYS, "copyOf"), CustomMethodHandlers::copyOfArray);
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
@@ -254,6 +255,13 @@ final class CustomMethodHandlers {
     DfaValue length = specialField.createValue(factory, qualifier);
     LongRangeSet range = DfIntType.extractRange(memState.getDfType(length));
     return intRange(LongRangeSet.range(-1, range.max() - 1));
+  }
+
+  private static @NotNull DfType copyOfArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
+    if (arguments.myArguments.length < 2) return TOP;
+    DfType size = state.getDfType(arguments.myArguments[1]).meet(intRange(LongRangeSet.indexRange()));
+    if (size == BOTTOM) return FAIL;
+    return typedObject(method.getReturnType(), Nullability.NOT_NULL).meet(ARRAY_LENGTH.asDfType(size)).meet(LOCAL_OBJECT);
   }
 
   private static @NotNull DfType collectionFactory(DfaCallArguments args,

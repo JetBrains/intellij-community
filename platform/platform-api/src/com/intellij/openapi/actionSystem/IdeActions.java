@@ -65,9 +65,10 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_CLONE_CARET_BELOW= "EditorCloneCaretBelow";
   @NonNls String ACTION_EDITOR_CLONE_CARET_ABOVE= "EditorCloneCaretAbove";
   @NonNls String ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE = "EditorAddCaretPerSelectedLine";
-  @NonNls String ACTION_EDITOR_TOGGLE_STICKY_SELECTION= "EditorToggleStickySelection";
-  @NonNls String ACTION_EDITOR_TOGGLE_OVERWRITE_MODE= "EditorToggleInsertState";
-  @NonNls String ACTION_EDITOR_TOGGLE_CASE= "EditorToggleCase";
+  @NonNls String ACTION_EDITOR_TOGGLE_STICKY_SELECTION = "EditorToggleStickySelection";
+  @NonNls String ACTION_EDITOR_TOGGLE_OVERWRITE_MODE = "EditorToggleInsertState";
+  @NonNls String ACTION_EDITOR_TOGGLE_CASE = "EditorToggleCase";
+  @NonNls String ACTION_EDITOR_TRANSPOSE = "EditorTranspose";
 
   @NonNls String ACTION_EDITOR_SHOW_PARAMETER_INFO = "ParameterInfo";
   @NonNls String ACTION_EDITOR_NEXT_PARAMETER = "NextParameter";
@@ -284,9 +285,12 @@ public interface IdeActions {
   @NonNls String MODULE_SETTINGS = "ModuleSettings";
 
   @NonNls String GROUP_WELCOME_SCREEN_QUICKSTART = "WelcomeScreen.QuickStart";
+  @NonNls String GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE = "WelcomeScreen.QuickStart.EmptyState";
+  @NonNls String GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE = "WelcomeScreen.QuickStart.ProjectsState";
   @NonNls String GROUP_WELCOME_SCREEN_DOC = "WelcomeScreen.Documentation";
   @NonNls String GROUP_WELCOME_SCREEN_CONFIGURE = "WelcomeScreen.Configure";
   @NonNls String GROUP_WELCOME_SCREEN_HELP = "WelcomeScreen.Help";
+  @NonNls String GROUP_WELCOME_SCREEN_LEARN_IDE = "WelcomeScreen.LearnIdeHelp";
   @NonNls String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";
   @NonNls String ACTION_MOVE = "Move";
   @NonNls String ACTION_RENAME = "RenameElement";

@@ -188,14 +188,17 @@ public final class PluginsAdvertiser {
 
         PluginsAdvertiserDialog advertiserDialog =
           new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[0]), myCustomPlugins);
+        advertiserDialog.setFinishFunction(result -> {
+          if (result) {
+            onSuccess.run();
+          }
+          return null;
+        });
         if (showDialog) {
-          if (advertiserDialog.showAndGet()) {
-            onSuccess.run();
-          }
-        } else {
-          if (advertiserDialog.doInstallPlugins()) {
-            onSuccess.run();
-          }
+          advertiserDialog.showAndGet();
+        }
+        else {
+          advertiserDialog.doInstallPlugins();
         }
       }
     });

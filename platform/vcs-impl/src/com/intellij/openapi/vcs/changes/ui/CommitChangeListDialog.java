@@ -74,7 +74,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.*;
 
 public abstract class CommitChangeListDialog extends DialogWrapper implements SingleChangeListCommitWorkflowUi, ComponentContainer {
-  public static final String DIALOG_TITLE = message("commit.dialog.title");
+  public static final @NlsContexts.DialogTitle String DIALOG_TITLE = message("commit.dialog.title");
 
   private static final String HELP_ID = "reference.dialogs.vcs.commit";
 
@@ -96,7 +96,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   @NotNull private final List<DataProvider> myDataProviders = new ArrayList<>();
   @NotNull private final EventDispatcher<InclusionListener> myInclusionEventDispatcher = EventDispatcher.create(InclusionListener.class);
 
-  @NotNull private String myDefaultCommitActionName = "";
+  @NotNull @NlsContexts.Button private String myDefaultCommitActionName = "";
   @Nullable private CommitAction myCommitAction;
   @NotNull private final List<CommitExecutorAction> myExecutorActions = new ArrayList<>();
 
@@ -625,12 +625,13 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @NotNull
   @Override
+  @NlsContexts.Button
   public String getDefaultCommitActionName() {
     return myDefaultCommitActionName;
   }
 
   @Override
-  public void setDefaultCommitActionName(@NotNull String defaultCommitActionName) {
+  public void setDefaultCommitActionName(@NotNull @NlsContexts.Button String defaultCommitActionName) {
     myDefaultCommitActionName = defaultCommitActionName;
   }
 

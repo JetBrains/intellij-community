@@ -15,8 +15,8 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.SpeedSearchComparator;
@@ -34,10 +34,10 @@ import java.util.ListIterator;
 
 class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
 
-  private XDebuggerTreeSearchSession mySearchSession;
+  public final int SEARCH_DEPTH = Registry.intValue("debugger.variablesView.rss.depth");
 
   XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
-    super(tree, toStringConvertor, false);
+    super(tree, toStringConvertor, true);
     setComparator(new SpeedSearchComparator(false, false) {
 
       @Override
@@ -49,131 +49,15 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       @Override
       public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
         myRecentSearchText = pattern;
-        boolean sensitive = false;
-        if (mySearchSession != null) {
-           sensitive = mySearchSession.getFindModel().isCaseSensitive();
-        }
-
-        int index = sensitive ? StringUtil.indexOf(text, pattern, 0)
-                              : StringUtil.indexOfIgnoreCase(text, pattern, 0);
-
+        int index = StringUtil.indexOfIgnoreCase(text, pattern, 0);
         return index >= 0 ? Collections.singleton(TextRange.from(index, pattern.length())) : null;
       }
     });
   }
 
-  boolean findOccurence(@NotNull String searchQuery){
-    Object element = findElement(searchQuery);
-    boolean found = element != null;
-    if (found) {
-      selectElement(element, searchQuery);
-    }
-    return found;
-  }
-
-  void searchSessionStarted(XDebuggerTreeSearchSession searchSession) {
-    mySearchSession = searchSession;
-    myCanExpand = true;
-  }
-
-  void searchSessionStopped() {
-    mySearchSession = null;
-    myCanExpand = false;
-  }
-
-  @Override
-  public boolean isPopupActive() {
-    if (mySearchSession != null) {
-      return true;
-    }
-    return super.isPopupActive();
-  }
-
-  boolean nextOccurence(@NotNull String searchQuery) {
-    final int selectedIndex = getSelectedIndex();
-    final ListIterator<?> it = getElementIterator(selectedIndex + 1);
-    final Object current;
-    if (it.hasPrevious()) {
-      current = it.previous();
-      it.next();
-    }
-    else {
-      current = null;
-    }
-    final String _s = searchQuery.trim();
-    while (it.hasNext()) {
-      final Object element = it.next();
-      if (isMatchingElement(element, _s)) {
-        selectElement(element, searchQuery);
-        return true;
-      }
-    }
-
-    if (UISettings.getInstance().getCycleScrolling()) {
-      final ListIterator<Object> i = getElementIterator(0);
-      while (i.hasNext()) {
-        final Object element = i.next();
-        if (isMatchingElement(element, _s)) {
-          selectElement(element, searchQuery);
-          return true;
-        }
-      }
-    }
-
-    if (current != null && isMatchingElement(current, _s)) {
-      selectElement(current, searchQuery);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  boolean previousOccurence(@NotNull String searchQuery) {
-    final int selectedIndex = getSelectedIndex();
-    if (selectedIndex < 0) return false;
-    final ListIterator<?> it = getElementIterator(selectedIndex);
-    final Object current;
-    if (it.hasNext()) {
-      current = it.next();
-      it.previous();
-    }
-    else {
-      current = null;
-    }
-    final String _s = searchQuery.trim();
-    while (it.hasPrevious()) {
-      final Object element = it.previous();
-      if (isMatchingElement(element, _s)) {
-        selectElement(element, searchQuery);
-        return true;
-      }
-    }
-
-    if (UISettings.getInstance().getCycleScrolling()) {
-      final ListIterator<Object> i = getElementIterator(getElementCount());
-      while (i.hasPrevious()) {
-        final Object element = i.previous();
-        if (isMatchingElement(element, _s)) {
-          selectElement(element, searchQuery);
-          return true;
-        }
-      }
-    }
-
-    if (current != null && isMatchingElement(current, _s)) {
-      selectElement(current, searchQuery);
-      return true;
-    }
-    else {
-      return false;
-    }
-  }
-
   @Nullable
   @Override
   protected Object findElement(@NotNull String s) {
-    if (!myCanExpand) return super.findElement(s);
-
     int selectedIndex = getSelectedIndex();
     if (selectedIndex < 0) {
       selectedIndex = 0;
@@ -211,19 +95,13 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
 
   @Override
   protected Object @NotNull [] getAllElements() {
-    if (!myCanExpand) return super.getAllElements();
-
     XDebuggerTreeNode root = ObjectUtils.tryCast(myComponent.getModel().getRoot(), XDebuggerTreeNode.class);
     int initialLevel = root != null ? root.getPath().getPathCount() : 0;
 
     return TreeUtil.treePathTraverser(myComponent)
-        .expand(n -> myComponent.isExpanded(n) || n.getPathCount() - initialLevel < getSearchDepth())
+        .expand(n -> myComponent.isExpanded(n) || n.getPathCount() - initialLevel < SEARCH_DEPTH)
         .traverse()
         .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode))
         .toArray(TreeUtil.EMPTY_TREE_PATH);
-  }
-
-  private int getSearchDepth() {
-    return mySearchSession.getFindModel().getSearchDepth();
   }
 }

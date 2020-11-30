@@ -2,6 +2,7 @@
 
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -22,7 +23,7 @@ public class ExtractMethodObjectViewDescriptor implements UsageViewDescriptor {
 
   @Override
   public String getProcessedElementsHeader() {
-    return "Method to be converted";
+    return JavaBundle.message("header.method.to.be.converted");
   }
 
   @NotNull

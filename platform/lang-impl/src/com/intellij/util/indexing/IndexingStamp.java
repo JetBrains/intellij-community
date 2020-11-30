@@ -420,8 +420,13 @@ public final class IndexingStamp {
     }
   }
 
-  private static final IntObjectMap<IndexingStamp.Timestamps> myTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
+  private static final IntObjectMap<IndexingStamp.Timestamps> ourTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(100);
+
+  static void dropTimestampMemoryCaches() {
+    flushCaches();
+    ourTimestampsCache.clear();
+  }
 
   public static long getIndexStamp(int fileId, ID<?, ?> indexName) {
     Lock readLock = getStripedLock(fileId).readLock();
@@ -437,7 +442,7 @@ public final class IndexingStamp {
 
   @TestOnly
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
-    myTimestampsCache.remove(fileId);
+    ourTimestampsCache.remove(fileId);
     try (DataOutputStream out =  FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
       new Timestamps(null).writeToStream(out);
     }
@@ -448,7 +453,7 @@ public final class IndexingStamp {
     if (!isValid) {
       id = -id;
     }
-    Timestamps timestamps = myTimestampsCache.get(id);
+    Timestamps timestamps = ourTimestampsCache.get(id);
     if (timestamps == null) {
       try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
         timestamps = new Timestamps(stream);
@@ -457,7 +462,7 @@ public final class IndexingStamp {
         FSRecords.handleError(e);
         throw new RuntimeException(e);
       }
-      if (isValid) myTimestampsCache.put(id, timestamps);
+      if (isValid) ourTimestampsCache.put(id, timestamps);
     }
     return timestamps;
   }
@@ -504,6 +509,22 @@ public final class IndexingStamp {
 
   public static void flushCache(@Nullable Integer finishedFile) {
     if (finishedFile != null && finishedFile == INVALID_FILE_ID) finishedFile = 0;
+
+    if (finishedFile != null) {
+      Lock readLock = getStripedLock(finishedFile).readLock();
+      readLock.lock();
+      try {
+        Timestamps timestamps = ourTimestampsCache.get(finishedFile);
+        if (timestamps == null) return;
+        if (!timestamps.isDirty()) {
+          ourTimestampsCache.remove(finishedFile);
+          return;
+        }
+      } finally {
+        readLock.unlock();
+      }
+    }
+
     // todo make better (e.g. FinishedFiles striping, remove integers)
     while (finishedFile == null || !ourFinishedFiles.offer(finishedFile)) {
       List<Integer> files = new ArrayList<>(ourFinishedFiles.size());
@@ -514,7 +535,7 @@ public final class IndexingStamp {
           Lock writeLock = getStripedLock(file).writeLock();
           writeLock.lock();
           try {
-            Timestamps timestamp = myTimestampsCache.remove(file);
+            Timestamps timestamp = ourTimestampsCache.remove(file);
             if (timestamp == null) continue;
 
             if (timestamp.isDirty() /*&& file.isValid()*/) {

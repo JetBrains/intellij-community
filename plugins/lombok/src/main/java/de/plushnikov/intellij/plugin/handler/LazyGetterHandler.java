@@ -3,12 +3,12 @@ package de.plushnikov.intellij.plugin.handler;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.InitializationUtils;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-public class LazyGetterHandler {
+public final class LazyGetterHandler {
 
   public static boolean isLazyGetterHandled(@NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) {
@@ -19,7 +19,7 @@ public class LazyGetterHandler {
       return false;
     }
 
-    final PsiAnnotation getterAnnotation = PsiAnnotationSearchUtil.findAnnotation(field, Getter.class);
+    final PsiAnnotation getterAnnotation = PsiAnnotationSearchUtil.findAnnotation(field, LombokClassNames.GETTER);
     return null != getterAnnotation && PsiAnnotationUtil.getBooleanAnnotationValue(getterAnnotation, "lazy", false);
   }
 

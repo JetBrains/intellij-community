@@ -2,6 +2,8 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,7 +29,7 @@ import javax.swing.JComponent
 
 abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
   protected val project get() = diffProcessor.project!!
-  private val previewFile = PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(diffProcessor) { getCurrentName() })
+  private val previewFile = EditorTabDiffPreviewVirtualFile(this)
   private val updatePreviewQueue =
     MergingUpdateQueue("updatePreviewQueue", 100, true, null, diffProcessor).apply {
       setRestartTimerOnAdd(true)
@@ -127,10 +129,20 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     return true
   }
 
+  private class EditorTabDiffPreviewVirtualFile(val preview: EditorTabPreview)
+    : PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(preview.diffProcessor) { preview.getCurrentName() }) {
+    init {
+      // EditorTabDiffPreviewProvider does not create new processor, so general assumptions of DiffVirtualFile are violated
+      preview.diffProcessor.putContextUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, true)
+      putUserData(SplitAction.FORBID_TAB_SPLIT, true)
+    }
+  }
+
   companion object {
     fun openPreview(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean, escapeHandler: Runnable? = null) {
       val wasAlreadyOpen = FileEditorManager.getInstance(project).isFileOpen(file)
-      val editor = FileEditorManager.getInstance(project).openFile(file, focusEditor, true).singleOrNull() ?: return
+      val diffPreviewFilesManager = EditorDiffPreviewFilesManager.getInstance(project)
+      val editor = diffPreviewFilesManager.openFile(file, focusEditor).singleOrNull() ?: return
 
       if (wasAlreadyOpen || escapeHandler == null) return
       EditorTabPreviewEscapeAction(escapeHandler).registerCustomShortcutSet(ESCAPE, editor.component, editor)

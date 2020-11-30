@@ -62,6 +62,9 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
       return;
     }
     final DefaultListModel model = (DefaultListModel) myList.getModel();
+    for (FileTemplate child : selectedTemplate.getChildren()) {
+      model.removeElement(child);
+    }
     final int selectedIndex = myList.getSelectedIndex();
     model.remove(selectedIndex);
     if (!model.isEmpty()) {

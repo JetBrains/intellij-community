@@ -326,8 +326,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         final DiagnosticSink diagnosticSink = new DiagnosticSink(context, Collections.unmodifiableCollection(myRefRegistrars));
 
         final String chunkName = chunk.getName();
-        context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.parsing.java.0",
-                                                                          chunk.getPresentableShortName())));
+        context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.parsing.java.0", chunk.getPresentableShortName())));
 
         final int filesCount = files.size();
         boolean compiledOk = true;
@@ -358,16 +357,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
         if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
           // unexpected exception occurred or compiler did not output any errors for some reason
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
-        }
-        if (diagnosticSink.getErrorCount() > 0) {
-          diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.compilation.failed.internal.java.compiler.error")));
         }
 
         if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
           throw new StopBuildException(
-            JpsBuildBundle.message("build.message.compilation.failed.errors.0.warnings.1", diagnosticSink.getErrorCount(),
-                                   diagnosticSink.getWarningCount())
+            JpsBuildBundle.message("build.message.compilation.failed.errors.0.warnings.1", diagnosticSink.getErrorCount(), diagnosticSink.getWarningCount())
           );
         }
       }
@@ -425,8 +420,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       if (shouldForkJavac) {
         forkSdk = getForkedJavacSdk(chunk, targetLanguageLevel);
         if (forkSdk == null) {
-          String text = "Cannot start javac process for " + chunk.getName() + ": unknown JDK home path.\nPlease check project configuration.";
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, text));
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.cannot.start.javac.process.for.0.unknown.jdk.home", chunk.getName())));
           return false;
         }
       }

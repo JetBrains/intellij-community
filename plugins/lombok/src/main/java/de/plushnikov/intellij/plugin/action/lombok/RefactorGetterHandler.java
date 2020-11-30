@@ -6,10 +6,12 @@ import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.action.BaseRefactorHandler;
-import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,25 +22,26 @@ public class RefactorGetterHandler extends BaseRefactorHandler {
     super(dataContext, project);
   }
 
-  protected String getChooserTitle() {
-    return "Select Fields to replace Getter-Method With @Getter";
+  @Override
+  protected @NlsContexts.DialogTitle String getChooserTitle() {
+    return LombokBundle.message("dialog.title.select.fields.to.replace.getter.method.with.getter");
   }
 
   @Override
-  protected String getNothingFoundMessage() {
-    return "No field getter have been found to generate @Getters for";
+  protected @NlsContexts.HintText String getNothingFoundMessage() {
+    return LombokBundle.message("hint.text.no.field.getter.have.been.found.to.generate.getters.for");
   }
 
   @Override
-  protected String getNothingAcceptedMessage() {
-    return "No fields with getter method were found";
+  protected @NlsContexts.HintText String getNothingAcceptedMessage() {
+    return LombokBundle.message("hint.text.no.fields.with.getter.method.were.found");
   }
 
   @Override
   protected List<EncapsulatableClassMember> getEncapsulatableClassMembers(PsiClass psiClass) {
     final List<EncapsulatableClassMember> result = new ArrayList<>();
     for (PsiField field : psiClass.getFields()) {
-      if (null != PropertyUtil.findPropertyGetter(psiClass, field.getName(), false, false)) {
+      if (null != PropertyUtilBase.findPropertyGetter(psiClass, field.getName(), false, false)) {
         result.add(new PsiFieldMember(field));
       }
     }
@@ -51,12 +54,12 @@ public class RefactorGetterHandler extends BaseRefactorHandler {
       final PsiElementClassMember elementClassMember = (PsiElementClassMember) classMember;
 
       PsiField psiField = (PsiField) elementClassMember.getPsiElement();
-      PsiMethod psiMethod = PropertyUtil.findPropertyGetter(psiField.getContainingClass(), psiField.getName(), false, false);
+      PsiMethod psiMethod = PropertyUtilBase.findPropertyGetter(psiField.getContainingClass(), psiField.getName(), false, false);
 
       if (null != psiMethod) {
         PsiModifierList modifierList = psiField.getModifierList();
         if (null != modifierList) {
-          PsiAnnotation psiAnnotation = modifierList.addAnnotation(Getter.class.getName());
+          PsiAnnotation psiAnnotation = modifierList.addAnnotation(LombokClassNames.GETTER);
 //          psiAnnotation.setDeclaredAttributeValue("value", )
 
           psiMethod.delete();

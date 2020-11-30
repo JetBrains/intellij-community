@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.executors
 
 import com.intellij.execution.Executor
@@ -57,6 +57,11 @@ abstract class ExecutorGroup<Settings : RunExecutorSettings> : Executor() {
     }
   }
 
+  companion object {
+    @JvmStatic
+    fun getGroupIfProxy(executor: Executor): ExecutorGroup<*>? = (executor as? ExecutorGroup<*>.ProxyExecutor)?.group()
+  }
+
   private inner class ProxyExecutor(private val settings: RunExecutorSettings, private val executorId: String) : Executor() {
     override fun getToolWindowId(): String = this@ExecutorGroup.toolWindowId
 
@@ -83,6 +88,8 @@ abstract class ExecutorGroup<Settings : RunExecutorSettings> : Executor() {
     override fun getHelpId(): String? = null
 
     override fun isApplicable(project: Project): Boolean = settings.isApplicable(project)
+
+    fun group() = this@ExecutorGroup
   }
 }
 

@@ -6,7 +6,8 @@ import com.intellij.compiler.BaseCompilerTestCase
 import com.intellij.compiler.CompilerWorkspaceConfiguration
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.compiler.CompileStatusNotification
+import com.intellij.openapi.compiler.*
+import com.intellij.openapi.compiler.CompilerMessageCategory.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -188,6 +189,34 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     } finally {
       workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = oldAutoShowErrorsInEditor
     }
+  }
+
+  @Suppress("DialogTitleCapitalization")
+  fun `test build messages started with carriage return`() {
+    val module = addModule("a", null)
+    myProject.messageBus.connect(testRootDisposable).subscribe(CompilerTopics.COMPILATION_STATUS, object : CompilationStatusListener {
+      override fun compilationFinished(aborted: Boolean, errors: Int, warnings: Int, compileContext: CompileContext) {
+        compileContext.addMessage(INFORMATION, "some progress 0%", null, -1, -1);
+        compileContext.addMessage(INFORMATION, "\rsome progress 30%", null, -1, -1);
+        compileContext.addMessage(INFORMATION, "\rsome progress 60%", null, -1, -1);
+        compileContext.addMessage(INFORMATION, "another message\n", null, -1, -1);
+        compileContext.addMessage(WARNING, "another yellow message\n", null, -1, -1);
+        compileContext.addMessage(INFORMATION, "\rsome progress 90%", null, -1, -1);
+        compileContext.addMessage(INFORMATION, "\rsome progress 95%", null, -1, -1);
+        compileContext.addMessage(INFORMATION, "this message will be dropped because of subsequent message started with CR", null, -1, -1);
+        compileContext.addMessage(INFORMATION, "\rsome progress 99%", null, -1, -1);
+        compileContext.addMessage(INFORMATION, "\rsome progress 100%", null, -1, -1);
+      }
+    })
+    build(module)
+    buildViewTestFixture.assertBuildViewTreeEquals("-\n" +
+                                                   " -build finished\n" +
+                                                   "  another yellow message")
+    buildViewTestFixture.assertBuildViewSelectedNode("build finished", "some progress 60%\n" +
+                                                                       "another message\n" +
+                                                                       "another yellow message\n" +
+                                                                       "some progress 95%\n" +
+                                                                       "some progress 100%", false)
   }
 
   private fun build(module: Module, errorsExpected: Boolean = false): CompilationLog? {

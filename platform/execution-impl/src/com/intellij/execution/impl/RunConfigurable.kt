@@ -24,6 +24,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.LabeledComponent.create
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.text.StringUtil
@@ -46,33 +47,36 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.datatransfer.Transferable
 import java.awt.event.KeyEvent
-import java.util.*
 import java.util.function.ToIntFunction
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.tree.*
 
-private const val TEMPLATE_GROUP_NODE_NAME = "Templates"
-
 internal val TEMPLATES_NODE_USER_OBJECT = object : Any() {
-  override fun toString() = TEMPLATE_GROUP_NODE_NAME
+  override fun toString() = ExecutionBundle.message("run.configuration.templates.node.name")
 }
 
 private const val INITIAL_VALUE_KEY = "initialValue"
 private val LOG = logger<RunConfigurable>()
 
+@Nls
 internal fun getUserObjectName(userObject: Any): String {
+  @Suppress("HardCodedStringLiteral")
   return when {
     userObject is ConfigurationType -> userObject.displayName
-    userObject === TEMPLATES_NODE_USER_OBJECT -> TEMPLATE_GROUP_NODE_NAME
+    userObject === TEMPLATES_NODE_USER_OBJECT -> ExecutionBundle.message("run.configuration.templates.node.name")
     userObject is ConfigurationFactory -> userObject.name
-    //Folder objects are strings
-    else -> if (userObject is SingleConfigurationConfigurable<*>) userObject.nameText else (userObject as? RunnerAndConfigurationSettingsImpl)?.name ?: userObject.toString()
+    userObject is SingleConfigurationConfigurable<*> -> userObject.nameText
+    userObject is RunnerAndConfigurationSettingsImpl -> userObject.name
+    // Folder objects are strings
+    userObject is String -> userObject
+    else -> userObject.toString()
   }
 }
 
@@ -131,19 +135,30 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
     }
 
+    fun isVirtualConfiguration(node: DefaultMutableTreeNode?) = when (node?.userObject) {
+      is SingleConfigurationConfigurable<*>, is RunnerAndConfigurationSettings -> {
+        getSettings(node)?.type is VirtualConfigurationType
+      }
+      is VirtualConfigurationType -> true
+      else -> false
+    }
+
     fun configurationTypeSorted(project: Project,
                                 showApplicableTypesOnly: Boolean,
-                                allTypes: List<ConfigurationType>): List<ConfigurationType> =
-      getTypesToShow(project, showApplicableTypesOnly, allTypes).sortedWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
+                                allTypes: List<ConfigurationType>,
+                                hideVirtualConfigurations : Boolean = false): List<ConfigurationType> =
+      getTypesToShow(project, showApplicableTypesOnly, allTypes, hideVirtualConfigurations)
+        .sortedWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
 
-    internal fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
+    internal fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>, hideVirtualConfigurations : Boolean = false): List<ConfigurationType> {
+      val allVisibleTypes = if (hideVirtualConfigurations) allTypes.filter { it !is VirtualConfigurationType } else allTypes
       if (showApplicableTypesOnly) {
-        val applicableTypes = allTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
+        val applicableTypes = allVisibleTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
         if (applicableTypes.isNotEmpty() && applicableTypes.size < (allTypes.size - 3)) {
           return applicableTypes
         }
       }
-      return allTypes
+      return allVisibleTypes
     }
   }
 
@@ -192,7 +207,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
     // add templates
     val templates = DefaultMutableTreeNode(TEMPLATES_NODE_USER_OBJECT)
-    for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
+    for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filter { it !is VirtualConfigurationType }) {
       val configurationFactories = type.configurationFactories
       val typeNode = DefaultMutableTreeNode(type)
       templates.add(typeNode)
@@ -313,7 +328,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     updateRightPanel(configurable)
   }
 
-  private fun showFolderField(node: DefaultMutableTreeNode, folderName: String) {
+  private fun showFolderField(node: DefaultMutableTreeNode, @Nls folderName: String) {
     rightPanel.removeAll()
     val p = JPanel(MigLayout("ins ${toolbarDecorator!!.actionsPanel.height} 5 0 0, flowx"))
     val textField = JTextField(folderName)
@@ -665,7 +680,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val nameText = if (configurable != null) configurable.nameText else configurationBean.settings.name
         if (!names.add(nameText)) {
           TreeUtil.selectNode(tree, node)
-          throw ConfigurationException("${type.displayName} with name \'$nameText\' already exists")
+          throw ConfigurationException(
+            ExecutionBundle.message("dialog.message.run.configuration.already.exists", type.displayName, nameText))
         }
         configurationBeans.add(configurationBean)
         if (settings === selectedSettings) {
@@ -680,11 +696,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       val folderName = node.userObject as String
       if (folderName.isEmpty()) {
         TreeUtil.selectNode(tree, node)
-        throw ConfigurationException("Folder name shouldn't be empty")
+        throw ConfigurationException(ExecutionBundle.message("dialog.message.folder.name.should.not.be.empty"))
       }
       if (!names.add(folderName)) {
         TreeUtil.selectNode(tree, node)
-        throw ConfigurationException("Folders name \'$folderName\' is duplicated")
+        throw ConfigurationException(ExecutionBundle.message("dialog.message.folders.have.same.name", folderName))
       }
     }
 
@@ -984,7 +1000,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     private fun showAddPopup(showApplicableTypesOnly: Boolean) {
       if (showApplicableTypesOnly && myPopupState.isRecentlyHidden) return // do not show new popup
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
-      val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes).toMutableList()
+      val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes, true).toMutableList()
       val hiddenCount = allTypes.size - configurationTypes.size
       if (hiddenCount > 0) {
         configurationTypes.add(NewRunConfigurationPopup.HIDDEN_ITEMS_STUB)
@@ -1030,7 +1046,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val node = each.lastPathComponent as DefaultMutableTreeNode
         val parent = node.parent as DefaultMutableTreeNode
         val kind = getKind(node)
-        if (!kind.isConfiguration && kind != FOLDER)
+        if (!kind.isConfiguration && kind != FOLDER || isVirtualConfiguration(node))
           continue
 
         if (node.userObject is SingleConfigurationConfigurable<*>) {
@@ -1125,8 +1141,9 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       val selections = tree.selectionPaths
       if (selections != null) {
         for (each in selections) {
-          val kind = getKind(each.lastPathComponent as DefaultMutableTreeNode)
-          if (kind.isConfiguration || kind == FOLDER) {
+          val node = each.lastPathComponent as DefaultMutableTreeNode
+          val kind = getKind(node)
+          if ((kind.isConfiguration || kind == FOLDER) && !isVirtualConfiguration(node)) {
             enabled = true
             break
           }
@@ -1231,7 +1248,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     return initialPosition - position
   }
 
-  protected inner class MyMoveAction(text: String, description: String?, icon: Icon, private val direction: Int) :
+  protected inner class MyMoveAction(@NlsActions.ActionText text: String,
+                                     @NlsActions.ActionDescription description: String?,
+                                     icon: Icon,
+                                     private val direction: Int) :
     AnAction(text, description, icon), AnActionButtonRunnable, AnActionButtonUpdater {
     override fun actionPerformed(e: AnActionEvent) {
       doMove()
@@ -1270,6 +1290,9 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       val path = tree.selectionPath
       if (path != null) {
         var o = path.lastPathComponent
+        if (o is DefaultMutableTreeNode && isVirtualConfiguration(o)) {
+          isEnabled = false
+        }
         if (o is DefaultMutableTreeNode && o.userObject == TEMPLATES_NODE_USER_OBJECT) {
           isEnabled = false
         }

@@ -2,6 +2,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 class ArrayStoreProblems {
+  void testLocalClass() {
+    abstract class Foo {}
+    Foo[] data = new Foo[1];
+    data[0] = new Foo() {};
+  }
+  
   void test(String[] args, Integer[] args2) {
     Object[] arr = args;
     arr[0] <warning descr="Storing element of type 'java.lang.Integer' to array of 'java.lang.String' elements will produce 'ArrayStoreException'">=</warning> 123;

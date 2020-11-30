@@ -559,8 +559,8 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
       final Set<PsiClass> unThrownSet = ContainerUtil.set(unThrown);
 
       final List<PsiClassType> redundantThrows = RedundantThrowsDeclarationLocalInspection.getRedundantThrowsCandidates(psiMethod, myIgnoreEntryPoints)
-        .filter(throwRefType -> unThrownSet.contains(throwRefType.getType().resolve()))
         .map(ThrowRefType::getType)
+        .filter(type -> unThrownSet.contains(type.resolve()))
         .toList();
 
       final StreamEx<PsiDocTag> javadocThrows = StreamEx.of(comment.getTags())

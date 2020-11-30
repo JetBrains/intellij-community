@@ -8,7 +8,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 
 public final class DisabledPluginsState {
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
@@ -122,7 +122,7 @@ public final class DisabledPluginsState {
   }
 
   /**
-   * @deprecated Bad API, sorry. Please use {@link #isDisabled(PluginId)} to check plugin's state,
+   * @deprecated Bad API, sorry. Please use {@link PluginManagerCore#isDisabled(PluginId)} to check plugin's state,
    * {@link #enablePlugin(PluginId)}/{@link #disablePlugin(PluginId)} for state management,
    * {@link #disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */
@@ -168,27 +168,57 @@ public final class DisabledPluginsState {
   }
 
   public static void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins, boolean enabled) {
-    enablePluginsById(ContainerUtil.map(plugins, (plugin) -> plugin.getPluginId()), enabled);
+    enablePlugins(plugins, enabled, true);
+  }
+
+  static void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins,
+                            boolean enabled,
+                            boolean updateDescriptors) {
+    Set<PluginId> pluginIds = new LinkedHashSet<>(plugins.size());
+    for (PluginDescriptor descriptor : plugins) {
+      PluginId value = descriptor.getPluginId();
+      if (value != null) {
+        pluginIds.add(value);
+      }
+    }
+    enablePluginsById(pluginIds, enabled, updateDescriptors);
   }
 
   public static void enablePluginsById(@NotNull Collection<PluginId> plugins, boolean enabled) {
+    enablePluginsById(plugins, enabled, true);
+  }
+
+  // todo reconsider whether PluginDescriptor#setEnabled should be updated as well
+  static void enablePluginsById(@NotNull Collection<PluginId> plugins,
+                                boolean enabled,
+                                boolean updateDescriptors) {
     Set<PluginId> disabled = getDisabledIds();
-    int sizeBefore = disabled.size();
-    for (PluginId plugin : plugins) {
-      if (enabled) {
-        disabled.remove(plugin);
+    boolean changed = enabled ?
+                      disabled.removeAll(plugins) :
+                      disabled.addAll(plugins);
+
+    String message;
+    if (updateDescriptors) {
+      List<IdeaPluginDescriptor> descriptors = new ArrayList<>(plugins.size());
+      Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+      for (PluginId pluginId : plugins) {
+        IdeaPluginDescriptor o = pluginIdMap.get(pluginId);
+        if (o != null) {
+          descriptors.add(o);
+        }
       }
-      else {
-        disabled.add(plugin);
-      }
-      IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(plugin);
-      if (pluginDescriptor != null) {
-        pluginDescriptor.setEnabled(enabled);
+
+      message = joinedDescriptors(descriptors, enabled);
+      for (IdeaPluginDescriptor descriptor : descriptors) {
+        descriptor.setEnabled(enabled);
       }
     }
+    else {
+      message = joinedPluginIds(plugins, Function.identity(), enabled);
+    }
+    getLogger().info(message);
 
-    if (sizeBefore == disabled.size()) {
-      // nothing changed
+    if (!changed) {
       return;
     }
 
@@ -231,5 +261,33 @@ public final class DisabledPluginsState {
 
   static void invalidate() {
     ourDisabledPlugins = null;
+  }
+
+  private static @NotNull String joinedDescriptors(@NotNull Collection<? extends PluginDescriptor> descriptors, boolean enabled) {
+    return joinedPluginIds(descriptors, PluginDescriptor::getPluginId, enabled);
+  }
+
+  private static @NotNull <T> String joinedPluginIds(@NotNull Collection<T> pluginIds, @NotNull Function<T, PluginId> pluginIdGetter, boolean enabled) {
+    StringBuilder buffer = new StringBuilder("Plugins to ")
+      .append(enabled ? "enable" : "disable")
+      .append(": [");
+
+    boolean isFirst = true;
+    for (T item : pluginIds) {
+      PluginId pluginId = pluginIdGetter.apply(item);
+      if (pluginId == null) {
+        continue;
+      }
+
+      CharSequence string = pluginId.getIdString();
+      if (isFirst) {
+        isFirst = false;
+      }
+      else {
+        buffer.append(", ");
+      }
+      buffer.append(string);
+    }
+    return buffer.append(']').toString();
   }
 }

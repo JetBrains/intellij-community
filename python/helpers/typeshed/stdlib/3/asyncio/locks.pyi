@@ -1,8 +1,9 @@
 import sys
 from types import TracebackType
-from typing import Any, Awaitable, Callable, Generator, Optional, Type, TypeVar, Union
+from typing import Any, Awaitable, Callable, Deque, Generator, Optional, Type, TypeVar, Union
 
 from .events import AbstractEventLoop
+from .futures import Future
 
 _T = TypeVar("_T")
 
@@ -55,10 +56,13 @@ class Condition(_ContextManagerMixin):
     def notify_all(self) -> None: ...
 
 class Semaphore(_ContextManagerMixin):
+    _value: int
+    _waiters: Deque[Future[Any]]
     def __init__(self, value: int = ..., *, loop: Optional[AbstractEventLoop] = ...) -> None: ...
     def locked(self) -> bool: ...
     async def acquire(self) -> bool: ...
     def release(self) -> None: ...
+    def _wake_up_next(self) -> None: ...
 
 class BoundedSemaphore(Semaphore):
     def __init__(self, value: int = ..., *, loop: Optional[AbstractEventLoop] = ...) -> None: ...

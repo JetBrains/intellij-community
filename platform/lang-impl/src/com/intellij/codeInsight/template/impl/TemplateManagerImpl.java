@@ -276,17 +276,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #isApplicable(CustomLiveTemplate, TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate,
-                                     @NotNull Editor editor,
-                                     @NotNull PsiFile file) {
-    return isApplicable(customLiveTemplate, TemplateActionContext.expanding(file, editor));
-  }
-
-  /**
    * @implNote custom templates and callbacks require additional work. There is a single place where offset provided externally, instead
    * of using one from the callback and this is probably a mistake. If this is the case, action context may be included into the callback.
    */
@@ -317,19 +306,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       templateStart = argOffset - template.getKey().length();
     }
     return templateStart;
-  }
-
-  /**
-   * @deprecated use {@link #isApplicable(CustomLiveTemplate, TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate,
-                                     @NotNull Editor editor,
-                                     @NotNull PsiFile file, boolean wrapping) {
-    return isApplicable(
-      customLiveTemplate,
-      wrapping ? TemplateActionContext.surrounding(file, editor) : TemplateActionContext.expanding(file, editor));
   }
 
   public Map<TemplateImpl, String> findMatchingTemplates(final PsiFile file,
@@ -542,9 +518,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #isApplicable(TemplateActionContext, TemplateImpl)}
+   * @deprecated use {@link #isApplicable(TemplateImpl, TemplateActionContext)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
   public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
     return isApplicable(template, TemplateActionContext.expanding(file, offset));
@@ -566,7 +542,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   /**
    * @deprecated use {@link #listApplicableTemplates(TemplateActionContext)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
   public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset, boolean selectionOnly) {
     return listApplicableTemplates(TemplateActionContext.create(file, null, offset, offset, selectionOnly));
@@ -586,34 +562,10 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return result;
   }
 
-  /**
-   * @deprecated use {@link #listApplicableTemplateWithInsertingDummyIdentifier(TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static List<TemplateImpl> listApplicableTemplateWithInsertingDummyIdentifier(Editor editor, PsiFile file, boolean selectionOnly) {
-    return listApplicableTemplateWithInsertingDummyIdentifier(
-      selectionOnly ? TemplateActionContext.surrounding(file, editor) : TemplateActionContext.expanding(file, editor)
-    );
-  }
-
   public static List<TemplateImpl> listApplicableTemplateWithInsertingDummyIdentifier(@NotNull TemplateActionContext templateActionContext) {
     OffsetsInFile offsets = insertDummyIdentifierWithCache(templateActionContext);
     return listApplicableTemplates(TemplateActionContext.create(
       offsets.getFile(), null, getStartOffset(offsets), getEndOffset(offsets), templateActionContext.isSurrounding()));
-  }
-
-  /**
-   * @deprecated use {@link #listApplicableTemplates(TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull Editor editor,
-                                                                       @NotNull PsiFile file,
-                                                                       boolean selectionOnly) {
-    return listApplicableCustomTemplates(
-      selectionOnly ? TemplateActionContext.surrounding(file, editor) : TemplateActionContext.expanding(file, editor)
-    );
   }
 
   public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull TemplateActionContext templateActionContext) {
@@ -624,15 +576,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       }
     }
     return result;
-  }
-
-  /**
-   * @deprecated use {@link #getApplicableContextTypes(TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static Set<TemplateContextType> getApplicableContextTypes(PsiFile file, int offset) {
-    return getApplicableContextTypes(TemplateActionContext.expanding(file, offset));
   }
 
   public static Set<TemplateContextType> getApplicableContextTypes(@NotNull TemplateActionContext templateActionContext) {

@@ -8,10 +8,13 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.executors.ExecutorGroup;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.AdjustingTabSettingsEditor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -54,8 +57,8 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       Disposer.register(this, myCompound);
       if (myConfigurationEditor instanceof SettingsEditorGroup) {
         SettingsEditorGroup<RunConfiguration> group = (SettingsEditorGroup<RunConfiguration>)myConfigurationEditor;
-        List<Pair<String, SettingsEditor<RunConfiguration>>> editors = group.getEditors();
-        for (Pair<String, SettingsEditor<RunConfiguration>> pair : editors) {
+        List<Pair<@TabTitle String, SettingsEditor<RunConfiguration>>> editors = group.getEditors();
+        for (Pair<@TabTitle String, SettingsEditor<RunConfiguration>> pair : editors) {
           myCompound.addEditor(pair.getFirst(), new ConfigToSettingsWrapper(pair.getSecond()));
         }
       }
@@ -68,7 +71,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       myRunnersComponent = new RunnersEditorComponent();
 
       for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
-        ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(executor.getId(), myConfiguration);
+        ProgramRunner<RunnerSettings> runner = getRunner(executor, myConfiguration);
         if (runner != null) {
           JComponent perRunnerSettings = createCompositePerRunnerSettings(executor, runner);
           if (perRunnerSettings != null) {
@@ -97,6 +100,19 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
                              });
       }
     }
+  }
+
+  @Nullable
+  private static ProgramRunner<RunnerSettings> getRunner(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
+    if (executor instanceof ExecutorGroup<?>) {
+      for (Executor childExecutor : ((ExecutorGroup<?>)executor).childExecutors()) {
+        ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(childExecutor.getId(), configuration);
+        if (runner != null) {
+          return runner;
+        }
+      }
+    }
+    return ProgramRunner.getRunner(executor.getId(), configuration);
   }
 
   @Nullable
@@ -231,7 +247,8 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       updateRunnerComponent();
       myRunnersList.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
         label.setIcon(value.getIcon());
-        label.setText(value.getId());
+        //noinspection HardCodedStringLiteral
+        label.setText(ExecutionUtil.getExecutorName(value));
       }));
       myScrollPane.setBorder(JBUI.Borders.empty());
       myScrollPane.setViewportBorder(JBUI.Borders.empty());
@@ -327,6 +344,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     }
   }
 
+  @TabTitle
   private static String getRunnersTabName() {
     return ExecutionBundle.message("run.configuration.startup.connection.rab.title");
   }

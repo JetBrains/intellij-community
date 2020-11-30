@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.android.tools.idea.gradle.dsl;
 
+import static com.google.common.base.Splitter.on;
+import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
+
 import com.google.common.base.Strings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -9,17 +12,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
-import static com.google.common.base.Splitter.on;
-import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
-
-public class GradleUtil {
+public final class GradleUtil {
 
   public static final String GRADLE_PATH_SEPARATOR = ":";
   public static final String FN_GRADLE_PROPERTIES = "gradle.properties";

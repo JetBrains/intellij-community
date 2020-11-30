@@ -5,6 +5,7 @@
   <category>Languages</category>
   <resource-bundle>messages.MarkdownBundle</resource-bundle>
   <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.platform.images</depends>
   <depends optional="true" config-file="plugin-intelliLang.xml">org.intellij.intelliLang</depends>
 
   <description><![CDATA[
@@ -67,6 +68,8 @@ Includes the following features:</p>
                             implementationClass="org.intellij.plugins.markdown.injection.LanguageListCompletionContributor"/>
 
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
+
+    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.MarkdownImagePasteProvider"/>
 
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>

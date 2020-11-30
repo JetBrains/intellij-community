@@ -5,6 +5,7 @@ import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.execution.target.ContributedConfigurationBase.Companion.getTypeImpl
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
@@ -48,7 +49,20 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
 
   fun resolvedConfigs(): List<C> = resolvedInstances.toList()
 
-  fun addConfig(config: C) = resolvedInstances.add(config)
+  fun addConfig(config: C) {
+    if (resolvedInstances.contains(config)) {
+      Logger.getInstance(ContributedConfigurationsList::class.java).error("Cannot add duplicate: $config")
+      return
+    }
+    resolvedInstances.add(config)
+  }
+
+  fun replaceAllWith(newList: List<C>) {
+    with(resolvedInstances) {
+      clear()
+      addAll(newList)
+    }
+  }
 
   fun removeConfig(config: C) = resolvedInstances.remove(config)
 

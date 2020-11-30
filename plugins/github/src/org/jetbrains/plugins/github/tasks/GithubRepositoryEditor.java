@@ -22,10 +22,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
-/**
- * @author Dennis.Ushakov
- */
-public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepository> {
+final class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepository> {
   private MyTextField myRepoAuthor;
   private MyTextField myRepoName;
   private MyTextField myToken;
@@ -35,7 +32,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   private JBLabel myRepositoryLabel;
   private JBLabel myTokenLabel;
 
-  public GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<? super GithubRepository> changeListener) {
+  GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<? super GithubRepository> changeListener) {
     super(project, repository, changeListener);
     myUrlLabel.setVisible(false);
     myUsernameLabel.setVisible(false);

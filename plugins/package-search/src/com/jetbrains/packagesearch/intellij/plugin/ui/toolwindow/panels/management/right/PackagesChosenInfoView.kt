@@ -1,29 +1,30 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.right
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.NlsContexts.LinkLabel
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchPluginIcons
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StackOverflowTag
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Author
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2GitHub
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2LinkedFile
+import com.jetbrains.packagesearch.intellij.plugin.normalizeSpace
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InfoLink
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InfoLink.GITHUB
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDependency
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
+import icons.PackageSearchIcons
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.FlowLayout
-import java.util.ArrayList
+import java.util.*
 import javax.swing.Icon
 import javax.swing.JPanel
 import javax.swing.SwingConstants
-import org.apache.commons.lang3.StringUtils
 
 class PackagesChosenInfoView {
 
@@ -102,7 +103,7 @@ class PackagesChosenInfoView {
         if (authors.isEmpty()) return
 
         val authorsString = authors.filterNot { it.name.isNullOrBlank() }
-            .map { StringUtils.normalizeSpace(it.name) }
+            .map { it.name.normalizeSpace() }
             .joinToString { it ?: "" }
 
         val byString = PackageSearchBundle.message("packagesearch.terminology.by.someone", authorsString)
@@ -140,17 +141,17 @@ class PackagesChosenInfoView {
         if (tags.isEmpty()) return
 
         linkComponents.addAll(tags.map {
-            createHyperlinkLabel(
-                PackageSearchBundle.message("packagesearch.ui.toolwindow.stackover.tagWithCount", it.tag, it.count),
-                PackageSearchBundle.message("packagesearch.wellknown.url.stackoverflow", it.tag),
-                PackageSearchPluginIcons.StackOverflow
-            )
+          createHyperlinkLabel(
+            PackageSearchBundle.message("packagesearch.ui.toolwindow.stackover.tagWithCount", it.tag, it.count),
+            PackageSearchBundle.message("packagesearch.wellknown.url.stackoverflow", it.tag),
+            PackageSearchIcons.StackOverflow
+          )
         })
     }
 
-    private fun renderLicenseIfValid(it: StandardV2LinkedFile, miscPanels: ArrayList<JPanel?>) {
-        val licenseUrl = it.htmlUrl ?: it.url
-        val licenseName = it.name ?: PackageSearchBundle.message("packagesearch.terminology.license.information")
+    private fun renderLicenseIfValid(linkedFile: StandardV2LinkedFile, miscPanels: ArrayList<JPanel?>) {
+        val licenseUrl = linkedFile.htmlUrl ?: linkedFile.url
+        val licenseName = linkedFile.name ?: PackageSearchBundle.message("packagesearch.terminology.license.information")
 
         if (!licenseUrl.isNullOrEmpty()) {
             miscPanels.add(
@@ -171,7 +172,7 @@ class PackagesChosenInfoView {
         panel.isVisible = false
     }
 
-    private fun createHyperlinkLabel(text: String, url: String?, icon: Icon? = null): Component {
+    private fun createHyperlinkLabel(@LinkLabel text: String, url: String?, icon: Icon? = null): Component {
         return if (!url.isNullOrEmpty() &&
             (url.startsWith("http://") || url.startsWith("https://"))) {
 

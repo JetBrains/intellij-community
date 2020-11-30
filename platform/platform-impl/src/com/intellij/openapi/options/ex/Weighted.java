@@ -3,10 +3,16 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 
 import java.util.Comparator;
 
-interface Weighted {
+/**
+ * Allows to sort configurables in generic configurables groups.
+ *
+ * @see DisplayPrioritySortable
+ */
+public interface Weighted {
   int getWeight();
 
   Comparator<Configurable> COMPARATOR = (configurable1, configurable2) -> {

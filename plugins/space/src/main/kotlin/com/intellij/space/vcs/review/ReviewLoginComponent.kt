@@ -2,7 +2,7 @@
 package com.intellij.space.vcs.review
 
 import com.intellij.openapi.project.Project
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.SpaceSettingsPanel
 import com.intellij.space.vcs.SpaceProjectInfo
@@ -33,7 +33,7 @@ internal class ReviewLoginComponent(lifetime: Lifetime,
         view.setContent(loginLabel)
       }
       else {
-        val workspace = space.workspace.value!!
+        val workspace = SpaceWorkspaceComponent.getInstance().workspace.value!!
         val client = workspace.client
 
         val reviewsListVm = SpaceReviewsListVmImpl(lifetime,
@@ -47,7 +47,7 @@ internal class ReviewLoginComponent(lifetime: Lifetime,
                                                    spaceRepos,
                                                    client,
                                                    reviewsListVm,
-                                                   SpaceSelectedReviewVmImpl())
+                                                   SpaceSelectedReviewVmImpl(workspace, spaceProjectInfo))
         view.setContent(reviewComponent)
       }
       view.validate()

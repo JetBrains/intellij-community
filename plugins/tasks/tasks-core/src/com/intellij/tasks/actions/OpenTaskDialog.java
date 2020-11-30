@@ -101,7 +101,6 @@ public class OpenTaskDialog extends DialogWrapper {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         LocalTaskImpl oldTask = new LocalTaskImpl(myTask);
-        //noinspection HardCodedStringLiteral
         myTask.setSummary(myNameField.getText());
         for (TaskDialogPanel panel : myPanels) {
           panel.taskNameChanged(oldTask, myTask);

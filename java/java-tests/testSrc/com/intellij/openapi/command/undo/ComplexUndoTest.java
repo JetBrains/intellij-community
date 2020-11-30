@@ -8,13 +8,12 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-
-import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
 
 public class ComplexUndoTest extends EditorUndoTestCase {
   private static final Charset WINDOWS_1251 = Charset.forName("windows-1251");
@@ -77,7 +76,7 @@ public class ComplexUndoTest extends EditorUndoTestCase {
 
   public void testDoesNotLoseCharset() {
     char utf8character = '\u00e9';
-    doEncodingTest(myProject, null, WINDOWS_1251.name(), () -> PlatformTestUtil.withEncoding(WINDOWS_1251.name(), () -> {
+    EditorTestUtil.saveEncodingsIn(myProject, null, WINDOWS_1251, () -> PlatformTestUtil.withEncoding(WINDOWS_1251.name(), () -> {
       assertEquals(CharsetToolkit.UTF8, EncodingManager.getInstance().getDefaultCharsetName());
       assertEquals(WINDOWS_1251, Charset.defaultCharset());
       VirtualFile virtualFile = createFileInCommand("f.java");

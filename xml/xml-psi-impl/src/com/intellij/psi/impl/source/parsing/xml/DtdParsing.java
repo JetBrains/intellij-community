@@ -170,7 +170,7 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
       }
       else if (parseConditionalSection()) {
       }
-      else if (tokenType != null) {
+      else {
         addToken();
       }
     }
@@ -602,13 +602,14 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
       addToken();
       group.done(XML_ELEMENT_CONTENT_GROUP);
       return true;
-    } else if (b) {
+    }
+    if (b) {
       myBuilder.error(XmlPsiBundle.message("dtd.parser.message.rparen.expected"));
       group.done(XML_ELEMENT_CONTENT_GROUP);
       return false;
     }
     group.done(XML_ELEMENT_CONTENT_GROUP);
-    return b;
+    return false;
   }
 
   private void parseAttlistDecl() {

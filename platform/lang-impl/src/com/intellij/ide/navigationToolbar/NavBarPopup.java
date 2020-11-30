@@ -2,8 +2,8 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -46,6 +46,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
     panel.installPopupHandler(getList(), selectedIndex);
+    
     getList().addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
@@ -92,7 +93,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private void show(final NavBarItem item, boolean checkRepaint) {
-    UIEventLogger.logUIEvent(UIEventId.NavBarShowPopup);
+    UIEventLogger.NavBarShowPopup.log(myPanel.getProject());
 
     final RelativePoint point = new RelativePoint(item, new Point(0, item.getHeight()));
     final Point p = point.getPoint(myPanel);
@@ -109,6 +110,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       int offset = NavBarUIManager.getUI().getPopupOffset(item);
       show(myPanel, p.x - offset, p.y, myPanel, new HintHint(myPanel, p));
       final JBList list = getList();
+      //noinspection HardCodedStringLiteral
       AccessibleContextUtil.setName(list, item.getText());
       if (0 <= myIndex && myIndex < list.getItemsCount()) {
         ScrollingUtil.selectItem(list, myIndex);
@@ -174,6 +176,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
     JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o, false));
     component.putClientProperty(JBLIST_KEY, list);
+    OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(component);
     return component;
   }
 

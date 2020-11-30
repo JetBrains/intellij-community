@@ -9,7 +9,6 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.util.ui.Advertiser;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
@@ -17,7 +16,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -56,6 +54,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -138,7 +137,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
-    myCellRenderer = new LookupCellRenderer(this);
+    myCellRenderer = new LookupCellRenderer(this, myEditor.getContentComponent());
     myList.setCellRenderer(myCellRenderer);
 
     myList.setFocusable(false);
@@ -1181,7 +1180,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return;
     }
 
-    UIEventLogger.logUIEvent(UIEventId.LookupShowElementActions);
+    UIEventLogger.LookupShowElementActions.log(myProject);
 
     Rectangle itemBounds = getCurrentItemBounds();
     Rectangle visibleRect = SwingUtilities.convertRectangle(myList, myList.getVisibleRect(), getComponent());

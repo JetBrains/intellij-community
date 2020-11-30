@@ -622,36 +622,29 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testReplacePreserveCase() {
-    configureByText(FileTypes.PLAIN_TEXT, "Bar bar BAR");
     FindModel model = new FindModel();
-    model.setStringToFind("bar");
-    model.setStringToReplace("foo");
     model.setPromptOnReplace(false);
     model.setPreserveCase(true);
-
+    checkReplacement(model,"Bar bar BAR", "bar", "foo", "Foo foo FOO");
+    checkReplacement(model, null, "Foo", "Bar", "Bar bar BAR");
+    checkReplacement(model, "Bar bar", "bar", "fooBar", "FooBar fooBar");
+    checkReplacement(model, "abc1 Abc1 ABC1", "ABC1", "DEF1", "def1 Def1 DEF1");
+    checkReplacement(model, "a1, a1", "a1", "abc", "abc, abc");
+    checkReplacement(model, "A1, A1", "a1", "abc", "ABC, ABC");
+    checkReplacement(model,
+                     "display preferences, DISPLAY PREFERENCES, display Preferences, Display preferences",
+                     "display preferences", "Report",
+                     "report, REPORT, report, Report");
+  }
+  private void checkReplacement(FindModel model, String initialText, String toFind, String toReplace, String expectedResult) {
+    if (initialText != null) {
+      configureByText(FileTypes.PLAIN_TEXT, initialText);
+    }
+    model.setStringToFind(toFind);
+    model.setStringToReplace(toReplace);
     FindUtil.replace(myProject, myEditor, 0, model);
-    assertEquals("Foo foo FOO", myEditor.getDocument().getText());
+    assertEquals(expectedResult, myEditor.getDocument().getText());
 
-    model.setStringToFind("Foo");
-    model.setStringToReplace("Bar");
-    FindUtil.replace(myProject, myEditor, 0, model);
-    assertEquals("Bar bar BAR", myEditor.getDocument().getText());
-
-    configureByText(FileTypes.PLAIN_TEXT, "Bar bar");
-
-    model.setStringToFind("bar");
-    model.setStringToReplace("fooBar");
-
-    FindUtil.replace(myProject, myEditor, 0, model);
-    assertEquals("FooBar fooBar", myEditor.getDocument().getText());
-
-    configureByText(FileTypes.PLAIN_TEXT, "abc1 Abc1 ABC1");
-
-    model.setStringToFind("ABC1");
-    model.setStringToReplace("DEF1");
-
-    FindUtil.replace(myProject, myEditor, 0, model);
-    assertEquals("def1 Def1 DEF1", myEditor.getDocument().getText());
   }
 
   public void testFindWholeWords() {
@@ -1006,7 +999,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     FindModel findModel = FindManagerTestUtils.configureFindModel("System.currentTimeMillis();\n   System.currentTimeMillis();");
     findModel.setMultiline(true);
     String fileContent = "System.currentTimeMillis();\n   System.currentTimeMillis();\n\n" +
-                  "        System.currentTimeMillis();\n       System.currentTimeMillis();";
+                  "        System.currentTimeMillis();\n   System.currentTimeMillis();";
     FindResult findResult = myFindManager.findString(fileContent, 0, findModel, null);
     assertTrue(findResult.isStringFound());
     findResult = myFindManager.findString(fileContent, findResult.getEndOffset(), findModel, null);
@@ -1017,7 +1010,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     String text = "final override val\n" +
                   "      d1PrimitiveType by lazyThreadSafeIdempotentGenerator { D1PrimitiveType( typeManager = this ) }";
     String pattern = "final override val\n" +
-                     "d(\\w+)PrimitiveType by lazyThreadSafeIdempotentGenerator \\{ D(\\w+)PrimitiveType\\( typeManager = this \\) \\}";
+                     "\\s+d(\\w+)PrimitiveType by lazyThreadSafeIdempotentGenerator \\{ D(\\w+)PrimitiveType\\( typeManager = this \\) \\}";
     String replacement = "";
 
     FindModel findModel = FindManagerTestUtils.configureFindModel(pattern);

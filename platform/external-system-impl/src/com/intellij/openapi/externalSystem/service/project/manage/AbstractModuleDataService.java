@@ -102,7 +102,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         }
         String productionModuleId = node.getData().getProductionModuleId();
         modelsProvider.setTestModuleProperties(module, productionModuleId);
-        setModuleOptions(module, node);
+        setModuleOptions(module, node, modelsProvider);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
 
@@ -186,7 +186,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       .filter(module -> !ExternalSystemApiUtil.isExternalSystemAwareModule(projectSystemId, module))
       .forEach(module -> {
         ExternalSystemModulePropertyManager.getInstance(module)
-          .setExternalOptions(projectSystemId, moduleData, node.getData(ProjectKeys.PROJECT));
+          .setExternalOptions(projectSystemId, moduleData, node.getData(ProjectKeys.PROJECT), modelsProvider);
       });
 
   }
@@ -366,7 +366,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       @Override
       protected JComponent createCenterPanel() {
         orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        orphanModulesList.setItems(orphanModules, module -> FileUtilRt.getNameWithoutExtension(new File(module.getFirst()).getName()));
+        orphanModulesList.setItems(orphanModules, module -> FileUtilRt.getNameWithoutExtension(new File(module.getFirst()).getName())); //NON-NLS
         orphanModulesList.setBorder(JBUI.Borders.empty(5));
 
         JScrollPane myModulesScrollPane =
@@ -418,11 +418,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     ExternalSystemModulePropertyManager.getInstance(module).unlinkExternalOptions();
   }
 
-  protected void setModuleOptions(Module module, DataNode<E> moduleDataNode) {
+  protected void setModuleOptions(Module module, DataNode<E> moduleDataNode, IdeModifiableModelsProvider modelsProvider) {
     ModuleData moduleData = moduleDataNode.getData();
     module.putUserData(MODULE_DATA_KEY, moduleData);
     ExternalSystemModulePropertyManager.getInstance(module)
-      .setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT));
+      .setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT), modelsProvider);
   }
 
   @Override

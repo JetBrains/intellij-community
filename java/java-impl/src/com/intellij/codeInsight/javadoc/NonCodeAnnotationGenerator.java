@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -74,7 +73,7 @@ public class NonCodeAnnotationGenerator {
   }
 
   @NotNull
-  public static @Nls String getNonCodeHeader(Collection<? extends AnnotationDocGenerator> values) {
+  public static @Nls String getNonCodeHeader(Collection<AnnotationDocGenerator> values) {
     boolean hasExternal = values.stream().anyMatch(AnnotationDocGenerator::isExternal);
     boolean hasInferred = values.stream().anyMatch(AnnotationDocGenerator::isInferred);
 
@@ -85,6 +84,20 @@ public class NonCodeAnnotationGenerator {
       return JavaBundle.message("non.code.annotations.explanation.external");
     }
     return JavaBundle.message("non.code.annotations.explanation.inferred");
+  }
+
+  @NotNull
+  public static @Nls String getNonCodeHeaderAvalable(Collection<AnnotationDocGenerator> values) {
+    boolean hasExternal = values.stream().anyMatch(AnnotationDocGenerator::isExternal);
+    boolean hasInferred = values.stream().anyMatch(AnnotationDocGenerator::isInferred);
+
+    if (hasExternal && hasInferred) {
+      return JavaBundle.message("non.code.annotations.explanation.external.and.inferred.available");
+    }
+    if (hasExternal) {
+      return JavaBundle.message("non.code.annotations.explanation.external.available");
+    }
+    return JavaBundle.message("non.code.annotations.explanation.inferred.available");
   }
 
   private static String getKind(PsiModifierListOwner owner) {

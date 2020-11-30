@@ -4,8 +4,9 @@ package com.intellij.space.ui
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.englishFullName
 import circlet.platform.api.TID
-import com.intellij.space.ui.SpaceAvatarUtils.generateColoredAvatar
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
+import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.JBValue
 import libraries.coroutines.extra.Lifetime
@@ -37,7 +38,7 @@ class SpaceAvatarProvider(
     }
 
     return avatarIconsCache.getOrPut(user.id) {
-      val gradientIcon = resizeIcon(JBImageIcon(ImageUtils.createCircleImage(
+      val gradientIcon = resizeIcon(JBImageIcon(ImageUtil.createCircleImage(
         generateColoredAvatar(
           user.username,
           user.englishFullName()
@@ -49,7 +50,7 @@ class SpaceAvatarProvider(
         launch(lifetime, Ui) {
           val image = imageLoader.loadImageAsync(tid)?.await()
           if (image != null) {
-            val circleImage = ImageUtils.createCircleImage(image)
+            val circleImage = ImageUtil.createCircleImage(image)
             icon.delegate = resizeIcon(JBImageIcon(circleImage), iconSize)
             component.repaint()
           }

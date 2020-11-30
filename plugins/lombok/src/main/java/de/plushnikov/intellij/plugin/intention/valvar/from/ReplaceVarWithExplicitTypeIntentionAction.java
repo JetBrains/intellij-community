@@ -1,11 +1,12 @@
 package de.plushnikov.intellij.plugin.intention.valvar.from;
 
 import com.intellij.psi.PsiVariable;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 
 public class ReplaceVarWithExplicitTypeIntentionAction extends AbstractReplaceVariableWithExplicitTypeIntentionAction {
 
   public ReplaceVarWithExplicitTypeIntentionAction() {
-    super("lombok.var");
+    super(LombokClassNames.VAR);
   }
 
   @Override

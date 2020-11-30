@@ -4,7 +4,6 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -44,7 +43,7 @@ public final class LowMemoryWatcherManager implements Disposable {
 
   public LowMemoryWatcherManager(@NotNull ExecutorService backendExecutorService) {
     // whether LowMemoryWatcher runnables should be executed on the same thread that the low memory events come
-    myExecutorService = SystemProperties.getBooleanProperty("low.memory.watcher.sync", false) ?
+    myExecutorService = Boolean.getBoolean("low.memory.watcher.sync") ?
       ConcurrencyUtil.newSameThreadExecutorService() :
       SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", backendExecutorService);
 
@@ -105,7 +104,15 @@ public final class LowMemoryWatcherManager implements Disposable {
   };
 
   private static float getOccupiedMemoryThreshold() {
-    return SystemProperties.getFloatProperty("low.memory.watcher.notification.threshold", 0.95f);
+    String value = System.getProperty("low.memory.watcher.notification.threshold");
+    if (value != null) {
+      try {
+        return Float.parseFloat(value);
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    return 0.95f;
   }
 
   @Override

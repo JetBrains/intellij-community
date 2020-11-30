@@ -35,6 +35,10 @@
     <extensionPoint name="executionEnvironmentProvider"
                     interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider" dynamic="true"/>
     <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
+    <extensionPoint name="targetConfigurationExtension" interface="org.jetbrains.idea.maven.execution.target.TargetConfigurationMavenExtension" dynamic="true"/>
+    <extensionPoint name="log.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser" dynamic="true"/>
+    <extensionPoint name="mavenServerSupportFactory" interface="org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory" dynamic="true"/>
+    <extensionPoint name="remotePathTransformerFactory" interface="org.jetbrains.idea.maven.server.RemotePathTransformerFactory" dynamic="true"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -43,6 +47,7 @@
   <depends>org.jetbrains.idea.maven.model</depends>
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
+  <depends optional="true" config-file="maven-dependency-update-integration.xml">com.intellij.externalSystem.dependencyUpdater</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <pathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
@@ -275,9 +280,9 @@
     </intentionAction>
 
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
-    <notificationGroup id="Maven: non-managed pom.xml" displayType="BALLOON"/>
     <notificationGroup id="Maven" displayType="BALLOON"/>
     <toolWindowAllowlist id="Maven"/>
+    <build.issueContributor implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsReleaseVersion5QuickFix" />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
@@ -428,6 +433,11 @@
     <executionEnvironmentProvider
       implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
 
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenBadConfigEventParser"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.JavaBuildErrorNotification"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.KotlinBuildErrorNotification"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.WarningNotifier"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.SourceOptionQuickFix"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>

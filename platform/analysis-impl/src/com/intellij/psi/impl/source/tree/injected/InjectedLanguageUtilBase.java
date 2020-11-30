@@ -141,7 +141,7 @@ public class InjectedLanguageUtilBase {
 
   /**
    * This is a quick check, that can be performed before committing document and invoking
-   * {@link #getEditorForInjectedLanguageNoCommit(Editor, Caret, PsiFile)} or other methods here, which don't work
+   * {@link com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil#getEditorForInjectedLanguageNoCommit(Editor, Caret, PsiFile)} or other methods here, which don't work
    * for uncommitted documents.
    */
   static boolean mightHaveInjectedFragmentAtCaret(@NotNull Project project, @NotNull Document hostDocument, int hostOffset) {

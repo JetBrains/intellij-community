@@ -13,7 +13,7 @@ import java.util.List;
  * Copy from com.siyeh.ig.psiutils
  * Classes: PsiElementUtil and EquivalenceChecker
  */
-public class PsiElementUtil {
+public final class PsiElementUtil {
   /**
    * @param method              the method to compare to.
    * @param containingClassName the name of the class which contiains the

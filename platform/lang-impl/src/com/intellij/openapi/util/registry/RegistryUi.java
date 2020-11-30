@@ -234,7 +234,7 @@ public class RegistryUi implements Disposable {
         final boolean c2 = i2 != -1;
         if (c1 && !c2) return -1;
         if (!c1 && c2) return 1;
-        if (c1 && c2) return i1 - i2;
+        if (c1) return i1 - i2;
         return key1.compareToIgnoreCase(key2);
       });
     }

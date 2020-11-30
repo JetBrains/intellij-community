@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -64,7 +65,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
 
       VirtualFile file = getVirtualFile();
       if (file != null && file.is(VFileProperty.SYMLINK)) {
-        String target = file.getCanonicalPath();
+        @NlsSafe String target = file.getCanonicalPath();
         if (target == null) {
           data.setAttributesKey(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
           data.setTooltip(IdeBundle.message("node.project.view.bad.link"));

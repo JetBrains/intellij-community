@@ -1,9 +1,10 @@
-# Stubs for mock
-
 import sys
-from typing import Any, List, Optional, Sequence, Text, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Generic, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union, overload
 
+_F = TypeVar("_F", bound=Callable[..., Any])
 _T = TypeVar("_T")
+_TT = TypeVar("_TT", bound=Type[Any])
+_R = TypeVar("_R")
 
 __all__ = [
     "Mock",
@@ -72,7 +73,7 @@ class Base:
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
 
 class NonCallableMock(Base, Any):  # type: ignore
-    def __new__(cls, *args: Any, **kw: Any) -> NonCallableMock: ...
+    def __new__(__cls, *args: Any, **kw: Any) -> NonCallableMock: ...
     def __init__(
         self,
         spec: Union[List[str], object, Type[object], None] = ...,
@@ -150,43 +151,60 @@ class CallableMixin(Base):
 
 class Mock(CallableMixin, NonCallableMock): ...
 
-class _patch:
+class _patch(Generic[_T]):
     attribute_name: Any
-    getter: Any
-    attribute: Any
-    new: Any
+    getter: Callable[[], Any]
+    attribute: str
+    new: _T
     new_callable: Any
     spec: Any
     create: bool
     has_local: Any
     spec_set: Any
     autospec: Any
-    kwargs: Any
+    kwargs: Mapping[str, Any]
     additional_patchers: Any
+    @overload
     def __init__(
-        self,
-        getter: Any,
-        attribute: Any,
-        new: Any,
-        spec: Any,
-        create: Any,
-        spec_set: Any,
-        autospec: Any,
-        new_callable: Any,
-        kwargs: Any,
+        self: _patch[MagicMock],
+        getter: Callable[[], Any],
+        attribute: str,
+        *,
+        spec: Optional[Any],
+        create: bool,
+        spec_set: Optional[Any],
+        autospec: Optional[Any],
+        new_callable: Optional[Any],
+        kwargs: Mapping[str, Any],
     ) -> None: ...
-    def copy(self) -> Any: ...
-    def __call__(self, func: Any) -> Any: ...
-    def decorate_class(self, klass: Any) -> Any: ...
-    def decorate_callable(self, func: Any) -> Any: ...
-    def get_original(self) -> Any: ...
+    # This overload also covers the case, where new==DEFAULT. In this case, self is _patch[Any].
+    # Ideally we'd be able to add an overload for it so that self is _patch[MagicMock],
+    # but that's impossible with the current type system.
+    @overload
+    def __init__(
+        self: _patch[_T],
+        getter: Callable[[], Any],
+        attribute: str,
+        new: _T,
+        spec: Optional[Any],
+        create: bool,
+        spec_set: Optional[Any],
+        autospec: Optional[Any],
+        new_callable: Optional[Any],
+        kwargs: Mapping[str, Any],
+    ) -> None: ...
+    def copy(self) -> _patch[_T]: ...
+    def __call__(self, func: Callable[..., _R]) -> Callable[..., _R]: ...
+    def decorate_class(self, klass: _TT) -> _TT: ...
+    def decorate_callable(self, func: _F) -> _F: ...
+    def get_original(self) -> Tuple[Any, bool]: ...
     target: Any
     temp_original: Any
-    is_local: Any
-    def __enter__(self) -> Any: ...
-    def __exit__(self, *exc_info: Any) -> Any: ...
-    def start(self) -> Any: ...
-    def stop(self) -> Any: ...
+    is_local: bool
+    def __enter__(self) -> _T: ...
+    def __exit__(self, *exc_info: Any) -> None: ...
+    def start(self) -> _T: ...
+    def stop(self) -> None: ...
 
 class _patch_dict:
     in_dict: Any
@@ -203,29 +221,59 @@ class _patch_dict:
 class _patcher:
     TEST_PREFIX: str
     dict: Type[_patch_dict]
+    @overload
+    def __call__(  # type: ignore
+        self,
+        target: Any,
+        *,
+        spec: Optional[Any] = ...,
+        create: bool = ...,
+        spec_set: Optional[Any] = ...,
+        autospec: Optional[Any] = ...,
+        new_callable: Optional[Any] = ...,
+        **kwargs: Any,
+    ) -> _patch[MagicMock]: ...
+    # This overload also covers the case, where new==DEFAULT. In this case, the return type is _patch[Any].
+    # Ideally we'd be able to add an overload for it so that the return type is _patch[MagicMock],
+    # but that's impossible with the current type system.
+    @overload
     def __call__(
         self,
         target: Any,
-        new: Optional[Any] = ...,
+        new: _T,
         spec: Optional[Any] = ...,
         create: bool = ...,
         spec_set: Optional[Any] = ...,
         autospec: Optional[Any] = ...,
         new_callable: Optional[Any] = ...,
         **kwargs: Any,
-    ) -> _patch: ...
+    ) -> _patch[_T]: ...
+    @overload
+    def object(  # type: ignore
+        self,
+        target: Any,
+        attribute: str,
+        *,
+        spec: Optional[Any] = ...,
+        create: bool = ...,
+        spec_set: Optional[Any] = ...,
+        autospec: Optional[Any] = ...,
+        new_callable: Optional[Any] = ...,
+        **kwargs: Any,
+    ) -> _patch[MagicMock]: ...
+    @overload
     def object(
         self,
         target: Any,
-        attribute: Text,
-        new: Optional[Any] = ...,
+        attribute: str,
+        new: _T = ...,
         spec: Optional[Any] = ...,
         create: bool = ...,
         spec_set: Optional[Any] = ...,
         autospec: Optional[Any] = ...,
         new_callable: Optional[Any] = ...,
         **kwargs: Any,
-    ) -> _patch: ...
+    ) -> _patch[_T]: ...
     def multiple(
         self,
         target: Any,
@@ -234,8 +282,8 @@ class _patcher:
         spec_set: Optional[Any] = ...,
         autospec: Optional[Any] = ...,
         new_callable: Optional[Any] = ...,
-        **kwargs: Any,
-    ) -> _patch: ...
+        **kwargs: _T,
+    ) -> _patch[_T]: ...
     def stopall(self) -> None: ...
 
 patch: _patcher

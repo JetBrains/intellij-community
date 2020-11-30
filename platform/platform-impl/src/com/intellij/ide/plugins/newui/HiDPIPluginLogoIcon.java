@@ -21,42 +21,18 @@ import static com.intellij.ui.scale.ScaleType.USR_SCALE;
  * @author Alexander Lobas
  */
 public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
-  private static Icon myCachedDisabledJBLogo;
-  private static Icon myCachedJBLogo2x;
   private static Icon myCachedErrorLogo2x;
-  private static Icon myCachedDisabledJBLogo2x;
 
-  HiDPIPluginLogoIcon(@NotNull Icon logo_40, @NotNull Icon logo_80) {
-    super(logo_40, createHiDPIDisabledIcon(logo_40, true), logo_80, createHiDPIDisabledIcon(logo_80, true));
+  HiDPIPluginLogoIcon(@NotNull Icon logo, @NotNull Icon logoBig) {
+    super(logo, createHiDPIDisabledIcon(logo, true), logoBig, createHiDPIDisabledIcon(logoBig, true));
   }
 
-  HiDPIPluginLogoIcon(@NotNull Icon logo_40, @NotNull Icon logoDisabled_40, @NotNull Icon logo_80, @NotNull Icon logoDisabled_80) {
-    super(logo_40, logoDisabled_40, logo_80, logoDisabled_80);
-  }
-
-  @Override
-  @NotNull
-  protected Icon getDisabledJBLogo() {
-    if (myCachedDisabledJBLogo == null) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      myCachedDisabledJBLogo = super.getDisabledJBLogo();
-    }
-    return myCachedDisabledJBLogo;
+  HiDPIPluginLogoIcon(@NotNull Icon logo, @NotNull Icon logoDisabled, @NotNull Icon logoBig, @NotNull Icon logoDisabledBig) {
+    super(logo, logoDisabled, logoBig, logoDisabledBig);
   }
 
   @Override
-  @NotNull
-  protected Icon getJBLogo2x() {
-    if (myCachedJBLogo2x == null) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      myCachedJBLogo2x = super.getJBLogo2x();
-    }
-    return myCachedJBLogo2x;
-  }
-
-  @Override
-  @NotNull
-  protected Icon getErrorLogo2x() {
+  protected @NotNull Icon getErrorLogo2x() {
     if (myCachedErrorLogo2x == null) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       myCachedErrorLogo2x = super.getErrorLogo2x();
@@ -64,35 +40,20 @@ public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
     return myCachedErrorLogo2x;
   }
 
-  @Override
-  @NotNull
-  protected Icon getDisabledJBLogo2x(@NotNull Icon jbLogo2x) {
-    if (myCachedDisabledJBLogo2x == null) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      myCachedDisabledJBLogo2x = super.getDisabledJBLogo2x(jbLogo2x);
-    }
-    return myCachedDisabledJBLogo2x;
-  }
-
   static void clearCache() {
-    myCachedDisabledJBLogo = null;
-    myCachedJBLogo2x = null;
     myCachedErrorLogo2x = null;
-    myCachedDisabledJBLogo2x = null;
     synchronized (disabledIcons) {
       disabledIcons.clear();
     }
   }
 
-  @NotNull
   @Override
-  protected Icon getDisabledIcon(@NotNull Icon icon, boolean base) {
+  protected @NotNull Icon getDisabledIcon(@NotNull Icon icon, boolean base) {
     return createHiDPIDisabledIcon(icon, base);
   }
 
-  @NotNull
   @Override
-  protected Icon getScaled2xIcon(@NotNull Icon icon) {
+  protected @NotNull Icon getScaled2xIcon(@NotNull Icon icon) {
     Computable<Icon> superCall = () -> super.getScaled2xIcon(icon);
 
     return new Icon() {
@@ -124,21 +85,18 @@ public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
     };
   }
 
-  @NotNull
-  private static Icon createHiDPIDisabledIcon(@NotNull Icon icon, boolean base) {
+  private static @NotNull Icon createHiDPIDisabledIcon(@NotNull Icon icon, boolean base) {
     return getHiDPI(ScaleContext.create(), createDisabledIcon(icon, base));
   }
 
-  @NotNull
-  static Icon loadSVG(@NotNull InputStream stream, int width, int height) throws IOException {
+  static @NotNull Icon loadSVG(@NotNull InputStream stream, int width, int height) throws IOException {
     ScaleContext context = ScaleContext.create();
     BufferedImage image = (BufferedImage)SVGLoader.load(null, stream, context, width, height);
     BufferedImage t = (BufferedImage)ImageUtil.ensureHiDPI(image, context);
     return getHiDPI(context, t);
   }
 
-  @NotNull
-  private static Icon getHiDPI(@NotNull ScaleContext context, @NotNull Object source) {
+  private static @NotNull Icon getHiDPI(@NotNull ScaleContext context, @NotNull Object source) {
     if (source instanceof ImageIcon) {
       Image image = ((ImageIcon)source).getImage();
       if (image instanceof JBHiDPIScaledImage) {
@@ -155,8 +113,7 @@ public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
     return (Icon)source;
   }
 
-  @NotNull
-  private static Icon wrapHiDPI(@NotNull ScaleContext context, @NotNull JBHiDPIScaledImage image) {
+  private static @NotNull Icon wrapHiDPI(@NotNull ScaleContext context, @NotNull JBHiDPIScaledImage image) {
     return new JBImageIcon(image) {
       final double myBase = context.getScale(USR_SCALE);
 

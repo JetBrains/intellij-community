@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -32,7 +31,6 @@ import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 import java.util.stream.Collectors
 import java.util.zip.ZipEntry
@@ -270,11 +268,11 @@ class DistributionJARsBuilder {
 
   void buildJARs() {
     validateModuleStructure()
-    CompletableFuture.allOf(
-      runAsync(BuildOptions.SVGICONS_PREBUILD_STEP, { SVGPreBuilder.prebuildSVGIcons(it) }),
-      runAsync(BuildOptions.GENERATE_JAR_ORDER_STEP, { buildOrderFiles(it) }),
-      runAsync(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) })
-    ).join()
+    BuildTasksImpl.runInParallel(Arrays.asList(
+      createAsyncTask(BuildOptions.SVGICONS_PREBUILD_STEP, { SVGPreBuilder.prebuildSVGIcons(it) }),
+      createAsyncTask(BuildOptions.GENERATE_JAR_ORDER_STEP, { buildOrderFiles(it) }),
+      createAsyncTask(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) })
+    ), buildContext)
     buildLib()
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
@@ -284,9 +282,14 @@ class DistributionJARsBuilder {
     reorderJARs()
   }
 
-  private CompletableFuture<Void> runAsync(String taskName, Consumer<BuildContext> consumer) {
-    BuildContext childContext = buildContext.forkForParallelTask(taskName)
-    CompletableFuture.runAsync({ consumer.accept(childContext) }, AppExecutorUtil.appExecutorService)
+  private static BuildTasksImpl.BuildTaskRunnable<Void> createAsyncTask(String taskName, Consumer<BuildContext> consumer) {
+    return new BuildTasksImpl.BuildTaskRunnable<Void>(taskName) {
+      @Override
+      Void run(BuildContext context) {
+        consumer.accept(context)
+        return null
+      }
+    }
   }
 
   void reorderJARs() {
@@ -435,7 +438,7 @@ class DistributionJARsBuilder {
 
   void generateProjectStructureMapping(File targetFile) {
     LayoutBuilder layoutBuilder = createLayoutBuilder()
-    processLibDirectoryLayout(layoutBuilder, false)
+    processLibDirectoryLayout(layoutBuilder, projectStructureMapping, false)
     def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
     def pluginsToBundle = allPlugins.findAll { satisfiesBundlingRequirements(it, null) }
     pluginsToBundle.each {
@@ -634,6 +637,7 @@ class DistributionJARsBuilder {
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     def productLayout = buildContext.productProperties.productLayout
+    new BrokenPluginsBuildFileService(buildContext, layoutBuilder).buildFile()
 
     processOrderFiles(layoutBuilder)
     addSearchableOptions(layoutBuilder)
@@ -662,7 +666,7 @@ class DistributionJARsBuilder {
 
     def libDirectoryMapping = new ProjectStructureMapping()
     buildContext.messages.block("Build platform JARs in lib directory") {
-      processLibDirectoryLayout(layoutBuilder, true)
+      processLibDirectoryLayout(layoutBuilder, projectStructureMapping, true)
     }
     projectStructureMapping.mergeFrom(libDirectoryMapping, "")
 
@@ -685,7 +689,7 @@ class DistributionJARsBuilder {
     }
   }
 
-  private processLibDirectoryLayout(LayoutBuilder layoutBuilder, boolean copyFiles) {
+  void processLibDirectoryLayout(LayoutBuilder layoutBuilder, ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
     processLayout(layoutBuilder, platform, buildContext.paths.distAll, projectStructureMapping, copyFiles, platform.moduleJars, [])
   }
 
@@ -965,7 +969,7 @@ class DistributionJARsBuilder {
     new File(buildContext.paths.temp, "searchableOptions/result")
   }
 
-  private void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
+  void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
     // Don't check modules which are not direct children of lib/ directory
     def modulesWithPluginXml = moduleJars.entrySet().stream()
       .filter { !it.key.contains("/") }
@@ -1017,7 +1021,7 @@ class DistributionJARsBuilder {
    * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
    * @param additionalResources pairs of resources files and corresponding relative output paths
    */
-  private void processLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory,
+  void processLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory,
                              ProjectStructureMapping mapping, boolean copyFiles,
                              MultiMap<String, String> moduleJars,
                              List<Pair<File, String>> additionalResources) {

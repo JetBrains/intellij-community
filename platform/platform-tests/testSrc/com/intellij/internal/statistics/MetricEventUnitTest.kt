@@ -55,20 +55,6 @@ class MetricEventUnitTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test compare usage metric events with counter range`() {
-    Assert.assertEquals(newCounterRangeMetric("abcd", 1), newCounterRangeMetric("abcd", 1))
-    Assert.assertEquals(newCounterRangeMetric("abcd", 5), newCounterRangeMetric("abcd", 5))
-    Assert.assertNotEquals(newCounterRangeMetric("abcd", 1), newCounterRangeMetric("abcd", 5))
-    Assert.assertNotEquals(newCounterRangeMetric("abcd", 5), newCounterRangeMetric("abcd", 2))
-    Assert.assertNotEquals(newCounterRangeMetric("abcd", 1), newCounterRangeMetric("efgh", 1))
-    Assert.assertNotEquals(newCounterRangeMetric("abcd", 1), newCounterRangeMetric("efgh", 2))
-    Assert.assertNotEquals(newCounterRangeMetric("abcd", 7), newCounterRangeMetric("efgh", 2))
-    Assert.assertNotEquals(newCounterRangeMetric("ijkl", 1), newCounterRangeMetric("efgh", 1))
-    Assert.assertNotEquals(newCounterRangeMetric("ijkl", 2), newCounterRangeMetric("efgh", 3))
-    Assert.assertNotEquals(newCounterRangeMetric("ijkl", 5), newCounterRangeMetric("efgh", 3))
-  }
-
-  @Test
   fun `test compare usage metric events with boolean`() {
     Assert.assertEquals(newMetric("abcd", true), newMetric("abcd", true))
     Assert.assertEquals(newMetric("abcd", false), newMetric("abcd", false))

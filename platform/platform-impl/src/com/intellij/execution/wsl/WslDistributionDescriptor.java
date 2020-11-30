@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +30,7 @@ final class WslDistributionDescriptor {
    * Absolute or relative executable path. Relative path resolved from default WSL executables root.
    */
   @Tag("executable-path")
-  private @NlsSafe String myExecutablePath;
+  private @NlsSafe @Nullable String myExecutablePath;
   @Tag("presentable-name")
   private @NlsSafe String myPresentableName;
 
@@ -41,10 +42,14 @@ final class WslDistributionDescriptor {
   WslDistributionDescriptor() {
   }
 
+  WslDistributionDescriptor(@NotNull String msId) {
+    this(msId, msId, null, msId);
+  }
+
   WslDistributionDescriptor(@NotNull String id,
-                                   @NotNull String msId,
-                                   @NotNull String executablePath,
-                                   @NotNull String presentableName) {
+                            @NotNull String msId,
+                            @Nullable String executablePath,
+                            @NotNull String presentableName) {
     myId = id;
     myMsId = msId;
     myExecutablePath = executablePath;
@@ -60,8 +65,8 @@ final class WslDistributionDescriptor {
     return Objects.requireNonNull(myMsId);
   }
 
-  public @NotNull @NlsSafe String getExecutablePath() {
-    return Objects.requireNonNull(myExecutablePath);
+  public @Nullable @NlsSafe String getExecutablePath() {
+    return myExecutablePath;
   }
 
   public @NotNull @NlsSafe String getPresentableName() {

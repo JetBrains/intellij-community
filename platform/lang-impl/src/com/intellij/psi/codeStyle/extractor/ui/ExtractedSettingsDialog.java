@@ -22,6 +22,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,8 +62,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    JComponent result = buildExtractedSettingsTree();
-    return result;
+    return buildExtractedSettingsTree();
   }
 
   public boolean valueIsSelectedInTree(@NotNull Value value) {
@@ -89,16 +89,17 @@ public class ExtractedSettingsDialog extends DialogWrapper {
   public static class SettingsTreeNode extends DefaultMutableTreeNode {
     protected CodeStyleSettingPresentation myRepresentation;
     protected boolean accepted = true;
-    protected final String valueString;
+    protected final @Nls String valueString;
     protected final boolean isGroupNode;
-    protected final String customTitle;
+    protected final @Nls String customTitle;
     protected Value myValue;
 
-    public SettingsTreeNode(String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode, Value value) {
+    public SettingsTreeNode(@Nls String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode, Value value) {
       this(valueString, representation, isGroupNode, null, value);
     }
 
-    public SettingsTreeNode(String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode, String customTitle,
+    public SettingsTreeNode(@Nls String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode,
+                            @Nls String customTitle,
                             Value value) {
       this.valueString = valueString;
       this.myRepresentation = representation;
@@ -107,7 +108,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
       this.myValue = value;
     }
 
-    public SettingsTreeNode(String title) {
+    public SettingsTreeNode(@Nls String title) {
       this(title, null, true, null);
     }
 
@@ -116,12 +117,11 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     }
 
     @NotNull
-    public String getTitle() {
+    public @Nls String getTitle() {
       return customTitle != null ? customTitle : (myRepresentation == null ? valueString : myRepresentation.getUiName());
     }
 
-    @Nullable
-    public String getValueString() {
+    public @Nullable @Nls String getValueString() {
       return myRepresentation == null ? null : valueString;
     }
   }
@@ -457,6 +457,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
         myLabel.setText(node.getTitle());
         myLabel.setFont(node.isGroupOrTypeNode() ? myLabel.getFont().deriveFont(Font.BOLD) : myLabel.getFont().deriveFont(Font.PLAIN));
       } else {
+        //noinspection HardCodedStringLiteral
         myLabel.setText(value.toString());
         myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
       }

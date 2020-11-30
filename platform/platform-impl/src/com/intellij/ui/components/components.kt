@@ -25,7 +25,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -37,19 +36,25 @@ import javax.swing.text.Segment
 private val LINK_TEXT_ATTRIBUTES: SimpleTextAttributes
   get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor())
 
-fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false): JLabel {
+fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false) = Label(text, style, fontColor, bold, null)
+
+fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false, font: Font? = null): JLabel {
   val finalText = BundleBase.replaceMnemonicAmpersand(text)
   val label: JLabel
   if (fontColor == null) {
     label = if (finalText.contains('\n')) MultiLineLabel(finalText) else JLabel(finalText)
-    style?.let { UIUtil.applyStyle(it, label) }
   }
   else {
-    label = JBLabel(finalText, style ?: UIUtil.ComponentStyle.REGULAR, fontColor)
+    label = JBLabel(finalText, UIUtil.ComponentStyle.REGULAR, fontColor)
   }
 
-  if (bold) {
-    label.font = label.font.deriveFont(Font.BOLD)
+  if (font != null) {
+    label.font = font
+  } else {
+    style?.let { UIUtil.applyStyle(it, label) }
+    if (bold) {
+      label.font = label.font.deriveFont(Font.BOLD)
+    }
   }
 
   // surrounded by space to avoid false match

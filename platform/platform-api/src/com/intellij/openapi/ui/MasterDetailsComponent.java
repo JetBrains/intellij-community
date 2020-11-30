@@ -439,30 +439,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     TreeUtil.installActions(myTree);
-    myTree.setCellRenderer(new ColoredTreeCellRenderer() {
-      @Override
-      public void customizeCellRenderer(@NotNull JTree tree,
-                                        Object value,
-                                        boolean selected,
-                                        boolean expanded,
-                                        boolean leaf,
-                                        int row,
-                                        boolean hasFocus) {
-        if (value instanceof MyNode) {
-          final MyNode node = (MyNode)value;
-          setIcon(node.getIcon(expanded));
-          final Font font = UIUtil.getTreeFont();
-          if (node.isDisplayInBold()) {
-            setFont(font.deriveFont(Font.BOLD));
-          }
-          else {
-            setFont(font.deriveFont(Font.PLAIN));
-          }
-          append(node.getDisplayName(),
-                 node.isDisplayInBold() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-      }
-    });
+    myTree.setCellRenderer(new MyColoredTreeCellRenderer());
     List<AnAction> actions = createActions(true);
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
@@ -759,6 +736,37 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected void onItemDeleted(Object item) {
+  }
+
+  public static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
+    @Override
+    public final void customizeCellRenderer(@NotNull JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+      if (value instanceof MyNode) {
+        final MyNode node = (MyNode)value;
+        setIcon(node.getIcon(expanded));
+        final Font font = UIUtil.getTreeFont();
+        if (node.isDisplayInBold()) {
+          setFont(font.deriveFont(Font.BOLD));
+        }
+        else {
+          setFont(font.deriveFont(Font.PLAIN));
+        }
+
+        SimpleTextAttributes attributes = node.isDisplayInBold() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES :
+                                          SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        append(node.getDisplayName(), SimpleTextAttributes.merge(getAdditionalAttributes(node), attributes));
+      }
+    }
+
+    protected @NotNull SimpleTextAttributes getAdditionalAttributes(@NotNull MyNode node) {
+      return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    }
   }
 
   protected class MyDeleteAction extends AnAction implements DumbAware {

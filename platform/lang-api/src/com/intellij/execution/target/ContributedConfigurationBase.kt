@@ -2,6 +2,7 @@
 package com.intellij.execution.target
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.Nls
 
 /**
  * Base class for all instance configurations contributed for given [extensionPoint] by some specific [extension][ContributedTypeBase].
@@ -14,6 +15,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 abstract class ContributedConfigurationBase(val typeId: String,
                                             internal val extensionPoint: ExtensionPointName<out ContributedTypeBase<*>>) {
 
+  @Nls
   var displayName: String = ""
 
   companion object {

@@ -30,8 +30,8 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Set;
 
 public class MoveRelatedFilesHandler extends MoveFilesOrDirectoriesHandler {
@@ -86,14 +86,8 @@ public class MoveRelatedFilesHandler extends MoveFilesOrDirectoriesHandler {
                      ? Messages.YES
                      : Messages.showYesNoDialog(project, message, RefactoringBundle.message("move.title"), Messages.getQuestionIcon());
       if (ok == Messages.YES) {
-        final PsiElement[] result = new PsiElement[sourceElements.length + relatedFilesToMove.size()];
-
-        System.arraycopy(sourceElements, 0, result, 0, sourceElements.length);
-
-        final Iterator<PsiFile> iterator = relatedFilesToMove.iterator();
-        for (int i = sourceElements.length; i < result.length; i++) {
-          result[i] = iterator.next();
-        }
+        final PsiElement[] result = Arrays.copyOf(sourceElements, sourceElements.length + relatedFilesToMove.size());
+        ArrayUtil.copy(relatedFilesToMove, result, sourceElements.length);
 
         return result;
       }

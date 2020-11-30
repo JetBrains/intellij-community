@@ -14,7 +14,7 @@ public final class UnknownConfigurationType extends SimpleConfigurationType {
   private static final String NAME = "Unknown";
 
   private UnknownConfigurationType() {
-    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"),
+    super(NAME, ExecutionBundle.message("run.configuration.unknown.name"), ExecutionBundle.message("run.configuration.unknown.description"),
           NotNullLazyValue.createValue(() -> AllIcons.Actions.Help));
   }
 

@@ -206,10 +206,10 @@ public final class TextDiffViewerUtil {
     }
   }
 
-  private static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
+  public static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
     private final T @NotNull [] myPolicies;
 
-    EnumPolicySettingAction(T @NotNull [] policies) {
+    public EnumPolicySettingAction(T @NotNull [] policies) {
       assert policies.length > 0;
       myPolicies = policies;
     }
@@ -245,7 +245,9 @@ public final class TextDiffViewerUtil {
     protected abstract T getStoredValue();
 
     @NotNull
-    protected abstract List<T> getValueSubstitutes(@NotNull T value);
+    protected List<T> getValueSubstitutes(@NotNull T value) {
+      return Collections.emptyList();
+    }
   }
 
   public static class HighlightPolicySettingAction extends EnumPolicySettingAction<HighlightPolicy> {

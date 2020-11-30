@@ -11,7 +11,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -22,8 +21,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
-
+public final class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   public NewWelcomeScreen() {
     super(new BorderLayout());
     add(createHeaderPanel(), BorderLayout.NORTH);
@@ -133,7 +131,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     if (isNewWelcomeScreen(e)) {
       Presentation presentation = e.getPresentation();
       presentation.setIcon(AllIcons.General.Add);
-      if (Registry.is("use.tabbed.welcome.screen")) {
+      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
         presentation.setIcon(AllIcons.Welcome.CreateNewProjectTab);
         presentation.setSelectedIcon(AllIcons.Welcome.CreateNewProjectTabSelected);
       }

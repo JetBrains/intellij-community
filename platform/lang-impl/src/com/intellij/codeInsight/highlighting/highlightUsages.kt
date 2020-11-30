@@ -6,7 +6,6 @@ package com.intellij.codeInsight.highlighting
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.impl.FindManagerImpl
-import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolDeclaration
@@ -17,10 +16,10 @@ import com.intellij.model.search.SearchService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.annotations.ApiStatus
@@ -38,11 +37,10 @@ internal fun highlightUsages(project: Project, editor: Editor, file: PsiFile): B
 }
 
 private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFile, symbol: Symbol, clearHighlights: Boolean) {
-  val fileToUse = InjectedLanguageManager.getInstance(project).getTopLevelFile((file as? PsiCompiledFile)?.decompiledPsiFile ?: file)
-  val editorToUse = (editor as? EditorWindow)?.delegate ?: editor
-  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = getUsageRanges(fileToUse, symbol)
+  val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = getUsageRanges(file, symbol)
   HighlightUsagesHandler.highlightUsages(
-    project, editorToUse,
+    project, hostEditor,
     readRanges + readDeclarationRanges,
     writeRanges + writeDeclarationRanges,
     clearHighlights
@@ -56,9 +54,18 @@ internal fun getUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges {
   val readDeclarationRanges = ArrayList<TextRange>()
   val writeDeclarationRanges = ArrayList<TextRange>()
 
-  val searchScope: SearchScope = LocalSearchScope(file)
+  var searchScope: SearchScope = LocalSearchScope(file)
   val project: Project = file.project
   val psiTarget: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
+  val targetContainingFile: PsiFile? = psiTarget?.containingFile
+  if (psiTarget != null && targetContainingFile != null) {
+    val injectedManager = InjectedLanguageManager.getInstance(project)
+    if (injectedManager.isInjectedFragment(file) != injectedManager.isInjectedFragment(targetContainingFile)) {
+      // weird case when injected symbol references host file
+      val hostFile: PsiFile = injectedManager.getTopLevelFile(file)
+      searchScope = LocalSearchScope(hostFile);
+    }
+  }
   val detector: ReadWriteAccessDetector? = if (psiTarget != null) ReadWriteAccessDetector.findDetector(psiTarget) else null
   val refs: Collection<PsiSymbolReference> = getReferences(project, searchScope, symbol, psiTarget)
   for (ref: PsiSymbolReference in refs) {

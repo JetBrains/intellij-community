@@ -223,6 +223,8 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI"
                     serviceImplementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.ActiveChangeListTracker"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ActiveChangeListTrackerImpl"/>
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
@@ -284,6 +286,11 @@
 
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.openapi.vcs.VcsNotificationIdsHolder"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains">
+    <webServerRootsProvider implementation="com.intellij.openapi.vcs.impl.VcsRootWebServerRootsProvider" order="last"/>
   </extensions>
 
   <applicationListeners>

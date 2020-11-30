@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.vcs.Context
 import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.space.vcs.SpaceProjectInfo
@@ -35,7 +35,7 @@ internal class SpaceCodeReviewTabManager(private val project: Project) {
 
 internal class SpaceCodeReviewTabContentManager(private val project: Project, private val cm: ContentManager) {
   private val lifetime: LifetimeSource = LifetimeSource()
-  private val workspace: Property<Workspace?> = space.workspace
+  private val workspace: Property<Workspace?> = SpaceWorkspaceComponent.getInstance().workspace
   private val context: Property<Context> = SpaceProjectContext.getInstance(project).context
 
   private val contents: Property<MutableMap<SpaceProjectInfo, Content>> =
@@ -78,7 +78,7 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
     val lifeTime = LifetimeSource()
     val factory = ContentFactory.SERVICE.getInstance()
 
-    return factory.createContent(null, spaceProjectInfo.project.name, false).apply {
+    return factory.createContent(null, spaceProjectInfo.project.name, false).apply { // NON-NLS
       val disposable = Disposable {
         lifeTime.terminate()
       }
@@ -87,7 +87,7 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
       icon = SpaceIcons.Main
 
       component = ReviewLoginComponent(lifetime, project, spaceProjectInfo, projectRepos).view
-      description = spaceProjectInfo.key.key
+      description = spaceProjectInfo.key.key // NON-NLS
     }
   }
 }

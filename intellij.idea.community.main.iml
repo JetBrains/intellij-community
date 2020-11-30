@@ -143,5 +143,13 @@
     <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.packageSearch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.packageSearch.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.dependencyUpdater" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.settingsRepository.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.featuresTrainer" scope="RUNTIME"/>
   </component>
 </module>

@@ -262,8 +262,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         return JavaDebuggerBundle.message("status.app.running");
       case WAITING_ATTACH:
         RemoteConnection connection = getProcess().getConnection();
-        return JavaDebuggerBundle.message(connection.isServerMode() ? "status.listening" : "status.connecting",
-                                          DebuggerUtilsImpl.getConnectionDisplayName(connection));
+        return DebuggerUtilsImpl.getConnectionWaitStatus(connection);
       case PAUSED:
         return JavaDebuggerBundle.message("status.paused");
       case WAIT_EVALUATION:
@@ -434,10 +433,15 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   private void attach() throws ExecutionException {
     RemoteConnection remoteConnection = myDebugEnvironment.getRemoteConnection();
+
     myDebugProcess.attachVirtualMachine(myDebugEnvironment, this);
-    getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH,
-                                 JavaDebuggerBundle.message("status.waiting.attach",
-                                                            DebuggerUtilsImpl.getConnectionDisplayName(remoteConnection)));
+
+    StringBuilder description = new StringBuilder(JavaDebuggerBundle.message("status.waiting.attach"));
+    if (!(remoteConnection instanceof RemoteConnectionStub)) {
+      String connectionName = DebuggerUtilsImpl.getConnectionDisplayName(remoteConnection);
+      description.append("; ").append(JavaDebuggerBundle.message("status.waiting.attach.address", connectionName));
+    }
+    getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH, description.toString());
   }
 
   private class MyDebugProcessListener extends DebugProcessAdapterImpl {

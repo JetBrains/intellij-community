@@ -255,7 +255,8 @@ public class ActionGroupPanelWrapper {
   }
 
   public static AnAction wrapGroups(@NotNull AnAction action, @NotNull Disposable parentDisposable) {
-    if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
+    if (!(action instanceof ActionGroup)) return action;
+    if (action instanceof ActionsWithPanelProvider) {
       AtomicReference<Component> createdPanel = new AtomicReference<>();
       final Pair<JPanel, JBList<AnAction>> panel =
         createActionGroupPanel((ActionGroup)action, () -> goBack(createdPanel.get()), parentDisposable);

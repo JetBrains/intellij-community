@@ -1,5 +1,3 @@
-# Stubs for _thread
-
 import sys
 from threading import Thread
 from types import TracebackType

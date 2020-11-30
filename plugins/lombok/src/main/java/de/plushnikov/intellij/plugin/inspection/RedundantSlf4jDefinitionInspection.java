@@ -4,6 +4,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor;
 import de.plushnikov.intellij.plugin.quickfix.UseSlf4jAnnotationQuickFix;
 import org.jetbrains.annotations.NotNull;
@@ -41,9 +42,9 @@ public class RedundantSlf4jDefinitionInspection extends AbstractBaseJavaLocalIns
         if (initializer != null && containingClass != null) {
           if (initializer.getText().contains(format(LOGGER_INITIALIZATION, containingClass.getQualifiedName()))) {
             holder.registerProblem(field,
-              "Slf4j Logger is defined explicitly. Use Lombok @Slf4j annotation instead.",
-              ProblemHighlightType.WARNING,
-              new UseSlf4jAnnotationQuickFix(field, containingClass));
+                                   LombokBundle.message("inspection.message.slf4j.logger.defined.explicitly"),
+                                   ProblemHighlightType.WARNING,
+                                   new UseSlf4jAnnotationQuickFix(field, containingClass));
           }
         }
       }

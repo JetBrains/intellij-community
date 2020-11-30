@@ -3,13 +3,13 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.facet.FacetFromExternalSourcesStorage
 import com.intellij.facet.FacetManager
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -31,7 +31,6 @@ internal class ModuleBridgeImpl(
   override var entityStorage: VersionedEntityStorage,
   override var diff: WorkspaceEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath?.toString()), ModuleBridge {
-  internal val originalDirectoryPath: Path? = filePath?.parent
 
   init {
     // default project doesn't have modules
@@ -45,7 +44,8 @@ internal class ModuleBridgeImpl(
               val currentStore = entityStorage.current
               val storage = if (currentStore is WorkspaceEntityStorageBuilder) currentStore.toStorage() else currentStore
               entityStorage = VersionedEntityStorageOnStorage(storage)
-              assert(entityStorage.current.resolve(moduleEntityId) != null) { "Cannot resolve module $moduleEntityId. Current store: $currentStore" }
+              assert(entityStorage.current.resolve(
+                moduleEntityId) != null) { "Cannot resolve module $moduleEntityId. Current store: $currentStore" }
             }
           }
         }
@@ -53,20 +53,15 @@ internal class ModuleBridgeImpl(
     }
   }
 
-  override fun canStoreSettings(): Boolean {
-    return originalDirectoryPath?.systemIndependentPath != ModuleManagerComponentBridge.getInstance(project).outOfTreeModulesPath
-  }
-
   override fun rename(newName: String, notifyStorage: Boolean) {
     moduleEntityId = moduleEntityId.copy(name = newName)
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: MutableList<in Runnable>?) {
+  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, listenerCallbacks: MutableList<Runnable>?) {
     super.registerComponents(plugins, null)
 
-    val corePlugin = plugins.asSequence().map { it.descriptor }.find { it.pluginId == PluginManagerCore.CORE_ID }
-
+    val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
     if (corePlugin != null) {
       registerComponent(ModuleRootManager::class.java, ModuleRootComponentBridge::class.java, corePlugin, true)
       registerComponent(FacetManager::class.java, FacetManagerBridge::class.java, corePlugin, true)

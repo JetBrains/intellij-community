@@ -94,8 +94,11 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
   JComponent fileLevelComponent;
-  @Nullable("null means it the same as highlighter") RangeMarker fixMarker;
+  @Nullable("null means it the same as highlighter")
+  RangeMarker fixMarker;
+  @Nullable
   volatile RangeHighlighterEx highlighter; // modified in EDT only
+  @Nullable
   PsiElement psiElement;
 
   protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
@@ -224,6 +227,7 @@ public class HighlightInfo implements Segment {
     return severity;
   }
 
+  @Nullable
   public RangeHighlighterEx getHighlighter() {
     return highlighter;
   }

@@ -13,15 +13,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
+import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
+import com.intellij.space.vcs.review.details.diff.SpaceDiffVmImpl
 import libraries.coroutines.extra.Lifetime
-import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.Lifetimed
-import libraries.coroutines.extra.usingSource
 import runtime.reactive.*
 
-private const val MAX_CHANGES_TO_LOAD = 1024
-
-internal open class CrDetailsVm<R : CodeReviewRecord>(
+abstract class CrDetailsVm<R : CodeReviewRecord>(
   final override val lifetime: Lifetime,
   val ideaProject: Project,
   val spaceProjectInfo: SpaceProjectInfo,
@@ -29,7 +27,6 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
   private val reviewRef: Ref<R>,
   val client: KCircletClient
 ) : Lifetimed {
-
   val review: Property<R> = reviewRef.property()
 
   val projectKey: ProjectKey = review.value.project
@@ -49,6 +46,7 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
 
   val turnBased: Property<Boolean?> = cellProperty { review.live.turnBased }
 
+
   private val participantsProperty: Property<LoadingValue<Ref<CodeReviewParticipants>>> = load {
     client.arena.resolveRefsOrFetch {
       reviewRef.extensionRef(CodeReviewParticipants::class)
@@ -61,7 +59,7 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
     r?.let { SpaceReviewParticipantsVmImpl(it, projectKey, review.value.identifier, client, lifetime) }
   }
 
-  protected val detailedInfo: Property<CodeReviewDetailedInfo?> = mapInit(review, null) {
+  private val detailedInfo: Property<CodeReviewDetailedInfo?> = mapInit(review, null) {
     client.codeReview.getReviewDetails(review.value.project.identifier, review.value.identifier)
   }
 
@@ -81,16 +79,21 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
 
   val selectedCommitIndices: MutableProperty<List<Int>> = Property.createMutable(emptyList())
 
-  protected suspend fun loadChanges(lt: LifetimeSource, revisions: List<RevisionInReview>): List<ChangeInReview> {
-    val reviewChanges: InitializedChannel<DiscussionEvent, DiscussionChannelInitialState<Batch<ChangeInReview>>> = client.codeReview.getReviewChanges(
-      lt,
-      BatchInfo("0", MAX_CHANGES_TO_LOAD),
-      projectKey.identifier,
-      reviewId,
-      revisions)
-    // TODO: check api changes
-    return reviewChanges.initial.payload.data
+  private val selectedCommits: Property<List<ReviewCommitListItem>> = mapInit(selectedCommitIndices, commits,
+                                                                              emptyList()) { indices, commits ->
+    commits ?: return@mapInit emptyList<ReviewCommitListItem>()
+
+    if (indices.isEmpty()) return@mapInit commits
+
+    indices.map { commits[it] }
   }
+
+  private val selectedChange: MutableProperty<ChangeInReview?> = mutableProperty(null)
+
+  val spaceDiffVm: Property<SpaceDiffVm> = mutableProperty(
+    SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, selectedChange))
+
+  val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(lifetime, client, projectKey, reviewId, selectedCommits, selectedChange)
 }
 
 internal class MergeRequestDetailsVm(
@@ -109,16 +112,6 @@ internal class MergeRequestDetailsVm(
   val sourceBranchInfo: Property<MergeRequestBranch?> = cellProperty { branchPair.live.sourceBranchInfo }
 
   val repoInfo = spaceReposInfo.firstOrNull { it.name == repository.value }
-
-  val changes = mapInit(commits, selectedCommitIndices, null) { allCommits, selectedCommitIndices ->
-    allCommits ?: return@mapInit null
-    lifetime.usingSource { lt ->
-      val selectedCommits = if (selectedCommitIndices.isNotEmpty()) selectedCommitIndices.map { allCommits[it] } else allCommits
-      selectedCommits
-        .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
-        .let { loadChanges(lt, it) }
-    }
-  }
 }
 
 internal class CommitSetReviewDetailsVm(
@@ -137,24 +130,6 @@ internal class CommitSetReviewDetailsVm(
       { it.repositoryInReview.name },
       { spaceReposByName[it.repositoryInReview.name] }
     )
-  }
-
-  val changesByRepos: Property<Map<String, List<ChangeInReview>>?> = mapInit(commits, selectedCommitIndices,
-                                                                             null) { commits, selectedCommitIndices ->
-    commits ?: return@mapInit null
-
-    val selectedCommits = if (selectedCommitIndices.isNotEmpty()) selectedCommitIndices.map { commits[it] } else commits
-
-    lifetime.usingSource { lt ->
-      selectedCommits
-        .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
-        .groupBy { it.repository }
-        .map {
-          val repoName = it.key
-          val revisionsInRepo = it.value
-          repoName to loadChanges(lt, revisionsInRepo)
-        }.toMap()
-    }
   }
 }
 

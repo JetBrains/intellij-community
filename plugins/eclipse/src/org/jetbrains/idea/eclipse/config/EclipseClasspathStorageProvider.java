@@ -28,6 +28,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.workspaceModel.ide.JpsFileEntitySource;
+import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
+import com.intellij.workspaceModel.storage.EntitySource;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +48,7 @@ import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.io.IOException;
+import java.util.function.Function;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -90,6 +100,29 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   @Override
   public void detach(@NotNull Module module) {
     EclipseModuleManagerImpl.getInstance(module).setDocumentSet(null);
+    updateEntitySource(module, source -> ((EclipseProjectFile)source).getInternalSource());
+  }
+
+  private static void updateEntitySource(Module module, Function<? super EntitySource, ? extends EntitySource> updateSource) {
+    if (WorkspaceModel.isEnabled()) {
+      ModuleBridge moduleBridge = (ModuleBridge)module;
+      WorkspaceEntityStorage moduleEntityStorage = moduleBridge.getEntityStorage().getCurrent();
+      ModuleEntity moduleEntity = ModuleManagerComponentBridge.findModuleEntity(moduleEntityStorage, moduleBridge);
+      if (moduleEntity != null) {
+        EntitySource entitySource = moduleEntity.getEntitySource();
+        ModuleManagerComponentBridge.changeModuleEntitySource(moduleBridge, moduleEntityStorage, updateSource.apply(entitySource), moduleBridge.getDiff());
+      }
+    }
+  }
+
+  @Override
+  public void attach(@NotNull Module module) {
+    updateEntitySource(module, source -> {
+      VirtualFileUrlManager virtualFileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, module.getProject());
+      String contentRoot = getContentRoot(ModuleRootManager.getInstance(module));
+      String classpathFileUrl = VfsUtilCore.pathToUrl(contentRoot) + "/" + EclipseXml.CLASSPATH_FILE;
+      return new EclipseProjectFile(virtualFileUrlManager.fromUrl(classpathFileUrl), (JpsFileEntitySource)source);
+    });
   }
 
   @NotNull
@@ -150,7 +183,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
   }
 
-  public static String getDescr() {
+  public static @Nls String getDescr() {
     return EclipseBundle.message("eclipse.classpath.storage.description");
   }
 }

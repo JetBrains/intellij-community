@@ -395,6 +395,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public void mergeRootsChangesDuring(@NotNull Runnable runnable) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     BatchSession<?> batchSession = myRootsChanged;
     batchSession.levelUp();
     try {

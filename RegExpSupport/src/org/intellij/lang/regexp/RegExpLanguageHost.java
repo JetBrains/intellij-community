@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.psi.PsiElement;
@@ -19,7 +19,20 @@ public interface RegExpLanguageHost {
   boolean characterNeedsEscaping(char c);
   boolean supportsPerl5EmbeddedComments();
   boolean supportsPossessiveQuantifiers();
+
+  /**
+   * @return true, if this dialects support conditionals, i.e. the following construct: {@code (?(1)then|else)}
+   */
   boolean supportsPythonConditionalRefs();
+
+  /**
+   * @param condition  a RegExpBackRef, RegExpNamedGroupRef or RegExpGroup instance.
+   * @return true, if this type of conditional condition is supported
+   */
+  default boolean supportConditionalCondition(RegExpAtom condition) {
+    return true;
+  }
+
   boolean supportsNamedGroupSyntax(RegExpGroup group);
   boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref);
   @NotNull

@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.rt.compiler.JavacResourcesReader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -143,7 +144,7 @@ public class JavacOutputParser extends OutputParser {
           while(true);
 
           if (colNum >= 0){
-            messages = convertMessages(messages);
+            convertMessages(messages);
             String text = StringUtil.join(messages, "\n");
             addMessage(callback, category, text, VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), lineNum, colNum + 1);
             return true;
@@ -168,9 +169,9 @@ public class JavacOutputParser extends OutputParser {
   }
 
 
-  private static List<String> convertMessages(List<String> messages) {
+  private static void convertMessages(@NotNull List<String> messages) {
     if(messages.size() <= 1) {
-      return messages;
+      return;
     }
     final String line0 = messages.get(0);
     final String line1 = messages.get(1);
@@ -187,7 +188,6 @@ public class JavacOutputParser extends OutputParser {
         messages.set(0, line0 + " " + symbol);
       }
     }
-    return messages;
   }
 
   private void addJavacPattern(@NonNls final String line) {

@@ -4,6 +4,7 @@ package com.intellij.diff.util;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.diff.*;
+import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
@@ -115,6 +116,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER;
+import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public final class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
@@ -515,20 +517,16 @@ public final class DiffUtil {
   //
 
   @NotNull
-  public static List<JComponent> createSimpleTitles(@NotNull ContentDiffRequest request) {
+  public static List<JComponent> createSimpleTitles(@Nullable DiffViewer viewer, @NotNull ContentDiffRequest request) {
     List<DiffContent> contents = request.getContents();
     List<@Nls String> titles = request.getContentTitles();
-
-    if (!ContainerUtil.exists(titles, Conditions.notNull())) {
-      return Collections.nCopies(titles.size(), null);
-    }
 
     List<JComponent> components = new ArrayList<>(titles.size());
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
       JComponent title = createTitle(titles.get(i),
                                      diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
-      title = createTitleWithNotifications(title, contents.get(i));
+      title = createTitleWithNotifications(viewer, title, contents.get(i));
       components.add(title);
     }
 
@@ -536,7 +534,9 @@ public final class DiffUtil {
   }
 
   @NotNull
-  public static List<JComponent> createTextTitles(@NotNull ContentDiffRequest request, @NotNull List<? extends Editor> editors) {
+  public static List<JComponent> createTextTitles(@Nullable DiffViewer viewer,
+                                                  @NotNull ContentDiffRequest request,
+                                                  @NotNull List<? extends Editor> editors) {
     List<DiffContent> contents = request.getContents();
     List<@Nls String> titles = request.getContentTitles();
 
@@ -545,9 +545,6 @@ public final class DiffUtil {
 
     List<JComponent> result = new ArrayList<>(contents.size());
 
-    if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Conditions.notNull())) {
-      return Collections.nCopies(titles.size(), null);
-    }
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
       JComponent title = createTitle(titles.get(i),
@@ -556,7 +553,7 @@ public final class DiffUtil {
                                      equalSeparators,
                                      editors.get(i),
                                      diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
-      title = createTitleWithNotifications(title, contents.get(i));
+      title = createTitleWithNotifications(viewer, title, contents.get(i));
       result.add(title);
     }
 
@@ -564,9 +561,10 @@ public final class DiffUtil {
   }
 
   @Nullable
-  private static JComponent createTitleWithNotifications(@Nullable JComponent title,
+  private static JComponent createTitleWithNotifications(@Nullable DiffViewer viewer,
+                                                         @Nullable JComponent title,
                                                          @NotNull DiffContent content) {
-    List<JComponent> notifications = new ArrayList<>(getCustomNotifications(content));
+    List<JComponent> notifications = new ArrayList<>(createCustomNotifications(viewer, content));
 
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
@@ -1692,22 +1690,49 @@ public final class DiffUtil {
     return null;
   }
 
+  /**
+   * @deprecated Use {@link #addNotification(DiffNotificationProvider, UserDataHolder)}
+   */
+  @Deprecated
   public static void addNotification(@Nullable JComponent component, @NotNull UserDataHolder holder) {
     if (component == null) return;
-    List<JComponent> oldComponents = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATIONS));
-    holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, ContainerUtil.append(oldComponents, component));
+    addNotification(viewer -> component, holder);
+  }
+
+  public static void addNotification(@Nullable DiffNotificationProvider provider, @NotNull UserDataHolder holder) {
+    if (provider == null) return;
+    List<DiffNotificationProvider> newProviders = new ArrayList<>(getNotificationProviders(holder));
+    newProviders.add(provider);
+    holder.putUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS, newProviders);
   }
 
   @NotNull
-  public static List<JComponent> getCustomNotifications(@NotNull UserDataHolder context, @NotNull UserDataHolder request) {
-    List<JComponent> requestComponents = request.getUserData(DiffUserDataKeys.NOTIFICATIONS);
-    List<JComponent> contextComponents = context.getUserData(DiffUserDataKeys.NOTIFICATIONS);
-    return ContainerUtil.concat(ContainerUtil.notNullize(contextComponents), ContainerUtil.notNullize(requestComponents));
+  public static List<JComponent> createCustomNotifications(@Nullable DiffViewer viewer,
+                                                           @NotNull UserDataHolder context,
+                                                           @NotNull UserDataHolder request) {
+    List<DiffNotificationProvider> contextProviders = getNotificationProviders(context);
+    List<DiffNotificationProvider> requestProviders = getNotificationProviders(request);
+    return createNotifications(viewer, ContainerUtil.concat(contextProviders, requestProviders));
   }
 
   @NotNull
-  public static List<JComponent> getCustomNotifications(@NotNull DiffContent content) {
-    return ContainerUtil.notNullize(content.getUserData(DiffUserDataKeys.NOTIFICATIONS));
+  public static List<JComponent> createCustomNotifications(@Nullable DiffViewer viewer,
+                                                           @NotNull DiffContent content) {
+    List<DiffNotificationProvider> providers = getNotificationProviders(content);
+    return createNotifications(viewer, providers);
+  }
+
+  @NotNull
+  private static List<DiffNotificationProvider> getNotificationProviders(@NotNull UserDataHolder holder) {
+    List<DiffNotificationProvider> providers = notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS));
+    List<JComponent> components = notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATIONS));
+    return ContainerUtil.concat(providers, ContainerUtil.map(components, component -> (viewer) -> component));
+  }
+
+  @NotNull
+  private static List<JComponent> createNotifications(@Nullable DiffViewer viewer,
+                                                      @NotNull List<DiffNotificationProvider> providers) {
+    return ContainerUtil.mapNotNull(providers, it -> it.createNotification(viewer));
   }
 
   //
@@ -1815,7 +1840,7 @@ public final class DiffUtil {
     @Override
     public Dimension getMinimumSize() {
       Dimension size = super.getMinimumSize();
-      size.height = getMaximumHeight(JComponent::getMinimumSize);
+      size.height = getMaximumHeight(JComponent::getPreferredSize);
       return size;
     }
 

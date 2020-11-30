@@ -8,7 +8,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
-import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -49,7 +49,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
@@ -62,8 +62,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 3, true);
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
-
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = StubUpdatingIndex::canHaveStub;
 
   @NotNull
   private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
@@ -89,6 +87,10 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   public static boolean canHaveStub(@NotNull VirtualFile file) {
     Project project = ProjectUtil.guessProjectForFile(file);
     FileType fileType = SubstitutedFileType.substituteFileType(file, file.getFileType(), project);
+    return canHaveStub(file, fileType);
+  }
+
+  private static boolean canHaveStub(@NotNull VirtualFile file, @NotNull FileType fileType) {
     if (fileType instanceof LanguageFileType) {
       final Language l = ((LanguageFileType)fileType).getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
@@ -299,6 +301,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
   }
 
+  @Override
+  public int getCacheSize() {
+    return super.getCacheSize() * Runtime.getRuntime().availableProcessors();
+  }
+
   @Nullable
   static IndexingStampInfo readSavedIndexingStampInfo(@NotNull VirtualFile file) {
     try (DataInputStream stream = INDEXED_STAMP.readAttribute(file)) {
@@ -340,7 +347,12 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return INPUT_FILTER;
+    return new FileBasedIndex.ProjectSpecificInputFilter() {
+      @Override
+      public boolean acceptInput(@NotNull IndexedFile file) {
+        return canHaveStub(file.getFile(), file.getFileType());
+      }
+    };
   }
 
   @Override
@@ -394,7 +406,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       ? snapshotInputMappings.getForwardIndexAccessor()
       : stubForwardIndexAccessor;
 
-    return new MyIndex(extension, storage, forwardIndex, accessor, snapshotInputMappings);
+    return new MyIndex(extension, storage, forwardIndex, accessor, snapshotInputMappings, mySerializationManager);
   }
 
   private void checkNameStorage() throws StorageException {
@@ -405,17 +417,20 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
   }
 
-  private static class MyIndex extends VfsAwareMapReduceIndex<Integer, SerializedStubTree> {
+  private static final class MyIndex extends VfsAwareMapReduceIndex<Integer, SerializedStubTree> {
     private StubIndexImpl myStubIndex;
     @Nullable
     private final CompositeBinaryBuilderMap myCompositeBinaryBuilderMap = FileBasedIndex.USE_IN_MEMORY_INDEX ? null : new CompositeBinaryBuilderMap();
+    private final @NotNull SerializationManagerEx mySerializationManager;
 
     MyIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
             @NotNull IndexStorage<Integer, SerializedStubTree> storage,
             @Nullable ForwardIndex forwardIndex,
             @Nullable ForwardIndexAccessor<Integer, SerializedStubTree> forwardIndexAccessor,
-            @Nullable SnapshotInputMappings<Integer, SerializedStubTree> snapshotInputMappings) throws IOException {
+            @Nullable SnapshotInputMappings<Integer, SerializedStubTree> snapshotInputMappings,
+            @NotNull SerializationManagerEx serializationManager) throws IOException {
       super(extension, storage, forwardIndex, forwardIndexAccessor, snapshotInputMappings, null);
+      mySerializationManager = serializationManager;
     }
 
     @Override
@@ -423,6 +438,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       final StubIndexImpl stubIndex = getStubIndex();
       try {
         stubIndex.flush();
+        mySerializationManager.flushNameStorage();
       }
       finally {
         super.doFlush();
@@ -571,12 +587,16 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   private static void instantiateElementTypesFromFields() {
     // load stub serializers before usage
     FileTypeRegistry.getInstance().getRegisteredFileTypes();
-    getExtensions(BinaryFileStubBuilders.INSTANCE).forEach(builder -> {});
-    getExtensions(LanguageParserDefinitions.INSTANCE).forEach(ParserDefinition::getFileNodeType);
+    getExtensions(BinaryFileStubBuilders.INSTANCE, builder -> {});
+    getExtensions(LanguageParserDefinitions.INSTANCE, ParserDefinition::getFileNodeType);
   }
 
-  private static @NotNull <T> Stream<T> getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector) {
-    ExtensionPoint<KeyedLazyInstance<T>> point = collector.getPoint();
-    return point == null ? Stream.empty() : point.extensions().map(KeyedLazyInstance::getInstance);
+  private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<T> consumer) {
+    ExtensionPointImpl<KeyedLazyInstance<T>> point = (ExtensionPointImpl<KeyedLazyInstance<T>>)collector.getPoint();
+    if (point != null) {
+      for (KeyedLazyInstance<T> instance : point) {
+        consumer.accept(instance.getInstance());
+      }
+    }
   }
 }

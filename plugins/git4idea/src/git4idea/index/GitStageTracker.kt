@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -28,7 +29,6 @@ import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.repo.GitUntrackedFilesHolder
 import git4idea.status.GitChangeProvider
 import git4idea.util.toShortenedLogString
 import org.jetbrains.annotations.NonNls
@@ -44,12 +44,18 @@ class GitStageTracker(val project: Project) : Disposable {
   @Volatile
   var state: State = State(gitRoots().associateWith { RootState.empty(it) })
     private set
+  val ignoredPaths: Map<VirtualFile, List<FilePath>>
+    get() {
+      return gitRoots().associateWith {
+        GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(it)?.ignoredFilesHolder?.ignoredFilePaths?.toList() ?: emptyList()
+      }
+    }
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
-        markDirty(events)
+        handleIndexFileEvents(events)
       }
     })
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsListener {
@@ -96,32 +102,37 @@ class GitStageTracker(val project: Project) : Disposable {
   }
 
   fun scheduleUpdateAll() {
-    val gitRoots = gitRoots()
-    LOG.debug("Mark dirty ${gitRoots}")
-    dirtyScopeManager.filesDirty(emptyList(), gitRoots)
+    LOG.debug("Mark everything dirty")
+    dirtyScopeManager.markEverythingDirty()
   }
 
+  /**
+   * Update tree on [FileDocumentManager#unsavedDocuments] state change.
+   *
+   * We can refresh only [doUpdateState], but this introduces blinking in some cases.
+   *   Ex: when unsaved unstaged changes are saved on disk. We remove file from tree immediately,
+   *   but CLM is slow to notice new saved unstaged changes - so file is removed from thee and added again in a second.
+   */
   private fun markDirty(file: VirtualFile) {
+    if (!isStagingAreaAvailable(project)) return
     val root = getRoot(project, file) ?: return
     if (!gitRoots().contains(root)) return
     LOG.debug("Mark dirty ${file.filePath()}")
     dirtyScopeManager.fileDirty(file.filePath())
   }
 
-  private fun markDirty(events: List<VFileEvent>) {
-    val gitRoots = gitRoots()
+  private fun handleIndexFileEvents(events: List<VFileEvent>) {
+    val pathsToDirty = mutableListOf<FilePath>()
+    for (event in events) {
+      if (event.isFromRefresh) continue
+      val file = event.file as? GitIndexVirtualFile ?: continue
+      pathsToDirty.add(file.filePath)
+    }
 
-    val roots = GitRepositoryManager.getInstance(project).repositories.filter { repo ->
-      events.any { e -> GitUntrackedFilesHolder.totalRefreshNeeded(repo, e.path) }
-    }.map { it.root }.intersect(gitRoots)
-
-    val files = events.mapNotNull { it.file as? GitIndexVirtualFile }.filter {
-      gitRoots.contains(it.root)
-    }.map { it.filePath }
-
-    LOG.debug("Mark dirty", files, roots)
-    dirtyScopeManager.filesDirty(emptyList(), roots)
-    dirtyScopeManager.filePathsDirty(files, emptyList())
+    if (pathsToDirty.isNotEmpty()) {
+      LOG.debug("Mark dirty on index VFiles save: ", pathsToDirty)
+      VcsDirtyScopeManager.getInstance(project).filePathsDirty(pathsToDirty, emptyList())
+    }
   }
 
   private fun doUpdateState(repository: GitRepository) {

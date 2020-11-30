@@ -13,6 +13,7 @@ import java.util.List;
 
 public abstract class AbstractDependencyNode implements DependencyNode, Serializable {
   private final long id;
+  @NotNull
   private final List<DependencyNode> dependencies;
   private String resolutionState;
 
@@ -58,7 +59,7 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
   @Override
   public int hashCode() {
     int result = (int)(id ^ (id >>> 32));
-    result = 31 * result + (dependencies != null ? dependencies.size() : 0);
+    result = 31 * result + dependencies.size();
     result = 31 * result + (resolutionState != null ? resolutionState.hashCode() : 0);
     return result;
   }

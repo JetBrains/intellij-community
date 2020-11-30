@@ -4,6 +4,7 @@ package org.jetbrains.jps.javac;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
@@ -105,7 +106,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       }
 
       @Override
-      public void reportMessage(Diagnostic.Kind kind, String message) {
+      public void reportMessage(Diagnostic.Kind kind, @Nls String message) {
         context.reportMessage(kind, message);
       }
     };
@@ -332,7 +333,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
 
     void consumeOutputFile(@NotNull OutputFileObject obj);
 
-    void reportMessage(final Diagnostic.Kind kind, String message);
+    void reportMessage(final Diagnostic.Kind kind, @Nls String message);
   }
 
   public final Context getContext() {

@@ -19,7 +19,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   private val state = State()
 
-  override fun getState(): State? {
+  override fun getState(): State {
     return state
   }
 

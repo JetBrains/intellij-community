@@ -10,17 +10,17 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchPluginIcons
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
+import icons.PackageSearchIcons
 
 class AddDependencyAction : AnAction(
-    PackageSearchBundle.message("packagesearch.actions.addDependency.text"),
-    PackageSearchBundle.message("packagesearch.actions.addDependency.description"),
-    PackageSearchPluginIcons.Artifact
+  PackageSearchBundle.message("packagesearch.actions.addDependency.text"),
+  PackageSearchBundle.message("packagesearch.actions.addDependency.description"),
+  PackageSearchIcons.Artifact
 ) {
 
     override fun update(e: AnActionEvent) {

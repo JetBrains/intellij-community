@@ -22,6 +22,9 @@ from typing_extensions import Literal
 from .events import AbstractEventLoop
 from .futures import Future
 
+if sys.version_info >= (3, 9):
+    from types import GenericAlias
+
 _T = TypeVar("_T")
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
@@ -189,6 +192,8 @@ class Task(Future[_T], Generic[_T]):
         def all_tasks(cls, loop: Optional[AbstractEventLoop] = ...) -> Set[Task[Any]]: ...
     if sys.version_info < (3, 7):
         def _wakeup(self, fut: Future[Any]) -> None: ...
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
 if sys.version_info >= (3, 7):
     def all_tasks(loop: Optional[AbstractEventLoop] = ...) -> Set[Task[Any]]: ...

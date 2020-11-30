@@ -31,6 +31,10 @@ public final class CommonJavaFragments {
 
   public static final String JRE_PATH = "jrePath";
 
+  private static boolean hasTask(@NotNull RunnerAndConfigurationSettingsImpl s) {
+    return exists(s.getManager().getBeforeRunTasks(s.getConfiguration()), t -> CompileStepBeforeRun.ID == t.getProviderId());
+  }
+
   public static <S extends RunConfigurationBase<?>> SettingsEditorFragment<S, JLabel> createBuildBeforeRun(BeforeRunComponent beforeRunComponent) {
     String buildAndRun = ExecutionBundle.message("application.configuration.title.build.and.run");
     String run = ExecutionBundle.message("application.configuration.title.run");
@@ -40,15 +44,11 @@ public final class CommonJavaFragments {
                                                                                               ExecutionBundle
                                                                                                 .message("do.not.build.before.run"),
                                                                                               ExecutionBundle.message("group.java.options"),
-                                                                                              jLabel, -1) {
+                                                                                              jLabel, -1,
+                                                                                              settings -> !hasTask(settings)) {
       @Override
-      public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
+      public void doReset(@NotNull RunnerAndConfigurationSettingsImpl s) {
         jLabel.setText(hasTask(s) ? buildAndRun : run);
-      }
-
-      private boolean hasTask(@NotNull RunnerAndConfigurationSettingsImpl s) {
-        return exists(s.getManager().getBeforeRunTasks(s.getConfiguration()),
-                      t -> CompileStepBeforeRun.ID == t.getProviderId());
       }
 
       @Override
@@ -56,8 +56,7 @@ public final class CommonJavaFragments {
         ArrayList<BeforeRunTask<?>> tasks = new ArrayList<>(s.getManager().getBeforeRunTasks(s.getConfiguration()));
         if (!isSelected()) {
           if (!hasTask(s)) {
-            CompileStepBeforeRun.MakeBeforeRunTask task =
-              new CompileStepBeforeRun.MakeBeforeRunTask();
+            CompileStepBeforeRun.MakeBeforeRunTask task = new CompileStepBeforeRun.MakeBeforeRunTask();
             task.setEnabled(true);
             tasks.add(task);
           }

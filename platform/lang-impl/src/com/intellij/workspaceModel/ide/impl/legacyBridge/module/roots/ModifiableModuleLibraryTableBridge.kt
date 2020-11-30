@@ -171,6 +171,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
   }
 
   internal fun disposeOriginalLibraries() {
+    if (copyToOriginal.isEmpty()) return
     libraryIterator.forEach {
       val original = copyToOriginal[it]
       if (original != null) {

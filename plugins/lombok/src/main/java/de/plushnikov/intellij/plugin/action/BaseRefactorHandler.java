@@ -7,11 +7,11 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 
@@ -27,7 +27,7 @@ public abstract class BaseRefactorHandler implements Runnable {
 
   public BaseRefactorHandler(DataContext dataContext, Project project) {
     this.project = project;
-    editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, false);
@@ -55,10 +55,13 @@ public abstract class BaseRefactorHandler implements Runnable {
     return true;
   }
 
+  @NlsContexts.DialogTitle
   protected abstract String getChooserTitle();
 
+  @NlsContexts.HintText
   protected abstract String getNothingFoundMessage();
 
+  @NlsContexts.HintText
   protected abstract String getNothingAcceptedMessage();
 
   protected abstract List<EncapsulatableClassMember> getEncapsulatableClassMembers(PsiClass psiClass);

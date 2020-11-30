@@ -65,6 +65,13 @@ public class PropertiesParser implements PsiParser {
     builder.putUserData(PsiBuilderImpl.CUSTOM_COMPARATOR, MATCH_BY_KEY);
     final PsiBuilder.Marker rootMarker = builder.mark();
     final PsiBuilder.Marker propertiesList = builder.mark();
+    if(builder.eof()){
+      propertiesList.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, WhitespacesBinders.GREEDY_RIGHT_BINDER);
+    }
+    else{
+      propertiesList.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
+    }
+
     while (!builder.eof()) {
       Parsing.parseProperty(builder);
     }

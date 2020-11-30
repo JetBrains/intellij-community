@@ -1,73 +1,54 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.CommitWorkflowManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
 
-class GitStageManager(val project: Project) : Disposable {
-
-  fun installListeners() {
-    val connection = project.messageBus.connect(this)
-    connection.subscribe(GitStagingAreaSettingsListener.TOPIC, object : GitStagingAreaSettingsListener {
-      override fun settingsChanged() {
-        onAvailabilityChanged()
-        ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
-        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-      }
-    })
-    connection.subscribe(CommitWorkflowManager.SETTINGS, object : CommitWorkflowManager.SettingsListener {
-      override fun settingsChanged() {
-        onAvailabilityChanged()
-      }
-    })
-    stageLocalChangesRegistryOption().addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-        ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
-      }
-    }, this)
-    stageLineStatusTrackerRegistryOption().addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
-      }
-    }, this)
-  }
-
-  private fun onAvailabilityChanged() {
-    if (isStageAvailable(project)) {
-      GitStageTracker.getInstance(project).scheduleUpdateAll()
-    }
-    ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
-  }
-
-  override fun dispose() {
-  }
-
+internal class GitStageManager {
   companion object {
-    @JvmStatic
-    fun getInstance(project: Project) = project.getService(GitStageManager::class.java)
-  }
-}
+    @RequiresEdt
+    private fun onAvailabilityChanged(project: Project) {
+      ApplicationManager.getApplication().assertIsDispatchThread()
 
-class GitStageStartupActivity : StartupActivity.Background {
-  override fun runActivity(project: Project) {
-    if (isStageAvailable(project)) {
-      GitStageTracker.getInstance(project).scheduleUpdateAll()
+      if (isStagingAreaAvailable(project)) {
+        GitStageTracker.getInstance(project).scheduleUpdateAll()
+      }
+      project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+      ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
+      // Notify LSTM after CLM to let it save current partial changelists state
+      ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
     }
-    GitStageManager.getInstance(project).installListeners()
+  }
+
+  internal class GitStageStartupActivity : StartupActivity.Background {
+    override fun runActivity(project: Project) {
+      if (isStagingAreaAvailable(project)) {
+        GitStageTracker.getInstance(project).scheduleUpdateAll()
+      }
+    }
+  }
+
+  internal class StagingSettingsListener(val project: Project) : GitStagingAreaSettingsListener {
+    override fun settingsChanged() {
+      onAvailabilityChanged(project)
+    }
+  }
+
+  internal class CommitSettingsListener(val project: Project) : CommitWorkflowManager.SettingsListener {
+    override fun settingsChanged() {
+      onAvailabilityChanged(project)
+    }
   }
 }
 
@@ -76,8 +57,9 @@ interface GitStagingAreaSettingsListener {
 
   companion object {
     @JvmField
-    val TOPIC: Topic<GitStagingAreaSettingsListener> = Topic.create("Git Staging Area Settings Changes",
-                                                                    GitStagingAreaSettingsListener::class.java)
+    val TOPIC: Topic<GitStagingAreaSettingsListener> = Topic(GitStagingAreaSettingsListener::class.java,
+                                                             Topic.BroadcastDirection.TO_DIRECT_CHILDREN,
+                                                             true)
   }
 }
 
@@ -96,7 +78,7 @@ fun enableStagingArea(enabled: Boolean) {
 fun canEnableStagingArea() = CommitWorkflowManager.isNonModalInSettings()
 
 fun isStagingAreaAvailable() = isStagingAreaEnabled() && canEnableStagingArea()
-fun isStageAvailable(project: Project): Boolean {
+fun isStagingAreaAvailable(project: Project): Boolean {
   return isStagingAreaAvailable() &&
          ProjectLevelVcsManager.getInstance(project).singleVCS?.keyInstanceMethod == GitVcs.getKey()
 }

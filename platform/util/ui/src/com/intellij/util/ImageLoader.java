@@ -11,6 +11,8 @@ import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -41,7 +43,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public final class ImageLoader {
@@ -55,7 +56,7 @@ public final class ImageLoader {
   }
 
   private static final long CACHED_IMAGE_MAX_SIZE = (long)(SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024);
-  private static final Set<String> IO_MISS_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<String> IO_MISS_CACHE = ContainerUtil.newConcurrentSet();
 
   private static final ConcurrentMap<CacheKey, Pair<Image, Dimension2DDouble>> imageCache = CollectionFactory.createConcurrentSoftValueMap();
   // https://github.com/JetBrains/intellij-community/pull/1242
@@ -102,9 +103,9 @@ public final class ImageLoader {
                                          String name,
                                          String ext,
                                          float scale,
-                                         @NotNull List<ImageDescriptor> list) {
+                                         @NotNull List<? super ImageDescriptor> list) {
     String _ext = isSvg ? "svg" : ext;
-    float _scale = isSvg ? scale : (retina ? 2 : 1);
+    float _scale = isSvg ? scale : retina ? 2 : 1;
 
     if (retina && isDark) {
       list.add(new ImageDescriptor(name + "@2x_dark." + _ext, _scale, isSvg, true));
@@ -125,10 +126,10 @@ public final class ImageLoader {
 
   @ApiStatus.Internal
   public static @Nullable Image loadRasterized(@NotNull String path,
-                                               @Nullable List<ImageFilter> filters,
-                                               @NotNull Class<?> resourceClass,
+                                               @NotNull List<? extends ImageFilter> filters,
+                                               @NotNull ClassLoader classLoader,
                                                @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                               ScaleContext scaleContext,
+                                               @NotNull ScaleContext scaleContext,
                                                boolean isUpScaleNeeded,
                                                long rasterizedCacheKey,
                                                @MagicConstant(flagsFromClass = ImageDescriptor.class) int imageFlags) {
@@ -148,7 +149,7 @@ public final class ImageLoader {
 
     float imageScale;
 
-    String ext = isSvg ? "svg" : (dotIndex < 0 || (dotIndex == path.length() - 1) ? "" : path.substring(dotIndex + 1));
+    String ext = isSvg ? "svg" : dotIndex < 0 || (dotIndex == path.length() - 1) ? "" : path.substring(dotIndex + 1);
 
     String effectivePath;
     boolean isEffectiveDark = isDark;
@@ -177,10 +178,10 @@ public final class ImageLoader {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
       Image image;
       if (isSvg) {
-        image = SVGLoader.loadFromClassResource(resourceClass, null, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark, originalUserSize);
+        image = SVGLoader.loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark, originalUserSize);
       }
       else {
-        image = loadPngFromClassResource(effectivePath, resourceClass, null, imageScale, originalUserSize);
+        image = loadPngFromClassResource(effectivePath, null, classLoader, imageScale, originalUserSize);
       }
 
       if (start != -1) {
@@ -203,7 +204,7 @@ public final class ImageLoader {
 
   @ApiStatus.Internal
   public static @Nullable Image load(@NotNull String path,
-                                     @Nullable List<ImageFilter> filters,
+                                     @NotNull List<? extends ImageFilter> filters,
                                      @Nullable Class<?> resourceClass,
                                      @Nullable ClassLoader classLoader,
                                      @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
@@ -272,7 +273,7 @@ public final class ImageLoader {
 
     Image image;
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    if (resourceClass == null) {
+    if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path))) {
       URLConnection connection = new URL(descriptor.path).openConnection();
       if (connection instanceof HttpURLConnection) {
         if (!descriptor.original) {
@@ -379,7 +380,7 @@ public final class ImageLoader {
   // originalUserSize - The original user space size of the image. In case of SVG it's the size specified in the SVG doc.
   // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
   public static @Nullable Image convertImage(@NotNull Image image,
-                                             @Nullable List<ImageFilter> filters,
+                                             @NotNull List<? extends ImageFilter> filters,
                                              @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
                                              ScaleContext scaleContext,
                                              boolean isUpScaleNeeded,
@@ -396,7 +397,7 @@ public final class ImageLoader {
       image = scaleImage(image, scale);
     }
 
-    if (filters != null && !filters.isEmpty()) {
+    if (!filters.isEmpty()) {
       Toolkit toolkit = Toolkit.getDefaultToolkit();
       for (ImageFilter filter : filters) {
         if (filter != null) {
@@ -419,9 +420,9 @@ public final class ImageLoader {
     return createImageDescriptorList(path, flags, scaleContext);
   }
 
-  private static List<ImageDescriptor> createImageDescriptorList(@NotNull String path,
-                                                                 @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                                                 @NotNull ScaleContext scaleContext) {
+  private static @NotNull List<ImageDescriptor> createImageDescriptorList(@NotNull String path,
+                                                                          @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
+                                                                          @NotNull ScaleContext scaleContext) {
     // Prefer retina images for HiDPI scale, because downscaling
     // retina images provides a better result than up-scaling non-retina images.
     float pixScale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
@@ -467,7 +468,7 @@ public final class ImageLoader {
       flags |= USE_DARK;
     }
     String path = url.toString();
-    return load(path, null, null, null, flags, ScaleContext.create(), !path.endsWith(".svg"));
+    return load(path, Collections.emptyList(), null, null, flags, ScaleContext.create(), !path.endsWith(".svg"));
   }
 
   /**
@@ -477,11 +478,10 @@ public final class ImageLoader {
   public static @Nullable Image loadFromUrl(@NotNull String path,
                                             @Nullable Class<?> aClass,
                                             @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                            @Nullable List<ImageFilter> filters,
                                             @NotNull ScaleContext scaleContext) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually - pass isUpScaleNeeded = true
-    return load(path, filters, aClass, null, flags, scaleContext, !path.endsWith(".svg"));
+    return load(path, Collections.emptyList(), aClass, null, flags, scaleContext, !path.endsWith(".svg"));
   }
 
   private static float adjustScaleFactor(boolean allowFloatScaling, float scale) {
@@ -546,7 +546,7 @@ public final class ImageLoader {
     int flags = USE_SVG | ALLOW_FLOAT_SCALING | USE_CACHE;
     flags = BitUtil.set(flags, USE_DARK, StartupUiUtil.isUnderDarcula());
     //noinspection MagicConstant
-    return load(path, null, aClass, null, flags, scaleContext, false);
+    return load(path, Collections.emptyList(), aClass, null, flags, scaleContext, false);
   }
 
   public static Image loadFromBytes(byte @NotNull [] bytes) {

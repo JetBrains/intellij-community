@@ -8,6 +8,9 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
+import org.jetbrains.jps.model.java.JavaResourceRootProperties
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -50,4 +53,19 @@ class JavaSourceRootPropertiesTest {
     assertThat(committedSource.jpsElement.getProperties(JavaModuleSourceRootTypes.SOURCES)!!.isForGeneratedSources).isTrue()
   }
 
+  @Test
+  fun `change root type`() {
+    val contentRoot = projectModel.baseProjectDir.newVirtualDirectory("content")
+    val srcRoot = projectModel.baseProjectDir.newVirtualDirectory("content/src")
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      val contentEntry = model.addContentEntry(contentRoot)
+      val sourceFolder1 = contentEntry.addSourceFolder(srcRoot, false)
+      assertThat(sourceFolder1.jpsElement.properties).isInstanceOf(JavaSourceRootProperties::class.java)
+      contentEntry.removeSourceFolder(sourceFolder1)
+      val sourceFolder2 = contentEntry.addSourceFolder(srcRoot, JavaResourceRootType.RESOURCE)
+      assertThat(sourceFolder2.jpsElement.properties).isInstanceOf(JavaResourceRootProperties::class.java)
+    }
+    val folder = ModuleRootManager.getInstance(module).contentEntries.single().sourceFolders.single()
+    assertThat(folder.jpsElement.properties).isInstanceOf(JavaResourceRootProperties::class.java)
+  }
 }

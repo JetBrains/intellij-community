@@ -103,8 +103,6 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
-  private static final MyHtml2Text html2TextParser = new MyHtml2Text(false);
-
   public static final NotNullFunction<String, String> QUOTER = s -> "\"" + s + "\"";
 
   public static final NotNullFunction<String, String> SINGLE_QUOTER = s -> "'" + s + "'";
@@ -734,7 +732,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * Pluralize English word. Could be used when e.g. generating collection name by element type.
    * Do not use this method in localized context, as it works for English language only.
-   * 
+   *
    * @param word word to pluralize
    * @return word in plural form
    */
@@ -1445,7 +1443,7 @@ public class StringUtil extends StringUtilRt {
     return Formats.formatFileSize(fileSize, unitSeparator);
   }
 
-  /** 
+  /**
    * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}).
    * This method is intended to be used in non-localized contexts (primarily in log output).
    * See com.intellij.ide.nls.NlsMessages for localized output.
@@ -1455,7 +1453,7 @@ public class StringUtil extends StringUtilRt {
     return Formats.formatDuration(duration);
   }
 
-  /** 
+  /**
    * Formats {@link Duration} as a sum of time units (calls {@link #formatDuration(long)} with duration converted to milliseconds)
    * This method is intended to be used in non-localized contexts (primarily in log output).
    * See com.intellij.ide.nls.NlsMessages for localized output.
@@ -2014,12 +2012,13 @@ public class StringUtil extends StringUtilRt {
     return removeHtmlTags(htmlString, false);
   }
 
+  @Contract(pure = true)
   public static @NotNull String removeHtmlTags(@NotNull String htmlString, boolean isRemoveStyleTag) {
     if (isEmpty(htmlString)) {
       return "";
     }
 
-    final MyHtml2Text parser = isRemoveStyleTag ? new MyHtml2Text(true) : html2TextParser;
+    final MyHtml2Text parser = isRemoveStyleTag ? new MyHtml2Text(true) : new MyHtml2Text(false);
     try {
       parser.parse(new StringReader(htmlString));
     }
@@ -2050,7 +2049,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String htmlEmphasize(@NotNull @Nls String text) {
+  public static @NlsSafe @NotNull String htmlEmphasize(@NotNull @Nls String text) {
     return HtmlChunk.tag("code").addText(text)
       .wrapWith("b").toString();
   }

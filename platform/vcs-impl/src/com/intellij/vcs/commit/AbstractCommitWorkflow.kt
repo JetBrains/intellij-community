@@ -176,12 +176,17 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   protected open fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) = Unit
 
   protected fun runBeforeCommitChecksWithEvents(isDefaultCommit: Boolean, executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    eventDispatcher.multicaster.beforeCommitChecksStarted()
+    fireBeforeCommitChecksStarted()
     val result = runBeforeCommitChecks(executor)
-    eventDispatcher.multicaster.beforeCommitChecksEnded(isDefaultCommit, result)
+    fireBeforeCommitChecksEnded(isDefaultCommit, result)
 
     return result
   }
+
+  protected fun fireBeforeCommitChecksStarted() = eventDispatcher.multicaster.beforeCommitChecksStarted()
+
+  protected fun fireBeforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) =
+    eventDispatcher.multicaster.beforeCommitChecksEnded(isDefaultCommit, result)
 
   private fun runBeforeCommitChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
     var result: CheckinHandler.ReturnResult? = null

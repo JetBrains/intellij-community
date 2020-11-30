@@ -162,7 +162,7 @@ public final class RepositoryHelper {
     for (PluginNode node : list) {
       PluginId pluginId = node.getPluginId();
 
-      if (pluginId == null || repositoryUrl != null && node.getDownloadUrl() == null) {
+      if (repositoryUrl != null && node.getDownloadUrl() == null) {
         LOG.debug("Malformed plugin record (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }

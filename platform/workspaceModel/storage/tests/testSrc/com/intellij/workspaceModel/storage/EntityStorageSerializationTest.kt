@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.entities.MySource
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertNull
 import org.junit.Test
@@ -25,8 +28,8 @@ class EntityStorageSerializationTest {
     val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
     builder.addSampleEntity("MyEntity")
 
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl(), true)
-    val deserializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl(), true)
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
+    val deserializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
       .also { it.serializerDataFormatVersion = "XYZ" }
 
     val stream = ByteArrayOutputStream()
@@ -40,13 +43,27 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serializer version`() {
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl(), true)
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
 
     val kryo = serializer.createKryo()
 
     val registration = (10..1_000).mapNotNull { kryo.getRegistration(it) }.joinToString(separator = "\n")
 
     assertEquals("Have you changed kryo registration? Update the version number! (And this test)", expectedKryoRegistration, registration)
+  }
+
+  @Test
+  fun `serialize empty lists`() {
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+
+    val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
+
+    // Do not replace ArrayList() with emptyList(). This must be a new object for this test
+    builder.addLibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), ArrayList(), MySource)
+
+    val stream = ByteArrayOutputStream()
+    serializer.serializeCache(stream, builder.toStorage())
   }
 }
 
@@ -80,11 +97,11 @@ private val expectedKryoRegistration = """
   [35, int[]]
   [36, kotlin.Pair]
   [37, com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex]
-  [38, com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex${'$'}VirtualFileUrlInfo]
-  [39, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}AddEntity]
-  [40, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}RemoveEntity]
-  [41, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}ReplaceEntity]
-  [42, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}ChangeEntitySource]
+  [38, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}AddEntity]
+  [39, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}RemoveEntity]
+  [40, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity]
+  [41, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ChangeEntitySource]
+  [42, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceAndChangeSource]
   [43, java.util.LinkedHashSet]
   [44, java.util.Collections${'$'}UnmodifiableCollection]
   [45, java.util.Collections${'$'}UnmodifiableSet]

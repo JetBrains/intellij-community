@@ -3,7 +3,6 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -14,6 +13,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -111,31 +111,33 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
       }
       if (usage instanceof MoveDirectoryUsageInfo) {
         MoveDirectoryUsageInfo moveDirUsage = (MoveDirectoryUsageInfo)usage;
-        PsiJavaModule moduleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(moveDirUsage.getSourceDirectory());
+        PsiDirectory sourceDirectory = moveDirUsage.getSourceDirectory();
+        if (sourceDirectory == null) continue;
+        PsiJavaModule moduleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(sourceDirectory);
         if (moduleDescriptor == null) continue;
 
-        ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(moveDirUsage.getSourceDirectory().getProject());
-        String oldPackageName = fileIndex.getPackageNameByDirectory(moveDirUsage.getSourceDirectory().getVirtualFile());
-        if (oldPackageName == null) continue;
-        String newPackageName = fileIndex.getPackageNameByDirectory(moveDirUsage.getTargetDirectory().getVirtualFile());
-        if (newPackageName == null) continue;
+        JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
+        PsiPackage oldPackage = directoryService.getPackage(sourceDirectory);
+        if (oldPackage == null) continue;
+        PsiDirectory targetDirectory = ObjectUtils.tryCast(moveDirUsage.getTargetFileItem(), PsiDirectory.class);
+        if (targetDirectory == null) continue;
+        PsiPackage newPackage = directoryService.getPackage(targetDirectory);
+        if (newPackage == null) continue;
 
-        renamePackageStatements(moduleDescriptor.getExports(), moveDirUsage.getTargetDirectory().getProject(), oldPackageName, newPackageName);
-        renamePackageStatements(moduleDescriptor.getOpens(), moveDirUsage.getTargetDirectory().getProject(), oldPackageName, newPackageName);
+        renamePackageStatements(moduleDescriptor.getExports(), oldPackage, newPackage);
+        renamePackageStatements(moduleDescriptor.getOpens(), oldPackage, newPackage);
       }
     }
   }
 
   private static void renamePackageStatements(@NotNull Iterable<PsiPackageAccessibilityStatement> packageStatements,
-                                              @NotNull Project project,
-                                              @NotNull String oldPackageName,
-                                              @NotNull String newPackageName) {
-    PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
+                                              @NotNull PsiPackage oldPackage,
+                                              @NotNull PsiPackage newPackage) {
     for (PsiPackageAccessibilityStatement exportStatement : packageStatements) {
-      if (!oldPackageName.equals(exportStatement.getPackageName())) continue;
       PsiJavaCodeReferenceElement packageReference = exportStatement.getPackageReference();
       if (packageReference == null) continue;
-      packageReference.replace(parserFacade.createReferenceFromText(newPackageName, exportStatement));
+      if (!oldPackage.equals(packageReference.resolve())) continue;
+      packageReference.bindToElement(newPackage);
       break;
     }
   }

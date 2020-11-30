@@ -5,6 +5,8 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -63,6 +65,16 @@ public class SuppressManagerImpl extends SuppressManager implements RedundantSup
   public boolean isSuppressionFor(@NotNull PsiElement elementWithSuppression, @NotNull PsiElement place, @NotNull String toolId) {
     PsiElement suppressionScope = JavaSuppressionUtil.getElementToolSuppressedIn(place, toolId);
     return suppressionScope != null && PsiTreeUtil.isAncestor(elementWithSuppression, suppressionScope, false);
+  }
+
+  @Override
+  public TextRange getHighlightingRange(PsiElement elementWithSuppression, String toolId) {
+    PsiElement annotationOrTagElement = elementWithSuppression instanceof PsiComment ? null : getElementToolSuppressedIn(elementWithSuppression, toolId);
+    if (annotationOrTagElement != null) {
+      int shiftInParent = annotationOrTagElement.getTextRange().getStartOffset() - elementWithSuppression.getTextRange().getStartOffset();
+      return RedundantSuppressionDetector.super.getHighlightingRange(annotationOrTagElement, toolId).shiftRight(shiftInParent);
+    }
+    return RedundantSuppressionDetector.super.getHighlightingRange(elementWithSuppression, toolId);
   }
 
   @Override

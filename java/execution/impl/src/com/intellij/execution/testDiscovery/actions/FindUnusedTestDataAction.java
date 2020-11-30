@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -34,7 +34,7 @@ import java.util.Set;
 
 import static com.intellij.openapi.vfs.LocalFileSystem.PROTOCOL_PREFIX;
 
-public class FindUnusedTestDataAction extends DumbAwareAction {
+public final class FindUnusedTestDataAction extends DumbAwareAction {
   private final static Logger LOG = Logger.getInstance(FindUnusedTestDataAction.class);
 
   @Override
@@ -87,7 +87,6 @@ public class FindUnusedTestDataAction extends DumbAwareAction {
                   JavaCompilerBundle.message("test.discovery.unused.test.data.tab.title"),
                   p -> {
                     p.setCodeUsages(false);
-                    p.setUsagesWord(count -> ExecutionBundle.message("label.usages.word.file", count));
                   }, project));
             }
           });

@@ -45,6 +45,10 @@ public class ProcessWaitFor {
             }
           }
         }
+        catch (Throwable e) {
+          LOG.error(e);
+          throw e;
+        }
         finally {
           if (!myDetached) {
             try {

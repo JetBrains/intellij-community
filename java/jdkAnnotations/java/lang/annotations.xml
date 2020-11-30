@@ -190,6 +190,9 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.lang.Class java.io.InputStream getResourceAsStream(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='java.lang.Class java.io.InputStream getResourceAsStream(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -403,8 +406,12 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.Class java.net.URL getResource(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='java.lang.Class java.net.URL getResource(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Nullable'/>

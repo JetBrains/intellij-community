@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util
 
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.ContributedReferenceHost
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
@@ -60,7 +62,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
   constructor(string: String) : this(string, null, TextRange.EMPTY_RANGE)
 
-  constructor(host: PsiLanguageInjectionHost) : this(
+  constructor(host: PsiElement) : this(
     StringEntry.Known(ElementManipulators.getValueText(host), host, ElementManipulators.getValueTextRange(host)))
 
   @JvmOverloads
@@ -167,7 +169,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
   }
 
-  fun mapRangeToHostRange(host: PsiLanguageInjectionHost, rangeInPks: TextRange): TextRange? =
+  fun mapRangeToHostRange(host: PsiElement, rangeInPks: TextRange): TextRange? =
     mapRangeToHostRange(host, ElementManipulators.getValueTextRange(host), rangeInPks)
 
   /**
@@ -177,23 +179,29 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
    *
    * NOTE: currently supports only single-segment [rangeInPks]
    */
-  fun mapRangeToHostRange(host: PsiLanguageInjectionHost, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
+  fun mapRangeToHostRange(host: PsiElement, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
 
     fun getHostRangeEscapeAware(segmentRange: TextRange, inSegmentStart: Int, inSegmentEnd: Int): TextRange {
-      val escaper = host.createLiteralTextEscaper()
-      val decode = escaper.decode(segmentRange, StringBuilder())
-      if (decode) {
-        val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
-        val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
-        if (start != -1 && end != -1)
-          return TextRange(start, end)
-        else {
-          logger<PartiallyKnownString>().warn("decoding of ${segmentRange} failed for ${host.text} : [$start, $end]")
-          return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
+      if (host is PsiLanguageInjectionHost) {
+        val escaper = host.createLiteralTextEscaper()
+        val decode = escaper.decode(segmentRange, StringBuilder())
+        if (decode) {
+          val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
+          val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
+          if (start != -1 && end != -1 && start <= end)
+            return TextRange(start, end)
+          else {
+            logger<PartiallyKnownString>().error(
+              "decoding of ${segmentRange} failed for $host : [$start, $end] inSegment = [$inSegmentStart, $inSegmentEnd]",
+              Attachment("host:", host.text ?: "<null>"),
+              Attachment("file:", host.containingFile?.text ?: "<null>")
+            )
+            return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
+          }
         }
       }
-      else
-        return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
+
+      return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
     }
 
     var accumulated = 0
@@ -220,7 +228,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
   /**
    * @return the range in the [valueIfKnown] that corresponds to given [host]
    */
-  fun getRangeOfTheHostContent(host: PsiLanguageInjectionHost): TextRange? {
+  fun getRangeOfTheHostContent(host: PsiElement): TextRange? {
     var accumulated = 0
     var start = 0
     var end = 0
@@ -274,18 +282,26 @@ sealed class StringEntry {
     override fun toString(): String = "StringEntry.Unknown(at $range in $sourcePsi)"
   }
 
-  val host: PsiLanguageInjectionHost? get() = sourcePsi as? PsiLanguageInjectionHost ?: sourcePsi?.parent as? PsiLanguageInjectionHost
+  val host: PsiElement?
+    get() = sourcePsi.takeIf { it.isSuitableHostClass() }  ?: sourcePsi?.parent.takeIf { it.isSuitableHostClass() }
 
-  val rangeAlignedToHost: Pair<PsiLanguageInjectionHost, TextRange>?
+  val rangeAlignedToHost: Pair<PsiElement, TextRange>?
     get() {
       val entry = this
       val sourcePsi = entry.sourcePsi ?: return null
-      if (sourcePsi is PsiLanguageInjectionHost) return sourcePsi to entry.range
+      if (sourcePsi.isSuitableHostClass()) return sourcePsi to entry.range
       val parent = sourcePsi.parent
       if (parent is PsiLanguageInjectionHost) { // Kotlin interpolated string, TODO: encapsulate this logic to range retrieval
         return parent to entry.range.shiftRight(sourcePsi.startOffsetInParent)
       }
       return null
+    }
+
+  private fun PsiElement?.isSuitableHostClass(): Boolean =
+    when(this) {
+      // this is primarily to workaround injections into YAMLKeyValue (which doesn't implement {@code PsiLanguageInjectionHost})
+      is ContributedReferenceHost, is PsiLanguageInjectionHost -> true
+      else -> false
     }
 }
 

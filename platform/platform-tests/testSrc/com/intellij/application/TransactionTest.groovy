@@ -302,7 +302,7 @@ class TransactionTest extends LightPlatformTestCase {
   }
 
   void "test writing is allowed inside invokeLater on not yet shown modal dialog component"() {
-    Assume.assumeFalse(GraphicsEnvironment.headless)
+    Assume.assumeFalse("Can't run in headless environment", GraphicsEnvironment.headless)
 
     app.invokeLater {
       assert guard.writingAllowed

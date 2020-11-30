@@ -41,12 +41,14 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tabs.impl.SingleHeightTabs;
+import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -60,6 +62,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -424,6 +427,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return PsiUtilCore.toPsiElementArray(result);
   }
 
+  private @Nullable PsiElement getFirstElementFromNode(@Nullable Object node) {
+    return ContainerUtil.getFirstItem(getElementsFromNode(node));
+  }
+
   @NotNull
   public List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object value = getValueFromNode(node);
@@ -442,7 +449,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @Deprecated
   @Nullable
   public PsiElement getPSIElementFromNode(@Nullable TreeNode node) {
-    return ContainerUtil.getFirstItem(getElementsFromNode(node));
+    return getFirstElementFromNode(node);
   }
 
   @Nullable
@@ -572,14 +579,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected @NotNull TreeExpander createTreeExpander() {
     return new DefaultTreeExpander(this::getTree) {
+      private boolean isExpandAllAllowed() {
+        JTree tree = getTree();
+        TreeModel model = tree == null ? null : tree.getModel();
+        return model == null || model instanceof AsyncTreeModel || model instanceof InvokerSupplier;
+      }
+
       @Override
       public boolean isExpandAllVisible() {
-        return getAsyncSupport() != null && Registry.is("ide.project.view.expand.all.action.visible");
+        return isExpandAllAllowed() && Registry.is("ide.project.view.expand.all.action.visible");
       }
 
       @Override
       public boolean canExpand() {
-        return getAsyncSupport() != null && super.canExpand();
+        return isExpandAllAllowed() && super.canExpand();
       }
 
       @Override
@@ -743,7 +756,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         @Nullable
         @Override
         protected PsiElement getPsiElement(@NotNull TreePath path) {
-          return ContainerUtil.getFirstItem(getElementsFromNode(path.getLastPathComponent()));
+          return getFirstElementFromNode(path.getLastPathComponent());
         }
 
         @Nullable
@@ -875,10 +888,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
       List<Trinity<@Nls String, Icon, @Nullable VirtualFile>> toRender = new ArrayList<>();
       for (TreePath path : getSelectionPaths()) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
         Pair<Icon, @Nls String> iconAndText = getIconAndText(path);
         toRender.add(Trinity.create(iconAndText.second, iconAndText.first,
-                                    PsiCopyPasteManager.asVirtualFile(ContainerUtil.getFirstItem(getElementsFromNode(node)))));
+                                    PsiCopyPasteManager.asVirtualFile(getFirstElementFromNode(path.getLastPathComponent()))));
       }
 
       int count = 0;
@@ -898,7 +910,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
       BufferedImage image = ImageUtil.createImage(panel.getWidth(), panel.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g2 = (Graphics2D)image.getGraphics();
-      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
       panel.paint(g2);
       g2.dispose();
 
@@ -907,7 +918,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
     @NotNull
     private Pair<Icon, @Nls String> getIconAndText(TreePath path) {
-      Object object = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+      Object object = TreeUtil.getLastUserObject(path);
       Component component = getTree().getCellRenderer()
         .getTreeCellRendererComponent(getTree(), object, false, false, true, getTree().getRowForPath(path), false);
       Icon[] icon = new Icon[1];

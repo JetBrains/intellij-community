@@ -16,6 +16,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -29,7 +30,6 @@ import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
@@ -46,9 +46,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -525,6 +523,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       }
 
       @Nls String quickDocMessage = null;
+      DocumentationProvider provider = null;
       PsiElement targetElement = null;
       PsiElement element = getElementForQuickDoc();
       if (element != null) {
@@ -545,7 +544,9 @@ public final class EditorMouseHoverPopupManager implements Disposable {
               return null;
             }).executeSynchronously();
             if (targetElement != null) {
-              quickDocMessage = documentationManager.generateDocumentation(targetElement, element, true);
+              Pair<@NlsSafe String, DocumentationProvider> docWithProvider = documentationManager.getDocumentationAndProvider(targetElement, element, true);
+              quickDocMessage = docWithProvider.first;
+              provider = docWithProvider.second;
               if (quickDocMessage != null && quickDocMessage.length() > MAX_QUICK_DOC_CHARACTERS) {
                 quickDocMessage = quickDocMessage.substring(0, MAX_QUICK_DOC_CHARACTERS);
               }
@@ -560,7 +561,9 @@ public final class EditorMouseHoverPopupManager implements Disposable {
           LOG.warn(e);
         }
       }
-      return infoToUse == null && quickDocMessage == null ? null : new Info(infoToUse, tooltipAction, quickDocMessage, targetElement);
+      return infoToUse == null && quickDocMessage == null
+             ? null
+             : new Info(infoToUse, tooltipAction, quickDocMessage, targetElement, provider);
     }
 
     private enum Relation {
@@ -576,10 +579,16 @@ public final class EditorMouseHoverPopupManager implements Disposable {
 
     private final @Nls String quickDocMessage;
     private final WeakReference<PsiElement> quickDocElement;
+    private final DocumentationProvider docProvider;
 
 
-    private Info(HighlightInfo highlightInfo, TooltipAction tooltipAction, @Nls String quickDocMessage, PsiElement quickDocElement) {
+    private Info(HighlightInfo highlightInfo,
+                 TooltipAction tooltipAction,
+                 @Nls String quickDocMessage,
+                 PsiElement quickDocElement,
+                 @Nullable DocumentationProvider provider) {
       assert highlightInfo != null || quickDocMessage != null;
+      this.docProvider = provider;
       this.highlightInfo = highlightInfo;
       this.tooltipAction = tooltipAction;
       this.quickDocMessage = quickDocMessage;
@@ -714,7 +723,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       if (deEmphasize) {
         component.setBorder(IdeBorderFactory.createBorder(UIUtil.getTooltipSeparatorColor(), SideBorder.TOP));
       }
-      component.setData(element, quickDocMessage, null, null, null);
+      component.setData(element, quickDocMessage, null, null, docProvider);
       component.setToolwindowCallback(() -> {
         PsiElement docElement = component.getElement();
         if (docElement != null) {
@@ -746,7 +755,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
 
   @NotNull
   public static EditorMouseHoverPopupManager getInstance() {
-    return ServiceManager.getService(EditorMouseHoverPopupManager.class);
+    return ApplicationManager.getApplication().getService(EditorMouseHoverPopupManager.class);
   }
 
   @Nullable

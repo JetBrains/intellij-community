@@ -59,8 +59,11 @@ object GHPRSearchPanel {
 
       override fun processKeyBinding(ks: KeyStroke?, e: KeyEvent?, condition: Int, pressed: Boolean): Boolean {
         if (e?.keyCode == KeyEvent.VK_ENTER && pressed) {
-          pullRequestUiSettings.addRecentSearchFilter(text.trim())
-          model.value = text
+          val query = text.trim()
+          if (query.isNotEmpty()) {
+            pullRequestUiSettings.addRecentSearchFilter(query)
+          }
+          model.value = query
           return true
         }
         return super.processKeyBinding(ks, e, condition, pressed)

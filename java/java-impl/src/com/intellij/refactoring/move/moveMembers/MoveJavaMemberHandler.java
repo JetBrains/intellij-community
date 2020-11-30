@@ -234,8 +234,14 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         // might need to make modifiers explicit, see IDEADEV-11416
         final PsiModifierList list = memberCopy.getModifierList();
         assert list != null;
-        list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
-        list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
+
+        if (!(member instanceof PsiClass && (((PsiClass)member).isEnum() || ((PsiClass)member).isInterface()))) {
+          list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
+        }
+        if (!(member instanceof PsiClass && ((PsiClass)member).isEnum())) { 
+          list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
+        }
+
         VisibilityUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
       }
     }

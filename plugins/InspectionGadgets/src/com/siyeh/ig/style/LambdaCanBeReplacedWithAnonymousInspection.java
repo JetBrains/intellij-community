@@ -131,12 +131,10 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         @Override
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
-          if (thisAccessExpr != null) {
-            final PsiMethod psiMethod = expression.resolveMethod();
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC) && methodExpression.getQualifierExpression() == null) {
-              replacements.add(expression);
-            }
+          final PsiMethod psiMethod = expression.resolveMethod();
+          final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+          if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC) && methodExpression.getQualifierExpression() == null) {
+            replacements.add(expression);
           }
         }
       });

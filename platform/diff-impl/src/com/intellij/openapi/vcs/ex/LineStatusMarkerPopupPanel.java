@@ -139,8 +139,13 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                  @Nullable JComponent editorComponent,
                                  @Nullable JComponent additionalInfoPanel,
                                  @Nullable Point mousePosition,
-                                 @NotNull Disposable childDisposable) {
+                                 @NotNull Disposable childDisposable,
+                                 @Nullable DataProvider dataProvider) {
     LineStatusMarkerPopupPanel popupPanel = new LineStatusMarkerPopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
+
+    if (dataProvider != null) DataManager.registerDataProvider(popupPanel, dataProvider);
+    toolbar.setTargetComponent(popupPanel);
+    toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
 
     LightweightHint hint = new LightweightHint(popupPanel);
     HintListener closeListener = __ -> Disposer.dispose(childDisposable);
@@ -244,7 +249,6 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     Disposer.register(parentDisposable, () -> ActionUtil.getActions(editorComponent).removeAll(actions));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(actions), true);
-    toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
     toolbar.setReservePlaceAutoPopupIcon(false);
     return toolbar;
   }

@@ -6,19 +6,17 @@ from _pydevd_bundle.pydevd_trace_dispatch import fix_top_level_trace_and_get_tra
 
 from _pydevd_bundle.pydevd_cython cimport PyDBAdditionalThreadInfo
 
-from _pydevd_frame_eval.pydevd_frame_evaluator_common cimport ThreadInfo, FuncCodeInfo, get_thread_info, get_func_code_info
-
-
-_thread_local_info = threading.local()
-
-
-def clear_thread_local_info():
-    global _thread_local_info
-    _thread_local_info = threading.local()
+from _pydevd_frame_eval.pydevd_frame_evaluator_common cimport ThreadInfo, FuncCodeInfo, get_thread_info, get_func_code_info, \
+    clear_thread_local_info
+from _pydevd_frame_eval.pydevd_frame_evaluator_common import _thread_local_info
 
 
 def get_thread_info_py() -> ThreadInfo:
     return get_thread_info()
+
+
+def clear_thread_local_info_py():
+    clear_thread_local_info()
 
 
 def dummy_trace_dispatch(frame, str event, arg):

@@ -34,8 +34,9 @@ import com.android.tools.idea.gradle.dsl.api.android.AndroidModel;
 import com.android.tools.idea.gradle.dsl.api.ext.ExtModel;
 import com.android.tools.idea.gradle.dsl.api.ext.PropertyType;
 import com.android.tools.idea.gradle.dsl.model.GradleFileModelTestCase;
-import com.android.utils.FileUtils;
 import org.junit.Test;
+
+import java.io.File;
 
 /**
  * Tests resolving references to project, parent, rootProject etc.
@@ -64,7 +65,7 @@ public class ReferenceResolutionTest extends GradleFileModelTestCase {
     writeToSubModuleBuildFile(REFERENCE_RESOLUTION_RESOLVE_PROJECT_DIR_SUB);
 
     String expectedRootDir = GradleUtil.getBaseDirPath(myProject).getPath();
-    String expectedSubModuleDir = FileUtils.toSystemDependentPath(mySubModuleBuildFile.getParent().getPath());
+    String expectedSubModuleDir = toSystemDependentPath(mySubModuleBuildFile.getParent().getPath());
     ExtModel ext = getSubModuleGradleBuildModel().ext();
     verifyPropertyModel(ext.findProperty("pd").resolve(), STRING_TYPE, expectedSubModuleDir, STRING, PropertyType.REGULAR, 1);
     verifyPropertyModel(ext.findProperty("pd1").resolve(), STRING_TYPE, expectedSubModuleDir, STRING, PropertyType.REGULAR, 1);
@@ -72,6 +73,13 @@ public class ReferenceResolutionTest extends GradleFileModelTestCase {
     verifyPropertyModel(ext.findProperty("pd3").resolve(), STRING_TYPE, expectedRootDir, STRING, PropertyType.REGULAR, 1);
     verifyPropertyModel(ext.findProperty("pd4").resolve(), STRING_TYPE, expectedSubModuleDir, STRING, PropertyType.REGULAR, 1);
     verifyPropertyModel(ext.findProperty("pd5").resolve(), STRING_TYPE, expectedRootDir, STRING, PropertyType.REGULAR, 1);
+  }
+
+  private static String toSystemDependentPath(String path) {
+    if (File.separatorChar != '/') {
+      return path.replace('/', File.separatorChar);
+    }
+    return path;
   }
 
   @Test

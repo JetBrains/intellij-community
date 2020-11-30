@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -39,43 +38,13 @@ public class UnknownSdkTracker {
   }
 
   @NotNull private final Project myProject;
-  @NotNull private final MergingUpdateQueue myUpdateQueue;
 
   public UnknownSdkTracker(@NotNull Project project) {
     myProject = project;
-    myUpdateQueue = new MergingUpdateQueue(getClass().getSimpleName(),
-                                           700,
-                                           true,
-                                           null,
-                                           myProject,
-                                           null,
-                                           false)
-      .usePassThroughInUnitTestMode();
   }
 
   private static boolean isEnabled() {
     return Registry.is("unknown.sdk") && UnknownSdkResolver.EP_NAME.hasAnyExtensions();
-  }
-
-  public void collectUnknownSdksBlocking(@NotNull UnknownSdkBlockingCollector collector,
-                                         @NotNull ShowStatusCallback showStatus) {
-    if (!isEnabled()) {
-      showStatus.showEmptyStatus();
-      return;
-    }
-
-    ProgressManager.getInstance()
-      .run(new Task.Modal(myProject, ProjectBundle.message("progress.title.resolving.sdks"), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          var snapshot = collector.collectSdksBlocking();
-
-          var action = createProcessSdksAction(snapshot, showStatus);
-          if (action == null) return;
-
-          action.run(indicator);
-        }
-      });
   }
 
   public @NotNull List<UnknownSdkFix> collectUnknownSdks(@NotNull UnknownSdkBlockingCollector collector,
@@ -91,30 +60,32 @@ public class UnknownSdkTracker {
   }
 
   @NotNull
-  private Update newUpdateTask(@NotNull ShowStatusCallback showStatus,
-                               @NotNull Predicate<UnknownSdkSnapshot> shouldProcessSnapshot) {
-    return new Update("update") {
+  private UnknownSdkTrackerTask newUpdateTask(@NotNull ShowStatusCallback showStatus,
+                                              @NotNull Predicate<UnknownSdkSnapshot> shouldProcessSnapshot) {
+    return new UnknownSdkTrackerTask() {
+      @Nullable
       @Override
-      public void run() {
+      public UnknownSdkCollector createCollector() {
         if (!isEnabled() || !Registry.is("unknown.sdk.auto")) {
           showStatus.showEmptyStatus();
-          return;
+          return null;
         }
+        return new UnknownSdkCollector(myProject);
+      }
 
-        new UnknownSdkCollector(myProject)
-          .collectSdksPromise(snapshot -> {
-            if (!shouldProcessSnapshot.test(snapshot)) return;
+      @Override
+      public void onLookupCompleted(@NotNull UnknownSdkSnapshot snapshot) {
+        if (!shouldProcessSnapshot.test(snapshot)) return;
 
-            var action = createProcessSdksAction(snapshot, showStatus);
-            if (action == null) return;
+        var action = createProcessSdksAction(snapshot, showStatus);
+        if (action == null) return;
 
-            ProgressManager.getInstance()
-              .run(new Task.Backgroundable(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false, ALWAYS_BACKGROUND) {
-                @Override
-                public void run(@NotNull ProgressIndicator indicator) {
-                  action.run(indicator);
-                }
-              });
+        ProgressManager.getInstance()
+          .run(new Task.Backgroundable(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false, ALWAYS_BACKGROUND) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              action.run(indicator);
+            }
           });
       }
     };
@@ -133,7 +104,8 @@ public class UnknownSdkTracker {
   };
 
   public void updateUnknownSdks() {
-    myUpdateQueue.queue(newUpdateTask(new DefaultShowStatusCallbackAdapter(), myIsNewSnapshot));
+    UnknownSdkTrackerQueue.getInstance(myProject)
+      .queue(newUpdateTask(new DefaultShowStatusCallbackAdapter(), myIsNewSnapshot));
   }
 
   private static boolean allowFixesFor(@NotNull SdkTypeId type) {
@@ -320,6 +292,27 @@ public class UnknownSdkTracker {
       indicator.popState();
     }
     return otherFixes;
+  }
+
+  public boolean isAutoFixAction(@Nullable UnknownSdkFixAction fix) {
+    return fix instanceof UnknownMissingSdkFixLocal;
+  }
+
+  @NotNull
+  public Sdk applyAutoFixAndNotify(@NotNull UnknownSdkFixAction fix, @NotNull ProgressIndicator indicator) throws IllegalArgumentException {
+    if (!isAutoFixAction(fix)) throw new IllegalArgumentException("The argument must pass #isAutoFixAction test");
+    assert fix instanceof UnknownMissingSdkFixLocal : "Invalid fix: " + fix;
+
+    indicator.pushState();
+    indicator.setText(ProjectBundle.message("progress.text.configuring.sdks"));
+
+    try {
+      return fix.applySuggestionBlocking(indicator);
+    }
+    finally {
+      indicator.popState();
+      UnknownSdkBalloonNotification.getInstance(myProject).notifyFixedSdks(List.of((UnknownMissingSdkFixLocal)fix));
+    }
   }
 
   @NotNull

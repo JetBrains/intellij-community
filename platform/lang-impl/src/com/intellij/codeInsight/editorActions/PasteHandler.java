@@ -70,6 +70,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   @Override
   public void execute(Editor editor, DataContext dataContext, @Nullable Producer<Transferable> producer) {
     final Transferable transferable = getContentsToPasteToEditor(producer);
+    if (transferable == null) return;
 
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
 

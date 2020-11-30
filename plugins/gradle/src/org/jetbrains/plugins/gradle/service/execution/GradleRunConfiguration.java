@@ -32,25 +32,26 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   @ApiStatus.Internal
   public static final Key<String> DEBUGGER_PARAMETERS_KEY = Key.create("DEBUGGER_PARAMETERS");
 
-  private boolean isScriptDebugEnabled = true;
   private boolean isDebugAllEnabled = false;
 
   public GradleRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(GradleConstants.SYSTEM_ID, project, factory, name);
+    setDebugServerProcess(true);
+    setReattachDebugProcess(true);
   }
 
   public boolean isScriptDebugEnabled() {
-    return isScriptDebugEnabled;
+    return isDebugServerProcess();
   }
 
   public void setScriptDebugEnabled(boolean scriptDebugEnabled) {
-    isScriptDebugEnabled = scriptDebugEnabled;
+    setDebugServerProcess(scriptDebugEnabled);
   }
 
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
-    putUserData(DEBUG_FLAG_KEY, Boolean.valueOf(isScriptDebugEnabled));
+    putUserData(DEBUG_FLAG_KEY, Boolean.valueOf(isDebugServerProcess()));
     putUserData(DEBUG_ALL_KEY, Boolean.valueOf(isDebugAllEnabled));
     return super.getState(executor, env);
   }
@@ -60,7 +61,7 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     super.readExternal(element);
     final Element child = element.getChild(DEBUG_FLAG_NAME);
     if (child != null) {
-      isScriptDebugEnabled = Boolean.valueOf(child.getText());
+      setDebugServerProcess(Boolean.valueOf(child.getText()));
     }
     final Element debugAll = element.getChild(DEBUG_ALL_NAME);
     if (debugAll != null) {
@@ -71,9 +72,6 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    final Element child = new Element(DEBUG_FLAG_NAME);
-    child.setText(String.valueOf(isScriptDebugEnabled));
-    element.addContent(child);
     final Element debugAll = new Element(DEBUG_ALL_NAME);
     debugAll.setText(String.valueOf(isDebugAllEnabled));
     element.addContent(debugAll);

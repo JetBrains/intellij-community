@@ -85,16 +85,9 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     type("US-ASCII");
 
     Collection<HighlightInfo> infos = doHighlighting();
-    assertEquals(1, infos.size());
-    boolean found = false;
+    HighlightInfo info = assertOneElement(infos);
 
-    for(HighlightInfo info:infos) {
-      if (info.getDescription().equals("Unsupported characters for the charset 'US-ASCII'")) {
-        found = true;
-        break;
-      }
-    }
-    assertTrue(found);
+    assertEquals("Unsupported characters for the charset 'US-ASCII'", info.getDescription());
   }
 
   public void testMultipleRanges() throws Exception {

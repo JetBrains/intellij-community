@@ -195,7 +195,7 @@ public final class ChainCompletionContext {
       return null;
     }
 
-    CompilerReferenceServiceEx compilerReferenceService = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(containingElement.getProject());
+    CompilerReferenceServiceEx compilerReferenceService = (CompilerReferenceServiceEx)CompilerReferenceService.getInstanceIfEnabled(containingElement.getProject());
     if (compilerReferenceService == null) {
       return null;
     }

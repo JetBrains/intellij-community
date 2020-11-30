@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface EventLogMetadataLoader {
 
@@ -10,4 +11,7 @@ public interface EventLogMetadataLoader {
 
   @NotNull
   String loadMetadataFromServer() throws EventLogMetadataLoadException;
+
+  @Nullable
+  String getOptionValue(@NotNull String name);
 }

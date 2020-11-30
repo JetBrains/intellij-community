@@ -2,7 +2,7 @@
 package com.intellij.navigation;
 
 import com.intellij.model.Symbol;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public interface SymbolNavigationService {
 
   @NotNull
   static SymbolNavigationService getInstance() {
-    return ServiceManager.getService(SymbolNavigationService.class);
+    return ApplicationManager.getApplication().getService(SymbolNavigationService.class);
   }
 
   @NotNull

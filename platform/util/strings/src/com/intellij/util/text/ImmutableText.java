@@ -32,6 +32,8 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 /**
  * A pruned and optimized version of javolution.text.Text
  *
@@ -459,9 +461,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
       if (start == 0 && end == length()) {
         return this;
       }
-      int length = end - start;
-      byte[] chars = new byte[length];
-      System.arraycopy(data, start, chars, 0, length);
+      byte[] chars = Arrays.copyOfRange(data, start, end);
       return new Leaf8BitNode(chars);
     }
 

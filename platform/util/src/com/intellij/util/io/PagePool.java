@@ -285,7 +285,7 @@ public class PagePool {
           PoolPageKey kk = new PoolPageKey(k.getOwner(), k.getOwner().physicalLength());
 
           SortedMap<PoolPageKey, FinalizationRequest> tail = myFinalizationQueue.tailMap(kk);
-          if (tail == null || tail.isEmpty()) {
+          if (tail.isEmpty()) {
             tail = myFinalizationQueue.tailMap(k);
           }
           key = tail.isEmpty() ? myFinalizationQueue.firstKey() : tail.firstKey();

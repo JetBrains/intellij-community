@@ -1,4 +1,3 @@
-import sys
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 class JSONDecodeError(ValueError):
@@ -16,27 +15,15 @@ class JSONDecoder:
     parse_constant: Callable[[str], Any] = ...
     strict: bool
     object_pairs_hook: Callable[[List[Tuple[str, Any]]], Any]
-
-    if sys.version_info >= (3, 6):
-        def __init__(
-            self,
-            *,
-            object_hook: Optional[Callable[[Dict[str, Any]], Any]] = ...,
-            parse_float: Optional[Callable[[str], Any]] = ...,
-            parse_int: Optional[Callable[[str], Any]] = ...,
-            parse_constant: Optional[Callable[[str], Any]] = ...,
-            strict: bool = ...,
-            object_pairs_hook: Optional[Callable[[List[Tuple[str, Any]]], Any]] = ...,
-        ) -> None: ...
-    else:
-        def __init__(
-            self,
-            object_hook: Optional[Callable[[Dict[str, Any]], Any]] = ...,
-            parse_float: Optional[Callable[[str], Any]] = ...,
-            parse_int: Optional[Callable[[str], Any]] = ...,
-            parse_constant: Optional[Callable[[str], Any]] = ...,
-            strict: bool = ...,
-            object_pairs_hook: Optional[Callable[[List[Tuple[str, Any]]], Any]] = ...,
-        ) -> None: ...
+    def __init__(
+        self,
+        *,
+        object_hook: Optional[Callable[[Dict[str, Any]], Any]] = ...,
+        parse_float: Optional[Callable[[str], Any]] = ...,
+        parse_int: Optional[Callable[[str], Any]] = ...,
+        parse_constant: Optional[Callable[[str], Any]] = ...,
+        strict: bool = ...,
+        object_pairs_hook: Optional[Callable[[List[Tuple[str, Any]]], Any]] = ...,
+    ) -> None: ...
     def decode(self, s: str, _w: Callable[..., Any] = ...) -> Any: ...  # _w is undocumented
     def raw_decode(self, s: str, idx: int = ...) -> Tuple[Any, int]: ...

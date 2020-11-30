@@ -164,7 +164,7 @@ class MixingMultiThreadSearchTest extends BasePlatformTestCase {
   private void testScenario(Scenario scenario) {
     SearchResultsCollector collector = new SearchResultsCollector()
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable())
-    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, { command -> alarm.addRequest(command, 0) }, ourEqualityProviders)
+    SESearcher searcher = new MixedResultsSearcher(collector, { command -> alarm.addRequest(command, 0) }, ourEqualityProviders)
     ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "tst")
 
     try {

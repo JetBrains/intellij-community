@@ -567,10 +567,16 @@ public class GroovyBlockGenerator {
   }
 
   private boolean fieldGroupEnded(PsiElement psi) {
-    if (!myContext.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS) return true;
+    if (!myContext.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS) {
+      return true;
+    }
+    int maxBlankLines = myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS;
+    if (maxBlankLines == 0) {
+      return false;
+    }
     PsiElement prevSibling = psi.getPrevSibling();
     return prevSibling != null &&
-           StringUtil.countChars(prevSibling.getText(), '\n') >= myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS;
+           StringUtil.countChars(prevSibling.getText(), '\n') > 1;
   }
 
   private static List<LeafPsiElement> getSpockTable(GrStatement statement) {

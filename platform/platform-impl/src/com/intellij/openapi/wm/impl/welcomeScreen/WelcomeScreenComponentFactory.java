@@ -57,10 +57,8 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManag
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
 import static com.intellij.util.ui.UIUtil.FontSize.SMALL;
 
-public class WelcomeScreenComponentFactory {
-
-  @NotNull
-  static JComponent createSmallLogo() {
+public final class WelcomeScreenComponentFactory {
+  @NotNull static JComponent createSmallLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
@@ -119,8 +117,7 @@ public class WelcomeScreenComponentFactory {
     return panel;
   }
 
-  @NotNull
-  static JComponent createLogo() {
+  @NotNull static JComponent createLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
@@ -188,7 +185,7 @@ public class WelcomeScreenComponentFactory {
   /**
    * Wraps an {@link ActionLink} component and delegates accessibility support to it.
    */
-  protected static class JActionLinkPanel extends JPanel {
+  protected static final class JActionLinkPanel extends JPanel {
     @NotNull private final ActionLink myActionLink;
 
     public JActionLinkPanel(@NotNull ActionLink actionLink) {
@@ -264,15 +261,20 @@ public class WelcomeScreenComponentFactory {
   }
 
   public static JComponent wrapActionLink(@NotNull ActionLink link) {
+    JPanel panel = (JPanel)wrapActionLinkWithoutArrow(link);
+    if (!StringUtil.isEmptyOrSpaces(link.getText())) {
+      panel.add(createArrow(link), BorderLayout.EAST);
+    }
+    return panel;
+  }
+
+  public static JComponent wrapActionLinkWithoutArrow(@NotNull ActionLink link) {
     // Don't allow focus, as the containing panel is going to be focusable.
     link.setFocusable(false);
     link.setPaintUnderline(false);
     link.setNormalColor(getLinkNormalColor());
     JActionLinkPanel panel = new JActionLinkPanel(link);
     panel.setBorder(JBUI.Borders.empty(4, 6));
-    if (!StringUtil.isEmptyOrSpaces(link.getText())) {
-      panel.add(createArrow(link), BorderLayout.EAST);
-    }
     return panel;
   }
 
@@ -305,7 +307,9 @@ public class WelcomeScreenComponentFactory {
     Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
       if (!types.isEmpty()) {
         NotificationType type = Collections.max(types);
-        actionLink.setIcon(IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
+        actionLink.setIcon(type == NotificationType.IDE_UPDATE
+                           ? AllIcons.Ide.Notification.IdeUpdate
+                           : IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
       }
       panel.setVisible(!types.isEmpty());
     });

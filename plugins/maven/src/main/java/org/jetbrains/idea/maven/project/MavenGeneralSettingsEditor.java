@@ -59,7 +59,7 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
     }
     else {
       MavenGeneralSettings generalSettings = runConfiguration.getGeneralSettings();
-      myPanel.applyTargetEnvironmentConfiguration(targetName);
+      myPanel.applyTargetEnvironmentConfiguration(runConfiguration.getProject(), targetName);
       if (generalSettings != null) {
         myPanel.setData(generalSettings);
       }

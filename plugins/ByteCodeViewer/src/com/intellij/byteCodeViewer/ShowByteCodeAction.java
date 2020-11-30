@@ -78,7 +78,6 @@ final class ShowByteCodeAction extends AnAction {
     final SmartPsiElementPointer element = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaByteCodeViewerBundle.message("looking.for.bytecode.progress")) {
       private String myByteCode;
-      private String myErrorMessage;
       private @Nls String myErrorTitle;
 
       @Override
@@ -155,15 +154,14 @@ final class ShowByteCodeAction extends AnAction {
 
   @Nullable
   private static PsiElement getPsiElement(DataContext dataContext, Project project, @Nullable Editor editor) {
-    PsiElement psiElement = null;
+    PsiElement psiElement;
     if (editor == null) {
       psiElement = dataContext.getData(CommonDataKeys.PSI_ELEMENT);
-    } else {
+    }
+    else {
       final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
       final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
-      if (injectedEditor != null) {
-        psiElement = findElementInFile(PsiUtilBase.getPsiFileInEditor(injectedEditor, project), injectedEditor);
-      }
+      psiElement = findElementInFile(PsiUtilBase.getPsiFileInEditor(injectedEditor, project), injectedEditor);
 
       if (file != null && psiElement == null) {
         psiElement = findElementInFile(file, editor);

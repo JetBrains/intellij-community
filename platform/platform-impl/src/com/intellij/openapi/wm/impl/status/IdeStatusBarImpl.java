@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.NotificationPopup;
@@ -538,6 +539,12 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     if (component == null) {
       return false;
     }
+
+    if (ComponentUtil.getWindow(myFrame.getComponent()) != ComponentUtil.getWindow(component)) {
+      hoverComponent(null);
+      return false;
+    }
+
     Point point = SwingUtilities.convertPoint(component, e.getPoint(), myRightPanel);
     Component widget = myRightPanel.getComponentAt(point);
     if (e.getClickCount() == 0) {

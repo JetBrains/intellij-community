@@ -24,7 +24,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -402,7 +401,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   public static Configuration getInstance() {
-    return ServiceManager.getService(Configuration.class);
+    return ApplicationManager.getApplication().getService(Configuration.class);
   }
 
   public static Configuration getProjectInstance(Project project) {

@@ -4,6 +4,7 @@
   </action>
   <action id="OpenInRightSplit">
     <keyboard-shortcut first-keystroke="shift ENTER"/>
+    <mouse-shortcut keystroke="alt button1 doubleClick"/> 
   </action>
   <action id="FileChooser.TogglePathShowing">
     <keyboard-shortcut first-keystroke="control P"/>

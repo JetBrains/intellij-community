@@ -371,6 +371,23 @@ public class GeneralCommandLine implements UserDataHolder {
       LOG.debug("  charset: " + myCharset);
     }
 
+    List<String> commands = validateAndPrepareCommandLine();
+    try {
+      return startProcess(commands);
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+      throw new ProcessNotCreatedException(e.getMessage(), e, this);
+    }
+  }
+
+  public @NotNull ProcessBuilder toProcessBuilder() throws ExecutionException {
+    List<String> escapedCommands = validateAndPrepareCommandLine();
+    return toProcessBuilderInternal(escapedCommands);
+  }
+
+  @NotNull
+  private List<String> validateAndPrepareCommandLine() throws ExecutionException {
     try {
       if (myWorkDirectory != null) {
         if (!myWorkDirectory.exists()) {
@@ -397,22 +414,20 @@ public class GeneralCommandLine implements UserDataHolder {
       if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
     }
 
-    String exePath = myParentEnvironmentType == ParentEnvironmentType.CONSOLE
-                     ? PathEnvironmentVariableUtil.clarifyExePath(myExePath)
-                     : myExePath;
-    if (exePath != myExePath) {
-      LOG.debug(myExePath + " => " + exePath);
+    String exePath = myExePath;
+    if (SystemInfoRt.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
+      String systemPath = System.getenv("PATH");
+      String shellPath = EnvironmentUtil.getValue("PATH");
+      if (!Objects.equals(systemPath, shellPath)) {
+        File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
+        if (exeFile != null) {
+          LOG.debug(exePath + " => " + exeFile);
+          exePath = exeFile.getPath();
+        }
+      }
     }
 
-    List<String> commands = prepareCommandLine(exePath, myProgramParams.getList(), Platform.current());
-
-    try {
-      return startProcess(commands);
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-      throw new ProcessNotCreatedException(e.getMessage(), e, this);
-    }
+    return prepareCommandLine(exePath, myProgramParams.getList(), Platform.current());
   }
 
   /**
@@ -435,6 +450,13 @@ public class GeneralCommandLine implements UserDataHolder {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Building process with commands: " + escapedCommands);
     }
+    return toProcessBuilderInternal(escapedCommands).start();
+  }
+
+  // This is caused by the fact there are external usages overriding startProcess(List<String>).
+  // Ideally, it should have been startProcess(ProcessBuilder), and the design would be more straightforward.
+  @NotNull
+  private ProcessBuilder toProcessBuilderInternal(@NotNull List<String> escapedCommands) {
     ProcessBuilder builder = new ProcessBuilder(escapedCommands);
     setupEnvironment(builder.environment());
     builder.directory(myWorkDirectory);
@@ -442,7 +464,7 @@ public class GeneralCommandLine implements UserDataHolder {
     if (myInputFile != null) {
       builder.redirectInput(ProcessBuilder.Redirect.from(myInputFile));
     }
-    return buildProcess(builder).start();
+    return buildProcess(builder);
   }
 
   /**

@@ -15,7 +15,11 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android;
 
-import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.*;
+import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.KEY_ALIAS;
+import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.KEY_PASSWORD;
+import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.STORE_FILE;
+import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.STORE_PASSWORD;
+import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.STORE_TYPE;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
@@ -27,8 +31,6 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslNamedDomainElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
 import com.google.common.collect.ImmutableMap;
@@ -72,10 +74,10 @@ public final class SigningConfigDslElement extends GradleDslBlockElement impleme
   @Override
   @NotNull
   public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
-    if (converter instanceof KotlinDslNameConverter) {
+    if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
-    else if (converter instanceof GroovyDslNameConverter) {
+    else if (converter.isGroovy()) {
       return groovyToModelNameMap;
     }
     else {

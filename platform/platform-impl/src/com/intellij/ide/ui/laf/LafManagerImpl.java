@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
@@ -44,9 +45,11 @@ import com.intellij.ui.components.DefaultLinkButtonUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
-import com.intellij.util.*;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.FontUtil;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.*;
 import kotlin.Lazy;
 import org.intellij.lang.annotations.JdkConstants;
@@ -158,8 +161,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return new IntelliJLookAndFeelInfo();
   }
 
-  @NotNull
-  private List<UIManager.LookAndFeelInfo> computeLafList() {
+  private @NotNull List<UIManager.LookAndFeelInfo> computeLafList() {
     List<UIManager.LookAndFeelInfo> lafList = new ArrayList<>();
     lafList.add(myDefaultLightLaf);
     lafList.add(myDefaultDarkLaf);
@@ -226,45 +228,47 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void initializeComponent() {
-    if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
-      UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
-      if (laf != null) {
-        boolean needUninstall = StartupUiUtil.isUnderDarcula();
-        // setup default LAF or one specified by readExternal
-        setCurrentLookAndFeel(laf);
-        updateWizardLAF(needUninstall);
-      }
-    }
-
-    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && !((UIThemeBasedLookAndFeelInfo)myCurrentLaf).isInitialised()) {
-      setCurrentLookAndFeel(myCurrentLaf);
-    }
-
-    updateUI();
-
-    UIThemeProvider.EP_NAME.addExtensionPointListener(new UIThemeEPListener(), this);
-
-    MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-    bus.connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        myUpdatingPlugin = isUpdate;
-        if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-          myThemeIdBeforePluginUpdate = ((UIThemeBasedLookAndFeelInfo) myCurrentLaf).getTheme().getId();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      UIManager.LookAndFeelInfo currentLaf = myCurrentLaf;
+      if (currentLaf != null) {
+        if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+          if (!((UIThemeBasedLookAndFeelInfo)currentLaf).isInitialised()) {
+            setLookAndFeelImpl(myCurrentLaf, false, false);
+          }
         }
         else {
-          myThemeIdBeforePluginUpdate = null;
+          UIManager.LookAndFeelInfo laf = findLaf(currentLaf.getClassName());
+          if (laf != null) {
+            boolean needUninstall = StartupUiUtil.isUnderDarcula();
+            // setup default LAF or one specified by readExternal
+            setLookAndFeelImpl(laf, false, false);
+            updateWizardLAF(needUninstall);
+          }
         }
       }
 
-      @Override
-      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        myUpdatingPlugin = false;
-        myThemeIdBeforePluginUpdate = null;
-      }
-    });
+      updateUI();
+      detectAndSyncLaf();
+      UIThemeProvider.EP_NAME.addExtensionPointListener(new UIThemeEPListener(), this);
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          myUpdatingPlugin = isUpdate;
+          if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+            myThemeIdBeforePluginUpdate = ((UIThemeBasedLookAndFeelInfo) myCurrentLaf).getTheme().getId();
+          }
+          else {
+            myThemeIdBeforePluginUpdate = null;
+          }
+        }
 
-    detectAndSyncLaf();
+        @Override
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          myUpdatingPlugin = false;
+          myThemeIdBeforePluginUpdate = null;
+        }
+      });
+    }, ModalityState.any());
   }
 
   private void detectAndSyncLaf() {
@@ -277,9 +281,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (autodetect) {
       boolean currentDark = myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().isDark() ||
                             StartupUiUtil.isUnderDarcula();
-
       UIManager.LookAndFeelInfo expectedLaf = systemDark ? myPreferredDarkLaf : myPreferredLightLaf;
-
       if (currentDark != systemDark || myCurrentLaf != expectedLaf) {
         QuickChangeLookAndFeel.switchLafAndUpdateUI(this, expectedLaf, true);
       }
@@ -316,7 +318,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     myPreferredDarkLaf = Objects.requireNonNullElse(loadLafState(element, ELEMENT_PREFERRED_DARK_LAF), myDefaultDarkLaf);
   }
 
-  private @Nullable UIManager.LookAndFeelInfo loadLafState(@NotNull Element element, @NonNls String attrName) {
+  private @Nullable UIManager.LookAndFeelInfo loadLafState(@NotNull Element element, @NotNull @NonNls String attrName) {
     Element lafElement = element.getChild(attrName);
     if (lafElement == null) {
       return null;
@@ -324,8 +326,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return findLaf(lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME), lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME));
   }
 
-  @Nullable
-  private UIManager.LookAndFeelInfo findLaf(String lafClassName, String themeId) {
+  private @Nullable UIManager.LookAndFeelInfo findLaf(@Nullable String lafClassName, @Nullable String themeId) {
     if (lafClassName != null && ourLafClassesAliases.containsKey(lafClassName)) {
       lafClassName = ourLafClassesAliases.get(lafClassName);
     }
@@ -434,7 +435,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public UIManager.LookAndFeelInfo findLaf(LafReference reference) {
+  public UIManager.LookAndFeelInfo findLaf(@NotNull LafReference reference) {
     return findLaf(reference.getClassName(), reference.getThemeId());
   }
 
@@ -471,7 +472,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     if (SystemInfoRt.isMac) {
-      String className = IntelliJLaf.class.getName();
+      String className = DarculaLaf.class.getName();
       UIManager.LookAndFeelInfo laf = findLaf(className);
       if (laf != null) {
         return laf;
@@ -488,7 +489,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find app L&F: " + appLafName);
     }
 
-    String defaultLafName = IntelliJLaf.class.getName();
+    String defaultLafName = DarculaLaf.class.getName();
     UIManager.LookAndFeelInfo laf = findLaf(defaultLafName);
     if (laf != null) {
       return laf;
@@ -537,7 +538,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     UIManager.getDefaults().clear();
     UIManager.getDefaults().putAll(ourDefaults);
-    SVGLoader.setColorPatcherForSelection(null);
+    if (!myFirstSetup) {
+      SVGLoader.setColorPatcherForSelection(null);
+    }
 
     // Set L&F
     if (IdeaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) { // that is IDEA default LAF
@@ -631,17 +634,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       installMacOSXFonts(UIManager.getLookAndFeelDefaults());
     }
 
-    myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
+    myCurrentLaf = lookAndFeelInfo;
     selectComboboxModel();
 
-    if (!myFirstSetup) {
-      if (!lockEditorScheme) {
-        if (processChangeSynchronously) {
-          updateEditorSchemeIfNecessary(oldLaf, true);
-        }
-        else {
-          ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf, false));
-        }
+    if (!myFirstSetup && !lockEditorScheme) {
+      if (processChangeSynchronously) {
+        updateEditorSchemeIfNecessary(oldLaf, true);
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf, false));
       }
     }
     myFirstSetup = false;
@@ -761,7 +762,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue());
-    uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getPREFERRED_FRACTIONAL_METRICS_VALUE());
+
+    uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS,
+                   AppUIUtil.adjustFractionalMetrics(UISettings.getPREFERRED_FRACTIONAL_METRICS_VALUE()));
 
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
@@ -1375,7 +1378,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       List<UIManager.LookAndFeelInfo> lightLafs = new ArrayList<>();
       List<UIManager.LookAndFeelInfo> darkLafs = new ArrayList<>();
 
-      for(UIManager.LookAndFeelInfo lafInfo: myLaFs.getValue()) {
+      for (UIManager.LookAndFeelInfo lafInfo : myLaFs.getValue()) {
         if (lafInfo instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)lafInfo).getTheme().isDark() ||
             lafInfo.getName().equals(DarculaLaf.NAME)) {
           darkLafs.add(lafInfo);
@@ -1385,21 +1388,21 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         }
       }
 
-      DefaultActionGroup myGroup = new DefaultActionGroup();
-      myGroup.addAll(createThemeActions(IdeBundle.message("preferred.theme.light.header"), lightLafs, false));
-      myGroup.addAll(createThemeActions(IdeBundle.message("preferred.theme.dark.header"), darkLafs, true));
-      return myGroup;
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.addAll(createThemeActions(IdeBundle.message("preferred.theme.light.header"), lightLafs, false));
+      group.addAll(createThemeActions(IdeBundle.message("preferred.theme.dark.header"), darkLafs, true));
+      return group;
     }
 
-    private Collection<AnAction> createThemeActions(@NotNull @NlsContexts.Separator String separatorText,
-                                 List<UIManager.LookAndFeelInfo> lafs, boolean isDark) {
+    private @NotNull Collection<AnAction> createThemeActions(@NotNull @NlsContexts.Separator String separatorText,
+                                                             @NotNull List<UIManager.LookAndFeelInfo> lafs,
+                                                             boolean isDark) {
       List<AnAction> result = new ArrayList<>();
       if (!lafs.isEmpty()) {
         result.add(Separator.create(separatorText));
-        lafs.stream().map(l -> {
-          @NlsSafe String name = l.getName();
-          return new LafToggleAction(name, l, isDark);
-        }).forEach(a -> result.add(a));
+        lafs.stream()
+          .map(l -> new LafToggleAction(l.getName(), l, isDark))
+          .forEach(a -> result.add(a));
       }
       return result;
     }

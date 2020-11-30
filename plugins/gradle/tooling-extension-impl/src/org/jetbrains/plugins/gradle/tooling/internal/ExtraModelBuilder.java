@@ -10,14 +10,15 @@ import org.gradle.internal.impldep.com.google.common.collect.Lists;
 import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
 import org.gradle.internal.logging.progress.ProgressLogger;
 import org.gradle.internal.logging.progress.ProgressLoggerFactory;
+import org.gradle.tooling.provider.model.ParameterizedToolingModelBuilder;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.model.internal.DummyModel;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
-import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
@@ -33,6 +34,15 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public class ExtraModelBuilder implements ToolingModelBuilder {
+
+  public static class ForGradle44 extends ExtraModelBuilder implements ParameterizedToolingModelBuilder<ModelBuilderService.Parameter> {
+    @NotNull
+    @Override
+    public Class<ModelBuilderService.Parameter> getParameterType() {
+      return ModelBuilderService.Parameter.class;
+    }
+  }
+
   private static final Logger LOG = LoggerFactory.getLogger(ExtraModelBuilder.class);
   @ApiStatus.Internal
   public static final String MODEL_BUILDER_SERVICE_MESSAGE_PREFIX = "ModelBuilderService message: ";
@@ -67,6 +77,10 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
   @Override
   public Object buildAll(String modelName, Project project) {
+    return buildAll(modelName, null, project);
+  }
+
+  public Object buildAll(String modelName, ModelBuilderService.Parameter parameter, Project project) {
     if (DummyModel.class.getName().equals(modelName)) {
       return new DummyModel() {
       };
@@ -85,7 +99,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
     if (myModelBuilderContext == null) {
       Gradle rootGradle = getRootGradle(project.getGradle());
-      myModelBuilderContext = new MyModelBuilderContext(rootGradle);
+      myModelBuilderContext = new MyModelBuilderContext(rootGradle, parameter);
     }
 
     CURRENT_CONTEXT.set(myModelBuilderContext);
@@ -94,9 +108,8 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
         if (service.canBuild(modelName) && isVersionMatch(service)) {
           final long startTime = System.currentTimeMillis();
           try {
-            if (service instanceof AbstractModelBuilderService) {
-              return ((AbstractModelBuilderService)service).buildAll(modelName, project, myModelBuilderContext);
-            }
+            if (service instanceof ModelBuilderService.Ex)
+              return ((ModelBuilderService.Ex)service).buildAll(modelName, project, myModelBuilderContext);
             else {
               return service.buildAll(modelName, project);
             }
@@ -159,15 +172,23 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   private static final class MyModelBuilderContext implements ModelBuilderContext {
     private final Map<DataProvider, Object> myMap = new IdentityHashMap<DataProvider, Object>();
     private final Gradle myGradle;
+    @Nullable private final ModelBuilderService.Parameter myParameter;
 
-    private MyModelBuilderContext(Gradle gradle) {
+    private MyModelBuilderContext(Gradle gradle, @Nullable ModelBuilderService.Parameter parameter) {
       myGradle = gradle;
+      myParameter = parameter;
     }
 
     @NotNull
     @Override
     public Gradle getRootGradle() {
       return myGradle;
+    }
+
+    @Nullable
+    @Override
+    public String getParameter() {
+      return myParameter != null ? myParameter.getValue() : null;
     }
 
     @NotNull

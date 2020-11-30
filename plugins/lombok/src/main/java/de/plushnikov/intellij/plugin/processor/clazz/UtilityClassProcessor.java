@@ -1,11 +1,12 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
-import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -17,7 +18,7 @@ import java.util.List;
 public class UtilityClassProcessor extends AbstractClassProcessor {
 
   public UtilityClassProcessor() {
-    super(PsiMethod.class, UtilityClass.class);
+    super(PsiMethod.class, LombokClassNames.UTILITY_CLASS);
   }
 
   @Override
@@ -28,7 +29,7 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
   private boolean validateNoConstructorsDefined(PsiClass psiClass, ProblemBuilder builder) {
     Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassConstructorIntern(psiClass);
     if (!psiMethods.isEmpty()) {
-      builder.addError("@UtilityClasses cannot have declared constructors.");
+      builder.addError(LombokBundle.message("inspection.message.utility.classes.cannot.have.declared.constructors"));
       return false;
     }
     return true;
@@ -36,7 +37,7 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
 
   public static boolean validateOnRightType(PsiClass psiClass, ProblemBuilder builder) {
     if (checkWrongType(psiClass)) {
-      builder.addError("@UtilityClass is only supported on a class (can't be an interface, enum, or annotation).");
+      builder.addError(LombokBundle.message("inspection.message.utility.class.only.supported.on.class"));
       return false;
     }
     PsiElement context = psiClass.getContext();
@@ -55,11 +56,11 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
           if (isStatic || checkWrongType(psiClassUp)) {
             contextUp = contextUp.getContext();
           } else {
-            builder.addError("@UtilityClass automatically makes the class static, however, this class cannot be made static.");
+            builder.addError(LombokBundle.message("inspection.message.utility.class.automatically.makes.class.static"));
             return false;
           }
         } else {
-          builder.addError("@UtilityClass cannot be placed on a method local or anonymous inner class, or any class nested in such a class.");
+          builder.addError(LombokBundle.message("inspection.message.utility.class.cannot.be.placed"));
           return false;
         }
       }

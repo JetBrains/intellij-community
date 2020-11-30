@@ -18,7 +18,7 @@ internal fun buildLoginPanel(st: SpaceLoginState.Disconnected,
                              loginAction: (String) -> Unit
 ): DialogPanel {
   return panel {
-    val serverField = JTextField(st.server, 30)
+    val serverField = JTextField(st.server, 30) // NON-NLS
 
     val loginButton = JButton(SpaceBundle.message("login.panel.log.in.button")).apply {
       addActionListener {

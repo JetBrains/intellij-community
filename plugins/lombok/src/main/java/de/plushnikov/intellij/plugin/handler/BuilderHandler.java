@@ -3,12 +3,12 @@ package de.plushnikov.intellij.plugin.handler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 
 
-public class BuilderHandler {
+public final class BuilderHandler {
 
   public static boolean isDefaultBuilderValue(@NotNull PsiElement highlightedElement) {
     PsiField field = PsiTreeUtil.getParentOfType(highlightedElement, PsiField.class);
@@ -16,6 +16,6 @@ public class BuilderHandler {
       return false;
     }
 
-    return PsiAnnotationSearchUtil.isAnnotatedWith(field, Builder.Default.class.getCanonicalName());
+    return PsiAnnotationSearchUtil.isAnnotatedWith(field, LombokClassNames.BUILDER_DEFAULT);
   }
 }

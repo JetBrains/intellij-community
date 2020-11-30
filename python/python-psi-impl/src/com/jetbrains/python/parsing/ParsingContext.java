@@ -30,10 +30,10 @@ public class ParsingContext {
   private final LanguageLevel myLanguageLevel;
   private final Deque<ParsingScope> myScopes;
 
-  public ParsingContext(final SyntaxTreeBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+  public ParsingContext(final SyntaxTreeBuilder builder, LanguageLevel languageLevel) {
     myBuilder = builder;
     myLanguageLevel = languageLevel;
-    stmtParser = new StatementParsing(this, futureFlag);
+    stmtParser = new StatementParsing(this);
     expressionParser = new ExpressionParsing(this);
     functionParser = new FunctionParsing(this);
     myScopes = new ArrayDeque<>();

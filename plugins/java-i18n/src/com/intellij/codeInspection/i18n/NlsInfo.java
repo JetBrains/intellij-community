@@ -326,7 +326,15 @@ public abstract class NlsInfo {
           if (!shouldGoThroughCall) return parent;
         }
       }
-      if (next instanceof UIfExpression && AnnotationContext.expressionsAreEquivalent(parent, ((UIfExpression)next).getCondition())) return parent;
+      if (next instanceof UIfExpression && AnnotationContext.expressionsAreEquivalent(parent, ((UIfExpression)next).getCondition())) {
+        return parent;
+      }
+      if (next instanceof USwitchExpression) {
+        final UExpression condExpression = ((USwitchExpression)next).getExpression();
+        if (condExpression != null && AnnotationContext.expressionsAreEquivalent(parent, condExpression)) {
+          return parent;
+        }
+      }
       parent = next;
     }
   }

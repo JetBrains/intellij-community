@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.CommonProcessors
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRAddCommentGutterIconRenderer
+import com.intellij.util.ui.codereview.diff.AddCommentGutterIconRenderer
 
 class GHPRCreateDiffCommentAction : DumbAwareAction() {
 
@@ -46,7 +46,7 @@ class GHPRCreateDiffCommentAction : DumbAwareAction() {
     val findProcessor = object : CommonProcessors.FindProcessor<RangeHighlighterEx>() {
       override fun accept(t: RangeHighlighterEx): Boolean {
         val gutterIconRenderer = t.gutterIconRenderer
-        return gutterIconRenderer is GHPRAddCommentGutterIconRenderer && gutterIconRenderer.line == line
+        return gutterIconRenderer is AddCommentGutterIconRenderer && gutterIconRenderer.line == line
       }
     }
     markupModel.processRangeHighlightersOverlappingWith(offset, offset, findProcessor)

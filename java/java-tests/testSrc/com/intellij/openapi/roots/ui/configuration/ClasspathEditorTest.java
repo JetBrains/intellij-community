@@ -34,9 +34,8 @@ public class ClasspathEditorTest extends LightPlatformTestCase {
     disposeOnTearDown(() -> uiRootModel.dispose());
 
     ClasspathEditor e = new ClasspathEditor(new ModuleConfigurationStateImpl(project, new DefaultModulesProvider(project)) {
-      @Nullable
       @Override
-      public ModifiableRootModel getRootModel() {
+      public @NotNull ModifiableRootModel getRootModel() {
         return uiRootModel;
       }
     });

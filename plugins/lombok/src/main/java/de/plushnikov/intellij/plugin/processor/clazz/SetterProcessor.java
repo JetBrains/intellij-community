@@ -1,7 +1,9 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
@@ -10,7 +12,6 @@ import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,11 +27,11 @@ import java.util.List;
 public class SetterProcessor extends AbstractClassProcessor {
 
   public SetterProcessor() {
-    super(PsiMethod.class, Setter.class);
+    super(PsiMethod.class, LombokClassNames.SETTER);
   }
 
   private SetterFieldProcessor getSetterFieldProcessor() {
-    return ServiceManager.getService(SetterFieldProcessor.class);
+    return ApplicationManager.getApplication().getService(SetterFieldProcessor.class);
   }
 
   @Override
@@ -41,7 +42,7 @@ public class SetterProcessor extends AbstractClassProcessor {
   private boolean validateAnnotationOnRightType(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError("'@%s' is only supported on a class or field type", psiAnnotation.getQualifiedName());
+      builder.addError(LombokBundle.message("inspection.message.s.only.supported.on.class.or.field.type"), psiAnnotation.getQualifiedName());
       result = false;
     }
     return result;
@@ -52,6 +53,7 @@ public class SetterProcessor extends AbstractClassProcessor {
     return null != methodVisibility;
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {

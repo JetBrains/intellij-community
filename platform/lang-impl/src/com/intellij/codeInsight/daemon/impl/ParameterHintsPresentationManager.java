@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hints.HintWidthAdjustment;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -34,7 +33,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
   private final Alarm myAlarm = new Alarm(this);
 
   public static ParameterHintsPresentationManager getInstance() {
-    return ServiceManager.getService(ParameterHintsPresentationManager.class);
+    return ApplicationManager.getApplication().getService(ParameterHintsPresentationManager.class);
   }
 
   private ParameterHintsPresentationManager() {
@@ -171,9 +170,8 @@ public final class ParameterHintsPresentationManager implements Disposable {
       return null;
     }
 
-    @Nullable
     @Override
-    public String getContextMenuGroupId(@NotNull Inlay inlay) {
+    public @NotNull String getContextMenuGroupId(@NotNull Inlay inlay) {
       return "ParameterNameHints";
     }
 

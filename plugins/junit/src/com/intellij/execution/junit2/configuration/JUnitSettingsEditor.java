@@ -53,8 +53,8 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     scopeFragment.setVariantNameProvider(scope -> scope == TestSearchScope.WHOLE_PROJECT
                                                   ? JUnitBundle.message("search.scope.project")
                                                   : scope == TestSearchScope.SINGLE_MODULE
-                                                    ? JUnitBundle.message("search.scope.module.deps")
-                                                    : JUnitBundle.message("search.scope.module"));
+                                                    ? JUnitBundle.message("search.scope.module")
+                                                    : JUnitBundle.message("search.scope.module.deps"));
     fragments.add(scopeFragment);
 
     VariantTagFragment<JUnitConfiguration, String> repeat =
@@ -96,6 +96,14 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     fragments.add(forkMode);
 
     testKind.addSettingsEditorListener(
-      editor -> forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(testKind.getTestKind(), forkMode.getSelectedVariant())));
+      editor -> {
+        int selectedType = testKind.getTestKind();
+        forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(selectedType, forkMode.getSelectedVariant()));
+        scopeFragment.setRemovable(selectedType == JUnitConfigurationModel.PATTERN ||
+                                   selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE ||
+                                   selectedType == JUnitConfigurationModel.TAGS ||
+                                   selectedType == JUnitConfigurationModel.CATEGORY);
+      });
+    fragments.add(new TargetPathFragment<>());
   }
 }

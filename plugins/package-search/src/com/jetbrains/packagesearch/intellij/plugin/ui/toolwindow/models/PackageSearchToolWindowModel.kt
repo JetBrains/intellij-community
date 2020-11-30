@@ -34,17 +34,20 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModulePr
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstallationInformation.Companion.DEFAULT_SCOPE
-import com.jetbrains.packagesearch.patchers.buildsystem.BuildDependency
-import com.jetbrains.packagesearch.patchers.buildsystem.DependencyConflictException
-import com.jetbrains.packagesearch.patchers.buildsystem.DependencyNotFoundException
-import com.jetbrains.packagesearch.patchers.buildsystem.OperationFailure
-import com.jetbrains.packagesearch.patchers.buildsystem.RepositoryConflictException
-import com.jetbrains.packagesearch.patchers.buildsystem.RepositoryNotFoundException
-import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedCoordinates
-import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependencyRepository
+import com.intellij.buildsystem.model.BuildDependency
+import com.intellij.buildsystem.model.DependencyConflictException
+import com.intellij.buildsystem.model.DependencyNotFoundException
+import com.intellij.buildsystem.model.OperationFailure
+import com.intellij.buildsystem.model.RepositoryConflictException
+import com.intellij.buildsystem.model.RepositoryNotFoundException
+import com.intellij.buildsystem.model.unified.UnifiedCoordinates
+import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.Signal
+import org.jetbrains.annotations.Nls
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.set
@@ -540,7 +543,7 @@ class PackageSearchToolWindowModel(val project: Project, val lifetime: Lifetime)
                 remotePackages.value
             )
 
-            val scope = operationTarget.targetScope.getSelectedValue().let {
+            val scope = operationTarget.targetScope.getSelectedScope().let {
                 if (it == DEFAULT_SCOPE) return@let null else return@let it
             }
 
@@ -592,8 +595,8 @@ class PackageSearchToolWindowModel(val project: Project, val lifetime: Lifetime)
                 )
             }
             operationFailures.isNotEmpty() -> operationFailures.forEach {
-                val error = prepareError(it)
-                displayError(project, error.first, error.second)
+                val errorData = prepareError(it)
+                displayError(project, errorData.message, errorData.notificationType)
             }
         }
 
@@ -602,35 +605,40 @@ class PackageSearchToolWindowModel(val project: Project, val lifetime: Lifetime)
         projectModuleOperationProvider?.refreshProject(project, virtualFile)
     }
 
-    private fun prepareError(error: OperationFailure<*>): Pair<String, NotificationType> =
+    private fun prepareError(error: OperationFailure<*>): ErrorData =
         when (error.error) {
             is DependencyConflictException ->
-                PackageSearchBundle.message(
+                ErrorData(PackageSearchBundle.message(
                     "packagesearch.add.dependency.error.dependency.already.exists",
                     (error.item as BuildDependency).displayName
-                ) to NotificationType.INFORMATION
+                ), NotificationType.INFORMATION)
             is RepositoryConflictException ->
-                PackageSearchBundle.message(
+                ErrorData(PackageSearchBundle.message(
                     "packagesearch.add.dependency.error.repository.already.exists",
                     error.item.toString()
-                ) to NotificationType.INFORMATION
+                ), NotificationType.INFORMATION)
             is DependencyNotFoundException ->
-                PackageSearchBundle.message(
+                ErrorData(PackageSearchBundle.message(
                     "packagesearch.add.dependency.error.dependency.not.found",
                     (error.item as BuildDependency).displayName
-                ) to NotificationType.ERROR
+                ), NotificationType.ERROR)
             is RepositoryNotFoundException ->
-                PackageSearchBundle.message(
+                ErrorData(PackageSearchBundle.message(
                     "packagesearch.add.dependency.error.repository.not.found",
                     error.item.toString()
-                ) to NotificationType.ERROR
+                ), NotificationType.ERROR)
             else -> {
                 logger.error(PackageSearchBundle.message("packagesearch.add.dependency.error.unknown"), error.error)
-                PackageSearchBundle.message("packagesearch.add.dependency.error.unknown") to NotificationType.ERROR
+                ErrorData(
+                    PackageSearchBundle.message("packagesearch.add.dependency.error.unknown"),
+                    NotificationType.ERROR
+                )
             }
         }
 
-    private fun displayError(project: Project, message: String, errorType: NotificationType = NotificationType.ERROR) {
+    private data class ErrorData(@Nls val message: String, val notificationType: NotificationType)
+
+    private fun displayError(project: Project, @Nls message: String, errorType: NotificationType = NotificationType.ERROR) {
         NotificationGroup.balloonGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
             .createNotification(
                 PackageSearchBundle.message("packagesearch.title"),
@@ -655,11 +663,11 @@ class PackageSearchToolWindowModel(val project: Project, val lifetime: Lifetime)
 private fun UnifiedCoordinates.toSimpleIdentifier(): String = "$groupId:$artifactId".toLowerCase()
 
 private fun ProgressManager.runBackgroundable(
-    project: Project,
-    title: String,
-    cancelable: Boolean = false,
-    backgroundOption: PerformInBackgroundOption = PerformInBackgroundOption.ALWAYS_BACKGROUND,
-    action: (indicator: ProgressIndicator) -> Unit
+  project: Project,
+  @ProgressTitle title: String,
+  cancelable: Boolean = false,
+  backgroundOption: PerformInBackgroundOption = PerformInBackgroundOption.ALWAYS_BACKGROUND,
+  action: (indicator: ProgressIndicator) -> Unit
 ) = run(
     object : Task.Backgroundable(project, title, cancelable, backgroundOption) {
         override fun run(indicator: ProgressIndicator) {

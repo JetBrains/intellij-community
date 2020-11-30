@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtilRt;
@@ -314,16 +315,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
-    if (!isValidName(file)) {
-      throw new IOException(CoreBundle.message("file.invalid.name.error", file));
+  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
+    if (!isValidName(name)) {
+      throw new IOException(CoreBundle.message("file.invalid.name.error", name));
     }
 
     if (!parent.exists() || !parent.isDirectory()) {
       throw new IOException(IdeBundle.message("vfs.target.not.directory.error", parent.getPath()));
-    }
-    if (parent.findChild(file) != null) {
-      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + file));
     }
 
     File ioParent = convertToIOFile(parent);
@@ -331,16 +329,34 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       throw new IOException(IdeBundle.message("target.not.directory.error", ioParent.getPath()));
     }
 
-    if (!auxCreateFile(parent, file)) {
-      File ioFile = new File(ioParent, file);
-      if (!FileUtil.createIfDoesntExist(ioFile)) {
+    if (!auxCreateFile(parent, name)) {
+      File ioFile = new File(ioParent, name);
+      VirtualFile existing = parent.findChild(name);
+      boolean created = FileUtil.createIfDoesntExist(ioFile);
+      if (!created) {
+        if (existing != null) {
+          throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + name));
+        }
+
         throw new IOException(IdeBundle.message("new.file.failed.error", ioFile.getPath()));
+      }
+      else if (existing != null) {
+        // wow, IO created file successfully although it already existed in VFS. Maybe we got dir case sensitivity wrong?
+        boolean oldCaseSensitive = parent.isCaseSensitive();
+        FileAttributes.CaseSensitivity actualSensitivity = FileSystemUtil.readParentCaseSensitivity(new File(existing.getPath()));
+        if ((actualSensitivity == FileAttributes.CaseSensitivity.SENSITIVE) != oldCaseSensitive) {
+          // we need to update case sensitivity
+          VFilePropertyChangeEvent event = VfsImplUtil.generateCaseSensitivityChangedEvent(parent, actualSensitivity);
+          if (event != null) {
+            RefreshQueue.getInstance().processSingleEvent(event);
+          }
+        }
       }
     }
 
-    auxNotifyCompleted(handler -> handler.createFile(parent, file));
+    auxNotifyCompleted(handler -> handler.createFile(parent, name));
 
-    return new FakeVirtualFile(parent, file);
+    return new FakeVirtualFile(parent, name);
   }
 
   @Override

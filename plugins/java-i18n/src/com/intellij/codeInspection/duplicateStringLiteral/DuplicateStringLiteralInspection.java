@@ -32,7 +32,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +42,7 @@ import javax.swing.event.DocumentEvent;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final int MAX_FILES_TO_ON_THE_FLY_SEARCH = 10;
 
   @SuppressWarnings("WeakerAccess") public int MIN_STRING_LENGTH = 5;
@@ -114,7 +113,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     StringSearcher searcher = new StringSearcher(stringToFind, true, true);
 
     List<PsiLiteralExpression> foundExpr = new SmartList<>();
-    LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, offset -> {
+    LowLevelSearchUtil.processTexts(text, 0, text.length(), searcher, offset -> {
       PsiElement element = file.findElementAt(offset);
       if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) return true;
       PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
@@ -131,7 +130,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
                                             final boolean isOnTheFly) {
     PsiExpression[] foundExpr = getDuplicateLiterals(holder.getProject(), originalExpression, isOnTheFly);
     if (foundExpr.length == 0) return;
-    Set<PsiClass> classes = new THashSet<>();
+    Set<PsiClass> classes = new HashSet<>();
     for (PsiElement aClass : foundExpr) {
       if (aClass == originalExpression) continue;
       ProgressManager.checkCanceled();

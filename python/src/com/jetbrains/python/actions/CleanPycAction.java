@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -70,7 +71,12 @@ public class CleanPycAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final PsiElement[] elements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
-    e.getPresentation().setEnabled(isAllDirectories(elements));
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(isAllDirectories(elements));
+    }
+    else {
+      e.getPresentation().setEnabled(isAllDirectories(elements));
+    }
   }
 
   private static boolean isAllDirectories(PsiElement @Nullable [] elements) {

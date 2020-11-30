@@ -32,7 +32,7 @@ fun FeatureUsageData.addPythonSpecificInfo(sdk: Sdk) = addLanguage(PythonLanguag
   .addData("interpreterType", sdk.interpreterType)
 
 
-private val Sdk.version get() = PythonSdkType.getLanguageLevelForSdk(this).version.toString()
+private val Sdk.version get() = PythonSdkType.getLanguageLevelForSdk(this).toPythonVersion()
 private val Sdk.executionType get(): String = (sdkAdditionalData as? PyRemoteSdkAdditionalDataBase)?.executionType ?: "local"
 private val Sdk.interpreterType
   get() = when {

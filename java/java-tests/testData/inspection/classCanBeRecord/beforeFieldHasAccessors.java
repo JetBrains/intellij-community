@@ -1,5 +1,5 @@
 // "Convert to a record" "true"
-class <caret>R {
+final class <caret>R {
     final int first;
     final String second;
     final int[] third;

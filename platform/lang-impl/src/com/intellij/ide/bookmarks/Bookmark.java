@@ -32,6 +32,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.dnd.DragSource;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
@@ -74,19 +75,18 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
   private int myLine;
   private String myUrl;
 
-  @NotNull
-  private String myDescription;
+  private @NotNull @NlsSafe String myDescription;
   private char myMnemonic;
   int index; // index in the list of bookmarks in the Navigate|Bookmarks|show
 
   @ApiStatus.Internal
-  public Bookmark(@NotNull String url, int line, @NotNull String description) {
+  public Bookmark(@NotNull String url, int line, @NotNull @NlsSafe String description) {
     myUrl = url;
     myLine = line;
     myDescription = description;
   }
 
-  Bookmark(@NotNull Project project, @NotNull VirtualFile file, int line, @NotNull String description) {
+  Bookmark(@NotNull Project project, @NotNull VirtualFile file, int line, @NotNull @NlsSafe String description) {
     myDescription = description;
 
     initTarget(project, file, line);
@@ -224,12 +224,11 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return myMnemonic == 0 ? DEFAULT_ICON : MnemonicIcon.getIcon(myMnemonic);
   }
 
-  @NotNull
-  public String getDescription() {
+  public @NotNull @NlsSafe String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(@NotNull String description) {
+  public void setDescription(@NotNull @NlsSafe String description) {
     myDescription = description;
   }
 
@@ -351,8 +350,9 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   @NotNull
+  @NlsContexts.Tooltip
   private String getBookmarkTooltip() {
-    StringBuilder result = new StringBuilder("Bookmark");
+    StringBuilder result = new StringBuilder(IdeBundle.message("bookmark.text"));
     if (myMnemonic != 0) {
       result.append(" ").append(myMnemonic);
     }
@@ -364,24 +364,21 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     StringBuilder shortcutDescription = new StringBuilder();
     if (myMnemonic != 0) {
-      String shortcutText = KeymapUtil.getFirstKeyboardShortcutText("ToggleBookmark" + myMnemonic);
-      if (shortcutText.length() > 0) {
-        shortcutDescription.append(shortcutText).append(" to toggle");
-      }
-
-      String navigateShortcutText = KeymapUtil.getFirstKeyboardShortcutText("GotoBookmark" + myMnemonic);
-      if (navigateShortcutText.length() > 0) {
-        if (shortcutDescription.length() > 0) {
-          shortcutDescription.append(", ");
-        }
-        shortcutDescription.append(navigateShortcutText).append(" to jump to");
+      String shortcutToToggle = KeymapUtil.getFirstKeyboardShortcutText("ToggleBookmark" + myMnemonic);
+      String shortcutToNavigate = KeymapUtil.getFirstKeyboardShortcutText("GotoBookmark" + myMnemonic);
+      if (!shortcutToToggle.isEmpty()) {
+        shortcutDescription.append(shortcutToNavigate.isEmpty()
+                                   ? IdeBundle.message("bookmark.shortcut.to.toggle", shortcutToToggle)
+                                   : IdeBundle.message("bookmark.shortcut.to.toggle.and.jump", shortcutToToggle, shortcutToNavigate));
+      } else if (!shortcutToNavigate.isEmpty()){
+        shortcutDescription.append(IdeBundle.message("bookmark.shortcut.to.jump", shortcutToNavigate));
       }
     }
 
     if (shortcutDescription.length() == 0) {
-      String shortcutText = KeymapUtil.getFirstKeyboardShortcutText("ToggleBookmark");
-      if (shortcutText.length() > 0) {
-        shortcutDescription.append(shortcutText).append(" to toggle");
+      String shortcutToToggle = KeymapUtil.getFirstKeyboardShortcutText("ToggleBookmark");
+      if (shortcutToToggle.length() > 0) {
+        shortcutDescription.append(IdeBundle.message("bookmark.shortcut.to.toggle", shortcutToToggle));
       }
     }
 
@@ -389,6 +386,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
       result.append(" (").append(shortcutDescription).append(")");
     }
 
+    //noinspection HardCodedStringLiteral
     return result.toString();
   }
 
@@ -578,5 +576,12 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     public ActionGroup getPopupMenuActions() {
       return (ActionGroup)ActionManager.getInstance().getAction("popup@BookmarkContextMenu");
     }
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull @NlsSafe String toString(char mnemonic, boolean point) {
+    StringBuilder sb = new StringBuilder().append(mnemonic);
+    if (point) sb.append('.');
+    return sb.toString(); //NON-NLS
   }
 }

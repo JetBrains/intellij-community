@@ -7,7 +7,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.ui.render.RenderingUtil;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
@@ -318,7 +318,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
       myTreeTableHeader.setResizingAllowed(false);
 
       // do not paint hover for table row separately from tree
-      putClientProperty(RenderingUtil.PAINT_HOVERED_BACKGROUND, false);
+      TableHoverListener.DEFAULT.removeFrom(this);
     }
 
     @Override

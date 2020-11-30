@@ -59,6 +59,11 @@ class CommunityRepositoryModules {
     "intellij.platform.editor.ex",
     "intellij.platform.codeStyle.impl",
     "intellij.platform.indexing.impl",
+    "intellij.platform.elevation",
+    "intellij.platform.elevation.client",
+    "intellij.platform.elevation.common",
+    "intellij.platform.elevation.daemon",
+    "intellij.platform.elevation.rpc",
     "intellij.platform.execution.impl",
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
@@ -171,12 +176,14 @@ class CommunityRepositoryModules {
       withModule("intellij.gradle.common")
       withModule("intellij.gradle.toolingExtension")
       withModule("intellij.gradle.toolingExtension.impl")
-      withModule("intellij.gradle.toolingLoaderRt")
       withProjectLibrary("Gradle")
     },
+    plugin("intellij.externalSystem.dependencyUpdater"),
+    plugin("intellij.gradle.dependencyUpdater"),
     plugin("intellij.gradle.dsl.impl") {
       withModule("intellij.gradle.dsl")
     },
+    plugin("intellij.gradle.dsl.kotlin.impl"),
     plugin("intellij.gradle.java") {
       withModule("intellij.gradle.jps")
     },
@@ -210,19 +217,6 @@ class CommunityRepositoryModules {
       withModule("intellij.java.coverage.rt")
       withProjectLibrary("JaCoCo") //todo[nik] convert to module library
     },
-    plugin("intellij.errorProne") {
-      withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
-    },
-    plugin("intellij.cucumber.java") {
-      withModule("intellij.cucumber.jvmFormatter")
-      withModule("intellij.cucumber.jvmFormatter3")
-      withModule("intellij.cucumber.jvmFormatter4")
-      withModule("intellij.cucumber.jvmFormatter5")
-      doNotCreateSeparateJarForLocalizableResources()
-    },
-    plugin("intellij.cucumber.groovy") {
-      doNotCreateSeparateJarForLocalizableResources()
-    },
     plugin("intellij.java.decompiler") {
       directoryName = "java-decompiler"
       mainJarName = "java-decompiler.jar"
@@ -234,6 +228,9 @@ class CommunityRepositoryModules {
       withResource("resources/.zshenv", "")
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
+    },
+    plugin("intellij.emojipicker") {
+      bundlingRestrictions.supportedOs = [OsFamily.LINUX]
     },
     plugin("intellij.textmate") {
       withModule("intellij.textmate.core")
@@ -251,7 +248,6 @@ class CommunityRepositoryModules {
     plugin("intellij.statsCollector") {
       bundlingRestrictions.includeInEapOnly = true
     },
-    plugin("intellij.statsCollector"),
     plugin("intellij.jps.cache"),
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")
@@ -266,10 +262,26 @@ class CommunityRepositoryModules {
         }
       }, "lib")
     },
-    plugin("intellij.gauge"),
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
     }
+  ]
+
+  static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = [
+    plugin("intellij.errorProne") {
+      withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
+    },
+    plugin("intellij.cucumber.java") {
+      withModule("intellij.cucumber.jvmFormatter")
+      withModule("intellij.cucumber.jvmFormatter3")
+      withModule("intellij.cucumber.jvmFormatter4")
+      withModule("intellij.cucumber.jvmFormatter5")
+      doNotCreateSeparateJarForLocalizableResources()
+    },
+    plugin("intellij.cucumber.groovy") {
+      doNotCreateSeparateJarForLocalizableResources()
+    },
+    plugin("intellij.gauge"),
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {

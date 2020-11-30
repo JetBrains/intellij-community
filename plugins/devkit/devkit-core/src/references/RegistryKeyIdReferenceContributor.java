@@ -11,7 +11,6 @@ import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
@@ -63,8 +62,8 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    protected String getExtensionPointClassname() {
-      return RegistryKeyBean.class.getName();
+    protected String getExtensionPointFqn() {
+      return "com.intellij.registryKey";
     }
 
     @NotNull

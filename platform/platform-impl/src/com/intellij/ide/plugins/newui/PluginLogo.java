@@ -10,6 +10,7 @@ import com.intellij.ide.ui.UIThemeProvider;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,6 +31,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,13 +46,13 @@ import java.util.zip.ZipFile;
  * @author Alexander Lobas
  */
 public final class PluginLogo {
-  private static final Logger LOG = Logger.getInstance(PluginLogo.class);
+  static final Logger LOG = Logger.getInstance(PluginLogo.class);
 
   private static final String CACHE_DIR = "imageCache";
   private static final String PLUGIN_ICON = "pluginIcon.svg";
   private static final String PLUGIN_ICON_DARK = "pluginIcon_dark.svg";
   private static final int PLUGIN_ICON_SIZE = 40;
-  private static final int PLUGIN_ICON_SIZE_SCALED = 80;
+  private static final int PLUGIN_ICON_SIZE_SCALED = 50;
 
   private static final Map<String, Pair<PluginLogoIconProvider, PluginLogoIconProvider>> ICONS = ContainerUtil.createWeakValueMap();
   private static PluginLogoIconProvider Default;
@@ -77,9 +82,9 @@ public final class PluginLogo {
   }
 
   @NotNull
-  public static Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean jb, boolean error, boolean disabled) {
+  public static Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean error, boolean disabled) {
     initLafListener();
-    return getIcon(descriptor).getIcon(big, jb, error, disabled);
+    return getIcon(descriptor).getIcon(big, error, disabled);
   }
 
   @NotNull
@@ -106,10 +111,52 @@ public final class PluginLogo {
   @NotNull
   static PluginLogoIconProvider getDefault() {
     if (Default == null) {
-      Default = new HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.PluginLogoDisabled_40,
-                                        AllIcons.Plugins.PluginLogo_80, AllIcons.Plugins.PluginLogoDisabled_80);
+      Default = new HiDPIPluginLogoIcon(reloadIcon(AllIcons.Plugins.PluginLogo, PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE, LOG),
+                                        reloadIcon(AllIcons.Plugins.PluginLogoDisabled, PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE, LOG),
+                                        reloadIcon(AllIcons.Plugins.PluginLogo, PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED, LOG),
+                                        reloadIcon(AllIcons.Plugins.PluginLogoDisabled, PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED, LOG));
     }
     return Default;
+  }
+
+  static @NotNull Icon reloadIcon(@NotNull Icon icon, int width, int height, @Nullable Logger logger) {
+    URL url = icon instanceof IconLoader.CachedImageIcon ? ((IconLoader.CachedImageIcon)icon).getURL() : null;
+    if (url == null) {
+      return icon;
+    }
+
+    try {
+      if (!JBColor.isBright() && url.getPath().endsWith(".svg") && !url.getPath().endsWith("_dark.svg")) {
+        Path file = URLUtil.urlToFile(url).toPath();
+        String fileName = file.getFileName().toString();
+        Path darkFile = file.getParent().resolve(fileName.substring(0, fileName.length() - 4) + "_dark.svg");
+        try (InputStream stream = Files.newInputStream(darkFile)) {
+          return HiDPIPluginLogoIcon.loadSVG(stream, width, height);
+        }
+        catch (NoSuchFileException ignore) {
+        }
+        catch (IOException e) {
+          if (logger != null) {
+            logger.error(e);
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      if (logger != null) {
+        logger.warn(e);
+      }
+    }
+
+    try {
+      return HiDPIPluginLogoIcon.loadSVG(url.openStream(), width, height);
+    }
+    catch (Exception e) {
+      if (logger != null) {
+        logger.error(e);
+      }
+    }
+    return icon;
   }
 
   @Nullable

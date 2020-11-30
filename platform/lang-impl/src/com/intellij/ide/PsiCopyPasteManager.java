@@ -5,7 +5,6 @@ import com.intellij.ide.dnd.LinuxDragAndDropSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -40,7 +39,7 @@ import java.util.stream.Stream;
 @Service
 public final class PsiCopyPasteManager {
   public static PsiCopyPasteManager getInstance() {
-    return ServiceManager.getService(PsiCopyPasteManager.class);
+    return ApplicationManager.getApplication().getService(PsiCopyPasteManager.class);
   }
 
   private static final Logger LOG = Logger.getInstance(PsiCopyPasteManager.class);
@@ -50,7 +49,7 @@ public final class PsiCopyPasteManager {
 
   public PsiCopyPasteManager() {
     myCopyPasteManager = CopyPasteManagerEx.getInstanceEx();
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (myRecentData != null && (!myRecentData.isValid() || myRecentData.getProject() == project)) {

@@ -47,7 +47,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
 
   public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
                                         @NotNull Project project,
-                                        @NotNull String title,
+                                        @NotNull @NlsContexts.DialogTitle String title,
                                         Class<? extends ExternalSystemNode> nodeClass,
                                         @Nullable Predicate<SimpleNode> selector) {
     //noinspection unchecked
@@ -90,9 +90,8 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
       };
       Disposer.register(myDisposable, treeStructure);
       treeStructure.init(new ExternalProjectsViewAdapter(projectsView) {
-        @Nullable
         @Override
-        public ExternalProjectsStructure getStructure() {
+        public @NotNull ExternalProjectsStructure getStructure() {
           return treeStructure;
         }
 

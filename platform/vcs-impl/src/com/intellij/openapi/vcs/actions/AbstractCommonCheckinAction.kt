@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
@@ -54,7 +55,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
 
   protected abstract fun approximatelyHasRoots(dataContext: VcsContext): Boolean
 
-  protected open fun getActionName(dataContext: VcsContext): String? = null
+  protected open fun getActionName(dataContext: VcsContext): @NlsActions.ActionText String? = null
 
   public override fun actionPerformed(context: VcsContext) {
     LOG.debug("actionPerformed. ")

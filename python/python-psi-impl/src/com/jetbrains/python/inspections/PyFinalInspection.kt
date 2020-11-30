@@ -372,7 +372,7 @@ class PyFinalInspection : PyInspection() {
         if (it.operand == node && isTopLevelInAnnotationOrTypeComment(it)) return
       }
 
-      if (isInAnnotationOrTypeComment(node) && resolvesToFinal(node)) {
+      if (isInsideTypeHint(node, myTypeEvalContext) && resolvesToFinal(node)) {
         registerProblem(node, PyPsiBundle.message("INSP.final.final.could.only.be.used.as.outermost.type"))
       }
     }

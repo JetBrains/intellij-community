@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -28,7 +27,7 @@ public final class EditorLastActionTracker {
 
   @NotNull
   public static EditorLastActionTracker getInstance() {
-    return ServiceManager.getService(EditorLastActionTracker.class);
+    return ApplicationManager.getApplication().getService(EditorLastActionTracker.class);
   }
 
   /**

@@ -24,6 +24,11 @@ public class FileTypeAssociationDialog extends DialogWrapper {
     return myForm.getTopPanel();
   }
 
+  @Override
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    return myForm.getPreferredFocusedComponent();
+  }
+
   public List<FileType> getSelectedFileTypes() {
     return myForm.getSelectedFileTypes();
   }

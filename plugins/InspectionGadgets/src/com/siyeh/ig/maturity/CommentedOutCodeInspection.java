@@ -15,12 +15,12 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.JavaCommentUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +55,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
 
   private static class DeleteCommentedOutCodeFix extends InspectionGadgetsFix {
 
-    DeleteCommentedOutCodeFix() {}
+    private DeleteCommentedOutCodeFix() {}
 
     @Override
     @NotNull
@@ -74,7 +74,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
         final List<PsiElement> toDelete = new ArrayList<>();
         toDelete.add(comment);
         PsiElement sibling = PsiTreeUtil.skipWhitespacesForward(comment);
-        while (JavaCommentUtil.isEndOfLineComment(sibling)) {
+        while (sibling instanceof PsiComment && ((PsiComment)sibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
           toDelete.add(sibling);
           sibling = PsiTreeUtil.skipWhitespacesForward(sibling);
         }
@@ -88,7 +88,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
 
   private static class UncommentCodeFix extends InspectionGadgetsFix {
 
-    UncommentCodeFix() {}
+    private UncommentCodeFix() {}
 
     @Override
     @NotNull
@@ -107,7 +107,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
         final List<TextRange> ranges = new ArrayList<>();
         ranges.add(comment.getTextRange());
         PsiElement sibling = PsiTreeUtil.skipWhitespacesForward(comment);
-        while (JavaCommentUtil.isEndOfLineComment(sibling)) {
+        while (sibling instanceof PsiComment && ((PsiComment)sibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
           ranges.add(sibling.getTextRange());
           sibling = PsiTreeUtil.skipWhitespacesForward(sibling);
         }
@@ -137,7 +137,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
 
   private class CommentedOutCodeVisitor extends BaseInspectionVisitor {
 
-    CommentedOutCodeVisitor() {}
+    private CommentedOutCodeVisitor() {}
 
     @Override
     public void visitComment(@NotNull PsiComment comment) {
@@ -147,7 +147,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
       }
       if (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
         final PsiElement before = PsiTreeUtil.skipWhitespacesBackward(comment);
-        if (JavaCommentUtil.isEndOfLineComment(before)) {
+        if (before instanceof PsiComment && ((PsiComment)before).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
           return;
         }
         while (true) {
@@ -156,16 +156,16 @@ public class CommentedOutCodeInspection extends BaseInspection {
           if (lines < minLines) {
             return;
           }
-          final Code code = isCode(text, comment);
-          if (code == Code.YES) {
+          final ThreeState code = isCode(text, comment);
+          if (code == ThreeState.YES) {
             registerErrorAtOffset(comment, 0, 2, lines);
             return;
           }
-          else if (code == Code.NO) {
+          else if (code == ThreeState.NO) {
             return;
           }
           final PsiElement after = PsiTreeUtil.skipWhitespacesForward(comment);
-          if (!JavaCommentUtil.isEndOfLineComment(after)) {
+          if (!(after instanceof PsiComment && ((PsiComment)after).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT)) {
             break;
           }
           comment = (PsiComment)after;
@@ -173,7 +173,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
       }
       else {
         final String text = getCommentText(comment);
-        if (StringUtil.countNewLines(text) + 1 < minLines || isCode(text, comment) != Code.YES) {
+        if (StringUtil.countNewLines(text) + 1 < minLines || isCode(text, comment) != ThreeState.YES) {
           return;
         }
         registerErrorAtOffset(comment, 0, 2, StringUtil.countNewLines(text) + 1);
@@ -181,13 +181,10 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
   }
 
-  enum Code {
-    YES, NO, MAYBE
-  }
 
-  static Code isCode(String text, PsiElement context) {
+  private static ThreeState isCode(String text, PsiElement context) {
     if (text.isEmpty()) {
-      return Code.NO;
+      return ThreeState.NO;
     }
     final Project project = context.getProject();
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
@@ -217,17 +214,26 @@ public class CommentedOutCodeInspection extends BaseInspection {
     else {
       fragment = factory.createCodeBlockCodeFragment(text, context, false);
     }
-    final boolean allowDanglingElse = PsiTreeUtil.getPrevSiblingOfType(context, PsiStatement.class) instanceof PsiIfStatement;
+    final boolean allowDanglingElse = isIfStatementWithoutElse(PsiTreeUtil.getPrevSiblingOfType(context, PsiStatement.class));
     if (!isInvalidCode(fragment, allowDanglingElse)) {
-      return Code.YES;
+      return ThreeState.YES;
     }
     else if (PsiTreeUtil.getDeepestLast(fragment) instanceof PsiErrorElement) {
-      return Code.NO;
+      return ThreeState.NO;
     }
-    return Code.MAYBE;
+    return ThreeState.UNSURE;
   }
 
-  static String getCommentText(PsiComment comment) {
+  private static boolean isIfStatementWithoutElse(PsiStatement statement) {
+    if (!(statement instanceof PsiIfStatement)) {
+      return false;
+    }
+    final PsiIfStatement ifStatement = (PsiIfStatement)statement;
+    final PsiStatement elseBranch = ifStatement.getElseBranch();
+    return elseBranch == null || isIfStatementWithoutElse(elseBranch);
+  }
+
+  private static String getCommentText(PsiComment comment) {
     String lineText = getEndOfLineCommentText(comment);
     if (lineText != null) {
       final StringBuilder result = new StringBuilder();
@@ -247,11 +253,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
   }
 
   @Nullable
-  static String getEndOfLineCommentText(PsiComment comment) {
+  private static String getEndOfLineCommentText(PsiComment comment) {
     return (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) ? StringUtil.trimStart(comment.getText(), "//") : null;
   }
 
-  static boolean isInvalidCode(PsiElement element, boolean allowDanglingElse) {
+  private static boolean isInvalidCode(PsiElement element, boolean allowDanglingElse) {
     final PsiElement firstChild = element.getFirstChild();
     final PsiElement lastChild = element.getLastChild();
     final boolean strict = firstChild == lastChild && firstChild instanceof PsiExpressionStatement;
@@ -339,7 +345,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
       }
       final PsiIdentifier identifier = statement.getLabelIdentifier();
       final PsiElement sibling = identifier.getNextSibling();
-      return PsiUtil.isJavaToken(sibling, JavaTokenType.COLON) && JavaCommentUtil.isEndOfLineComment(sibling.getNextSibling());
+      if (!PsiUtil.isJavaToken(sibling, JavaTokenType.COLON)) {
+        return false;
+      }
+      PsiElement element = sibling.getNextSibling();
+      return element instanceof PsiComment && ((PsiComment)element).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT;
     }
 
     @Override

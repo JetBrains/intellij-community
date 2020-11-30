@@ -115,8 +115,7 @@ final class BlockUtil {
         }
         vInd++;
       }
-      else if (vRange.getStartOffset() > fRange.getStartOffset() ||
-               vRange.getStartOffset() == fRange.getStartOffset() && vRange.getEndOffset() < fRange.getEndOffset()) {
+      else {
         // add including foreign blocks or split them if needed
         int lastContainedTlInd = vInd;
         while (lastContainedTlInd < tlBlocks.size() && fRange.intersectsStrict(tlBlocks.get(lastContainedTlInd).getTextRange())) {

@@ -431,6 +431,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           return DisplayPriority.LANGUAGE_SETTINGS;
         }
 
+        @Override
+        public int getWeight() {
+          if (page instanceof DisplayPrioritySortable) {
+            return ((DisplayPrioritySortable)page).getWeight();
+          }
+          return ColorAndFontPanelFactoryEx.super.getWeight();
+        }
+
         @NotNull
         @Override
         public Class<?> getOriginalClass() {
@@ -439,22 +447,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       });
     }
     extensions.addAll(ColorAndFontPanelFactory.EP_NAME.getExtensionList());
-    extensions.sort((f1, f2) -> {
-      if (f1 instanceof DisplayPrioritySortable) {
-        if (f2 instanceof DisplayPrioritySortable) {
-          int result1 = ((DisplayPrioritySortable)f1).getPriority().compareTo(((DisplayPrioritySortable)f2).getPriority());
-          if (result1 != 0) return result1;
-        }
-        else {
-          return 1;
-        }
-      }
-      else if (f2 instanceof DisplayPrioritySortable) {
-        return -1;
-      }
-      return f1.getPanelDisplayName().compareToIgnoreCase(f2.getPanelDisplayName());
-    });
-
+    extensions.sort(
+      (f1, f2) -> DisplayPrioritySortable.compare(f1, f2, factory -> factory.getPanelDisplayName())
+    );
     return new ArrayList<>(extensions);
   }
 

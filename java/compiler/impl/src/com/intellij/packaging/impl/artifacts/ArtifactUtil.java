@@ -152,8 +152,8 @@ public final class ArtifactUtil {
       if (processor.shouldProcessSubstitution(complexElement)) {
         final List<? extends PackagingElement<?>> substitution = complexElement.getSubstitution(resolvingContext, artifactType);
         if (substitution != null) {
-          return processElementsRecursively(substitution, type, processor, resolvingContext, processSubstitutions, artifactType,
-                                 path.appendComplex(complexElement), processed);
+          return processElementsRecursively(substitution, type, processor, resolvingContext, true, artifactType,
+                                            path.appendComplex(complexElement), processed);
         }
       }
     }

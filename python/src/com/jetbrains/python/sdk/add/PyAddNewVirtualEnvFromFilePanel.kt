@@ -17,6 +17,8 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.InputData
+import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.RequirementsTxtOrSetupPyData
 import com.jetbrains.python.sdk.basePath
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
@@ -32,6 +34,10 @@ class PyAddNewVirtualEnvFromFilePanel(private val module: Module,
   private val baseSdkField = PySdkPathChoosingComboBox()
   private val pathField = TextFieldWithBrowseButton()
   private val requirementsTxtOrSetupPyField = TextFieldWithBrowseButton()
+
+  private var initialBaseSdk: Sdk? = null
+  private val initialPath: String
+  private val initialRequirementsTxtOrSetupPy: String
 
   private val projectBasePath: @SystemIndependent String?
     get() = module.basePath ?: module.project.basePath
@@ -70,12 +76,89 @@ class PyAddNewVirtualEnvFromFilePanel(private val module: Module,
       .addLabeledComponent(PyBundle.message("sdk.create.venv.dependencies.label"), requirementsTxtOrSetupPyField)
       .panel
     add(formPanel, BorderLayout.NORTH)
-    addBaseInterpretersAsync(baseSdkField, existingSdks, module, UserDataHolderBase())
+    addBaseInterpretersAsync(baseSdkField, existingSdks, module, UserDataHolderBase()) { initialBaseSdk = baseSdkField.selectedSdk }
+
+    initialPath = pathField.text
+    initialRequirementsTxtOrSetupPy = requirementsTxtOrSetupPyField.text
   }
 
-  fun validateAll(defaultButtonName: @NlsContexts.Button String): List<ValidationInfo> =
+  fun validateAll(@NlsContexts.Button defaultButtonName: String): List<ValidationInfo> =
     listOfNotNull(PyAddSdkPanel.validateEnvironmentDirectoryLocation(pathField),
                   PyAddSdkPanel.validateSdkComboBox(baseSdkField, defaultButtonName))
+
+  /**
+   * Must be called if the input is confirmed and the current instance will not be used anymore
+   * e.g. `OK` was clicked on the outer dialog.
+   */
+  fun logData() {
+    val (path, baseSdk, requirementsTxtOrSetupPyPath) = envData
+
+    PyAddNewEnvCollector.logVirtualEnvFromFileData(
+      module.project,
+      pathToEventField(initialPath, path),
+      baseSdkToEventField(initialBaseSdk, baseSdk),
+      requirementsTxtOrSetupPyPathToEventField(initialRequirementsTxtOrSetupPy, requirementsTxtOrSetupPyPath)
+    )
+  }
+
+  private fun pathToEventField(initial: String, result: String): InputData {
+    return if (initial.isBlank()) {
+      if (result.isBlank()) InputData.BLANK_UNCHANGED else InputData.SPECIFIED
+    }
+    else if (initial != result) {
+      InputData.CHANGED
+    }
+    else {
+      InputData.UNCHANGED
+    }
+  }
+
+  private fun baseSdkToEventField(initial: Sdk?, result: Sdk?): InputData {
+    return if (initial == null) {
+      if (result == null) InputData.BLANK_UNCHANGED else InputData.SPECIFIED
+    }
+    else if (initial != result) {
+      InputData.CHANGED
+    }
+    else {
+      InputData.UNCHANGED
+    }
+  }
+
+  private fun requirementsTxtOrSetupPyPathToEventField(initial: String, result: String): RequirementsTxtOrSetupPyData {
+    return if (initial.isBlank()) {
+      if (result.isBlank()) RequirementsTxtOrSetupPyData.BLANK_UNCHANGED
+      else if (result.endsWith(".txt", true)) RequirementsTxtOrSetupPyData.TXT_SPECIFIED
+      else if (result.endsWith(".py", true)) RequirementsTxtOrSetupPyData.PY_SPECIFIED
+      else RequirementsTxtOrSetupPyData.OTHER_SPECIFIED
+    }
+    else if (initial != result) {
+      if (initial.endsWith(".txt", true)) {
+        when {
+          result.endsWith(".py", true) -> RequirementsTxtOrSetupPyData.CHANGED_TXT_TO_PY
+          result.endsWith(".txt", true) -> RequirementsTxtOrSetupPyData.CHANGED_TXT_TO_TXT
+          else -> RequirementsTxtOrSetupPyData.CHANGED_TXT_TO_OTHER
+        }
+      }
+      else if (initial.endsWith(".py", true)) {
+        when {
+          result.endsWith(".py", true) -> RequirementsTxtOrSetupPyData.CHANGED_PY_TO_PY
+          result.endsWith(".txt", true) -> RequirementsTxtOrSetupPyData.CHANGED_PY_TO_TXT
+          else -> RequirementsTxtOrSetupPyData.CHANGED_PY_TO_OTHER
+        }
+      }
+      else {
+        when {
+          result.endsWith(".py", true) -> RequirementsTxtOrSetupPyData.CHANGED_OTHER_TO_PY
+          result.endsWith(".txt", true) -> RequirementsTxtOrSetupPyData.CHANGED_OTHER_TO_TXT
+          else -> RequirementsTxtOrSetupPyData.CHANGED_OTHER_TO_OTHER
+        }
+      }
+    }
+    else {
+      RequirementsTxtOrSetupPyData.UNCHANGED
+    }
+  }
 
   data class Data(
     val path: @NlsSafe @SystemDependent String,

@@ -2,19 +2,12 @@
 #
 # Note: Commented out items means they weren't implemented at the time.
 # Uncomment them when the modules have been added to the typeshed.
-import __builtin__ as builtins
-from __builtin__ import (
-    intern as intern,
-    raw_input as input,
-    reduce as reduce,
-    reload as reload_module,
-    xrange as range,
-    xrange as xrange,
-)
-from cStringIO import StringIO as cStringIO
-from itertools import ifilter as filter, ifilterfalse as filterfalse, imap as map, izip as zip, izip_longest as zip_longest
-from os import getcwd as getcwdb, getcwdu as getcwd
-from pipes import quote as shlex_quote
+import __builtin__
+import itertools
+import os
+import pipes
+from __builtin__ import intern as intern, reduce as reduce, xrange as xrange
+from cStringIO import StringIO as _cStringIO
 from StringIO import StringIO as StringIO
 from UserDict import UserDict as UserDict
 from UserList import UserList as UserList
@@ -65,3 +58,21 @@ from . import (
 )
 
 # import SimpleXMLRPCServer as xmlrpc_server
+
+builtins = __builtin__
+input = __builtin__.raw_input
+reload_module = __builtin__.reload
+range = __builtin__.xrange
+
+cStringIO = _cStringIO
+
+filter = itertools.ifilter
+filterfalse = itertools.ifilterfalse
+map = itertools.imap
+zip = itertools.izip
+zip_longest = itertools.izip_longest
+
+getcwdb = os.getcwd
+getcwd = os.getcwdu
+
+shlex_quote = pipes.quote

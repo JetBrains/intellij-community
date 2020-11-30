@@ -9,6 +9,8 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
@@ -19,6 +21,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageS
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.SimpleToolWindowWithTwoToolbarsPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories.RepositoryManagementPanel
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -91,7 +94,7 @@ class PackageSearchToolWindowAvailabilityService(val project: Project) {
         val model = PackageSearchToolWindowModel(project, lifetime)
         project.putUserData(PackageSearchToolWindowFactory.ToolWindowModelKey, model)
 
-        val panels = mutableListOf<PackageSearchPanelBase>(
+        val panels = mutableListOf(
             PackageManagementPanel(model),
             RepositoryManagementPanel(model)
         )
@@ -117,7 +120,7 @@ class PackageSearchToolWindowAvailabilityService(val project: Project) {
         }
     }
 
-    private fun ContentManager.addTab(title: String, content: JComponent, toolbar: JComponent?) {
+    private fun ContentManager.addTab(@TabTitle title: String, content: JComponent, toolbar: JComponent?) {
         addContent(ContentFactory.SERVICE.getInstance().createContent(null, title, false).apply {
             component = SimpleToolWindowPanel(false).setProvideQuickActions(true).apply {
                 setContent(content)

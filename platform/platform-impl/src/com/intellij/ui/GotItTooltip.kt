@@ -7,7 +7,10 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.Balloon
@@ -15,6 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -25,20 +29,29 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
-import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
+import java.awt.*
+import java.awt.event.*
 import java.net.URL
 import javax.swing.*
 import javax.swing.event.AncestorEvent
 import javax.swing.plaf.basic.BasicHTML
 import javax.swing.text.View
 
-class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable: Disposable) {
+/**
+ * id is a unique id for the tooltip that will be used to store the tooltip state in <code>PropertiesComponent</code>
+ * id has the following format: place.where.used - lowercase words separated with dots.
+ * GotIt tooltip usage statistics can be properly gathered if its id prefix is registered in plugin.xml (PlatformExtensions.xml)
+ * with gotItTooltipAllowlist extension point. Prefix can cover a whole class of different gotit tooltips.
+ * If prefix is shorter than the whole ID then all different tooltip usages will be reported in one category described by the prefix.
+ */
+class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposable: Disposable) : Disposable {
+  private class ActionContext(val tooltip: GotItTooltip, val pointProvider: (Component) -> Point)
+
   @Nls
   private var header : String = ""
 
@@ -52,17 +65,25 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
   private var linkAction : () -> Unit = {}
   private var maxWidth = MAX_WIDTH
   private var showCloseShortcut = false
-  private var showCount = 1
+  private var maxCount = 1
+  private var chainFunction: () -> Unit = {}
+  private var position = Balloon.Position.below
+  private var onBalloonCreated : (Balloon) -> Unit = {}
 
-  var canShow : (String) -> Boolean = { PropertiesComponent.getInstance().getInt(it, showCount) > 0 }
-  var onGotIt : (String) -> Unit = {
-    PropertiesComponent.getInstance().let { pc ->
-      val value = pc.getInt(it, showCount)
-      if (value > 0) pc.setValue(it, (value - 1).toString())
-    }
+  // Ease the access (remove private or val to var) if fine tuning is needed.
+  private val savedCount : (String) -> Int = { PropertiesComponent.getInstance().getInt(it, 0) }
+  private val canShow : (String) -> Boolean = { savedCount(it) < maxCount }
+  private val onGotIt : (String) -> Unit = {
+    val count = savedCount(it)
+    if (count in 0 until maxCount) PropertiesComponent.getInstance().setValue(it, (count + 1).toString())
   }
 
   private val alarm = Alarm()
+  private var balloon : Balloon? = null
+
+  init {
+    Disposer.register(parentDisposable, this)
+  }
 
   /**
    * Add optional header to the tooltip.
@@ -144,7 +165,15 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
    * Set number of times the tooltip is shown.
    */
   fun withShowCount(count: Int) : GotItTooltip {
-    if (count > 0) showCount = count
+    if (count > 0) maxCount = count
+    return this
+  }
+
+  /**
+   * Set preferred tooltip position relatively to the owner component
+   */
+  fun withPosition(position: Balloon.Position) : GotItTooltip {
+    this.position = position
     return this
   }
 
@@ -156,93 +185,212 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     return this
   }
 
-  fun showDynamic(position: Balloon.Position, point: () -> RelativePoint) {
-    (point().component as JComponent).addAncestorListener(object : AncestorListenerAdapter() {
-      var balloon : Balloon? = null
+  /**
+   * Set notification method that's called when actual <code>Balloon</code> is created.
+   */
+  fun setOnBalloonCreated(callback: (Balloon) -> Unit) : GotItTooltip {
+    onBalloonCreated = callback
+    return this
+  }
 
-      override fun ancestorAdded(event: AncestorEvent?) {
-        event?.let {
-          balloon = it.component.getClientProperty(PROPERTY_PREFIX) as Balloon?
+  /**
+   * Returns <code>true</code> if this tooltip can be shown at the given properties settings.
+   */
+  fun canShow() : Boolean = canShow("$PROPERTY_PREFIX.$id")
 
-          if (balloon == null && canShow("$PROPERTY_PREFIX.$id") ) {
-            balloon = createAndShow(position, point())
-            it.component.putClientProperty(PROPERTY_PREFIX, balloon)
-          }
+  /**
+   * Show tooltip for the given component and point on the component.
+   * If the component is showing (see <code>Component.isShowing</code>) and has non empty bounds then
+   * the tooltip is show right away.
+   * If the component is showing by has empty bounds (technically not visible) then tooltip is shown asynchronously
+   * when component gets resized to non empty bounds.
+   * If the component is not showing then tooltip is shown asynchronously when component is added to the hierarchy and
+   * gets non empty bounds.
+   */
+  fun show(component: JComponent, pointProvider: (Component) -> Point) {
+    if (canShow()) {
+      if (component.isShowing) {
+        if (!component.bounds.isEmpty) {
+          showImpl(component, pointProvider)
+        }
+        else {
+          component.addComponentListener(object : ComponentAdapter() {
+            override fun componentResized(event: ComponentEvent) {
+              if (!event.component.bounds.isEmpty) {
+                showImpl(event.component as JComponent, pointProvider)
+              }
+            }
+          }.also{ Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
         }
       }
+      else {
+        component.addAncestorListener(object : AncestorListenerAdapter() {
+          override fun ancestorAdded(ancestorEvent: AncestorEvent) {
+            if (!ancestorEvent.component.bounds.isEmpty) {
+              showImpl(ancestorEvent.component, pointProvider)
+            }
+            else {
+              ancestorEvent.component.addComponentListener(object : ComponentAdapter() {
+                override fun componentResized(componentEvent: ComponentEvent) {
+                  if (!componentEvent.component.bounds.isEmpty) {
+                    showImpl(componentEvent.component as JComponent, pointProvider)
+                  }
+                }
+              }.also{ Disposer.register(this@GotItTooltip, Disposable { component.removeComponentListener(it) }) })
+            }
+          }
 
-      override fun ancestorRemoved(event: AncestorEvent?) {
-        balloon?.hide()
-        balloon = null
-        event?.component?.putClientProperty(PROPERTY_PREFIX, null)
+          override fun ancestorRemoved(ancestorEvent: AncestorEvent) {
+            balloon?.let {
+              it.hide(true)
+              GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+            }
+            balloon = null
+          }
+        }.also{ Disposer.register(this, Disposable { component.removeAncestorListener(it) }) })
       }
-    })
+    }
   }
 
-  fun showAt(position: Balloon.Position, point: RelativePoint) : Balloon? {
-    val balloon = (point.component as JComponent).getClientProperty(PROPERTY_PREFIX)
-    return if (balloon == null && canShow("$PROPERTY_PREFIX.$id"))
-      createAndShow(position, point).also { (point.component as JComponent).putClientProperty(PROPERTY_PREFIX, it) }
-    else null
+  /**
+   * Bind the tooltip to action's presentation. Then <code>ActionToolbar</code> starts following ActionButton with
+   * the tooltip if it can be shown. Term "follow" is used because ActionToolbar updates it's content and ActionButton's
+   * JComponent showing status / location may change in time.
+   */
+  fun assignTo(presentation: Presentation, pointProvider: (Component) -> Point) {
+    presentation.putClientProperty(PRESENTATION_KEY, ActionContext(this, pointProvider))
   }
 
-  private fun createAndShow(position: Balloon.Position, point: RelativePoint) : Balloon = createBalloon().also {
+  private fun showImpl(component: JComponent, pointProvider: (Component) -> Point) {
+    if (canShow()) {
+      val balloonProperty = UIUtil.getClientProperty(component, BALLOON_PROPERTY)
+      if (balloonProperty == null) {
+        val tracker = object : PositionTracker<Balloon> (component) {
+          override fun recalculateLocation(balloon: Balloon): RelativePoint = RelativePoint(component, pointProvider(component))
+        }
+        balloon = createAndShow(tracker).also { UIUtil.putClientProperty(component, BALLOON_PROPERTY, it) }
+      }
+      else if (balloonProperty is BalloonImpl && balloonProperty.isVisible) {
+        balloonProperty.revalidate()
+      }
+    }
+    else {
+      hideBalloon()
+      chainFunction()
+    }
+  }
+
+  /**
+   * Chain this tooltip showing after another determined with the tooltip parameter.
+   * It's possible to build a chain of got it tooltips shown on the screen.
+   */
+  fun showAfter(tooltip: GotItTooltip, component: JComponent, pointProvider: (Component) -> Point) {
+    tooltip.chainFunction = { show(component, pointProvider) }
+  }
+
+  private fun followToolbarComponent(component: JComponent, toolbar: JComponent, pointProvider: (Component) -> Point) {
+    if (canShow()) {
+      component.addComponentListener(object : ComponentAdapter() {
+        override fun componentMoved(event: ComponentEvent) {
+          hideOrRepaint(event.component)
+        }
+
+        override fun componentResized(event: ComponentEvent) {
+          if (balloon == null && !event.component.bounds.isEmpty && event.component.isShowing) {
+            val tracker = PositionTracker.Static<Balloon>(RelativePoint(event.component, pointProvider(event.component)))
+            balloon = createAndShow(tracker)
+          }
+          else {
+            hideOrRepaint(event.component)
+          }
+        }
+      }.also{ Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
+
+      toolbar.addAncestorListener(object : AncestorListenerAdapter() {
+        override fun ancestorRemoved(event: AncestorEvent) {
+          hideBalloon()
+        }
+      }.also{ Disposer.register(this, Disposable { component.removeAncestorListener(it) }) })
+    }
+  }
+
+  private fun createAndShow(tracker: PositionTracker<Balloon>) : Balloon = createBalloon().also {
       val dispatcherDisposable = Disposer.newDisposable()
-      Disposer.register(disposable, dispatcherDisposable)
+      Disposer.register(this, dispatcherDisposable)
 
       it.addListener(object : JBPopupListener {
         override fun onClosed(event: LightweightWindowEvent) {
-          onGotIt("$PROPERTY_PREFIX.$id")
-          HelpTooltip.setMasterPopupOpenCondition(point.component, null)
-          (point.component as JComponent).putClientProperty(PROPERTY_PREFIX, null)
+          HelpTooltip.setMasterPopupOpenCondition(tracker.component, null)
+          UIUtil.putClientProperty(tracker.component as JComponent, BALLOON_PROPERTY, null)
           Disposer.dispose(dispatcherDisposable)
+
+          if (event.isOk) {
+            onGotIt("$PROPERTY_PREFIX.$id")
+            chainFunction()
+          }
         }
       })
 
       IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { e ->
         if (e is KeyEvent && KeymapUtil.isEventForAction(e, CLOSE_ACTION_NAME)) {
-          it.hide()
+          it.hide(true)
+          GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.EscapeShortcutPressed)
           true
         }
         else false
       }, dispatcherDisposable)
 
-      HelpTooltip.setMasterPopupOpenCondition(point.component) {
+      HelpTooltip.setMasterPopupOpenCondition(tracker.component) {
         it.isDisposed
       }
 
-      it.show(point, position)
+      it.show(tracker, position)
+      onBalloonCreated(it)
+
+      GotItUsageCollector.instance.logOpen(id, savedCount("$PROPERTY_PREFIX.$id") + 1)
     }
 
   private fun createBalloon() : Balloon {
     var button : JButton? = null
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(createContent { button = it }).
-        setDisposable(disposable).
-        setHideOnClickOutside(true).
+        setDisposable(this).
         setHideOnAction(false).
+        setHideOnClickOutside(false).
         setHideOnFrameResize(false).
         setHideOnKeyOutside(false).
         setBlockClicksThroughBalloon(true).
         setBorderColor(BORDER_COLOR).
         setCornerToPointerDistance(ARROW_SHIFT).
         setFillColor(BACKGROUND_COLOR).
+        setPointerSize(JBUI.size(16, 8)).
         createBalloon().
-      apply { setAnimationEnabled(false) }
+      also {
+        it.setAnimationEnabled(false)
+      }
+
+    val collector = GotItUsageCollector.instance
 
     link?.apply{
       setListener(LinkListener { _, _ ->
         linkAction()
         balloon.hide(true)
+        collector.logClose(id, GotItUsageCollectorGroup.CloseType.LinkClick)
       }, null)
     }
 
     button?.apply {
-      addActionListener(ActionListener { balloon.hide() })
+      addActionListener(ActionListener {
+        balloon.hide(true)
+        collector.logClose(id, GotItUsageCollectorGroup.CloseType.ButtonClick)
+      })
     }
 
     if (timeout > 0) {
       alarm.cancelAllRequests()
-      alarm.addRequest({ balloon.hide() }, timeout)
+      alarm.addRequest({
+         balloon.hide(true)
+         collector.logClose(id, GotItUsageCollectorGroup.CloseType.Timeout)
+       }, timeout)
     }
 
     return balloon
@@ -304,8 +452,29 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     }
 
     panel.background = BACKGROUND_COLOR
+    panel.border = PANEL_MARGINS
 
     return panel
+  }
+
+  override fun dispose() {
+    hideBalloon()
+  }
+
+  private fun hideBalloon() {
+    balloon?.hide(false)
+    balloon = null
+  }
+
+  private fun hideOrRepaint(component: Component) {
+    balloon?.let {
+      if (component.bounds.isEmpty) {
+        hideBalloon()
+      }
+      else if (it is BalloonImpl && it.isVisible) {
+        it.revalidate()
+      }
+    }
   }
 
   companion object {
@@ -313,12 +482,41 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     val ARROW_SHIFT = JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + BalloonImpl.ARC.get()
     const val PROPERTY_PREFIX = "got.it.tooltip"
 
+    private val PRESENTATION_KEY = Key<ActionContext>("$PROPERTY_PREFIX.presentation")
+    private val BALLOON_PROPERTY = Key<Balloon>("$PROPERTY_PREFIX.balloon")
+
     private const val DEFAULT_TIMEOUT = 5000 // milliseconds
     private const val CLOSE_ACTION_NAME = "CloseGotItTooltip"
     private val MAX_WIDTH   = JBUIScale.scale(280)
     private val SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", JBColor(0x787878, 0x999999))
     private val BACKGROUND_COLOR = JBColor.namedColor("ToolTip.background", JBColor(0xf7f7f7, 0x474a4c))
-    private val BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", JBColor(0xadadad, 0x636569))
+    private val BORDER_COLOR = JBColor.namedColor("GotItTooltip.borderColor", JBColor(Color(0xcccccc), JBColor.namedColor("ToolTip.borderColor", 0x636569)))
+
+    private val PANEL_MARGINS = JBUI.Borders.empty(7, 4, 9, 9)
+
+
+    /**
+     * Use this method for following an ActionToolbar component.
+     */
+    @JvmStatic
+    fun followToolbarComponent(presentation: Presentation, component: JComponent, toolbar: JComponent) {
+      presentation.getClientProperty(PRESENTATION_KEY)?.let {
+        it.tooltip.followToolbarComponent(component, toolbar, it.pointProvider)
+      }
+    }
+
+    // Frequently used point providers
+    @JvmField
+    val TOP_MIDDLE : (Component) -> Point = { Point(it.width / 2, 0) }
+
+    @JvmField
+    val LEFT_MIDDLE : (Component) -> Point = { Point(0, it.height / 2) }
+
+    @JvmField
+    val RIGHT_MIDDLE : (Component) -> Point = { Point(it.width, it.height / 2) }
+
+    @JvmField
+    val BOTTOM_MIDDLE : (Component) -> Point = { Point(it.width / 2, it.height) }
   }
 }
 

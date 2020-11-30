@@ -36,8 +36,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -119,6 +121,24 @@ fun detectPipEnvExecutable(): File? {
 fun getPipEnvExecutable(): File? =
   PropertiesComponent.getInstance().pipEnvPath?.let { File(it) } ?: detectPipEnvExecutable()
 
+fun validatePipEnvExecutable(pipEnvExecutable: @SystemDependent String?): ValidationInfo? {
+  val message = if (pipEnvExecutable.isNullOrBlank()) {
+    PyBundle.message("python.sdk.pipenv.executable.not.found")
+  }
+  else {
+    val file = File(pipEnvExecutable)
+    when {
+      !file.exists() -> PyBundle.message("python.sdk.file.not.found", file.absolutePath)
+      !file.canExecute() || !file.isFile -> PyBundle.message("python.sdk.cannot.execute", file.absolutePath)
+      else -> null
+    }
+  }
+
+  return message?.let { ValidationInfo(it) }
+}
+
+fun suggestedSdkName(basePath: @NlsSafe String): @NlsSafe String = "Pipenv (${PathUtil.getFileName(basePath)})"
+
 /**
  * Sets up the pipenv environment under the modal progress window.
  *
@@ -144,8 +164,7 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
       return PythonSdkUtil.getPythonExecutable(pipEnv) ?: FileUtil.join(pipEnv, "bin", "python")
     }
   }
-  val suggestedName = "Pipenv (${PathUtil.getFileName(projectPath)})"
-  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedName)?.apply {
+  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath))?.apply {
     isPipEnv = true
     associateWithModule(module, newProjectPath)
   }
@@ -214,16 +233,6 @@ fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String
       else -> stdout
     }
   }
-}
-
-/**
- * Detects and sets up pipenv SDK for a module with Pipfile.
- */
-fun detectAndSetupPipEnv(project: Project?, module: Module?, existingSdks: List<Sdk>): Sdk? {
-  if (module?.pipFile == null || getPipEnvExecutable() == null) {
-    return null
-  }
-  return setupPipEnvSdkUnderProgress(project, module, existingSdks, null, null, false)
 }
 
 /**
@@ -466,4 +475,3 @@ private data class PipFileLockPackage(@SerializedName("version") var version: St
                                       @SerializedName("editable") var editable: Boolean?,
                                       @SerializedName("hashes") var hashes: List<String>?,
                                       @SerializedName("markers") var markers: String?)
-

@@ -2,6 +2,7 @@
 package git4idea;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,8 +14,6 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,6 +61,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
@@ -446,8 +448,7 @@ public final class GitUtil {
   @NlsSafe
   public static String adjustAuthorName(@NlsSafe String authorName, @NlsSafe String committerName) {
     if (!authorName.equals(committerName)) {
-      //noinspection HardCodedStringLiteral
-      committerName = authorName + ", via " + committerName;
+      committerName = GitBundle.message("commit.author.with.committer", authorName, committerName);
     }
     return committerName;
   }
@@ -1015,18 +1016,37 @@ public final class GitUtil {
   }
 
   public static boolean isGitRoot(@NotNull @NonNls String rootDir) {
-    String dotGit = rootDir + File.separatorChar + DOT_GIT;
-    FileAttributes attributes = FileSystemUtil.getAttributes(dotGit);
-    if (attributes == null) return false;
+    Path dotGit = Paths.get(rootDir, DOT_GIT);
+    BasicFileAttributes attributes;
+    try {
+      attributes = Files.readAttributes(dotGit, BasicFileAttributes.class);
+    }
+    catch (IOException ignore) {
+      return false;
+    }
 
     if (attributes.isDirectory()) {
-      FileAttributes headExists = FileSystemUtil.getAttributes(dotGit + File.separatorChar + HEAD_FILE);
-      return headExists != null && headExists.isFile();
+      try {
+        BasicFileAttributes headExists = Files.readAttributes(dotGit.resolve(HEAD_FILE), BasicFileAttributes.class);
+        return headExists.isRegularFile();
+      }
+      catch (IOException ignore) {
+        return false;
+      }
     }
-    if (!attributes.isFile()) return false;
+    if (!attributes.isRegularFile()) {
+      return false;
+    }
 
-    String content = DvcsUtil.tryLoadFileOrReturn(new File(dotGit), null, CharsetToolkit.UTF8);
-    if (content == null) return false;
+    String content;
+    try {
+      content = DvcsUtil.tryOrThrow(() -> StringUtil.convertLineSeparators(Files.readString(dotGit)).trim(), dotGit);
+    }
+    catch (RepoStateException e) {
+      LOG.error(e);
+      return false;
+    }
+
     String pathToDir = parsePathToRepository(content);
     return findRealRepositoryDir(rootDir, pathToDir) != null;
   }

@@ -88,7 +88,6 @@ public final class KShortestPathsFinder<Node> {
           root = heapNode;
         }
       }
-      LOG.assertTrue(root != null);
       heapNodes.remove(root);
       myOutRoots.put(node, root);
       if (!heapNodes.isEmpty()) {

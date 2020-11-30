@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.sh">
   <id>com.jetbrains.sh</id>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.lang</depends>
@@ -69,6 +69,7 @@ Adds support for working with shell script files
     <lineIndentProvider implementation="com.intellij.sh.formatter.ShLineIndentProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
 
+    <fileDocumentManagerListener implementation="com.intellij.sh.formatter.ShLineEndingsAdapter"/>
     <externalFormatProcessor implementation="com.intellij.sh.formatter.ShExternalFormatter"/>
     <lang.formatter language="Shell Script" implementationClass="com.intellij.sh.formatter.ShFormatterModelBuilder"/>
     <postFormatProcessor implementation="com.intellij.sh.formatter.ShPostFormatProcessor"/>

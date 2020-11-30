@@ -18,6 +18,7 @@ class NonSingularHandler implements BuilderElementHandler {
   NonSingularHandler() {
   }
 
+  @Override
   public Collection<PsiField> renderBuilderFields(@NotNull BuilderInfo info) {
     Collection<PsiField> result = new ArrayList<>();
     result.add(new LombokLightFieldBuilder(info.getManager(), info.renderFieldName(), info.getFieldType())
@@ -25,7 +26,7 @@ class NonSingularHandler implements BuilderElementHandler {
       .withModifier(PsiModifier.PRIVATE)
       .withNavigationElement(info.getVariable()));
     if (info.hasBuilderDefaultAnnotation()) {
-      result.add(new LombokLightFieldBuilder(info.getManager(), info.renderFieldDefaultSetName(), PsiPrimitiveType.BOOLEAN)
+      result.add(new LombokLightFieldBuilder(info.getManager(), info.renderFieldDefaultSetName(), PsiType.BOOLEAN)
         .withContainingClass(info.getBuilderClass())
         .withModifier(PsiModifier.PRIVATE)
         .withNavigationElement(info.getVariable()));
@@ -48,6 +49,7 @@ class NonSingularHandler implements BuilderElementHandler {
     return Collections.singleton(methodBuilder);
   }
 
+  @Override
   public List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation) {
     return Collections.singletonList(newName);
   }
@@ -67,6 +69,7 @@ class NonSingularHandler implements BuilderElementHandler {
       info.renderFieldDefaultSetName(), info.getBuilderChainResult());
   }
 
+  @Override
   public String renderBuildPrepare(@NotNull BuilderInfo info) {
     if (info.hasBuilderDefaultAnnotation()) {
       return MessageFormat.format(

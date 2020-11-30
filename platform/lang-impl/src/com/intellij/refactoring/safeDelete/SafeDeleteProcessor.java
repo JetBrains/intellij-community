@@ -240,12 +240,11 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private void showUsages(final UsageInfo[] conflictUsages, final UsageInfo[] usages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setTabText("Safe Delete Conflicts");
+    presentation.setTabText(LangBundle.message("tab.title.safe.delete.conflicts"));
     presentation.setTargetsNodeText(RefactoringBundle.message("attempting.to.delete.targets.node.text"));
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);
     presentation.setCodeUsagesString(RefactoringBundle.message("safe.delete.conflict.title"));
-    presentation.setUsagesInGeneratedCodeString(RefactoringBundle.message("references.found.in.generated.code"));
     presentation.setNonCodeUsagesString(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
     presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
 
@@ -362,17 +361,15 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return list.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @NotNull RefactoringEventData getBeforeData() {
     final RefactoringEventData beforeData = new RefactoringEventData();
     beforeData.addElements(myElements);
     return beforeData;
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @NotNull String getRefactoringId() {
     return "refactoring.safeDelete";
   }
 

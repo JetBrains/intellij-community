@@ -67,7 +67,7 @@ public final class PreferencesReadUtil {
     String key = plist.getPlistValue(Constants.TAB_TRIGGER_KEY, "").getString();
     String content = plist.getPlistValue(Constants.StringKey.CONTENT.value, "").getString();
     String scope = plist.getPlistValue(Constants.SCOPE_KEY, "").getString();
-    String description = plist.getPlistValue(Constants.DESCRIPTION_KEY, "").getString();
+    String description = plist.getPlistValue(Constants.DESCRIPTION_KEY, "").getString(); //NON-NLS
     String uuid = plist.getPlistValue(Constants.UUID_KEY, "").getString();
     if (!key.isEmpty() && !content.isEmpty()) {
       if (name.isEmpty()) name = key;

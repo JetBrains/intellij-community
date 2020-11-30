@@ -71,7 +71,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
-    Language language = LanguageUtil.getLanguageForPsi(project, file);
+    Language language = LanguageUtil.getLanguageForPsi(project, file, fileType);
 
     return language != null ? language : PlainTextLanguage.INSTANCE;
   }

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -40,28 +41,37 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   static class VfsDataFlags {
     static final int IS_WRITABLE_FLAG = 0x0100_0000;
     static final int IS_HIDDEN_FLAG = 0x0200_0000;
-    static final int CHILDREN_CACHED = 0x0800_0000; // makes sense for directory only
+    /**
+     * @see com.intellij.util.indexing.UnindexedFilesFinder
+     * @see com.intellij.util.indexing.FileBasedIndexImpl
+     */
+    private static final int INDEXED_FLAG = 0x0400_0000;
     /**
      * true if the line separator for this file was detected to be equal to {@link com.intellij.util.LineSeparator#getSystemLineSeparator()}
      */
-    static final int SYSTEM_LINE_SEPARATOR_DETECTED = CHILDREN_CACHED; // makes sense for non-directory file only
-    static final int IS_SYMLINK_FLAG = 0x2000_0000;
-    static final int IS_SPECIAL_FLAG = 0x8000_0000; // makes sense for non-directory file only
-    /**
-     * true if this directory contains case-sensitive files. I.e. files "readme.txt" and "README.TXT" it can contain would be treated as different files.
-     */
-    static final int CHILDREN_CASE_SENSITIVE = IS_SPECIAL_FLAG; // makes sense for directory only
-    private static final int INDEXED_FLAG = 0x0400_0000; // makes sense for non-directory only
+    static final int SYSTEM_LINE_SEPARATOR_DETECTED = 0x0800_0000; // makes sense for non-directory file only
     /**
      * the case-sensitivity of this directory children is known, so the flag CHILDREN_CASE_SENSITIVE is actual
      */
-    static final int CHILDREN_CASE_SENSITIVITY_CACHED = INDEXED_FLAG; // makes sense for directory only
+    static final int CHILDREN_CASE_SENSITIVITY_CACHED = SYSTEM_LINE_SEPARATOR_DETECTED; // makes sense for directory only
     private static final int DIRTY_FLAG = 0x1000_0000;
-    private static final int PARENT_HAS_SYMLINK_FLAG = 0x4000_0000;
+    /**
+     * this file is a symlink
+     */
+    static final int IS_SYMLINK_FLAG = 0x2000_0000;
+    /**
+     * this file is not a symlink but there's a symlink somewhere up among parents
+     */
+    static final int STRICT_PARENT_HAS_SYMLINK_FLAG = 0x4000_0000;
+    /**
+     * this directory contains case-sensitive files. I.e. files "readme.txt" and "README.TXT" it can contain would be treated as different files.
+     */
+    static final int CHILDREN_CASE_SENSITIVE = 0x8000_0000; // makes sense for directory only
+    static final int IS_SPECIAL_FLAG = CHILDREN_CASE_SENSITIVE; // makes sense for non-directory file only
   }
   static final int ALL_FLAGS_MASK =
     VfsDataFlags.DIRTY_FLAG | VfsDataFlags.IS_SYMLINK_FLAG |
-    VfsDataFlags.PARENT_HAS_SYMLINK_FLAG | VfsDataFlags.IS_SPECIAL_FLAG | VfsDataFlags.IS_WRITABLE_FLAG | VfsDataFlags.IS_HIDDEN_FLAG | VfsDataFlags.INDEXED_FLAG | VfsDataFlags.CHILDREN_CACHED |
+    VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG | VfsDataFlags.IS_WRITABLE_FLAG | VfsDataFlags.IS_HIDDEN_FLAG | VfsDataFlags.INDEXED_FLAG |
     VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED;
 
   @MagicConstant(flagsFromClass = VfsDataFlags.class)
@@ -108,7 +118,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return segment;
   }
 
-  private VfsData.Segment updateSegmentAndParent(VfsData.Segment segment) {
+  private @NotNull VfsData.Segment updateSegmentAndParent(@NotNull VfsData.Segment segment) {
     while (segment.replacement != null) {
       segment = segment.replacement;
     }
@@ -121,13 +131,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   void registerLink(@NotNull VirtualFileSystem fs) {
-    if (fs instanceof LocalFileSystemImpl && is(VFileProperty.SYMLINK) && isValid()) {
+    if (fs instanceof LocalFileSystemImpl && isSymlink() && isValid()) {
       ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getNameSequence(), getPath(), getCanonicalPath());
     }
   }
 
   void updateLinkStatus(boolean isSymlink, @NotNull VirtualFileSystemEntry parent) {
-    setFlagInt(VfsDataFlags.PARENT_HAS_SYMLINK_FLAG, isSymlink || parent.parentHasSymlink());
+    setFlagInt(VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG, parent.thisOrParentHaveSymlink());
     registerLink(getFileSystem());
   }
 
@@ -156,13 +166,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return myParent;
   }
 
-  /**
-   * @return true if it's a symlink or there is a symlink parent
-   */
-  public boolean parentHasSymlink() {
-    return getFlagInt(VfsDataFlags.PARENT_HAS_SYMLINK_FLAG);
-  }
-
   @Override
   public boolean isDirty() {
     return getFlagInt(VfsDataFlags.DIRTY_FLAG);
@@ -186,13 +189,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public boolean isFileIndexed() {
-    return !isDirectory() && getFlagInt(VfsDataFlags.INDEXED_FLAG);
+    return getFlagInt(VfsDataFlags.INDEXED_FLAG);
   }
 
   public void setFileIndexed(boolean indexed) {
-    if (!isDirectory()) {
-      setFlagInt(VfsDataFlags.INDEXED_FLAG, indexed);
-    }
+    setFlagInt(VfsDataFlags.INDEXED_FLAG, indexed);
   }
 
   @Override
@@ -397,7 +398,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
     getSegment().changeParent(myId, directory);
     directory.addChild(this);
-    updateLinkStatus(is(VFileProperty.SYMLINK), directory);
+    updateLinkStatus(isSymlink(), directory);
     ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
@@ -447,8 +448,18 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
         return super.getCharset();
       }
       try {
-        final byte[] content = VfsUtilCore.loadBytes(this);
-        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, fileType);
+        FileType.CharsetHint charsetHint = fileType.getCharsetHint();
+        if (charsetHint instanceof ForcedCharset) {
+          charset = ((ForcedCharset)charsetHint).getCharset();
+        }
+        else {
+          byte[] content = VfsUtilCore.loadBytes(this);
+          if (isCharsetSet()) {
+            // loadBytes() may have cached the charset (see VirtualFileImpl.contentsToByteArray(boolean))
+            return super.getCharset();
+          }
+          charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, fileType);
+        }
       }
       catch (IOException e) {
         return super.getCharset();
@@ -468,10 +479,32 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean is(@NotNull VFileProperty property) {
-    if (property == VFileProperty.SPECIAL) return !isDirectory() && getFlagInt(VfsDataFlags.IS_SPECIAL_FLAG);
+    if (property == VFileProperty.SPECIAL) return !isDirectory() && isSpecial();
     if (property == VFileProperty.HIDDEN) return getFlagInt(VfsDataFlags.IS_HIDDEN_FLAG);
-    if (property == VFileProperty.SYMLINK) return getFlagInt(VfsDataFlags.IS_SYMLINK_FLAG);
+    if (property == VFileProperty.SYMLINK) return isSymlink();
     throw new IllegalArgumentException("unknown property: "+property);
+  }
+
+  /**
+   * @return true if this file is symlink
+   */
+  private boolean isSymlink() {
+    return getFlagInt(VfsDataFlags.IS_SYMLINK_FLAG);
+  }
+
+  /**
+   * @return true if this file is "special"
+   */
+  private boolean isSpecial() {
+    return !isDirectory() && getFlagInt(VfsDataFlags.IS_SPECIAL_FLAG);
+  }
+
+  /**
+   * @return true if this file is a symlink or there is a symlink parent
+   */
+  @ApiStatus.Internal
+  public boolean thisOrParentHaveSymlink() {
+    return isSymlink() || getFlagInt(VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG);
   }
 
   @ApiStatus.Internal
@@ -485,8 +518,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public String getCanonicalPath() {
-    if (parentHasSymlink()) {
-      if (is(VFileProperty.SYMLINK)) {
+    if (thisOrParentHaveSymlink()) {
+      if (isSymlink()) {
         return ourPersistence.resolveSymLink(this);
       }
       VirtualFileSystemEntry parent = getParent();
@@ -500,7 +533,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public NewVirtualFile getCanonicalFile() {
-    if (parentHasSymlink()) {
+    if (thisOrParentHaveSymlink()) {
       final String path = getCanonicalPath();
       return path != null ? (NewVirtualFile)getFileSystem().findFileByPath(path) : null;
     }
@@ -509,7 +542,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean isRecursiveOrCircularSymlink() {
-    if (!is(VFileProperty.SYMLINK)) return false;
+    if (!isSymlink()) return false;
     NewVirtualFile resolved = getCanonicalFile();
     // invalid symlink
     if (resolved == null) return false;
@@ -519,8 +552,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     // check if it's circular - any symlink above resolves to my target too
     for (VirtualFileSystemEntry p = getParent(); p != null ; p = p.getParent()) {
       // optimization: when the file has no symlinks up the hierarchy, it's not circular
-      if (!p.parentHasSymlink()) return false;
-      if (p.is(VFileProperty.SYMLINK)) {
+      if (!p.thisOrParentHaveSymlink()) return false;
+      if (p.isSymlink()) {
         VirtualFile parentResolved = p.getCanonicalFile();
         if (resolved.equals(parentResolved)) {
           return true;

@@ -265,9 +265,17 @@
 
     <!-- See com.intellij.codeInspection.javaDoc.JavaDocLocalInspection -->
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+
+    <notificationGroup id="jps configuration error"
+                       toolWindowId="Build"
+                       displayType="TOOL_WINDOW"
+                       bundle="messages.JavaCompilerBundle"
+                       key="notification.group.title.jps.cannot.start.compiler" />
+
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
     <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider" />
@@ -278,7 +286,6 @@
     <backgroundPostStartupActivity implementation="com.intellij.packaging.impl.artifacts.ArtifactTypeFeatureCollector"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerConfiguration" serviceImplementation="com.intellij.compiler.CompilerConfigurationImpl" preload="await"/>
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
-    <projectService serviceImplementation="com.intellij.compiler.ExternalCompilerConfigurationStorage"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerReferenceService" serviceImplementation="com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl"/>
     <postStartupActivity implementation="com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl$InitializationActivity"/>
 
@@ -344,7 +351,6 @@
     <projectService serviceInterface="com.intellij.refactoring.listeners.JavaRefactoringListenerManager"
                     serviceImplementation="com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl"/>
     <projectService serviceImplementation="com.intellij.refactoring.RefactoringManager"/>
-    <projectService serviceImplementation="com.intellij.psi.impl.migration.PsiMigrationManager"/>
     <projectService serviceInterface="com.intellij.ide.util.TreeClassChooserFactory"
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.JavaPsiImplementationHelper"
@@ -363,7 +369,6 @@
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
-    <projectService serviceImplementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
 
@@ -421,6 +426,7 @@
 
     <statistics.counterUsagesCollector groupId="java.find.usages" version="1"/>
     <statistics.counterUsagesCollector groupId="java.extract.method" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
 
@@ -434,7 +440,6 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
-    <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
 
     <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
                     serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>
@@ -446,6 +451,7 @@
     <projectService serviceImplementation="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"/>
 
     <projectService serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration"/>
+    <projectService serviceImplementation="com.intellij.compiler.CompilerConfigurationSettings" configurationSchemaKey="compiler"/>
     <projectService
       serviceInterface="com.intellij.build.BuildWorkspaceConfiguration"
       serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration$JavaBuildWorkspaceConfiguration"
@@ -749,15 +755,11 @@
     <java.elementFinder implementation="com.intellij.debugger.impl.AlternativeJreClassFinder" order="last"/>
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
     <jdkUpdateCheckContributor implementation="com.intellij.execution.AlternativeSdkRootsProviderForJdkUpdate"/>
-    <unknownSdkContributor implementation="com.intellij.execution.RunConfigurationsUnknownJdkContributor"/>
-    <postStartupActivity implementation="com.intellij.execution.RunConfigurationsUnknownJdkContributorRefresher" />
-    <registryKey key="jdk.auto.runConfigurations" defaultValue="false" restartRequired="true"
-                 description="Check missing JDK references in shared run configurations"/>
     <registryKey key="java.refactoring.extractMethod.newImplementation"
                  defaultValue="true"
                  description="Enable experimental extract method implementation"/>
     <registryKey key="java.refactoring.extractMethod.inplace"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enable experimental extract method inplace mode"/>
     <debugger.asyncStackTraceProvider
         implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
@@ -1467,6 +1469,10 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
                      bundle="messages.JavaBundle" key="inspection.redundant.record.constructor.description"
                      implementationClass="com.intellij.codeInspection.RedundantRecordConstructorInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MeaninglessRecordAnnotationInspection" enabledByDefault="true" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     bundle="messages.JavaBundle" key="inspection.meaningless.record.annotation.description"
+                     implementationClass="com.intellij.codeInspection.MeaninglessRecordAnnotationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RecordCanBeClass" enabledByDefault="true" level="INFORMATION"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      bundle="messages.JavaBundle" key="inspection.message.record.can.be.converted.to.class"
@@ -2097,6 +2103,7 @@
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
     <readerModeProvider implementation="com.intellij.ide.impl.JavaInlaysReaderModeProvider"/>
+    <referenceInjector implementation="com.intellij.java.JavaMethodNameReferenceInjector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

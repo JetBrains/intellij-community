@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.ui.DefaultExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.NaturalComparator
 import javax.swing.Icon
 
@@ -30,6 +31,7 @@ class ProjectRefreshAction : DumbAwareAction() {
     e.presentation.isEnabled = notificationAware.isNotificationVisible()
   }
 
+  @NlsActions.ActionText
   private fun getNotificationText(systemIds: Set<ProjectSystemId>): String {
     val systemsPresentation = systemIds.joinToString { it.readableName }
     return ExternalSystemBundle.message("external.system.reload.notification.action.reload.text", systemsPresentation)
@@ -42,6 +44,7 @@ class ProjectRefreshAction : DumbAwareAction() {
     return ExternalSystemBundle.message("external.system.reload.notification.action.reload.and.conjunction", leading, last())
   }
 
+  @NlsActions.ActionDescription
   private fun getNotificationDescription(systemIds: Set<ProjectSystemId>): String {
     val systemsPresentation = systemIds.map { it.readableName }
       .sortedWith(NaturalComparator.INSTANCE)

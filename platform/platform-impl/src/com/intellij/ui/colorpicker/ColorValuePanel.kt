@@ -63,7 +63,7 @@ enum class ColorFormat {
   }
 }
 
-class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha: Boolean = false)
+class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha: Boolean = false, val showAlphaInPercent: Boolean = true)
   : JPanel(GridBagLayout()), DocumentListener, ColorListener {
 
   /**
@@ -107,7 +107,7 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
   private val blueDocument = DigitColorDocument(colorField3, COLOR_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   private val brightnessDocument = DigitColorDocument(colorField3, PERCENT_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
 
-  var currentAlphaFormat by Delegates.observable(loadAlphaFormatProperty()) { _, _, newValue ->
+  var currentAlphaFormat by Delegates.observable(if (showAlphaInPercent) AlphaFormat.PERCENTAGE else loadAlphaFormatProperty()) { _, _, newValue ->
     updateAlphaFormat()
     saveAlphaFormatProperty(newValue)
     repaint()
@@ -195,9 +195,9 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
   private fun updateColorFormat() {
     when (currentColorFormat) {
       ColorFormat.RGB -> {
-        colorLabel1.text = "R"
-        colorLabel2.text = "G"
-        colorLabel3.text = "B"
+        colorLabel1.text = IdeBundle.message("colorpanel.label.red")
+        colorLabel2.text = IdeBundle.message("colorpanel.label.green")
+        colorLabel3.text = IdeBundle.message("colorpanel.label.blue")
 
         colorField1.document = redDocument
         colorField2.document = greenDocument
@@ -208,9 +208,9 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
         colorField3.text = model.blue.toString()
       }
       ColorFormat.HSB -> {
-        colorLabel1.text = "H°"
-        colorLabel2.text = "S%"
-        colorLabel3.text = "B%"
+        colorLabel1.text = IdeBundle.message("colorpanel.label.hue")
+        colorLabel2.text = IdeBundle.message("colorpanel.label.saturation")
+        colorLabel3.text = IdeBundle.message("colorpanel.label.brightness")
 
         colorField1.document = hueDocument
         colorField2.document = saturationDocument

@@ -31,6 +31,7 @@ public final class ErrorInfo {
   public static final ErrorInfo[] EMPTY_ARRAY = new ErrorInfo[0];
 
   private final RadComponent myComponent;
+  @NotNull
   public final @Nls String myDescription;
   private final String myPropertyName;
   public final QuickFix[] myFixes;

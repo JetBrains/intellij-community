@@ -283,7 +283,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
       final PyCallExpression callExpression = (PyCallExpression)rhs;
       final PyExpression callee = callExpression.getCallee();
       final PyClassType classType = PyUtil.as(rhsType, PyClassType.class);
-      if (classType != null && callee != null && isDictCall(callee, classType)) {
+      if (classType != null && callee != null && isDictCall(callee, classType, context)) {
         target.append(sure(sure(callExpression.getArgumentList()).getNode()).getChars());
       }
       else { // just a call, reuse
@@ -303,12 +303,15 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
   }
 
   private static boolean isDictCall(@NotNull PyExpression callee,
-                                    @NotNull PyClassType classType) {
+                                    @NotNull PyClassType classType,
+                                    @NotNull TypeEvalContext context) {
     final PyClassType dictType = PyBuiltinCache.getInstance(callee.getContainingFile()).getDictType();
+    final var calleeType = PyUtil.as(context.getType(callee), PyClassType.class);
     return dictType != null &&
+           calleeType != null &&
            classType.getPyClass() == dictType.getPyClass() &&
-           callee instanceof PyReferenceExpression &&
-           PyUtil.isInitMethod(((PyReferenceExpression)callee).getReference().resolve());
+           calleeType.getPyClass() == dictType.getPyClass() &&
+           calleeType.isDefinition();
   }
 
   private static String getSeparator(PyStringLiteralExpression leftExpression) {

@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,6 +65,45 @@ public class PluginInstallOperation {
     myCustomReposPlugins = customReposPlugins;
     myPluginEnabler = pluginEnabler;
     myIndicator = indicator;
+
+    synchronized (ourInstallLock) {
+      for (PluginNode node : pluginsToInstall) {
+        PluginId id = node.getPluginId();
+        ActionCallback callback = ourInstallCallbacks.get(id);
+        if (callback == null) {
+          createInstallCallback(id);
+        }
+        else {
+          myLocalWaitInstallCallbacks.put(id, callback);
+        }
+      }
+    }
+  }
+
+  private static final Map<PluginId, ActionCallback> ourInstallCallbacks = new IdentityHashMap<>();
+  private final Map<PluginId, ActionCallback> myLocalInstallCallbacks = new IdentityHashMap<>();
+  private final Map<PluginId, ActionCallback> myLocalWaitInstallCallbacks = new IdentityHashMap<>();
+  private static final Object ourInstallLock = new Object();
+
+  private static void removeInstallCallback(@NotNull PluginId id, @NotNull ActionCallback callback, boolean isDone) {
+    synchronized (ourInstallLock) {
+      ActionCallback oldValue = ourInstallCallbacks.get(id);
+      if (oldValue == callback) {
+        ourInstallCallbacks.remove(id);
+      }
+    }
+    if (isDone) {
+      callback.setDone();
+    }
+    else {
+      callback.setRejected();
+    }
+  }
+
+  private void createInstallCallback(@NotNull PluginId id) {
+    ActionCallback callback = new ActionCallback();
+    ourInstallCallbacks.put(id, callback);
+    myLocalInstallCallbacks.put(id, callback);
   }
 
   public void setAllowInstallWithoutRestart(boolean allowInstallWithoutRestart) {
@@ -144,7 +184,7 @@ public class PluginInstallOperation {
     for (PluginNode pluginNode : pluginsToInstall) {
       myIndicator.setText(pluginNode.getName());
       try {
-        result |= prepareToInstall(pluginNode, pluginIds);
+        result |= prepareToInstallWithCallback(pluginNode, pluginIds);
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
@@ -158,6 +198,29 @@ public class PluginInstallOperation {
     return result;
   }
 
+  private boolean prepareToInstallWithCallback(PluginNode pluginNode, List<PluginId> pluginIds) throws IOException {
+    PluginId id = pluginNode.getPluginId();
+    ActionCallback localCallback = myLocalInstallCallbacks.remove(id);
+
+    if (localCallback == null) {
+      ActionCallback callback = myLocalWaitInstallCallbacks.remove(id);
+      if (callback == null) {
+        return prepareToInstall(pluginNode, pluginIds);
+      }
+      return callback.waitFor(-1) && callback.isDone();
+    }
+    else {
+      try {
+        boolean result = prepareToInstall(pluginNode, pluginIds);
+        removeInstallCallback(id, localCallback, result);
+        return result;
+      }
+      catch (IOException | RuntimeException e) {
+        removeInstallCallback(id, localCallback, false);
+        throw e;
+      }
+    }
+  }
 
   private boolean prepareToInstall(PluginNode pluginNode, List<PluginId> pluginIds) throws IOException {
     Ref<IdeaPluginDescriptor> toDisable = checkDependenciesAndReplacements(pluginNode, pluginIds);
@@ -270,45 +333,75 @@ public class PluginInstallOperation {
         }
       }
 
-      if (!depends.isEmpty()) { // has something to install prior installing the plugin
-        final boolean[] proceed = new boolean[1];
-        try {
-          ApplicationManager.getApplication().invokeAndWait(() -> {
-            String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
-            String deps = getPluginsText(depends);
-            String message = IdeBundle.message("plugin.manager.dependencies.detected.message", pluginNode.getName(), deps);
-            proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(),
-                                                  Messages.getWarningIcon()) == Messages.YES;
-          }, ModalityState.any());
-        }
-        catch (Exception e) {
-          return false;
-        }
-        if (!proceed[0] || !prepareToInstall(depends)) {
-          return false;
-        }
+      if (!prepareDependencies(pluginNode, depends, "plugin.manager.dependencies.detected.title",
+                               "plugin.manager.dependencies.detected.message")) {
+        return false;
       }
 
-      if (!optionalDeps.isEmpty() && Registry.is("ide.plugins.suggest.install.optional.dependencies")) {
-        final boolean[] proceed = new boolean[1];
-        try {
-          ApplicationManager.getApplication().invokeAndWait(() -> {
-            String title = IdeBundle.message("plugin.manager.optional.dependencies.detected.title");
-            String deps = getPluginsText(optionalDeps);
-            String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", pluginNode.getName(), deps);
-            proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(),
-                                                  Messages.getWarningIcon()) == Messages.YES;
-          }, ModalityState.any());
-        }
-        catch (Exception e) {
-          return false;
-        }
-        if (proceed[0] && !prepareToInstall(optionalDeps)) {
+      if (Registry.is("ide.plugins.suggest.install.optional.dependencies")) {
+        if (!prepareDependencies(pluginNode, optionalDeps, "plugin.manager.optional.dependencies.detected.title",
+                                 "plugin.manager.optional.dependencies.detected.message")) {
           return false;
         }
       }
     }
     return true;
+  }
+
+  private boolean prepareDependencies(@NotNull IdeaPluginDescriptor pluginNode,
+                                      @NotNull List<PluginNode> depends,
+                                      @NotNull String titleKey,
+                                      @NotNull String messageKey) {
+    if (depends.isEmpty()) {
+      return true;
+    }
+    final boolean[] proceed = new boolean[1];
+    try {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        synchronized (ourInstallLock) {
+          List<PluginNode> dependsToShow = new ArrayList<>();
+          for (Iterator<PluginNode> I = depends.iterator(); I.hasNext(); ) {
+            PluginNode node = I.next();
+            PluginId id = node.getPluginId();
+            ActionCallback callback = ourInstallCallbacks.get(id);
+            if (callback == null || callback.isRejected()) {
+              if (InstalledPluginsState.getInstance().wasInstalled(id) ||
+                  InstalledPluginsState.getInstance().wasInstalledWithoutRestart(id)) {
+                I.remove();
+                continue;
+              }
+              dependsToShow.add(node);
+            }
+            else {
+              myLocalWaitInstallCallbacks.put(id, callback);
+            }
+          }
+          if (dependsToShow.isEmpty()) {
+            proceed[0] = true;
+            return;
+          }
+
+          String title = IdeBundle.message(titleKey);
+          String deps = getPluginsText(depends);
+          String message = IdeBundle.message(messageKey, pluginNode.getName(), deps);
+          proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(),
+                                                Messages.getWarningIcon()) == Messages.YES;
+
+          if (proceed[0]) {
+            for (PluginNode depend : dependsToShow) {
+              createInstallCallback(depend.getPluginId());
+            }
+          }
+        }
+      }, ModalityState.any());
+    }
+    catch (Exception e) {
+      return false;
+    }
+    if (depends.isEmpty()) {
+      return true;
+    }
+    return proceed[0] && prepareToInstall(depends);
   }
 
   @NotNull

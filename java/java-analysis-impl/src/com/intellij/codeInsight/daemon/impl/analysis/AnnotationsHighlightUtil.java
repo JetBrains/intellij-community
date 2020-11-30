@@ -566,6 +566,16 @@ public final class AnnotationsHighlightUtil {
     return null;
   }
 
+  static HighlightInfo checkInvalidAnnotationOnRecordComponent(@NotNull PsiAnnotation annotation) {
+    if (!Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_SAFE_VARARGS)) return null;
+    PsiAnnotationOwner owner = annotation.getOwner();
+    if (!(owner instanceof PsiModifierList)) return null;
+    PsiElement parent = ((PsiModifierList)owner).getParent();
+    if (!(parent instanceof PsiRecordComponent)) return null;
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation)
+      .descriptionAndTooltip(JavaErrorBundle.message("safevararg.annotation.cannot.be.applied.for.record.component")).create();
+  }
+
   static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
       final PsiAnnotationOwner owner = annotation.getOwner();

@@ -19,12 +19,14 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.text.VersionComparatorUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -406,15 +408,30 @@ public final class MavenModuleImporter {
       }
     }
 
-    // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
+    // default source and target settings of maven-compiler-plugin is 1.5 for versions less than 3.8.1 and 1.6 for 3.8.1 and above
+    // see details at http://maven.apache.org/plugins/maven-compiler-plugin and https://issues.apache.org/jira/browse/MCOMPILER-335
     if (level == null) {
-      level = LanguageLevel.JDK_1_5;
+      level = getDefaultLevel(mavenProject);
     }
 
     if (level.isAtLeast(LanguageLevel.JDK_11)) {
       level = adjustPreviewLanguageLevel(mavenProject, level);
     }
     return level;
+  }
+
+  @NotNull
+  public static LanguageLevel getDefaultLevel(MavenProject mavenProject) {
+    MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
+    if (plugin != null && plugin.getVersion() != null) {
+      if (VersionComparatorUtil.compare("3.8.1", plugin.getVersion()) <= 0) {
+        return LanguageLevel.JDK_1_6;
+      }
+      else {
+        return LanguageLevel.JDK_1_5;
+      }
+    }
+    return LanguageLevel.JDK_1_5;
   }
 
   private static LanguageLevel adjustPreviewLanguageLevel(MavenProject mavenProject, LanguageLevel level) {

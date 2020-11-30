@@ -2,7 +2,6 @@
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -88,7 +87,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   }
 
   @Override
-  protected void applyEditorTo(@NotNull T s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull T s) {
     mySetter.accept(s, mySelectedVariant);
   }
 
@@ -128,6 +127,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().putClientProperty(Presentation.PROP_VALUE, getVariantName(mySelectedVariant));
+        e.getPresentation().setVisible(isRemovable());
       }
     };
     group.setPopup(true);

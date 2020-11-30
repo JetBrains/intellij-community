@@ -294,7 +294,10 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                              else ModuleDependencyItem.InheritedSdkDependency)
           }
           else if (path.startsWith(EclipseXml.USER_LIBRARY)) {
-            val libraryId = LibraryId(AbstractEclipseClasspathReader.getPresentableName(path), LibraryTableId.ProjectLibraryTableId)
+            val libraryName = AbstractEclipseClasspathReader.getPresentableName(path)
+            val globalLevel = findGlobalLibraryLevel(libraryName)
+            val tableId = if (globalLevel != null) LibraryTableId.GlobalLibraryTableId(globalLevel) else LibraryTableId.ProjectLibraryTableId
+            val libraryId = LibraryId(libraryName, tableId)
             dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryId, exported,
                                                                                ModuleDependencyItem.DependencyScope.COMPILE))
 
@@ -343,6 +346,12 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     return builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
       this.dependencies = dependencies
     }
+  }
+
+  private fun findGlobalLibraryLevel(libraryName: String): String? {
+    val registrar = LibraryTablesRegistrar.getInstance()
+    if (registrar.libraryTable.getLibraryByName(libraryName) != null) return LibraryTablesRegistrar.APPLICATION_LEVEL
+    return registrar.customLibraryTables.find { it.getLibraryByName(libraryName) != null }?.tableLevel
   }
 
   private fun generateUniqueLibraryName(path: String, libraryNames: MutableSet<String>): String {

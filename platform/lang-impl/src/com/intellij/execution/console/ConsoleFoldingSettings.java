@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -40,7 +40,7 @@ public final class ConsoleFoldingSettings implements PersistentStateComponent<Co
   }
 
   public static ConsoleFoldingSettings getSettings() {
-    return ServiceManager.getService(ConsoleFoldingSettings.class);
+    return ApplicationManager.getApplication().getService(ConsoleFoldingSettings.class);
   }
 
   public boolean shouldFoldLine(String line) {

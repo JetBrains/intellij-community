@@ -747,7 +747,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12);
   private static final Thread[] NO_THREADS = new Thread[0];
-  private final Set<Thread> myPrioritizedThreads = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Thread> myPrioritizedThreads = ContainerUtil.newConcurrentSet();
   private volatile Thread[] myEffectivePrioritizedThreads = NO_THREADS;
   private int myDeprioritizations;
   private final Object myPrioritizationLock = ObjectUtils.sentinel("myPrioritizationLock");
@@ -758,7 +758,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E {
     Thread thread = Thread.currentThread();
 
-    if (!Registry.is("ide.prioritize.threads") || isPrioritizedThread(thread)) {
+    if (!Registry.is("ide.prioritize.threads", true) || isPrioritizedThread(thread)) {
       return computable.compute();
     }
 

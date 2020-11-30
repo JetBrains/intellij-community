@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import libraries.coroutines.extra.LifetimeSource
 
 internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware {
@@ -18,7 +18,7 @@ internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware {
 
     val project = (toolWindow as ToolWindowEx).project
 
-    space.workspace.forEach(lifetime) { ws ->
+    SpaceWorkspaceComponent.getInstance().workspace.forEach(lifetime) { ws ->
       val available = ws != null && shouldBeAvailable(project)
       if (available && !toolWindow.isAvailable) {
         toolWindow.isShowStripeButton = true

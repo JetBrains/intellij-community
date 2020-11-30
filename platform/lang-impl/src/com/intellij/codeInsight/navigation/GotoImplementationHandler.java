@@ -69,7 +69,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return createDataForSource(editor, offset, source);
   }
 
-  private GotoData createDataForSource(@NotNull Editor editor, int offset, PsiElement source) {
+  private @NotNull GotoData createDataForSource(@NotNull Editor editor, int offset, PsiElement source) {
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
     final TargetElementUtil instance = TargetElementUtil.getInstance();
     PsiElement[] targets = new ImplementationSearcher.FirstImplementationsSearcher() {
@@ -128,9 +128,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     int offset = editor.getCaretModel().getOffset();
     PsiElementProcessor<PsiElement> navigateProcessor = element -> {
       GotoData data = createDataForSource(editor, offset, element);
-      if (data != null) {
-        successCallback.consume(data);
-      }
+      successCallback.consume(data);
       return true;
     };
     Project project = editor.getProject();

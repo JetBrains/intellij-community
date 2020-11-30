@@ -16,19 +16,13 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.*;
 
 public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends AbstractClassProcessor {
 
   AbstractBuilderPreDefinedInnerClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                                               @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+                                               @NotNull String supportedAnnotationClass) {
     super(supportedClass, supportedAnnotationClass);
-  }
-
-  @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
   }
 
   @NotNull

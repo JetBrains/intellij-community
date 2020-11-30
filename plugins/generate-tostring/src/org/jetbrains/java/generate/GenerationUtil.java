@@ -32,7 +32,7 @@ import org.jetbrains.java.generate.velocity.VelocityFactory;
 import java.io.StringWriter;
 import java.util.*;
 
-public class GenerationUtil {
+public final class GenerationUtil {
   private static final Logger LOG = Logger.getInstance(GenerationUtil.class);
 
   /**

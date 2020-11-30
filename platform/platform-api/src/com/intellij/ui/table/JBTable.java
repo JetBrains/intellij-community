@@ -11,12 +11,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.render.RenderingUtil;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
@@ -43,7 +44,9 @@ import java.util.Comparator;
 import java.util.EventObject;
 import java.util.function.Predicate;
 
+import static com.intellij.ui.TableUtil.stopEditing;
 import static com.intellij.ui.components.JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY;
+import static com.intellij.ui.render.RenderingUtil.isHoverPaintingDisabled;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   public static final int PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS = 7;
@@ -72,8 +75,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private TableCell rollOverCell;
 
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
-
-  protected int myMouseHoveredRow = -1;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -113,20 +114,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     setFillsViewportHeight(true);
 
     addMouseListener(new MyMouseListener());
-    addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        if (!isStriped()) {
-          updateHoveredRow(rowAtPoint(e.getPoint()));
-        }
-      }
-    });
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseExited(MouseEvent e) {
-        updateHoveredRow(-1);
-      }
-    });
+    TableHoverListener.DEFAULT.addTo(this);
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       addMouseMotionListener(new MouseMotionAdapter() {
@@ -188,11 +176,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     new MyCellEditorRemover();
   }
 
-  private void updateHoveredRow(int row) {
-    if (!Boolean.FALSE.equals(getClientProperty(RenderingUtil.PAINT_HOVERED_BACKGROUND)) && myMouseHoveredRow != row) {
-      myMouseHoveredRow = row;
-      repaint();
-    }
+  public final int getHoveredRow() {
+    return isHoverPaintingDisabled(this) ? -1 : TableHoverListener.getHoveredRow(this);
   }
 
   protected void onTableChanged(@NotNull TableModelEvent e) {
@@ -686,7 +671,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           setRendererBackground(row, column, component, row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor());
         }
       }
-      else if (myMouseHoveredRow == row) {
+      else if (row == getHoveredRow()) {
         setRendererBackground(row, column, component, UIUtil.getTableHoverBackground(true));
       }
     }
@@ -1426,6 +1411,50 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         ((AbstractTableModel)getModel()).fireTableCellUpdated(rollOverCell.row, rollOverCell.column);
       }
       rollOverCell = null;
+    }
+  }
+  public static boolean setupCheckboxShortcut(@NotNull JTable table, int columnIndex) {
+    if (columnIndex >=0 && columnIndex < table.getColumnCount()) {
+      return SpaceKeyListener.install(table, columnIndex);
+    }
+    return false;
+  }
+
+  private static class SpaceKeyListener extends KeyAdapter {
+    private final JTable myTable;
+    private final int myColumnIndex;
+
+    static boolean install(@NotNull JTable table, int columnIndex) {
+      for (KeyListener listener : table.getKeyListeners()) {
+        if (listener instanceof SpaceKeyListener) return false;
+      }
+      table.addKeyListener(new SpaceKeyListener(table, columnIndex));
+      return true;
+    }
+
+    private SpaceKeyListener(@NotNull JTable table, int columnIndex) {
+      myTable = table;
+      myColumnIndex = columnIndex;
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+      int[] rows = myTable.getSelectedRows();
+      if (rows.length == 0 || e.getKeyCode() != KeyEvent.VK_SPACE || myTable.isEditing() || e.getModifiersEx() != 0) return;
+
+      SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myTable);
+      if (supply != null && supply.isPopupActive()) return;
+
+      for (int row : rows) {
+        if (myTable.editCellAt(row, myColumnIndex)) {
+          TableCellEditor editor = myTable.getCellEditor();
+          if (editor instanceof DefaultCellEditor) {
+            ObjectUtils.consumeIfCast(((DefaultCellEditor)editor).getComponent(), JCheckBox.class, box -> box.setSelected(!box.isSelected()));
+          }
+          stopEditing(myTable);
+          e.consume();
+        }
+      }
     }
   }
 }

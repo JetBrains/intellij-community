@@ -254,7 +254,7 @@ public class DeclarationParser {
   }
 
   @Nullable
-  public PsiBuilder.Marker parse(final PsiBuilder builder, final Context context) {
+  public PsiBuilder.Marker parse(final @NotNull PsiBuilder builder, final Context context) {
     IElementType tokenType = builder.getTokenType();
     if (tokenType == null) return null;
 

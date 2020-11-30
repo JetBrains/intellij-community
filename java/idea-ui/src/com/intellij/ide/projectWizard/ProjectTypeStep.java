@@ -16,6 +16,7 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.WebModuleTypeBase;
@@ -68,8 +69,10 @@ import java.util.*;
 @SuppressWarnings("unchecked")
 public final class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectTypeStep.class);
+  private static final ExtensionPointName<ProjectCategory> EP_NAME =
+    new ExtensionPointName<>("com.intellij.projectWizard.projectCategory");
 
-  private static final Convertor<FrameworkSupportInModuleProvider,String> PROVIDER_STRING_CONVERTOR =
+  private static final Convertor<FrameworkSupportInModuleProvider, String> PROVIDER_STRING_CONVERTOR =
     o -> o.getId();
   private static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = FrameworkSupportNodeBase::getId;
   private static final String TEMPLATES_CARD = "templates card";
@@ -246,35 +249,37 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return FRAMEWORKS_CARD.equals(myCurrentCard) && getSelectedBuilder().equals(myContext.getProjectBuilder());
   }
 
-  private List<TemplatesGroup> fillTemplatesMap(WizardContext context) {
-
+  private @NotNull List<TemplatesGroup> fillTemplatesMap(@NotNull WizardContext context) {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
     if (context.isCreatingNewProject()) {
       builders.add(new EmptyModuleBuilder());
     }
     Map<String, TemplatesGroup> groupMap = new HashMap<>();
     for (ModuleBuilder builder : builders) {
-      BuilderBasedTemplate template = new BuilderBasedTemplate(builder);
-      if (builder.isTemplate()) {
-        TemplatesGroup group = groupMap.get(builder.getGroupName());
-        if (group == null) {
-          group = new TemplatesGroup(builder);
+      try {
+        BuilderBasedTemplate template = new BuilderBasedTemplate(builder);
+        if (builder.isTemplate()) {
+          TemplatesGroup group = groupMap.get(builder.getGroupName());
+          if (group == null) {
+            group = new TemplatesGroup(builder);
+          }
+          myTemplatesMap.putValue(group, template);
         }
-        myTemplatesMap.putValue(group, template);
+        else {
+          TemplatesGroup group = new TemplatesGroup(builder);
+          groupMap.put(group.getName(), group);
+          myTemplatesMap.put(group, new ArrayList<>());
+        }
       }
-      else {
-        TemplatesGroup group = new TemplatesGroup(builder);
-        groupMap.put(group.getName(), group);
-        myTemplatesMap.put(group, new ArrayList<>());
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }
 
-    MultiMap<TemplatesGroup, ProjectTemplate> map = getTemplatesMap(context);
-    myTemplatesMap.putAllValues(map);
+    myTemplatesMap.putAllValues(getTemplatesMap(context));
 
-    for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
+    for (ProjectCategory category : EP_NAME.getExtensionList()) {
       TemplatesGroup group = new TemplatesGroup(category);
-
       ModuleBuilder builder = group.getModuleBuilder();
       if (builder == null || builder.isAvailable()) {
         myTemplatesMap.remove(group);

@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +57,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   @Nullable
   @Override
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
-    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || file.getLanguage() != PythonLanguage.getInstance()) {
+    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || !isSupportedFile(file)) {
       return null;
     }
     // Expand copied text if it can cause indentation ambiguity
@@ -98,7 +97,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                                   Editor editor,
                                   String text,
                                   RawText rawText) {
-    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || file.getLanguage() != PythonLanguage.getInstance()) {
+    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || !isSupportedFile(file)) {
       return text;
     }
 
@@ -141,6 +140,10 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       newText += "\n";
     }
     return newText;
+  }
+
+  protected boolean isSupportedFile(PsiFile file) {
+    return file instanceof PyFile;
   }
 
   @NotNull

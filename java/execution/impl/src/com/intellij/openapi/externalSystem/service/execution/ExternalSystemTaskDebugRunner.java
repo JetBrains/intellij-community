@@ -21,6 +21,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DefaultDebugEnvironment;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.RemoteConnectionStub;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.DefaultExecutionResult;
@@ -34,7 +35,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.ide.ui.EditorOptionsTopHitProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.xdebugger.XDebugProcess;
@@ -71,16 +71,16 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
     throws ExecutionException {
     if (state instanceof ExternalSystemRunnableState) {
-      ExternalSystemRunnableState myRunnableState = (ExternalSystemRunnableState)state;
-      int port = myRunnableState.getDebugPort();
+      ExternalSystemRunnableState runnableState = (ExternalSystemRunnableState)state;
+      int port = runnableState.getDebugPort();
       if (port > 0) {
-        RunContentDescriptor runContentDescriptor = doGetRunContentDescriptor(myRunnableState, environment);
+        RunContentDescriptor runContentDescriptor = doGetRunContentDescriptor(runnableState, environment);
         if (runContentDescriptor == null) return null;
 
         ProcessHandler processHandler = runContentDescriptor.getProcessHandler();
-        final ServerSocket socket = myRunnableState.getForkSocket();
+        final ServerSocket socket = runnableState.getForkSocket();
         if (socket != null && processHandler != null) {
-          new ForkedDebuggerThread(processHandler, runContentDescriptor, socket, environment.getProject()).start();
+          new ForkedDebuggerThread(processHandler, runContentDescriptor, socket, environment, runnableState).start();
         }
         return runContentDescriptor;
       }
@@ -128,7 +128,10 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   private XDebugProcess jvmProcessToDebug(@NotNull XDebugSession session,
                                           ExternalSystemRunnableState state,
                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
-    RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(state.getDebugPort()), true);
+    String debugPort = String.valueOf(state.getDebugPort());
+    RemoteConnection connection = state.isDebugServerProcess()
+                                  ? new RemoteConnection(true, "127.0.0.1", debugPort, true)
+                                  : new RemoteConnectionStub(true, "127.0.0.1", debugPort, true);
     DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, DebugEnvironment.LOCAL_START_TIMEOUT);
 
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);

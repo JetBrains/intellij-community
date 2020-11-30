@@ -242,13 +242,7 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
                         except: #may happen on jython when checking java classes (so, just ignore it)
                             doc = ''
 
-                    if inspect.ismethoddescriptor(obj) or inspect.isdatadescriptor(obj) \
-                            or inspect.isgetsetdescriptor(obj) or inspect.ismemberdescriptor(obj):
-                        # Fix for PY-38151: `obj` is a descriptor definition, not a called descriptor
-                        # (`obj_to_complete` is the class defining it).
-                        retType = TYPE_ATTR
-
-                    elif inspect.ismethod(obj) or inspect.isbuiltin(obj) or inspect.isfunction(obj) or inspect.isroutine(obj):
+                    if inspect.ismethod(obj) or inspect.isbuiltin(obj) or inspect.isfunction(obj) or inspect.isroutine(obj):
                         try:
                             args, vargs, kwargs, defaults, kwonly_args, kwonly_defaults = getargspec(obj)
 

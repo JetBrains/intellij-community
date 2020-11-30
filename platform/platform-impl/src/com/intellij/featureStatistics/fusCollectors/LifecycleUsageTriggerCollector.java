@@ -7,7 +7,6 @@ import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.*;
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.Application;
@@ -28,7 +27,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 57);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 58);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -66,6 +65,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
                                                                                errorFramesField,
                                                                                errorSizeField,
                                                                                tooManyErrorsField);
+  private static final EventId IDE_CRASH_DETECTED = LIFECYCLE.registerEvent("ide.crash.detected");
+
   private enum ProjectOpenMode { New, Same, Attach }
   private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, (mode) -> StringUtil.toLowerCase(mode.name()));
   private static final EventId1<ProjectOpenMode> PROJECT_FRAME_SELECTED = LIFECYCLE.registerEvent("project.frame.selected", projectOpenModeField);
@@ -155,6 +156,10 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     catch (Exception e) {
       LOG.warn(e);
     }
+  }
+
+  public static void onCrashDetected() {
+    IDE_CRASH_DETECTED.log();
   }
 
   @NotNull

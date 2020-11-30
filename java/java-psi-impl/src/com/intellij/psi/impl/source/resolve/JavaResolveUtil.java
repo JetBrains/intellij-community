@@ -112,6 +112,10 @@ public final class JavaResolveUtil {
       else {
         contextClass = PsiTreeUtil.getContextOfType(place, PsiClass.class, false);
         if (isInClassAnnotationParameterList(place, contextClass)) return false;
+        if (contextClass instanceof PsiAnonymousClass && 
+            PsiTreeUtil.isAncestor(((PsiAnonymousClass)contextClass).getArgumentList(), place, true)) {
+          contextClass = PsiTreeUtil.getContextOfType(contextClass, PsiClass.class, true);
+        }
       }
       return canAccessProtectedMember(member, memberClass, accessObjectClass, contextClass,
                                       modifierList.hasModifierProperty(PsiModifier.STATIC));

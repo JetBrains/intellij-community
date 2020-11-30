@@ -12,7 +12,7 @@ import javax.swing.*;
  */
 public final class GoogleAppEngineIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
-    return IconManager.getInstance().loadRasterizedIcon(path, GoogleAppEngineIcons.class, cacheKey, flags);
+    return IconManager.getInstance().loadRasterizedIcon(path, GoogleAppEngineIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon AppEngine = load("/icons/appEngine.svg", 7368279653757801528L, 0);
+  /** 16x16 */ public static final @NotNull Icon AppEngine = load("icons/appEngine.svg", 7368279653757801528L, 0);
 }

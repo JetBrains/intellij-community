@@ -3,7 +3,6 @@ package com.intellij.ide.todo;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -48,7 +47,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   }
 
   public static TodoConfiguration getInstance() {
-    return ServiceManager.getService(TodoConfiguration.class);
+    return ApplicationManager.getApplication().getService(TodoConfiguration.class);
   }
 
   public void resetToDefaultTodoPatterns() {
@@ -105,8 +104,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     }
   }
 
-  @NotNull
-  private static PropertyChangeListener getPublisher(@NotNull Topic<PropertyChangeListener> topic) {
+  private static @NotNull PropertyChangeListener getPublisher(@NotNull Topic<PropertyChangeListener> topic) {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(topic);
   }
 

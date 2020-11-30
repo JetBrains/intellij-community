@@ -18,6 +18,7 @@ package com.android.tools.idea.gradle.dsl.api.repositories;
 import com.android.tools.idea.gradle.dsl.api.util.GradleDslModel;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface RepositoriesModel extends GradleDslModel {
   @NotNull
@@ -29,9 +30,11 @@ public interface RepositoriesModel extends GradleDslModel {
 
   boolean containsMethodCall(@NotNull String methodName);
 
-  void addMavenRepositoryByUrl(@NotNull String url, @NotNull String name);
+  void addMavenRepositoryByUrl(@NotNull String url, @Nullable String name);
 
   boolean containsMavenRepositoryByUrl(@NotNull String repositoryUrl);
+
+  boolean removeRepositoryByUrl(@NotNull String repositoryUrl);
 
   boolean hasGoogleMavenRepository();
 

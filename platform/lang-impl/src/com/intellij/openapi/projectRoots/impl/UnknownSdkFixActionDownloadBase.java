@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,8 +16,9 @@ public abstract class UnknownSdkFixActionDownloadBase extends UnknownSdkFixActio
     createTask().withListener(getMulticaster()).runAsync(project);
   }
 
+  @NotNull
   @Override
-  public final void applySuggestionBlocking(@NotNull ProgressIndicator indicator) {
-    createTask().withListener(getMulticaster()).runBlocking(indicator);
+  public final Sdk applySuggestionBlocking(@NotNull ProgressIndicator indicator) {
+    return createTask().withListener(getMulticaster()).runBlocking(indicator);
   }
 }

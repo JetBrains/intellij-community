@@ -64,6 +64,7 @@ object GithubUtil {
     }
   }
 
+  @NlsSafe
   @JvmStatic
   fun getErrorTextFromException(e: Throwable): String {
     return if (e is UnknownHostException) {

@@ -9,6 +9,7 @@ import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,17 +33,19 @@ public class MavenLogOutputParser implements BuildOutputParser {
   private final MavenSpyOutputParser mavenSpyOutputParser;
   private final MavenParsingContext myParsingContext;
 
-  public MavenLogOutputParser(@NotNull ExternalSystemTaskId taskId,
+  public MavenLogOutputParser(@NotNull Project project,
+                              @NotNull ExternalSystemTaskId taskId,
                               @NotNull List<MavenLoggedEventParser> registeredEvents) {
-    this(taskId, Function.identity(), registeredEvents);
+    this(project, taskId, Function.identity(), registeredEvents);
   }
 
-  public MavenLogOutputParser(@NotNull ExternalSystemTaskId taskId,
+  public MavenLogOutputParser(@NotNull Project project,
+                              @NotNull ExternalSystemTaskId taskId,
                               @NotNull Function<String, String> targetFileMapper,
                               @NotNull List<MavenLoggedEventParser> registeredEvents) {
     myRegisteredEvents = registeredEvents;
     myTaskId = taskId;
-    myParsingContext = new MavenParsingContext(taskId, targetFileMapper);
+    myParsingContext = new MavenParsingContext(project, taskId, targetFileMapper);
     mavenSpyOutputParser = new MavenSpyOutputParser(myParsingContext);
   }
 

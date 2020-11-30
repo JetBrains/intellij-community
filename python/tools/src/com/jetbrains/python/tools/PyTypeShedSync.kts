@@ -9,10 +9,8 @@ import java.nio.file.Paths
 /**
  * This script was implemented to sync local copy of `typeshed` with bundled `typeshed`.
  *
- * As a result it leaves top-level modules and packages that are listed in `whiteList`.
+ * As a result it skips top-level modules and packages that are listed in `blacklist`.
  * It allows us to reduce the size of bundled `typeshed` and do not run indexing and other analyzing processes on disabled stubs.
- *
- * @see [com.jetbrains.python.tools.splitBuiltins]
  */
 
 val repo: Path = Paths.get("../../../../../../../../../typeshed").abs().normalize()
@@ -67,13 +65,11 @@ val blacklist = sequenceOf(
   "codeop",
   "colorsys",
   "commands",
-  "contextlib",
   "cookie",
   "cookielib",
   "copy",
   "copy_reg",
   "copyreg",
-  "cprofile",
   "croniter",
   "cstringio",
   "dataclasses",
@@ -96,7 +92,6 @@ val blacklist = sequenceOf(
   "flask",
   "fnmatch",
   "formatter", // leads to broken tests but could be enabled
-  "fractions",
   "future_builtins",
   "geoip2",
   "getopt",
@@ -114,7 +109,6 @@ val blacklist = sequenceOf(
   "jinja2",
   "jwt",
   "kazoo",
-  "keyword",
   "lib2to3",
   "linecache",
   "macurl2path",
@@ -135,8 +129,6 @@ val blacklist = sequenceOf(
   "openssl",
   "optparse", // deprecated
   "pickletools",
-  "pipes",
-  "pkgutil",
   "platform", // leads to broken tests but could be enabled
   "popen2",
   "poplib",
@@ -200,7 +192,6 @@ val blacklist = sequenceOf(
   "trace",
   "traceback",
   "tty",
-  "typed_ast",
   "ujson",
   "unicodedata",
   "urllib2",
@@ -212,15 +203,11 @@ val blacklist = sequenceOf(
   "whichdb",
   "xdrlib",
   "xmlrpclib",
-  "yaml",
-  "zoneinfo"
+  "yaml"
 ).mapTo(hashSetOf()) { it.toLowerCase() }
 
 println("Cleaning")
 cleanTopLevelPackages(bundled, blacklist)
-
-println("Splitting builtins")
-splitBuiltins(bundled)
 
 fun sync(repo: Path, bundled: Path) {
   if (!Files.exists(repo)) throw IllegalArgumentException("Not found: ${repo.abs()}")
@@ -230,14 +217,16 @@ fun sync(repo: Path, bundled: Path) {
     println("Removed: ${bundled.abs()}")
   }
 
-  val whiteList = setOf("stdlib",
+  val whiteList = setOf(".github",
+                        "scripts",
+                        "stdlib",
                         "tests",
                         "third_party",
                         ".flake8",
                         ".gitignore",
-                        ".travis.yml",
                         "CONTRIBUTING.md",
                         "LICENSE",
+                        "pre-commit",
                         "pyproject.toml",
                         "README.md",
                         "requirements-tests-py3.txt")

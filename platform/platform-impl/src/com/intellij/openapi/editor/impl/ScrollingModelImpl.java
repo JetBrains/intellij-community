@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.RemoteDesktopService;
@@ -33,7 +32,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ScrollingModelImpl implements ScrollingModelEx {
+public final class ScrollingModelImpl implements ScrollingModelEx {
   private static final Logger LOG = Logger.getInstance(ScrollingModelImpl.class);
 
   private final EditorImpl myEditor;
@@ -316,7 +315,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
     cancelAnimatedScrolling(false);
 
-    VisibleEditorsTracker editorsTracker = VisibleEditorsTracker.getInstance();
     boolean useAnimation;
     //System.out.println("myCurrentCommandStart - myLastCommandFinish = " + (myCurrentCommandStart - myLastCommandFinish));
     if (!myEditor.getSettings().isAnimatedScrolling() || myAnimationDisabled || RemoteDesktopService.isRemoteSession()) {
@@ -325,12 +323,15 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     else if (CommandProcessor.getInstance().getCurrentCommand() == null) {
       useAnimation = myEditor.getComponent().isShowing();
     }
-    else if (editorsTracker.getCurrentCommandStart() - editorsTracker.getLastCommandFinish() <
-             AnimatedScrollingRunnable.SCROLL_DURATION) {
-      useAnimation = false;
-    }
     else {
-      useAnimation = editorsTracker.wasEditorVisibleOnCommandStart(myEditor);
+      VisibleEditorsTracker editorTracker = VisibleEditorsTracker.getInstance();
+      if (editorTracker.getCurrentCommandStart() - editorTracker.getLastCommandFinish() <
+          AnimatedScrollingRunnable.SCROLL_DURATION) {
+        useAnimation = false;
+      }
+      else {
+        useAnimation = editorTracker.wasEditorVisibleOnCommandStart(myEditor);
+      }
     }
 
     cancelAnimatedScrolling(false);
@@ -423,7 +424,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     Disposer.register(parentDisposable, () -> myScrollRequestListeners.remove(scrollRequestListener));
   }
 
-  private class AnimatedScrollingRunnable {
+  private final class AnimatedScrollingRunnable {
     private static final int SCROLL_DURATION = 100;
     private static final int SCROLL_INTERVAL = 10;
 
@@ -431,15 +432,11 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     private final int myStartVOffset;
     private final int myEndHOffset;
     private final int myEndVOffset;
-    private final int myAnimationDuration;
 
     private final ArrayList<Runnable> myPostRunnables = new ArrayList<>();
 
-    private final int myHDist;
-    private final int myVDist;
     private final int myMaxDistToScroll;
     private final double myTotalDist;
-    private final double myScrollDist;
 
     private final int myStepCount;
     private final double myPow;
@@ -454,24 +451,24 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       myEndHOffset = endHOffset;
       myEndVOffset = endVOffset;
 
-      myHDist = Math.abs(myEndHOffset - myStartHOffset);
-      myVDist = Math.abs(myEndVOffset - myStartVOffset);
+      int HDist = Math.abs(myEndHOffset - myStartHOffset);
+      int VDist = Math.abs(myEndVOffset - myStartVOffset);
 
       myMaxDistToScroll = myEditor.getLineHeight() * 50;
-      myTotalDist = Math.sqrt((double)myHDist * myHDist + (double)myVDist * myVDist);
-      myScrollDist = Math.min(myTotalDist, myMaxDistToScroll);
-      myAnimationDuration = calcAnimationDuration();
-      if (myAnimationDuration < SCROLL_INTERVAL * 2) {
+      myTotalDist = Math.sqrt((double)HDist * HDist + (double)VDist * VDist);
+      double scrollDist = Math.min(myTotalDist, myMaxDistToScroll);
+      int animationDuration = calcAnimationDuration();
+      if (animationDuration < SCROLL_INTERVAL * 2) {
         throw new NoAnimationRequiredException();
       }
-      myStepCount = myAnimationDuration / SCROLL_INTERVAL - 1;
+      myStepCount = animationDuration / SCROLL_INTERVAL - 1;
       double firstStepTime = 1.0 / myStepCount;
       double firstScrollDist = 5.0;
-      if (myTotalDist > myScrollDist) {
-        firstScrollDist *= myTotalDist / myScrollDist;
+      if (myTotalDist > scrollDist) {
+        firstScrollDist *= myTotalDist / scrollDist;
         firstScrollDist = Math.min(firstScrollDist, myEditor.getLineHeight() * 5);
       }
-      myPow = myScrollDist > 0 ? setupPow(firstStepTime, firstScrollDist / myScrollDist) : 1;
+      myPow = scrollDist > 0 ? setupPow(firstStepTime, firstScrollDist / scrollDist) : 1;
 
       myAnimator = new Animator("Animated scroller", myStepCount, SCROLL_DURATION, false, true) {
         @Override
@@ -561,11 +558,11 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     }
   }
 
-  private static class NoAnimationRequiredException extends Exception {
+  private static final class NoAnimationRequiredException extends Exception {
   }
 
   @DirtyUI
-  private class MyChangeListener implements ChangeListener {
+  private final class MyChangeListener implements ChangeListener {
     private Rectangle myLastViewRect;
 
     @DirtyUI

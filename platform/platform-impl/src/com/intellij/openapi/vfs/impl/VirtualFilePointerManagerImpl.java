@@ -81,7 +81,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     assertAllPointersDisposed();
   }
 
-  private static final class EventDescriptor {
+  private static class EventDescriptor {
     @NotNull private final VirtualFilePointerListener myListener;
     private final VirtualFilePointer @NotNull [] myPointers;
 
@@ -95,9 +95,6 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       myListener.beforeValidityChanged(myPointers);
     }
 
-    private void fireBeforeUrlChanged() {
-      myListener.beforeUrlChanged(myPointers);
-    }
 
     private void fireAfter() {
       myListener.validityChanged(myPointers);
@@ -274,7 +271,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
       if (next == '/' && i != 0 ||
           next == '/' && !SystemInfo.isWindows ||// additional condition for Windows UNC
-          next == '/' && SystemInfo.isWindows && slash == 2 && path.charAt(1) == ':' && OSAgnosticPathUtil.isDriveLetter(path.charAt(0)) ||// Z://foo -> Z:/foo
+          next == '/' && slash == 2 && path.charAt(1) == ':' && OSAgnosticPathUtil.isDriveLetter(path.charAt(0)) ||// Z://foo -> Z:/foo
           next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
         return cleanupTail(path, slash);
       }
@@ -425,21 +422,18 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private static class CollectedEvents {
     private final @NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers;
     private final List<? extends NodeToUpdate> toUpdateNodes;
-    private final List<EventDescriptor> eventList;
-    private final List<EventDescriptor> eventListForPointersWithChangingUrls;
+    private final List<? extends EventDescriptor> eventList;
     private final long startModCount;
     private final long prepareElapsedMs;
 
     CollectedEvents(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
                     @NotNull List<? extends NodeToUpdate> toUpdateNodes,
-                    @NotNull List<EventDescriptor> eventList,
-                    @NotNull List<EventDescriptor> eventListForPointersWithChangingUrls,
+                    @NotNull List<? extends EventDescriptor> eventList,
                     long startModCount,
                     long prepareElapsedMs) {
       this.toFirePointers = toFirePointers;
       this.toUpdateNodes = toUpdateNodes;
       this.eventList = eventList;
-      this.eventListForPointersWithChangingUrls = eventListForPointersWithChangingUrls;
       this.startModCount = startModCount;
       this.prepareElapsedMs = prepareElapsedMs;
     }
@@ -460,14 +454,11 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private CollectedEvents collectEvents(@NotNull List<? extends VFileEvent> events) {
     long start = System.currentTimeMillis();
     MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers = MultiMap.create();
-    MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> pointersWithChangingUrls = new MultiMap<>();
     List<NodeToUpdate> toUpdateNodes = new ArrayList<>();
 
     long startModCount;
     List<EventDescriptor> eventList;
-    List<EventDescriptor> pointersWithChangingUrlsEventList;
     List<VirtualFilePointer> allPointersToFire;
-    List<VirtualFilePointer> pointersWithChangingUrlsToFire;
 
     //noinspection SynchronizeOnThis
     synchronized (this) {
@@ -517,7 +508,6 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());
           if (parent != null) {
             addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
-            addRelevantPointers(eventFile, parent, newNameId, pointersWithChangingUrls, new ArrayList<>(), true, fs, false, event);
           }
         }
         else if (event instanceof VFilePropertyChangeEvent) {
@@ -531,7 +521,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
               addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
 
               // old pointers remain valid after rename, no need to fire
-              addRelevantPointers(eventFile, parent, FilePartNode.getNameId(eventFile), pointersWithChangingUrls, toUpdateNodes, true, fs, false, event);
+              addRelevantPointers(eventFile, parent, FilePartNode.getNameId(eventFile), toFirePointers, toUpdateNodes, true, fs, false, event);
             }
           }
         }
@@ -540,22 +530,14 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       eventList = new ArrayList<>();
       allPointersToFire = new ArrayList<>();
       groupPointersToFire(toFirePointers, eventList, allPointersToFire);
-
-      pointersWithChangingUrlsEventList = new ArrayList<>();
-      pointersWithChangingUrlsToFire = new ArrayList<>();
-      groupPointersToFire(pointersWithChangingUrls, pointersWithChangingUrlsEventList, pointersWithChangingUrlsToFire);
     }
     if (!allPointersToFire.isEmpty()) {
       VirtualFilePointer[] allPointers = allPointersToFire.toArray(VirtualFilePointer.EMPTY_ARRAY);
       eventList.add(new EventDescriptor(myPublisher, allPointers));
     }
-    if (!pointersWithChangingUrlsToFire.isEmpty()) {
-      VirtualFilePointer[] allPointers = pointersWithChangingUrlsToFire.toArray(VirtualFilePointer.EMPTY_ARRAY);
-      pointersWithChangingUrlsEventList.add(new EventDescriptor(myPublisher, allPointers));
-    }
     long prepareElapsedMs = System.currentTimeMillis() - start;
 
-    return new CollectedEvents(toFirePointers, toUpdateNodes, eventList, pointersWithChangingUrlsEventList, startModCount, prepareElapsedMs);
+    return new CollectedEvents(toFirePointers, toUpdateNodes, eventList, startModCount, prepareElapsedMs);
   }
 
   // converts multimap with pointers to fire into a convenient
@@ -596,10 +578,6 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
         for (EventDescriptor descriptor : collected.eventList) {
           descriptor.fireBefore();
-        }
-
-        for (EventDescriptor descriptor : collected.eventListForPointersWithChangingUrls) {
-          descriptor.fireBeforeUrlChanged();
         }
 
         assertConsistency();
@@ -688,7 +666,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private static final class DelegatingDisposable implements Disposable {
-    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
+    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ConcurrentCollectionFactory.createConcurrentIdentityMap();
     private final Reference2IntOpenHashMap<VirtualFilePointerImpl> myCounts = new Reference2IntOpenHashMap<>(); // guarded by this
     private final Disposable myParent;
 

@@ -3,18 +3,17 @@ package de.plushnikov.intellij.plugin.processor.clazz.log;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -48,13 +47,8 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     }
   }
 
-  AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
+  AbstractLogProcessor(@NotNull String supportedAnnotationClass) {
     super(PsiField.class, supportedAnnotationClass);
-  }
-
-  @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_LOG_ENABLED);
   }
 
   @NotNull
@@ -88,19 +82,20 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isInterface() || psiClass.isAnnotationType()) {
-      builder.addError("@%s is legal only on classes and enums", getSupportedAnnotationClasses()[0].getSimpleName());
+      builder.addError(LombokBundle.message("inspection.message.s.legal.only.on.classes.enums"), getSupportedAnnotationClasses()[0]);
       result = false;
     }
     if (result) {
       final String loggerName = getLoggerName(psiClass);
       if (hasFieldByName(psiClass, loggerName)) {
-        builder.addError("Not generating field %s: A field with same name already exists", loggerName);
+        builder.addError(LombokBundle.message("inspection.message.not.generating.field.s.field.with.same.name.already.exists"), loggerName);
         result = false;
       }
     }
     return result;
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     target.add(createLoggerField(psiClass, psiAnnotation));
   }

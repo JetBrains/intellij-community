@@ -38,7 +38,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
       @NotNull
       @Override
       protected PsiTypeElement compute() {
-        return new ClsTypeElementImpl(ClsParameterImpl.this, getStub().getType(false));
+        return new ClsTypeElementImpl(ClsParameterImpl.this, getStub().getType());
       }
     };
   }

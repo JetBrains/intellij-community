@@ -13,10 +13,10 @@ asyncio.events.AbstractEventLoop.sock_sendfile
 asyncio.futures.Future.__init__
 asyncio.futures.Future._callbacks
 asyncio.proactor_events._ProactorBasePipeTransport.__del__
+asyncio.run  # Bugfix involving this was backported to 3.8
+asyncio.runners.run  # It just hasn't been released yet
 asyncio.threads  # Added in Python 3.9
-builtins.compile
 builtins.dict.get
-builtins.reversed
 collections.AsyncGenerator.ag_await
 collections.AsyncGenerator.ag_code
 collections.AsyncGenerator.ag_frame
@@ -39,6 +39,7 @@ dataclasses.InitVar.__init__
 dataclasses.field
 email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
+fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 functools.partialmethod.__get__
 functools.singledispatchmethod.__call__  # A lie to reflect that the descriptor get returns a callable
 gettext.install
@@ -74,7 +75,6 @@ sre_constants.RANGE_IGNORE
 ssl.PROTOCOL_SSLv3
 ssl.RAND_egd
 sys.UnraisableHookArgs
-threading.ExceptHookArgs
 types.ClassMethodDescriptorType.__get__
 types.CodeType.replace
 types.MethodDescriptorType.__get__
@@ -101,3 +101,14 @@ xml.etree.ElementTree.XMLParser.__init__
 xml.etree.cElementTree.TreeBuilder.start  # bpo-39495
 xml.etree.cElementTree.XMLParser.__init__
 zipfile.Path.open
+# These enums derive from (int, IntEnum) or (str, Enum). See comment in py3_common.txt
+enum.IntFlag.__new__
+pstats.SortKey.__new__
+re.RegexFlag.__new__
+socket.AddressInfo.__new__
+socket.MsgFlag.__new__
+ssl.Options.__new__
+ssl.TLSVersion.__new__
+ssl.VerifyFlags.__new__
+ssl.VerifyMode.__new__
+tkinter.EventType.__new__

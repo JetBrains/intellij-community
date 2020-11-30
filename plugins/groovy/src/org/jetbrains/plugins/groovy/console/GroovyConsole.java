@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
@@ -196,7 +197,13 @@ public final class GroovyConsole {
     try {
       final JavaParameters javaParameters = createJavaParameters(module);
       final GeneralCommandLine commandLine = javaParameters.toCommandLine();
-      return new OSProcessHandler.Silent(commandLine) {
+      return new ColoredProcessHandler(commandLine) {
+
+        @Override
+        protected @NotNull BaseOutputReader.Options readerOptions() {
+          return BaseOutputReader.Options.forMostlySilentProcess();
+        }
+
         @Override
         public boolean isSilentlyDestroyOnClose() {
           return true;

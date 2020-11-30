@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,7 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class EmptySchemesManager extends SchemeManager<Object> {
+public final class EmptySchemesManager extends SchemeManager<Object> {
   @Override
   @NotNull
   public Collection<Object> loadSchemes() {
@@ -77,5 +78,18 @@ public class EmptySchemesManager extends SchemeManager<Object> {
   @Override
   public Object removeScheme(@NotNull String name) {
     return null;
+  }
+
+  @Override
+  public void loadBundledScheme(@NotNull String resourceName, @Nullable Object requestor, @Nullable PluginDescriptor pluginDescriptor) {
+  }
+
+  @Override
+  public boolean isMetadataEditable(Object scheme) {
+    return true;
+  }
+
+  @Override
+  public void save(@NotNull List<Throwable> errors) {
   }
 }

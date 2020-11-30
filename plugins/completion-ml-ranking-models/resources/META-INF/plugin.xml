@@ -14,13 +14,17 @@
   <depends>com.intellij.completion.ml.ranking</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <preloadingActivity implementation="com.jetbrains.completion.ml.ranker.cb.jvm.PreloadNaiveCatBoostModel" />
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentKotlinMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentScalaMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentJavaMLRankingProvider"/>
-    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentJavaMLRankingProvider2"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentPythonMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentRustMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentPhpMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentRubyMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentGoMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentJSMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentTypeScriptMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentDartMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentSwiftMLRankingProvider"/>
   </extensions>
 </idea-plugin>

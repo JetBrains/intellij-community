@@ -222,7 +222,7 @@ public class CheckboxTreeBase extends Tree {
           public String getAccessibleName() {
             return AccessibleContextUtil.combineAccessibleStrings(
               myTextRenderer.getAccessibleContext().getAccessibleName(),
-              myCheckbox.isSelected() ? "checked" : "not checked");
+              UIBundle.message(myCheckbox.isSelected() ? "checkbox.tree.accessible.name.checked" : "checkbox.tree.accessible.name.not.checked"));
           }
         };
       }

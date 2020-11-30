@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
+import com.intellij.DynamicBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -13,6 +14,7 @@ import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.Nls;
@@ -21,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import static com.intellij.DynamicBundle.findLanguageBundle;
 
 /**
  * @author Dmitry Avdeev
@@ -204,11 +208,28 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     Application app = ApplicationManager.getApplication();
     String fileName = getDescriptionFileName();
 
+    InputStream langStream = getLanguagePluginStream(fileName);
+    if (langStream != null) return langStream;
+
     if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
       return ResourceUtil.getResourceAsStream(getDescriptionContextClass().getClassLoader(), "inspectionDescriptions", fileName);
     }
 
     return myEP.getPluginDescriptor().getPluginClassLoader().getResourceAsStream("inspectionDescriptions/" + fileName);
+  }
+
+  @Nullable
+  private static InputStream getLanguagePluginStream(@NotNull String fileName) {
+    DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
+    if (langBundle == null) return null;
+
+    PluginDescriptor langPluginDescriptor = langBundle.pluginDescriptor;
+    if (langPluginDescriptor == null) return null;
+
+    ClassLoader classLoader = langPluginDescriptor.getPluginClassLoader();
+    if (classLoader == null) return null;
+
+    return classLoader.getResourceAsStream("inspectionDescriptions/" + fileName);
   }
 
   @NotNull

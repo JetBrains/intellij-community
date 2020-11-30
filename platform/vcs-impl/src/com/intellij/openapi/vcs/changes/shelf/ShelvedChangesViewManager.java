@@ -62,6 +62,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1007,17 +1008,22 @@ public class ShelvedChangesViewManager implements Disposable {
       String date = DateFormatUtil.formatPrettyDateTime(myList.DATE);
       renderer.append(", " + date, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
+
+    @Override
+    public @Nls String getTextPresentation() {
+      return getUserObject().toString();
+    }
   }
 
   private static class ShelvedChangeNode extends ChangesBrowserNode<ShelvedWrapper> implements Comparable<ShelvedChangeNode> {
 
     @NotNull private final ShelvedWrapper myShelvedChange;
     @NotNull private final FilePath myFilePath;
-    @Nullable private final String myAdditionalText;
+    @Nullable @Nls private final String myAdditionalText;
 
     protected ShelvedChangeNode(@NotNull ShelvedWrapper shelvedChange,
                                 @NotNull FilePath filePath,
-                                @Nullable String additionalText) {
+                                @Nullable @Nls String additionalText) {
       super(shelvedChange);
       myShelvedChange = shelvedChange;
       myFilePath = filePath;

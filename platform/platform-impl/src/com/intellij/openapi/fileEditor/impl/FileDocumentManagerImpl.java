@@ -83,7 +83,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
-  private final Set<Document> myUnsavedDocuments = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
 
   private final FileDocumentManagerListener myMultiCaster;
   private final TrailingSpacesStripper myTrailingSpacesStripper = new TrailingSpacesStripper();
@@ -394,7 +394,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       removeFromUnsaved(document);
       updateModifiedProperty(file);
       if (ioException instanceof IOException) throw (IOException)ioException;
-      if (ioException instanceof RuntimeException) throw (RuntimeException)ioException;
+      if (ioException != null) throw (RuntimeException)ioException;
       return;
     }
 

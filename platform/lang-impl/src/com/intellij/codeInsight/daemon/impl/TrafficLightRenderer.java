@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.Language;
@@ -19,10 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorBundle;
-import com.intellij.openapi.editor.HectorComponentPanel;
-import com.intellij.openapi.editor.HectorComponentPanelsProvider;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -310,10 +308,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         if (count > 0) {
           HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
           if (severity != null) {
-            String name = count > 1 ? severity.getDisplayLowercasePluralName() : severity.getDisplayLowercaseName();
-
             Icon icon = mySeverityRegistrar.getRendererIconByIndex(i, status.fullInspect);
-            statusItems.add(new StatusItem(Integer.toString(count), icon, name));
+            statusItems.add(new StatusItem(Integer.toString(count), icon, severity.getCountMessage(count)));
 
             if (mainIcon == null) {
               mainIcon = icon;
@@ -369,6 +365,12 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     return new SimplifiedUIController();
   }
 
+  @NotNull
+  protected final UIController createUIController(@NotNull Editor editor) {
+    boolean mergeEditor = editor.getUserData(DiffUserDataKeys.MERGE_EDITOR_FLAG) == Boolean.TRUE;
+    return editor.getEditorKind() == EditorKind.DIFF && !mergeEditor ? new SimplifiedUIController() : new DefaultUIController();
+  }
+  
   protected abstract class AbstractUIController implements UIController {
     private final boolean inLibrary;
     private final List<LanguageHighlightLevel> myLevelsList;

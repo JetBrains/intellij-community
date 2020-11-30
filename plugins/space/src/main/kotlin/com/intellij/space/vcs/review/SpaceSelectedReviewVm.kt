@@ -2,8 +2,14 @@
 package com.intellij.space.vcs.review
 
 import circlet.code.api.CodeReviewWithCount
+import circlet.workspaces.Workspace
+import com.intellij.space.vcs.SpaceProjectInfo
 import runtime.reactive.MutableProperty
 
 internal interface SpaceSelectedReviewVm {
+  val workspace: Workspace
+
+  val projectInfo: SpaceProjectInfo
+
   val selectedReview: MutableProperty<CodeReviewWithCount?>
 }

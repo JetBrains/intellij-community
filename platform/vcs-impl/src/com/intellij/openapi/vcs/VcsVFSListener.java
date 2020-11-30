@@ -416,11 +416,22 @@ public abstract class VcsVFSListener implements Disposable {
     return filePath != null && ReadAction.compute(() -> !myProject.isDisposed() && myVcsManager.getVcsFor(filePath) == myVcs);
   }
 
+  private boolean allowedDeletion(@NotNull VFileEvent event) {
+    if (myVcsFileListenerContextHelper.isDeletionContextEmpty()) return true;
+
+    return !myVcsFileListenerContextHelper.isDeletionIgnored(VcsUtil.getFilePath(event.getPath()));
+  }
+
+  private boolean allowedAddition(@NotNull VFileEvent event) {
+    if (myVcsFileListenerContextHelper.isAdditionContextEmpty()) return true;
+
+    return !myVcsFileListenerContextHelper.isAdditionIgnored(event.getFile());
+  }
+
   @RequiresBackgroundThread
   protected void executeAdd() {
     List<VirtualFile> addedFiles = myProcessor.acquireAddedFiles();
     LOG.debug("executeAdd. addedFiles: ", addedFiles);
-    addedFiles.removeIf(myVcsFileListenerContextHelper::isAdditionIgnored);
     addedFiles.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
     Map<VirtualFile, VirtualFile> copyFromMap = isFileCopyingFromTrackingSupported() ? myProcessor.acquireCopiedFiles() : emptyMap();
     if (!addedFiles.isEmpty()) {
@@ -476,9 +487,6 @@ public abstract class VcsVFSListener implements Disposable {
     AllDeletedFiles allFiles = myProcessor.acquireAllDeletedFiles();
     List<FilePath> filesToDelete = allFiles.deletedWithoutConfirmFiles;
     List<FilePath> deletedFiles = allFiles.deletedFiles;
-
-    filesToDelete.removeIf(myVcsFileListenerContextHelper::isDeletionIgnored);
-    deletedFiles.removeIf(myVcsFileListenerContextHelper::isDeletionIgnored);
 
     VcsShowConfirmationOption.Value removeOption = myRemoveOption.getValue();
     if (removeOption == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
@@ -554,7 +562,8 @@ public abstract class VcsVFSListener implements Disposable {
     ApplicationManager.getApplication()
       .invokeAndWait(() -> ref.set(helper.selectFilePathsToProcess(files, title, null, singleFileTitle,
                                                                    singleFilePromptTemplate, option)));
-    return ref.get();
+    Collection<FilePath> selectedFilePaths = ref.get();
+    return selectedFilePaths != null ? selectedFilePaths : emptyList();
   }
 
   protected void beforeContentsChange(@NotNull VFileContentChangeEvent event) {
@@ -693,7 +702,7 @@ public abstract class VcsVFSListener implements Disposable {
               continue;
             }
 
-            if (event instanceof VFileDeleteEvent) {
+            if (event instanceof VFileDeleteEvent && allowedDeletion(event)) {
               myProcessor.processDeletedFile(((VFileDeleteEvent)event).getFile());
             }
             else if (event instanceof VFileMoveEvent) {
@@ -718,7 +727,11 @@ public abstract class VcsVFSListener implements Disposable {
       public void commandFinished(@NotNull CommandEvent event) {
         if (myProject != event.getProject()) return;
 
-        List<VFileEvent> events = ContainerUtil.copyList(myEventsToProcess);
+        /*
+        * Create file events cannot be filtered in afterVfsChange since VcsFileListenerContextHelper populated after actual file creation in PathsVerifier.CheckAdded.check
+        * So this commandFinished is the only way to get in sync with VcsFileListenerContextHelper to check if additions need to be filtered.
+        */
+        List<VFileEvent> events = ContainerUtil.filter(myEventsToProcess, e -> !(e instanceof VFileCreateEvent) || allowedAddition(e));
         myEventsToProcess.clear();
 
         if (events.isEmpty() && !myProcessor.isAnythingToProcess()) return;

@@ -11,9 +11,6 @@ import org.jdom.Parent
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
-@Deprecated("Please use SchemeManager")
-abstract class SchemesManager<T> : SchemeManager<T>()
-
 interface ExternalizableScheme : Scheme {
   fun setName(value: String)
 }

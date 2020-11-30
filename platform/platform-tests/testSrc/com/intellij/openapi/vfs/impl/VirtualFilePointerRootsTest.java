@@ -146,7 +146,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
 
     PersistentFSImpl persistentFS = (PersistentFSImpl)ManagingFS.getInstance();
 
-    PlatformTestUtil.startPerformanceTest("update()", 5000, () -> {
+    PlatformTestUtil.startPerformanceTest("update()", 7000, () -> {
       for (int i=0; i<500_000; i++) {
         persistentFS.incStructuralModificationCount();
         AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(createEvents);

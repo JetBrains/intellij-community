@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -35,7 +35,7 @@ public class SpellcheckingStrategy {
   protected final Tokenizer<XmlAttributeValue> myXmlAttributeTokenizer = new XmlAttributeValueTokenizer();
 
   public static final ExtensionPointName<KeyedLazyInstance<SpellcheckingStrategy>> EP_NAME =
-    ExtensionPointName.create("com.intellij.spellchecker.support");
+    new ExtensionPointName<>("com.intellij.spellchecker.support");
   public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer() {
     @Override
     public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {

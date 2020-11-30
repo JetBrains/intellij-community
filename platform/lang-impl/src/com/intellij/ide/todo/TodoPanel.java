@@ -205,6 +205,8 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     toolbarGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
     toolbarGroup.add(new SetTodoFilterAction(myProject, mySettings, todoFilter -> setTodoFilter(todoFilter)));
     toolbarGroup.add(createAutoScrollToSourceAction());
+    toolbarGroup.add(CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this));
+    toolbarGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this));
 
     if (!myCurrentFileMode) {
       DefaultActionGroup groupBy = createGroupByActionGroup();

@@ -51,7 +51,10 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     super(project, directory, includeSubdirs, getProgressText(), getCommandName(), false);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, @NotNull PsiDirectory directory, boolean includeSubdirs, boolean processOnlyVcsChangedFiles) {
+  public OptimizeImportsProcessor(@NotNull Project project,
+                                  @NotNull PsiDirectory directory,
+                                  boolean includeSubdirs,
+                                  boolean processOnlyVcsChangedFiles) {
     super(project, directory, includeSubdirs, getProgressText(), getCommandName(), processOnlyVcsChangedFiles);
   }
 
@@ -63,7 +66,10 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     this(project, files, getCommandName(), postRunnable);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, @NotNull @NlsContexts.Command String commandName, Runnable postRunnable) {
+  public OptimizeImportsProcessor(@NotNull Project project,
+                                  PsiFile @NotNull [] files,
+                                  @NotNull @NlsContexts.Command String commandName,
+                                  Runnable postRunnable) {
     super(project, files, getProgressText(), commandName, postRunnable, false);
   }
 

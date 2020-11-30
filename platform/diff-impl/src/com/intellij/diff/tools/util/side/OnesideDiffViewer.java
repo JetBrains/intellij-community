@@ -50,9 +50,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
     mySide = Side.fromRight(myRequest.getContents().get(0) instanceof EmptyContent);
     myHolder = createEditorHolder(factory);
 
-    JComponent titlePanels = createTitle();
     myContentPanel = OnesideContentPanel.createFromHolder(myHolder);
-    myContentPanel.setTitle(titlePanels);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
   }
@@ -60,7 +58,8 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   @Override
   protected void onInit() {
     super.onInit();
-    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
+    myContentPanel.setTitle(createTitle());
   }
 
   @Override
@@ -86,7 +85,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
 
   @Nullable
   protected JComponent createTitle() {
-    List<JComponent> simpleTitles = DiffUtil.createSimpleTitles(myRequest);
+    List<JComponent> simpleTitles = DiffUtil.createSimpleTitles(this, myRequest);
     return mySide.select(simpleTitles);
   }
 

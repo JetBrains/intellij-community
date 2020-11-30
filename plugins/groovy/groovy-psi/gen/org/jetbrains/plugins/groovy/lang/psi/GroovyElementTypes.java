@@ -1,5 +1,3 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.psi;
 
@@ -288,6 +286,8 @@ public interface GroovyElementTypes {
   IElementType T_NEQ = new GroovyElementType("!=");
   IElementType T_NID = new GroovyElementType("!==");
   IElementType T_NOT = new GroovyElementType("!");
+  IElementType T_NOT_IN = new GroovyElementType("!in");
+  IElementType T_NOT_INSTANCEOF = new GroovyElementType("!instanceof");
   IElementType T_PLUS = new GroovyElementType("+");
   IElementType T_PLUS_ASSIGN = new GroovyElementType("+=");
   IElementType T_POW = new GroovyElementType("**");

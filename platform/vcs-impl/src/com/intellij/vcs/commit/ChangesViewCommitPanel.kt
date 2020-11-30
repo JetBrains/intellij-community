@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
@@ -23,7 +22,6 @@ import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI.Borders.*
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.tree.TreeUtil.*
-import com.intellij.vcs.log.VcsUser
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -40,7 +38,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     isOpaque = false
     border = emptyLeft(1)
   }
-  private val commitAuthorComponent = CommitAuthorComponent(project)
   private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
 
   private var isHideToolWindowOnDeactivate = false
@@ -102,15 +99,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       addToLeft(toolbar.component)
     }
   }
-
-  override var commitAuthor: VcsUser?
-    get() = commitAuthorComponent.commitAuthor
-    set(value) {
-      commitAuthorComponent.commitAuthor = value
-    }
-
-  override fun addCommitAuthorListener(listener: CommitAuthorListener, parent: Disposable) =
-    commitAuthorComponent.addCommitAuthorListener(listener, parent)
 
   override var editedCommit by observable<EditedCommitDetails?>(null) { _, _, newValue ->
     refreshData()

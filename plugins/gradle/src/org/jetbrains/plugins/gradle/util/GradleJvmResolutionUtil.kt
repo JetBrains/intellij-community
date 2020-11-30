@@ -91,12 +91,26 @@ fun suggestGradleVersion(project: Project): GradleVersion? {
 /**
  * @see org.jetbrains.plugins.gradle.util.isSupported
  */
-private fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
+fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
   return when {
     isSupported(GradleVersion.current(), javaVersion) -> GradleVersion.current()
-    javaVersion.feature >= 8 /* ..14 */ -> GradleVersion.version("6.5")
-    javaVersion.feature == 7 -> GradleVersion.version("4.1")
-    javaVersion.feature == 6 -> GradleVersion.version("3.0")
+    javaVersion.feature >= 8 -> GradleVersion.version("6.7")
+    javaVersion.feature == 7 -> GradleVersion.version("4.10.3") // https://docs.gradle.org/5.0/release-notes.html#potential-breaking-changes
+    else -> null
+  }
+}
+
+/**
+ * @see org.jetbrains.plugins.gradle.util.isSupported
+ */
+fun suggestOldestCompatibleGradleVersion(javaVersion: JavaVersion): GradleVersion? {
+  return when {
+    javaVersion.feature >= 15 -> GradleVersion.version("6.7")
+    javaVersion.feature >= 14 -> GradleVersion.version("6.3")
+    javaVersion.feature >= 13 -> GradleVersion.version("6.0")
+    javaVersion.feature >= 12 -> GradleVersion.version("5.4.1")
+    javaVersion.feature >= 11 -> GradleVersion.version("4.8")
+    javaVersion.feature >= 7 -> GradleVersion.version("3.0")
     else -> null
   }
 }

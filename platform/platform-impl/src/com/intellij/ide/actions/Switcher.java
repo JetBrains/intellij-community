@@ -764,7 +764,7 @@ public final class Switcher extends AnAction implements DumbAware {
       }
 
       List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
-      if (filesData.size() <= 1 || pinned) {
+      if (filesData.size() <= 1) {
         if (!filesForInit.isEmpty()) {
           int editorsFilesCount = (int) editors.stream().map(info -> info.first).distinct().count();
           int maxFiles = Math.max(editorsFilesCount, filesForInit.size());
@@ -1159,13 +1159,19 @@ public final class Switcher extends AnAction implements DumbAware {
       else {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
           final FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+          EditorWindow splitWindow = null;
           for (Object value : values) {
             if (value instanceof FileInfo) {
               final FileInfo info = (FileInfo)value;
 
               VirtualFile file = info.first;
               if (mode == RIGHT_SPLIT) {
-                OpenInRightSplitAction.Companion.openInRightSplit(project, file, null);
+                if (splitWindow == null) {
+                  splitWindow = OpenInRightSplitAction.Companion.openInRightSplit(project, file, null);
+                }
+                else {
+                  manager.openFileWithProviders(file, true, splitWindow);
+                }
               }
               if (mode == NEW_WINDOW) {
                 manager.openFileInNewWindow(file);

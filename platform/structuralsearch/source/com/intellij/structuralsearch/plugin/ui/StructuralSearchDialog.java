@@ -573,14 +573,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
           .showUnderneathOf((Component)source);
       }
     };
-    final ToolbarLabel searchTemplateLabel = new ToolbarLabel(SSRBundle.message("search.template")) {
-      @Override
-      public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-        final JLabel label = (JLabel)super.createCustomComponent(presentation, place);
-        UIUtil.installCompleteMatchInfo(label, () -> myConfiguration, link -> showFilterPanel(link));
-        return label;
-      }
-    };
+    final ToolbarLabel searchTemplateLabel = new ToolbarLabel(SSRBundle.message("search.template"));
     final DefaultActionGroup historyActionGroup = new DefaultActionGroup(historyAction, searchTemplateLabel);
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbar historyToolbar = actionManager.createActionToolbar("StructuralSearchDialog", historyActionGroup, true);
@@ -1347,7 +1340,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
   }
 
-  public static String getUserDefined() {
+  public static @Nls(capitalization = Nls.Capitalization.Sentence) String getUserDefined() {
     return SSRBundle.message("new.template.defaultname");
   }
 

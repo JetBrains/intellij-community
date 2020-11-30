@@ -746,12 +746,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         ArrayList<InjInfo> list = new ArrayList<>(ObjectUtils.notNull(currentMap.get(supportId), Collections.emptyList()));
         final List<BaseInjection> currentInjections = getInjectionList(list);
         final List<BaseInjection> importingInjections = cfg.getInjections(supportId);
-        if (currentInjections == null) {
-          newInjections.addAll(importingInjections);
-        }
-        else {
-          Configuration.importInjections(currentInjections, importingInjections, originalInjections, newInjections);
-        }
+        Configuration.importInjections(currentInjections, importingInjections, originalInjections, newInjections);
       }
       info.replace(originalInjections, newInjections);
       myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
@@ -873,7 +868,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     return ContainerUtil.concat(infos, cfgInfo -> cfgInfo.injectionInfos);
   }
 
-  private static List<BaseInjection> getInjectionList(final List<? extends InjInfo> list) {
+  private static @NotNull List<BaseInjection> getInjectionList(final List<? extends InjInfo> list) {
     return new AbstractList<BaseInjection>() {
       @Override
       public BaseInjection get(final int index) {

@@ -168,6 +168,8 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTestReplaceChoice("Extract as 'map' operation");
   }
 
+  public void testDuplicateInsideLiteral() { doTestReplaceChoice("Replace all 0 occurrences"); }
+
   public void testBrokenFormattingWithInValidation() {
     doTest(introducer -> type("bool"));
   }

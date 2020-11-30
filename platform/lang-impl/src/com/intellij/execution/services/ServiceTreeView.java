@@ -182,6 +182,22 @@ class ServiceTreeView extends ServiceView {
   }
 
   @Override
+  Promise<Void> extract(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    AsyncPromise<Void> result = new AsyncPromise<>();
+    myTreeModel.findPath(service, contributorClass)
+      .onError(result::setError)
+      .onSuccess(path -> {
+        ServiceViewItem item = (ServiceViewItem)path.getLastPathComponent();
+        AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+          ServiceViewManagerImpl manager = (ServiceViewManagerImpl)ServiceViewManager.getInstance(getProject());
+          manager.extract(new ServiceViewDragHelper.ServiceViewDragBean(this, Collections.singletonList(item)));
+          result.setResult(null);
+        });
+      });
+    return result;
+  }
+
+  @Override
   void onViewSelected() {
     mySelected = true;
     if (myLastSelection != null) {
@@ -357,7 +373,7 @@ class ServiceTreeView extends ServiceView {
   /**
    * @return {@code true} if selection and updated paths are equal but contain at least one nonidentical element, otherwise {@code false}
    */
-  private static boolean isSelectionUpdateNeeded(List<TreePath> selectionPaths, List<TreePath> updatedPaths) {
+  private static boolean isSelectionUpdateNeeded(List<? extends TreePath> selectionPaths, List<? extends TreePath> updatedPaths) {
     if (selectionPaths.size() != updatedPaths.size()) return false;
 
     boolean result = false;
@@ -458,15 +474,13 @@ class ServiceTreeView extends ServiceView {
     }
   }
 
-  private static List<TreePath> adjustPaths(List<TreePath> paths, Collection<? extends ServiceViewItem> roots, Object treeRoot) {
+  private static List<TreePath> adjustPaths(List<? extends TreePath> paths, Collection<? extends ServiceViewItem> roots, Object treeRoot) {
     List<TreePath> result = new SmartList<>();
     for (TreePath path : paths) {
       Object[] items = path.getPath();
       for (int i = 1; i < items.length; i++) {
         if (roots.contains(items[i])) {
-          Object[] adjustedItems = new Object[items.length - i + 1];
-          adjustedItems[0] = treeRoot;
-          System.arraycopy(items, i, adjustedItems, 1, items.length - i);
+          Object[] adjustedItems = ArrayUtil.insert(items, 0, treeRoot);
           result.add(new TreePath(adjustedItems));
           break;
         }
@@ -531,9 +545,9 @@ class ServiceTreeView extends ServiceView {
   }
 
   private static class PathExpandVisitor implements TreeVisitor {
-    private final List<TreePath> myPaths;
+    private final List<? extends TreePath> myPaths;
 
-    PathExpandVisitor(List<TreePath> paths) {
+    PathExpandVisitor(List<? extends TreePath> paths) {
       myPaths = paths;
     }
 

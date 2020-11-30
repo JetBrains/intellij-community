@@ -35,4 +35,9 @@ public class ConfigValue {
     result = 31 * result + (stopBubbling ? 1 : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "ConfigValue {" + value + ", " + stopBubbling + "}";
+  }
 }

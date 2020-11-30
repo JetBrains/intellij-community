@@ -1,9 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
@@ -13,9 +15,6 @@ import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerF
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.*;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +44,18 @@ public class BuilderHandler {
   private static final String TO_BUILDER_METHOD_NAME = "toBuilder";
   static final String TO_BUILDER_ANNOTATION_KEY = "toBuilder";
 
-  private static final Collection<String> INVALID_ON_BUILDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-    Getter.class.getSimpleName(), Setter.class.getSimpleName(), Wither.class.getSimpleName(), With.class.getSimpleName(),
-    ToString.class.getSimpleName(), EqualsAndHashCode.class.getSimpleName(),
-    RequiredArgsConstructor.class.getSimpleName(), AllArgsConstructor.class.getSimpleName(), NoArgsConstructor.class.getSimpleName(),
-    Data.class.getSimpleName(), Value.class.getSimpleName(), FieldDefaults.class.getSimpleName())));
+  private static final Collection<String> INVALID_ON_BUILDERS = Stream.of(LombokClassNames.GETTER,
+                                                                          LombokClassNames.SETTER,
+                                                                          LombokClassNames.WITHER,
+                                                                          LombokClassNames.WITH,
+                                                                          LombokClassNames.TO_STRING,
+                                                                          LombokClassNames.EQUALS_AND_HASHCODE,
+                                                                          LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
+                                                                          LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+                                                                          LombokClassNames.NO_ARGS_CONSTRUCTOR,
+                                                                          LombokClassNames.DATA,
+                                                                          LombokClassNames.VALUE,
+                                                                          LombokClassNames.FIELD_DEFAULTS).map(fqn -> StringUtil.getShortName(fqn)).collect(Collectors.toUnmodifiableSet());
 
   PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -92,7 +98,7 @@ public class BuilderHandler {
       .filter(BuilderInfo::hasBuilderDefaultAnnotation)
       .filter(BuilderInfo::hasSingularAnnotation).findAny();
     anyBuilderDefaultAndSingulars.ifPresent(builderInfo -> {
-        problemBuilder.addError("@Builder.Default and @Singular cannot be mixed.");
+        problemBuilder.addError(LombokBundle.message("inspection.message.builder.default.singular.cannot.be.mixed"));
       }
     );
 
@@ -100,7 +106,7 @@ public class BuilderHandler {
       .filter(BuilderInfo::hasBuilderDefaultAnnotation)
       .filter(BuilderInfo::hasNoInitializer).findAny();
     anyBuilderDefaultWithoutInitializer.ifPresent(builderInfo -> {
-        problemBuilder.addError("@Builder.Default requires an initializing expression (' = something;').");
+        problemBuilder.addError(LombokBundle.message("inspection.message.builder.default.requires.initializing.expression"));
       }
     );
 
@@ -135,13 +141,12 @@ public class BuilderHandler {
       final PsiType psiVariableType = builderInfo.getVariable().getType();
       final String qualifiedName = PsiTypeUtil.getQualifiedName(psiVariableType);
       if (SingularHandlerFactory.isInvalidSingularType(qualifiedName)) {
-        problemBuilder.addError("Lombok does not know how to create the singular-form builder methods for type '%s'; " +
-          "they won't be generated.", qualifiedName != null ? qualifiedName : psiVariableType.getCanonicalText());
+        problemBuilder.addError(LombokBundle.message("inspection.message.lombok.does.not.know"), qualifiedName != null ? qualifiedName : psiVariableType.getCanonicalText());
         result.set(false);
       }
 
       if (!AbstractSingularHandler.validateSingularName(builderInfo.getSingularAnnotation(), builderInfo.getFieldName())) {
-        problemBuilder.addError("Can't singularize this name: \"%s\"; please specify the singular explicitly (i.e. @Singular(\"sheep\"))", builderInfo.getFieldName());
+        problemBuilder.addError(LombokBundle.message("inspection.message.can.t.singularize.this.name"), builderInfo.getFieldName());
         result.set(false);
       }
     });
@@ -151,7 +156,7 @@ public class BuilderHandler {
   private boolean validateBuilderIdentifier(@NotNull String builderClassName, @NotNull Project project, @NotNull ProblemBuilder builder) {
     final PsiNameHelper psiNameHelper = PsiNameHelper.getInstance(project);
     if (!psiNameHelper.isIdentifier(builderClassName)) {
-      builder.addError("%s is not a valid identifier", builderClassName);
+      builder.addError(LombokBundle.message("inspection.message.s.not.valid.identifier"), builderClassName);
       return false;
     }
     return true;
@@ -165,7 +170,7 @@ public class BuilderHandler {
 
   boolean validateInvalidAnnotationsOnBuilderClass(@NotNull PsiClass builderClass, @NotNull ProblemBuilder problemBuilder) {
     if (PsiAnnotationSearchUtil.checkAnnotationsSimpleNameExistsIn(builderClass, INVALID_ON_BUILDERS)) {
-      problemBuilder.addError("Lombok annotations are not allowed on builder class.");
+      problemBuilder.addError(LombokBundle.message("inspection.message.lombok.annotations.are.not.allowed.on.builder.class"));
       return false;
     }
     return true;
@@ -173,7 +178,7 @@ public class BuilderHandler {
 
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError(String.format("@%s can be used on classes only", psiAnnotation.getQualifiedName()));
+      builder.addError(String.format(LombokBundle.message("inspection.message.s.can.be.used.on.classes.only"), psiAnnotation.getQualifiedName()));
       return false;
     }
     return true;
@@ -184,12 +189,12 @@ public class BuilderHandler {
     builderInfos.map(BuilderInfo::withObtainVia).filter(BuilderInfo::hasObtainViaAnnotation).forEach(builderInfo ->
     {
       if (StringUtil.isEmpty(builderInfo.getViaFieldName()) == StringUtil.isEmpty(builderInfo.getViaMethodName())) {
-        problemBuilder.addError("The syntax is either @ObtainVia(field = \"fieldName\") or @ObtainVia(method = \"methodName\").");
+        problemBuilder.addError(LombokBundle.message("inspection.message.syntax.either.obtain.via.field"));
         result.set(false);
       }
 
       if (StringUtil.isEmpty(builderInfo.getViaMethodName()) && builderInfo.isViaStaticCall()) {
-        problemBuilder.addError("@ObtainVia(isStatic = true) is not valid unless 'method' has been set.");
+        problemBuilder.addError(LombokBundle.message("inspection.message.obtain.via.is.static.true.not.valid.unless.method.has.been.set"));
         result.set(false);
       }
     });
@@ -458,10 +463,10 @@ public class BuilderHandler {
 
   private boolean isNotBuilderDefaultSetterFields(@NotNull PsiField psiField) {
     boolean isBuilderDefaultSetter = false;
-    if (psiField.getName().endsWith("$set") && PsiPrimitiveType.BOOLEAN.equals(psiField.getType())) {
+    if (psiField.getName().endsWith("$set") && PsiType.BOOLEAN.equals(psiField.getType())) {
       PsiElement navigationElement = psiField.getNavigationElement();
       if (navigationElement instanceof PsiField) {
-        isBuilderDefaultSetter = PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) navigationElement, Builder.Default.class.getCanonicalName());
+        isBuilderDefaultSetter = PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) navigationElement, LombokClassNames.BUILDER_DEFAULT);
       }
     }
     return !isBuilderDefaultSetter;
@@ -605,11 +610,11 @@ public class BuilderHandler {
   }
 
   private NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
-    return ServiceManager.getService(NoArgsConstructorProcessor.class);
+    return ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class);
   }
 
 
   private ToStringProcessor getToStringProcessor() {
-    return ServiceManager.getService(ToStringProcessor.class);
+    return ApplicationManager.getApplication().getService(ToStringProcessor.class);
   }
 }

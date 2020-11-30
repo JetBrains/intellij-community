@@ -13,10 +13,12 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.impl.ProgressResult
+import com.intellij.openapi.progress.impl.ProgressRunner
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -37,17 +39,19 @@ import java.awt.Frame
 import java.awt.Image
 import java.io.EOFException
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.function.Function
 import javax.swing.JComponent
 import kotlin.math.min
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
-  open fun <T : Any> run(task: () -> T?): T? {
+  open fun <T : Any> run(task: () -> T?): CompletableFuture<T?> {
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
       runBlocking {
         saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
       }
     }
-    return task()
+    return CompletableFuture.completedFuture(task())
   }
 
   /**
@@ -70,8 +74,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   var cancelled = false
     private set
 
-  override fun <T : Any> run(task: () -> T?): T? {
-    var result: T? = null
+  override fun <T : Any> run(task: () -> T?): CompletableFuture<T?> {
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
       invokeAndWaitIfNeeded {
         SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(ProjectManager.getInstance().defaultProject)
@@ -80,10 +83,13 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
     frameManager = createFrameManager()
 
-    val progressTask = Runnable {
+    val progress = (ApplicationManager.getApplication() as ApplicationImpl)
+      .createProgressWindowAsyncIfNeeded(getProgressTitle(), true, true, null, frameManager!!.getComponent(), null)
+
+    val progressRunner = ProgressRunner<T?>(Function {
       frameManager!!.init(this@ProjectUiFrameAllocator)
       try {
-        result = task()
+        task()
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -96,14 +102,28 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
           logger<ProjectFrameAllocator>().error(e)
           projectNotLoaded(e as? CannotConvertException)
         }
+        null
       }
+    })
+      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .modal()
+      .withProgress(progress)
+
+    val progressResultFuture: CompletableFuture<ProgressResult<T?>>
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      progressResultFuture = CompletableFuture.completedFuture(progressRunner.submitAndGet())
+    }
+    else {
+      progressResultFuture = progressRunner.submit()
     }
 
-    if (ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(progressTask, getProgressTitle(), false, true, null, frameManager!!.getComponent(), null)) {
-      return result
+    return progressResultFuture.thenCompose { result ->
+      when (result.throwable) {
+        null -> CompletableFuture.completedFuture(result.result)
+        is ProcessCanceledException -> CompletableFuture.completedFuture(null)
+        else -> CompletableFuture.failedFuture(result.throwable)
+      }
     }
-    // cancelled
-    return null
   }
 
   @NlsContexts.ProgressTitle
@@ -146,7 +166,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
       runActivity("project frame assigning") {
-        frameManager!!.projectLoaded(frameHelper, project)
         windowManager.assignFrame(frameHelper, project)
       }
       runActivity("tool window pane creation") {
@@ -230,9 +249,6 @@ internal interface ProjectUiFrameManager {
   fun init(allocator: ProjectUiFrameAllocator)
 
   fun getComponent(): JComponent
-
-  fun projectLoaded(frameHelper: ProjectFrameHelper, project: Project) {
-  }
 
   fun projectOpened(project: Project) {
   }

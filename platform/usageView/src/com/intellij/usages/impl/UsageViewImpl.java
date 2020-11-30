@@ -172,7 +172,7 @@ public class UsageViewImpl implements UsageViewEx {
                                           JobSchedulerImpl.getJobPoolParallelism(), this);
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
   private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses =
-    Collections.newSetFromMap(new ConcurrentHashMap<>());
+    ContainerUtil.newConcurrentSet();
 
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -1003,7 +1003,7 @@ public class UsageViewImpl implements UsageViewEx {
       expandAllAction,
       collapseAllAction,
       new Separator(),
-      isPreviewUsageActionEnabled() ? new PreviewUsageAction(this) : null,
+      isPreviewUsageActionEnabled() ? new PreviewUsageAction() : null,
       new Separator(),
       canShowSettings() ? new ShowSettings() : null,
     };
@@ -1046,7 +1046,7 @@ public class UsageViewImpl implements UsageViewEx {
    * create*Action() methods can be used in createActions() method in subclasses to create a toolbar
    */
   protected @NotNull AnAction createPreviewAction() {
-    return new PreviewUsageAction(this);
+    return new PreviewUsageAction();
   }
 
   protected @NotNull AnAction createSettingsAction() {

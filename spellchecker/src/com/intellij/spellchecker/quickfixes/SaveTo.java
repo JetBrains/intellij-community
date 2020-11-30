@@ -47,7 +47,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
   @Override
   @NotNull
   public String getName() {
-    return SpellCheckerBundle.message("save.0.to.1", myWord != null ? SpellCheckerBundle.message("0.in.qoutes", myWord) : "");
+    return SpellCheckerBundle.message("save.0.to.1", myWord != null ? SpellCheckerBundle.message("0.in.quotes", myWord) : "");
   }
 
   @Override

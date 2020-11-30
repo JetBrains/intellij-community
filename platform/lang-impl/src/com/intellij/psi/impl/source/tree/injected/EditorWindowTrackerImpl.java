@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
@@ -104,7 +105,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
       }
     }
   }
-  private static final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl implements EditorWindow, EditorEx {
+  private static final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow, EditorEx {
     private final DocumentWindowImpl myDocumentWindow;
     private final EditorImpl myDelegate;
     private volatile PsiFile myInjectedFile;

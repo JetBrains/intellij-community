@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
+import icons.VcsCodeReviewIcons
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
@@ -94,7 +95,11 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
                               || stateModel.viewerDidAuthor
 
       override fun createStatusComponent(): JComponent {
-        val stateLabel = JLabel(GithubBundle.message("pull.request.state.closed.long"), GithubIcons.PullRequestClosed, SwingConstants.LEFT)
+        val stateLabel = JLabel(
+          GithubBundle.message("pull.request.state.closed.long"),
+          VcsCodeReviewIcons.PullRequestClosed,
+          SwingConstants.LEFT
+        )
         return if (canReopen) stateLabel
         else {
           val accessDeniedLabel = JLabel().apply {

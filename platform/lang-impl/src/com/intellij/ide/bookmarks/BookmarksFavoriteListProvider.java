@@ -181,6 +181,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
       }
     }
     else {
+      //noinspection HardCodedStringLiteral
       renderer.append(getListName(myProject));
     }
   }

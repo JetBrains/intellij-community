@@ -376,6 +376,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   @Override
+  public boolean hasBuildFiles() {
+    return !myBuildFiles.isEmpty() || !myBuildFilesConfiguration.isEmpty();
+  }
+
+  @Override
   public AntBuildFile[] getBuildFiles() {
     return myBuildFiles.toArray(new AntBuildFileBase[0]);
   }

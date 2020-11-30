@@ -78,9 +78,8 @@ public final class UnknownSdkType extends SdkType {
     }
   }
 
-  @Nullable
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
+  public @NotNull SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
     return new UnknownSdkAdditionalData(additional);
   }
 

@@ -13,11 +13,12 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public final class ReplaceExpressionUtil {
   private static final Logger LOG = Logger.getInstance(ReplaceExpressionUtil.class);
 
-  public static boolean isNeedParenthesis(ASTNode oldExpr, ASTNode newExpr) {
+  public static boolean isNeedParenthesis(@NotNull ASTNode oldExpr, ASTNode newExpr) {
     final ASTNode oldParent = oldExpr.getTreeParent();
     if (!ElementType.EXPRESSION_BIT_SET.contains(oldParent.getElementType())) return false;
     int priority = getExpressionPriority(newExpr);
@@ -31,12 +32,12 @@ public final class ReplaceExpressionUtil {
     if (i == JavaElementType.ASSIGNMENT_EXPRESSION) {
       return priority < parentPriority || ((CompositeElement)oldParent).getChildRole(oldExpr) == ChildRole.LOPERAND;
     }
-    else if (i == JavaElementType.CONDITIONAL_EXPRESSION) {
+    if (i == JavaElementType.CONDITIONAL_EXPRESSION) {
       int role = ((CompositeElement)oldParent).getChildRole(oldExpr);
       if (role == ChildRole.THEN_EXPRESSION) return false;
       return priority < parentPriority || role != ChildRole.ELSE_EXPRESSION;
     }
-    else if (i == JavaElementType.BINARY_EXPRESSION || i == JavaElementType.POLYADIC_EXPRESSION) {
+    if (i == JavaElementType.BINARY_EXPRESSION || i == JavaElementType.POLYADIC_EXPRESSION) {
       if (priority < parentPriority) return true;
       PsiElement element = SourceTreeToPsiMap.treeElementToPsi(oldParent);
       assert element != null;
@@ -52,21 +53,21 @@ public final class ReplaceExpressionUtil {
              opType != JavaTokenType.ANDAND &&
              opType != JavaTokenType.OROR;
     }
-    else if (i == JavaElementType.POSTFIX_EXPRESSION) {
-      return priority <= parentPriority;
+    if (i == JavaElementType.POSTFIX_EXPRESSION) {
+      return true;
     }
-    else if (i == JavaElementType.INSTANCE_OF_EXPRESSION ||
+    if (i == JavaElementType.INSTANCE_OF_EXPRESSION ||
              i == JavaElementType.PREFIX_EXPRESSION ||
              i == JavaElementType.TYPE_CAST_EXPRESSION ||
              i == JavaElementType.REFERENCE_EXPRESSION ||
              i == JavaElementType.METHOD_REF_EXPRESSION) {
       return priority < parentPriority;
     }
-    else if (i == JavaElementType.ARRAY_ACCESS_EXPRESSION) {
+    if (i == JavaElementType.ARRAY_ACCESS_EXPRESSION) {
       int role = ((CompositeElement)oldParent).getChildRole(oldExpr);
       return role != ChildRole.ARRAY_DIMENSION && role != ChildRole.INDEX && priority < parentPriority;
     }
-    else if (i == JavaElementType.METHOD_CALL_EXPRESSION ||
+    if (i == JavaElementType.METHOD_CALL_EXPRESSION ||
              i == JavaElementType.NEW_EXPRESSION ||
              i == JavaElementType.ARRAY_INITIALIZER_EXPRESSION ||
              i == JavaElementType.PARENTH_EXPRESSION ||

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<!-- Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file. -->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="ps"/>
+	</identity>
+	<annotations>
+		<annotation cp="¤" type="tts">نامعلومه مروجه پېسې</annotation>
+		<annotation cp="֏" type="tts">ارمينيايي ډرام</annotation>
+		<annotation cp="؋" type="tts">افغانۍ</annotation>
+		<annotation cp="৳" type="tts">بنګالۍ ټاکه</annotation>
+		<annotation cp="฿" type="tts">تهايي بات</annotation>
+		<annotation cp="៛" type="tts">کمبوډي ريل</annotation>
+		<annotation cp="₡" type="tts">کوسټا ريکن کولون</annotation>
+		<annotation cp="₦" type="tts">نايجيري نايرا</annotation>
+		<annotation cp="₪" type="tts">اسرايلي نيو شيکل</annotation>
+		<annotation cp="₫" type="tts">ويتنامي ډونګ</annotation>
+		<annotation cp="₭" type="tts">لاشې کپ</annotation>
+		<annotation cp="₮" type="tts">منګوليايي توګريک</annotation>
+		<annotation cp="₲" type="tts">پيراګوين ګوراني</annotation>
+		<annotation cp="₴" type="tts">اوکرايني هريونيا</annotation>
+		<annotation cp="₵" type="tts">ګانين سيډي</annotation>
+		<annotation cp="₸" type="tts">قازقستاني ټينج</annotation>
+		<annotation cp="₺" type="tts">ترکي ليرا</annotation>
+		<annotation cp="₼" type="tts">آزربايجاني منت</annotation>
+		<annotation cp="₾" type="tts">جارجیاېي لارې</annotation>
+	</annotations>
+</ldml>

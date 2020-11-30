@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +144,7 @@ final class RefreshWorker {
     List<VirtualFile> children = snapshot.getSecond();
 
     String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
-    Set<String> newNames = new THashSet<>(upToDateNames.length);
+    Set<String> newNames = new HashSet<>(upToDateNames.length);
     ContainerUtil.addAll(newNames, upToDateNames);
     if (dir.allChildrenLoaded() && children.size() < upToDateNames.length) {
       for (VirtualFile child : children) {
@@ -156,7 +155,7 @@ final class RefreshWorker {
       newNames.removeAll(persistedNames);
     }
 
-    Set<String> deletedNames = new THashSet<>(persistedNames);
+    Set<String> deletedNames = new HashSet<>(persistedNames);
     ContainerUtil.removeAll(deletedNames, upToDateNames);
 
     ObjectOpenCustomHashSet<String> actualNames = dir.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(upToDateNames, false);

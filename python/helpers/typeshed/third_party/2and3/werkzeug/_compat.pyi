@@ -1,10 +1,16 @@
 import sys
 from typing import Any, Optional, Text
 
-if sys.version_info < (3,):
-    import StringIO as BytesIO
+if sys.version_info >= (3,):
+    from io import BytesIO as BytesIO, StringIO as StringIO
+
+    NativeStringIO = StringIO
 else:
-    from io import StringIO as BytesIO
+    import cStringIO
+    from StringIO import StringIO as StringIO
+
+    BytesIO = cStringIO.StringIO
+    NativeStringIO = BytesIO
 
 PY2: Any
 WIN: Any
@@ -27,7 +33,6 @@ def native_string_result(func): ...
 def implements_bool(cls): ...
 
 range_type: Any
-NativeStringIO: Any
 
 def make_literal_wrapper(reference): ...
 def normalize_string_tuple(tup): ...

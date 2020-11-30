@@ -48,12 +48,12 @@ open class TimelineComponent<in T : TimelineItem>(
         repaint()
       }
     })
-    for (i in 0 until model.size) {
-      add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i.viewIndex())
-    }
 
     if (title != null) {
       add(title, VerticalLayout.FILL_HORIZONTAL, 0)
+    }
+    for (i in 0 until model.size) {
+      add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i.viewIndex())
     }
   }
 

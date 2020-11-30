@@ -182,14 +182,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     myTabbedPane = new TabbedPaneWrapper(getDisposable());
 
     final JPanel dummyPanel = new JPanel(new BorderLayout());
-    String name = null;
-/*
-    if (myInitialClass != null) {
-      name = myInitialClass.getName();
-    }
-*/
-    myGotoByNamePanel = new ChooseByNamePanel(myProject, createChooseByNameModel(), name, myScope.isSearchInLibraries(), getContext()) {
-
+    myGotoByNamePanel = new ChooseByNamePanel(myProject, createChooseByNameModel(), null, myScope.isSearchInLibraries(), getContext()) {
       @Override
       protected void showTextFieldPanel() {
       }

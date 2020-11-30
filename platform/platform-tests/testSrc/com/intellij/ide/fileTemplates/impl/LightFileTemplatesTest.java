@@ -7,6 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
@@ -211,7 +212,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertTrue(template.isReformatCode());
     template.setReformatCode(false);
 
-    FileTemplateSettings settings = ServiceManager.getService(ExportableFileTemplateSettings.class);
+    FileTemplateSettings settings = ApplicationManager.getApplication().getService(ExportableFileTemplateSettings.class);
     Element state = settings.getState();
     assertNotNull(state);
     Element element = state.getChildren().get(0).getChildren().get(0);
@@ -223,7 +224,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertFalse(((FileTemplateBase)myTemplateManager.getTemplate(TEST_TEMPLATE_TXT)).isLiveTemplateEnabledByDefault());
     FileTemplateBase template = (FileTemplateBase)myTemplateManager.getTemplate("templateWithLiveTemplate.txt");
     assertTrue(template.isLiveTemplateEnabledByDefault());
-    FileTemplateSettings settings = ServiceManager.getService(ExportableFileTemplateSettings.class);
+    FileTemplateSettings settings = ApplicationManager.getApplication().getService(ExportableFileTemplateSettings.class);
     assertEquals(0, settings.getState().getContentSize());
     template.setLiveTemplateEnabled(false);
     Element state = settings.getState();
@@ -237,16 +238,14 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     ExtensionPoint<InternalTemplateBean> point = InternalTemplateBean.EP_NAME.getPoint();
     InternalTemplateBean bean = new InternalTemplateBean();
     bean.name = "Unknown";
-    bean.setPluginDescriptor(new DefaultPluginDescriptor("test"));
-    point.registerExtension(bean, getTestRootDisposable());
+    point.registerExtension(bean, new DefaultPluginDescriptor("testInternalTemplatePlugin"), getTestRootDisposable());
     try {
       myTemplateManager.getInternalTemplates();
       fail();
     }
     catch (Throwable e) {
-      assertEquals("Can't find template Unknown", e.getMessage());
-      PluginException pluginException = ((PluginException)e.getCause());
-      assertEquals("test", pluginException.getPluginId().getIdString());
+      assertThat(e.getMessage()).isEqualTo("Can't find template Unknown");
+      assertThat(((PluginException)e.getCause()).getPluginId().getIdString()).isEqualTo("testInternalTemplatePlugin");
     }
   }
 
@@ -271,7 +270,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     CustomFileTemplate child = new CustomFileTemplate("child", "txt");
     child.setFileName("child");
     template.setChildren(new FileTemplate[]{child});
-    FileTemplateSettings settings = ServiceManager.getService(ExportableFileTemplateSettings.class);
+    FileTemplateSettings settings = ApplicationManager.getApplication().getService(ExportableFileTemplateSettings.class);
     Element state = settings.getState();
     assertNotNull(state);
     Element element = state.getChildren().get(0).getChildren().get(0);

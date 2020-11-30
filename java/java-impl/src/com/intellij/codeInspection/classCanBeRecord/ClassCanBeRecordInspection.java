@@ -50,7 +50,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
 
   @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
+    return myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS;
   }
 
   @Override

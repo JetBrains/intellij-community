@@ -13,11 +13,8 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import it.unimi.dsi.fastutil.ints.*;
@@ -26,10 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,7 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 class KeyHashLog<Key> implements Closeable {
   private static final Logger LOG = Logger.getInstance(KeyHashLog.class);
   private static final boolean ENABLE_CACHED_HASH_IDS = SystemProperties.getBooleanProperty("idea.index.cashed.hashids", true);
-  private static final ConcurrentIntObjectMap<Boolean> ourInvalidatedSessionIds = ContainerUtil.createConcurrentIntObjectMap();
 
   @NotNull
   private final KeyDescriptor<Key> myKeyDescriptor;
@@ -46,12 +39,19 @@ class KeyHashLog<Key> implements Closeable {
   private final Path myBaseStorageFile;
   @NotNull
   private final AppendableObjectStorage<int[]> myKeyHashToVirtualFileMapping;
+  @NotNull
+  private final ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = ContainerUtil.createConcurrentIntObjectMap();
+
   private volatile int myLastScannedId;
 
   KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile) throws IOException {
+    this(descriptor, baseStorageFile, true);
+  }
+
+  private KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile, boolean compact) throws IOException {
     myKeyDescriptor = descriptor;
     myBaseStorageFile = baseStorageFile;
-    if (isRequiresCompaction()) {
+    if (compact && isRequiresCompaction()) {
       performCompaction();
     }
     myKeyHashToVirtualFileMapping =
@@ -90,7 +90,7 @@ class KeyHashLog<Key> implements Closeable {
 
     final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS;
     if (useCachedHashIds && id == myLastScannedId) {
-      if (ourInvalidatedSessionIds.remove(id) == null) {
+      if (myInvalidatedSessionIds.remove(id) == null) {
         try {
           hashMaskSet = loadProjectHashes(sessionProjectCacheFile);
         }
@@ -127,6 +127,7 @@ class KeyHashLog<Key> implements Closeable {
   }
 
   private void appendKeyHashToVirtualFileMappingToLog(Key key, int inputId) throws StorageException {
+    if (inputId == 0) return;
     try {
       withLock(() -> myKeyHashToVirtualFileMapping.append(new int[]{myKeyDescriptor.getHashCode(key), inputId}), false);
     }
@@ -142,7 +143,7 @@ class KeyHashLog<Key> implements Closeable {
       myKeyHashToVirtualFileMapping.force();
     }, false);
 
-    IntSet hashMaskSet = new IntOpenHashSet(1000);
+    Int2ObjectMap<IntSet> hash2inputIds = new Int2ObjectOpenHashMap<>(1000);
     try {
       AtomicInteger uselessRecords = new AtomicInteger();
 
@@ -152,29 +153,36 @@ class KeyHashLog<Key> implements Closeable {
         myKeyHashToVirtualFileMapping.processAll(key -> {
           ProgressManager.checkCanceled();
           int inputId = key[1];
-          if (!idFilter.containsFileId(Math.abs(inputId))) return true;
+          int absInputId = Math.abs(inputId);
+          if (!idFilter.containsFileId(absInputId)) return true;
           int keyHash = key[0];
           if (inputId > 0) {
-            if (!hashMaskSet.add(keyHash)) {
+            if (!hash2inputIds.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(inputId)) {
               uselessRecords.incrementAndGet();
             }
           }
           else {
-            hashMaskSet.remove(keyHash);
+            IntSet inputIds = hash2inputIds.get(keyHash);
+            if (inputIds != null) {
+              inputIds.remove(absInputId);
+              if (inputIds.isEmpty()) {
+                hash2inputIds.remove(keyHash);
+              }
+            }
             uselessRecords.incrementAndGet();
           }
           return true;
         });
       }, true);
 
-      if (uselessRecords.get() >= hashMaskSet.size()) {
+      if (uselessRecords.get() >= hash2inputIds.size()) {
         setRequiresCompaction();
       }
     }
     catch (IOException e) {
       throw new StorageException(e);
     }
-    return hashMaskSet;
+    return hash2inputIds.keySet();
   }
 
   void force() {
@@ -201,13 +209,15 @@ class KeyHashLog<Key> implements Closeable {
         oldMapping.processAll(key -> {
           int inputId = key[1];
           int keyHash = key[0];
+          int absInputId = Math.abs(inputId);
+
           if (inputId > 0) {
-            data.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(inputId);
+            data.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(absInputId);
           }
           else {
             IntSet associatedInputIds = data.get(keyHash);
             if (associatedInputIds != null) {
-              associatedInputIds.remove(inputId);
+              associatedInputIds.remove(absInputId);
             }
           }
           return true;
@@ -218,7 +228,9 @@ class KeyHashLog<Key> implements Closeable {
         oldMapping.unlockRead();
       }
 
-      Path newDataFile = oldDataFile.resolveSibling(oldDataFile.getFileName().toString() + ".new");
+      String dataFileName = oldDataFile.getFileName().toString();
+      String newDataFileName = "new." + dataFileName;
+      Path newDataFile = oldDataFile.resolveSibling(newDataFileName);
       AppendableStorageBackedByResizableMappedFile<int[]> newMapping = openMapping(newDataFile, 32 * 2 * data.size());
 
       newMapping.lockWrite();
@@ -237,12 +249,22 @@ class KeyHashLog<Key> implements Closeable {
         newMapping.unlockWrite();
       }
 
-      FileUtil.deleteWithRenaming(oldDataFile.toFile());
-      FileUtil.rename(newDataFile.toFile(), oldDataFile.toFile());
+      IOUtil.deleteAllFilesStartingWith(oldDataFile.toFile());
+
+      try (DirectoryStream<Path> paths = Files.newDirectoryStream(newDataFile.getParent())) {
+        for (Path path : paths) {
+          String name = path.getFileName().toString();
+          if (name.startsWith(newDataFileName)) {
+            FileUtil.rename(path.toFile(), dataFileName + name.substring(newDataFileName.length()));
+          }
+        }
+      }
+
       try {
         Files.delete(getCompactionMarker());
       }
       catch (IOException ignored) {}
+
     } catch (ProcessCanceledException e) {
       LOG.error(e);
       throw e;
@@ -310,7 +332,7 @@ class KeyHashLog<Key> implements Closeable {
   private void invalidateKeyHashToVirtualFileMappingCache() {
     int lastScannedId = myLastScannedId;
     if (lastScannedId != 0) { // we have write lock
-      ourInvalidatedSessionIds.putIfAbsent(lastScannedId, Boolean.TRUE);
+      myInvalidatedSessionIds.putIfAbsent(lastScannedId, Boolean.TRUE);
       myLastScannedId = 0;
     }
   }
@@ -364,7 +386,7 @@ class KeyHashLog<Key> implements Closeable {
     return myBaseStorageFile.resolveSibling(myBaseStorageFile.getFileName() + ".project");
   }
 
-  private static class IntPairInArrayKeyDescriptor implements KeyDescriptor<int[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  private static class IntPairInArrayKeyDescriptor implements DataExternalizer<int[]> {
     private static final IntPairInArrayKeyDescriptor INSTANCE = new IntPairInArrayKeyDescriptor();
     @Override
     public void save(@NotNull DataOutput out, int[] value) throws IOException {
@@ -376,15 +398,24 @@ class KeyHashLog<Key> implements Closeable {
     public int[] read(@NotNull DataInput in) throws IOException {
       return new int[] {DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in)};
     }
+  }
 
-    @Override
-    public int getHashCode(int[] value) {
-      return value[0] * 31 + value[1];
-    }
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void main(String[] args) throws Exception {
+    String indexPath = args[0];
+    EnumeratorStringDescriptor enumeratorStringDescriptor = EnumeratorStringDescriptor.INSTANCE;
 
-    @Override
-    public boolean isEqual(int[] val1, int[] val2) {
-      return val1[0] == val2[0] && val1[1] == val2[1];
+    try (KeyHashLog<String> keyHashLog = new KeyHashLog<>(enumeratorStringDescriptor, Path.of(indexPath), false)) {
+      IntSet allHashes = keyHashLog.getSuitableKeyHashes(new IdFilter() {
+        @Override
+        public boolean containsFileId(int id) {
+          return true;
+        }
+      });
+
+      for (Integer hash : allHashes) {
+        System.out.println("key hash = " + hash);
+      }
     }
   }
 }

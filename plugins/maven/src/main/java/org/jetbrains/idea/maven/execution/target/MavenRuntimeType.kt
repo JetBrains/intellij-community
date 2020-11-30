@@ -7,6 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import icons.MavenIcons
 import org.jetbrains.idea.maven.execution.RunnerBundle
@@ -15,9 +16,10 @@ import java.util.concurrent.CompletableFuture
 class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TYPE_ID) {
   override val icon = MavenIcons.ExecuteMavenGoal
 
+  @NlsSafe
   override val displayName = "Maven"
 
-  override val configurableDescription = "Configure Maven"
+  override val configurableDescription = "Maven configuration"
 
   override val launchDescription = "Run Maven goal"
 
@@ -30,11 +32,11 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
   override fun createConfigurable(project: Project,
                                   config: MavenRuntimeTargetConfiguration,
                                   target: TargetEnvironmentConfiguration): Configurable {
-    return MavenRuntimeTargetUI(config, target)
+    return MavenRuntimeTargetUI(config, target, project)
   }
 
   override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): MavenRuntimeTargetConfiguration? {
-    return target.runtimes.findByType<MavenRuntimeTargetConfiguration>()
+    return target.runtimes.findByType()
   }
 
   override fun createIntrospector(config: MavenRuntimeTargetConfiguration): Introspector<MavenRuntimeTargetConfiguration>? {
@@ -70,6 +72,9 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
     }
   }
 
+  override fun duplicateConfig(config: MavenRuntimeTargetConfiguration): MavenRuntimeTargetConfiguration =
+    duplicatePersistentComponent(this, config)
+
   companion object {
     @JvmStatic
     val TYPE_ID = "MavenRuntime"
@@ -78,12 +83,14 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
     val PROJECT_FOLDER_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":projectFolder",
                                                  RunnerBundle.message("maven.target.execution.project.folder.label"),
                                                  RunnerBundle.message("maven.target.execution.project.folder.description"),
+                                                 RunnerBundle.message("maven.target.execution.project.folder.browsing.title"),
                                                  "/project")
 
     @JvmStatic
     val MAVEN_EXT_CLASS_PATH_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":maven.ext.class.path",
                                                        RunnerBundle.message("maven.target.execution.ext.class.path.folder.label"),
                                                        RunnerBundle.message("maven.target.execution.ext.class.path.folder.description"),
+                                                       RunnerBundle.message("maven.target.execution.ext.class.path.folder.browsing.title"),
                                                        "")
   }
 }

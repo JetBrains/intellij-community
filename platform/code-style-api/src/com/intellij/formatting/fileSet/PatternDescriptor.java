@@ -4,10 +4,11 @@ package com.intellij.formatting.fileSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import java.util.Objects;
-import java.util.regex.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Describes a set of files specified by a directory and/or by a file mask.
@@ -52,7 +53,7 @@ public class PatternDescriptor implements FileSetDescriptor {
     if (lastSlashPos >= 0) {
       fileSpec = spec.substring(lastSlashPos + 1);
       pathSpec = spec.substring(0, lastSlashPos + 1);
-      if (pathSpec.length() > 0 && pathSpec.charAt(0) != '/') {
+      if (pathSpec.charAt(0) != '/') {
         pathSpec = "/**/" + pathSpec;
       }
     }

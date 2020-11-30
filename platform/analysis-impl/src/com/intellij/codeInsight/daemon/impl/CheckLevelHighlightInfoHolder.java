@@ -64,7 +64,8 @@ public class CheckLevelHighlightInfoHolder extends HighlightInfoHolder {
     if (info == null) return false;
     PsiElement psiElement = info.psiElement;
     if (psiElement != null && !PsiTreeUtil.isAncestor(myLevel, psiElement,false)) {
-      throw new RuntimeException("Info: '" + info + "' reported for the element '" + psiElement + "'; but it was at the level " + myLevel);
+      throw new RuntimeException("Info: '" + info + "' reported for the element '" + psiElement + "' (" +psiElement.getTextRange()+")"+
+                                 "; but it was at the level '" + myLevel+ "' (" +myLevel.getTextRange()+")");
     }
     return myHolder.add(info);
   }

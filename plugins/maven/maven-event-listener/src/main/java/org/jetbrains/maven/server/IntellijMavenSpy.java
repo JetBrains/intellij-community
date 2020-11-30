@@ -107,7 +107,10 @@ public class IntellijMavenSpy extends AbstractEventSpy {
       }
       StringBuilder builder = new StringBuilder();
       for (MavenProject project : projectsInReactor) {
-        builder.append(project.getGroupId()).append(":").append(project.getArtifactId()).append("&&");
+        builder
+          .append(project.getGroupId()).append(":")
+          .append(project.getArtifactId()).append(":")
+          .append(project.getVersion()).append("&&");
       }
       printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", builder.toString());
     }

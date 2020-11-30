@@ -1,0 +1,679 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="kab"/>
+	</identity>
+	<annotations>
+		<annotation cp="🏻" draft="unconfirmed">taglimt taceɛlalt</annotation>
+		<annotation cp="🏻" type="tts" draft="unconfirmed">taglimt taceɛlalt</annotation>
+		<annotation cp="🏼">tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🏼" type="tts" draft="unconfirmed">tagwlimt taceɛlalt talemmast</annotation>
+		<annotation cp="🏽">taglimt talemmast</annotation>
+		<annotation cp="🏽" type="tts" draft="unconfirmed">taglimt talemmast</annotation>
+		<annotation cp="🏾">tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🏾" type="tts" draft="unconfirmed">tagwlimt tubrikt talemmast</annotation>
+		<annotation cp="🏿">tagwlimt tubrikt</annotation>
+		<annotation cp="🏿" type="tts" draft="unconfirmed">tagwlimt tubrikt</annotation>
+		<annotation cp="😀">acmumeḥ meqqren</annotation>
+		<annotation cp="😀" type="tts" draft="unconfirmed">acmumeḥ meqqren</annotation>
+		<annotation cp="😃">acmumeh n lfarh</annotation>
+		<annotation cp="😃" type="tts" draft="unconfirmed">acmumeh n lfarh</annotation>
+		<annotation cp="😄">acmumeh amesrar</annotation>
+		<annotation cp="😄" type="tts" draft="unconfirmed">acmumeh amesrar</annotation>
+		<annotation cp="😁">acmumeḥ n tuɣmas meṛṛa</annotation>
+		<annotation cp="😁" type="tts" draft="unconfirmed">acmumeḥ n tuɣmas meṛṛa</annotation>
+		<annotation cp="😆">udem acmumaḥ akked yimi yeldin d wallen imedlen</annotation>
+		<annotation cp="😆" type="tts" draft="unconfirmed">udem acmumaḥ akked yimi yeldin d wallen imedlen</annotation>
+		<annotation cp="😅">acmumeh n reffu</annotation>
+		<annotation cp="😅" type="tts" draft="unconfirmed">acmumeh n reffu</annotation>
+		<annotation cp="🤣">axbibed di tmurt si tedsa</annotation>
+		<annotation cp="🤣" type="tts" draft="unconfirmed">axbibed di tmurt si tedsa</annotation>
+		<annotation cp="😂">taḍsa ar imeṭṭawen</annotation>
+		<annotation cp="😂" type="tts" draft="unconfirmed">taḍsa ar imeṭṭawen</annotation>
+		<annotation cp="🙂">acmumeh afessas</annotation>
+		<annotation cp="🙂" type="tts" draft="unconfirmed">acmumeh afessas</annotation>
+		<annotation cp="😉">udem yemmalen aɣmaz n ti</annotation>
+		<annotation cp="😉" type="tts" draft="unconfirmed">udem yemmalen aɣmaz n ti</annotation>
+		<annotation cp="😊">udem innecṛaḥen s wallen icmumḥen</annotation>
+		<annotation cp="😊" type="tts" draft="unconfirmed">udem innecṛaḥen s wallen icmumḥen</annotation>
+		<annotation cp="😍" draft="unconfirmed">udem yecmumhen d wallen igan am wul</annotation>
+		<annotation cp="😍" type="tts" draft="unconfirmed">udem yecmumhen d wallen igan am wul</annotation>
+		<annotation cp="😘">tasudent d wul</annotation>
+		<annotation cp="😘" type="tts" draft="unconfirmed">tasudent d wul</annotation>
+		<annotation cp="😗">tamact</annotation>
+		<annotation cp="😗" type="tts" draft="unconfirmed">tamact</annotation>
+		<annotation cp="☺">udem n ucmumeḥ</annotation>
+		<annotation cp="☺" type="tts" draft="unconfirmed">udem n ucmumeḥ</annotation>
+		<annotation cp="😚">tasudent allen medlent</annotation>
+		<annotation cp="😚" type="tts" draft="unconfirmed">tasudent allen medlent</annotation>
+		<annotation cp="😙">tasudent meqren</annotation>
+		<annotation cp="😙" type="tts" draft="unconfirmed">tasudent meqren</annotation>
+		<annotation cp="😋">ham-ham</annotation>
+		<annotation cp="😋" type="tts" draft="unconfirmed">ham-ham</annotation>
+		<annotation cp="😛">Udem s yiles</annotation>
+		<annotation cp="😛" type="tts" draft="unconfirmed">Udem s yiles</annotation>
+		<annotation cp="😜">Udem yessufɣen iles</annotation>
+		<annotation cp="😜" type="tts" draft="unconfirmed">Udem yessufɣen iles</annotation>
+		<annotation cp="🤗">udem yefkan ahennec</annotation>
+		<annotation cp="🤗" type="tts" draft="unconfirmed">udem yefkan ahennec</annotation>
+		<annotation cp="🤔">udem ikecmen di ttexmim</annotation>
+		<annotation cp="🤔" type="tts" draft="unconfirmed">udem ikecmen di ttexmim</annotation>
+		<annotation cp="🤐">udem d yimi ixaden</annotation>
+		<annotation cp="🤐" type="tts" draft="unconfirmed">udem d yimi ixaden</annotation>
+		<annotation cp="🤨">afus irefden iḍudan bejqen</annotation>
+		<annotation cp="🤨" type="tts" draft="unconfirmed">afus irefden iḍudan bejqen</annotation>
+		<annotation cp="😐">war awal</annotation>
+		<annotation cp="😐" type="tts" draft="unconfirmed">war awal</annotation>
+		<annotation cp="😑">udem war asunfal</annotation>
+		<annotation cp="😑" type="tts" draft="unconfirmed">udem war asunfal</annotation>
+		<annotation cp="😶">ulac imi</annotation>
+		<annotation cp="😶" type="tts" draft="unconfirmed">ulac imi</annotation>
+		<annotation cp="😏">acmumeh n tiherci</annotation>
+		<annotation cp="😏" type="tts" draft="unconfirmed">acmumeh n tiherci</annotation>
+		<annotation cp="😒">udem ameklu</annotation>
+		<annotation cp="😒" type="tts" draft="unconfirmed">udem ameklu</annotation>
+		<annotation cp="🙄">baɛar s wallen</annotation>
+		<annotation cp="🙄" type="tts" draft="unconfirmed">baɛar s wallen</annotation>
+		<annotation cp="😌">udem yenirsen</annotation>
+		<annotation cp="😌" type="tts" draft="unconfirmed">udem yenirsen</annotation>
+		<annotation cp="😪">udem yeṭṭsen</annotation>
+		<annotation cp="😪" type="tts" draft="unconfirmed">udem yeṭṭsen</annotation>
+		<annotation cp="🤤">asluddu</annotation>
+		<annotation cp="🤤" type="tts" draft="unconfirmed">asluddu</annotation>
+		<annotation cp="😴">udem anudam</annotation>
+		<annotation cp="😴" type="tts" draft="unconfirmed">udem anudam</annotation>
+		<annotation cp="😷">udem s tgelmust</annotation>
+		<annotation cp="😷" type="tts" draft="unconfirmed">udem s tgelmust</annotation>
+		<annotation cp="🤒">udem s utirmumitr</annotation>
+		<annotation cp="🤒" type="tts" draft="unconfirmed">udem s utirmumitr</annotation>
+		<annotation cp="😎">acmumeḥ s nwader n yiṭij</annotation>
+		<annotation cp="😎" type="tts" draft="unconfirmed">acmumeḥ s nwader n yiṭij</annotation>
+		<annotation cp="☹">udem amiglaz</annotation>
+		<annotation cp="☹" type="tts" draft="unconfirmed">udem amiglaz</annotation>
+		<annotation cp="😮">vennej</annotation>
+		<annotation cp="😮" type="tts" draft="unconfirmed">vennej</annotation>
+		<annotation cp="😯">udem war taɣect</annotation>
+		<annotation cp="😯" type="tts" draft="unconfirmed">udem war taɣect</annotation>
+		<annotation cp="😥">uk</annotation>
+		<annotation cp="😥" type="tts" draft="unconfirmed">uk</annotation>
+		<annotation cp="😣">udem akayay</annotation>
+		<annotation cp="😣" type="tts" draft="unconfirmed">udem akayay</annotation>
+		<annotation cp="😫">udem yeɛyan</annotation>
+		<annotation cp="😫" type="tts" draft="unconfirmed">udem yeɛyan</annotation>
+		<annotation cp="👶">ṣebyan</annotation>
+		<annotation cp="👶" type="tts" draft="unconfirmed">ṣebyan</annotation>
+		<annotation cp="🧒">agrud</annotation>
+		<annotation cp="🧒" type="tts" draft="unconfirmed">agrud</annotation>
+		<annotation cp="👦">aqruṛ</annotation>
+		<annotation cp="👦" type="tts" draft="unconfirmed">aqruṛ</annotation>
+		<annotation cp="👧" draft="unconfirmed">Taqruṛt</annotation>
+		<annotation cp="👧" type="tts" draft="unconfirmed">Taqruṛt</annotation>
+		<annotation cp="🧑" draft="unconfirmed">amengaḍ</annotation>
+		<annotation cp="🧑" type="tts" draft="unconfirmed">amengaḍ</annotation>
+		<annotation cp="👨" draft="unconfirmed">argaz</annotation>
+		<annotation cp="👨" type="tts" draft="unconfirmed">argaz</annotation>
+		<annotation cp="👩" draft="unconfirmed">tameṭṭut</annotation>
+		<annotation cp="👩" type="tts" draft="unconfirmed">tameṭṭut</annotation>
+		<annotation cp="🧓" draft="unconfirmed">amengaḍ meqqren</annotation>
+		<annotation cp="🧓" type="tts" draft="unconfirmed">amengaḍ meqqren</annotation>
+		<annotation cp="👴" draft="unconfirmed">amɣaṛ</annotation>
+		<annotation cp="👴" type="tts" draft="unconfirmed">amɣaṛ</annotation>
+		<annotation cp="🦰" draft="unconfirmed">acekkuḥ azeggaɣ</annotation>
+		<annotation cp="🦰" type="tts" draft="unconfirmed">acekkuḥ azeggaɣ</annotation>
+		<annotation cp="🦱" draft="unconfirmed">acekkuḥ imdewweṛ</annotation>
+		<annotation cp="🦱" type="tts" draft="unconfirmed">acekkuḥ imdewweṛ</annotation>
+		<annotation cp="🦳" draft="unconfirmed">acekkuḥ amellal</annotation>
+		<annotation cp="🦳" type="tts" draft="unconfirmed">acekkuḥ amellal</annotation>
+		<annotation cp="🦲" draft="unconfirmed">aferḍas</annotation>
+		<annotation cp="🦲" type="tts" draft="unconfirmed">aferḍas</annotation>
+		<annotation cp="🐵" draft="unconfirmed">taqeṛṛuct n ibki</annotation>
+		<annotation cp="🐵" type="tts" draft="unconfirmed">taqeṛṛuct n ibki</annotation>
+		<annotation cp="🐒" draft="unconfirmed">ivki</annotation>
+		<annotation cp="🐒" type="tts" draft="unconfirmed">ivki</annotation>
+		<annotation cp="🦍" draft="unconfirmed">aguril</annotation>
+		<annotation cp="🦍" type="tts" draft="unconfirmed">aguril</annotation>
+		<annotation cp="🐶" draft="unconfirmed">taqeṛṛuct n waydi</annotation>
+		<annotation cp="🐶" type="tts" draft="unconfirmed">taqeṛṛuct n waydi</annotation>
+		<annotation cp="🐕" draft="unconfirmed">aydi</annotation>
+		<annotation cp="🐕" type="tts" draft="unconfirmed">aydi</annotation>
+		<annotation cp="🐩" draft="unconfirmed">akennic</annotation>
+		<annotation cp="🐩" type="tts" draft="unconfirmed">akennic</annotation>
+		<annotation cp="🐺" draft="unconfirmed">aguleh</annotation>
+		<annotation cp="🐺" type="tts" draft="unconfirmed">aguleh</annotation>
+		<annotation cp="🦊" draft="unconfirmed">avaṛaɣ</annotation>
+		<annotation cp="🦊" type="tts" draft="unconfirmed">avaṛaɣ</annotation>
+		<annotation cp="🐱" draft="unconfirmed">taqerruct n wemcic</annotation>
+		<annotation cp="🐱" type="tts" draft="unconfirmed">taqerruct n wemcic</annotation>
+		<annotation cp="🐜" draft="unconfirmed">taweṭṭuft</annotation>
+		<annotation cp="🐜" type="tts" draft="unconfirmed">taweṭṭuft</annotation>
+		<annotation cp="🐝" draft="unconfirmed">tizizwit</annotation>
+		<annotation cp="🐝" type="tts" draft="unconfirmed">tizizwit</annotation>
+		<annotation cp="🐞" draft="unconfirmed">takumda</annotation>
+		<annotation cp="🐞" type="tts" draft="unconfirmed">takumda</annotation>
+		<annotation cp="🦗">ajṛad</annotation>
+		<annotation cp="🦗" type="tts" draft="unconfirmed">ajṛad</annotation>
+		<annotation cp="🕷" draft="unconfirmed">tissist</annotation>
+		<annotation cp="🕷" type="tts" draft="unconfirmed">tissist</annotation>
+		<annotation cp="🕸" draft="unconfirmed">azeṭṭa n tissit</annotation>
+		<annotation cp="🕸" type="tts" draft="unconfirmed">azeṭṭa n tissit</annotation>
+		<annotation cp="🦂" draft="unconfirmed">tiɣiṛdemt</annotation>
+		<annotation cp="🦂" type="tts" draft="unconfirmed">tiɣiṛdemt</annotation>
+		<annotation cp="💐" draft="unconfirmed">tafuseț</annotation>
+		<annotation cp="💐" type="tts" draft="unconfirmed">tafuseț</annotation>
+		<annotation cp="🌸" draft="unconfirmed">ajeğğig n taknisya</annotation>
+		<annotation cp="🌸" type="tts" draft="unconfirmed">ajeğğig n taknisya</annotation>
+		<annotation cp="💮">ajeğğig amellal</annotation>
+		<annotation cp="💮" type="tts" draft="unconfirmed">ajeğğig amellal</annotation>
+		<annotation cp="🏵">tawardit</annotation>
+		<annotation cp="🏵" type="tts" draft="unconfirmed">tawardit</annotation>
+		<annotation cp="🌹">tawerdett</annotation>
+		<annotation cp="🌹" type="tts" draft="unconfirmed">tawerdett</annotation>
+		<annotation cp="🥀">ajeğğig akiwan</annotation>
+		<annotation cp="🥀" type="tts" draft="unconfirmed">ajeğğig akiwan</annotation>
+		<annotation cp="🌺">tivinṣeṛt</annotation>
+		<annotation cp="🌺" type="tts" draft="unconfirmed">tivinṣeṛt</annotation>
+		<annotation cp="🌻">mager iṭṭij</annotation>
+		<annotation cp="🌻" type="tts" draft="unconfirmed">mager iṭṭij</annotation>
+		<annotation cp="🌼">amgud</annotation>
+		<annotation cp="🌼" type="tts" draft="unconfirmed">amgud</annotation>
+		<annotation cp="🌷">taxlult</annotation>
+		<annotation cp="🌷" type="tts" draft="unconfirmed">taxlult</annotation>
+		<annotation cp="🌱">imɣi aleqqaq</annotation>
+		<annotation cp="🌱" type="tts" draft="unconfirmed">imɣi aleqqaq</annotation>
+		<annotation cp="🌲">tumert</annotation>
+		<annotation cp="🌲" type="tts" draft="unconfirmed">tumert</annotation>
+		<annotation cp="🌳">aseklu bu yifer</annotation>
+		<annotation cp="🌳" type="tts" draft="unconfirmed">aseklu bu yifer</annotation>
+		<annotation cp="🌴">tazdayt</annotation>
+		<annotation cp="🌴" type="tts" draft="unconfirmed">tazdayt</annotation>
+		<annotation cp="🌵">Tasiɣawt</annotation>
+		<annotation cp="🌵" type="tts" draft="unconfirmed">Tasiɣawt</annotation>
+		<annotation cp="🌾">taceṛṛaft n ṛṛuz</annotation>
+		<annotation cp="🌾" type="tts" draft="unconfirmed">taceṛṛaft n ṛṛuz</annotation>
+		<annotation cp="🌿">ifer</annotation>
+		<annotation cp="🌿" type="tts" draft="unconfirmed">ifer</annotation>
+		<annotation cp="☘">ikeffis</annotation>
+		<annotation cp="☘" type="tts" draft="unconfirmed">ikeffis</annotation>
+		<annotation cp="🍀">ikeffis bu kuẓ n wafriwen</annotation>
+		<annotation cp="🍀" type="tts" draft="unconfirmed">ikeffis bu kuẓ n wafriwen</annotation>
+		<annotation cp="🍁">ifer n kikev</annotation>
+		<annotation cp="🍁" type="tts" draft="unconfirmed">ifer n kikev</annotation>
+		<annotation cp="🍂">ifer alvivec (ifer ucelvu)</annotation>
+		<annotation cp="🍂" type="tts" draft="unconfirmed">ifer alvivec (ifer ucelvu)</annotation>
+		<annotation cp="🍃">tamjiwect n ifriwen</annotation>
+		<annotation cp="🍃" type="tts" draft="unconfirmed">tamjiwect n ifriwen</annotation>
+		<annotation cp="🍇">tiẓurin</annotation>
+		<annotation cp="🍇" type="tts" draft="unconfirmed">tiẓurin</annotation>
+		<annotation cp="🍈">afeqqus</annotation>
+		<annotation cp="🍈" type="tts" draft="unconfirmed">afeqqus</annotation>
+		<annotation cp="🍉">delleɛ</annotation>
+		<annotation cp="🍉" type="tts" draft="unconfirmed">delleɛ</annotation>
+		<annotation cp="🍊">tamandaritt</annotation>
+		<annotation cp="🍊" type="tts" draft="unconfirmed">tamandaritt</annotation>
+		<annotation cp="🍋" draft="unconfirmed">tilimett</annotation>
+		<annotation cp="🍋" type="tts" draft="unconfirmed">tilimett</annotation>
+		<annotation cp="🍌">tabanant</annotation>
+		<annotation cp="🍌" type="tts" draft="unconfirmed">tabanant</annotation>
+		<annotation cp="🍍">tananast</annotation>
+		<annotation cp="🍍" type="tts" draft="unconfirmed">tananast</annotation>
+		<annotation cp="🥭">tamungatt</annotation>
+		<annotation cp="🥭" type="tts" draft="unconfirmed">tamungatt</annotation>
+		<annotation cp="🍎">adeffu azeggaɣ</annotation>
+		<annotation cp="🍎" type="tts" draft="unconfirmed">adeffu azeggaɣ</annotation>
+		<annotation cp="🍏">adeffu azegzaw</annotation>
+		<annotation cp="🍏" type="tts" draft="unconfirmed">adeffu azegzaw</annotation>
+		<annotation cp="🍐">ifires</annotation>
+		<annotation cp="🍐" type="tts" draft="unconfirmed">ifires</annotation>
+		<annotation cp="🍑">taxuxett</annotation>
+		<annotation cp="🍑" type="tts" draft="unconfirmed">taxuxett</annotation>
+		<annotation cp="🍒">taknisya</annotation>
+		<annotation cp="🍒" type="tts" draft="unconfirmed">taknisya</annotation>
+		<annotation cp="🍓">tariwalt</annotation>
+		<annotation cp="🍓" type="tts" draft="unconfirmed">tariwalt</annotation>
+		<annotation cp="🥝">takiwitt</annotation>
+		<annotation cp="🥝" type="tts" draft="unconfirmed">takiwitt</annotation>
+		<annotation cp="🍅">taṭumaṭict</annotation>
+		<annotation cp="🍅" type="tts" draft="unconfirmed">taṭumaṭict</annotation>
+		<annotation cp="🥥">iɣsan n koko</annotation>
+		<annotation cp="🥥" type="tts" draft="unconfirmed">iɣsan n koko</annotation>
+		<annotation cp="🥑">tavukatt</annotation>
+		<annotation cp="🥑" type="tts" draft="unconfirmed">tavukatt</annotation>
+		<annotation cp="🍆">tapatengalt</annotation>
+		<annotation cp="🍆" type="tts" draft="unconfirmed">tapatengalt</annotation>
+		<annotation cp="🥔">tabaṭaṭatt</annotation>
+		<annotation cp="🥔" type="tts" draft="unconfirmed">tabaṭaṭatt</annotation>
+		<annotation cp="🥕">taẓrudgatt</annotation>
+		<annotation cp="🥕" type="tts" draft="unconfirmed">taẓrudgatt</annotation>
+		<annotation cp="🌽">ageṭṭuc</annotation>
+		<annotation cp="🌽" type="tts" draft="unconfirmed">ageṭṭuc</annotation>
+		<annotation cp="🌶">ifelfel azggaɣ</annotation>
+		<annotation cp="🌶" type="tts" draft="unconfirmed">ifelfel azggaɣ</annotation>
+		<annotation cp="🥒">ilekkel</annotation>
+		<annotation cp="🥒" type="tts" draft="unconfirmed">ilekkel</annotation>
+		<annotation cp="🥬" draft="unconfirmed">Tidelt n iferrawen izegzawen</annotation>
+		<annotation cp="🥬" type="tts" draft="unconfirmed">Tidelt n iferrawen izegzawen</annotation>
+		<annotation cp="🍄" draft="unconfirmed">taṛeɣlett</annotation>
+		<annotation cp="🍄" type="tts" draft="unconfirmed">taṛeɣlett</annotation>
+		<annotation cp="🥜" draft="unconfirmed">takawkawt</annotation>
+		<annotation cp="🥜" type="tts" draft="unconfirmed">takawkawt</annotation>
+		<annotation cp="🥄" draft="unconfirmed">tajɣelt</annotation>
+		<annotation cp="🥄" type="tts" draft="unconfirmed">tajɣelt</annotation>
+		<annotation cp="🔪" draft="unconfirmed">tafruyt n usaččet</annotation>
+		<annotation cp="🔪" type="tts" draft="unconfirmed">tafruyt n usaččet</annotation>
+		<annotation cp="🏺" draft="unconfirmed">abuqal</annotation>
+		<annotation cp="🏺" type="tts" draft="unconfirmed">abuqal</annotation>
+		<annotation cp="🌍" draft="unconfirmed">amtiweg turuft tafriqt</annotation>
+		<annotation cp="🌍" type="tts" draft="unconfirmed">amtiweg turuft tafriqt</annotation>
+		<annotation cp="🌎" draft="unconfirmed">amtiweg timrikin</annotation>
+		<annotation cp="🌎" type="tts" draft="unconfirmed">amtiweg timrikin</annotation>
+		<annotation cp="🌏" draft="unconfirmed">amtiweg asya ustralya</annotation>
+		<annotation cp="🌏" type="tts" draft="unconfirmed">amtiweg asya ustralya</annotation>
+		<annotation cp="🗺">takarḍa n umaḍal</annotation>
+		<annotation cp="🗺" type="tts" draft="unconfirmed">takarḍa n umaḍal</annotation>
+		<annotation cp="🗾">takarḍa n Japun</annotation>
+		<annotation cp="🗾" type="tts" draft="unconfirmed">takarḍa n Japun</annotation>
+		<annotation cp="🧭" draft="unconfirmed">tabusult</annotation>
+		<annotation cp="🧭" type="tts" draft="unconfirmed">tabusult</annotation>
+		<annotation cp="🏔">adrar n udfel</annotation>
+		<annotation cp="🏔" type="tts" draft="unconfirmed">adrar n udfel</annotation>
+		<annotation cp="⛰">adrar</annotation>
+		<annotation cp="⛰" type="tts" draft="unconfirmed">adrar</annotation>
+		<annotation cp="🌋" draft="unconfirmed">aburkan</annotation>
+		<annotation cp="🌋" type="tts" draft="unconfirmed">aburkan</annotation>
+		<annotation cp="🗻" draft="unconfirmed">Taqacuct Fuji</annotation>
+		<annotation cp="🗻" type="tts" draft="unconfirmed">Taqacuct Fuji</annotation>
+		<annotation cp="🏕">asdar</annotation>
+		<annotation cp="🏕" type="tts" draft="unconfirmed">asdar</annotation>
+		<annotation cp="🏜">aneẓruf</annotation>
+		<annotation cp="🏜" type="tts" draft="unconfirmed">aneẓruf</annotation>
+		<annotation cp="🏝" draft="unconfirmed">tigzirt taneẓruft</annotation>
+		<annotation cp="🏝" type="tts" draft="unconfirmed">tigzirt taneẓruft</annotation>
+		<annotation cp="🏞" draft="unconfirmed">amṛaḥ aɣelnaw</annotation>
+		<annotation cp="🏞" type="tts" draft="unconfirmed">amṛaḥ aɣelnaw</annotation>
+		<annotation cp="🏟">annar</annotation>
+		<annotation cp="🏟" type="tts" draft="unconfirmed">annar</annotation>
+		<annotation cp="🏛" draft="unconfirmed">amedruz aklasikan</annotation>
+		<annotation cp="🏛" type="tts" draft="unconfirmed">amedruz aklasikan</annotation>
+		<annotation cp="🏗" draft="unconfirmed">bennu n uzadaɣ</annotation>
+		<annotation cp="🏗" type="tts" draft="unconfirmed">bennu n uzadaɣ</annotation>
+		<annotation cp="🧱" draft="unconfirmed">Tayajuṛt</annotation>
+		<annotation cp="🧱" type="tts" draft="unconfirmed">Tayajuṛt</annotation>
+		<annotation cp="🏘">ixxamen</annotation>
+		<annotation cp="🏘" type="tts" draft="unconfirmed">ixxamen</annotation>
+		<annotation cp="🏚" draft="unconfirmed">axxam yettwaḍeggren</annotation>
+		<annotation cp="🏚" type="tts" draft="unconfirmed">axxam yettwaḍeggren</annotation>
+		<annotation cp="🏠" draft="unconfirmed">axxam</annotation>
+		<annotation cp="🏠" type="tts" draft="unconfirmed">axxam</annotation>
+		<annotation cp="🏡" draft="unconfirmed">axxam s tmazirt</annotation>
+		<annotation cp="🏡" type="tts" draft="unconfirmed">axxam s tmazirt</annotation>
+		<annotation cp="🏢" draft="unconfirmed">aṣuk n tnariyin</annotation>
+		<annotation cp="🏢" type="tts" draft="unconfirmed">aṣuk n tnariyin</annotation>
+		<annotation cp="🏣" draft="unconfirmed">tanazent tajapunit</annotation>
+		<annotation cp="🏣" type="tts" draft="unconfirmed">tanazent tajapunit</annotation>
+		<annotation cp="🏤" draft="unconfirmed">tanarit n tnazent</annotation>
+		<annotation cp="🏤" type="tts" draft="unconfirmed">tanarit n tnazent</annotation>
+		<annotation cp="🏥" draft="unconfirmed">Asegnaf</annotation>
+		<annotation cp="🏥" type="tts" draft="unconfirmed">Asegnaf</annotation>
+		<annotation cp="🏦" draft="unconfirmed">tabanka</annotation>
+		<annotation cp="🏦" type="tts" draft="unconfirmed">tabanka</annotation>
+		<annotation cp="🏨" draft="unconfirmed">asensu</annotation>
+		<annotation cp="🏨" type="tts" draft="unconfirmed">asensu</annotation>
+		<annotation cp="🏩" draft="unconfirmed">asensu n tayri</annotation>
+		<annotation cp="🏩" type="tts" draft="unconfirmed">asensu n tayri</annotation>
+		<annotation cp="🏪" draft="unconfirmed">talzuzt</annotation>
+		<annotation cp="🏪" type="tts" draft="unconfirmed">talzuzt</annotation>
+		<annotation cp="🏫" draft="unconfirmed">aɣerbaz</annotation>
+		<annotation cp="🏫" type="tts" draft="unconfirmed">aɣerbaz</annotation>
+		<annotation cp="🏬" draft="unconfirmed">taḥanut meqqren</annotation>
+		<annotation cp="🏬" type="tts" draft="unconfirmed">taḥanut meqqren</annotation>
+		<annotation cp="🏭" draft="unconfirmed">taneɣraft</annotation>
+		<annotation cp="🏭" type="tts" draft="unconfirmed">taneɣraft</annotation>
+		<annotation cp="🏯" draft="unconfirmed">tiɣremt tajapunit</annotation>
+		<annotation cp="🏯" type="tts" draft="unconfirmed">tiɣremt tajapunit</annotation>
+		<annotation cp="🏰" draft="unconfirmed">tiɣremt</annotation>
+		<annotation cp="🏰" type="tts" draft="unconfirmed">tiɣremt</annotation>
+		<annotation cp="💒" draft="unconfirmed">tissulya</annotation>
+		<annotation cp="💒" type="tts" draft="unconfirmed">tissulya</annotation>
+		<annotation cp="🗼" draft="unconfirmed">Tiɣremt n Tokyo</annotation>
+		<annotation cp="🗼" type="tts" draft="unconfirmed">Tiɣremt n Tokyo</annotation>
+		<annotation cp="🗽" draft="unconfirmed">lemqam n tlelli</annotation>
+		<annotation cp="🗽" type="tts" draft="unconfirmed">lemqam n tlelli</annotation>
+		<annotation cp="⛪">tamezgida n imasiḥiyen</annotation>
+		<annotation cp="⛪" type="tts" draft="unconfirmed">tamezgida n imasiḥiyen</annotation>
+		<annotation cp="🕌">tamezgida n inselmen</annotation>
+		<annotation cp="🕌" type="tts" draft="unconfirmed">tamezgida n inselmen</annotation>
+		<annotation cp="🕍">tamezgida n udayen</annotation>
+		<annotation cp="🕍" type="tts" draft="unconfirmed">tamezgida n udayen</annotation>
+		<annotation cp="⛩" draft="unconfirmed">lemqam shrine</annotation>
+		<annotation cp="⛩" type="tts" draft="unconfirmed">lemqam shrine</annotation>
+		<annotation cp="🕋">lkaɛva</annotation>
+		<annotation cp="🕋" type="tts" draft="unconfirmed">lkaɛva</annotation>
+		<annotation cp="⛲">tala</annotation>
+		<annotation cp="⛲" type="tts" draft="unconfirmed">tala</annotation>
+		<annotation cp="⛺" draft="unconfirmed">aqiḍun</annotation>
+		<annotation cp="⛺" type="tts" draft="unconfirmed">aqiḍun</annotation>
+		<annotation cp="🌁" draft="unconfirmed">agu</annotation>
+		<annotation cp="🌁" type="tts" draft="unconfirmed">agu</annotation>
+		<annotation cp="🌃">iḍ s itran</annotation>
+		<annotation cp="🌃" type="tts" draft="unconfirmed">iḍ s itran</annotation>
+		<annotation cp="🏙" draft="unconfirmed">tamdint</annotation>
+		<annotation cp="🏙" type="tts" draft="unconfirmed">tamdint</annotation>
+		<annotation cp="🚇">amitṛu</annotation>
+		<annotation cp="🚇" type="tts" draft="unconfirmed">amitṛu</annotation>
+		<annotation cp="🚈">amitru afess</annotation>
+		<annotation cp="🚈" type="tts" draft="unconfirmed">amitru afess</annotation>
+		<annotation cp="🚓" draft="unconfirmed">Takerrust n temsulta</annotation>
+		<annotation cp="🚓" type="tts" draft="unconfirmed">Takerrust n temsulta</annotation>
+		<annotation cp="🚕" draft="unconfirmed">Ataksi</annotation>
+		<annotation cp="🚕" type="tts" draft="unconfirmed">Ataksi</annotation>
+		<annotation cp="🚗" draft="unconfirmed">Takerrust</annotation>
+		<annotation cp="🚗" type="tts" draft="unconfirmed">Takerrust</annotation>
+		<annotation cp="🛹">Avilu</annotation>
+		<annotation cp="🚨" draft="unconfirmed">Taftilt n tkerrust n tmsulta</annotation>
+		<annotation cp="🚨" type="tts" draft="unconfirmed">Taftilt n tkerrust n tmsulta</annotation>
+		<annotation cp="✈">asafag</annotation>
+		<annotation cp="✈" type="tts" draft="unconfirmed">asafag</annotation>
+		<annotation cp="🛩">asafag ameẓyan</annotation>
+		<annotation cp="🛩" type="tts" draft="unconfirmed">asafag ameẓyan</annotation>
+		<annotation cp="💺">tasɣimt</annotation>
+		<annotation cp="💺" type="tts" draft="unconfirmed">tasɣimt</annotation>
+		<annotation cp="🚁">talikuptirt</annotation>
+		<annotation cp="🚁" type="tts" draft="unconfirmed">talikuptirt</annotation>
+		<annotation cp="🛰">Aṣatilit</annotation>
+		<annotation cp="🛰" type="tts" draft="unconfirmed">Aṣatilit</annotation>
+		<annotation cp="🚀">tallunt</annotation>
+		<annotation cp="🛸">taɣawsa tarussint yettafgen</annotation>
+		<annotation cp="⌛">tamrilt n ijdan</annotation>
+		<annotation cp="⌛" type="tts" draft="unconfirmed">tamrilt n ijdan</annotation>
+		<annotation cp="⏳">tamrilt n ijdan yettmirin</annotation>
+		<annotation cp="⏳" type="tts" draft="unconfirmed">tamrilt n ijdan yettmirin</annotation>
+		<annotation cp="⌚">tamrilt</annotation>
+		<annotation cp="⌚" type="tts" draft="unconfirmed">tamrilt</annotation>
+		<annotation cp="⏱">amesnakud</annotation>
+		<annotation cp="⏱" type="tts" draft="unconfirmed">amesnakud</annotation>
+		<annotation cp="⏲">Asakway</annotation>
+		<annotation cp="⏲" type="tts" draft="unconfirmed">Asakway</annotation>
+		<annotation cp="🌡">atirmumitr</annotation>
+		<annotation cp="🌡" type="tts" draft="unconfirmed">atirmumitr</annotation>
+		<annotation cp="☀">iṭij</annotation>
+		<annotation cp="☀" type="tts" draft="unconfirmed">iṭij</annotation>
+		<annotation cp="☁">asigna</annotation>
+		<annotation cp="☁" type="tts" draft="unconfirmed">asigna</annotation>
+		<annotation cp="⛅">asigna | iṭij</annotation>
+		<annotation cp="🌤">asigna | iṭij</annotation>
+		<annotation cp="🌫">asigna</annotation>
+		<annotation cp="🔥">times</annotation>
+		<annotation cp="🔥" type="tts" draft="unconfirmed">times</annotation>
+		<annotation cp="🎃">taxsayt</annotation>
+		<annotation cp="🎃" type="tts" draft="unconfirmed">taxsayt</annotation>
+		<annotation cp="🎆">asfugel</annotation>
+		<annotation cp="🎇">ifṭiwej</annotation>
+		<annotation cp="🎇" type="tts" draft="unconfirmed">ifṭiwej</annotation>
+		<annotation cp="✨">itran</annotation>
+		<annotation cp="✨" type="tts" draft="unconfirmed">itran</annotation>
+		<annotation cp="🎈">asfugel</annotation>
+		<annotation cp="🎀">asfugel</annotation>
+		<annotation cp="🎫">atiki</annotation>
+		<annotation cp="🎫" type="tts" draft="unconfirmed">atiki</annotation>
+		<annotation cp="🎖">ciɛa taserdasant</annotation>
+		<annotation cp="🎖" type="tts" draft="unconfirmed">ciɛa taserdasant</annotation>
+		<annotation cp="🏆">arraz</annotation>
+		<annotation cp="🏆" type="tts" draft="unconfirmed">arraz</annotation>
+		<annotation cp="🏅">ciɛa n waddal</annotation>
+		<annotation cp="🏅" type="tts" draft="unconfirmed">ciɛa n waddal</annotation>
+		<annotation cp="🥇">ciɛa n dhev</annotation>
+		<annotation cp="🥇" type="tts" draft="unconfirmed">ciɛa n dhev</annotation>
+		<annotation cp="🥈">ciɛa n lfeṭṭa</annotation>
+		<annotation cp="🥈" type="tts" draft="unconfirmed">ciɛa n lfeṭṭa</annotation>
+		<annotation cp="🥉" draft="unconfirmed">ciɛa n bṛunz</annotation>
+		<annotation cp="🥉" type="tts" draft="unconfirmed">ciɛa n bṛunz</annotation>
+		<annotation cp="⚽">ččir n dabax n uḍar</annotation>
+		<annotation cp="⚽" type="tts" draft="unconfirmed">ččir n dabax n uḍar</annotation>
+		<annotation cp="🔮">takurt n ukrisṭal</annotation>
+		<annotation cp="🔮" type="tts" draft="unconfirmed">takurt n ukrisṭal</annotation>
+		<annotation cp="🀄">azeggaɣ | mahjong | urar</annotation>
+		<annotation cp="🎴">takarḍa | urar</annotation>
+		<annotation cp="🎩" draft="unconfirmed">tarazalt</annotation>
+		<annotation cp="🎓" draft="unconfirmed">agerdas</annotation>
+		<annotation cp="🎓" type="tts" draft="unconfirmed">agerdas</annotation>
+		<annotation cp="⛑">akaskiḍ amidag amellal</annotation>
+		<annotation cp="⛑" type="tts" draft="unconfirmed">akaskiḍ amidag amellal</annotation>
+		<annotation cp="📿">teṣbiḥ</annotation>
+		<annotation cp="📿" type="tts" draft="unconfirmed">teṣbiḥ</annotation>
+		<annotation cp="💄" draft="unconfirmed">zzin aγec</annotation>
+		<annotation cp="💄" type="tts" draft="unconfirmed">zzin aγec</annotation>
+		<annotation cp="💍">taxatemt</annotation>
+		<annotation cp="💍" type="tts" draft="unconfirmed">taxatemt</annotation>
+		<annotation cp="💎">adgun aswa</annotation>
+		<annotation cp="💎" type="tts" draft="unconfirmed">adgun aswa</annotation>
+		<annotation cp="🔇">asusam</annotation>
+		<annotation cp="🔇" type="tts" draft="unconfirmed">asusam</annotation>
+		<annotation cp="🔈" draft="unconfirmed">imesli</annotation>
+		<annotation cp="🔉" draft="unconfirmed">imesli</annotation>
+		<annotation cp="🔊" draft="unconfirmed">imesli</annotation>
+		<annotation cp="📣">amigafun</annotation>
+		<annotation cp="📣" type="tts" draft="unconfirmed">amigafun</annotation>
+		<annotation cp="🎵" draft="unconfirmed">tazmilt taẓawant</annotation>
+		<annotation cp="🎵" type="tts" draft="unconfirmed">tazmilt taẓawant</annotation>
+		<annotation cp="🎶" draft="unconfirmed">tizmilin tiẓawanin</annotation>
+		<annotation cp="🎶" type="tts" draft="unconfirmed">tizmilin tiẓawanin</annotation>
+		<annotation cp="📻" draft="unconfirmed">rradyu</annotation>
+		<annotation cp="📻" type="tts" draft="unconfirmed">rradyu</annotation>
+		<annotation cp="🎷" draft="unconfirmed">asaksufun</annotation>
+		<annotation cp="🎷" type="tts" draft="unconfirmed">asaksufun</annotation>
+		<annotation cp="🎸" draft="unconfirmed">snitra</annotation>
+		<annotation cp="🎸" type="tts" draft="unconfirmed">snitra</annotation>
+		<annotation cp="📱" draft="unconfirmed">tiliɣri tazirazt</annotation>
+		<annotation cp="📱" type="tts" draft="unconfirmed">tiliɣri tazirazt</annotation>
+		<annotation cp="☎" draft="unconfirmed">tiliɣri</annotation>
+		<annotation cp="☎" type="tts" draft="unconfirmed">tiliɣri</annotation>
+		<annotation cp="🔋" draft="unconfirmed">aẓru</annotation>
+		<annotation cp="🔋" type="tts" draft="unconfirmed">aẓru</annotation>
+		<annotation cp="💻">aselkim aziraz</annotation>
+		<annotation cp="💻" type="tts" draft="unconfirmed">aselkim aziraz</annotation>
+		<annotation cp="🖥">aselkim n tnarit</annotation>
+		<annotation cp="🖥" type="tts" draft="unconfirmed">aselkim n tnarit</annotation>
+		<annotation cp="🖨">tasaggazt</annotation>
+		<annotation cp="🖨" type="tts" draft="unconfirmed">tasaggazt</annotation>
+		<annotation cp="⌨">anasiw</annotation>
+		<annotation cp="⌨" type="tts" draft="unconfirmed">anasiw</annotation>
+		<annotation cp="🖱">taɣerdayt n uselkim</annotation>
+		<annotation cp="🖱" type="tts" draft="unconfirmed">taɣerdayt n uselkim</annotation>
+		<annotation cp="🖲">aselkim</annotation>
+		<annotation cp="💽" draft="unconfirmed">aḍebsi n uselkim</annotation>
+		<annotation cp="💽" type="tts" draft="unconfirmed">aḍebsi n uselkim</annotation>
+		<annotation cp="🎥" draft="unconfirmed">takamirat</annotation>
+		<annotation cp="🎥" type="tts" draft="unconfirmed">takamirat</annotation>
+		<annotation cp="📽" draft="unconfirmed">ameskan n yisura</annotation>
+		<annotation cp="📽" type="tts" draft="unconfirmed">ameskan n yisura</annotation>
+		<annotation cp="📺">tiliẓri</annotation>
+		<annotation cp="📺" type="tts" draft="unconfirmed">tiliẓri</annotation>
+		<annotation cp="📷">Takamiṛat</annotation>
+		<annotation cp="📷" type="tts" draft="unconfirmed">Takamiṛat</annotation>
+		<annotation cp="📔">imedlis s tduli icebḥen</annotation>
+		<annotation cp="📔" type="tts" draft="unconfirmed">imedlis s tduli icebḥen</annotation>
+		<annotation cp="📕">adlis imedlen</annotation>
+		<annotation cp="📕" type="tts" draft="unconfirmed">adlis imedlen</annotation>
+		<annotation cp="📖">adlis yeldin</annotation>
+		<annotation cp="📖" type="tts" draft="unconfirmed">adlis yeldin</annotation>
+		<annotation cp="📗">adlis azegzaw</annotation>
+		<annotation cp="📗" type="tts" draft="unconfirmed">adlis azegzaw</annotation>
+		<annotation cp="📘">adlis amidadi</annotation>
+		<annotation cp="📘" type="tts" draft="unconfirmed">adlis amidadi</annotation>
+		<annotation cp="📙">adlis ačinawi</annotation>
+		<annotation cp="📙" type="tts" draft="unconfirmed">adlis ačinawi</annotation>
+		<annotation cp="📚">idlisen</annotation>
+		<annotation cp="📚" type="tts" draft="unconfirmed">idlisen</annotation>
+		<annotation cp="📓">imedlis</annotation>
+		<annotation cp="📓" type="tts" draft="unconfirmed">imedlis</annotation>
+		<annotation cp="📒">ambellez</annotation>
+		<annotation cp="📒" type="tts" draft="unconfirmed">ambellez</annotation>
+		<annotation cp="📃">asebter yettwasekwren</annotation>
+		<annotation cp="📃" type="tts" draft="unconfirmed">asebter yettwasekwren</annotation>
+		<annotation cp="📜">adrurem</annotation>
+		<annotation cp="📜" type="tts" draft="unconfirmed">adrurem</annotation>
+		<annotation cp="📄">asebter</annotation>
+		<annotation cp="📄" type="tts" draft="unconfirmed">asebter</annotation>
+		<annotation cp="📰">aɣmis</annotation>
+		<annotation cp="📰" type="tts" draft="unconfirmed">aɣmis</annotation>
+		<annotation cp="📑">tacreṭ | tacreṭ n usebter</annotation>
+		<annotation cp="🔖">tacreṭ n usebter</annotation>
+		<annotation cp="🔖" type="tts" draft="unconfirmed">tacreṭ n usebter</annotation>
+		<annotation cp="🏷">tabzimt</annotation>
+		<annotation cp="🏷" type="tts" draft="unconfirmed">tabzimt</annotation>
+		<annotation cp="✉">tajellabt</annotation>
+		<annotation cp="✉" type="tts" draft="unconfirmed">tajellabt</annotation>
+		<annotation cp="📧">imayl</annotation>
+		<annotation cp="📧" type="tts" draft="unconfirmed">imayl</annotation>
+		<annotation cp="📨">izen ukcim</annotation>
+		<annotation cp="📨" type="tts" draft="unconfirmed">izen ukcim</annotation>
+		<annotation cp="📩">izen yettwazen</annotation>
+		<annotation cp="📩" type="tts" draft="unconfirmed">izen yettwazen</annotation>
+		<annotation cp="📤">tanaka n tuzna</annotation>
+		<annotation cp="📤" type="tts" draft="unconfirmed">tanaka n tuzna</annotation>
+		<annotation cp="🗳">asenduq</annotation>
+		<annotation cp="✏">imru</annotation>
+		<annotation cp="✏" type="tts" draft="unconfirmed">imru</annotation>
+		<annotation cp="✒">imru n tricet aberkan</annotation>
+		<annotation cp="✒" type="tts" draft="unconfirmed">imru n tricet aberkan</annotation>
+		<annotation cp="📁">akaram n ufaylu</annotation>
+		<annotation cp="📁" type="tts" draft="unconfirmed">akaram n ufaylu</annotation>
+		<annotation cp="📂">ldi akaram n ufaylu</annotation>
+		<annotation cp="📂" type="tts" draft="unconfirmed">ldi akaram n ufaylu</annotation>
+		<annotation cp="📆">awitay</annotation>
+		<annotation cp="🔒">yeskweṛ</annotation>
+		<annotation cp="🔒" type="tts" draft="unconfirmed">yeskweṛ</annotation>
+		<annotation cp="🔓">yeldi</annotation>
+		<annotation cp="🔓" type="tts" draft="unconfirmed">yeldi</annotation>
+		<annotation cp="🔨">afecku</annotation>
+		<annotation cp="🛡" draft="unconfirmed">abeckiḍ</annotation>
+		<annotation cp="⚙">afecku</annotation>
+		<annotation cp="🔗">aseɣwen</annotation>
+		<annotation cp="🔗" type="tts" draft="unconfirmed">aseɣwen</annotation>
+		<annotation cp="💉">tisegnit</annotation>
+		<annotation cp="💉" type="tts" draft="unconfirmed">tisegnit</annotation>
+		<annotation cp="💊">amejjay | amuḍin | tujjya</annotation>
+		<annotation cp="🚪">tabburt</annotation>
+		<annotation cp="🚪" type="tts" draft="unconfirmed">tabburt</annotation>
+		<annotation cp="🛒">taqecwalt n tiɣin</annotation>
+		<annotation cp="🛒" type="tts" draft="unconfirmed">taqecwalt n tiɣin</annotation>
+		<annotation cp="🚬">ageṛṛu</annotation>
+		<annotation cp="🚬" type="tts" draft="unconfirmed">ageṛṛu</annotation>
+		<annotation cp="⚰">tamettant</annotation>
+		<annotation cp="🏧">tamacint n tedrimt tawurmant</annotation>
+		<annotation cp="🏧" type="tts" draft="unconfirmed">tamacint n tedrimt tawurmant</annotation>
+		<annotation cp="🚮">tignit n iḍumman</annotation>
+		<annotation cp="🚮" type="tts" draft="unconfirmed">tignit n iḍumman</annotation>
+		<annotation cp="🚰">aman deg ufus</annotation>
+		<annotation cp="🚰" type="tts" draft="unconfirmed">aman deg ufus</annotation>
+		<annotation cp="♿">azamul n unekcum n uneɛyabu</annotation>
+		<annotation cp="♿" type="tts" draft="unconfirmed">azamul n unekcum n uneɛyabu</annotation>
+		<annotation cp="🚹">azamul n urgaz</annotation>
+		<annotation cp="🚹" type="tts" draft="unconfirmed">azamul n urgaz</annotation>
+		<annotation cp="🚺">azamul n tmeṭṭut</annotation>
+		<annotation cp="🚺" type="tts" draft="unconfirmed">azamul n tmeṭṭut</annotation>
+		<annotation cp="🚻">azamul n teslalayt</annotation>
+		<annotation cp="🚻" type="tts" draft="unconfirmed">azamul n teslalayt</annotation>
+		<annotation cp="🚼">azamul n ṣebyan</annotation>
+		<annotation cp="🚼" type="tts" draft="unconfirmed">azamul n ṣebyan</annotation>
+		<annotation cp="🚾">taslalayt</annotation>
+		<annotation cp="🚾" type="tts" draft="unconfirmed">taslalayt</annotation>
+		<annotation cp="⬆">aneccab d asawen</annotation>
+		<annotation cp="⬆" type="tts" draft="unconfirmed">aneccab d asawen</annotation>
+		<annotation cp="↗">aneccab d asawen uẓẓil</annotation>
+		<annotation cp="↗" type="tts" draft="unconfirmed">aneccab d asawen uẓẓil</annotation>
+		<annotation cp="➡">aneccab ayeffus</annotation>
+		<annotation cp="➡" type="tts" draft="unconfirmed">aneccab ayeffus</annotation>
+		<annotation cp="↘">aneccab d akesser uẓẓil</annotation>
+		<annotation cp="↘" type="tts" draft="unconfirmed">aneccab d akesser uẓẓil</annotation>
+		<annotation cp="⬇">aneccab akesser</annotation>
+		<annotation cp="⬇" type="tts" draft="unconfirmed">aneccab akesser</annotation>
+		<annotation cp="↙">aneccab akesser ayeffus</annotation>
+		<annotation cp="↙" type="tts" draft="unconfirmed">aneccab akesser ayeffus</annotation>
+		<annotation cp="⬅">aneccab azelmaḍ</annotation>
+		<annotation cp="⬅" type="tts" draft="unconfirmed">aneccab azelmaḍ</annotation>
+		<annotation cp="↖">aneccab asawen azelmaḍ</annotation>
+		<annotation cp="↖" type="tts" draft="unconfirmed">aneccab asawen azelmaḍ</annotation>
+		<annotation cp="↕">aneccab asawen akesser</annotation>
+		<annotation cp="↕" type="tts" draft="unconfirmed">aneccab asawen akesser</annotation>
+		<annotation cp="↔">aneccab azelmaḍ ayeffus</annotation>
+		<annotation cp="↔" type="tts" draft="unconfirmed">aneccab azelmaḍ ayeffus</annotation>
+		<annotation cp="↩">aneccab ayeffus yettin s azelmaḍ</annotation>
+		<annotation cp="↩" type="tts" draft="unconfirmed">aneccab ayeffus yettin s azelmaḍ</annotation>
+		<annotation cp="↪">aneccab azelmaḍ yettin s ayeffus</annotation>
+		<annotation cp="↪" type="tts" draft="unconfirmed">aneccab azelmaḍ yettin s ayeffus</annotation>
+		<annotation cp="⤴">aneccab ayeffus yettin d asawen</annotation>
+		<annotation cp="⤴" type="tts" draft="unconfirmed">aneccab ayeffus yettin d asawen</annotation>
+		<annotation cp="⤵">aneccab ayeffus yettin d akesser</annotation>
+		<annotation cp="⤵" type="tts" draft="unconfirmed">aneccab ayeffus yettin d akesser</annotation>
+		<annotation cp="🔃">ineccaben tanila n isegnan n temrilt</annotation>
+		<annotation cp="🔃" type="tts" draft="unconfirmed">ineccaben tanila n isegnan n temrilt</annotation>
+		<annotation cp="🔄">taqeffalt n ineccaben n tnila yettin n isegnan n temrilt</annotation>
+		<annotation cp="🔄" type="tts" draft="unconfirmed">taqeffalt n ineccaben n tnila yettin n isegnan n temrilt</annotation>
+		<annotation cp="🔙">Aneccab n tuɣalin</annotation>
+		<annotation cp="🔙" type="tts" draft="unconfirmed">Aneccab n tuɣalin</annotation>
+		<annotation cp="🔚">Aneccab n tagara</annotation>
+		<annotation cp="🔚" type="tts" draft="unconfirmed">Aneccab n tagara</annotation>
+		<annotation cp="🔛">urmid</annotation>
+		<annotation cp="🔛" type="tts" draft="unconfirmed">urmid</annotation>
+		<annotation cp="🔜">Aneccab Qrib</annotation>
+		<annotation cp="🔜" type="tts" draft="unconfirmed">Aneccab Qrib</annotation>
+		<annotation cp="🔝">aneccab n ufalla</annotation>
+		<annotation cp="🔝" type="tts" draft="unconfirmed">aneccab n ufalla</annotation>
+		<annotation cp="♈">Ikerri</annotation>
+		<annotation cp="♈" type="tts" draft="unconfirmed">Ikerri</annotation>
+		<annotation cp="♉">Aramul</annotation>
+		<annotation cp="♉" type="tts" draft="unconfirmed">Aramul</annotation>
+		<annotation cp="♊">Akniwen</annotation>
+		<annotation cp="♊" type="tts" draft="unconfirmed">Akniwen</annotation>
+		<annotation cp="♋">Afurray</annotation>
+		<annotation cp="♋" type="tts" draft="unconfirmed">Afurray</annotation>
+		<annotation cp="♌">Izem</annotation>
+		<annotation cp="♌" type="tts" draft="unconfirmed">Izem</annotation>
+		<annotation cp="♍">Taḥbayrit</annotation>
+		<annotation cp="♍" type="tts" draft="unconfirmed">Taḥbayrit</annotation>
+		<annotation cp="♎">Tacihant</annotation>
+		<annotation cp="♎" type="tts" draft="unconfirmed">Tacihant</annotation>
+		<annotation cp="♏">Tiɣirdemt</annotation>
+		<annotation cp="♏" type="tts" draft="unconfirmed">Tiɣirdemt</annotation>
+		<annotation cp="♐">Amnaccab</annotation>
+		<annotation cp="♐" type="tts" draft="unconfirmed">Amnaccab</annotation>
+		<annotation cp="♑">Aqelwac</annotation>
+		<annotation cp="♑" type="tts" draft="unconfirmed">Aqelwac</annotation>
+		<annotation cp="♒">Azfuf</annotation>
+		<annotation cp="♒" type="tts" draft="unconfirmed">Azfuf</annotation>
+		<annotation cp="♓">Islem</annotation>
+		<annotation cp="♓" type="tts" draft="unconfirmed">Islem</annotation>
+		<annotation cp="⛎">Aẓudyak</annotation>
+		<annotation cp="🔀">Aneccab anmidag</annotation>
+		<annotation cp="🔀" type="tts" draft="unconfirmed">Aneccab anmidag</annotation>
+		<annotation cp="🔁">aneccab imdewweṛ</annotation>
+		<annotation cp="🔁" type="tts" draft="unconfirmed">aneccab imdewweṛ</annotation>
+		<annotation cp="▶">taqeffalt n tɣuri</annotation>
+		<annotation cp="▶" type="tts" draft="unconfirmed">taqeffalt n tɣuri</annotation>
+		<annotation cp="⏏">taqeffalt n senzelli</annotation>
+		<annotation cp="⏏" type="tts" draft="unconfirmed">taqeffalt n senzelli</annotation>
+		<annotation cp="🎦">sinima</annotation>
+		<annotation cp="🎦" type="tts" draft="unconfirmed">sinima</annotation>
+		<annotation cp="💲">adulaṛ | idrimen | tadrimt</annotation>
+		<annotation cp="🏁">anay s texxamin</annotation>
+		<annotation cp="🏁" type="tts" draft="unconfirmed">anay s texxamin</annotation>
+		<annotation cp="🚩">anay azeggaɣ</annotation>
+		<annotation cp="🚩" type="tts" draft="unconfirmed">anay azeggaɣ</annotation>
+		<annotation cp="🎌">anayen ijapuniyen</annotation>
+		<annotation cp="🎌" type="tts" draft="unconfirmed">anayen ijapuniyen</annotation>
+		<annotation cp="🏴">anay aberkan</annotation>
+		<annotation cp="🏴" type="tts" draft="unconfirmed">anay aberkan</annotation>
+		<annotation cp="🏳">anay amellal</annotation>
+		<annotation cp="🏳" type="tts" draft="unconfirmed">anay amellal</annotation>
+		<annotation cp="🏳‍🌈">anay n teslit n unẓar</annotation>
+		<annotation cp="🏳‍🌈" type="tts" draft="unconfirmed">anay n teslit n unẓar</annotation>
+	</annotations>
+</ldml>

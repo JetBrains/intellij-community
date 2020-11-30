@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
@@ -221,11 +222,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   public static boolean isSearchField(Component c) {
-    return c instanceof JTextField && "search".equals(((JTextField)c).getClientProperty(VARIANT));
+    if(!(c instanceof JTextField)){
+      return false;
+    }
+    var variant = ((JTextField)c).getClientProperty(VARIANT);
+    return "search".equals(variant) || "searchWithJbPopup".equals(variant);
   }
 
   public static boolean isSearchFieldWithHistoryPopup(Component c) {
-    return isSearchField(c) && ((JTextField)c).getClientProperty(POPUP) instanceof JPopupMenu;
+    return isSearchField(c) && (((JTextField)c).getClientProperty(POPUP) instanceof JPopupMenu ||
+                                ((JTextField)c).getClientProperty(POPUP) instanceof JBPopup);
   }
 
   @Nullable
@@ -557,7 +563,21 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         if (extension instanceof Extension) {
           addExtension((Extension)extension);
         }
-        addExtension(new SearchExtension());
+        JTextComponent component = getComponent();
+        Object popup = component.getClientProperty(POPUP);
+        if(popup instanceof JPopupMenu) {
+          addExtension(new SearchExtension<>(PopupState.forPopupMenu(), (JPopupMenu)popup));
+          addExtension(new ClearExtension());
+        }
+      }
+      else if ("searchWithJbPopup".equals(variant)) {
+        Object extension = getComponent().getClientProperty("search.extension");
+        if (extension instanceof Extension) {
+          addExtension((Extension)extension);
+        }
+        JTextComponent component = getComponent();
+        Object popup = component.getClientProperty(POPUP);
+        addExtension(new SearchExtension<>(PopupState.forPopup(), (JBPopup)popup));
         addExtension(new ClearExtension());
       }
     }
@@ -589,6 +609,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   public static final class IconHolder {
     public final Rectangle bounds = new Rectangle();
     public final Extension extension;
+
     public boolean hovered;
     public Icon icon;
 
@@ -617,9 +638,15 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
 
-  private final class SearchExtension implements Extension {
-    private final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
+  private final class SearchExtension<Popup> implements Extension {
+    private final PopupState<Popup> myPopupState;
     private Rectangle bounds; // should be bound to IconHandler#bounds
+    private final Popup myPopup;
+
+    private SearchExtension(PopupState<Popup> popupState, Popup popup){
+      this.myPopupState = popupState;
+      this.myPopup = popup;
+    }
 
     @Override
     public Icon getIcon(boolean hovered) {
@@ -645,16 +672,30 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public Runnable getActionOnClick() {
       JTextComponent component = getComponent();
-      Object property = component == null ? null : component.getClientProperty(POPUP);
-      JPopupMenu popup = property instanceof JPopupMenu ? (JPopupMenu)property : null;
-      return popup == null ? null : () -> {
-        if (myPopupState.isRecentlyHidden()) return; // do not show new popup
-        Rectangle editor = getVisibleEditorRect();
-        if (editor != null) {
-          myPopupState.prepareToShow(popup);
-          popup.show(component, bounds.x, editor.y + editor.height);
-        }
-      };
+      if(component == null){
+        return null;
+      }
+      if(myPopup instanceof JPopupMenu){
+        return () -> {
+          if (myPopupState.isRecentlyHidden()) return; // do not show new popup
+          Rectangle editor = getVisibleEditorRect();
+          if (editor != null) {
+            myPopupState.prepareToShow(myPopup);
+            ((JPopupMenu)myPopup).show(component, bounds.x, editor.y + editor.height);
+          }
+        };
+      }
+      if(myPopup instanceof JBPopup){
+        return () -> {
+          if (myPopupState.isRecentlyHidden()) return; // do not show new popup
+          Rectangle editor = getVisibleEditorRect();
+          if (editor != null) {
+            myPopupState.prepareToShow(myPopup);
+            ((JBPopup)myPopup).showUnderneathOf(component);
+          }
+        };
+      }
+      return null;
     }
 
     @Override

@@ -93,9 +93,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
-    FieldDescriptor[] fields = new FieldDescriptor[myFieldDescriptors.length];
-    System.arraycopy(myFieldDescriptors, 0, fields, 0, myFieldDescriptors.length);
-    return new EncapsulateFieldsViewDescriptor(fields);
+    return new EncapsulateFieldsViewDescriptor(myFieldDescriptors.clone());
   }
 
   @Override
@@ -237,7 +235,6 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
       for (final PsiReference reference : ReferencesSearch.search(fieldDescriptor.getField())) {
         final PsiElement element = reference.getElement();
-        if (element == null) continue;
 
         final EncapsulateFieldHelper helper = EncapsulateFieldHelper.getHelper(element.getLanguage());
         if (helper != null) {

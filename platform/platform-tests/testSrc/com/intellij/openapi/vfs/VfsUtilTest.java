@@ -4,17 +4,24 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectManagerExImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -22,11 +29,12 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
@@ -37,6 +45,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,6 +58,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
@@ -440,9 +450,100 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       //todo order should be the same
       if (waitForDiskRefreshCompletionBeforeStartingModality) {
         assertThat(log).containsExactlyInAnyOrder("modal finished", "non-modal finished");
-      } else {
+      }
+      else {
         assertThat(log).containsExactly("modal finished", "non-modal finished");
       }
     });
+  }
+
+  @Test
+  public void testVfsUtilCopyMustCopyBOMCorrectly() throws IOException {
+    File file = myTempDir.newFile("test.txt");
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    assertFalse(vFile.isDirectory());
+    WriteAction.runAndWait(() -> vFile.setBinaryContent(CharsetToolkit.UTF8_BOM));
+    assertEquals("", VfsUtilCore.loadText(vFile));
+    assertArrayEquals(CharsetToolkit.UTF8_BOM, vFile.getBOM());
+    VirtualFile dir = WriteAction.computeAndWait(() -> vFile.getParent().createChildDirectory(this, "dir"));
+
+    VirtualFile copy = WriteAction.computeAndWait(() -> VfsUtil.copy(this, vFile, dir));
+
+    assertEquals("", VfsUtilCore.loadText(copy));
+    assertArrayEquals(CharsetToolkit.UTF8_BOM, copy.getBOM());
+  }
+
+  @Test
+  public void testVfsUtilCopyMustCopyBOMCorrectlyForFileUnderProjectRoot() throws IOException {
+    File dir1 = myTempDir.newDirectory("dir1");
+    Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()));
+    WriteAction.runAndWait(() -> {
+      VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
+      Module module1 = PsiTestUtil.addModule(project, ModuleType.EMPTY, "module1", root);
+      ModuleRootModificationUtil.addContentRoot(module1, root);
+      File f = new File(dir1, "file.txt");
+      FileUtil.writeToFile(f, CharsetToolkit.UTF8_BOM);
+      VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+      assertTrue(ProjectFileIndex.getInstance(project).isInContent(file));
+      assertEquals("", VfsUtilCore.loadText(file));
+      assertEquals("", VfsUtilCore.loadText(file));
+      assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
+      VirtualFile dir2 = root.createChildDirectory(this, "dir2");
+      VirtualFile copy = VfsUtil.copy(this, file, dir2);
+      assertEquals("", VfsUtilCore.loadText(copy));
+      assertEquals("", VfsUtilCore.loadText(copy));
+      assertArrayEquals(CharsetToolkit.UTF8_BOM, copy.getBOM());
+    });
+  }
+
+  @Test
+  public void testVfsUtilCopyMustCopyBOMLessFileCorrectlyWhenEncodingProjectManagerBOMForNewFilesOptionIsSetToTrue() throws IOException {
+    File dir1 = myTempDir.newDirectory("dir1");
+    Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()));
+    WriteAction.runAndWait(() -> {
+      ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project)).setBOMForNewUtf8Files(
+        EncodingProjectManagerImpl.BOMForNewUTF8Files.ALWAYS);
+      VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
+      Module module1 = PsiTestUtil.addModule(project, ModuleType.EMPTY, "module1", root);
+      ModuleRootModificationUtil.addContentRoot(module1, root);
+      File f = new File(dir1, "file.txt");
+      FileUtil.writeToFile(f, "xxx");
+      VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+      assertTrue(ProjectFileIndex.getInstance(project).isInContent(file));
+      assertEquals("xxx", VfsUtilCore.loadText(file));
+      assertEquals("xxx", VfsUtilCore.loadText(file));
+      assertArrayEquals(null, file.getBOM());
+      VirtualFile dir2 = root.createChildDirectory(this, "dir2");
+      VirtualFile copy = VfsUtil.copy(this, file, dir2);
+      assertEquals("xxx", VfsUtilCore.loadText(copy));
+      assertEquals("xxx", VfsUtilCore.loadText(copy));
+      assertArrayEquals(null, copy.getBOM());
+    });
+  }
+
+  @Test
+  public void refreshAndFindFileMustUpdateParentDirectoryCaseSensitivityToReturnCorrectFile() throws IOException {
+    IoTestUtil.assumeWindows();
+    IoTestUtil.assumeWslPresence();
+    assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
+
+    File dir = new File(myTempDir.getRoot(), "dir");
+    File file = new File(dir, "child.txt");
+    assertFalse(file.exists());
+    assertEquals(myTempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(myTempDir.getRoot()));
+
+    assertTrue(dir.mkdirs());
+    assertTrue(file.createNewFile());
+
+    IoTestUtil.setCaseSensitivity(dir, true);
+    File file2 = new File(dir, "CHILD.TXT");
+    assertTrue(file2.createNewFile());
+    VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file2);
+    assertNotNull(vFile2);
+    assertEquals("CHILD.TXT", vFile2.getName());
+    assertTrue(vFile2.isCaseSensitive());
+    assertTrue(vFile2.getParent().isCaseSensitive());
+    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, ((VirtualDirectoryImpl)vFile2.getParent()).getChildrenCaseSensitivity());
   }
 }

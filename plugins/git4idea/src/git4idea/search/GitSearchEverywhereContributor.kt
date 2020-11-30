@@ -136,12 +136,13 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
     }
 
     override fun getListCellRendererComponent(
-      list: JList<out Any>?,
+      list: JList<out Any>,
       value: Any?, index: Int,
       isSelected: Boolean, cellHasFocus: Boolean
     ): Component {
       panel.background = UIUtil.getListBackground(isSelected, cellHasFocus)
       leftLabel.apply {
+        font = list.font
         text = when (value) {
           is VcsRef -> value.name
           is VcsCommitMetadata -> value.subject
@@ -155,6 +156,7 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       }
 
       rightLabel.apply {
+        font = list.font
         text = when (value) {
           is VcsRef -> getTrackingRemoteBranchName(value)
           is VcsCommitMetadata -> value.id.toShortString()

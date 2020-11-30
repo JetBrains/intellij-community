@@ -28,7 +28,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -76,7 +75,7 @@ public final class DeleteMethodBodyFix implements IntentionAction {
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     return new DeleteMethodBodyFix(PsiTreeUtil.findSameElementInCopy(myMethod, target));
   }
 }

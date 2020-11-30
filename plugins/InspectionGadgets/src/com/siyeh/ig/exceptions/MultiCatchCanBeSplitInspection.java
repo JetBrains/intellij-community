@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +75,7 @@ public class MultiCatchCanBeSplitInspection extends BaseInspection {
 
       final PsiTypeElement typeElement = Objects.requireNonNull(Objects.requireNonNull(copy.getParameter()).getTypeElement());
       final PsiTypeElement newTypeElement = factory.createTypeElementFromText(disjunction.getCanonicalText(true), catchSection);
-      final PsiElement replaced = typeElement.replace(newTypeElement);
+      final PsiElement replaced = new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
 
       grandParent.addBefore(copy, catchSection);
       styleManager.shortenClassReferences(replaced);

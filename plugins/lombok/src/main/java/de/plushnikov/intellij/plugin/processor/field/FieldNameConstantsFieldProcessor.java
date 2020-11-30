@@ -2,6 +2,8 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -10,7 +12,6 @@ import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import lombok.experimental.FieldNameConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
   private static final String CONFIG_DEFAULT = " CONFIG DEFAULT ";
 
   public FieldNameConstantsFieldProcessor() {
-    super(PsiField.class, FieldNameConstants.class);
+    super(PsiField.class, LombokClassNames.FIELD_NAME_CONSTANTS);
   }
 
   @Override
@@ -44,7 +45,7 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
   public boolean checkIfFieldNameIsValidAndWarn(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     final boolean isValid = isValidFieldNameConstant(psiAnnotation, psiField);
     if (!isValid) {
-      builder.addWarning("Not generating constant for this field: The name of the constant would be equal to the name of this field.");
+      builder.addWarning(LombokBundle.message("inspection.message.not.generating.constant"));
     }
     return isValid;
   }

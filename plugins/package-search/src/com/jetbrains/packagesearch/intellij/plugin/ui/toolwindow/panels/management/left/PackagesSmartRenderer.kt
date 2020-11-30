@@ -1,11 +1,14 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.left
 
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.Label
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchPluginIcons
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
+import com.jetbrains.packagesearch.intellij.plugin.normalizeSpace
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderColor
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toHtml
@@ -14,6 +17,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageS
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryColorManager
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.asList
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.localizedName
+import icons.PackageSearchIcons
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -23,10 +27,10 @@ import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
-import org.apache.commons.lang3.StringUtils
+import org.jetbrains.annotations.Nls
 
 private val packageIconSize by lazy { JBUI.scale(16) }
-private val packageIcon by lazy { IconUtil.toSize(PackageSearchPluginIcons.Package, packageIconSize, packageIconSize) }
+private val packageIcon by lazy { IconUtil.toSize(PackageSearchIcons.Package, packageIconSize, packageIconSize) }
 
 class PackagesSmartRenderer(private val viewModel: PackageSearchToolWindowModel) : ListCellRenderer<PackagesSmartItem> {
 
@@ -92,6 +96,7 @@ class PackagesSmartRenderer(private val viewModel: PackageSearchToolWindowModel)
             latestAvailableVersion
         } else null
 
+        @NlsSafe
         val versionMessage = buildString {
             if (installedVersions.isNotBlank()) {
                 append(colored(installedVersions, textColor2))
@@ -116,13 +121,14 @@ class PackagesSmartRenderer(private val viewModel: PackageSearchToolWindowModel)
         )
     }
 
+    @NlsSafe
     private fun buildIdMessage(
         packageSearchDependency: PackageSearchDependency,
         textColor: RiderColor,
         textColor2: RiderColor
     ): String = buildString {
         if (packageSearchDependency.remoteInfo?.name != null && packageSearchDependency.remoteInfo?.name != packageSearchDependency.identifier) {
-            append(colored(StringUtils.normalizeSpace(packageSearchDependency.remoteInfo?.name), textColor))
+            append(colored(packageSearchDependency.remoteInfo?.name.normalizeSpace(), textColor))
             append(" ")
             append(colored(packageSearchDependency.identifier, textColor2))
         } else {
@@ -130,6 +136,7 @@ class PackagesSmartRenderer(private val viewModel: PackageSearchToolWindowModel)
         }
     }
 
+    @NlsSafe
     @Suppress("ComplexMethod")
     private fun buildRepositoryMessage(
         isSelected: Boolean,
@@ -203,9 +210,9 @@ class PackagesSmartRenderer(private val viewModel: PackageSearchToolWindowModel)
         packageSearchDependency: PackageSearchDependency,
         applyColors: (JComponent) -> Unit,
         iconLabel: JLabel,
-        idMessage: String,
-        repositoryMessage: String,
-        versionMessage: String,
+        @Nls idMessage: String,
+        @Nls repositoryMessage: String,
+        @Label versionMessage: String,
         isMultiPlatform: Boolean
     ): JPanel = JPanel(BorderLayout()).apply {
         @Suppress("MagicNumber") // Gotta love Swing APIs
@@ -245,5 +252,6 @@ class PackagesSmartRenderer(private val viewModel: PackageSearchToolWindowModel)
         }
     }
 
-    private fun colored(text: String?, color: RiderColor) = "<font color=${color.toHtml()}>${text ?: ""}</font>"
+    @NlsSafe
+    private fun colored(@Nls text: String?, color: RiderColor) = "<font color=${color.toHtml()}>${text ?: ""}</font>"
 }

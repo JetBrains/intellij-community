@@ -1,57 +1,46 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager.getApplication
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.annotations.ApiStatus
 
-@Service
-@State(
-  name = "ProjectPluginTracker",
-  storages = [Storage(StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)]
-)
-internal class ProjectPluginTracker(project: Project) : PersistentStateComponent<ProjectPluginTracker.Companion.State> {
+@ApiStatus.Internal
+class ProjectPluginTracker(
+  internal val project: Project,
+  private val state: ProjectPluginTrackerState,
+) {
 
   companion object {
-    @JvmStatic
-    fun getInstance(project: Project): ProjectPluginTracker = project.service()
 
-    class State {
-      var enabledPlugins = mutableSetOf<String>()
-      var disabledPlugins = mutableSetOf<String>()
+    class ProjectPluginTrackerState : BaseState() {
 
-      fun register(id: PluginId, enable: Boolean) {
+      @get:XCollection
+      internal var enabledPlugins by stringSet()
+
+      @get:XCollection
+      internal var disabledPlugins by stringSet()
+
+      internal fun register(id: PluginId, enable: Boolean) {
         val idString = id.idString
-        if (!setToRemoveFrom(enable).remove(idString)) {
-          setToAddTo(enable).add(idString)
+        val setToRemoveFrom = if (enable) disabledPlugins else enabledPlugins
+        if (!setToRemoveFrom.remove(idString)) {
+          val setToAddTo = if (enable) enabledPlugins else disabledPlugins
+          setToAddTo.add(idString)
         }
       }
 
-      fun unregister(id: PluginId) {
+      internal fun unregister(id: PluginId) {
         val idString = id.idString
         if (!enabledPlugins.remove(idString)) {
           disabledPlugins.remove(idString)
         }
       }
-
-      internal fun updatePluginEnabledState(project: Project, enable: Boolean) {
-        PluginEnabler.updatePluginEnabledState(
-          project,
-          setToAddTo(enable).findPluginById(),
-          setToRemoveFrom(enable).findPluginById(),
-          null
-        )
-      }
-
-      private fun setToAddTo(enable: Boolean) = if (enable) enabledPlugins else disabledPlugins
-
-      private fun setToRemoveFrom(enable: Boolean) = if (enable) disabledPlugins else enabledPlugins
     }
 
     internal class EnableDisablePluginsActivity : StartupActivity.RequiredForSmartMode {
@@ -62,70 +51,52 @@ internal class ProjectPluginTracker(project: Project) : PersistentStateComponent
         }
       }
 
-      /**
-       * Triggers [ProjectPluginTracker.loadState].
-       *
-       * @param project a project to enable/disable plugins for
-       */
-      override fun runActivity(project: Project) = updatePluginEnabledState(project, true)
-    }
+      override fun runActivity(project: Project) {
+        val manager = ProjectPluginTrackerManager.getInstance()
+        val tracker = manager.createPluginTracker(project)
+        val trackers = manager.openProjectsPluginTrackers(project)
 
-    private fun updatePluginEnabledState(project: Project, enable: Boolean) {
-      val pluginTracker = getInstance(project)
-      if (pluginTracker.applicationShuttingDown) return
+        ProjectPluginTrackerManager.loadPlugins(
+          tracker.enabledPluginIds(trackers)
+        )
 
-      pluginTracker.state.updatePluginEnabledState(project, enable)
-    }
-  }
-
-  private var state = State()
-  private var applicationShuttingDown = false
-
-  init {
-    val connection = getApplication().messageBus.connect(project)
-    connection.subscribe(
-      ProjectManager.TOPIC,
-      object : ProjectManagerListener {
-        override fun projectClosing(project: Project) = updatePluginEnabledState(project, false)
+        manager.unloadPlugins(
+          tracker.disabledPluginIds,
+          project,
+        )
       }
-    )
+    }
+  }
 
-    connection.subscribe(
-      AppLifecycleListener.TOPIC,
-      object : AppLifecycleListener {
-        override fun appWillBeClosed(isRestart: Boolean) {
-          applicationShuttingDown = true
-        }
+  private val enabledPluginIds get() = state.enabledPlugins.findPluginId()
+
+  private val disabledPluginIds get() = state.disabledPlugins.findPluginId()
+
+  fun startTrackingPerProject(pluginId: PluginId, enable: Boolean) {
+    state.register(pluginId, enable)
+  }
+
+  fun stopTrackingPerProject(pluginId: PluginId) {
+    state.unregister(pluginId)
+  }
+
+  fun isEnabled(pluginId: PluginId) = state.enabledPlugins.contains(pluginId.idString)
+
+  fun isDisabled(pluginId: PluginId) = state.disabledPlugins.contains(pluginId.idString)
+
+  internal fun enabledPluginIds(trackers: List<ProjectPluginTracker>): Collection<PluginId> {
+    return trackers
+      .flatMap { it.disabledPluginIds() }
+      .union(enabledPluginIds)
+  }
+
+  internal fun disabledPluginIds(trackers: List<ProjectPluginTracker> = listOf()): Collection<PluginId> {
+    return disabledPluginIds
+      .filterNot { pluginId ->
+        DisabledPluginsState.disabledPlugins().contains(pluginId) ||
+        trackers.isNotEmpty() && trackers.all { it.isDisabled(pluginId) }
       }
-    )
   }
 
-  override fun getState(): State = state
-
-  override fun loadState(state: State) {
-    this.state = state
-  }
-
-  fun changeEnableDisable(plugin: IdeaPluginDescriptor,
-                          newState: PluginEnabledState) {
-    val pluginId = plugin.pluginId
-    if (newState.isPerProject) {
-      state.register(pluginId, enable = newState.isEnabled)
-    }
-    else {
-      state.unregister(pluginId)
-    }
-  }
-
-  fun isEnabled(plugin: IdeaPluginDescriptor) = state
-    .enabledPlugins
-    .containsPluginId(plugin)
-
-  fun isDisabled(plugin: IdeaPluginDescriptor) = state
-    .disabledPlugins
-    .containsPluginId(plugin)
+  private fun Set<String>.findPluginId() = mapNotNull { PluginId.findId(it) }
 }
-
-private fun Set<String>.containsPluginId(descriptor: IdeaPluginDescriptor) = contains(descriptor.pluginId.idString)
-
-private fun Set<String>.findPluginById() = mapNotNull { PluginId.findId(it) }.mapNotNull { PluginManagerCore.getPlugin(it) }

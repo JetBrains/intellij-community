@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -287,9 +288,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
         while (newLength <= index && newLength > 0) {
           newLength <<= 1;
         }
-        double[] newData = new double[newLength];
-        System.arraycopy(data, 0, newData, 0, end);
-        data = newData;
+        data = ArrayUtil.realloc(data, newLength);
       }
       data[index] = value;
       if (index >= end) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.formatter;
 
 import com.intellij.execution.ExecutionException;
@@ -42,7 +42,7 @@ import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 
-public class ShShfmtFormatterUtil {
+public final class ShShfmtFormatterUtil {
   private static final Logger LOG = Logger.getInstance(ShShfmtFormatterUtil.class);
   private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHFMT_UPDATE");
   private static final String FEATURE_ACTION_ID = "ExternalFormatterDownloaded";

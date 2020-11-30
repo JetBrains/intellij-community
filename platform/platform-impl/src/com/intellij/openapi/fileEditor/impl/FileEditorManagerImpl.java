@@ -108,6 +108,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
+  public static final Key<Boolean> OPEN_IN_PREVIEW_TAB = Key.create("OPEN_IN_PREVIEW_TAB");
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
 
   public enum OpenMode {
@@ -407,6 +408,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     updateFileIcon(file, false);
   }
 
+  private void resetPreviewFlag(@NotNull VirtualFile file) {
+    for (EditorsSplitters splitter : getAllSplitters()) {
+      splitter.findEditorComposites(file).stream()
+        .filter(EditorComposite::isPreview)
+        .forEach(c -> c.setPreview(false));
+      splitter.updateFileStyle(file);
+    }
+  }
+
   /**
    * Updates tab icon for the specified {@code file}. The {@code file}
    * should be opened in the myEditor, otherwise the method throws an assertion.
@@ -650,14 +660,20 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     }
+
+    FileEditor selectedEditor = getSelectedEditor();
+    EditorsSplitters splitters;
+    if (FileEditorManager.USE_MAIN_WINDOW.isIn(selectedEditor)) {
+      boolean useCurrentWindow = selectedEditor != null && !FileEditorManager.USE_MAIN_WINDOW.get(selectedEditor, false);
+      splitters = useCurrentWindow ? getSplitters() : getMainSplitters();
+    }
     else {
-      wndToOpenIn = getSplitters().getCurrentWindow();
+      splitters = UISettings.getInstance().getOpenTabsInMainWindow() ? getMainSplitters() : getSplitters();
     }
 
-    EditorsSplitters splitters = getSplitters();
-
     if (wndToOpenIn == null) {
-      wndToOpenIn = splitters.getOrCreateCurrentWindow(file);
+      EditorWindow currentWindow = splitters.getCurrentWindow();
+      wndToOpenIn = currentWindow != null ? currentWindow : splitters.getOrCreateCurrentWindow(file);
     }
 
     openAssociatedFile(file, wndToOpenIn, splitters);
@@ -712,9 +728,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       int modifiers = ((MouseEvent)event).getModifiersEx();
       if (modifiers == InputEvent.SHIFT_DOWN_MASK && isMouseClick) {
         return OpenMode.NEW_WINDOW;
-      }
-      if (modifiers == InputEvent.ALT_DOWN_MASK && isMouseClick) {
-        return OpenMode.RIGHT_SPLIT;
       }
     }
 
@@ -1969,6 +1982,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           updateFileIcon(file);
           updateFileColor(file);
           updateFileBackgroundColor(file);
+          resetPreviewFlag(file);
         }
 
       }

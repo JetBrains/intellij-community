@@ -1,9 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -14,7 +16,6 @@ import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
-import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -34,15 +35,15 @@ public class ToStringProcessor extends AbstractClassProcessor {
   private static final String INCLUDE_ANNOTATION_METHOD = "name";
   private static final String INCLUDE_ANNOTATION_RANK = "rank";
   private static final String INCLUDE_ANNOTATION_SKIP_NULL = "skipNull";
-  private static final String TOSTRING_INCLUDE = ToString.Include.class.getCanonicalName();
-  private static final String TOSTRING_EXCLUDE = ToString.Exclude.class.getCanonicalName();
+  private static final String TOSTRING_INCLUDE = LombokClassNames.TO_STRING_INCLUDE;
+  private static final String TOSTRING_EXCLUDE = LombokClassNames.TO_STRING_EXCLUDE;
 
   public ToStringProcessor() {
-    super(PsiMethod.class, ToString.class);
+    super(PsiMethod.class, LombokClassNames.TO_STRING);
   }
 
   private EqualsAndHashCodeToStringHandler getEqualsAndHashCodeToStringHandler() {
-    return ServiceManager.getService(EqualsAndHashCodeToStringHandler.class);
+    return ApplicationManager.getApplication().getService(EqualsAndHashCodeToStringHandler.class);
   }
 
   @Override
@@ -56,8 +57,8 @@ public class ToStringProcessor extends AbstractClassProcessor {
     final Collection<String> ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class);
 
     if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
-      builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored",
-        PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
+      builder.addWarning(LombokBundle.message("inspection.message.exclude.are.mutually.exclusive.exclude.parameter.will.be.ignored"),
+                         PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
     } else {
       validateExcludeParam(psiClass, builder, psiAnnotation, excludeProperty);
     }
@@ -69,7 +70,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   private boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError("@ToString is only supported on a class or enum type");
+      builder.addError(LombokBundle.message("inspection.message.to.string.only.supported.on.class.or.enum.type"));
       result = false;
     }
     return result;
@@ -77,7 +78,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
 
   private void validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (hasToStringMethodDefined(psiClass)) {
-      builder.addWarning("Not generated '%s'(): A method with same name already exists", TO_STRING_METHOD_NAME);
+      builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.same.name.already.exists"), TO_STRING_METHOD_NAME);
     }
   }
 
@@ -86,6 +87,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
     return PsiMethodUtil.hasMethodByName(classMethods, TO_STRING_METHOD_NAME, 0);
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     target.addAll(createToStringMethod(psiClass, psiAnnotation));
   }

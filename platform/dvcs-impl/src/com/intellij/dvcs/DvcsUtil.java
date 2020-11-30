@@ -8,6 +8,8 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -113,6 +115,15 @@ public final class DvcsUtil {
       }
     }
     return false;
+  }
+
+  public static <T extends Repository> void disableActionIfAnyRepositoryIsFresh(@NotNull AnActionEvent e, @NotNull List<T> repositories, @NlsSafe String operationName) {
+    boolean isFresh = repositories.stream().anyMatch(Repository::isFresh);
+    if (isFresh) {
+      Presentation p = e.getPresentation();
+      p.setEnabled(false);
+      p.setDescription(DvcsBundle.messagePointer("action.not.possible.in.fresh.repo.description", operationName));
+    }
   }
 
   @Nullable
@@ -244,21 +255,21 @@ public final class DvcsUtil {
    * If an other exception happens, rethrows it as a {@link RepoStateException}.
    * In the case of success returns the result of the task execution.
    */
-  private static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) throws RepoStateException {
+  public static <T> T tryOrThrow(Callable<T> actionToTry, Object details) throws RepoStateException {
     IOException cause = null;
     for (int i = 0; i < IO_RETRIES; i++) {
       try {
         return actionToTry.call();
       }
       catch (IOException e) {
-        LOG.info("IOException while loading " + fileToLoad, e);
+        LOG.info("IOException while loading " + details, e);
         cause = e;
       }
       catch (Exception e) {    // this shouldn't happen since only IOExceptions are thrown in clients.
-        throw new RepoStateException("Couldn't load file " + fileToLoad, e);
+        throw new RepoStateException("Couldn't load file " + details, e);
       }
     }
-    throw new RepoStateException("Couldn't load file " + fileToLoad, cause);
+    throw new RepoStateException("Couldn't load file " + details, cause);
   }
 
   public static void visitVcsDirVfs(@NotNull VirtualFile vcsDir, @NotNull Collection<String> subDirs) {

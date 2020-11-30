@@ -45,8 +45,6 @@ import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.Executor
-import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
 import java.util.function.Function
 import kotlin.system.exitProcess
@@ -105,7 +103,7 @@ fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescrip
                           app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
   return pluginFuture.thenApply {
     runMainActivity("app component registration") {
-      app.registerComponents(it)
+      app.registerComponents(it, null)
     }
     it
   }
@@ -308,16 +306,36 @@ private fun addActivateAndWindowsCliListeners() {
   StartupUtil.addExternalInstanceListener { rawArgs ->
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
-    val ref = AtomicReference<Future<CliResult>>()
 
-    ApplicationManager.getApplication().invokeAndWait {
-      val result = CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
-      ref.set(result.future)
+    val result = handleExternalCommand(args, currentDirectory)
+    result.future
+  }
 
-      if (result.showErrorIfFailed()) {
-        return@invokeAndWait
-      }
+  MainRunner.LISTENER = BiFunction { currentDirectory, args ->
+    LOG.info("External Windows command received")
+    if (args.isEmpty()) {
+      return@BiFunction 0
+    }
 
+    val result = handleExternalCommand(args.toList(), currentDirectory)
+    CliResult.unmap(result.future, Main.ACTIVATE_ERROR).exitCode
+  }
+
+  ApplicationManager.getApplication().messageBus.connect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+    override fun appWillBeClosed(isRestart: Boolean) {
+      StartupUtil.addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
+      MainRunner.LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
+    }
+  })
+}
+
+private fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
+  val result = CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
+  ApplicationManager.getApplication().invokeLater {
+    if (result.hasError) {
+      result.showErrorIfFailed()
+    }
+    else {
       val windowManager = WindowManager.getInstance()
       if (result.project == null) {
         windowManager.findVisibleFrame()?.let { frame ->
@@ -331,37 +349,8 @@ private fun addActivateAndWindowsCliListeners() {
         }
       }
     }
-
-    ref.get()
   }
-
-  MainRunner.LISTENER = BiFunction { currentDirectory, args ->
-    LOG.info("External Windows command received")
-    if (args.isEmpty()) {
-      return@BiFunction 0
-    }
-
-    val app = ApplicationManager.getApplication()
-    val anyState = ApplicationStarter.EP_NAME.iterable.any {
-      it.canProcessExternalCommandLine() && args[0] == it.commandName && it.requiredModality != ApplicationStarter.NON_MODAL
-    }
-    val state = if (anyState) app.anyModalityState else app.defaultModalityState
-
-    val ref = AtomicReference<Future<CliResult>>()
-    app.invokeAndWait({
-                        val result = CommandLineProcessor.processExternalCommandLine(args.toList(), currentDirectory)
-                        ref.set(result.future)
-                        result.showErrorIfFailed()
-                      }, state)
-    CliResult.unmap(ref.get(), Main.ACTIVATE_ERROR).exitCode
-  }
-
-  ApplicationManager.getApplication().messageBus.connect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
-    override fun appWillBeClosed(isRestart: Boolean) {
-      StartupUtil.addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
-      MainRunner.LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
-    }
-  })
+  return result
 }
 
 fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {

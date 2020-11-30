@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -75,7 +75,7 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testCharacterPlusAppend() { doTestFor("StringBuilder"); }
 
   public void testComplexSignOnNextLine() {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.BINARY_OPERATION_SIGN_ON_NEXT_LINE = true;
     try {
       doTestFor("StringBuilder");

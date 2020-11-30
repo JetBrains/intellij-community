@@ -4,7 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class LombokConfigPsiUtil {
+public final class LombokConfigPsiUtil {
   public static String getKey(@NotNull LombokConfigCleaner element) {
     ASTNode keyNode = element.getNode().findChildByType(LombokConfigTypes.KEY);
     if (keyNode != null) {

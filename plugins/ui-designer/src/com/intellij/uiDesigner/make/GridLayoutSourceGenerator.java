@@ -55,9 +55,6 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
 
         generator.endMethod();
       }
-      else if (container.isXY()) {
-        throw new IllegalArgumentException("XY is not supported");
-      }
       else {
         throw new IllegalArgumentException("unknown layout: " + container.getLayout());
       }

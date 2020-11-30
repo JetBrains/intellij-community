@@ -54,11 +54,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 %xstate IN_GSTRING_DOT
 %xstate IN_GSTRING_DOT_IDENT
 
-// Not to separate NewLine sequence by comments
-%xstate NLS_AFTER_COMMENT
 // Special hacks for IDEA formatter
 %xstate NLS_AFTER_LBRACE
-%xstate NLS_AFTER_NLS
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// NewLines and spaces /////////////////////////////////////////////////////////////////////////////////////////
@@ -117,6 +114,7 @@ mNUM_BIG_DECIMAL = {mNUM_DEC} (
 mLETTER = [:letter:] | "_"
 mIDENT = ({mLETTER}|\$) ({mLETTER} | {mDIGIT} | \$)*
 mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
+NOT_IDENT_PART=[^_[:letter:]0-9$]
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// String & regexprs ///////////////////////////////////////////////////////////////////////////////////////////
@@ -193,34 +191,11 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "final"         { return storeToken(KW_FINAL); }
 }
 
-<NLS_AFTER_COMMENT> {
-  {mSL_COMMENT}                             { return SL_COMMENT; }
-  {mML_COMMENT}                             { return ML_COMMENT; }
-  {mDOC_COMMENT}                            { return GROOVY_DOC_COMMENT; }
-
-  ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
-
-  [^] {
-    yypushback(1);
-    yyendstate(NLS_AFTER_COMMENT);
-  }
-}
-
 <NLS_AFTER_LBRACE> {
   ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
   [^] {
     yypushback(1);
     yyendstate(NLS_AFTER_LBRACE);
-  }
-}
-
-<NLS_AFTER_NLS>{
-  ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
-
-  [^] {
-    yypushback(1);
-    yyendstate(NLS_AFTER_NLS);
-    yybeginstate(NLS_AFTER_COMMENT);
   }
 }
 
@@ -346,11 +321,11 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 ///////////////////////// Parentheses and braces ///////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 <YYINITIAL, IN_BRACES, IN_INJECTION> {
-  {mNLS} { yybeginstate(NLS_AFTER_NLS); return storeToken(NL); }
+  {mNLS} { return storeToken(NL); }
 }
 
 <IN_PARENS_BRACKETS> {
-  {mNLS} { yybeginstate(NLS_AFTER_NLS); return TokenType.WHITE_SPACE; }
+  {mNLS} { return TokenType.WHITE_SPACE; }
 }
 
 <YYINITIAL, IN_PARENS_BRACKETS, IN_BRACES, IN_INJECTION> {
@@ -488,6 +463,8 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 "==="                                     { return storeToken(T_ID); }
 "=="                                      { return storeToken(T_EQ); }
 "!"                                       { return storeToken(T_NOT); }
+"!in"/{NOT_IDENT_PART}                    { return storeToken(T_NOT_IN); }
+"!instanceof"/{NOT_IDENT_PART}            { return storeToken(T_NOT_INSTANCEOF); }
 "~"                                       { return storeToken(T_BNOT); }
 "!=="                                     { return storeToken(T_NID); }
 "!="                                      { return storeToken(T_NEQ); }

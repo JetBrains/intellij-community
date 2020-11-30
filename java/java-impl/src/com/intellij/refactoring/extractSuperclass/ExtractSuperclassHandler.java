@@ -97,6 +97,12 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
       return;
     }
 
+    if (mySubclass.isRecord()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("superclass.cannot.be.extracted.from.a.record"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
+      return;
+    }
+
     List<MemberInfo> memberInfos = MemberInfo.extractClassMembers(mySubclass, new MemberInfo.Filter<>() {
       @Override
       public boolean includeMember(PsiMember element) {

@@ -56,7 +56,7 @@ public abstract class JavaTestFrameworkDebuggerRunner extends GenericDebuggerRun
               if (process == null) break;
               final RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(read), true);
               final DebugEnvironment env = new DefaultDebugEnvironment(environment, state, connection, true);
-              ((DebugProcessImpl)process).reattach(env, () -> {
+              ((DebugProcessImpl)process).reattach(env, false, () -> {
                 try {
                   accept.getOutputStream().write(0);
                 }

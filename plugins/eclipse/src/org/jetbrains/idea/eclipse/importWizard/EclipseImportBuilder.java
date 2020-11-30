@@ -45,6 +45,7 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
@@ -100,7 +101,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<String> roots = new ArrayList<>();
-        EclipseProjectFinder.findModuleRoots(roots, path, path12 -> {
+        EclipseProjectFinder.findModuleRoots(roots, path, (@NlsSafe var path12) -> {
           final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
           if (progressIndicator != null) {
             if (progressIndicator.isCanceled()) return false;
@@ -322,7 +323,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
         getParameters().existingModuleNames.add(projectName);
       }
     }
-    StringBuilder message = new StringBuilder();
+    @Nls StringBuilder message = new StringBuilder();
     if (!refsToModules.isEmpty()) {
 
       message.append(EclipseBundle.message("unknown.modules.detected.dialog.message", StringUtil.join(refsToModules, "\n")));

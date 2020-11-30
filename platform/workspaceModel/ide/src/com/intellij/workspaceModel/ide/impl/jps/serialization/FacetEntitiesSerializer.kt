@@ -1,13 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -19,6 +20,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
 import com.intellij.workspaceModel.storage.impl.references.OneToOneChild
 import com.intellij.workspaceModel.storage.referrers
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState
 import org.jetbrains.jps.model.serialization.facet.FacetState
@@ -92,7 +94,16 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     }
     val componentTag = JDomSerializationUtil.createComponentElement(componentName)
     XmlSerializer.serializeInto(facetManagerState, componentTag)
-    writer.saveComponent(imlFileUrl.url, componentName, componentTag)
+    val fileUrl = imlFileUrl.url
+    if (externalStorage && FileUtil.extensionEquals(fileUrl, "iml")) {
+      // Trying to catch https://ea.jetbrains.com/browser/ea_problems/239676
+      logger<FacetEntitiesSerializer>().error("""Incorrect file for the serializer
+        |externalStorage: $externalStorage
+        |file path: $fileUrl
+        |componentName: $componentName
+      """.trimMargin())
+    }
+    writer.saveComponent(fileUrl, componentName, componentTag)
   }
 
   private fun saveFacet(facetEntity: FacetEntity, facetStates: MutableMap<String, FacetState>, rootFacets: MutableList<FacetState>) {

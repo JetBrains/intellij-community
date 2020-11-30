@@ -32,6 +32,7 @@ object SpaceReviewListFactory {
                                                                          ScrollPaneFactory.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                                          ScrollPaneFactory.HORIZONTAL_SCROLLBAR_NEVER).apply {
       border = JBUI.Borders.empty()
+      verticalScrollBar.isOpaque = true
       UIUtil.putClientProperty(verticalScrollBar, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, false)
     }
 

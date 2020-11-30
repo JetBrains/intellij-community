@@ -77,7 +77,7 @@ public final class NewRunConfigurationPopup {
   @NotNull
   public static JBPopup createAddPopup(@NotNull Project project,
                                        @NotNull final List<? extends ConfigurationType> typesToShow,
-                                       @NotNull final String defaultText,
+                                       @NotNull @Nls final String defaultText,
                                        @NotNull final Consumer<? super ConfigurationFactory> creator,
                                        @Nullable final ConfigurationType selectedConfigurationType,
                                        @Nullable final Runnable finalStep, boolean showTitle) {
@@ -165,7 +165,8 @@ public final class NewRunConfigurationPopup {
         values.clear();
         values.addAll(RunConfigurable.Companion.configurationTypeSorted(project,
                                                                         false,
-                                                                        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()));
+                                                                        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(),
+                                                                        true));
 
         getListModel().updateOriginalList();
         super.onSpeedSearchPatternChanged();

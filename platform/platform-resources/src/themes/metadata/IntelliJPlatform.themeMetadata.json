@@ -327,6 +327,10 @@
       "deprecated": true
     },
     {
+      "key": "GotItTooltip.borderColor",
+      "description": "GotIt tooltip border color if different from ToolTip.borderColor"
+    },
+    {
       "key": "Group.disabledSeparatorColor"
     },
     {
@@ -1000,6 +1004,11 @@
       "key": "VersionControl.Log.Commit.unmatchedForeground",
       "description": "Text color for the \"unmatched\" commits (such as merge commits or cherry-picked commits) in the Version Control | Log tab (\"Highlight Merge commits\" and \"Highlight Not Cherry-Picked Commits\" settings under the \"eye\" icon",
       "since": "2019.1"
+    },
+    {
+      "key": "VersionControl.Log.Commit.hoveredBackground",
+      "description": "Background color for the commit under the cursor in the Version Control | Log tab",
+      "since": "2020.3"
     },
     {
       "key": "VersionControl.RefLabel.backgroundBase",

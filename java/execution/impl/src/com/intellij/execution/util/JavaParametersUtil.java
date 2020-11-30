@@ -133,14 +133,14 @@ public final class JavaParametersUtil {
   }
 
   public static Sdk createModuleJdk(final Module module, boolean productionOnly, @Nullable String jreHome) throws CantRunException {
-    return jreHome == null ? JavaParameters.getValidJdkToRunModule(module, productionOnly) : createAlternativeJdk(jreHome);
+    return jreHome == null ? JavaParameters.getValidJdkToRunModule(module, productionOnly) : createAlternativeJdk(module.getProject(), jreHome);
   }
 
-  public static Sdk createProjectJdk(final Project project, @Nullable String jreHome) throws CantRunException {
-    return jreHome == null ? createProjectJdk(project) : createAlternativeJdk(jreHome);
+  public static Sdk createProjectJdk(@NotNull final Project project, @Nullable String jreHome) throws CantRunException {
+    return jreHome == null ? createProjectJdk(project) : createAlternativeJdk(project, jreHome);
   }
 
-  private static Sdk createProjectJdk(final Project project) throws CantRunException {
+  private static Sdk createProjectJdk(@NotNull final Project project) throws CantRunException {
     final Sdk jdk = PathUtilEx.getAnyJdk(project);
     if (jdk == null) {
       throw CantRunException.noJdkConfigured();
@@ -148,18 +148,21 @@ public final class JavaParametersUtil {
     return jdk;
   }
 
-  private static Sdk createAlternativeJdk(@NotNull String jreHome) throws CantRunException {
+  private static Sdk createAlternativeJdk(@NotNull Project project, @NotNull String jreHome) throws CantRunException {
     final Sdk configuredJdk = ProjectJdkTable.getInstance().findJdk(jreHome);
     if (configuredJdk != null) {
       return configuredJdk;
     }
 
-    if (!JdkUtil.checkForJre(jreHome)) {
-      throw new CantRunException(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.message", jreHome));
+    if (JdkUtil.checkForJre(jreHome)) {
+      final JavaSdk javaSdk = JavaSdk.getInstance();
+      return javaSdk.createJdk(ObjectUtils.notNull(javaSdk.getVersionString(jreHome), ""), jreHome);
     }
 
-    final JavaSdk javaSdk = JavaSdk.getInstance();
-    return javaSdk.createJdk(ObjectUtils.notNull(javaSdk.getVersionString(jreHome), ""), jreHome);
+    Sdk resolved = UnknownAlternativeSdkResolver.getInstance(project).tryResolveJre(jreHome);
+    if (resolved != null) return resolved;
+
+    throw new CantRunException(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.message", jreHome));
   }
 
   public static void checkAlternativeJRE(@NotNull CommonJavaRunConfigurationParameters configuration) throws RuntimeConfigurationWarning {

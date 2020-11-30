@@ -165,24 +165,6 @@ internal data class EntityId(val arrayId: Int, val clazz: Int) {
   }
 
   override fun toString(): String = clazz.findEntityClass<WorkspaceEntity>().simpleName + "-:-" + arrayId.toString()
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as EntityId
-
-    if (arrayId != other.arrayId) return false
-    if (clazz != other.clazz) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = arrayId
-    result = 31 * result + clazz.hashCode()
-    return result
-  }
 }
 
 interface SoftLinkable {
@@ -194,13 +176,13 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
-  internal fun createPid(): EntityId = EntityId(id, ClassConversion.entityDataToEntity(this.javaClass).toClassId())
+  internal fun createEntityId(): EntityId = EntityId(id, ClassConversion.entityDataToEntity(this.javaClass).toClassId())
 
   abstract fun createEntity(snapshot: WorkspaceEntityStorage): E
 
   fun addMetaData(res: E, snapshot: WorkspaceEntityStorage) {
     (res as WorkspaceEntityBase).entitySource = entitySource
-    (res as WorkspaceEntityBase).id = createPid()
+    (res as WorkspaceEntityBase).id = createEntityId()
     (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
   }
 
@@ -210,7 +192,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     res as ModifiableWorkspaceEntityBase
     res.original = this
     res.diff = diff
-    res.id = createPid()
+    res.id = createEntityId()
     res.entitySource = this.entitySource
     return res
   }

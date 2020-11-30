@@ -438,6 +438,12 @@ public final class HighlightUtil {
     PsiTypeElement typeElement = variable.getTypeElement();
     if (typeElement != null && typeElement.isInferredType()) {
       if (variable instanceof PsiLocalVariable) {
+        PsiElement parent = variable.getParent();
+        if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
+          String message = JavaErrorBundle.message("lvti.compound");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable).create();
+        }
+
         PsiExpression initializer = variable.getInitializer();
         if (initializer == null) {
           String message = JavaErrorBundle.message("lvti.no.initializer");
@@ -447,12 +453,6 @@ public final class HighlightUtil {
           boolean lambda = initializer instanceof PsiLambdaExpression;
           String message = JavaErrorBundle.message(lambda ? "lvti.lambda" : "lvti.method.ref");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-        }
-
-        PsiElement parent = variable.getParent();
-        if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
-          String message = JavaErrorBundle.message("lvti.compound");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable).create();
         }
 
         if (isArray(variable)) {

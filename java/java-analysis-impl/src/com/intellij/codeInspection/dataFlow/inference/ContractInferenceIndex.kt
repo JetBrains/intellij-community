@@ -27,7 +27,7 @@ import kotlin.collections.HashMap
  * @author peter
  */
 
-private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 13, MethodDataExternalizer) { file ->
+private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 14, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)
 }
 
@@ -37,8 +37,8 @@ private fun indexFile(tree: LighterAST): Map<Int, MethodData> {
   return visitor.result
 }
 
-internal data class ClassData(val hasSuper : Boolean, val hasPureInitializer : Boolean, val isFinal : Boolean, 
-                              val fieldModifiers : Map<String, LighterASTNode?>)
+internal data class ClassData(val hasSuper: Boolean, val hasPureInitializer: Boolean, val isFinal: Boolean,
+                              val onlyLocalInheritors: Boolean, val fieldModifiers: Map<String, LighterASTNode?>)
 
 private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeWalkingVisitor(tree) {
   var methodIndex = 0
@@ -63,6 +63,8 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
   private fun calcClassData(aClass: LighterASTNode) : ClassData {
     var hasSuper = aClass.tokenType == ANONYMOUS_CLASS
     var isFinal = aClass.tokenType == ANONYMOUS_CLASS
+    val parent = tree.getParent(aClass)
+    var onlyLocalInheritors = parent != null && parent.tokenType == DECLARATION_STATEMENT
     val fieldModifiers = HashMap<String, LighterASTNode?>()
     val initializers = ArrayList<LighterASTNode>()
     for (child in tree.getChildren(aClass)) {
@@ -70,6 +72,9 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
         JavaTokenType.RECORD_KEYWORD, JavaTokenType.ENUM_KEYWORD -> isFinal = true
         MODIFIER_LIST -> {
           isFinal = LightTreeUtil.firstChildOfType(tree, child, JavaTokenType.FINAL_KEYWORD) != null
+          if (!onlyLocalInheritors) {
+            onlyLocalInheritors = (LightTreeUtil.firstChildOfType(tree, child, JavaTokenType.PRIVATE_KEYWORD) != null)
+          }
         }
         ENUM_CONSTANT -> {
           // We rely that enum constants go after ENUM_KEYWORD
@@ -116,11 +121,11 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
         if (!pureInitializer) break
       }
     }
-    return ClassData(hasSuper, pureInitializer, isFinal, fieldModifiers)
+    return ClassData(hasSuper, pureInitializer, isFinal, onlyLocalInheritors, fieldModifiers)
   }
   
   private fun getInferenceMode(method: LighterASTNode, clsData: ClassData?): JavaSourceInference.InferenceMode {
-    if (clsData?.isFinal == true) return JavaSourceInference.InferenceMode.ENABLED
+    if (clsData?.isFinal == true || clsData?.onlyLocalInheritors == true) return JavaSourceInference.InferenceMode.ENABLED
     // PsiUtil#canBeOverridden logic on LighterAST
     val ctor = LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
     if (ctor) return JavaSourceInference.InferenceMode.ENABLED

@@ -54,7 +54,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     myProject = project;
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
 
-    ((JBTerminalPanel)getTerminalPanel()).addPreKeyEventHandler(e -> {
+    getTerminalPanel().addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
       if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
         myEscapePressed = true;

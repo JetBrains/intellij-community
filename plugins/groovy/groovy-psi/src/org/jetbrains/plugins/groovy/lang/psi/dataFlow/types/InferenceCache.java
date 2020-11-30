@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ class InferenceCache {
 
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
   private final SharedVariableInferenceCache mySharedVariableInferenceCache;
-  private final Set<Instruction> myTooComplexInstructions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
     myScope = scope;
@@ -187,8 +188,10 @@ class InferenceCache {
     for (Instruction closureInstruction : myFlow) {
       PsiElement closure = closureInstruction.getElement();
       if (closure instanceof GrFunctionalExpression) {
-        GrControlFlowOwner owner =
-          Objects.requireNonNull(FunctionalExpressionFlowUtil.getControlFlowOwner((GrFunctionalExpression)closure));
+        GrControlFlowOwner owner = FunctionalExpressionFlowUtil.getControlFlowOwner((GrFunctionalExpression)closure);
+        if (owner == null) {
+          continue;
+        }
         Set<ResolvedVariableDescriptor> foreignVariables =
           ControlFlowUtils.getForeignVariableDescriptors(owner, ReadWriteVariableInstruction::isWrite);
         closureInstructions.add(Pair.create(closureInstruction, foreignVariables));

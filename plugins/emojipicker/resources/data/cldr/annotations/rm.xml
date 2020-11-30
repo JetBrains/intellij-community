@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="rm"/>
+	</identity>
+	<annotations>
+		<annotation cp="🏻">colur da pel | pel clera | tip 1–2</annotation>
+		<annotation cp="🏻" type="tts">pel clera</annotation>
+		<annotation cp="🏼">colur da pel | pel mez clera | tip 3</annotation>
+		<annotation cp="🏼" type="tts">pel mez clera</annotation>
+		<annotation cp="🏽">colur da pel | pel media | tip 4</annotation>
+		<annotation cp="🏽" type="tts">pel media</annotation>
+		<annotation cp="🏾">colur da pel | pel mez stgira | tip 5</annotation>
+		<annotation cp="🏾" type="tts">pel mez stgira</annotation>
+		<annotation cp="🏿">colur da pel | pel stgira | tip 6</annotation>
+		<annotation cp="🏿" type="tts">pel stgira</annotation>
+		<annotation cp="¬">negaziun</annotation>
+		<annotation cp="¬" type="tts">negaziun</annotation>
+		<annotation cp="|">lingia verticala</annotation>
+		<annotation cp="|" type="tts">lingia verticala</annotation>
+		<annotation cp="~">tilda</annotation>
+		<annotation cp="~" type="tts">tilda</annotation>
+		<annotation cp="≥">pli grond che u egual</annotation>
+		<annotation cp="≥" type="tts">pli grond che u egual</annotation>
+		<annotation cp="🤵">persuna | persuna cun smoking | smoking | spus</annotation>
+		<annotation cp="🤵" type="tts">persuna cun smoking</annotation>
+		<annotation cp="🤵‍♂">smoking | um | um cun smoking</annotation>
+		<annotation cp="🤵‍♂" type="tts">um cun smoking</annotation>
+		<annotation cp="🤵‍♀">dunna | dunna cun smoking | smoking</annotation>
+		<annotation cp="🤵‍♀" type="tts">dunna cun smoking</annotation>
+		<annotation cp="👰">maridaglia | nozzas | persuna | persuna cun vel | spusa | vel</annotation>
+		<annotation cp="👰" type="tts">persuna cun vel</annotation>
+		<annotation cp="👰‍♂">um | um cun vel | vel</annotation>
+		<annotation cp="👰‍♂" type="tts">um cun vel</annotation>
+		<annotation cp="👰‍♀">dunna | dunna cun vel | vel</annotation>
+		<annotation cp="👰‍♀" type="tts">dunna cun vel</annotation>
+		<annotation cp="🦰">chavels cotschens</annotation>
+		<annotation cp="🦰" type="tts">chavels cotschens</annotation>
+		<annotation cp="🦱">chavels ritschads</annotation>
+		<annotation cp="🦱" type="tts">chavels ritschads</annotation>
+		<annotation cp="🐵">fatscha | fatscha da schimgia | schimgia</annotation>
+		<annotation cp="🐵" type="tts">fatscha da schimgia</annotation>
+		<annotation cp="🐒">schimgia</annotation>
+		<annotation cp="🐒" type="tts">schimgia</annotation>
+		<annotation cp="🦍">gorilla | schimgia</annotation>
+		<annotation cp="🦍" type="tts">gorilla</annotation>
+		<annotation cp="🦧">orangutan | schimgia</annotation>
+		<annotation cp="🦧" type="tts">orangutan</annotation>
+		<annotation cp="🐶">animal da chasa | chaun | fatscha | fatscha da chaun</annotation>
+		<annotation cp="🐶" type="tts">fatscha da chaun</annotation>
+		<annotation cp="🐕">animal da chasa | chaun</annotation>
+		<annotation cp="🐕" type="tts">chaun</annotation>
+		<annotation cp="🐩">chaun | pudel</annotation>
+		<annotation cp="🐩" type="tts">pudel</annotation>
+	</annotations>
+</ldml>

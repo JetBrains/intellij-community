@@ -37,8 +37,7 @@
     <action id="ShowProjectStructureSettings" class="com.intellij.ide.actions.ShowStructureSettingsAction"
             icon="AllIcons.General.ProjectStructure">
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
-      <add-to-group group-id="MainToolBarSettings" anchor="after" relative-to-action="ShowSettings"/>
-      <add-to-group group-id="NavBarToolBar" relative-to-action="NavBarToolBarOthers" anchor="after"/>
+      <add-to-group group-id="SettingsEntryPointGroup" anchor="before" relative-to-action="ShowSettings"/>
     </action>
     <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
@@ -525,7 +524,7 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
         <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
-        <override-text place="XDebuggerTreeInlayPopup" text="Create Value Renderer"/>
+        <override-text place="XDebuggerTreeInlayPopup"/>
       </action>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">

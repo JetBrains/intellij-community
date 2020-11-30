@@ -299,6 +299,25 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   @Override
+  public boolean isParallelCompilationEnabled() {
+    // returns parallel compilation flag first by looking into workspace.xml and then intellij.yaml
+
+    //noinspection deprecation
+    Boolean workspaceParallelCompilation = CompilerWorkspaceConfiguration.getInstance(myProject).PARALLEL_COMPILATION;
+    if (workspaceParallelCompilation != null) {
+      return workspaceParallelCompilation;
+    }
+
+    return CompilerConfigurationSettings.Companion.getInstance(myProject).isParallelCompilationEnabled();
+  }
+
+  @Override
+  public void setParallelCompilationEnabled(boolean enabled) {
+    //noinspection deprecation
+    CompilerWorkspaceConfiguration.getInstance(myProject).PARALLEL_COMPILATION = enabled;
+  }
+
+  @Override
   @Nullable
   public String getProjectBytecodeTarget() {
     return myBytecodeTargetLevel;

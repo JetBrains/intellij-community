@@ -34,7 +34,9 @@ public class XmlTextContextType extends TemplateContextType {
   }
 
   @Override
-  public boolean isInContext(@NotNull PsiFile file, int offset) {
+  public boolean isInContext(@NotNull TemplateActionContext templateActionContext) {
+    PsiFile file = templateActionContext.getFile();
+    int offset = templateActionContext.getStartOffset();
     if (!XmlContextType.isInXml(file, offset)) return false;
     PsiElement element = file.findElementAt(offset);
     if (element == null) return false;

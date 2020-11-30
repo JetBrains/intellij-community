@@ -3,8 +3,11 @@ package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,6 +21,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class UserActivityWatcher extends ComponentTreeWatcher {
+  @ApiStatus.Experimental
+  public static final Key<Boolean> DO_NOT_WATCH = Key.create("DO_NOT_WATCH");
   private boolean myIsModified = false;
   private final EventDispatcher<UserActivityListener> myListeners = EventDispatcher.create(UserActivityListener.class);
 
@@ -85,6 +90,12 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
 
   public void removeUserActivityListener(UserActivityListener listener) {
     myListeners.removeListener(listener);
+  }
+
+  @Override
+  protected boolean shouldBeIgnored(Object object) {
+    if (Boolean.TRUE.equals(UIUtil.getClientProperty(object, DO_NOT_WATCH))) return true;
+    return super.shouldBeIgnored(object);
   }
 
   protected final void fireUIChanged() {

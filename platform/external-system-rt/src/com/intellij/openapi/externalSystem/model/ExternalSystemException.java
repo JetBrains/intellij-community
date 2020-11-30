@@ -99,7 +99,7 @@ public class ExternalSystemException extends RuntimeException {
     return super.initCause(cause);
   }
 
-  @Nullable
+  @NotNull
   private static String extractMessage(@Nullable String message, @Nullable Throwable cause) {
     StringBuilder buffer = new StringBuilder();
     if (message != null) {

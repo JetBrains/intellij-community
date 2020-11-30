@@ -280,6 +280,30 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   }
 
   @Test
+  fun testLogHeadlessModeEnabled() {
+    doTestHeadlessMode(true) {
+      assertEquals(it.event.data["system_headless"], true)
+    }
+  }
+
+  @Test
+  fun testLogHeadlessModeDisabled() {
+    doTestHeadlessMode(false) {
+      assertFalse(it.event.data.containsKey("system_headless"))
+    }
+  }
+
+  private fun doTestHeadlessMode(headless: Boolean, assertion: (LogEvent) -> Unit) {
+    val logger = TestFeatureUsageFileEventLogger(headless = headless)
+    logger.logAsync(EventLogGroup("group.id", 1), "test.action", false)
+    logger.dispose()
+
+    val loggedEvents = logger.testWriter.logged
+    UsefulTestCase.assertSize(1, loggedEvents)
+    assertion.invoke(loggedEvents[0])
+  }
+
+  @Test
   fun testObjectEvent() {
     /* {
       "intField" : 43
@@ -495,13 +519,14 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
 private const val TEST_RECORDER = "TEST"
 
-class TestFeatureUsageFileEventLogger(session: String,
-                                      build: String,
-                                      bucket: String,
-                                      recorderVersion: String,
-                                      writer: TestFeatureUsageEventWriter,
-                                      systemEventIdProvider: StatisticsSystemEventIdProvider = TestSystemEventIdProvider(0)) :
-  StatisticsFileEventLogger(TEST_RECORDER, session, build, bucket, recorderVersion, writer, systemEventIdProvider) {
+class TestFeatureUsageFileEventLogger(session: String = DEFAULT_SESSION_ID,
+                                      build: String = "999.999",
+                                      bucket: String = "0",
+                                      recorderVersion: String = "1",
+                                      writer: TestFeatureUsageEventWriter = TestFeatureUsageEventWriter(),
+                                      systemEventIdProvider: StatisticsSystemEventIdProvider = TestSystemEventIdProvider(0),
+                                      headless: Boolean = false) :
+  StatisticsFileEventLogger(TEST_RECORDER, session, headless, build, bucket, recorderVersion, writer, systemEventIdProvider) {
   val testWriter = writer
 
   override fun dispose() {
@@ -521,6 +546,7 @@ class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
   override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
   override fun cleanup() = Unit
   override fun rollOver() = Unit
+  override fun dispose() = Unit
 }
 
 class TestSystemEventIdProvider(var value: Long) : StatisticsSystemEventIdProvider {

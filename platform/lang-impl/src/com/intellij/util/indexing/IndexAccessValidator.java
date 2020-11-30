@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,10 +22,15 @@ public final class IndexAccessValidator {
     String message = MessageFormat.format("Accessing ''{0}'' during processing ''{1}''. Nested different indices processing may cause deadlock",
               indexKey.getName(),
               alreadyProcessingIndex.getName());
+
+    PluginId alreadyProcessingIndexOwner = alreadyProcessingIndex.getPluginId();
+    PluginException exception = new PluginException(message, alreadyProcessingIndexOwner);
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(message);
+      throw exception;
     }
-    Logger.getInstance(FileBasedIndexImpl.class).error(message); // RuntimeException to skip rebuild
+
+    Logger.getInstance(FileBasedIndexImpl.class).error(exception); // RuntimeException to skip rebuild
   }
 
   public <T, E extends Throwable> T validate(@NotNull ID<?, ?> indexKey, @NotNull ThrowableComputable<T, E> runnable) throws E {

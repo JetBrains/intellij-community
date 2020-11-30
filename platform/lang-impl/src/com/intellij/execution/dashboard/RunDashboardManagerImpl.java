@@ -83,7 +83,6 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myServiceContentManagerListener = new ServiceContentManagerListener();
     myReuseCondition = this::canReuseContent;
     initExtensionPointListeners();
-
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -322,6 +321,14 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       moveAddedContent(settings -> configurations.contains(settings.getConfiguration()));
     }
     updateDashboard(true);
+  }
+
+  public boolean isOpenRunningConfigInNewTab() {
+    return myState.openRunningConfigInTab;
+  }
+
+  public void setOpenRunningConfigInNewTab(boolean value) {
+    myState.openRunningConfigInTab = value;
   }
 
   static @NotNull List<RunDashboardCustomizer> getCustomizers(@NotNull RunnerAndConfigurationSettings settings,
@@ -677,6 +684,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     public final Set<String> configurationTypes = new THashSet<>();
     public final Set<String> excludedTypes = new THashSet<>();
     public final Map<String, Set<String>> hiddenConfigurations = new THashMap<>();
+    public boolean openRunningConfigInTab = false;
   }
 
   private static class RunDashboardServiceImpl implements RunDashboardService {
@@ -737,12 +745,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       updateDashboard(true);
 
       if (onAdd) {
-        RunnerAndConfigurationSettings settings = findSettings(content);
-        if (settings != null) {
-          RunDashboardServiceImpl service = new RunDashboardServiceImpl(settings);
-          service.setContent(content);
-          RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
-          RunConfigurationNode node = new RunConfigurationNode(myProject, service, getCustomizers(settings, descriptor));
+        RunConfigurationNode node = createNode(content);
+        if (node != null) {
           ServiceViewManager.getInstance(myProject).select(node, RunDashboardServiceViewContributor.class, true, false);
         }
       }
@@ -750,12 +754,29 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     @Override
     public void contentAdded(@NotNull ContentManagerEvent event) {
-      addServiceContent(event.getContent());
+      Content content = event.getContent();
+      addServiceContent(content);
+      if (myState.openRunningConfigInTab) {
+        RunConfigurationNode node = createNode(content);
+        if (node != null) {
+          ServiceViewManager.getInstance(myProject).extract(node, RunDashboardServiceViewContributor.class);
+        }
+      }
     }
 
     @Override
     public void contentRemoved(@NotNull ContentManagerEvent event) {
       removeServiceContent(event.getContent());
+    }
+
+    private RunConfigurationNode createNode(Content content) {
+      RunnerAndConfigurationSettings settings = findSettings(content);
+      if (settings == null) return null;
+
+      RunDashboardServiceImpl service = new RunDashboardServiceImpl(settings);
+      service.setContent(content);
+      RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
+      return new RunConfigurationNode(myProject, service, getCustomizers(settings, descriptor));
     }
   }
 }

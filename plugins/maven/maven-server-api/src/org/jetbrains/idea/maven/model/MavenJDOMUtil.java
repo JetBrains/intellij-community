@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.Comparing;
@@ -18,7 +18,7 @@ import java.util.List;
  * Methods in this class are copied from {@link com.intellij.openapi.util.JDOMUtil} to avoid dependency on 'intellij.platform.util' module
  * in Maven server classes.
  */
-class MavenJDOMUtil {
+final class MavenJDOMUtil {
   public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2) {
     if (e1 == null && e2 == null) return true;
     if (e1 == null || e2 == null) return false;

@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public interface SelectInTarget {
   ExtensionPointName<SelectInTarget> EP_NAME = new ExtensionPointName<>("com.intellij.selectInTarget");
 
   @Override
-  String toString();
+  @Nls String toString();
 
   /**
    * This should be called in an read action

@@ -113,16 +113,16 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
 
   fun createFragments(configuration: U): List<SettingsEditorFragment<U, *>> {
     val list = ArrayList<SettingsEditorFragment<U, *>>()
-    processApplicableExtensions(configuration) {
-      val fragments = it.createFragments(configuration)
+    processApplicableExtensions(configuration) { t ->
+      val fragments = t.createFragments(configuration)
       if (fragments != null) {
         list.addAll(fragments)
       }
       else {
-        val editor = it.createEditor(configuration)
+        val editor = t.createEditor(configuration)
         if (editor != null) {
-          val wrapper = SettingsEditorFragment.createWrapper(it.serializationId, it.editorTitle, null, editor)
-          wrapper.isSelected = it.isEnabledFor(configuration, null)
+          val wrapper = SettingsEditorFragment.createWrapper(t.serializationId, t.editorTitle, null, editor)
+          { t.isEnabledFor(configuration, null) }
           list.add(wrapper)
         }
       }

@@ -11,7 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.space.components.SpaceUserAvatarProvider
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.*
 import com.intellij.space.ui.*
@@ -39,6 +39,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
       return
     }
 
+    val space = SpaceWorkspaceComponent.getInstance()
     val connected = space.loginState.value is SpaceLoginState.Connected
     if (!connected) {
       e.presentation.isEnabledAndVisible = false
@@ -58,6 +59,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val component = e.inputEvent.component
+    val space = SpaceWorkspaceComponent.getInstance()
     val workspace = space.workspace.value
     if (workspace != null) {
       buildMenu(workspace, SpaceUserAvatarProvider.getInstance().avatars.value.circle, e.project!!)
@@ -95,6 +97,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
       }
 
       is SpaceLoginState.Disconnected -> buildLoginPanel(st, true) { serverName ->
+        val space = SpaceWorkspaceComponent.getInstance()
         space.signInManually(serverName, space.lifetime, component)
       }
     }
@@ -105,7 +108,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
     val serverUrl = cleanupUrl(host)
     val menuItems: MutableList<AccountMenuItem> = mutableListOf()
     menuItems += AccountMenuItem.Account(
-      workspace.me.value.englishFullName(),
+      workspace.me.value.englishFullName(), // NON-NLS
       serverUrl,
       resizeIcon(icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
       listOf(browseAction(SpaceBundle.message("main.toolbar.open.server", serverUrl), host, true)))
@@ -143,7 +146,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
     menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.settings.action"),
                                         { SpaceSettingsPanel.openSettings(project) },
                                         showSeparatorAbove = true)
-    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.log.out.action"), { space.signOut() })
+    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.log.out.action"), { SpaceWorkspaceComponent.getInstance().signOut() })
 
     return AccountsMenuListPopup(project, AccountMenuPopupStep(menuItems))
   }

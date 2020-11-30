@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,27 +10,23 @@ import java.util.Map;
 public final class LocalFileUrl implements Url {
   private final String path;
 
-  /**
-   * Use {@link Urls#newLocalFileUrl(String)} instead
-   */
+  /** Use {@link Urls#newLocalFileUrl(String)} instead */
   public LocalFileUrl(@NotNull String path) {
     this.path = path;
   }
 
   @Override
-  public Url resolve(@NotNull String subPath) {
+  public @NotNull Url resolve(@NotNull String subPath) {
     return new LocalFileUrl(path.isEmpty() ? subPath : (path + "/" + subPath));
   }
 
-  @NotNull
   @Override
-  public Url addParameters(@NotNull Map<String, String> parameters) {
+  public @NotNull Url addParameters(@NotNull Map<String, String> parameters) {
     throw new UnsupportedOperationException("File URL doesn't support parameters");
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return path;
   }
 
@@ -44,33 +40,28 @@ public final class LocalFileUrl implements Url {
     return path;
   }
 
-  @NotNull
   @Override
-  public String toExternalForm() {
+  public @NotNull String toExternalForm() {
     return path;
   }
 
-  @Nullable
   @Override
-  public String getScheme() {
+  public @Nullable String getScheme() {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getAuthority() {
+  public @Nullable String getAuthority() {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getParameters() {
+  public @Nullable String getParameters() {
     return null;
   }
 
-  @NotNull
   @Override
-  public Url trimParameters() {
+  public @NotNull Url trimParameters() {
     return this;
   }
 

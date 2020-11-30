@@ -4,6 +4,7 @@ package org.intellij.lang.regexp.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.TokenSet;
@@ -36,8 +37,14 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
   @Override
   @Nullable
   public RegExpGroup resolve() {
-    return SyntaxTraverser.psiTraverser(getContainingFile()).filter(RegExpGroup.class)
-      .filter(group -> group.isAnyNamedGroup() && Objects.equals(getGroupName(), group.getGroupName()))
+    final String groupName = getGroupName();
+    return groupName == null ? null : resolve(groupName, getContainingFile());
+  }
+
+  static RegExpGroup resolve(@NotNull String groupName, PsiFile file) {
+    return SyntaxTraverser.psiTraverser(file)
+      .filter(RegExpGroup.class)
+      .filter(group -> Objects.equals(groupName, group.getGroupName()))
       .first();
   }
 

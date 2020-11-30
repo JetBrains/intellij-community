@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
@@ -15,13 +12,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nullable
+import javax.swing.JComponent
 
 class OpenInRightSplitAction : AnAction(), DumbAware {
-  
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = getEventProject(e) ?: return
     val file = getVirtualFile(e) ?: return
-    
+
 
     val element = e.getData(CommonDataKeys.PSI_ELEMENT) as? Navigatable
     val editorWindow = openInRightSplit(project, file, element)
@@ -36,18 +34,24 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
       }
     }
   }
-  
+
   override fun update(e: AnActionEvent) {
     val project = getEventProject(e)
+    val editor = e.getData(CommonDataKeys.EDITOR)
+    val fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR)
+
     val place = e.place
-    if (project == null || 
-        place == ActionPlaces.EDITOR_TAB_POPUP || 
+    if (project == null ||
+        fileEditor != null ||
+        editor != null ||
+        place == ActionPlaces.EDITOR_TAB_POPUP ||
         place == ActionPlaces.EDITOR_POPUP) {
       e.presentation.isEnabledAndVisible = false
       return
-    } 
-    
-    val contextFile =  getVirtualFile(e)
+    }
+
+
+    val contextFile = getVirtualFile(e)
     e.presentation.isEnabledAndVisible = contextFile != null && !contextFile.isDirectory
   }
 
@@ -74,6 +78,25 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
         ApplicationManager.getApplication().invokeLater({ element.navigate(true) }, project.disposed)
       }
       return editorWindow
+    }
+
+    fun overrideDoubleClickWithOneClick(component: JComponent) {
+      val action = ActionManager.getInstance().getAction(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT) ?: return
+
+      val set = action.shortcutSet
+      for (shortcut in set.shortcuts) {
+        if (shortcut is MouseShortcut) {
+          //convert double click -> one click
+          if (shortcut.clickCount == 2) {
+            val customSet = CustomShortcutSet(MouseShortcut(shortcut.button, shortcut.modifiers, 1))
+            object: AnAction(null as String?) {
+              override fun actionPerformed(e: AnActionEvent) {
+                action.actionPerformed(e)
+              }
+            }.registerCustomShortcutSet(customSet, component)
+          }
+        }
+      }
     }
   }
 }

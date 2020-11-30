@@ -78,7 +78,10 @@ private class DebuggerTitleInfoProvider : TitleInfoProvider {
     var subscriptionDisposable: Disposable? = null
 
     fun checkState(provider: DebuggerTitleInfoProvider) {
-      debuggerSessionStarted = provider.isEnabled() && XDebuggerManager.getInstance(project).debugSessions.isNotEmpty()
+      debuggerSessionStarted = XDebuggerManager.getInstance(project)?.let {
+        provider.isEnabled() && it.debugSessions.isNotEmpty()
+      } ?: false
+
       provider.updateNotify()
     }
 

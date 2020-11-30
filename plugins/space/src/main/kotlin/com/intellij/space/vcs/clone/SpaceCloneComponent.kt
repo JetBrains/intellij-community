@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.space.components.SpaceUserAvatarProvider
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.*
 import com.intellij.space.ui.*
@@ -67,7 +67,7 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
   init {
     Disposer.register(this, Disposable { uiLifetime.terminate() })
 
-    space.loginState.forEach(uiLifetime) { st ->
+    SpaceWorkspaceComponent.getInstance().loginState.forEach(uiLifetime) { st ->
       val view = createView(uiLifetime, st)
       view.border = JBUI.Borders.empty(8, 12)
       wrapper.setContent(view)
@@ -90,7 +90,7 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
       }
 
       is SpaceLoginState.Disconnected -> buildLoginPanel(st) { serverName ->
-        space.signInManually(serverName, lifetime, getView())
+        SpaceWorkspaceComponent.getInstance().signInManually(serverName, lifetime, getView())
       }
     }
   }
@@ -100,7 +100,7 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
   }
 
   override fun onComponentSelected() {
-    val isConnected = space.loginState.value is SpaceLoginState.Connected
+    val isConnected = SpaceWorkspaceComponent.getInstance().loginState.value is SpaceLoginState.Connected
     dialogStateListener.onOkActionNameChanged(DvcsBundle.message("clone.button"))
     dialogStateListener.onOkActionEnabled(isConnected && cloneView.getUrl() != null)
   }
@@ -148,8 +148,8 @@ private class CloneView(
     val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
     fcd.isShowFileSystemRoots = true
     fcd.isHideIgnored = false
-    addBrowseFolderListener(DvcsBundle.getString("clone.destination.directory.browser.title"),
-                            DvcsBundle.getString("clone.destination.directory.browser.description"),
+    addBrowseFolderListener(DvcsBundle.message("clone.destination.directory.browser.title"),
+                            DvcsBundle.message("clone.destination.directory.browser.description"),
                             project,
                             fcd)
   }
@@ -195,7 +195,7 @@ private class CloneView(
     }
 
     cloneViewModel.me.forEach(lifetime) { profile ->
-      accountLabel.toolTipText = profile.englishFullName()
+      accountLabel.toolTipText = profile.englishFullName() // NON-NLS
     }
 
     cloneViewModel.repos.batches.forEach(lifetime) { batchResult ->
@@ -250,7 +250,7 @@ private class CloneView(
         val host = st.server
         val serverUrl = cleanupUrl(st.server)
         val menuItems: MutableList<AccountMenuItem> = mutableListOf()
-        menuItems += AccountMenuItem.Account(st.workspace.me.value.englishFullName(),
+        menuItems += AccountMenuItem.Account(st.workspace.me.value.englishFullName(), // NON-NLS
                                              serverUrl,
                                              resizeIcon(SpaceUserAvatarProvider.getInstance().avatars.value.circle,
                                                         VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
@@ -262,7 +262,7 @@ private class CloneView(
                                               updateSelectedUrl()
                                             },
                                             showSeparatorAbove = true)
-        menuItems += AccountMenuItem.Action(SpaceBundle.message("clone.dialog.logout.action"), { space.signOut() })
+        menuItems += AccountMenuItem.Action(SpaceBundle.message("clone.dialog.logout.action"), { SpaceWorkspaceComponent.getInstance().signOut() })
 
         AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))
           .showUnderneathOf(accountLabel)

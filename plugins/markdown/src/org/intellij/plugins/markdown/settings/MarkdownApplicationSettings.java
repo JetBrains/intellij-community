@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.settings;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.messages.Topic;
@@ -39,7 +38,7 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
 
   @NotNull
   public static MarkdownApplicationSettings getInstance() {
-    return ServiceManager.getService(MarkdownApplicationSettings.class);
+    return ApplicationManager.getApplication().getService(MarkdownApplicationSettings.class);
   }
 
   @Nullable

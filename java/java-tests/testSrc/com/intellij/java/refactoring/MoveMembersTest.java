@@ -84,6 +84,10 @@ public class MoveMembersTest extends LightMultiFileTestCase {
   public void testIDEADEV12448() {
     doTest("B", "A", false, 0);
   }
+  
+  public void testClearFinalStatic() {
+    doTest("B", "A", 0, 1);
+  }
 
   public void testFieldForwardRef() {
     doTest("A", "Constants", 0);

@@ -314,7 +314,6 @@ public final class ActionUtil {
       if (actionIndex != -1 && targetIndex != -1) {
         if (actionIndex < targetIndex) targetIndex--;
         AnAction anAction = list.remove(actionIndex);
-        assert targetIndex >= 0;
         list.add(before ? targetIndex : targetIndex + 1, anAction);
         return;
       }

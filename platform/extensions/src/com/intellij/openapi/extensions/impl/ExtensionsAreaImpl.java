@@ -259,8 +259,12 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       ExtensionPointImpl<?> old = map.put(point.getName(), point);
       if (old != null) {
         map.put(point.getName(), old);
-        throw componentManager.createError("Duplicate registration for EP '" + point.getName() + "': first in " + old.getPluginDescriptor() +
-                                             ", second in " + point.getPluginDescriptor(), point.getPluginDescriptor().getPluginId());
+        PluginDescriptor oldPluginDescriptor = old.getPluginDescriptor();
+        PluginDescriptor pluginDescriptor = point.getPluginDescriptor();
+        throw componentManager.createError("Duplicate registration for EP '" + point.getName() + "': " +
+                                           "first in " + oldPluginDescriptor + " (" + oldPluginDescriptor.getPluginPath() + ")" +
+                                           ", second in " + pluginDescriptor+ " (" + pluginDescriptor.getPluginPath() + ")",
+                                           pluginDescriptor.getPluginId());
       }
     }
   }

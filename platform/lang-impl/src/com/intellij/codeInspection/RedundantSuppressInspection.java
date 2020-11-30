@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -335,16 +334,6 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
           HashMap<PsiElement, Collection<String>> scopes = new HashMap<>();
           boolean suppressAll = collectSuppressions(element, scopes, IGNORE_ALL, mySuppressor);
           if (suppressAll) {
-            for (String suppressId : myActiveTools) {
-              if (isSuppressedFor(element, suppressId, myToolToSuppressScopes.get(suppressId))) {
-                return;
-              }
-            }
-            TextRange range = mySuppressor.getHighlightingRange(element, SuppressionUtil.ALL);
-            String allSuppression = range.substring(element.getText());
-            holder.registerProblem(element, range,
-                                   InspectionsBundle.message("inspection.redundant.suppression.description"),
-                                   mySuppressor.createRemoveRedundantSuppressionFix(allSuppression));
             return;
           }
           Collection<String> suppressIds = scopes.get(element);

@@ -2,11 +2,11 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import com.jetbrains.packagesearch.intellij.plugin.normalizeSpace
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDependency
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import java.awt.Component
-import org.apache.commons.lang3.StringUtils
 
 class PackagesChosenDescriptionView {
 
@@ -29,7 +29,7 @@ class PackagesChosenDescriptionView {
         var text = meta?.remoteInfo?.description
         if (text.isNullOrEmpty() || text.equals("null", true)) text = meta?.identifier ?: ""
 
-        packageDescription.text = StringUtils.normalizeSpace(text)
+        packageDescription.text = text.normalizeSpace()
 
         panel.updateAndRepaint()
     }

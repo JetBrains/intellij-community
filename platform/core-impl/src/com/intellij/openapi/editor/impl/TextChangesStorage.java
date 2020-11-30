@@ -181,7 +181,7 @@ public class TextChangesStorage {
         ));
         return insertionIndex;
       }
-      else if (insertionIndex > 0 && !myChanges.isEmpty()) {
+      else if (insertionIndex > 0) {
         ChangeEntry changeEntry = myChanges.get(insertionIndex - 1);
         clientShift = changeEntry.clientStartOffset - changeEntry.change.getStart() + changeEntry.change.getDiff();
       }
@@ -266,7 +266,7 @@ public class TextChangesStorage {
       }
 
       // Check if given change intersects stored change range from the right.
-      if (newChangeStart < storedClientEnd && newChangeEnd >= storedClientEnd) {
+      if (newChangeEnd >= storedClientEnd) {
         CharSequence adjustedText = storedText.subSequence(0, newChangeStart - storedClientStart);
         TextChangeImpl adjusted = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
         changeEntry.change = adjusted;
@@ -277,9 +277,7 @@ public class TextChangesStorage {
       }
 
       // Check if given change is left-adjacent to the stored change.
-      if (newChangeEnd == storedClientStart) {
-        changeEntry.clientStartOffset += changeDiff;
-      }
+      changeEntry.clientStartOffset += changeDiff;
     }
 
     if (insertionIndex >= 0) {
@@ -429,7 +427,7 @@ public class TextChangesStorage {
             break;
           }
         }
-        if (end >= clientStart && clientStart < clientEnd) {
+        if (clientStart < clientEnd) {
           int changeTextStartOffset = start <= clientStart ? 0 : start - clientStart;
           int length = Math.min(clientEnd, end) - Math.max(clientStart, start);
           CharArrayUtil.getChars(changeEntry.change.getText(), data, changeTextStartOffset, outputOffset, length);

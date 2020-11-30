@@ -5,12 +5,17 @@ import com.intellij.openapi.application.Experiments;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class WSLCommandLineOptions {
+import java.util.ArrayList;
+import java.util.List;
+
+public final class WSLCommandLineOptions {
 
   private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
   private boolean mySudo = false;
   private String myRemoteWorkingDirectory;
+  private boolean myPassEnvVarsUsingInterop = false;
+  private final List<String> myInitShellCommands = new ArrayList<>();
 
   public boolean isLaunchWithWslExe() {
     return myLaunchWithWslExe && Experiments.getInstance().isFeatureEnabled("wsl.execute.with.wsl.exe");
@@ -57,6 +62,40 @@ public class WSLCommandLineOptions {
    */
   public @NotNull WSLCommandLineOptions setRemoteWorkingDirectory(@Nullable String remoteWorkingDirectory) {
     myRemoteWorkingDirectory = remoteWorkingDirectory;
+    if (remoteWorkingDirectory != null && !remoteWorkingDirectory.startsWith("/")) {
+      throw new AssertionError("Linux path was expected, but got " + remoteWorkingDirectory);
+    }
+    return this;
+  }
+
+  public boolean isPassEnvVarsUsingInterop() {
+    return myPassEnvVarsUsingInterop;
+  }
+
+  /**
+   * Enables passing environment variables to WSL process using environmental variable interoperability between Windows and WSL.
+   * See <a href="https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/">Share Environment</a>.
+   * @param passEnvVarsUsingInterop true to pass environment variables using interoperability
+   */
+  public @NotNull WSLCommandLineOptions setPassEnvVarsUsingInterop(boolean passEnvVarsUsingInterop) {
+    myPassEnvVarsUsingInterop = passEnvVarsUsingInterop;
+    return this;
+  }
+
+  public @NotNull List<String> getInitShellCommands() {
+    return myInitShellCommands;
+  }
+
+  /**
+   * Adds an initialize command that is applied only when executing in shell ({@link #isExecuteCommandInShell()} is true).
+   * The initialize command is a linux command that runs before the main command.
+   * If the initialize command fails (exit code != 0), the main command won't run.
+   * For example, it can be used to setup environment before running the app.
+   * 
+   * @param initCommand a linux shell command (may contain shell builtin commands)
+   */
+  public @NotNull WSLCommandLineOptions addInitCommand(@NotNull String initCommand) {
+    myInitShellCommands.add(initCommand);
     return this;
   }
 
@@ -65,6 +104,8 @@ public class WSLCommandLineOptions {
     return "launchWithWslExe=" + myLaunchWithWslExe +
            ", executeCommandInShell=" + myExecuteCommandInShell +
            ", sudo=" + mySudo +
-           ", remoteWorkingDirectory='" + myRemoteWorkingDirectory + '\'';
+           ", remoteWorkingDirectory='" + myRemoteWorkingDirectory + '\'' +
+           ", passEnvVarsUsingInterop=" + myPassEnvVarsUsingInterop +
+           ", initCommands=" + myInitShellCommands;
   }
 }

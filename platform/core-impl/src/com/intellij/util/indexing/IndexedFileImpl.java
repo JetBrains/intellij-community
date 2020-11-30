@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -19,6 +19,10 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
   private FileType mySubstituteFileType;
 
   private final @Nullable FileType myType;
+
+  public IndexedFileImpl(@NotNull VirtualFile file) {
+    this(file, null);
+  }
 
   public IndexedFileImpl(@NotNull VirtualFile file, Project project) {
     this(file, null, project);

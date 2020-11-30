@@ -15,12 +15,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.ui.panel.ProgressPanel;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
@@ -110,13 +108,16 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private static final String GOT_IT_HEADER = "IDE features trainer";
     private static final String GOT_IT_TEXT = "Learn the most useful shortcuts and essential IDE features interactively";
-    //private static final String GOT_IT_TEXT = "Press Tab to show options";
+    private static final String GOT_IT_TEXT2 = "Some textfield that actually means nothing";
 
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
 
     private JTabbedPane   pane;
     private final Project project;
+
+    private JButton abracadabraButton;
+    private GotItTooltip gotItTooltip;
 
     private ComponentPanelTest(Project project) {
       super(project);
@@ -127,9 +128,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       setTitle("Component Panel Test Action");
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @NotNull JComponent createCenterPanel() {
       pane = new JBTabbedPane(SwingConstants.TOP);
       pane.addTab("Component", createComponentPanel());
       pane.addTab("Component Grid", createComponentGridPanel());
@@ -263,24 +263,22 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       // Abracadaba button
       gc.gridy++;
-      JButton button = new JButton("Abracadabra");
-      new HelpTooltip().setDescription(LONG_TEXT2).installOn(button);
-      topPanel.add(UI.PanelFactory.panel(button).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
+      abracadabraButton = new JButton("Abracadabra");
+      new HelpTooltip().setDescription(LONG_TEXT2).installOn(abracadabraButton);
+      topPanel.add(UI.PanelFactory.panel(abracadabraButton).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
-      //try {
-        GotItTooltip gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
+      try {
+        gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
           andShowCloseShortcut().
           withShowCount(3).
-          //withHeader(GOT_IT_HEADER).
-          withIcon(AllIcons.General.BalloonInformation);
+          withHeader(GOT_IT_HEADER).
+          withIcon(AllIcons.General.BalloonInformation).
+          withBrowserLink("Learn more", new URL("https://www.jetbrains.com/"));
 
-          //withTimeout();
-          //withIcon(AllIcons.General.BalloonInformation).
-          //withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
-          //withShortcut("Ctrl+Alt+D");
+        new GotItTooltip("textfield", GOT_IT_TEXT2, project).
+          withShowCount(5).showAfter(gotItTooltip, text1, GotItTooltip.BOTTOM_MIDDLE);
 
-        gotItTooltip.showDynamic(Balloon.Position.below, () -> new RelativePoint(button, new Point(button.getWidth() / 2, button.getHeight())));
-      //} catch (MalformedURLException ex) {}
+      } catch (MalformedURLException ex) {}
 
       // Combobox with comment
       gc.gridy++;
@@ -832,8 +830,14 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       DefaultActionGroup toolbarActions = new DefaultActionGroup();
       toolbarActions.add(new SplitButtonAction(actions));
-      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1).withShortCut("control K"));
-      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating2).withShortCut("control N"));
+      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1) {
+        {
+          GotItTooltip actionGotIt = new GotItTooltip("short.action", "Short action text", project).withHeader("Header");
+          actionGotIt.assignTo(getTemplatePresentation(), GotItTooltip.BOTTOM_MIDDLE);
+          gotItTooltip.showAfter(actionGotIt, abracadabraButton, GotItTooltip.BOTTOM_MIDDLE);
+        }
+      }.withShortCut("control K"));
+      toolbarActions.add(new MyAction("Long", AllIcons.Ide.Rating2).withShortCut("control N"));
       toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3).withShortCut("control P"));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);

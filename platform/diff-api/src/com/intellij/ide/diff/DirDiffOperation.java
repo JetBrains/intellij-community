@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,6 +29,7 @@ public enum DirDiffOperation {
     return JBUIScale.scaleIcon(EmptyIcon.create(16));
   }
 
+  @Nullable
   public Color getTextColor() {
     switch (this) {
       case COPY_TO:

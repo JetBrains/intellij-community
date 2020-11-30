@@ -19,6 +19,7 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.ThumbnailManager;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -48,7 +49,7 @@ final class ThumbnailSelectInTarget implements SelectInTarget {
   }
 
   public String toString() {
-    return getToolWindowId();
+    return ImagesBundle.message("thumbnails.toolwindow.name");
   }
 
   @Override

@@ -42,11 +42,10 @@ public class ChangeProjectIconForm {
     myClear.setEnabled(getIcon() != null);
     myClearDark.setEnabled(getDarculaIcon() != null);
     RecentProjectsManagerBase recentProjectsManager = RecentProjectsManagerBase.getInstanceEx();
-    Icon projectOrAppIcon = recentProjectsManager.getProjectOrAppIcon(myProjectPath);
     Icon defaultIcon = recentProjectsManager.getProjectIcon(myProjectPath, false);
-    myDefaultIcon.setIcon(defaultIcon == null ? projectOrAppIcon : defaultIcon);
+    myDefaultIcon.setIcon(defaultIcon);
     Icon darculaIcon = recentProjectsManager.getProjectIcon(myProjectPath, true);
-    myDarculaIcon.setIcon(darculaIcon == null ? myDefaultIcon.getIcon() : darculaIcon);
+    myDarculaIcon.setIcon(darculaIcon);
   }
 
   Icon getIcon() {

@@ -4,28 +4,27 @@ package org.jetbrains.idea.devkit.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.With;
+import org.jetbrains.idea.devkit.dom.index.ExtensionPointClassIndex;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+/**
+ * Locates EP via associated class.
+ */
 public final class ExtensionPointLocator {
   private final PsiClass myPsiClass;
 
   public ExtensionPointLocator(PsiClass psiClass) {
     myPsiClass = psiClass;
   }
-
 
   public Set<ExtensionPointCandidate> findDirectCandidates() {
     Set<ExtensionPointCandidate> candidates = new HashSet<>();
@@ -52,45 +51,36 @@ public final class ExtensionPointLocator {
   }
 
   private static void findExtensionPointCandidates(PsiClass psiClass, Set<? super ExtensionPointCandidate> candidates) {
-    String name = ClassUtil.getJVMClassName(psiClass);
-    if (name == null) return;
+    final Project project = psiClass.getProject();
+    final SmartPointerManager instance = SmartPointerManager.getInstance(project);
 
-    Project project = psiClass.getProject();
-    GlobalSearchScope scope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
-    PsiSearchHelper.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
-      PsiElement element = file.findElementAt(startOffset);
-      processExtensionPointCandidate(element, candidates);
-      return true;
-    }, scope);
-  }
+    final List<ExtensionPoint> extensionPoints =
+      ExtensionPointClassIndex.getExtensionPointsByClass(project, psiClass, PluginRelatedLocatorsUtils.getCandidatesScope(project));
+    for (ExtensionPoint point : extensionPoints) {
+      final SmartPsiElementPointer<XmlTag> pointer = instance.createSmartPsiElementPointer(point.getXmlTag());
+      final String effectiveQualifiedName = point.getEffectiveQualifiedName();
 
-  private static void processExtensionPointCandidate(PsiElement element, Set<? super ExtensionPointCandidate> candidates) {
-    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-    if (tag == null) return;
-    if ("extensionPoint".equals(tag.getName())) {
-      String epName = getEPName(tag);
-      if (epName != null) {
-        candidates.add(new ExtensionPointCandidate(SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag), epName));
+      if (DomUtil.hasXml(point.getInterface())) {
+        candidates.add(new ExtensionPointCandidate(pointer, effectiveQualifiedName));
+        continue;
       }
-    }
-    else if ("with".equals(tag.getName())) {
-      XmlTag extensionPointTag = tag.getParentTag();
-      if (extensionPointTag == null) return;
-      if (!"extensionPoint".equals(extensionPointTag.getName())) return;
-      String attrName = tag.getAttributeValue("attribute");
-      String tagName = tag.getAttributeValue("tag");
-      String epName = getEPName(extensionPointTag);
-      String beanClassName = extensionPointTag.getAttributeValue("beanClass");
-      if ((attrName == null && tagName == null) || epName == null) return;
-      candidates.add(new ExtensionPointCandidate(SmartPointerManager.getInstance(extensionPointTag.getProject())
-                                             .createSmartPsiElementPointer(extensionPointTag), epName, attrName, tagName, beanClassName));
-    }
-  }
 
-  @Nullable
-  private static String getEPName(XmlTag tag) {
-    final DomElement domElement = DomUtil.getDomElement(tag);
-    if (!(domElement instanceof ExtensionPoint)) return null;
-    return ((ExtensionPoint)domElement).getEffectiveQualifiedName();
+      String tagName = null;
+      String attributeName = null;
+      for (With element : point.getWithElements()) {
+        if (psiClass.equals(element.getImplements().getValue())) {
+          tagName = element.getTag().getStringValue();
+          attributeName = element.getAttribute().getStringValue();
+          break;
+        }
+      }
+
+      final ExtensionPointCandidate candidate =
+        new ExtensionPointCandidate(pointer,
+                                    effectiveQualifiedName,
+                                    attributeName, tagName,
+                                    point.getBeanClass().getStringValue());
+      candidates.add(candidate);
+    }
   }
 }

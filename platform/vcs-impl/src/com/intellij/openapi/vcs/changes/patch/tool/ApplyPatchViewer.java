@@ -271,7 +271,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   //
 
   protected void initPatchViewer() {
-  myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myPatchRequest));
+    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(null, myContext, myPatchRequest));
     final Document outputDocument = myResultEditor.getDocument();
     boolean success =
       DiffUtil.executeWriteCommand(outputDocument, myProject, DiffBundle.message("message.init.merge.content.command"), () -> {
@@ -705,7 +705,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
         // do not abort - ranges are ordered in patch order, but they can be not ordered in terms of resultRange
         handler.processResolvable(resultRange.start, resultRange.end, patchRange.start, patchRange.end,
-                                  myPatchEditor, change.getDiffType(), change.isResolved());
+                                  change.getDiffType(), change.isResolved());
       }
     }
   }

@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import org.jetbrains.annotations.NotNull;
@@ -11,29 +12,41 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class VisibleEditorsTracker implements CommandListener {
+@Service
+public final class VisibleEditorsTracker {
   private final Set<Editor> myEditorsVisibleOnCommandStart = new HashSet<>();
   private long myCurrentCommandStart;
   private long myLastCommandFinish;
 
   public static VisibleEditorsTracker getInstance() {
-    return ApplicationManager.getApplication().getComponent(VisibleEditorsTracker.class);
+    return ApplicationManager.getApplication().getService(VisibleEditorsTracker.class);
   }
 
-  public VisibleEditorsTracker() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(CommandListener.TOPIC, this);
+  final static class MyCommandListener implements CommandListener {
+    @Override
+    public void commandStarted(@NotNull CommandEvent event) {
+      getInstance().commandStarted();
+    }
+
+    @Override
+    public void commandFinished(@NotNull CommandEvent event) {
+      getInstance().commandFinished();
+    }
   }
 
-  public boolean wasEditorVisibleOnCommandStart(Editor editor){
+  public boolean wasEditorVisibleOnCommandStart(Editor editor) {
     return myEditorsVisibleOnCommandStart.contains(editor);
   }
 
-  public long getCurrentCommandStart() { return myCurrentCommandStart; }
+  public long getCurrentCommandStart() {
+    return myCurrentCommandStart;
+  }
 
-  public long getLastCommandFinish() { return myLastCommandFinish; }
+  public long getLastCommandFinish() {
+    return myLastCommandFinish;
+  }
 
-  @Override
-  public void commandStarted(@NotNull CommandEvent event) {
+  private void commandStarted() {
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor.getComponent().isShowing()) {
         myEditorsVisibleOnCommandStart.add(editor);
@@ -44,8 +57,7 @@ public final class VisibleEditorsTracker implements CommandListener {
     }
   }
 
-  @Override
-  public void commandFinished(@NotNull CommandEvent event) {
+  private void commandFinished() {
     myEditorsVisibleOnCommandStart.clear();
     myLastCommandFinish = System.currentTimeMillis();
   }

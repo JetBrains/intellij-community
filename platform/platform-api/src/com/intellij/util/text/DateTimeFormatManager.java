@@ -2,8 +2,8 @@
 package com.intellij.util.text;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -91,6 +91,6 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Ele
   }
 
   public static DateTimeFormatManager getInstance() {
-    return ServiceManager.getService(DateTimeFormatManager.class);
+    return ApplicationManager.getApplication().getService(DateTimeFormatManager.class);
   }
 }

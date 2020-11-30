@@ -369,6 +369,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
           .map(state -> state.getScope(myProject))
           .filter(Objects::nonNull)
           .map(NamedScope::getScopeId)
+          .distinct()
           .sorted(myScopeComparator)
           .toArray(String[]::new);
     }
@@ -446,6 +447,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
           refreshAggregatedScopes();
           for (int i = 0; i < getRowCount(); i++) {
             if (getScopeName(i).equals(scopeName)) {
+              fireTableRowsInserted(i, i);
               myTable.clearSelection();
               myTable.setRowSelectionInterval(i, i);
             }

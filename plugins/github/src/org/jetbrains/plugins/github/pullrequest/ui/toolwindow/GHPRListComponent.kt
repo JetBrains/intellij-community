@@ -111,7 +111,7 @@ internal object GHPRListComponent {
 
     ListEmptyTextController(listLoader, searchQueryHolder, list.emptyText, disposable)
 
-    val searchCompletionProvider = GHPRSearchCompletionProvider(project)
+    val searchCompletionProvider = GHPRSearchCompletionProvider(project, dataContext.repositoryDataService)
     val pullRequestUiSettings = GithubPullRequestsProjectUISettings.getInstance(project)
     val search = GHPRSearchPanel.create(project, searchStringModel, searchCompletionProvider, pullRequestUiSettings).apply {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)

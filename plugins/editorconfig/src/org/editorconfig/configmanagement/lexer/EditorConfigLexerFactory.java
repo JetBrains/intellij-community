@@ -11,7 +11,7 @@ import org.editorconfig.language.lexer.EditorConfigLexerAdapter;
 import org.editorconfig.language.psi.EditorConfigElementTypes;
 import org.jetbrains.annotations.NotNull;
 
-public class EditorConfigLexerFactory {
+public final class EditorConfigLexerFactory {
   @NotNull
   public static Lexer getAdapter() {
     return PlatformUtils.isRider()

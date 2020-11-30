@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<!-- Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file. -->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="so"/>
+	</identity>
+	<annotations>
+		<annotation cp="¤" type="tts">Lacag aan la aqoon</annotation>
+		<annotation cp="֏" type="tts">Daraamka Armeniya</annotation>
+		<annotation cp="؋" type="tts">Afgan Afgani</annotation>
+		<annotation cp="৳" type="tts">Taka Bangledesh</annotation>
+		<annotation cp="฿" type="tts">Baatka Taylaan</annotation>
+		<annotation cp="៛" type="tts">Riyf kambodiya</annotation>
+		<annotation cp="₡" type="tts">Kolonka Kosta Riika</annotation>
+		<annotation cp="₦" type="tts">Nairada Neyjeeriya</annotation>
+		<annotation cp="₪" type="tts">Niyuu Shekelka Israaiil</annotation>
+		<annotation cp="₫" type="tts">Dongta Fitnaam</annotation>
+		<annotation cp="₭" type="tts">Kib Laoti</annotation>
+		<annotation cp="₮" type="tts">Tugrikta Mongoliya</annotation>
+		<annotation cp="₲" type="tts">Guranida Baraguway</annotation>
+		<annotation cp="₴" type="tts">Hirfiniyada Yukreeyn</annotation>
+		<annotation cp="₵" type="tts">Sedida Gana</annotation>
+		<annotation cp="₸" type="tts">Tengeda Kasakhstan</annotation>
+		<annotation cp="₺" type="tts">Liirada Turkiga</annotation>
+		<annotation cp="₼" type="tts">Manaata Asarbeyjan</annotation>
+		<annotation cp="₾" type="tts">Laariga Joorjiya</annotation>
+	</annotations>
+</ldml>

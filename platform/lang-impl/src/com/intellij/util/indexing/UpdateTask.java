@@ -4,15 +4,14 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 abstract class UpdateTask<Type> {
   private final Semaphore myUpdateSemaphore = new Semaphore();
-  private final Set<Type> myItemsBeingIndexed = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Type> myItemsBeingIndexed = ContainerUtil.newConcurrentSet();
   private static final boolean DEBUG = false;
 
   final boolean processAll(Collection<? extends Type> itemsToProcess, Project project) {

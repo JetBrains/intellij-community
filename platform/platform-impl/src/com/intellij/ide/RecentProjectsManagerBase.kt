@@ -16,7 +16,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.*
+import com.intellij.openapi.project.impl.ProjectUiFrameAllocator
+import com.intellij.openapi.project.impl.ProjectUiFrameManager
+import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
@@ -244,7 +246,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   protected open fun getProjectDisplayName(project: Project): String? = null
 
   fun getProjectIcon(path: String, isDark: Boolean): Icon {
-    return projectIconHelper.getProjectIcon(path, isDark)
+    return projectIconHelper.getProjectIcon(path, isDark, false)
+  }
+
+  fun getProjectIcon(path: String, isDark: Boolean, generateFromName: Boolean): Icon {
+    return projectIconHelper.getProjectIcon(path, isDark, generateFromName)
   }
 
   fun getProjectOrAppIcon(path: String): Icon {
@@ -275,7 +281,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       val appInfo = ApplicationInfoEx.getInstanceEx()
       info.displayName = getProjectDisplayName(project)
       info.projectWorkspaceId = project.stateStore.projectWorkspaceId
-      info.frame = ProjectFrameBounds.getInstance(project).frameInfoHelper.info
+      ProjectFrameBounds.getInstance(project).frameInfoHelper.info?.let {
+        info.frame = it
+      }
       info.build = appInfo!!.build.asString()
       info.productionCode = appInfo.build.productCode
       info.eap = appInfo.isEAP
@@ -431,7 +439,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   // open for rider
   protected open fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
-    if (WindowManagerEx.getInstanceEx().getFrameHelper(null) != null) {
+    if (!System.getProperty("idea.open.multi.projects.correctly", "true").toBoolean() ||
+        WindowManagerEx.getInstanceEx().getFrameHelper(null) != null) {
       return false
     }
 
@@ -456,7 +465,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         info.frameTitle?.let {
           ideFrame.title = it
         }
-        ideFrame.isVisible = true
         val frameManager = if (isActive) {
           MyActiveProjectUiFrameManager(ideFrame, taskList, frameInfo.fullScreen)
         }
@@ -535,14 +543,19 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl, writLastProjectInfo: Boolean) {
     val frameHelper = windowManager.getFrameHelper(project)
     if (frameHelper == null) {
-      LOG.warn("Cannot find frameHelper for ${project.name} to update frame info")
+      LOG.warn("Cannot update frame info (project=${project.name}, reason=frame helper is not found)")
+      return
+    }
+
+    val frame = frameHelper.frame
+    if (frame == null) {
+      LOG.warn("Cannot update frame info (project=${project.name}, reason=frame is null)")
       return
     }
 
     val workspaceId = project.stateStore.projectWorkspaceId
 
-    // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
-    val frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frameHelper, windowManager)
+    val frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frameHelper, frame, windowManager)
     val path = getProjectPath(project)
     synchronized(stateLock) {
       val info = state.additionalInfo.get(path)
@@ -554,13 +567,13 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
           info.frame = frameInfo
         }
         info.projectWorkspaceId = workspaceId
-        info.frameTitle = frameHelper.frame?.title
+        info.frameTitle = frame.title
       }
     }
 
     LOG.runAndLogException {
       if (writLastProjectInfo) {
-        writeInfoFile(frameInfo, frameHelper.frame ?: return@runAndLogException)
+        writeInfoFile(frameInfo, frame)
       }
 
       if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
@@ -735,9 +748,6 @@ private open class MyProjectUiFrameManager(val frame: IdeFrameImpl) : ProjectUiF
     // done by active frame manager for all frames
   }
 
-  override fun projectLoaded(frameHelper: ProjectFrameHelper, project: Project) {
-  }
-
   fun dispose() {
     frame.dispose()
   }
@@ -760,20 +770,21 @@ private class MyActiveProjectUiFrameManager(frame: IdeFrameImpl,
                                             private val isFullScreen: Boolean) : MyProjectUiFrameManager(frame) {
   companion object {
     private fun doInit(isFullScreen: Boolean, tasks: List<Pair<Path, OpenProjectTask>>) {
-      for (task in tasks) {
+      for (task in tasks.reversed()) {
         val manager = task.second.frameManager as MyProjectUiFrameManager
         val frame = manager.frame
-
         val frameHelper = ProjectFrameHelper(frame, null)
+        frame.isVisible = true
 
         if (isFullScreen && manager is MyActiveProjectUiFrameManager && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
           frameHelper.toggleFullScreen(true)
         }
 
-        frameHelper.init()
-        // otherwise not painted if frame is already visible
-        frame.validate()
         manager.frameHelper = frameHelper
+      }
+
+      for (task in tasks) {
+        (task.second.frameManager as MyProjectUiFrameManager).frameHelper!!.init()
       }
     }
   }

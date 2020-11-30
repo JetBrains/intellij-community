@@ -14,13 +14,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.impl.local.FileWatcher
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.INTER_RESPONSE_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.NATIVE_PROCESS_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.SHORT_PROCESS_DELAY
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.refresh
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.unwatch
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.local.FileWatcherTestUtil.watch
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
@@ -58,7 +59,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Rule @JvmField val tempDir = TempDirectory()
 
   private lateinit var fs: LocalFileSystem
-  private lateinit var root: VirtualFile
+  private lateinit var vfsTempDir: VirtualFile
   private lateinit var watcher: FileWatcher
   private lateinit var alarm: Alarm
 
@@ -70,7 +71,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
     fs = LocalFileSystem.getInstance()
-    root = refresh(tempDir.root)
+    vfsTempDir = refresh(tempDir.root)
 
     runInEdtAndWait { fs.refresh(false) }
     runInEdtAndWait { fs.refresh(false) }
@@ -94,18 +95,15 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @After fun tearDown() {
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
 
-    if (this::watcher.isInitialized) {
-      shutdown(watcher)
-    }
-
-    runInEdtAndWait {
-      if (this::root.isInitialized) {
-        runWriteAction { root.delete(this) }
-      }
-      if (this::fs.isInitialized) {
-        (fs as LocalFileSystemImpl).cleanupForNextTest()
-      }
-    }
+    RunAll(
+      { if (this::watcher.isInitialized) shutdown(watcher) },
+      {
+        runInEdtAndWait {
+          if (this::vfsTempDir.isInitialized) runWriteAction { vfsTempDir.delete(this) }
+          if (this::fs.isInitialized) (fs as LocalFileSystemImpl).cleanupForNextTest()
+        }
+      },
+    ).run()
 
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
   }
@@ -696,15 +694,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     fs.refresh(false)
   }
 
-  private fun refresh(file: File): VirtualFile {
-    val vFile = fs.refreshAndFindFileByIoFile(file) ?: throw IllegalStateException("can't get '${file.path}' into VFS")
-    VfsUtilCore.visitChildrenRecursively(vFile, object : VirtualFileVisitor<Any>() {
-      override fun visitFile(file: VirtualFile): Boolean { file.children; return true }
-    })
-    vFile.refresh(false, true)
-    return vFile
-  }
-
   private fun assertEvents(action: () -> Unit, expectedOps: Map<File, Char>, timeout: Long = NATIVE_PROCESS_DELAY) {
     LOG.debug("** waiting for ${expectedOps}")
     watcherEvents.down()
@@ -721,7 +710,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assumeFalse("reset happened", resetHappened.get())
     LOG.debug("** done waiting")
 
-    val events = VfsTestUtil.getEvents { fs.refresh(false) }.filter { !FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
+    val events = VfsTestUtil.getEvents { fs.refresh(false) }
+      .filterNot { FileUtil.startsWith(it.path, PathManager.getConfigPath()) || FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
 
     val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
     val actual = VfsTestUtil.print(events).sorted()

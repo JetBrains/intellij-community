@@ -401,8 +401,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     boolean isSomehowOverwriting = children.size() > 1 ||
                                    (children.size() == 1 && !PathMacroUtil.DIRECTORY_STORE_NAME.equals(children.get(0).getFileName().toString()));
 
-    return ProgressManager.getInstance().run(new Task.WithResult<Project, RuntimeException>(null, LangBundle
-      .message("progress.title.applying.template"), true) {
+    return ProgressManager.getInstance().run(new Task.WithResult<>(null, LangBundle.message("progress.title.applying.template"), true) {
       @Override
       public Project compute(@NotNull ProgressIndicator indicator) {
         try {

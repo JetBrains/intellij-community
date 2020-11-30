@@ -54,7 +54,7 @@ data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
 private class PyCollectImportsTask(
   private val module: Module,
   private val psiManager: PsiManager,
-  @NlsContexts.ProgressTitle title: String
+  @NlsContexts.DialogTitle title: String
 ) : Task.WithResult<Set<String>, Exception>(module.project, title, true) {
 
   override fun compute(indicator: ProgressIndicator): Set<String> {

@@ -20,6 +20,7 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -183,9 +184,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   private static final String[] PREFIX_CANDIDATES = {
     "Rider", "GoLand", "CLion", "MobileIDE",
     null,
-    "AppCode", "SwiftTests", "CidrCommonTests",
+    "AppCode", "SwiftTests",
     "DataGrip",
-    "Python", "PyCharmCore",
+    "Python", "PyCharmDS", "PyCharmCore",
     "Ruby",
     "PhpStorm",
     "UltimateLangXml", "Idea", "PlatformLangXml"};
@@ -233,6 +234,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   @Override
   final void removeGlobalTempDirectory(@NotNull Path dir) {
     temporaryDirectory.after();
+  }
+
+  @Override
+  protected void addTmpFileToKeep(@NotNull Path file) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -818,7 +824,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   public static void setFileText(final @NotNull VirtualFile file, final @NotNull String text) {
     try {
-      WriteAction.runAndWait(() -> VfsUtil.saveText(file, text));
+      WriteAction.runAndWait(() -> LoadTextUtil.write(null, file, file,text, -1));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -19,6 +19,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
+import java.util.function.BiConsumer
 import java.util.function.Function
 
 open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(
@@ -43,9 +44,9 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
   protected val profilesAreInitialized = AtomicNotNullLazyValue.createValue {
     val app = ApplicationManager.getApplication()
     if (!(app.isUnitTestMode || app.isHeadlessEnvironment)) {
-      for (ep in BUNDLED_EP_NAME.iterable) {
-        schemeManager.loadBundledScheme(ep.path!! + ".xml", ep)
-      }
+      BUNDLED_EP_NAME.processWithPluginDescriptor(BiConsumer { ep, pluginDescriptor ->
+        schemeManager.loadBundledScheme(ep.path!! + ".xml", null, pluginDescriptor)
+      })
     }
     schemeManager.loadSchemes()
 
@@ -58,6 +59,7 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
 
   @Volatile
   protected var LOAD_PROFILES = !ApplicationManager.getApplication().isUnitTestMode
+
   override fun getProfiles(): Collection<InspectionProfileImpl> {
     initProfiles()
     return Collections.unmodifiableList(schemeManager.allSchemes)
@@ -103,8 +105,7 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
     // use default as base, not random custom profile
     val result = schemeManager.findSchemeByName(DEFAULT_PROFILE_NAME)
     if (result == null) {
-      val profile = InspectionProfileImpl(
-        DEFAULT_PROFILE_NAME)
+      val profile = InspectionProfileImpl(DEFAULT_PROFILE_NAME)
       addProfile(profile)
       return profile
     }

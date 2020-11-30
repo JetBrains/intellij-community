@@ -78,6 +78,7 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
             }
           })
         } else {
+          if (!directoryFile.isValid) continue
           val children = directoryFile.children
           for (file in children) {
             if (!file.isDirectory && FileTypeRegistry.getInstance().getFileTypeByFileName(file.nameSequence) === ArchiveFileType.INSTANCE) {

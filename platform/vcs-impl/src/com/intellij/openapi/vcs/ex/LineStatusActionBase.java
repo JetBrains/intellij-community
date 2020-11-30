@@ -18,18 +18,23 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class LineStatusActionBase extends DumbAwareAction {
+  public static final DataKey<Integer> SELECTED_OFFSET_KEY = DataKey.create("VCS_LINE_MARKER_SELECTED_OFFSET_KEY");
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     Editor editor = e.getData(CommonDataKeys.EDITOR);
+    Integer selectedOffset = e.getData(SELECTED_OFFSET_KEY);
     if (project == null || editor == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
@@ -39,22 +44,35 @@ public abstract class LineStatusActionBase extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    if (!isSomeChangeSelected(editor, tracker)) {
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(false);
-      return;
+
+    boolean isEnabled;
+    if (selectedOffset != null) {
+      int line = editor.getDocument().getLineNumber(selectedOffset);
+      isEnabled = tracker.getRangeForLine(line) != null;
     }
-    e.getPresentation().setEnabledAndVisible(true);
+    else {
+      isEnabled = isSomeChangeSelected(editor, tracker);
+    }
+
+    e.getPresentation().setVisible(true);
+    e.getPresentation().setEnabled(isEnabled);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
+    Integer selectedOffset = e.getData(SELECTED_OFFSET_KEY);
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
     assert tracker != null;
 
-    doAction(tracker, editor);
+    Range range = null;
+    if (selectedOffset != null) {
+      int line = editor.getDocument().getLineNumber(selectedOffset);
+      range = tracker.getRangeForLine(line);
+    }
+
+    doAction(tracker, editor, range);
   }
 
   private static boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull LineStatusTrackerI<?> tracker) {
@@ -65,5 +83,5 @@ public abstract class LineStatusActionBase extends DumbAwareAction {
     return true;
   }
 
-  protected abstract void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor);
+  protected abstract void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor, @Nullable Range range);
 }

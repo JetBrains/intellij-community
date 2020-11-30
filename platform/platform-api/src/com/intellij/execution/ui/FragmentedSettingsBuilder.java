@@ -3,6 +3,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.TextWithMnemonic;
@@ -40,11 +42,19 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   public static final int TAG_VGAP = JBUI.scale(6);
   public static final int TAG_HGAP = JBUI.scale(2);
 
+  private Disposable myDisposable;
   private final JPanel myPanel = new JPanel(new GridBagLayout()) {
     @Override
     public void addNotify() {
       super.addNotify();
+      myDisposable = Disposer.newDisposable();
       registerShortcuts();
+    }
+
+    @Override
+    public void removeNotify() {
+      super.removeNotify();
+      Disposer.dispose(myDisposable);
     }
   };
   private final GridBagConstraints myConstraints =
@@ -157,15 +167,16 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
   private void registerShortcuts() {
     for (AnAction action : buildGroup(new Ref<>()).getChildActionsOrStubs()) {
-      ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(action);
-      if (shortcutSet != null && action instanceof ToggleFragmentAction) {
-        action.registerCustomShortcutSet(shortcutSet, null);
+      ShortcutSet shortcutSet = action.getShortcutSet();
+      if (shortcutSet.getShortcuts().length > 0 && action instanceof ToggleFragmentAction) {
         new AnAction(action.getTemplateText()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            ((ToggleFragmentAction)action).myFragment.toggle(true); // show or set focus
+            SettingsEditorFragment<?, ?> fragment = ((ToggleFragmentAction)action).myFragment;
+            fragment.toggle(true); // show or set focus
+            IdeFocusManager.getGlobalInstance().requestFocus(fragment.getEditorComponent(), false);
           }
-        }.registerCustomShortcutSet(shortcutSet, myPanel.getRootPane());
+        }.registerCustomShortcutSet(shortcutSet, myPanel.getRootPane(), myDisposable);
       }
     }
   }
@@ -176,8 +187,9 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     DefaultActionGroup group = buildGroup(lastSelected);
     Runnable callback = () -> {
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (!lastSelected.isNull()) {
-          IdeFocusManager.getGlobalInstance().requestFocus(lastSelected.get(), false);
+        JComponent component = lastSelected.get();
+        if (component != null && !(component instanceof JPanel) && !(component instanceof JLabel)) {
+          IdeFocusManager.getGlobalInstance().requestFocus(component, false);
         }
       });
     };
@@ -218,7 +230,12 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
         actionGroup.add(customGroup);
         continue;
       }
-      actionGroup.add(new ToggleFragmentAction(fragment, lastSelected));
+      ToggleFragmentAction action = new ToggleFragmentAction(fragment, lastSelected);
+      ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(action);
+      if (shortcutSet != null) {
+        action.registerCustomShortcutSet(shortcutSet, null);
+      }
+      actionGroup.add(action);
       List<SettingsEditorFragment<Settings, ?>> children = fragment.getChildren();
       if (!children.isEmpty()) {
         DefaultActionGroup childGroup = buildGroup(children, lastSelected);

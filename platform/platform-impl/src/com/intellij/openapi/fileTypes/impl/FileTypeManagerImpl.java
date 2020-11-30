@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.StartupAbortedException;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -81,7 +83,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new HashMap<>();
   private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
-  private final ConflictingMappingTracker myConflictingMappingTracker = new ConflictingMappingTracker(myRemovedMappingTracker);
+  private final ConflictingFileTypeMappingTracker
+    myConflictingMappingTracker = new ConflictingFileTypeMappingTracker(myRemovedMappingTracker);
 
   private final Map<String, FileTypeBean> myPendingFileTypes = new LinkedHashMap<>();
   private final FileTypeAssocTable<FileTypeBean> myPendingAssociations = new FileTypeAssocTable<>();
@@ -581,16 +584,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     FileType fileType = getByFile(file);
-    if (!(file instanceof StubVirtualFile)) {
-      if (fileType == null) {
-        return myDetectionService.getOrDetectFromContent(file, content);
+    if (file instanceof StubVirtualFile) {
+      if (fileType == null && content == null && file instanceof FakeVirtualFile) {
+        if (ScratchUtil.isScratch(file.getParent())) return PlainTextFileType.INSTANCE;
       }
-      if (mightBeReplacedByDetectedFileType(fileType) && FileTypeDetectionService.isDetectable(file)) {
-        FileType detectedFromContent = myDetectionService.getOrDetectFromContent(file, content);
-        // unknown file type means that it was detected as binary, it's better to keep it binary
-        if (detectedFromContent != PlainTextFileType.INSTANCE) {
-          return detectedFromContent;
-        }
+    }
+    else if (fileType == null) {
+      return myDetectionService.getOrDetectFromContent(file, content);
+    }
+    else if (mightBeReplacedByDetectedFileType(fileType) && FileTypeDetectionService.isDetectable(file)) {
+      FileType detectedFromContent = myDetectionService.getOrDetectFromContent(file, content);
+      // unknown file type means that it was detected as binary, it's better to keep it binary
+      if (detectedFromContent != PlainTextFileType.INSTANCE) {
+        return detectedFromContent;
       }
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
@@ -705,7 +711,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       unregisterFileTypeWithoutNotification(fileType);
       myStandardFileTypes.remove(fileType.getName());
       if (fileType instanceof LanguageFileType) {
-        Language.unregisterLanguage(((LanguageFileType) fileType).getLanguage());
+        Language language = ((LanguageFileType)fileType).getLanguage();
+        if (fileType.getClass().getClassLoader().equals(language.getClass().getClassLoader())) {
+          Language.unregisterLanguage(language);
+        }
       }
       fireFileTypesChanged(null, fileType);
     });
@@ -1137,7 +1146,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         continue;
       }
       FileType oldFileType = myPatternsTable.findAssociatedFileType(matcher);
-      ConflictingMappingTracker.ResolveConflictResult result = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFileType, fileType);
+      ConflictingFileTypeMappingTracker.ResolveConflictResult result = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFileType, fileType);
       FileType newFileType = result.resolved;
       if (!newFileType.equals(oldFileType)) {
         myPatternsTable.addAssociation(matcher, newFileType);

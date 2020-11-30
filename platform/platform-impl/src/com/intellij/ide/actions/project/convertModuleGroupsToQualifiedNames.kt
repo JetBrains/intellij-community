@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.*
@@ -114,7 +115,8 @@ internal class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) :
     if (groupPath == null) {
       return listOf(name)
     }
-    val group = LineExtensionInfo(groupPath.joinToString(separator = "/", prefix = " (", postfix = ")"), Color.GRAY, null, null, Font.PLAIN)
+    @NlsSafe val pathString = groupPath.joinToString(separator = "/", prefix = " (", postfix = ")")
+    val group = LineExtensionInfo(pathString, Color.GRAY, null, null, Font.PLAIN)
     return listOf(name, group)
   }
 

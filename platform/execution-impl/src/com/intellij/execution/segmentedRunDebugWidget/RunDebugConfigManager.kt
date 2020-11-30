@@ -2,14 +2,14 @@
 package com.intellij.execution.segmentedRunDebugWidget
 
 import com.intellij.execution.Executor
-import com.intellij.execution.RunManager
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 
-class RunDebugConfigManager(val project: Project) {
-  enum class State(val running: Boolean =  false, val debugging: Boolean= false, val profiling: Boolean = false) {
+internal class RunDebugConfigManager(private val project: Project) {
+  enum class State(val running: Boolean = false, val debugging: Boolean = false, val profiling: Boolean = false) {
     RUNNING_DEBUGGING_PROFILING(true, true, true),
     RUNNING_PROFILING(true, profiling = true),
     DEBUGGING_PROFILING(debugging = true, profiling = true),
@@ -33,72 +33,70 @@ class RunDebugConfigManager(val project: Project) {
 
     private val ids = listOf(RUN_EXECUTOR_ID, DEBUG_EXECUTOR_ID, PROFILE_EXECUTOR_ID)
 
-    fun getInstance(project: Project): RunDebugConfigManager? {
-      return project.getService(RunDebugConfigManager::class.java)
-    }
+    fun getInstance(project: Project): RunDebugConfigManager = project.service()
 
     @JvmStatic
     fun wrapAction(executor: Executor, action: AnAction): AnAction? {
-      return if(ids.contains(executor.id)) {
+      if (ids.contains(executor.id)) {
         return BaseExecutorActionWrapper(executor, action)
-      } else null
+      }
+      else {
+        return null
+      }
     }
 
     @JvmStatic
-    fun generateActionID(executor: Executor): String {
-      return "${ACTION_PREFIX}_${executor.id}"
-    }
+    fun generateActionID(executor: Executor) = "${ACTION_PREFIX}_${executor.id}"
   }
 
-  val runManager = RunManager.getInstance(project)
-  val executionManager = ExecutionManagerImpl.getInstance(project)
-
   fun getState(): State {
-    val runningMap = executionManager.getRunning(ids)
+    val runningMap = ExecutionManagerImpl.getInstance(project).getRunning(ids)
 
     val profiling = runningMap.containsKey(PROFILE_EXECUTOR_ID)
     val running = runningMap.containsKey(RUN_EXECUTOR_ID)
     val debugging = runningMap.containsKey(DEBUG_EXECUTOR_ID)
 
-    if(profiling && running && debugging) {
+    if (profiling && running && debugging) {
       return State.RUNNING_DEBUGGING_PROFILING
     }
 
-    if(profiling && running && debugging) {
+    if (profiling && running && debugging) {
       return State.RUNNING_DEBUGGING_PROFILING
     }
-    if(running && debugging) {
+    if (running && debugging) {
       return State.RUNNING_DEBUGGING
     }
-    if(profiling && running) {
+    if (profiling && running) {
       return State.RUNNING_PROFILING
     }
 
-    if(profiling && debugging) {
+    if (profiling && debugging) {
       return State.DEBUGGING_PROFILING
     }
 
-    if(profiling) {
+    if (profiling) {
       runningMap[PROFILE_EXECUTOR_ID]?.let {
         return if (it.size > 1) {
           State.PROFILING_SEVERAL
-        } else {
+        }
+        else {
           State.PROFILING
         }
       }
     }
 
-    if(debugging) {
+    if (debugging) {
       runningMap[DEBUG_EXECUTOR_ID]?.let {
         return if (it.size > 1) {
           State.DEBUGGING_SEVERAL
-        } else {
+        }
+        else {
           State.DEBUGGING
         }
       }
     }
 
-    if(running) {
+    if (running) {
       runningMap[RUN_EXECUTOR_ID]?.let {
         return if (it.size > 1) {
           State.RUNNING_SEVERAL

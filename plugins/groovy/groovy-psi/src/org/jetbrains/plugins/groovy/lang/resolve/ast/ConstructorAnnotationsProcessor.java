@@ -7,6 +7,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -70,19 +71,22 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       context.addMethod(fieldsConstructor);
     }
 
-    List<GrLightMethodBuilder> mapConstructors = generateMapConstructor(typeDefinition, originInfo);
+    List<GrLightMethodBuilder> mapConstructors = generateMapConstructor(typeDefinition, originInfo, context);
     for (GrLightMethodBuilder mapConstructor : mapConstructors) {
       context.addMethod(mapConstructor);
     }
   }
 
-  private static @NotNull List<GrLightMethodBuilder> generateMapConstructor(@NotNull GrTypeDefinition typeDefinition, String originInfo) {
+  private static @NotNull List<GrLightMethodBuilder> generateMapConstructor(@NotNull GrTypeDefinition typeDefinition,
+                                                                            String originInfo,
+                                                                            @NotNull TransformationContext context) {
     if (GroovyConfigUtils.isAtLeastGroovy25(typeDefinition)) {
       PsiAnnotation mapConstructorAnno = typeDefinition.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR);
       if (mapConstructorAnno == null) {
         return Collections.emptyList();
       }
       GrLightMethodBuilder mapConstructor = new GrLightMethodBuilder(typeDefinition);
+      checkContainingClass(context, mapConstructor);
       mapConstructor.setOriginInfo(originInfo);
       Visibility visibility = getVisibility(mapConstructorAnno, mapConstructor, Visibility.PUBLIC);
       mapConstructor.addModifier(visibility.toString());
@@ -98,6 +102,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       var noArg = GrAnnotationUtil.inferBooleanAttribute(mapConstructorAnno, "noArg");
       if (Boolean.TRUE.equals(noArg)) {
         var noArgConstructor = new GrLightMethodBuilder(typeDefinition);
+        checkContainingClass(context, noArgConstructor);
         noArgConstructor.setOriginInfo(originInfo);
         return List.of(mapConstructor, noArgConstructor);
       }
@@ -107,6 +112,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     }
     else {
       final GrLightMethodBuilder mapConstructor = new GrLightMethodBuilder(typeDefinition);
+      checkContainingClass(context, mapConstructor);
       mapConstructor.addParameter("args", CommonClassNames.JAVA_UTIL_HASH_MAP);
       mapConstructor.setOriginInfo(originInfo);
       return List.of(mapConstructor);
@@ -161,6 +167,9 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
       fieldsConstructor.addModifier(visibility.toString());
       AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(tupleConstructor);
+
+      checkContainingClass(context, fieldsConstructor);
+
       for (PsiNamedElement element : cache.getAffectedMembers()) {
         GrLightParameter parameter;
         if (element instanceof PsiField) {
@@ -181,5 +190,29 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     }
     fieldsConstructor.setOriginInfo(originInfo);
     return fieldsConstructor;
+  }
+
+  private static void checkContainingClass(@NotNull TransformationContext context,@NotNull GrLightMethodBuilder constructor) {
+    GrTypeDefinition codeClass = context.getCodeClass();
+    var modifierList = codeClass.getModifierList();
+    if (modifierList == null || context.hasModifierProperty(modifierList, PsiModifier.STATIC)) {
+      return;
+    }
+    PsiClass containingClass = codeClass.getContainingClass();
+    if (containingClass == null) {
+      return;
+    }
+    var factory = GroovyPsiElementFactory.getInstance(context.getProject());
+    PsiClassType classType = factory.createType(containingClass);
+    var justTypeParameter = new EnclosingClassParameter("_containingClass", classType, containingClass);
+    constructor.addParameter(justTypeParameter);
+  }
+
+  static public class EnclosingClassParameter extends GrLightParameter {
+    public EnclosingClassParameter(@NlsSafe @NotNull String name,
+                                   @Nullable PsiType type,
+                                   @NotNull PsiElement scope) {
+      super(name, type, scope);
+    }
   }
 }

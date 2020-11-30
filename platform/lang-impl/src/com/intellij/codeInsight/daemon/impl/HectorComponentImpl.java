@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -217,7 +216,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
       oldHector.cancel();
     } else {
       myHectorRef = new WeakReference<>(hector);
-      UIEventLogger.logUIEvent(UIEventId.HectorPopupDisplayed);
+      UIEventLogger.HectorPopupDisplayed.log(myFile.getProject());
       hector.show(point);
     }
   }

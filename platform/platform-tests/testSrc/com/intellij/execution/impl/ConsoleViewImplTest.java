@@ -3,8 +3,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.ConsoleFolding;
-import com.intellij.execution.filters.ConsoleInputFilterProvider;
-import com.intellij.execution.filters.InputFilter;
+import com.intellij.execution.filters.*;
 import com.intellij.execution.process.AnsiEscapeDecoderTest;
 import com.intellij.execution.process.NopProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -529,6 +528,33 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals(expectedRegisteredTokens, registered);
   }
 
+  public void testCustomFiltersPrecedence() {
+    HyperlinkInfo predefinedHyperlink = project -> {};
+    Filter predefinedFilter = (line, entireLength) ->  new Filter.Result(0, 1, predefinedHyperlink);
+    HyperlinkInfo customHyperlink = project -> {};
+    Filter customFilter = (line, entireLength) ->  new Filter.Result(0, 10, customHyperlink);
+
+    Disposer.dispose(myConsole); // have to re-init extensions
+
+    ConsoleFilterProvider predefinedProvider = project -> new Filter[] { predefinedFilter };
+    ExtensionTestUtil.maskExtensions(
+      ConsoleFilterProvider.FILTER_PROVIDERS,
+      ContainerUtil.newArrayList(predefinedProvider),
+      getTestRootDisposable());
+
+    myConsole = createConsole(true, getProject());
+    myConsole.addMessageFilter(customFilter);
+    myConsole.print("foo bar buz test", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.flushDeferredText();
+    myConsole.waitAllRequests();
+
+    EditorHyperlinkSupport hyperlinks = myConsole.getHyperlinks();
+    assertNotNull(hyperlinks.getHyperlinkAt(0));
+    assertEquals(customHyperlink, hyperlinks.getHyperlinkAt(0));
+    assertNotNull(hyperlinks.getHyperlinkAt(10));
+    assertEquals(customHyperlink, hyperlinks.getHyperlinkAt(10));
+  }
+
   public void testBackspaceDeletesPreviousOutput() {
     assertPrintedText(new String[]{"Test", "\b"}, "Tes");
     assertPrintedText(new String[]{"Test", "\b", "\b"}, "Te");
@@ -757,6 +783,20 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertSize(2, regions);
     assertTrue(regions[0].isExpanded());
     assertFalse(regions[1].isExpanded());
+  }
+
+  public void testClearPrintConsoleSizeConsistency() {
+    withCycleConsoleNoFolding(1000, consoleView -> {
+      String text = "long text";
+      consoleView.print(text, ConsoleViewContentType.SYSTEM_OUTPUT);
+      consoleView.waitAllRequests();
+      //editor contains `text`
+      assertEquals(text.length(), consoleView.getEditor().getDocument().getTextLength());
+      consoleView.clear();
+      consoleView.print(text, ConsoleViewContentType.SYSTEM_OUTPUT);
+      //assert console's editor text which is about to be cleared is not added
+      assertEquals(text.length(), consoleView.getContentSize());
+    });
   }
 
   public void testSubsequentExpandedNonAttachedFoldsAreCombined() {

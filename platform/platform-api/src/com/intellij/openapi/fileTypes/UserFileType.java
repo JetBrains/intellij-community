@@ -76,11 +76,6 @@ public abstract class UserFileType<T extends UserFileType<T>> implements FileTyp
     return icon;
   }
 
-  @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    return null;
-  }
-
   public void copyFrom(@NotNull UserFileType<T> newType) {
     myName = newType.getName();
     myDescription = newType.getDescription();

@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.project.DumbAware
 
-internal class BaseExecutorActionWrapper(val executor: Executor, val action: AnAction) : AnAction(), DumbAware, UpdateInBackground {
+internal class BaseExecutorActionWrapper(val executor: Executor, val action: AnAction)
+  : AnAction(action.templateText), DumbAware, UpdateInBackground {
+
   override fun displayTextInToolbar(): Boolean {
     return true
   }

@@ -50,22 +50,28 @@ public class WSLDistribution {
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
   @NotNull private final WslDistributionDescriptor myDescriptor;
-  @NotNull private final Path myExecutablePath;
+  @Nullable private final Path myExecutablePath;
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
   }
 
-  WSLDistribution(@NotNull WslDistributionDescriptor descriptor, @NotNull Path executablePath) {
+  WSLDistribution(@NotNull WslDistributionDescriptor descriptor, @Nullable Path executablePath) {
     myDescriptor = descriptor;
     myExecutablePath = executablePath;
   }
 
+  public WSLDistribution(@NotNull String msId) {
+    this(new WslDistributionDescriptor(msId), null);
+  }
+
   /**
-   * @return executable file
+   * @deprecated please don't use it, to be removed
+   * @return executable file, null for WSL distributions parsed from `wsl.exe --list` output
    */
-  @NotNull
-  public Path getExecutablePath() {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
+  public @Nullable Path getExecutablePath() {
     return myExecutablePath;
   }
 
@@ -96,7 +102,7 @@ public class WSLDistribution {
    * @return creates and patches command line, e.g:
    * {@code ruby -v} => {@code bash -c "ruby -v"}
    */
-  public @NotNull GeneralCommandLine createWslCommandLine(String @NotNull ... command) {
+  public @NotNull GeneralCommandLine createWslCommandLine(String @NotNull ... command) throws ExecutionException {
     return patchCommandLine(new GeneralCommandLine(command), null, new WSLCommandLineOptions());
   }
 
@@ -173,7 +179,12 @@ public class WSLDistribution {
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setRemoteWorkingDirectory(remoteWorkingDir)
       .setSudo(askForSudo);
-    return patchCommandLine(commandLine, project, options);
+    try {
+      return patchCommandLine(commandLine, project, options);
+    }
+    catch (ExecutionException e) {
+      throw new IllegalStateException("Cannot patch command line for WSL", e);
+    }
   }
 
   /**
@@ -193,9 +204,14 @@ public class WSLDistribution {
   @NotNull
   public <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                            @Nullable Project project,
-                                                           @NotNull WSLCommandLineOptions options) {
+                                                           @NotNull WSLCommandLineOptions options) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
-    Path wslExe = findWslExe(options);
+    Path executable = getExecutablePath();
+    boolean launchWithWslExe = options.isLaunchWithWslExe() || executable == null;
+    Path wslExe = launchWithWslExe ? findWslExe() : null;
+    if (wslExe == null && executable == null) {
+      throw new ExecutionException(IdeBundle.message("wsl.not.installed.dialog.message"));
+    }
     boolean executeCommandInShell = wslExe == null || options.isExecuteCommandInShell();
     List<String> linuxCommand = buildLinuxCommand(commandLine, executeCommandInShell);
 
@@ -233,14 +249,19 @@ public class WSLDistribution {
     if (executeCommandInShell && StringUtil.isNotEmpty(options.getRemoteWorkingDirectory())) {
       prependCommand(linuxCommand, "cd", CommandLineUtil.posixQuote(options.getRemoteWorkingDirectory()), "&&");
     }
-    if (executeCommandInShell) {
+    if (executeCommandInShell && !options.isPassEnvVarsUsingInterop()) {
       commandLine.getEnvironment().forEach((key, val) -> {
         prependCommand(linuxCommand, "export", CommandLineUtil.posixQuote(key) + "=" + CommandLineUtil.posixQuote(val), "&&");
       });
       commandLine.getEnvironment().clear();
     }
     else {
-      setWSLENV(commandLine);
+      passEnvironmentUsingInterop(commandLine);
+    }
+    if (executeCommandInShell) {
+      for (String command : options.getInitShellCommands()) {
+        prependCommand(linuxCommand, command, "&&");
+      }
     }
 
     commandLine.getParametersList().clearAll();
@@ -257,7 +278,7 @@ public class WSLDistribution {
       }
     }
     else {
-      commandLine.setExePath(getExecutablePath().toString());
+      commandLine.setExePath(executable.toString());
       commandLine.addParameter(getRunCommandLineParameter());
       commandLine.addParameter(linuxCommandStr);
     }
@@ -284,8 +305,8 @@ public class WSLDistribution {
     }
   }
 
-  private static @Nullable Path findWslExe(@NotNull WSLCommandLineOptions options) {
-    File file = options.isLaunchWithWslExe() ? PathEnvironmentVariableUtil.findInPath("wsl.exe") : null;
+  static @Nullable Path findWslExe() {
+    File file = PathEnvironmentVariableUtil.findInPath("wsl.exe");
     return file != null ? file.toPath() : null;
   }
 
@@ -295,7 +316,7 @@ public class WSLDistribution {
   }
 
   // https://blogs.msdn.microsoft.com/commandline/2017/12/22/share-environment-vars-between-wsl-and-windows/
-  private static void setWSLENV(@NotNull GeneralCommandLine commandLine) {
+  private static void passEnvironmentUsingInterop(@NotNull GeneralCommandLine commandLine) {
     StringBuilder builder = new StringBuilder();
     for (String envName : commandLine.getEnvironment().keySet()) {
       if (StringUtil.isNotEmpty(envName)) {

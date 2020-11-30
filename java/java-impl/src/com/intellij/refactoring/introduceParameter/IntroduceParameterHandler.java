@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -222,9 +221,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       final PsiMethod selectedMethod = list.getSelectedValue();
       if (selectedMethod == null) return;
       dropHighlighters(highlighters);
-      updateView(selectedMethod, editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, highlighters, superMethod);
+      updateView(selectedMethod, editor, highlighters, superMethod);
     });
-    updateView(validEnclosingMethods.get(0), editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, highlighters, superMethod);
+    updateView(validEnclosingMethods.get(0), editor, highlighters, superMethod);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list);
     scrollPane.setBorder(null);
     panel.add(scrollPane, BorderLayout.CENTER);
@@ -256,7 +255,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
   private static void updateView(PsiMethod selectedMethod,
                                  Editor editor,
-                                 @NotNull TextAttributesKey attributesKey,
                                  List<? super RangeHighlighter> highlighters,
                                  JCheckBox superMethod) {
     final MarkupModel markupModel = editor.getMarkupModel();
@@ -264,7 +262,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     if (nameIdentifier != null) {
       final TextRange textRange = nameIdentifier.getTextRange();
       final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
-        attributesKey, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
+        EditorColors.SEARCH_RESULT_ATTRIBUTES, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
         HighlighterTargetArea.EXACT_RANGE);
       highlighters.add(rangeHighlighter);
     }
@@ -433,14 +431,13 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         @NonNls String parameterName = "anObject";
-        boolean replaceAllOccurences = true;
-        boolean isDeleteLocalVariable = true;
         PsiExpression initializer = myLocalVar != null && myExpr == null ? myLocalVar.getInitializer() : myExpr;
-        new IntroduceParameterProcessor(myProject, method, methodToSearchFor, initializer, myExpr, myLocalVar, isDeleteLocalVariable, parameterName,
-                                        replaceAllOccurences, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, mustBeFinal,
+        new IntroduceParameterProcessor(myProject, method, methodToSearchFor, initializer, myExpr, myLocalVar, true, parameterName,
+                                        true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, mustBeFinal,
                                         false, null,
                                         getParamsToRemove(method, occurrences)).run();
-      } else {
+      }
+      else {
         if (myEditor != null) {
           RefactoringUtil.highlightAllOccurrences(myProject, occurrences, myEditor);
         }

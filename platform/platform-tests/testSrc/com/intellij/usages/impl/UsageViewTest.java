@@ -231,7 +231,7 @@ public class UsageViewTest extends BasePlatformTestCase {
 
     String text = new ExporterToTextFile(usageView, UsageViewSettings.getInstance()).getReportText();
     assertEquals("Found usages  (1 usage found)\n" +
-                 "    Unclassified usage  (1 usage found)\n" +
+                 "    Unclassified  (1 usage found)\n" +
                  "        light_idea_test_case  (1 usage found)\n" +
                  "              (1 usage found)\n" +
                  "                X.java  (1 usage found)\n" +

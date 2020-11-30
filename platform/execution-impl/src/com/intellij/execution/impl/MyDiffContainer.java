@@ -22,6 +22,7 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,7 +40,7 @@ class MyDiffContainer extends JBLayeredPane implements Disposable {
   private final JComponent myLoadingPanel;
   private final JLabel myJLabel;
 
-  MyDiffContainer(@NotNull JComponent content, @NotNull String text) {
+  MyDiffContainer(@NotNull JComponent content, @NotNull @Nls String text) {
     setLayout(new MyOverlayLayout());
     myContent = content;
     myLoadingPanel = new JPanel(new MyPanelLayout());

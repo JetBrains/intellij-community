@@ -120,7 +120,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         final long line = message.hasLine() ? message.getLine() : -1;
         final long column = message.hasColumn() ? message.getColumn() : -1;
         //noinspection HardCodedStringLiteral
-        final CompilerMessage msg = myContext.createAndAddMessage(category, message.getText(), url, (int)line, (int)column, null);
+        final CompilerMessage msg = myContext.createAndAddMessage(category, message.getText(), url, (int)line, (int)column, null, message.getModuleNamesList());
         if (category == CompilerMessageCategory.ERROR || kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
           if (category == CompilerMessageCategory.ERROR) {
             ReadAction.run(() -> informWolf(message));

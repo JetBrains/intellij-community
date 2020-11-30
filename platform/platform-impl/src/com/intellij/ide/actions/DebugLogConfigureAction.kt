@@ -45,7 +45,7 @@ private class DebugLogConfigureDialog(project: Project, categories: List<DebugLo
         DebugLogLevel.TRACE -> "${it.category}$TRACE_SUFFIX"
       }
     }
-    title = "Custom Debug Log Configuration"
+    title = IdeBundle.message("dialog.title.custom.debug.log.configuration")
     init()
   }
 

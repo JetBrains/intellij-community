@@ -299,18 +299,23 @@ public final class VfsImplUtil {
    * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events: see {@link VirtualFileSystem#isCaseSensitive()}).
    * Otherwise, return null.
    */
-  public static VFileEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile parent, @NotNull String childName) {
-    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN && FileSystemUtil.isCaseSensitive(childName)) {
-      FileAttributes.CaseSensitivity parentCaseSensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
-      if (parentCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
-        if (parent.getFileSystem().isCaseSensitive() != (parentCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
-          // fire only when the new case sensitivity is different from the default FS sensitivity, because only in that case the file.isCaseSensitive() value could change
-          return new VFilePropertyChangeEvent(null, parent, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
-                                              FileAttributes.CaseSensitivity.UNKNOWN, parentCaseSensitivity, true);
-        }
-        else {
-          PersistentFSImpl.executeChangeCaseSensitivity(parent, parentCaseSensitivity);
-        }
+  public static VFileEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent, @NotNull String childName) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN) {
+      FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
+      return generateCaseSensitivityChangedEvent(parent, sensitivity);
+    }
+    return null;
+  }
+
+  public static VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir, @NotNull FileAttributes.CaseSensitivity actualCaseSensitivity) {
+    if (actualCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
+      if (dir.getFileSystem().isCaseSensitive() != (actualCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
+        // fire only when the new case sensitivity is different from the default FS sensitivity, because only in that case the file.isCaseSensitive() value could change
+        return new VFilePropertyChangeEvent(null, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
+                                            FileAttributes.CaseSensitivity.UNKNOWN, actualCaseSensitivity, true);
+      }
+      else {
+        PersistentFSImpl.executeChangeCaseSensitivity(dir, actualCaseSensitivity);
       }
     }
     return null;

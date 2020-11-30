@@ -554,6 +554,8 @@ public abstract class DialogWrapper {
         HelpTooltip.dispose((JComponent)evt.getSource());
       }
     });
+    helpButton.getAccessibleContext().setAccessibleName(UIBundle.message("dialog.options.help.button.accessible.name"));
+    helpButton.getAccessibleContext().setAccessibleDescription(ActionsBundle.message("action.HelpTopics.description"));
     return helpButton;
   }
 
@@ -1467,6 +1469,22 @@ public abstract class DialogWrapper {
    */
   @Nullable
   public Dimension getInitialSize() {
+    if (SystemInfo.isLinux) {
+      //Temporary workaround for IDEA-253643
+      return null;
+    }
+    List<JTable> tables = UIUtil.findComponentsOfType(getContentPanel(), JTable.class);
+    if (!tables.isEmpty()) {
+      Dimension size = getContentPanel().getPreferredSize();
+      for (JTable table : tables) {
+        Dimension tablePreferredSize = table.getPreferredSize();
+        size.width = Math.max(size.width, tablePreferredSize.width);
+        size.height = Math.max(size.height, size.height - table.getParent().getHeight() + tablePreferredSize.height);
+      }
+      size.width = Math.min(1000, Math.max(600, size.width));
+      size.height = Math.min(800, size.height);
+      return size;
+    }
     return new Dimension(400, 0);
   }
 

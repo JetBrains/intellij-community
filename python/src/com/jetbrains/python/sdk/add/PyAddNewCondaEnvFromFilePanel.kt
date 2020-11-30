@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.InputData
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import org.jetbrains.annotations.SystemDependent
 import java.awt.BorderLayout
@@ -23,6 +24,9 @@ class PyAddNewCondaEnvFromFilePanel(private val module: Module, environmentYml: 
 
   private val condaPathField = TextFieldWithBrowseButton()
   private val environmentYmlField = TextFieldWithBrowseButton()
+
+  private val initialCondaPath: String
+  private val initialEnvironmentYmlPath: String
 
   init {
     condaPathField.apply {
@@ -56,9 +60,38 @@ class PyAddNewCondaEnvFromFilePanel(private val module: Module, environmentYml: 
       .addLabeledComponent(PyBundle.message("python.sdk.environment.yml.label"), environmentYmlField)
       .panel
     add(formPanel, BorderLayout.NORTH)
+
+    initialCondaPath = condaPathField.text
+    initialEnvironmentYmlPath = environmentYmlField.text
   }
 
   fun validateAll(): List<ValidationInfo> = listOfNotNull(CondaEnvSdkFlavor.validateCondaPath(condaPathField.text))
+
+  /**
+   * Must be called if the input is confirmed and the current instance will not be used anymore
+   * e.g. ʻOK` was clicked on the outer dialog.
+   */
+  fun logData() {
+    val (condaPath, environmentYmlPath) = envData
+
+    PyAddNewEnvCollector.logCondaEnvFromFileData(
+      module.project,
+      pathToEventField(initialCondaPath, condaPath),
+      pathToEventField(initialEnvironmentYmlPath, environmentYmlPath)
+    )
+  }
+
+  private fun pathToEventField(initial: String, result: String): InputData {
+    return if (initial.isBlank()) {
+      if (result.isBlank()) InputData.BLANK_UNCHANGED else InputData.SPECIFIED
+    }
+    else if (initial != result) {
+      InputData.CHANGED
+    }
+    else {
+      InputData.UNCHANGED
+    }
+  }
 
   data class Data(val condaPath: @NlsSafe @SystemDependent String, val environmentYmlPath: @NlsSafe @SystemDependent String)
 }

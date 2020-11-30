@@ -10,6 +10,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -162,6 +163,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       myCurrentState.setAutoscrollToSource(selected);
       getDefaultState().setAutoscrollToSource(selected);
       getGlobalOptions().setAutoscrollToSource(selected);
+    }
+  };
+
+  private final Option myOpenInPreviewTab = new Option() {
+    @Override
+    public boolean isSelected() {
+      return UISettings.getInstance().getOpenInPreviewTabIfPossible();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      UISettings.getInstance().setOpenInPreviewTabIfPossible(selected);
     }
   };
 
@@ -504,7 +517,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() {
-        return myAutoscrollToSource.isSelected();
+        return myAutoscrollToSource.isSelected() || myOpenInPreviewTab.isSelected();
       }
 
       @Override
@@ -2109,6 +2122,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     static final class AutoscrollToSource extends Action {
       AutoscrollToSource() {
         super(view -> view.myAutoscrollToSource);
+      }
+    }
+
+    static final class OpenInPreviewTab extends Action {
+      OpenInPreviewTab() {
+        super(view -> view.myOpenInPreviewTab);
       }
     }
 

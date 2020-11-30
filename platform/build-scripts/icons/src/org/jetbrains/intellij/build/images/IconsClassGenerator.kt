@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.ui.svg.SvgTranscoder
@@ -21,11 +22,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.*
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 data class ModifiedClass(val module: JpsModule, val file: Path, val result: CharSequence)
 
@@ -98,7 +96,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         )
       }
       else -> {
-        packageName = "icons"
+        packageName = getPluginPackageIfPossible(module) ?: "icons"
 
         val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).firstOrNull() ?: return emptyList()
 
@@ -120,7 +118,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         }
 
         val generatedRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).find { it.properties.isForGeneratedSources }
-        val targetRoot = (generatedRoot ?: firstRoot).file.toPath().resolve("icons")
+        val targetRoot = (generatedRoot ?: firstRoot).file.toPath().resolve(packageName.replace('.', File.separatorChar))
 
         if (generatedRoot != null && oldClassName != null && firstRoot != generatedRoot) {
           val oldFile = firstRootDir.resolve("$oldClassName.java")
@@ -291,7 +289,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     result.append(" class ").append(info.className).append(" {\n")
     if (info.customLoad) {
       append(result, "private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {", 1)
-      append(result, "return $iconLoaderCode.loadRasterizedIcon(path, ${info.className}.class, cacheKey, flags);", 2)
+      append(result, "return $iconLoaderCode.loadRasterizedIcon(path, ${info.className}.class.getClassLoader(), cacheKey, flags);", 2)
       append(result, "}", 1)
 
       val customExternalLoad = images.any { it.deprecation?.replacementContextClazz != null }
@@ -455,7 +453,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         key = 0
       }
 
-      javaDoc = "/** ${loadedImage.getWidth()}x${loadedImage.getHeight()} */ "
+      javaDoc = "/** ${loadedImage.width}x${loadedImage.height} */ "
     }
     catch (e: NoSuchFileException) {
       if (!image.phantom) {
@@ -468,8 +466,9 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
     val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
     val relativePath = rootPrefix + rootDir.relativize(imageFile).systemIndependentPath
+    assert(relativePath.startsWith("/"))
     append(result, "${javaDoc}public static final @NotNull Icon $iconName = " +
-                   "$method(\"$relativePath\", ${key}L, ${image.getFlags()});", level)
+                   "$method(\"${relativePath.removePrefix("/")}\", ${key}L, ${image.getFlags()});", level)
 
     val oldName = deprecatedIconFieldNameMap.get(iconName)
     if (oldName != null) {
@@ -668,4 +667,26 @@ internal fun loadAndNormalizeSvgFile(svgFile: Path): String {
     }
   }
   return builder.toString()
+}
+
+private fun getPluginPackageIfPossible(module: JpsModule): String? {
+  for (resourceRoot in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
+    val metaInf = Paths.get(JpsPathUtil.urlToPath(resourceRoot.url), "META-INF")
+    if (!Files.isDirectory(metaInf)) {
+      break
+    }
+
+    var pluginXml = metaInf.resolve("plugin.xml")
+    if (!Files.exists(pluginXml)) {
+      // ok, any xml file
+      pluginXml = Files.newDirectoryStream(metaInf).use { files -> files.find { it.toString().endsWith(".xml") } } ?: break
+    }
+
+    try {
+      return JDOMUtil.load(pluginXml).getAttributeValue("package") ?: "icons"
+    }
+    catch (ignore: NoSuchFileException) {
+    }
+  }
+  return null
 }

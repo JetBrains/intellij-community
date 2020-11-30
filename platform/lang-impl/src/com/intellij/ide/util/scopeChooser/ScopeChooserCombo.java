@@ -193,14 +193,18 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
     Promise<DataContext> promise = DataManager.getInstance().getDataContextFromFocusAsync();
     promise.onSuccess(c -> {
-      processScopes(myProject, c, myOptions, descriptor -> {
-        if (myScopeFilter == null || myScopeFilter.value(descriptor)) {
-          model.addElement(descriptor);
-        }
-        return true;
-      });
+      processScopes(model, c);
       getComboBox().setModel(model);
       selectItem(selection);
+    });
+  }
+
+  protected void processScopes(DefaultComboBoxModel<ScopeDescriptor> model, DataContext c) {
+    processScopes(myProject, c, myOptions, descriptor -> {
+      if (myScopeFilter == null || myScopeFilter.value(descriptor)) {
+        model.addElement(descriptor);
+      }
+      return true;
     });
   }
 

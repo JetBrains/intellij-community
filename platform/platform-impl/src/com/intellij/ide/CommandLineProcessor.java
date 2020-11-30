@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
 
@@ -52,7 +53,10 @@ public final class CommandLineProcessor {
     OpenProjectTask openProjectOptions = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
     // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
-    Project project = ProjectUtil.openOrImport(file, openProjectOptions);
+    Project project = null;
+    if (!LightEditUtil.isForceOpenInLightEditMode()) {
+      project = ProjectUtil.openOrImport(file, openProjectOptions);
+    }
     if (project == null) {
       return doOpenFile(file, -1, -1, false, shouldWait);
     }
@@ -139,35 +143,64 @@ public final class CommandLineProcessor {
     }
     logMessage.append("-----");
     LOG.info(logMessage.toString());
+
     if (args.isEmpty()) {
       return new CommandLineProcessorResult(null, OK_FUTURE);
     }
 
+    CommandLineProcessorResult result;
+    result = processApplicationStarters(args, currentDirectory);
+    if (result != null) return result;
+
+    result = processJetBrainsProtocol(args);
+    if (result != null) return result;
+
+    return processOpenFile(args, currentDirectory);
+  }
+
+  @Nullable
+  private static CommandLineProcessorResult processApplicationStarters(@NotNull List<String> args, @Nullable String currentDirectory) {
     String command = args.get(0);
-    CommandLineProcessorResult result = ApplicationStarter.EP_NAME.computeSafeIfAny(starter -> {
+    return ApplicationStarter.EP_NAME.computeSafeIfAny(starter -> {
       if (!command.equals(starter.getCommandName())) {
         return null;
       }
 
-      if (starter.canProcessExternalCommandLine()) {
-        LOG.info("Processing command with " + starter);
+      if (!starter.canProcessExternalCommandLine()) {
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
+                                                                        ApplicationNamesInfo.getInstance().getProductName()));
+      }
+
+      LOG.info("Processing command with " + starter);
+      int requiredModality = starter.getRequiredModality();
+      if (requiredModality == ApplicationStarter.NOT_IN_EDT) {
         return new CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory));
       }
       else {
-        return CommandLineProcessorResult.createError(
-          IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time", ApplicationNamesInfo.getInstance().getProductName()));
+        ModalityState modalityState = requiredModality == ApplicationStarter.ANY_MODALITY
+                                      ? ModalityState.any() : ModalityState.defaultModalityState();
+        AtomicReference<CommandLineProcessorResult> ref = new AtomicReference<>();
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          ref.set(new CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory)));
+        }, modalityState);
+        return ref.get();
       }
     });
-    if (result != null) {
-      return result;
-    }
+  }
 
+  @Nullable
+  private static CommandLineProcessorResult processJetBrainsProtocol(@NotNull List<String> args) {
+    String command = args.get(0);
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
       ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
       return new CommandLineProcessorResult(null, OK_FUTURE);
     }
+    return null;
+  }
 
+  @NotNull
+  private static CommandLineProcessorResult processOpenFile(@NotNull List<String> args, @Nullable String currentDirectory) {
     CommandLineProcessorResult projectAndCallback = null;
     int line = -1;
     int column = -1;
@@ -217,18 +250,7 @@ public final class CommandLineProcessor {
         arg = StringUtilRt.unquoteString(arg);
       }
 
-      Path file = null;
-      try {
-        // handle paths like /file/foo\qwe
-        file = Paths.get(FileUtilRt.toSystemDependentName(arg));
-        if (!file.isAbsolute()) {
-          file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
-        }
-        file = file.normalize();
-      }
-      catch (InvalidPathException e) {
-        LOG.warn(e);
-      }
+      Path file = parseFilePath(arg, currentDirectory);
       if (file == null) {
         return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.invalid.path", arg));
       }
@@ -248,18 +270,39 @@ public final class CommandLineProcessor {
       tempProject = false;
     }
 
-    if (shouldWait && projectAndCallback == null) {
-      return new CommandLineProcessorResult(
-        null,
-        CliResult.error(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
-      );
+    if (projectAndCallback != null) {
+      return projectAndCallback;
     }
+    else {
+      if (shouldWait) {
+        return new CommandLineProcessorResult(
+          null,
+          CliResult.error(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
+        );
+      }
 
-    if (projectAndCallback == null && LightEditUtil.isForceOpenInLightEditMode()) {
-      LightEditService.getInstance().showEditorWindow();
-      return new CommandLineProcessorResult(LightEditService.getInstance().getProject(), OK_FUTURE);
+      if (LightEditUtil.isForceOpenInLightEditMode()) {
+        LightEditService.getInstance().showEditorWindow();
+        return new CommandLineProcessorResult(LightEditService.getInstance().getProject(), OK_FUTURE);
+      }
+
+      return new CommandLineProcessorResult(null, OK_FUTURE);
     }
+  }
 
-    return projectAndCallback == null ? new CommandLineProcessorResult(null, OK_FUTURE) : projectAndCallback;
+  @Nullable
+  private static Path parseFilePath(@NotNull String path, @Nullable String currentDirectory) {
+    try {
+      // handle paths like /file/foo\qwe
+      Path file = Paths.get(FileUtilRt.toSystemDependentName(path));
+      if (!file.isAbsolute()) {
+        file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
+      }
+      return file.normalize();
+    }
+    catch (InvalidPathException e) {
+      LOG.warn(e);
+      return null;
+    }
   }
 }

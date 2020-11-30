@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -49,8 +50,9 @@ public final class EnvironmentUtil {
   public static final @NonNls String BASH_EXECUTABLE_NAME = "bash";
   public static final String SHELL_VARIABLE_NAME = "SHELL";
   private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
-  private static final String SHELL_LOGIN_ARGUMENT = "-l";
+  public static final String SHELL_LOGIN_ARGUMENT = "-l";
   public static final String SHELL_COMMAND_ARGUMENT = "-c";
+  public static final String SHELL_SOURCE_COMMAND = "source";
 
   /**
    * Holds the number of shell levels the current shell is running on top of.
@@ -222,20 +224,30 @@ public final class EnvironmentUtil {
       myTimeoutMillis = timeoutMillis;
     }
 
-    protected final @NotNull Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws IOException {
+    public final @NotNull Map<String, String> readShellEnv(@Nullable Path file, @Nullable Map<String, String> additionalEnvironment) throws IOException {
       Path reader = PathManager.findBinFileWithException("printenv.py");
 
       Path envFile = Files.createTempFile("intellij-shell-env.", ".tmp");
+      StringBuilder readerCmd = new StringBuilder();
+      if (file != null) {
+        if (!Files.exists(file)) {
+          throw new NoSuchFileException(file.toString());
+        }
+        readerCmd.append(SHELL_SOURCE_COMMAND).append(" \"").append(file).append("\" && ");
+      }
+
+      readerCmd.append("'").append(reader.toAbsolutePath()).append("' '").append(envFile.toAbsolutePath()).append("'");
+
       try {
         List<String> command = getShellProcessCommand();
         int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
         if (idx >= 0) {
           // if there is already a command append command to the end
-          command.set(idx + 1, command.get(idx + 1) + ";" + "'" + reader.toAbsolutePath() + "' '" + envFile.toAbsolutePath() + "'");
+          command.set(idx + 1, command.get(idx + 1) + ";" + readerCmd.toString());
         }
         else {
           command.add(SHELL_COMMAND_ARGUMENT);
-          command.add("'" + reader.toAbsolutePath() + "' '" + envFile.toAbsolutePath() + "'");
+          command.add(readerCmd.toString());
         }
 
         LOG.info("loading shell env: " + String.join(" ", command));
@@ -253,24 +265,38 @@ public final class EnvironmentUtil {
       }
     }
 
-    public @NotNull Map<String, String> readBatEnv(@NotNull Path batchFile, List<String> args) throws Exception {
+    protected final @NotNull Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws IOException {
+      return readShellEnv(null, additionalEnvironment);
+    }
+
+    public @NotNull Map<String, String> readBatEnv(@Nullable Path batchFile, List<String> args) throws IOException {
       return readBatOutputAndEnv(batchFile, args).second;
     }
 
-    protected @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull Path batchFile, List<String> args) throws Exception {
+    public @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@Nullable Path batchFile, List<String> args) throws IOException {
+      if (batchFile != null && !Files.exists(batchFile)) {
+        throw new NoSuchFileException(batchFile.toString());
+      }
+
       Path envFile = Files.createTempFile("intellij-cmd-env.", ".tmp");
       try {
+        List<@NonNls String> callArgs = new ArrayList<>();
+        if (batchFile != null) {
+          callArgs.add("call");
+          callArgs.add(batchFile.toString());
+          if (args != null)
+            callArgs.addAll(args);
+          callArgs.add("&&");
+        }
+        callArgs.addAll(getReadEnvCommand());
+        callArgs.add(envFile.toString());
+        callArgs.addAll(Arrays.asList("||", "exit", "/B", "%ERRORLEVEL%"));
+        
         List<@NonNls String> cl = new ArrayList<>();
         cl.add(CommandLineUtil.getWinShellName());
         cl.add("/c");
-        cl.add("call");
-        cl.add(batchFile.toString());
-        cl.addAll(args);
-        cl.add("&&");
-        cl.addAll(getReadEnvCommand());
-        cl.add(envFile.toString());
-        cl.addAll(Arrays.asList("||", "exit", "/B", "%ERRORLEVEL%"));
-        return runProcessAndReadOutputAndEnvs(cl, batchFile.getParent(), null, envFile);
+        cl.add(prepareCallArgs(callArgs));
+        return runProcessAndReadOutputAndEnvs(cl, batchFile != null ? batchFile.getParent() : null, null, envFile);
       }
       finally {
         try {
@@ -282,6 +308,19 @@ public final class EnvironmentUtil {
           LOG.warn("Cannot delete temporary file", e);
         }
       }
+    }
+
+    @NotNull
+    private static String prepareCallArgs(@NotNull List<String> callArgs) {
+      List<String> preparedCallArgs = CommandLineUtil.toCommandLine(callArgs);
+      String firstArg = preparedCallArgs.remove(0);
+      preparedCallArgs.add(0, CommandLineUtil.escapeParameterOnWindows(firstArg, false));
+      // for CMD we would like to add extra double quotes for the actual command in call
+      // to mitigate possible JVM issue when argument contains spaces and the first word
+      // starts with double quote and the last ends with double quote and JVM does not
+      // wrap the argument with double quotes
+      // Example: callArgs = ["\"C:\\New Folder\aa\"", "\"C:\\New Folder\aa\""]
+      return StringUtil.wrapWithDoubleQuote(String.join(" ", preparedCallArgs));
     }
 
     private static @NotNull List<String> getReadEnvCommand() {

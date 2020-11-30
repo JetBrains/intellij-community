@@ -3,6 +3,7 @@ package com.intellij.space.plugins.pipelines.viewmodel
 
 import circlet.pipelines.config.api.ScriptConfig
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.impl.OutputBuildEventImpl
 import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.assertNotTerminated
@@ -31,12 +32,12 @@ class LogData {
 
   private val _buildLifetime = LifetimeSource()
 
-  fun message(message: String) {
+  fun message(@BuildEventsNls.Message message: String) {
     _buildLifetime.assertNotTerminated()
     messages.add(OutputBuildEventImpl(buildId, message + "\n", true))
   }
 
-  fun error(message: String) {
+  fun error(@BuildEventsNls.Message message: String) {
     _buildLifetime.assertNotTerminated()
     messages.add(OutputBuildEventImpl(buildId, message + "\n", false))
   }

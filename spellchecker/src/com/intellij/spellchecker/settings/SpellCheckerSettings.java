@@ -3,8 +3,7 @@ package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.util.SPFileUtil;
 import org.jdom.Element;
@@ -46,7 +45,9 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
   private boolean mySettingsTransferred = false;
 
+  @NlsSafe
   public String getDictionaryToSave() {
+    //This is NLS safe since dictionary names are NLS
     return myDictionaryToSave;
   }
 

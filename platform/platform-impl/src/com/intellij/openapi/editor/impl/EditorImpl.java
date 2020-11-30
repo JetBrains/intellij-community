@@ -69,7 +69,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.mac.MacGestureSupportForEditor;
+import com.intellij.ui.mac.MacGestureSupportInstaller;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
@@ -386,9 +386,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    ErrorStripeMarkersModel errorStripeMarkersModel = myMarkupModel.getErrorStripeMarkersModel();
-    myDocumentMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel.createMarkupListener(true));
-    myMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel.createMarkupListener(false));
     myMarkupModel.addErrorMarkerListener(new ErrorStripeListener() {
       @Override
       public void errorMarkerChanged(@NotNull ErrorStripeEvent e) {
@@ -532,7 +529,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
 
     if (SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm) {
-      new MacGestureSupportForEditor(getComponent());
+      MacGestureSupportInstaller.installOnComponent(getComponent());
     }
 
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);

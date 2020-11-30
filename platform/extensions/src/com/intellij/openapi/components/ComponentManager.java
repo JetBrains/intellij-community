@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Provides access to components. Serves as a base interface for {@link com.intellij.openapi.application.Application}
@@ -157,22 +157,20 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Internal
-  default @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
-    ExceptionUtilRt.rethrowUnchecked(error);
-    return new RuntimeException(error);
-  }
+  @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId);
 
   @ApiStatus.Internal
-  default @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId) {
-    return new RuntimeException(message);
-  }
+  @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId);
 
-  // todo make pluginDescriptor as not-null
+  @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId, @Nullable Map<String, String> attachments);
+
   @ApiStatus.Internal
-  default @NotNull <T> T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name, @Nullable PluginDescriptor pluginDescriptor) {
+  <@NotNull T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
+
+  @ApiStatus.Internal
+  default @NotNull <@NotNull T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
     try {
-      //noinspection unchecked
-      return (T)ReflectionUtil.newInstance(Class.forName(name));
+      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
     }
     catch (ClassNotFoundException e) {
       throw new RuntimeException(e);

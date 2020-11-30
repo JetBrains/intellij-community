@@ -449,6 +449,7 @@ public class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> newConcurrentSet() {
+    //noinspection SSBasedInspection
     return Collections.newSetFromMap(new ConcurrentHashMap<>());
   }
 
@@ -2118,6 +2119,11 @@ public class ContainerUtil {
     return new HashSet<>(Arrays.asList(items));
   }
 
+  /**
+   * @deprecated Use {@link Map#putIfAbsent}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static <K, V> void putIfAbsent(final K key, @Nullable V value, final @NotNull Map<? super K, ? super V> result) {
     if (!result.containsKey(key)) {
       result.put(key, value);

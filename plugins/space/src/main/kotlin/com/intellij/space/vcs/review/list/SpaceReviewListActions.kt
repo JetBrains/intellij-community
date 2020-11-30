@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.review.list.SpaceReviewListDataKeys.REVIEWS_LIST_VM
 import com.intellij.space.vcs.review.list.SpaceReviewListDataKeys.SELECTED_REVIEW
@@ -35,7 +35,7 @@ class SpaceReviewOpenInBrowserAction : DumbAwareAction(SpaceBundle.messagePointe
   override fun actionPerformed(e: AnActionEvent) {
     val data = e.getData(SELECTED_REVIEW) ?: return
     val review = data.review.resolve()
-    val server = space.workspace.value!!.client.server
+    val server = SpaceWorkspaceComponent.getInstance().workspace.value!!.client.server
     val reviewLink = Navigator.p.project(review.project).review(review.number).absoluteHref(server)
 
     BrowserUtil.browse(reviewLink)
@@ -51,13 +51,13 @@ class SpaceReviewAuthorActionGroup : ActionGroup() {
 
     // TODO: fix review created by Space service
     val profile = review.createdBy!!.resolve()
-    e.presentation.text = profile.englishFullName()
+    e.presentation.text = profile.englishFullName() // NON-NLS
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val data = e?.getData(SELECTED_REVIEW) ?: return emptyArray()
     val review = data.review.resolve()
-    val server = space.workspace.value!!.client.server
+    val server = SpaceWorkspaceComponent.getInstance().workspace.value!!.client.server
 
     val actions: MutableList<ActionGroup> = mutableListOf()
     actions += UserActionGroup(review.createdBy!!.resolve(), server)
@@ -74,7 +74,7 @@ class SpaceReviewAuthorActionGroup : ActionGroup() {
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.text = profile.englishFullName()
+      e.presentation.text = profile.englishFullName() // NON-NLS
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {

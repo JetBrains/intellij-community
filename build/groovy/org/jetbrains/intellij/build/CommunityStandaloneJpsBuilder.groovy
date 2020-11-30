@@ -52,6 +52,12 @@ class CommunityStandaloneJpsBuilder {
         jar("jps-builders-6.jar") {
           module("intellij.platform.jps.build.javac.rt")
         }
+        dir("rt") {
+          jar("jps-javac-rt-rpc.jar") {
+            module("intellij.platform.jps.build.javac.rt.rpc")
+          }
+          moduleLibrary("intellij.platform.jps.build.javac.rt.rpc", "protobuf-java6")
+        }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
         jar("groovy-jps.jar") { module("intellij.groovy.jps") }
         jar("groovy-rt.jar") { module("intellij.groovy.rt") }

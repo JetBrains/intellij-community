@@ -24,11 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FontUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,46 +152,42 @@ public class ProjectViewDirectoryHelper {
     return false;
   }
 
-  public boolean canRepresent(Object element, PsiDirectory directory, Object owner, ViewSettings settings) {
-    if (directory != null) {
-      if (canRepresent(element, directory)) return true;
-      if (settings == null) return false; // unexpected
-      if (!settings.isFlattenPackages() && settings.isHideEmptyMiddlePackages()) {
-        if (element instanceof PsiDirectory) {
-          if (getParents(directory, owner).find(dir -> Comparing.equal(element, dir)) != null) return true;
-        }
-        else if (element instanceof VirtualFile) {
-          if (getParents(directory, owner).find(dir -> Comparing.equal(element, dir.getVirtualFile())) != null) return true;
-        }
-      }
+  public boolean canRepresent(@NotNull VirtualFile element, @NotNull PsiDirectory directory, @NotNull PsiDirectory owner, ViewSettings settings) {
+    if (canRepresent(element, directory)) return true;
+    if (settings == null) return false; // unexpected
+    if (settings.isFlattenPackages() || !settings.isHideEmptyMiddlePackages()) {
+      return false;
     }
-    return false;
+    return !processParents(directory, owner, dir -> !element.equals(dir.getVirtualFile()));
   }
 
   boolean isValidDirectory(PsiDirectory directory, Object owner, ViewSettings settings, PsiFileSystemItemFilter filter) {
     if (directory == null || !directory.isValid()) return false;
     if (settings == null) return true; // unexpected
+    if (!(owner instanceof PsiDirectory)) return true;
     if (!settings.isFlattenPackages() && settings.isHideEmptyMiddlePackages()) {
       PsiDirectory parent = directory.getParent();
       if (parent == null || skipDirectory(parent)) return true;
       if (ProjectRootsUtil.isSourceRoot(directory)) return true;
       if (isEmptyMiddleDirectory(directory, true, filter)) return false;
-      for (PsiDirectory dir : getParents(directory, owner)) {
+      return processParents(directory, (PsiDirectory)owner, dir -> {
         if (!dir.isValid()) return false;
-        parent = dir.getParent();
-        if (parent == null || skipDirectory(parent)) return false;
-        if (!isEmptyMiddleDirectory(dir, true, filter)) return false;
-      }
+        PsiDirectory dirParent = dir.getParent();
+        if (dirParent == null || skipDirectory(dirParent)) return false;
+        return isEmptyMiddleDirectory(dir, true, filter);
+      });
     }
     return true;
   }
 
-  @NotNull
-  private static JBIterable<PsiDirectory> getParents(PsiDirectory directory, Object owner) {
-    if (directory != null) directory = directory.getParent(); // because JBIterable adds first parent without comparing with owner
-    return directory != null && owner instanceof PsiDirectory && PsiTreeUtil.isAncestor((PsiDirectory)owner, directory, true)
-           ? JBIterable.generate(directory, PsiDirectory::getParent).takeWhile(dir -> dir != null && !dir.equals(owner))
-           : JBIterable.empty();
+  private static boolean processParents(@NotNull PsiDirectory directory, @NotNull PsiDirectory owner,
+                                        @NotNull Processor<? super PsiDirectory> processor) {
+    for (directory = directory.getParentDirectory();
+         directory != null && !directory.equals(owner);
+         directory = directory.getParentDirectory()) {
+      if (!processor.process(directory)) return false;
+    }
+    return true;
   }
 
   @NotNull

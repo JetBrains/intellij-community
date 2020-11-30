@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 @State(name = "BaseRefactoringSettings", storages = @Storage("baseRefactoring.xml"))
 public class RefactoringSettings implements PersistentStateComponent<RefactoringSettings> {
   public static RefactoringSettings getInstance() {
-    return ServiceManager.getService(RefactoringSettings.class);
+    return ApplicationManager.getApplication().getService(RefactoringSettings.class);
   }
 
   public boolean SAFE_DELETE_WHEN_DELETE = true;

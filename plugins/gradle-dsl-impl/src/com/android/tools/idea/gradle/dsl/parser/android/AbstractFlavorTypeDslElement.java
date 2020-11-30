@@ -15,16 +15,34 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android;
 
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.APPLICATION_ID_SUFFIX;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.BUILD_CONFIG_FIELD;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.CONSUMER_PROGUARD_FILES;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.MANIFEST_PLACEHOLDERS;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.MATCHING_FALLBACKS;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.MULTI_DEX_ENABLED;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.MULTI_DEX_KEEP_FILE;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.MULTI_DEX_KEEP_PROGUARD;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.PROGUARD_FILES;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.RES_VALUE;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.SIGNING_CONFIG;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.USE_JACK;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.VERSION_NAME_SUFFIX;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.atLeast;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.OTHER;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAL;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR_BUT_DO_NOT_USE_FOR_WRITING_IN_KTS;
 
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.elements.*;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslNameConverter;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpressionMap;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
 import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
@@ -107,10 +125,10 @@ public abstract class AbstractFlavorTypeDslElement extends GradleDslBlockElement
   @Override
   @NotNull
   public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
-    if (converter instanceof KotlinDslNameConverter) {
+    if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
-    else if (converter instanceof GroovyDslNameConverter) {
+    else if (converter.isGroovy()) {
       return groovyToModelNameMap;
     }
     else {

@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
-import org.jetbrains.annotations.Nullable
 
 internal class SyntheticLibraryIndexableFilesIterator(
   private val syntheticLibrary: SyntheticLibrary
@@ -19,7 +18,7 @@ internal class SyntheticLibraryIndexableFilesIterator(
   override fun getDebugName() = getName().takeUnless { it.isNullOrEmpty() }?.let { "Synthetic library '$it'" }
                                 ?: syntheticLibrary.toString()
 
-  override fun getIndexingProgressText(): @Nullable String {
+  override fun getIndexingProgressText(): String {
     val name = getName()
     if (!name.isNullOrEmpty()) {
       return IndexingBundle.message("indexable.files.provider.indexing.named.provider", name)

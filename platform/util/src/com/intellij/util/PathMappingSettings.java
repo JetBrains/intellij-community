@@ -106,12 +106,9 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   }
 
   public void addMappingCheckUnique(@NotNull String local, @NotNull String remote) {
-    for (PathMapping mapping : myPathMappings) {
-      if (pathEquals(local, mapping.getLocalRoot()) && pathEquals(remote, mapping.getRemoteRoot())) {
-        return;
-      }
-    }
-    addMapping(local, remote);
+    PathMapping mapping = new PathMapping(local, remote);
+    if (myPathMappings.contains(mapping)) return;
+    add(mapping);
   }
 
   private static boolean pathEquals(@NotNull String path1, @NotNull String path2) {

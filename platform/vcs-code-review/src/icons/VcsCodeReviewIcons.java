@@ -12,10 +12,14 @@ import javax.swing.*;
  */
 public final class VcsCodeReviewIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
-    return IconManager.getInstance().loadRasterizedIcon(path, VcsCodeReviewIcons.class, cacheKey, flags);
+    return IconManager.getInstance().loadRasterizedIcon(path, VcsCodeReviewIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Delete = load("/com.intellij.codeReview/delete.svg", -7096832826219323469L, 0);
-  /** 16x16 */ public static final @NotNull Icon DeleteHovered = load("/com.intellij.codeReview/deleteHovered.svg", 6938120386099586696L, 0);
-  /** 16x16 */ public static final @NotNull Icon Send = load("/com.intellij.codeReview/send.svg", 4194848673382143948L, 0);
-  /** 16x16 */ public static final @NotNull Icon SendHovered = load("/com.intellij.codeReview/sendHovered.svg", 6854511407842700178L, 0);
+  /** 16x16 */ public static final @NotNull Icon Comment = load("icons/comment.svg", -3056595990209732615L, 0);
+  /** 16x16 */ public static final @NotNull Icon CommentHovered = load("icons/commentHovered.svg", 7093337652238115394L, 0);
+  /** 16x16 */ public static final @NotNull Icon Delete = load("icons/delete.svg", -7096832826219323469L, 0);
+  /** 16x16 */ public static final @NotNull Icon DeleteHovered = load("icons/deleteHovered.svg", 6938120386099586696L, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("icons/pullRequestClosed.svg", -4139963041270704048L, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("icons/pullRequestOpen.svg", -5145211218350150377L, 0);
+  /** 16x16 */ public static final @NotNull Icon Send = load("icons/send.svg", 4194848673382143948L, 0);
+  /** 16x16 */ public static final @NotNull Icon SendHovered = load("icons/sendHovered.svg", 6854511407842700178L, 0);
 }

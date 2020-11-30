@@ -100,7 +100,7 @@ public final class AddMissingRequiredAnnotationParametersFix implements Intentio
             name = "value";
           }
           if (value == null) {
-            LOG.error(String.format("Invalid annotation parameter name = %s, value = %s", name, value));
+            LOG.error(String.format("Invalid annotation parameter name = %s, value = %s", name, null));
             continue;
           }
           newParameters.add(Pair.create(name, value));

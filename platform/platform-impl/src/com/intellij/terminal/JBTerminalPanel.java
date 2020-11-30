@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.SaveAndSyncHandler;
@@ -15,9 +16,10 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -93,7 +95,9 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ResizeToolWindowRight",
     "ResizeToolWindowUp",
     "ResizeToolWindowDown",
-    "MaximizeToolWindow"
+    "MaximizeToolWindow",
+    
+    "MaintenanceAction"
   };
   private static final int MIN_FONT_SIZE = 8;
 
@@ -294,6 +298,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     super.processMouseWheelEvent(e);
   }
 
+  @Nullable ToolWindow getContextToolWindow() {
+    return DataManager.getInstance().getDataContext(this).getData(PlatformDataKeys.TOOL_WINDOW);
+  }
+
+  @Nullable Project getContextProject() {
+    return DataManager.getInstance().getDataContext(this).getData(CommonDataKeys.PROJECT);
+  }
+
   /**
    * Adds "Override IDE shortcuts" terminal feature allowing terminal to process all the key events.
    * Without own IdeEventQueue.EventDispatcher, terminal won't receive key events corresponding to IDE action shortcuts.
@@ -321,12 +333,9 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
         IdeEventQueue.getInstance().flushDelayedKeyEvents();
-        // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214830, revert once it's fixed.
-        if (SystemInfo.isJavaVersionAtLeast(8, 0, 212)) {
-          // JBTerminalPanel is focused, because TerminalEventDispatcher added in focusGained and removed in focusLost
-          processKeyEvent(e);
-        }
-        dispatchEvent(e);
+        // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214830
+        // Once it's fixed, replace "processKeyEvent(e)" with "dispatchEvent(e)".
+        JBTerminalPanel.this.processKeyEvent(e);
         return true;
       }
       return false;

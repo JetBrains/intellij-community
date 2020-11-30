@@ -11,6 +11,7 @@ import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.TObjectHashingStrategy
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import it.unimi.dsi.fastutil.Hash
 import org.gradle.internal.classpath.ClassPath
 import org.gradle.tooling.internal.consumer.ConnectorServices
 import org.gradle.tooling.internal.consumer.connection.ConsumerConnection
@@ -67,6 +68,7 @@ class GradleDaemonServices {
         new File(PathManager.getJarPathForClass(DynamicBundle)).toURI().toURL(),
         new File(PathManager.getJarPathForClass(AbstractBundle)).toURI().toURL(),
         new File(PathManager.getJarPathForClass(TObjectHashingStrategy)).toURI().toURL(),
+        new File(PathManager.getJarPathForClass(Hash)).toURI().toURL(),
         new File(PathManager.getJarPathForClass(Function)).toURI().toURL()
       )
       .parent(daemonClientFactory.class.classLoader)

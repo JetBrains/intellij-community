@@ -131,7 +131,7 @@ public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
     return myEscaped;
   }
 
-  @Nullable
+  @Nullable @NlsSafe
   String readEntry(@NotNull final String endsWith) {
     try {
       return processStream(new StreamProcessor<>() {

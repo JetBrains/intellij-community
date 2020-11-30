@@ -16,6 +16,7 @@ import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -347,34 +348,19 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    final List<String> methodNames = isDefinition() ? Arrays.asList(PyNames.INIT, PyNames.NEW) : Collections.singletonList(PyNames.CALL);
+    final var resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
     return StreamEx
-      .of(methodNames)
-      .map(name -> getParametersOfMethod(name, context))
-      .findFirst(Objects::nonNull)
+      .of(PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(this, null, resolveContext)))
+      .select(PyCallable.class)
+      .map(callable -> callable.getParameters(context))
+      .findFirst()
       // If resolved parameters are empty, consider them as invalid and return null
       .filter(parameters -> !parameters.isEmpty())
       // Skip "self" for __init__/__call__ and "cls" for __new__
       .map(parameters -> ContainerUtil.subList(parameters, 1))
       .orElse(null);
   }
-
-  @Nullable
-  private List<PyCallableParameter> getParametersOfMethod(@NotNull String name, @NotNull TypeEvalContext context) {
-    final List<? extends RatedResolveResult> results =
-      resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext().withTypeEvalContext(context), true);
-    if (results != null) {
-      return StreamEx.of(results)
-        .map(RatedResolveResult::getElement)
-        .select(PyCallable.class)
-        .map(func -> func.getParameters(context))
-        .findFirst()
-        .orElse(null);
-    }
-    return null;
-  }
-
 
   private static boolean isMethodType(@NotNull PyClassType type) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());

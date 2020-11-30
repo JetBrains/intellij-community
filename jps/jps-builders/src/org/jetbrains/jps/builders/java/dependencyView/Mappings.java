@@ -142,15 +142,12 @@ public class Mappings {
         myClassToRelativeSourceFilePath = new IntObjectTransientMultiMaplet<>(fileCollectionFactory);
       }
       else {
-        if (myIsDelta) {
-          myRootDir.mkdirs();
-        }
         myClassToSubclasses = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES),
                                                               EnumeratorIntegerDescriptor.INSTANCE);
         myClassToClassDependency = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS),
                                                                    EnumeratorIntegerDescriptor.INSTANCE);
-        myShortClassNameIndex = myIsDelta? null : new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, SHORT_NAMES),
-                                                                                  EnumeratorIntegerDescriptor.INSTANCE);
+        myShortClassNameIndex = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, SHORT_NAMES),
+                                                                EnumeratorIntegerDescriptor.INSTANCE);
         myRelativeSourceFilePathToClasses = new ObjectObjectPersistentMultiMaplet<String, ClassFileRepr>(
           DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), PathStringDescriptor.INSTANCE, new ClassFileReprExternalizer(myContext),
           () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
@@ -595,7 +592,7 @@ public class Mappings {
           }
           final Boolean inheritorOf = isInheritorOf(s, whom, visitedClasses);
           if (inheritorOf != null && inheritorOf) {
-            return inheritorOf;
+            return true;
           }
         }
       }
@@ -2474,8 +2471,7 @@ public class Mappings {
           for (Pair<ModulePackageRepr, ModulePackageRepr.Diff> p : exportsDiff.changed()) {
             final Collection<Integer> removedModuleNames = p.second.targetModules().removed();
             affectDeps |= !removedModuleNames.isEmpty();
-            if (!removedModuleNames.isEmpty()) {
-              affectDeps = true;
+            if (affectDeps) {
               for (Integer name : removedModuleNames) {
                 final UsageConstraint matchName = UsageConstraint.exactMatch(name);
                 if (constraint == null) {
