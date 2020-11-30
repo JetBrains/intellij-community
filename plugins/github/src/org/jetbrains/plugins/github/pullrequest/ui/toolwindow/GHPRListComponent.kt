@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
+import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchCompletionProvider
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.ui.GHHandledErrorPanelModel
