@@ -57,11 +57,15 @@ import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.importing.worktree.IdeModifiableModelsProviderBridge;
+import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
+import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
@@ -244,9 +248,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       if (isInitialized.getAndSet(true)) {
         return;
       }
-
+      initPreloadMavenServices();
       initProjectsTree(!isNew);
-
       initWorkers();
       listenForSettingsChanges();
       listenForProjectsTreeChanges();
@@ -264,6 +267,17 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     finally {
       initLock.unlock();
     }
+  }
+
+  private void initPreloadMavenServices() {
+    // init maven tool window
+    MavenProjectsNavigator.getInstance(myProject);
+    // init indices manager
+    MavenProjectIndicesManager.getInstance(myProject);
+    // add CompileManager before/after tasks
+    MavenTasksManager.getInstance(myProject);
+    // init maven shortcuts manager to subscribe to KeymapManagerListener
+    MavenShortcutsManager.getInstance(myProject);
   }
 
   private void updateTabTitles() {
