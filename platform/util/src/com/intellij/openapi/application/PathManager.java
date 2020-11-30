@@ -441,7 +441,7 @@ public final class PathManager {
         result = new File(resourceURL.toURI().getSchemeSpecificPart());
       }
       catch (URISyntaxException e) {
-        throw new IllegalArgumentException("URL='" + resourceURL.toString() + "'", e);
+        throw new IllegalArgumentException("URL='" + resourceURL + "'", e);
       }
       String path = result.getPath();
       String testPath = path.replace('\\', '/');
@@ -470,7 +470,7 @@ public final class PathManager {
   }
 
   // do not use URLUtil.splitJarUrl here - used in bootstrap
-  private static @Nullable String splitJarUrl(@NotNull String url) {
+  public static @Nullable String splitJarUrl(@NotNull String url) {
     int pivot = url.indexOf(URLUtil.JAR_SEPARATOR);
     if (pivot < 0) {
       return null;
@@ -503,7 +503,7 @@ public final class PathManager {
         result = new File(parsedUrl.toURI().getSchemeSpecificPart());
       }
       catch (URISyntaxException e) {
-        throw new IllegalArgumentException("URL='" + parsedUrl.toString() + "'", e);
+        throw new IllegalArgumentException("URL='" + parsedUrl + "'", e);
       }
       return result.getPath().replace('\\', '/');
     }

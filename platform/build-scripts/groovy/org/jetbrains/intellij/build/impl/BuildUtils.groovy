@@ -2,8 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.lang.JavaVersion
+import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -18,6 +17,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.function.Consumer
 
 @CompileStatic
 final class BuildUtils {
@@ -69,7 +69,7 @@ final class BuildUtils {
 
   static String replaceAll(String text, Map<String, String> replacements, String marker = "__") {
     replacements.each {
-      text = StringUtil.replace(text, "$marker$it.key$marker", it.value)
+      text = text.replace("$marker$it.key$marker", it.value)
     }
     return text
   }
@@ -149,45 +149,73 @@ final class BuildUtils {
   }
 
   /**
-   * Executes a Java class in a forked JVM using classpath shortening (@argfile on Java 9+, 'CommandLineWrapper' otherwise).
+   * Executes a Java class in a forked JVM using classpath shortening (@argfile) using ProcessHandler.
    */
-  @CompileDynamic
-  static boolean runJava(BuildContext context,
-                         Iterable<String> vmOptions = [],
-                         Map<String, Object> sysProperties = [:],
-                         Iterable<String> classPath,
-                         String mainClass,
-                         Iterable<String> args = []) {
-    boolean argFile = JavaVersion.current().feature >= 9
-    Path classpathFile = context.paths.tempDir.resolve("classpath.txt")
+  static void runJava(BuildContext buildContext,
+                      String mainClass,
+                      List<String> args,
+                      List<String> jvmArgs,
+                      Collection<String> classPath) {
+    Path classpathFile = Files.createTempFile(buildContext.paths.tempDir, "classpath-", ".txt")
+    boolean removeClassPathFile = true
+    try {
+      CommandLineWrapperUtil.writeArgumentsFile(classpathFile.toFile(),
+                                                ["-classpath", String.join(File.pathSeparator, classPath)], StandardCharsets.UTF_8)
 
-    String rtClasses = null
-    if (!argFile) {
-      rtClasses = context.getModuleOutputPath(context.findModule("intellij.java.rt"))
-      if (!new File(rtClasses).exists()) {
-        context.messages.error("Cannot run application '${mainClass}': 'java-runtime' module isn't compiled ('${rtClasses}' doesn't exist)")
+      //noinspection SpellCheckingInspection
+      List<String> processArgs = [ProcessHandle.current().info().command().orElseThrow(), "-Djava.awt.headless=true", "-ea"] +
+                                 jvmArgs +
+                                 ["@" + classpathFile, mainClass] +
+                                 args
+      buildContext.messages.debug("Execute: " + processArgs)
+      Process process = new ProcessBuilder(processArgs).start()
+      redirectOutput(new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        buildContext.messages.info(it)
+      }
+      redirectOutput(new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+        buildContext.messages.warning(it)
+      }
+
+      int exitCode = process.waitFor()
+      if (exitCode != 0) {
+        removeClassPathFile = false
+        buildContext.messages.error("Cannot execute $mainClass (exitCode=$exitCode, args=$args, vmOptions=$jvmArgs, classPath=see $classpathFile)")
       }
     }
-
-    context.ant.java(classname: argFile ? mainClass : "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
-      vmOptions.each { jvmArg(value: it) }
-
-      sysProperties.each { sysproperty(key: it.key, value: it.value) }
-
-      if (argFile) {
-        CommandLineWrapperUtil.writeArgumentsFile(classpathFile.toFile(), ["-classpath", classPath.join(File.pathSeparator)], StandardCharsets.UTF_8)
-        jvmArg(value: "@${classpathFile}")
+    finally {
+      if (removeClassPathFile) {
+        Files.deleteIfExists(classpathFile)
       }
-      else {
-        Files.writeString(classpathFile, classPath.join("\n"))
-        classpath { pathelement(location: rtClasses) }
-        arg(value: classpathFile.toString())
-        arg(line: mainClass)
-      }
-
-      args.each { arg(value: it) }
     }
+  }
 
-    true
+  static List<String> propertiesToJvmArgs(Map<String, Object> properties) {
+    List<String> result = new ArrayList<String>(properties.size())
+    for (Map.Entry<String, Object> entry : properties.entrySet()) {
+      result.add("-D" + entry.key + "=" + entry.value)
+    }
+    return result
+  }
+
+  private static void redirectOutput(BufferedReader input, Consumer<String> consumer) {
+    new Thread({
+      try {
+        String line
+        while ((line = input.readLine()) != null) {
+          consumer.accept(line)
+        }
+      }
+      finally {
+        input.close()
+      }
+    })
+  }
+
+  static void convertLineSeparators(@NotNull Path file, @NotNull String newLineSeparator) {
+    String data = Files.readString(file)
+    String convertedData = StringUtilRt.convertLineSeparators(data, newLineSeparator)
+    if (data != convertedData) {
+      Files.writeString(file, convertedData)
+    }
   }
 }

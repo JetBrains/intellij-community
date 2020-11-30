@@ -2,11 +2,12 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Formats
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import groovy.io.FileType
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -29,8 +30,10 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
 @CompileStatic
@@ -129,15 +132,17 @@ final class BuildTasksImpl extends BuildTasks {
       }
     }
 
-    Map<String, Object> ideaProperties = [
-      "java.awt.headless": true,
+    List<String> jvmArgs = new ArrayList<>(BuildUtils.propertiesToJvmArgs(new HashMap<String, Object>([
       "idea.home.path"   : context.paths.projectHome,
       "idea.system.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/system",
       "idea.config.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/config"
-    ] as Map<String, Object>
+    ])))
     if (context.productProperties.platformPrefix != null) {
-      ideaProperties.put("idea.platform.prefix", context.productProperties.platformPrefix)
+      //noinspection SpellCheckingInspection
+      jvmArgs.add("-Didea.platform.prefix=" + context.productProperties.platformPrefix)
     }
+    jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties))
+    jvmArgs.addAll(vmOptions)
 
     List<String> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
     for (String pluginPath : additionalPluginPaths) {
@@ -156,11 +161,10 @@ final class BuildTasksImpl extends BuildTasks {
 
     BuildUtils.runJava(
       context,
-      vmOptions,
-      ideaProperties + systemProperties,
-      ideClasspath,
       "com.intellij.idea.Main",
-      arguments)
+      arguments,
+      jvmArgs,
+      ideClasspath)
   }
 
   private static void disableCompatibleIgnoredPlugins(@NotNull BuildContext context,
@@ -302,7 +306,7 @@ idea.fatal.error.notification=disabled
 
   private static @NotNull BuildTaskRunnable<Path> createDistributionForOsTask(@NotNull String taskName,
                                                                               @NotNull Function<BuildContext, OsSpecificDistributionBuilder> factory) {
-    return BuildTaskRunnable.<Path>create(taskName) { BuildContext context ->
+    return BuildTaskRunnable.<Path>taskWithResult(taskName) { BuildContext context ->
       OsSpecificDistributionBuilder builder = factory.apply(context)
       if (builder == null || !context.shouldBuildDistributionForOS(builder.targetOs.osId)) {
         return null
@@ -352,7 +356,7 @@ idea.fatal.error.notification=disabled
 
   private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Path patchedApplicationInfo, @NotNull Set<PluginLayout> pluginsToPublish) {
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
-    compileModules(distributionJARsBuilder.modulesForPluginsToPublish)
+    compileModules(distributionJARsBuilder.getModulesForPluginsToPublish())
 
     //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
     CompilationTasks.create(buildContext).resolveProjectDependencies()
@@ -399,8 +403,9 @@ idea.fatal.error.notification=disabled
       }
       else {
         buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
-        DistributionJARsBuilder.buildOrderFiles(buildContext)
-        distributionJARsBuilder.buildSearchableOptions(buildContext)
+        // todo jar-order.txt is used only by reorderJARs method but we don't call it here - should we remove buildOrderFiles call here?
+        ReorderJarTask.createReorderJarTask(buildContext.paths.tempDir.resolve("jar-order.txt"), distributionJARsBuilder.platform).execute(buildContext)
+        DistributionJARsBuilder.createBuildSearchableOptionsTask(distributionJARsBuilder.getModulesForPluginsToPublish()).execute(buildContext)
         distributionJARsBuilder.buildNonBundledPlugins()
       }
     }
@@ -492,7 +497,7 @@ idea.fatal.error.notification=disabled
     def pluginsToPublish = new LinkedHashSet<PluginLayout>(
       DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
     def distributionJARsBuilder = compilePlatformAndPluginModules(patchApplicationInfo(), pluginsToPublish)
-    distributionJARsBuilder.buildSearchableOptions(buildContext)
+    DistributionJARsBuilder.createBuildSearchableOptionsTask(distributionJARsBuilder.getModulesForPluginsToPublish()).execute(buildContext)
     distributionJARsBuilder.buildNonBundledPlugins()
   }
 
@@ -529,7 +534,7 @@ idea.fatal.error.notification=disabled
   static def unpackPty4jNative(BuildContext buildContext, @NotNull Path distDir, String pty4jOsSubpackageName) {
     def pty4jNativeDir = "$distDir/lib/pty4j-native"
     def nativePkg = "resources/com/pty4j/native"
-    def includedNativePkg = StringUtil.trimEnd(nativePkg + "/" + StringUtil.notNullize(pty4jOsSubpackageName), '/')
+    def includedNativePkg = Strings.trimEnd(nativePkg + "/" + Strings.notNullize(pty4jOsSubpackageName), '/')
     buildContext.project.libraryCollection.findLibrary("pty4j").getFiles(JpsOrderRootType.COMPILED).each {
       buildContext.ant.unzip(src: it, dest: pty4jNativeDir) {
         buildContext.ant.patternset() {
@@ -752,39 +757,45 @@ idea.fatal.error.notification=disabled
   static <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks, BuildContext buildContext) {
     if (!buildContext.options.runBuildStepsInParallel) {
       return tasks.collect {
-        it.task.apply(buildContext)
+        it.execute(buildContext)
       }
     }
 
     try {
       return buildContext.messages.block("Run parallel tasks") {
-        buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.name }}")
-        def executorService = Executors.newCachedThreadPool()
-        List<Future<V>> futures = tasks.collect { task ->
-          def childContext = buildContext.forkForParallelTask(task.name)
-          executorService.submit({
-            def start = System.currentTimeMillis()
-            childContext.messages.onForkStarted()
-            try {
-              return task.task.apply(childContext)
-            }
-            finally {
-              buildContext.messages.info("'$task.name' task finished in ${Formats.formatDuration(System.currentTimeMillis() - start)}")
-              childContext.messages.onForkFinished()
-            }
-          } as Callable<V>)
+        buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.stepId }}")
+        ExecutorService executorService = Executors.newWorkStealingPool()
+        List<Pair<BuildTaskRunnable<V>, Future<Pair<V, Long>>>> futures = new ArrayList<Pair<BuildTaskRunnable<V>, Future<Pair<V, Long>>>>(tasks.size())
+        AtomicReference<Throwable> errorRef = new AtomicReference<>()
+        for (BuildTaskRunnable<V> task : tasks) {
+          if (errorRef.get() != null) {
+            break
+          }
+
+          futures.add(new Pair<>(task, executorService.submit(createTaskWrapper(task, buildContext.forkForParallelTask(task.stepId), errorRef))))
         }
+
+        executorService.shutdown()
 
         // wait until all tasks finishes
         List<V> results = new ArrayList<>(futures.size())
-        for (Future<V> future : futures) {
-          try {
-            results.add(future.get())
+        for (Pair<BuildTaskRunnable<V>, Future<Pair<V, Long>>> item : futures) {
+          Throwable error = errorRef.get()
+          if (error != null) {
+            buildContext.messages.error("Cannot execute task", error)
+            // unreachable code - BuildException will be thrown
+            return results
           }
-          catch (Throwable ignore) {
+
+          Pair<V, Long> result = item.second.get()
+          if (result == null) {
+            continue
           }
+
+          results.add(result.first)
+          buildContext.messages.info("'${item.first.stepId}' task finished in ${Formats.formatDuration(result.second)}")
         }
-        results
+        return results
       }
     }
     catch (ExecutionException e) {
@@ -792,6 +803,32 @@ idea.fatal.error.notification=disabled
     }
     finally {
       buildContext.messages.onAllForksFinished()
+    }
+  }
+
+  private static <T> Callable<Pair<T, Long>> createTaskWrapper(BuildTaskRunnable<T> task, BuildContext buildContext, AtomicReference<Throwable> errorRef) {
+    return new Callable<Pair<T, Long>>() {
+      @Override
+      Pair<T, Long> call() throws Exception {
+        if (errorRef.get() != null) {
+          return null
+        }
+
+        long start = System.currentTimeMillis()
+        buildContext.messages.onForkStarted()
+        try {
+          T result = task.execute(buildContext)
+          long duration = System.currentTimeMillis() - start
+          return new Pair<T, Long>(result, duration)
+        }
+        catch (Throwable e) {
+          errorRef.compareAndSet(null, e)
+          return null
+        }
+        finally {
+          buildContext.messages.onForkFinished()
+        }
+      }
     }
   }
 
@@ -842,11 +879,11 @@ idea.fatal.error.notification=disabled
   @CompileStatic(TypeCheckingMode.SKIP)
   void buildUnpackedDistribution(@NotNull Path targetDirectory, boolean includeBinAndRuntime) {
     buildContext.paths.distAll = targetDirectory.toString()
-    OsFamily currentOs = SystemInfo.isWindows ? OsFamily.WINDOWS :
-                         SystemInfo.isMac ? OsFamily.MACOS :
-                         SystemInfo.isLinux ? OsFamily.LINUX : null
+    OsFamily currentOs = SystemInfoRt.isWindows ? OsFamily.WINDOWS :
+                         SystemInfoRt.isMac ? OsFamily.MACOS :
+                         SystemInfoRt.isLinux ? OsFamily.LINUX : null
     if (currentOs == null) {
-      buildContext.messages.error("Update from source isn't supported for '$SystemInfo.OS_NAME'")
+      buildContext.messages.error("Update from source isn't supported for '$SystemInfoRt.OS_NAME'")
     }
     buildContext.options.targetOS = currentOs.osId
 
@@ -896,7 +933,7 @@ idea.fatal.error.notification=disabled
       }
     }
     else {
-      copyResourceFiles(buildContext, SystemInfo.isMac ? targetDirectory.resolve("Resources") : targetDirectory)
+      copyResourceFiles(buildContext, SystemInfoRt.isMac ? targetDirectory.resolve("Resources") : targetDirectory)
       unpackPty4jNative(buildContext, targetDirectory, null)
     }
   }
@@ -908,19 +945,11 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  static void fixCrlf(@NotNull Path file) {
-    String data = Files.readString(file)
-    String convertedData = StringUtil.convertLineSeparators(data)
-    if (data != convertedData) {
-      Files.writeString(file, convertedData)
-    }
-  }
-
   static void copyInspectScript(@NotNull BuildContext buildContext, @NotNull Path distBinDir) {
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
       Path targetPath = distBinDir.resolve("${inspectScript}.sh")
-      Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.COPY_ATTRIBUTES)
+      Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.REPLACE_EXISTING)
       buildContext.patchInspectScript(targetPath)
     }
   }

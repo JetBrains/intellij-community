@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
@@ -28,7 +27,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
@@ -36,10 +34,11 @@ import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.regex.Matcher
+import java.util.function.Consumer
 import java.util.stream.Collectors
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -55,11 +54,11 @@ final class DistributionJARsBuilder {
    * see the same constant at com.intellij.ide.actions.AboutPopup#THIRD_PARTY_LIBRARIES_FILE_PATH
    */
   private static final String THIRD_PARTY_LIBRARIES_FILE_PATH = "license/third-party-libraries.html"
-  private static final String PLUGINS_DIRECTORY = "/plugins"
+  static final String PLUGINS_DIRECTORY = "/plugins"
 
   private final BuildContext buildContext
   private final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
-  private final PlatformLayout platform
+  final PlatformLayout platform
   private final Path patchedApplicationInfo
   private final LinkedHashSet<PluginLayout> pluginsToPublish
 
@@ -283,49 +282,32 @@ final class DistributionJARsBuilder {
 
   void buildJARs() {
     validateModuleStructure()
-    BuildTasksImpl.<Void>runInParallel(List.of(
-      BuildTaskRunnable.create(BuildOptions.SVGICONS_PREBUILD_STEP, { SVGPreBuilder.prebuildSVGIcons(it) }),
-      BuildTaskRunnable.create(BuildOptions.GENERATE_JAR_ORDER_STEP, { buildOrderFiles(it) }),
-      BuildTaskRunnable.create(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) }),
-      BuildTaskRunnable.create(BuildOptions.BROKEN_PLUGINS_LIST_STEP, { BrokenPluginsBuildFileService.buildFile(it) })
-    ), buildContext)
+
+    List<BuildTaskRunnable<Void>> tasks = new ArrayList<>(8)
+    tasks.add(SVGPreBuilder.createPrebuildSvgIconsTask())
+
+    Path loadingOrderFilePath = buildContext.paths.tempDir.resolve("jar-order.txt")
+
+    boolean isGenerateJarOrderStepEnabled = !buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)
+    if (isGenerateJarOrderStepEnabled) {
+      tasks.add(ReorderJarTask.createReorderJarTask(loadingOrderFilePath, platform))
+    }
+
+    tasks.add(createBuildSearchableOptionsTask(getModulesForPluginsToPublish()))
+    tasks.add(BrokenPluginsBuildFileService.createBuildBrokenPluginListTask())
+    tasks.add(createBuildThirdPartyLibrariesListTask(projectStructureMapping))
+
+    BuildTasksImpl.runInParallel(tasks, buildContext)
+
     buildLib()
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
     buildNonBundledPluginsBlockMaps()
-    buildThirdPartyLibrariesList()
-    reorderJARs()
-  }
 
-  void reorderJARs() {
-    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
-      def explicitOrderFile = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
-      Path loadingOrderFilePath = explicitOrderFile == null ? Paths.get(buildContext.paths.temp, "jarOrder/order.txt") : Paths.get(explicitOrderFile)
-      if (Files.exists(loadingOrderFilePath)) {
-        reorderJARs(loadingOrderFilePath)
-      }
+    if (isGenerateJarOrderStepEnabled && Files.exists(loadingOrderFilePath)) {
+      ReorderJarTask.reorderJARs(loadingOrderFilePath, buildContext, platform)
     }
-  }
-
-  /**
-   * Creates files with modules and class loading order.
-   * The files are used in {@link #processOrderFiles} for creating the "classpath-order.txt" and "order.txt"
-   */
-  static void buildOrderFiles(BuildContext buildContext) {
-    buildContext.executeStep("Build jar order file", BuildOptions.GENERATE_JAR_ORDER_STEP, {
-      Path directory = Paths.get(buildContext.paths.temp, "jarOrder")
-      Path modulesOrder = directory.resolveSibling("modules-order.txt")
-      Path classesOrder = directory.resolveSibling("classes-order.txt")
-      List<String> modulesToIndex =  buildContext.productProperties.productLayout.mainModules + getModulesToCompile(buildContext)
-      buildContext.messages.progress("Generating jar loading order for ${modulesToIndex.size()} modules")
-      FileUtil.delete(modulesOrder)
-      FileUtil.delete(classesOrder)
-      BuildTasksImpl.runApplicationStarter(buildContext, directory, modulesToIndex,
-                                           List.<String>of("jarOrder", modulesOrder.toString(), classesOrder.toString()),
-                                           Collections.<String, Object>singletonMap("idea.log.classpath.info", true),
-                                           List.of("-ea", "-Xmx768m"))
-    })
   }
 
   /**
@@ -356,29 +338,32 @@ final class DistributionJARsBuilder {
   /**
    * Build index which is used to search options in the Settings dialog.
    */
-  void buildSearchableOptions(BuildContext buildContext) {
-    buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
-      def productLayout = buildContext.productProperties.productLayout
-      def modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
-      modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
-      Path targetDirectory = getSearchableOptionsDir()
-      buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
-      buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
-      FileUtil.delete(targetDirectory)
-      // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-      // It'll process all UI elements in Settings dialog and build index for them.
-      BuildTasksImpl.runApplicationStarter(buildContext,
-                                           Paths.get(buildContext.paths.temp, "searchableOptions"),
-                                           modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
-                                           Collections.emptyMap(),
-                                           List.of("-ea", "-Xmx1024m"))
-      String[] modules = targetDirectory.toFile().list()
-      if (modules == null || modules.length == 0) {
-        buildContext.messages.error("Failed to build searchable options index: $targetDirectory is empty")
-      }
-      else {
-        buildContext.messages.info("Searchable options are built successfully for $modules.length modules")
-        buildContext.messages.debug("The following modules contain searchable options: $modules")
+  static BuildTaskRunnable<Void> createBuildSearchableOptionsTask(@NotNull List<String> modulesForPluginsToPublish) {
+    BuildTaskRunnable.task(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, "Build searchable options index", new Consumer<BuildContext>() {
+      @Override
+      void accept(BuildContext buildContext) {
+        ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+        List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
+        modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
+        Path targetDirectory = getSearchableOptionsDir(buildContext)
+        buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
+        buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
+        FileUtil.delete(targetDirectory)
+        // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+        // It'll process all UI elements in Settings dialog and build index for them.
+        BuildTasksImpl.runApplicationStarter(buildContext,
+                                             buildContext.paths.tempDir.resolve("searchableOptions"),
+                                             modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
+                                             Collections.emptyMap(),
+                                             List.of("-ea", "-Xmx1024m"))
+        String[] modules = targetDirectory.toFile().list()
+        if (modules == null || modules.length == 0) {
+          buildContext.messages.error("Failed to build searchable options index: $targetDirectory is empty")
+        }
+        else {
+          buildContext.messages.info("Searchable options are built successfully for $modules.length modules")
+          buildContext.messages.debug("The following modules contain searchable options: $modules")
+        }
       }
     })
   }
@@ -397,33 +382,7 @@ final class DistributionJARsBuilder {
   }
 
   List<String> getModulesForPluginsToPublish() {
-    platformModules + pluginsToPublish.collectMany(new LinkedHashSet()) { it.moduleJars.values() }
-  }
-
-  @CompileStatic(TypeCheckingMode.SKIP)
-  void reorderJARs(@NotNull Path loadingOrderFilePath) {
-    buildContext.messages.block("Reorder JARs") {
-      String targetDirectory = buildContext.paths.distAll
-      buildContext.messages.progress("Reordering *.jar files in $targetDirectory")
-      File ignoredJarsFile = new File(buildContext.paths.temp, "reorder-jars/required_for_dist.txt")
-      ignoredJarsFile.parentFile.mkdirs()
-      def moduleJars = platform.moduleJars.entrySet().collect(new HashSet()) { getActualModuleJarPath(it.key, it.value, platform.explicitlySetJarPaths) }
-      ignoredJarsFile.text = new File(buildContext.paths.distAll, "lib").list()
-        .findAll {it.endsWith(".jar") && !moduleJars.contains(it)}
-        .join("\n")
-
-      buildContext.ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: true, failonerror: true) {
-        arg(value: loadingOrderFilePath.toString())
-        arg(value: targetDirectory)
-        arg(value: targetDirectory)
-        arg(value: ignoredJarsFile.parent)
-        classpath {
-          buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule("intellij.platform.util"), false).each {
-            pathelement(location: it)
-          }
-        }
-      }
-    }
+    return platformModules + pluginsToPublish.collectMany(new LinkedHashSet()) { it.moduleJars.values() }
   }
 
   void buildAdditionalArtifacts() {
@@ -432,8 +391,8 @@ final class DistributionJARsBuilder {
     if (productProperties.generateLibrariesLicensesTable && !buildContext.options.buildStepsToSkip.
       contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
       String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      FileUtil.copy(new File(getThirdPartyLibrariesHtmlFilePath()), new File(buildContext.paths.artifacts, "$artifactNamePrefix-third-party-libraries.html"))
-      FileUtil.copy(new File(getThirdPartyLibrariesJsonFilePath()), new File(buildContext.paths.artifacts, "$artifactNamePrefix-third-party-libraries.json"))
+      FileUtil.copy(new File(getThirdPartyLibrariesHtmlFilePath(buildContext)), new File(buildContext.paths.artifacts, "$artifactNamePrefix-third-party-libraries.html"))
+      FileUtil.copy(new File(getThirdPartyLibrariesJsonFilePath(buildContext)), new File(buildContext.paths.artifacts, "$artifactNamePrefix-third-party-libraries.json"))
     }
 
     buildInternalUtilities()
@@ -466,186 +425,46 @@ final class DistributionJARsBuilder {
     }
   }
 
-  private void buildThirdPartyLibrariesList() {
-    buildContext.executeStep("Generate table of licenses for used third-party libraries", BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP) {
-      def generator = LibraryLicensesListGenerator.create(buildContext.messages,
-                                                          buildContext.project,
-                                                          buildContext.productProperties.allLibraryLicenses,
-                                                          projectStructureMapping.includedModules as Set<String>)
-      generator.generateHtml(getThirdPartyLibrariesHtmlFilePath())
-      generator.generateJson(getThirdPartyLibrariesJsonFilePath())
+  @NotNull
+  private static BuildTaskRunnable<Void> createBuildThirdPartyLibrariesListTask(@NotNull ProjectStructureMapping projectStructureMapping) {
+    return BuildTaskRunnable.task(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
+                                    "Generate table of licenses for used third-party libraries") { buildContext ->
+      LibraryLicensesListGenerator generator = LibraryLicensesListGenerator.create(buildContext.messages,
+                                                                                   buildContext.project,
+                                                                                   buildContext.productProperties.allLibraryLicenses,
+                                                                                   projectStructureMapping.includedModules as Set<String>)
+      generator.generateHtml(getThirdPartyLibrariesHtmlFilePath(buildContext))
+      generator.generateJson(getThirdPartyLibrariesJsonFilePath(buildContext))
     }
   }
 
-  private String getThirdPartyLibrariesHtmlFilePath() {
+  private static String getThirdPartyLibrariesHtmlFilePath(@NotNull BuildContext buildContext) {
     "$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH"
   }
 
-  private String getThirdPartyLibrariesJsonFilePath() {
+  private static String getThirdPartyLibrariesJsonFilePath(@NotNull BuildContext buildContext) {
     "$buildContext.paths.temp/third-party-libraries.json"
   }
 
-
-  /**
-   * Post processing after {@link #buildOrderFiles}
-   */
-  private void processOrderFiles(LayoutBuilder layoutBuilder) {
-    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
-      buildContext.messages.info("Start processing order files")
-      def libModulesToJar = getModuleToJarMap(platform)
-      Map<String, String> pluginsToJar = getPluginModulesToJar()
-      Map<String, String> pathToToJarName = getLibraryPathToJarName()
-      Map<String, String> pathToModuleName = getModulePathToModuleName(libModulesToJar.keySet() + pluginsToJar.keySet())
-
-      addClassesOrderFile(pathToModuleName, pathToToJarName, pluginsToJar, libModulesToJar)
-      addJarOrderFile(layoutBuilder, pathToModuleName, pathToToJarName, libModulesToJar)
-      buildContext.messages.info("End processing order files")
-    }
-  }
-
-  private void addClassesOrderFile(Map<String, String> pathToModuleName,
-                                   Map<String, String> pathToToJarName,
-                                   Map<String, String> pluginModulesToJar,
-                                   Map<String, String> libModulesToJar) {
-    Path jarOrderTempDirectoryPath = buildContext.paths.tempDir.resolve("jarOrder")
-    Path classesLoadingOrderFile = jarOrderTempDirectoryPath.resolve("classes-order.txt")
-    Path finalOrder = jarOrderTempDirectoryPath.resolve("order.txt")
-    if (!Files.exists(classesLoadingOrderFile)) {
-      buildContext.messages.info("Failed to generate classes order file: $classesLoadingOrderFile doesn't exist")
-      return
-    }
-
-    List<String> lines = Files.readAllLines(classesLoadingOrderFile)
-    if (lines.isEmpty()) {
-      buildContext.messages.info("Failed to generate classes order file: $classesLoadingOrderFile empty")
-      return
-    }
-
-    List<String> resultLines = new ArrayList<String>()
-    for (String line : lines) {
-      def i = line.indexOf(':')
-      if (-1 == i) continue
-      def className = line.substring(0, i)
-      def modulePath = line.substring(i + 1)
-      if (modulePath.endsWith(".jar")) {
-        String jarName = pathToToJarName.get(modulePath)
-        //possible jar from a plugin
-        if (jarName == null) continue
-        resultLines.add(className + ":/lib/" + jarName)
-      }
-      else {
-        def moduleName = pathToModuleName.get(modulePath)
-        if (moduleName == null) continue
-        def libJarName = libModulesToJar.get(moduleName)
-        if (libJarName != null) {
-          resultLines.add(className + ":/lib/" + libJarName)
-        }
-        else {
-          String moduleJarName = pluginModulesToJar.get(moduleName)
-          if (moduleName == null) {
-            continue
-          }
-          resultLines.add(className + ":" + moduleJarName)
-        }
-      }
-    }
-    Files.writeString(finalOrder, resultLines.join("\n"))
-    buildContext.messages.info("Completed generating classes order file. Before preparing: ${lines.size()} after: ${resultLines.size()}")
-  }
-
-  private Map<String, String> getPluginModulesToJar() {
+  static Map<String, String> getPluginModulesToJar(@NotNull BuildContext buildContext) {
     def pluginsToJar = new HashMap<String, String>()
     def productLayout = buildContext.productProperties.productLayout
     def allPlugins = getPluginsByModules(buildContext, productLayout.bundledPluginModules + productLayout.pluginModulesToPublish)
     for (def plugin : allPlugins) {
       def directory = getActualPluginDirectoryName(plugin, buildContext)
-      getModuleToJarMap(plugin, pluginsToJar, "$PLUGINS_DIRECTORY/$directory/lib/")
+      getModuleToJarMap(plugin, buildContext, pluginsToJar, "$PLUGINS_DIRECTORY/$directory/lib/")
     }
     return pluginsToJar
   }
 
-  private Map<String, String> getModulePathToModuleName(Set<String> allModules) {
-    def pathToModuleName = new HashMap<String, String>()
-    for (def moduleName in allModules) {
-      def module = buildContext.findModule(moduleName)
-      if (module == null) {
-        continue
-      }
-      def classpath = SystemInfo.isWindows ? '/' + FileUtil.toSystemIndependentName(buildContext.getModuleOutputPath(module)) : buildContext.getModuleOutputPath(module)
-      pathToModuleName.put(classpath, moduleName)
-    }
-    return pathToModuleName
-  }
-
-  private Map<String, String> getLibraryPathToJarName() {
-    def libWithoutVersion = new HashSet(platform.projectLibrariesWithRemovedVersionFromJarNames)
-    def libraryJarPathToJarName = new HashMap()
-    buildContext.project.libraryCollection.libraries.each {
-      def name = it.getName()
-      for (File libFile : it.getFiles(JpsOrderRootType.COMPILED)) {
-        def fileName = libFile.getName()
-        def jarName = fileName
-        if (libWithoutVersion.contains(name)) {
-          def candidate = getLibraryNameWithoutVersion(libFile)
-          if (candidate != null) {
-            jarName = candidate
-          }
-        }
-        def jarPath = (SystemInfo.isWindows) ? '/' + FileUtil.toSystemIndependentName(libFile.getPath()) : libFile.getPath()
-        libraryJarPathToJarName.put(jarPath, jarName)
-      }
-    }
-    return libraryJarPathToJarName
-  }
-
-  private void addJarOrderFile(LayoutBuilder layoutBuilder,
-                               Map<String, String> pathToModuleName,
-                               Map<String, String> pathToToJarName,
-                               Map<String, String> libModulesToJar) {
-    Path jarOrderTempDirectoryPath = buildContext.paths.tempDir.resolve("jarOrder")
-    Path modulesLoadingOrderFile = jarOrderTempDirectoryPath.resolve("modules-order.txt")
-    List<String> lines
-    try {
-      lines = Files.readAllLines(modulesLoadingOrderFile)
-    }
-    catch (NoSuchFileException ignored) {
-      buildContext.messages.info("Failed to generate jar loading order file: $modulesLoadingOrderFile doesn't exist")
-      return
-    }
-
-    Set<String> jarFileNames = new LinkedHashSet<>()
-    for (String line : lines) {
-      String jarName
-      if (line.endsWith(".jar")) {
-        jarName = pathToToJarName.get(line)
-      }
-      else {
-        String moduleName = pathToModuleName.get(line)
-        jarName = moduleName != null ? libModulesToJar.get(moduleName) : null
-      }
-      if (jarName != null) {
-        jarFileNames.add(jarName)
-      }
-    }
-
-    if (jarFileNames.isEmpty()) {
-      buildContext.messages.warning("Jar order file is empty")
-      return
-    }
-
-    String bootstrap = "intellij.platform.bootstrap"
-    Path newFile = jarOrderTempDirectoryPath.resolve(bootstrap + "/com/intellij/ide/classpath-order.txt")
-    Files.writeString(newFile, jarFileNames.join("\n"))
-    buildContext.messages.info("Completed generating jar file. Before preparing: ${lines.size()} after: ${jarFileNames.size()}")
-    layoutBuilder.patchModuleOutput(bootstrap, "$jarOrderTempDirectoryPath/$bootstrap")
-    buildContext.messages.info("Add patch to apply jar order: $newFile")
-  }
-
-  private Map<String, String> getModuleToJarMap(BaseLayout layout, Map<String, String> moduleToJar = new HashMap<>(), String jarPrefix = "") {
+  static Map<String, String> getModuleToJarMap(BaseLayout layout,
+                                               @NotNull BuildContext buildContext,
+                                               Map<String, String> moduleToJar = new HashMap<>(),
+                                               String jarPrefix = "") {
     for (Map.Entry<String, Collection<String>> entry : layout.moduleJars.entrySet()) {
       String jarName = entry.key
-      String fixedJarName = getActualModuleJarPath(jarName, entry.value, layout.explicitlySetJarPaths)
-      for (String  el : entry.value) {
+      String fixedJarName = getActualModuleJarPath(jarName, entry.value, layout.explicitlySetJarPaths, buildContext)
+      for (String el : entry.value) {
         moduleToJar.put(el, jarPrefix + fixedJarName)
       }
     }
@@ -656,7 +475,6 @@ final class DistributionJARsBuilder {
     def layoutBuilder = createLayoutBuilder()
     def productLayout = buildContext.productProperties.productLayout
 
-    processOrderFiles(layoutBuilder)
     addSearchableOptions(layoutBuilder)
 
     String applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
@@ -708,14 +526,6 @@ final class DistributionJARsBuilder {
 
   void processLibDirectoryLayout(LayoutBuilder layoutBuilder, ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
     processLayout(layoutBuilder, platform, buildContext.paths.distAll, projectStructureMapping, copyFiles, platform.moduleJars, [])
-  }
-
-  static String getLibraryNameWithoutVersion(File library) {
-    Matcher matcher = library.name =~ LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN
-    if (matcher.matches()) {
-      return matcher.group(1) + ".jar"
-    }
-    return null
   }
 
   private void buildBundledPlugins() {
@@ -973,7 +783,7 @@ final class DistributionJARsBuilder {
 
   private void addSearchableOptions(LayoutBuilder layoutBuilder) {
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
-      Path searchableOptionsDir = getSearchableOptionsDir()
+      Path searchableOptionsDir = getSearchableOptionsDir(buildContext)
       if (!Files.exists(searchableOptionsDir)) {
         buildContext.messages.error("There are no searchable options available. " +
                                     "Please ensure that you call DistributionJARsBuilder#buildSearchableOptions before this method.")
@@ -984,7 +794,8 @@ final class DistributionJARsBuilder {
     }
   }
 
-  private @NotNull Path getSearchableOptionsDir() {
+  @NotNull
+  private static Path getSearchableOptionsDir(@NotNull BuildContext buildContext) {
     return buildContext.paths.tempDir.resolve("searchableOptions/result")
   }
 
@@ -1022,14 +833,16 @@ final class DistributionJARsBuilder {
    * Returns path to a JAR file in the product distribution where platform/plugin classes will be placed. If the JAR name corresponds to
    * a module name and the module was renamed, return the old name to temporary keep the product layout unchanged.
    */
-  private String getActualModuleJarPath(String relativeJarPath, Collection<String> moduleNames, Set<String> explicitlySetJarPaths) {
+  static String getActualModuleJarPath(String relativeJarPath,
+                                       Collection<String> moduleNames,
+                                       Set<String> explicitlySetJarPaths,
+                                       @NotNull BuildContext buildContext) {
     if (explicitlySetJarPaths.contains(relativeJarPath)) {
       return relativeJarPath
     }
     for (String moduleName : moduleNames) {
       if (relativeJarPath == "${BaseLayout.convertModuleNameToFileName(moduleName)}.jar" &&
-          buildContext.getOldModuleName(moduleName) !=
-          null) {
+          buildContext.getOldModuleName(moduleName) != null) {
         return "${buildContext.getOldModuleName(moduleName)}.jar"
       }
     }
@@ -1055,7 +868,7 @@ final class DistributionJARsBuilder {
     MultiMap<String, String> actualModuleJars = MultiMap.createLinked()
     moduleJars.entrySet().each {
       def modules = it.value
-      def jarPath = getActualModuleJarPath(it.key, modules, layout.explicitlySetJarPaths)
+      def jarPath = getActualModuleJarPath(it.key, modules, layout.explicitlySetJarPaths, buildContext)
       actualModuleJars.putValues(jarPath, modules)
     }
     layoutBuilder.process(targetDirectory, mapping, copyFiles) {

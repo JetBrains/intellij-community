@@ -2,12 +2,12 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.text.StringUtil
-import java.io.File
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.io.write
+import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.isAccessible
-import kotlin.streams.toList
 import kotlin.system.exitProcess
 
 /**
@@ -17,16 +17,18 @@ import kotlin.system.exitProcess
  * Performance tests (mostly Windows) show 600ms startup performance improvement after reordering classes in jar files
  */
 @Suppress("UNCHECKED_CAST")
-class JarOrderStarter : ApplicationStarter {
-  override fun getCommandName(): String = "jarOrder"
+internal class JarOrderStarter : ApplicationStarter {
+  override fun getCommandName() = "jarOrder"
 
-  override fun main(args: Array<String>) {
+  override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
+
+  override fun main(args: List<String>) {
     try {
-      generateJarAccessLog(JarOrderStarter::class.java.classLoader, args[1])
-      generateClassesAccessLog(JarOrderStarter::class.java.classLoader, args[2])
+      generateJarAccessLog(JarOrderStarter::class.java.classLoader, Paths.get(args[1]))
+      generateClassesAccessLog(JarOrderStarter::class.java.classLoader, Paths.get(args[2]))
     }
     catch (e: Throwable) {
-      Logger.getInstance(JarOrderStarter::class.java).error(e)
+      logger<JarOrderStarter>().error(e)
     }
     finally {
       exitProcess(0)
@@ -44,18 +46,14 @@ class JarOrderStarter : ApplicationStarter {
    * ...
    * Afterward the build scripts convert the output file to the final list of jar files (classpath-order.txt)
    */
-  fun generateJarAccessLog(loader: ClassLoader, path: String?) {
-    // Must use reflection because the classloader class is loaded with a different classloader
+  fun generateJarAccessLog(loader: ClassLoader, path: Path) {
+    // must use reflection because the classloader class is loaded with a different classloader
     val accessor = loader::class.memberFunctions.find { it.name == "getJarAccessLog" }
                    ?: throw Exception("Can't find getJarAccessLog() method")
     val log = accessor.call(loader) as? Collection<String> ?: throw Exception("Unexpected return type of getJarAccessLog()")
-    val result = log
-      .stream()
-      .map { it.removePrefix("jar:").removePrefix("file:").removeSuffix("!/").removeSuffix("/") }
-      .toList()
-      .joinToString("\n")
+    val result = log.joinToString("\n") { it.removePrefix("jar:").removePrefix("file:").removeSuffix("!/").removeSuffix("/") }
     if (result.isNotEmpty()) {
-      File(path).writeText(result)
+      path.write(result)
     }
   }
 
@@ -67,7 +65,7 @@ class JarOrderStarter : ApplicationStarter {
    * com/package2/ClassName2.class:path/to/module
    * com/package3/ClassName3.class:path/to/some.jar
    */
-  private fun generateClassesAccessLog(loader: ClassLoader, path: String?) {
+  private fun generateClassesAccessLog(loader: ClassLoader, path: Path) {
     val classPathMember = loader::class.memberFunctions.find { it.name == "getClassPath" }
     classPathMember?.isAccessible = true
     val result = classPathMember?.call(loader) ?: return
@@ -76,10 +74,9 @@ class JarOrderStarter : ApplicationStarter {
     field.isAccessible = true
 
     val log = field.get(null) as? Collection<String> ?: throw Exception("Unexpected type of ourLoadedClasses")
-
     if (log.isNotEmpty()) {
       synchronized(log) {
-        File(path).writeText(StringUtil.join(log, "\n"))
+        path.write(log.joinToString(separator = "\n"))
       }
     }
   }

@@ -7,6 +7,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildNumber
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.intellij.build.impl.retry.StopTrying
 
@@ -26,10 +27,12 @@ final class BrokenPluginsBuildFileService {
   /**
    * Generate brokenPlugins.txt file using JetBrains Marketplace.
    */
-  static void buildFile(@NotNull BuildContext buildContext) {
-    List<MarketplaceBrokenPlugin> allBrokenPlugins = downloadFileFromMarketplace(buildContext)
-    Map<String, Set<String>> currentBrokenPlugins = filterBrokenPluginForCurrentIDE(allBrokenPlugins, buildContext)
-    storeBrokenPlugin(currentBrokenPlugins, buildContext)
+  static @NotNull BuildTaskRunnable<Void> createBuildBrokenPluginListTask() {
+    return BuildTaskRunnable.task(BuildOptions.BROKEN_PLUGINS_LIST_STEP, "Build broken plugin list") { BuildContext buildContext ->
+      List<MarketplaceBrokenPlugin> allBrokenPlugins = downloadFileFromMarketplace(buildContext)
+      Map<String, Set<String>> currentBrokenPlugins = filterBrokenPluginForCurrentIDE(allBrokenPlugins, buildContext)
+      storeBrokenPlugin(currentBrokenPlugins, buildContext)
+    }
   }
 
   private static @NotNull List<MarketplaceBrokenPlugin> downloadFileFromMarketplace(@NotNull BuildContext buildContext) {
@@ -48,22 +51,15 @@ final class BrokenPluginsBuildFileService {
 
         HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream())
         String encoding = response.headers().firstValue("Content-Encoding").orElse("")
-        InputStream stream = response.body()
-        switch (encoding) {
-          case "":
-            break
-          case "gzip":
-            stream = new GZIPInputStream(stream)
-            break
-          default:
-            throw new UnsupportedOperationException("Unexpected Content-Encoding: " + encoding)
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream()
+        (encoding == "gzip" ? new GZIPInputStream(response.body()) : response.body()).withCloseable {
+          it.transferTo(byteOut)
         }
-
+        String content = new String(byteOut.toByteArray(), StandardCharsets.UTF_8)
         int responseCode = response.statusCode()
-        String content = new String(stream.readAllBytes(), StandardCharsets.UTF_8)
         if (responseCode != HttpURLConnection.HTTP_OK) {
           RuntimeException error = new RuntimeException("$responseCode: $content")
-          // server error, will retry
+          // server error - retry
           if (responseCode >= HttpURLConnection.HTTP_INTERNAL_ERROR) {
             throw error
           }

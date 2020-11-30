@@ -23,6 +23,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.BiFunction
+import java.util.function.Supplier
 import java.util.stream.Collectors
 
 @CompileStatic
@@ -84,6 +85,7 @@ final class BuildContextImpl extends BuildContext {
 
   @Override
   void addResourceFile(@NotNull Path file) {
+    messages.debug("$file requested to be added to app resources")
     resourceFiles.add(file)
   }
 
@@ -241,12 +243,18 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  boolean executeStep(String stepMessage, String stepId, Closure step) {
+  boolean executeStep(String stepMessage, String stepId, Runnable step) {
     if (options.buildStepsToSkip.contains(stepId)) {
       messages.info("Skipping '$stepMessage'")
     }
     else {
-      messages.block(stepMessage, step)
+      messages.block(stepMessage, new Supplier<Void>() {
+        @Override
+        Void get() {
+          step.run()
+          return null
+        }
+      })
     }
     return true
   }

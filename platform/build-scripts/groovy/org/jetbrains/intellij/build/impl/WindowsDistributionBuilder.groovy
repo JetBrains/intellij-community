@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfo
+
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileFilters
+import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.xml.XmlUtil
@@ -47,8 +49,11 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   @Override
   @CompileStatic(TypeCheckingMode.SKIP)
   void copyFilesForOsDistribution(@NotNull Path winDistPath) {
+    Path distBinDir = winDistPath.resolve("bin")
+    Files.createDirectories(distBinDir)
+
     buildContext.messages.progress("Building distributions for $targetOs.osName")
-    buildContext.ant.copy(todir: "$winDistPath/bin") {
+    buildContext.ant.copy(todir: distBinDir.toString()) {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
           exclude(name: "breakgen*")
@@ -59,24 +64,21 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     BuildTasksImpl.generateBuildTxt(buildContext, winDistPath)
     BuildTasksImpl.copyResourceFiles(buildContext, winDistPath)
 
-    buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
-    buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")
+    Files.writeString(distBinDir.resolve(ideaProperties.fileName), StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "'\r\n"))
 
     if (icoPath != null) {
-      buildContext.ant.copy(file: icoPath, tofile: "$winDistPath/bin/${buildContext.productProperties.baseFileName}.ico")
+      Files.copy(Paths.get(icoPath), distBinDir.resolve("${buildContext.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
     }
     if (customizer.includeBatchLaunchers) {
       generateScripts(winDistPath)
     }
     List<JvmArchitecture> architectures = customizer.include32BitLauncher ? List.of(JvmArchitecture.values()) : List.of(JvmArchitecture.x64)
-    Path distBinDir = winDistPath.resolve("bin")
     generateVMOptions(distBinDir, architectures)
     for (JvmArchitecture architecture : architectures) {
       buildWinLauncher(architecture, winDistPath)
     }
     customizer.copyAdditionalFiles(buildContext, winDistPath.toString())
-    List<String> extensions = ["exe", "dll"]
-    for (String extension : extensions) {
+    for (String extension : ["exe", "dll"]) {
       distBinDir.toFile().listFiles(FileFilters.filesWithExtension(extension))?.each {
         buildContext.signExeFile(it.absolutePath)
       }
@@ -118,7 +120,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     if (!buildContext.options.isInDevelopmentMode && zipPath != null && exePath != null) {
-      if (SystemInfo.isLinux) {
+      if (SystemInfoRt.isLinux) {
         buildContext.messages.info("Comparing ${new File(zipPath).name} vs. ${new File(exePath).name} ...")
 
         File tempZip = new File(buildContext.paths.temp, "__zip")
@@ -150,7 +152,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.ant.delete(dir: tempExe)
       }
       else {
-        buildContext.messages.warning("Comparing .zip and .exe is not supported on ${SystemInfo.OS_NAME}")
+        buildContext.messages.warning("Comparing .zip and .exe is not supported on ${SystemInfoRt.OS_NAME}")
       }
     }
   }

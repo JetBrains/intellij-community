@@ -53,7 +53,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     Files.copy(ideaProperties, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
     // for real installers we need to checkout all text files with 'lf' separators anyway
-    BuildTasksImpl.fixCrlf(unixDistPath.resolve("bin/idea.properties"))
+    BuildUtils.convertLineSeparators(unixDistPath.resolve("bin/idea.properties"), "\n")
     if (iconPngPath != null) {
       Files.copy(Paths.get(iconPngPath), distBinDir.resolve("${buildContext.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
     }
@@ -121,7 +121,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    Files.move(distBinDir.resolve("executable-template.sh"), distBinDir.resolve(scriptName), StandardCopyOption.COPY_ATTRIBUTES)
+    Files.move(distBinDir.resolve("executable-template.sh"), distBinDir.resolve(scriptName), StandardCopyOption.REPLACE_EXISTING)
     BuildTasksImpl.copyInspectScript(buildContext, distBinDir)
 
     buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.sh", eol: "unix")
@@ -132,7 +132,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
                       ['-Dsun.tools.attach.tmp.only=true'] //todo
-      Files.writeString(distBinDir.resolve("$fileName"), vmOptions.join('\n') + '\n')
+      Files.writeString(distBinDir.resolve("$fileName"), String.join("\n", vmOptions) + '\n')
     }
   }
 
@@ -145,7 +145,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
        "product"        : buildContext.productProperties.baseFileName,
        "product_vendor" : buildContext.applicationInfo.shortCompanyName,
        "system_selector": buildContext.systemSelector], "@@")
-    BuildTasksImpl.fixCrlf(unixDistPath.resolve("bin/Install-Linux-tar.txt"))
+    BuildUtils.convertLineSeparators(unixDistPath.resolve("bin/Install-Linux-tar.txt"), "\n")
   }
 
   @Override

@@ -1,14 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JarMemoryLoader;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author anna
@@ -20,68 +34,54 @@ public final class ReorderJarsMain {
   public static void main(String[] args) {
     try {
       final String orderTxtPath = args[0];
-      final String jarsPath = args[1];
-      final String destinationPath = args[2];
+      Path jarDir = Paths.get(args[1]);
+      Path destinationPath = Paths.get(args[2]);
       final String libPath = args.length > 3 ? args[3] : null;
 
-      final Map<String, List<String>> toReorder = getOrder(new File(orderTxtPath));
-      final Set<String> ignoredJars = libPath == null ? Collections.emptySet() : loadIgnoredJars(libPath);
+      Map<String, List<String>> toReorder = getOrder(Paths.get(orderTxtPath));
+      Set<String> ignoredJars = libPath == null ? Collections.emptySet() : new LinkedHashSet<>(Files.readAllLines(Paths.get(libPath, "required_for_dist.txt")));
 
+      ExecutorService executor = Executors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() > 2 ? 4 : 2);
+      AtomicReference<Throwable> errorReference = new AtomicReference<>();
       for (String jarUrl : toReorder.keySet()) {
-        if (ignoredJars.contains(StringUtil.trimStart(jarUrl, "/lib/")) ||
-            jarUrl.startsWith("/lib/ant")) {
+        if (errorReference.get() != null) {
+          break;
+        }
+
+        if (ignoredJars.contains(StringUtil.trimStart(jarUrl, "/lib/")) || jarUrl.startsWith("/lib/ant")) {
           System.out.println("Ignored jar: " + jarUrl);
-          continue;
+          return;
         }
 
-        final File jarFile = new File(jarsPath, jarUrl);
-        if (!jarFile.isFile()) {
-          System.out.println("Cannot find jar: " + jarUrl);
-          continue;
+        Path jarFile = jarDir.resolve(StringUtil.trimStart(jarUrl, "/"));
+        if (!Files.exists(jarFile)) {
+          System.out.println("Cannot find jar: " + jarFile);
+          return;
         }
-        System.out.println("Reorder jar: " + jarUrl);
 
-        final JBZipFile zipFile = new JBZipFile(jarFile);
-        final List<JBZipEntry> entries = zipFile.getEntries();
-        final List<String> orderedEntries = toReorder.get(jarUrl);
-        assert orderedEntries.size() <= Short.MAX_VALUE : jarUrl;
-        entries.sort((o1, o2) -> {
-          if ("META-INF/plugin.xml".equals(o2.getName())) return Integer.MAX_VALUE;
-          if ("META-INF/plugin.xml".equals(o1.getName())) return -Integer.MAX_VALUE;
-          if (orderedEntries.contains(o1.getName())) {
-            return orderedEntries.contains(o2.getName()) ? orderedEntries.indexOf(o1.getName()) - orderedEntries.indexOf(o2.getName()) : -1;
+        executor.execute(() -> {
+          if (errorReference.get() != null) {
+            return;
           }
-          else {
-            return orderedEntries.contains(o2.getName()) ? 1 : 0;
+
+          System.out.println("Reorder jar: " + jarFile);
+          try {
+            reorderJar(jarFile, destinationPath, toReorder, jarUrl);
+          }
+          catch (Throwable e) {
+            errorReference.compareAndSet(null, e);
           }
         });
-
-        final File tempJarFile = FileUtil.createTempFile("__reorder__", "__reorder__", true);
-        final JBZipFile file = new JBZipFile(tempJarFile);
-
-        final JBZipEntry sizeEntry = file.getOrCreateEntry(JarMemoryLoader.SIZE_ENTRY);
-        sizeEntry.setData(ZipShort.getBytes(orderedEntries.size()));
-
-        for (JBZipEntry entry : entries) {
-          final JBZipEntry zipEntry = file.getOrCreateEntry(entry.getName());
-          zipEntry.setData(entry.getData());
-        }
-        file.close();
-
-        final File resultJarFile = new File(destinationPath, jarUrl);
-        final File resultDir = resultJarFile.getParentFile();
-        if (!resultDir.isDirectory() && !resultDir.mkdirs()) {
-          throw new IOException("Cannot create: " + resultDir);
-        }
-        try {
-          FileUtil.rename(tempJarFile, resultJarFile);
-        }
-        catch (Exception e) {
-          FileUtil.delete(resultJarFile);
-          throw e;
-        }
-        FileUtil.delete(tempJarFile);
       }
+      executor.shutdown();
+
+      Throwable error = errorReference.get();
+      if (error != null) {
+        error.printStackTrace();
+        System.exit(1);
+      }
+
+      executor.awaitTermination(8, TimeUnit.MINUTES);
     }
     catch (Throwable t) {
       t.printStackTrace();
@@ -89,17 +89,97 @@ public final class ReorderJarsMain {
     }
   }
 
-  private static Set<String> loadIgnoredJars(String libPath) throws IOException {
-    final File ignoredJarsFile = new File(libPath, "required_for_dist.txt");
-    final Set<String> ignoredJars = new HashSet<>();
-    ContainerUtil.addAll(ignoredJars, FileUtil.loadFile(ignoredJarsFile).split("\r\n"));
-    return ignoredJars;
+  private static final class Item {
+    final String name;
+    final FileTime lastModifiedTime;
+    final byte[] data;
+
+    Item(String name, FileTime lastModifiedTime, byte[] data) {
+      this.name = name;
+      this.lastModifiedTime = lastModifiedTime;
+      this.data = data;
+    }
   }
 
-  private static Map<String, List<String>> getOrder(final File loadingFile) throws IOException {
-    final Map<String, List<String>> entriesOrder = new HashMap<>();
-    final String[] lines = FileUtil.loadFile(loadingFile).split("\n");
-    for (String line : lines) {
+  private static void reorderJar(@NotNull Path jarFile,
+                                 @NotNull Path destinationPath,
+                                 @NotNull Map<String, List<String>> toReorder,
+                                 @NotNull String jarUrl) throws IOException {
+    List<String> orderedEntries = toReorder.get(jarUrl);
+    assert orderedEntries.size() <= Short.MAX_VALUE : jarUrl;
+
+    List<Item> entries = new ArrayList<>();
+    try (ZipInputStream in = new ZipInputStream(new BufferedInputStream(Files.newInputStream(jarFile), 32_000))) {
+      ZipEntry entry;
+      while ((entry = in.getNextEntry()) != null) {
+        if (entry.isDirectory()) {
+          continue;
+        }
+
+        entries.add(new Item(entry.getName(), entry.getLastModifiedTime(), FileUtilRt.loadBytes(in, (int)entry.getSize())));
+      }
+    }
+
+    entries.sort((o1, o2) -> {
+      String o2p = o2.name;
+      if ("META-INF/plugin.xml".equals(o2p)) {
+        return Integer.MAX_VALUE;
+      }
+
+      String o1p = o1.name;
+      if ("META-INF/plugin.xml".equals(o1p)) {
+        return -Integer.MAX_VALUE;
+      }
+
+      if (orderedEntries.contains(o1p)) {
+        return orderedEntries.contains(o2p)
+               ? orderedEntries.indexOf(o1p) - orderedEntries.indexOf(o2p)
+               : -1;
+      }
+      else {
+        return orderedEntries.contains(o2p) ? 1 : 0;
+      }
+    });
+
+    Path resultJarFile = destinationPath.resolve(StringUtil.trimStart(jarUrl, "/"));
+    Path resultDir = resultJarFile.getParent();
+    Files.createDirectories(resultDir);
+
+    Path tempJarFile = resultJarFile.resolveSibling(resultJarFile.getFileName() + "_reorder.jar");
+    try (ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(tempJarFile,
+                                                                                                  StandardOpenOption.CREATE_NEW,
+                                                                                                  StandardOpenOption.WRITE), 32_000))) {
+      addFile(out, JarMemoryLoader.SIZE_ENTRY, ZipShort.getBytes(orderedEntries.size()), null);
+      for (Item entry : entries) {
+        addFile(out, entry.name, entry.data, entry.lastModifiedTime);
+      }
+    }
+
+    try {
+      Files.move(tempJarFile, resultJarFile);
+    }
+    catch (Exception e) {
+      Files.deleteIfExists(resultJarFile);
+      throw e;
+    }
+    finally {
+      Files.deleteIfExists(tempJarFile);
+    }
+  }
+
+  private static void addFile(@NotNull ZipOutputStream out, @NotNull String entryName, byte @NotNull [] content, @Nullable FileTime lastModifiedTime) throws IOException {
+    ZipEntry e = new ZipEntry(entryName);
+    if (lastModifiedTime != null) {
+      e.setLastModifiedTime(lastModifiedTime);
+    }
+    out.putNextEntry(e);
+    out.write(content);
+    out.closeEntry();
+  }
+
+  private static @NotNull Map<String, List<String>> getOrder(@NotNull Path loadingFile) throws IOException {
+    Map<String, List<String>> entriesOrder = new LinkedHashMap<>();
+    for (String line : Files.readAllLines(loadingFile)) {
       line = line.trim();
       final int i = line.indexOf(":");
       if (i != -1) {
