@@ -1403,7 +1403,7 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      bundle="messages.JavaBundle"
-                     key="inspection.slow.abstract.set.remove.all.display.name"
+                     key="inspection.slow.abstract.set.remove.all.description"
                      implementationClass="com.intellij.codeInspection.SlowAbstractSetRemoveAllInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantUnmodifiable"
                      groupBundle="messages.InspectionsBundle"
