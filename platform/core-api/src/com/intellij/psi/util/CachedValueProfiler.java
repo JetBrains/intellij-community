@@ -2,11 +2,13 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -227,8 +229,11 @@ public final class CachedValueProfiler {
       long count = this.count.getAndSet(0);
       NumberFormat format = NumberFormat.getInstance(Locale.US);
       return format.format(count) + " " + eventName + " calls, " +
-             format.format(overhead) + " overhead ns (" + format.format(overhead / count) + " ns/call" +
-             (total == 0 ? "" : ", " + String.format("%.2f", overhead / (double)(total / 100)) + " %") + ")";
+             format.format(overhead) + " overhead ns" +
+             (count == 0 && total == 0 ? "" : " (" + StringUtil.join(Arrays.asList(
+               count == 0 ? null : format.format(overhead / count) + " ns/call",
+               total == 0 ? null : String.format("%.2f", overhead / (double)(total / 100)) + " %"
+             ), ", ") + ")");
     }
   }
 
