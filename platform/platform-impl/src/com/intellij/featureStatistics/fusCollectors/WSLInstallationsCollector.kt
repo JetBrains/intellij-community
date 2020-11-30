@@ -11,7 +11,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 
 class WSLInstallationsCollector : ApplicationUsagesCollector() {
@@ -30,7 +29,7 @@ class WSLInstallationsCollector : ApplicationUsagesCollector() {
 
     val wslExe = WSLDistribution.findWslExe() ?: return emptySet()
     val output = try {
-      ExecUtil.execAndGetOutput(GeneralCommandLine(wslExe.toString(), "-l", "-v").withCharset(StandardCharsets.UTF_16LE))
+      ExecUtil.execAndGetOutput(GeneralCommandLine(wslExe.toString(), "-l", "-v").withCharset(StandardCharsets.UTF_16LE), 10_000)
     }
     catch(e: ExecutionException) {
       LOG.info("Failed to run wsl: " + e.message)
