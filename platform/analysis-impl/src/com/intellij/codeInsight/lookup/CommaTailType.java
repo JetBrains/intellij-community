@@ -2,11 +2,11 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.application.options.CodeStyleSettingsFacade;
 import com.intellij.codeInsight.TailType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsFacade;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiUtilCore;
 

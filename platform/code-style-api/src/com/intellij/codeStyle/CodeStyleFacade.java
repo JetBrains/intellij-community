@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsFacade;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,7 @@ public abstract class CodeStyleFacade {
 
   /**
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getFacade} and
-   * {@link com.intellij.application.options.CodeStyleSettingsFacade#getTabSize()}
+   * {@link CodeStyleSettingsFacade#getTabSize()}
    */
   @Deprecated
   public abstract int getTabSize(final FileType fileType);
