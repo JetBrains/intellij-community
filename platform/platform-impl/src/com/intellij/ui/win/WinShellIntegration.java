@@ -13,7 +13,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.loader.NativeLibraryLoader;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,11 +27,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
 /**
- * <p>WinShellIntegration class provides features allow integrate you application into Windows Shell.
+ * <p>WinShellIntegration class provides features allow to integrate you application into Windows Shell.
  * It has asynchronous interface because most of the methods should be invoked strictly inside the internal thread.</p>
  *
  * <p>Typical usage is something like the following:<pre>
@@ -181,21 +182,6 @@ public final class WinShellIntegration implements Disposable {
     bridge.comExecutor.shutdown();
   }
 
-
-  // TODO: documentation
-  @NotNull
-  private CompletableFuture<?> patchSystemShortcutsAsync() {
-    return CompletableFuture.runAsync(() -> {
-                                        try {
-                                          patchSystemShortcuts();
-                                        }
-                                        catch (final Throwable e) {
-                                          throw new CompletionException(e);
-                                        }
-                                      },
-                                      // should not be executed neither in IDE main thread nor in EDT
-                                      AppExecutorUtil.getAppExecutorService());
-  }
 
   /** @returns null if the caching should be disabled */
   private @Nullable WinShellIntegrationCache obtainCache() {
