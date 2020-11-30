@@ -1080,6 +1080,11 @@
                      groupKey="inspection.confusing"
                      enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyImplicitNullArgumentCallInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.string.style.violation"
+                     level="WARNING"
+                     groupKey="inspection.style"
+                     enabledByDefault="false"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GroovyStringStyleViolationInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.duplicate.switch.branch"
                      groupKey="inspection.validity"
                      enabledByDefault="true"
