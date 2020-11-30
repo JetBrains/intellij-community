@@ -156,15 +156,15 @@ public class InstalledPluginsTableModel {
                                   @NotNull PluginEnableDisableAction action) {
     Map<PluginId, PluginEnabledState> tempEnabled = new HashMap<>(myEnabled);
 
-    PluginEnabledState[] newState = {null};
     setNewEnabled(
       ideaPluginDescriptors,
       tempEnabled,
       action,
-      (descriptor, pair) -> newState[0] = pair.getSecond()
+      (descriptor, pair) -> {
+      }
     );
 
-    boolean enabled = newState[0].isEnabled();
+    boolean enabled = action.isEnable();
     Set<Pair<@Nullable ? extends IdeaPluginDescriptor, @NotNull String>> dependencies = getDependenciesToUpdateState(
       ideaPluginDescriptors,
       tempEnabled,

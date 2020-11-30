@@ -11,7 +11,8 @@ public enum PluginEnableDisableAction {
 
   ENABLE_GLOBALLY(
     "plugins.configurable.enable.for.all.projects",
-    PluginEnabledState.ENABLED
+    PluginEnabledState.ENABLED,
+    true
   ) {
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
@@ -20,7 +21,8 @@ public enum PluginEnableDisableAction {
   },
   ENABLE_FOR_PROJECT(
     "plugins.configurable.enable.for.current.project",
-    PluginEnabledState.ENABLED_FOR_PROJECT
+    PluginEnabledState.ENABLED_FOR_PROJECT,
+    true
   ) {
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
@@ -29,7 +31,8 @@ public enum PluginEnableDisableAction {
   },
   ENABLE_FOR_PROJECT_DISABLE_GLOBALLY(
     "plugins.configurable.enable.for.current.project.only",
-    PluginEnabledState.ENABLED_FOR_PROJECT
+    PluginEnabledState.ENABLED_FOR_PROJECT,
+    false
   ) {
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
@@ -38,7 +41,8 @@ public enum PluginEnableDisableAction {
   },
   DISABLE_GLOBALLY(
     "plugins.configurable.disable.for.all.projects",
-    PluginEnabledState.DISABLED
+    PluginEnabledState.DISABLED,
+    false
   ) {
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
@@ -47,7 +51,8 @@ public enum PluginEnableDisableAction {
   },
   DISABLE_FOR_PROJECT(
     "plugins.configurable.disable.for.current.project",
-    PluginEnabledState.DISABLED_FOR_PROJECT
+    PluginEnabledState.DISABLED_FOR_PROJECT,
+    false
   ) {
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
@@ -56,7 +61,8 @@ public enum PluginEnableDisableAction {
   },
   DISABLE_FOR_PROJECT_ENABLE_GLOBALLY(
     "plugins.configurable.disable.for.current.project.only",
-    PluginEnabledState.DISABLED_FOR_PROJECT
+    PluginEnabledState.DISABLED_FOR_PROJECT,
+    true
   ) {
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
@@ -66,11 +72,14 @@ public enum PluginEnableDisableAction {
 
   private final @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String myPropertyKey;
   private final @NotNull PluginEnabledState myState;
+  private final boolean myIsEnable;
 
   PluginEnableDisableAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String propertyKey,
-                            @NotNull PluginEnabledState state) {
+                            @NotNull PluginEnabledState state,
+                            boolean isEnable) {
     myPropertyKey = propertyKey;
     myState = state;
+    myIsEnable = isEnable;
   }
 
   public abstract boolean isApplicable(@NotNull PluginEnabledState state);
@@ -84,7 +93,7 @@ public enum PluginEnableDisableAction {
   }
 
   public boolean isEnable() {
-    return ordinal() / 3 == 0;
+    return myIsEnable;
   }
 
   public boolean isDisable() {
