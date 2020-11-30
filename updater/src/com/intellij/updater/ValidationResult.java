@@ -6,7 +6,7 @@ import java.util.List;
 
 public class ValidationResult implements Comparable<ValidationResult> {
   public enum Kind {
-    INFO, CONFLICT, ERROR, FATAL_ERROR
+    INFO, CONFLICT, ERROR
   }
 
   public enum Action {
@@ -55,7 +55,6 @@ public class ValidationResult implements Comparable<ValidationResult> {
         prefix = "?";
         break;
       case ERROR:
-      case FATAL_ERROR:
         prefix = "!";
         break;
       default:
