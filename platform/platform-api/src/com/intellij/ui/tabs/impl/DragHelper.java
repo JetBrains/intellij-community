@@ -23,7 +23,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
-final class DragHelper extends MouseDragHelper {
+public class DragHelper extends MouseDragHelper {
   private final JBTabsImpl myTabs;
   private TabInfo myDragSource;
   private Rectangle myDragOriginalRec;
@@ -34,7 +34,7 @@ final class DragHelper extends MouseDragHelper {
   private TabInfo myDragOutSource;
   private Reference<TabLabel> myPressedTabLabel;
 
-  DragHelper(@NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
+  protected DragHelper(@NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
     super(parentDisposable, tabs);
 
     myTabs = tabs;
