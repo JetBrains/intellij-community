@@ -10,9 +10,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -40,6 +42,7 @@ public final class FileSetFormatter extends FileSetProcessor {
   private final static String RESULT_MESSAGE_OK = "OK";
   private final static String RESULT_MESSAGE_FAILED = "Failed";
   private final static String RESULT_MESSAGE_NOT_SUPPORTED = "Skipped, not supported.";
+  private final static String RESULT_MESSAGE_REJECTED_BY_FORMATTER = "Skipped, rejected by formatter.";
   private final static String RESULT_MESSAGE_BINARY_FILE = "Skipped, binary file.";
 
   private final @NotNull String myProjectUID;
@@ -98,7 +101,14 @@ public final class FileSetFormatter extends FileSetProcessor {
         NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(virtualFile));
         if (psiFile != null) {
           if (isFormattingSupported(psiFile)) {
-            reformatFile(myProject, psiFile, document);
+            try {
+              reformatFile(myProject, psiFile, document);
+            }
+            catch (ProcessCanceledException pce) {
+              final String cause = StringUtil.notNullize(pce.getCause() != null ? pce.getCause().getMessage() : pce.getMessage());
+              LOG.warn(virtualFile.getCanonicalPath() + ": " + RESULT_MESSAGE_REJECTED_BY_FORMATTER + " " + cause);
+              resultMessage = RESULT_MESSAGE_REJECTED_BY_FORMATTER;
+            }
             FileDocumentManager.getInstance().saveDocument(document);
           }
           else {
