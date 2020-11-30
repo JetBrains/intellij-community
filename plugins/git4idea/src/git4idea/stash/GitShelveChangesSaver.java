@@ -13,16 +13,17 @@ import com.intellij.openapi.vcs.changes.VcsShelveChangesSaver;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,9 +83,19 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
         ContainerUtil.addAllNotNull(filePaths, ChangesUtil.getAfterPath(change));
       }
 
-      VcsUtil.groupByRoots(myProject, filePaths, Functions.identity()).forEach((root, paths) -> {
-        if (rootsToSave.contains(root.getPath())) {
-          restoreStagedWorktree(myProject, root.getPath(), paths);
+      GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filePaths).forEach((root, paths) -> {
+        if (!rootsToSave.contains(root)) {
+          LOG.warn(String.format("Paths not under shelved root: root - %s, paths - %s, shelved roots - %s", root, paths, rootsToSave));
+          return;
+        }
+
+        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+        boolean isFreshRepository = repository != null && repository.getCurrentRevision() == null;
+        if (isFreshRepository) {
+          resetHardLocal(myProject, root);
+        }
+        else {
+          restoreStagedWorktree(myProject, root, paths);
         }
       });
     }
