@@ -48,6 +48,11 @@ public final class MavenShortcutsManager implements Disposable {
     return project.getService(MavenShortcutsManager.class);
   }
 
+  @Nullable
+  public static MavenShortcutsManager getInstanceIfCreated(@NotNull Project project) {
+    return project.getServiceIfCreated(MavenShortcutsManager.class);
+  }
+
   public MavenShortcutsManager(@NotNull Project project) {
     myProject = project;
 

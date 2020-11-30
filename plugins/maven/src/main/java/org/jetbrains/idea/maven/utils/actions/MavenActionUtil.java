@@ -31,14 +31,17 @@ public final class MavenActionUtil {
 
   public static boolean isMavenizedProject(DataContext context) {
     Project project = CommonDataKeys.PROJECT.getData(context);
-    return project != null && MavenProjectsManager.getInstance(project).isMavenizedProject();
+    if (project == null) return false;
+    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstanceIfCreated(project);
+    if (mavenProjectsManager == null) return false;
+    return mavenProjectsManager.isMavenizedProject();
   }
 
   @Nullable
   public static MavenProject getMavenProject(DataContext context) {
     MavenProject result;
     final MavenProjectsManager manager = getProjectsManager(context);
-    if(manager == null) return null;
+    if (manager == null) return null;
 
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file != null) {
@@ -58,7 +61,7 @@ public final class MavenActionUtil {
   @Nullable
   public static MavenProjectsManager getProjectsManager(DataContext context) {
     final Project project = getProject(context);
-    if(project == null) return null;
+    if (project == null) return null;
     return MavenProjectsManager.getInstance(project);
   }
 

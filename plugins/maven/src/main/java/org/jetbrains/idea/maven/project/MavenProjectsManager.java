@@ -121,6 +121,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return project.getService(MavenProjectsManager.class);
   }
 
+  @Nullable
+  public static MavenProjectsManager getInstanceIfCreated(@NotNull Project project) {
+    return project.getServiceIfCreated(MavenProjectsManager.class);
+  }
+
   public MavenProjectsManager(@NotNull Project project) {
     super(project);
 
@@ -190,14 +195,20 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       return;
     }
 
-    StartupManager startupManager = StartupManager.getInstance(myProject);
-    startupManager.registerStartupActivity(() -> {
+    Runnable runnable = () -> {
       boolean wasMavenized = !myState.originalFiles.isEmpty();
       if (!wasMavenized) {
         return;
       }
       initMavenized();
-    });
+    };
+
+    StartupManager startupManager = StartupManager.getInstance(myProject);
+    if (startupManager.postStartupActivityPassed()) {
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    } else {
+      startupManager.registerStartupActivity(runnable);
+    }
 
     startupManager.runAfterOpened(() -> {
       CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {

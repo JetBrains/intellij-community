@@ -89,6 +89,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -507,9 +508,9 @@ public final class MavenUtil {
                                                  @NotNull final MavenTask task,
                                                  @Nullable("null means application pooled thread")
                                                      ExecutorService executorService) {
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-
-    final MavenProgressIndicator indicator = new MavenProgressIndicator(project, manager::getSyncConsole);
+    MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
+    Supplier<MavenSyncConsole> syncConsoleSupplier = manager == null ? null : () -> manager.getSyncConsole();
+    final MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
 
     Runnable runnable = () -> {
       if (project.isDisposed()) return;

@@ -68,6 +68,11 @@ public final class MavenServerManager implements Disposable {
     return ApplicationManager.getApplication().getService(MavenServerManager.class);
   }
 
+  @Nullable
+  public static MavenServerManager getInstanceIfCreated() {
+    return ApplicationManager.getApplication().getServiceIfCreated(MavenServerManager.class);
+  }
+
   public MavenServerManager() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
