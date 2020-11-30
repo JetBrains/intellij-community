@@ -38,7 +38,7 @@ class KotlinParameterInfo(
     val originalTypeInfo: KotlinTypeInfo = KotlinTypeInfo(false),
     var defaultValueForParameter: KtExpression? = null,
     var defaultValueForCall: KtExpression? = null,
-    var valOrVar: KotlinValVar = KotlinValVar.None,
+    var valOrVar: KotlinValVar = defaultValOrVar(callableDescriptor),
     val modifierList: KtModifierList? = null
 ) : ParameterInfo {
     var currentTypeInfo: KotlinTypeInfo = originalTypeInfo
@@ -251,3 +251,9 @@ class KotlinParameterInfo(
         }
     }
 }
+
+private fun defaultValOrVar(callableDescriptor: CallableDescriptor): KotlinValVar =
+    if (callableDescriptor is ConstructorDescriptor && callableDescriptor.isPrimary && callableDescriptor.constructedClass.isData)
+        KotlinValVar.Val
+    else
+        KotlinValVar.None

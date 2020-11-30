@@ -2204,6 +2204,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/changeSignature/addParameterToFakeOverride.kt");
         }
 
+        @TestMetadata("changeClassConstructor.kt")
+        public void testChangeClassConstructor() throws Exception {
+            runTest("testData/quickfix/changeSignature/changeClassConstructor.kt");
+        }
+
+        @TestMetadata("changeDataClassConstructor.kt")
+        public void testChangeDataClassConstructor() throws Exception {
+            runTest("testData/quickfix/changeSignature/changeDataClassConstructor.kt");
+        }
+
         @TestMetadata("changeFunctionLiteralParameters1.kt")
         public void testChangeFunctionLiteralParameters1() throws Exception {
             runTest("testData/quickfix/changeSignature/changeFunctionLiteralParameters1.kt");
