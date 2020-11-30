@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.DaemonCodeAnalyzerStatusService
 import org.jetbrains.kotlin.idea.caches.resolve.CodeFragmentAnalyzer
 import org.jetbrains.kotlin.idea.caches.resolve.util.analyzeControlFlow
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
+import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.inBlockModificationCount
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
@@ -65,7 +66,7 @@ class ResolveElementCache(
                 // data on any modification of the file
                 !file.isPhysical -> file.modificationStamp
 
-                resolveElement is KtDeclaration && KotlinCodeBlockModificationListener.isBlockDeclaration(resolveElement) -> resolveElement.getModificationStamp()
+                resolveElement is KtDeclaration && PureKotlinCodeBlockModificationListener.isBlockDeclaration(resolveElement) -> resolveElement.getModificationStamp()
                 resolveElement is KtSuperTypeList -> resolveElement.modificationStamp
                 else -> null
             }

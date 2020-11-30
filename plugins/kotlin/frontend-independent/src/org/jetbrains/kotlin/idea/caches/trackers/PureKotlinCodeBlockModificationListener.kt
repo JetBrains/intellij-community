@@ -1,13 +1,9 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
-
 package org.jetbrains.kotlin.idea.caches.trackers
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -19,16 +15,11 @@ import com.intellij.pom.event.PomModelListener
 import com.intellij.pom.tree.TreeAspect
 import com.intellij.pom.tree.events.TreeChangeEvent
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl
-import com.intellij.psi.*
-import com.intellij.psi.impl.PsiManagerImpl
-import com.intellij.psi.impl.PsiModificationTrackerImpl
-import com.intellij.psi.impl.PsiTreeChangeEventImpl
-import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED
-import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED
-import com.intellij.psi.impl.PsiTreeChangePreprocessor
-import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.KotlinLanguage
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.*
@@ -36,47 +27,13 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getTopmostParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
-val KOTLIN_CONSOLE_KEY = Key.create<Boolean>("kotlin.console")
+interface PureKotlinOutOfCodeBlockModificationListener {
+    fun didChangeKotlinFileOutOfCodeBlock(file: KtFile, isPhysical: Boolean)
+}
 
-
-/**
- * Tested in OutOfBlockModificationTestGenerated
- */
-class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePreprocessor, Disposable {
-    private val modificationTrackerImpl: PsiModificationTrackerImpl =
-        PsiModificationTracker.SERVICE.getInstance(project) as PsiModificationTrackerImpl
-
-    @Volatile
-    private var kotlinModificationTracker: Long = 0
-
-    private var kotlinOutOfCodeBlockTrackerImpl: SimpleModificationTracker
-
-    var kotlinOutOfCodeBlockTracker: ModificationTracker
-
-    internal val perModuleOutOfCodeBlockTrackerUpdater = KotlinModuleOutOfCodeBlockModificationTracker.Updater(project)
-
-    override fun treeChanged(event: PsiTreeChangeEventImpl) {
-        if (!PsiModificationTrackerImpl.canAffectPsi(event)) {
-            return
-        }
-
-        // Copy logic from PsiModificationTrackerImpl.treeChanged(). Some out-of-code-block events are written to language modification
-        // tracker in PsiModificationTrackerImpl but don't have correspondent PomModelEvent. Increase kotlinOutOfCodeBlockTracker
-        // manually if needed.
-        val outOfCodeBlock = when (event.code) {
-            PROPERTY_CHANGED ->
-                event.propertyName === PsiTreeChangeEvent.PROP_UNLOADED_PSI || event.propertyName === PsiTreeChangeEvent.PROP_ROOTS
-            CHILD_MOVED -> event.oldParent is PsiDirectory || event.newParent is PsiDirectory
-            else -> event.parent is PsiDirectory
-        }
-
-        if (outOfCodeBlock) {
-            kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
-        }
-    }
-
+class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
     companion object {
-        fun getInstance(project: Project): KotlinCodeBlockModificationListener = project.getServiceSafe()
+        fun getInstance(project: Project): PureKotlinCodeBlockModificationListener = project.getServiceSafe()
 
         private fun isReplLine(file: VirtualFile): Boolean = file.getUserData(KOTLIN_CONSOLE_KEY) == true
 
@@ -101,12 +58,12 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
             changeSet.changedElements.all { changedElement ->
                 val changesByElement = changeSet.getChangesByElement(changedElement)
                 changesByElement.affectedChildren.all { affectedChild ->
-                    if (!precondition(affectedChild)) return@all false
-                    val changeByChild = changesByElement.getChangeByChild(affectedChild)
-                    return@all if (changeByChild is ChangeInfoImpl) {
-                        val oldChild = changeByChild.oldChild
-                        precondition(oldChild)
-                    } else false
+                    precondition(affectedChild) && changesByElement.getChangeByChild(affectedChild).let { changeByChild ->
+                        if (changeByChild is ChangeInfoImpl) {
+                            val oldChild = changeByChild.oldChild
+                            precondition(oldChild)
+                        } else false
+                    }
                 }
             }
 
@@ -253,13 +210,14 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
         )
     }
 
+    private val myListeners: MutableList<PureKotlinOutOfCodeBlockModificationListener> = ContainerUtil.createLockFreeCopyOnWriteList()
+
+    private val outOfCodeBlockModificationTrackerImpl = SimpleModificationTracker()
+    val outOfCodeBlockModificationTracker = ModificationTracker { outOfCodeBlockModificationTrackerImpl.modificationCount }
+
     init {
         val treeAspect: TreeAspect = TreeAspect.getInstance(project)
-
-        kotlinOutOfCodeBlockTrackerImpl = SimpleModificationTracker()
-        kotlinOutOfCodeBlockTracker = kotlinOutOfCodeBlockTrackerImpl
         val model = PomManager.getModel(project)
-        val messageBusConnection = project.messageBus.connect(this)
 
         model.addModelListener(
             object : PomModelListener {
@@ -282,36 +240,39 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
                     val inBlockElements = inBlockModifications(changedElements)
 
                     val physical = ktFile.isPhysical
-                    if (inBlockElements.isEmpty()) {
-                        messageBusConnection.deliverImmediately()
 
-                        if (physical && !isReplLine(ktFile.virtualFile) && ktFile !is KtTypeCodeFragment) {
-                            kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
-                            perModuleOutOfCodeBlockTrackerUpdater.onKotlinPhysicalFileOutOfBlockChange(ktFile, true)
+                    if (inBlockElements.isEmpty()) {
+                        val isPhysicalFile = physical && !isReplLine(ktFile.virtualFile) && ktFile !is KtTypeCodeFragment
+
+                        if (isPhysicalFile) {
+                            outOfCodeBlockModificationTrackerImpl.incModificationCount()
                         }
 
                         ktFile.incOutOfBlockModificationCount()
+
+                        didChangeKotlinCode(ktFile, isPhysicalFile)
                     } else if (physical) {
                         inBlockElements.forEach { it.containingKtFile.addInBlockModifiedItem(it) }
                     }
                 }
             },
-            messageBusConnection,
+            this,
         )
+    }
 
-        (PsiManager.getInstance(project) as PsiManagerImpl).addTreeChangePreprocessor(this)
+    fun addListener(listener: PureKotlinOutOfCodeBlockModificationListener, parentDisposable: Disposable) {
+        myListeners.add(listener)
+        Disposer.register(parentDisposable, { removeModelListener(listener) })
+    }
 
-        messageBusConnection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener {
-            val kotlinTrackerInternalIDECount = modificationTrackerImpl.forLanguage(KotlinLanguage.INSTANCE).modificationCount
-            if (kotlinModificationTracker == kotlinTrackerInternalIDECount) {
-                // Some update that we are not sure is from Kotlin language, as Kotlin language tracker wasn't changed
-                kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
-            } else {
-                kotlinModificationTracker = kotlinTrackerInternalIDECount
-            }
+    fun removeModelListener(listener: PureKotlinOutOfCodeBlockModificationListener) {
+        myListeners.remove(listener)
+    }
 
-            perModuleOutOfCodeBlockTrackerUpdater.onPsiModificationTrackerUpdate()
-        })
+    private fun didChangeKotlinCode(ktFile: KtFile, isPhysicalFile: Boolean) {
+        myListeners.forEach {
+            it.didChangeKotlinFileOutOfCodeBlock(ktFile, isPhysicalFile)
+        }
     }
 
     override fun dispose() = Unit
