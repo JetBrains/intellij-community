@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -18,6 +19,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.config.GitVersionSpecialty;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public final class GitShelveChangesSaver extends GitChangesSaver {
+  private static final Logger LOG = Logger.getInstance(GitShelveChangesSaver.class);
   private final VcsShelveChangesSaver myVcsShelveChangesSaver;
 
   public GitShelveChangesSaver(@NotNull Project project,
@@ -100,7 +103,10 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
     handler.addParameters("--hard");
     handler.endOptions();
-    Git.getInstance().runCommand(handler);
+    GitCommandResult result = Git.getInstance().runCommand(handler);
+    if (!result.success()) {
+      LOG.warn("Can't reset changes:" + result.getErrorOutputAsJoinedString());
+    }
   }
 
   private static void restoreStagedWorktree(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<FilePath> filePaths) {
@@ -109,7 +115,10 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
       handler.addParameters("--staged", "--worktree", "--source=HEAD");
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler);
+      GitCommandResult result = Git.getInstance().runCommand(handler);
+      if (!result.success()) {
+        LOG.warn("Can't restore changes:" + result.getErrorOutputAsJoinedString());
+      }
     }
   }
 
