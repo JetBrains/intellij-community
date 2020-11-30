@@ -3,6 +3,7 @@ package com.intellij.internal.cachedValueProfiler;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroupManager;
@@ -18,7 +19,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProfiler;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +29,11 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -42,43 +42,59 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
   private static final int VERSION = 1;
 
   private final Project myProject;
-  private final ExecutorService myExecutor;
   private final File myFileTmp;
   private final MyWriter myWriter;
+  private final MyQueue myQueue;
 
-  CachedValueProfilerDumpHelper(@NotNull Project project) {
-    myProject = project;
-    myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("CachedValueProfilerDumpWriter", 1);
-    myFileTmp = newFile(true);
-    try {
-      myWriter = new MyWriter(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(myFileTmp))));
+
+  static void toggleProfiling(@NotNull Project project) {
+    CachedValueProfiler.EventConsumer prev = CachedValueProfiler.setEventConsumer(null);
+    if (prev == null) {
+      try {
+        CachedValueProfiler.setEventConsumer(new CachedValueProfilerDumpHelper(project));
+      }
+      catch (IOException ex) {
+        notifyFailure(project, ex);
+      }
     }
-    catch (IOException e) {
-      throw new AssertionError(e);
+    else if (prev instanceof CachedValueProfilerDumpHelper) {
+      ((CachedValueProfilerDumpHelper)prev).close();
     }
   }
 
+  private CachedValueProfilerDumpHelper(@NotNull Project project) throws IOException {
+    myProject = project;
+    myFileTmp = newFile(true);
+    myWriter = new MyWriter(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(myFileTmp))));
+    myQueue = new MyQueue();
+  }
+
   void close() {
-    List<Runnable> runnables = myExecutor.shutdownNow();
-    try {
-      myExecutor.awaitTermination(200, TimeUnit.MILLISECONDS);
-    }
-    catch (InterruptedException ignore) { }
-    for (Runnable runnable : runnables) {
-      runnable.run();
-    }
-    File file = newFile(false);
-    try {
-      myWriter.close();
-      if (myWriter.getError() != null) {
-        notifyFailure(myProject, myWriter.getError());
-        FileUtil.delete(myFileTmp);
+    Throwable error = null;
+    for (Closeable c : Arrays.asList(myQueue, myWriter)) {
+      try {
+        c.close();
       }
-      FileUtil.rename(myFileTmp, file);
-      notifySuccess(myProject, file);
+      catch (IOException ex) {
+        if (error == null) error = ex;
+      }
     }
-    catch (IOException e) {
-      notifyFailure(myProject, e);
+    if (error == null) {
+      error = myWriter.getError();
+    }
+    if (error != null) {
+      notifyFailure(myProject, error);
+      FileUtil.delete(myFileTmp);
+    }
+    else {
+      File file = newFile(false);
+      try {
+        FileUtil.rename(myFileTmp, file);
+        notifySuccess(myProject, file);
+      }
+      catch (IOException e) {
+        notifyFailure(myProject, e);
+      }
     }
   }
 
@@ -91,32 +107,27 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
 
   @Override
   public void onFrameEnter(long frameId, StackTraceElement place, long parentId, long time) {
-    if (myExecutor.isShutdown()) return;
-    myExecutor.execute(() -> myWriter.onFrameEnter(frameId, place, parentId, time));
+    myQueue.offer(() -> myWriter.onFrameEnter(frameId, place, parentId, time));
   }
 
   @Override
   public void onFrameExit(long frameId, long start, long computed, long time) {
-    if (myExecutor.isShutdown()) return;
-    myExecutor.execute(() -> myWriter.onFrameExit(frameId, start, computed, time));
+    myQueue.offer(() -> myWriter.onFrameExit(frameId, start, computed, time));
   }
 
   @Override
   public void onValueComputed(long frameId, StackTraceElement place, long start, long time) {
-    if (myExecutor.isShutdown()) return;
-    myExecutor.execute(() -> myWriter.onValueComputed(frameId, place, start, time));
+    myQueue.offer(() -> myWriter.onValueComputed(frameId, place, start, time));
   }
 
   @Override
   public void onValueUsed(long frameId, StackTraceElement place, long start, long time) {
-    if (myExecutor.isShutdown()) return;
-    myExecutor.execute(() -> myWriter.onValueUsed(frameId, place, start, time));
+    myQueue.offer(() -> myWriter.onValueUsed(frameId, place, start, time));
   }
 
   @Override
   public void onValueInvalidated(long frameId, StackTraceElement place, long start, long time) {
-    if (myExecutor.isShutdown()) return;
-    myExecutor.execute(() -> myWriter.onValueInvalidated(frameId, place, start, time));
+    myQueue.offer(() -> myWriter.onValueInvalidated(frameId, place, start, time));
   }
 
   private static String placeToString(StackTraceElement place) {
@@ -155,17 +166,69 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
       }).notify(project);
   }
 
-  private static void notifyFailure(@NotNull Project project, @NotNull Exception exception) {
+  private static void notifyFailure(@NotNull Project project, @NotNull Throwable exception) {
     NotificationGroupManager.getInstance().getNotificationGroup("Cached value profiling")
       .createNotification("Failed to capture snapshot: " + exception.getMessage(), NotificationType.ERROR).notify(project);
   }
 
-  public static class MyWriter implements CachedValueProfiler.EventConsumer, Closeable {
+  static class MyQueue extends ConcurrentLinkedQueue<Runnable> implements Runnable, Closeable {
+
+    volatile boolean closed;
+    final Future<?> future;
+
+    MyQueue() {
+      future = ProcessIOExecutorService.INSTANCE.submit(this);
+    }
+
+    private void drainQueue() {
+      Runnable r;
+      while ((r = poll()) != null) {
+        r.run();
+      }
+    }
+
+    @Override
+    public boolean offer(Runnable runnable) {
+      if (closed) return false;
+      return super.offer(runnable);
+    }
+
+    @Override
+    public void run() {
+      while (!closed) {
+        drainQueue();
+        synchronized (future) {
+          try {
+            future.wait(100);
+          }
+          catch (InterruptedException ignore) { }
+        }
+      }
+    }
+
+    @Override
+    public void close() throws IOException {
+      closed = true;
+      try {
+        synchronized (future) {
+          future.notifyAll();
+        }
+        future.get(500, TimeUnit.MILLISECONDS);
+        drainQueue();
+      }
+      catch (ExecutionException ex) {
+        throw new IOException(ex);
+      }
+      catch (InterruptedException | TimeoutException ignore) { }
+    }
+  }
+
+  static class MyWriter implements CachedValueProfiler.EventConsumer, Closeable {
 
     private final JsonWriter myWriter;
     private IOException myError;
 
-    public MyWriter(OutputStream out) throws IOException {
+    MyWriter(OutputStream out) throws IOException {
       myWriter = new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
       myWriter.beginObject();
       myWriter.name("version").value(VERSION);

@@ -13,13 +13,7 @@ public class TurnOnOffCachedValueProfilerAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
-    CachedValueProfiler.EventConsumer prev = CachedValueProfiler.setEventConsumer(null);
-    if (prev == null) {
-      CachedValueProfiler.setEventConsumer(new CachedValueProfilerDumpHelper(project));
-    }
-    else if (prev instanceof CachedValueProfilerDumpHelper) {
-      ((CachedValueProfilerDumpHelper)prev).close();
-    }
+    CachedValueProfilerDumpHelper.toggleProfiling(project);
   }
 
   @Override
