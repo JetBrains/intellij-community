@@ -211,7 +211,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           if (anchor == null) {
             return null;
           }
-          return createProblem(equalsToCallExpression, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.RIGHT);
+          return createChangeCaseProblem(equalsToCallExpression, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.RIGHT);
         }
       }
 
@@ -230,14 +230,14 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         }
         //case: text1.toLowerCase().equals("test2")
         if (PsiUtil.isConstantExpression(equalTo)) {
-          return createProblem(qualifierCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.LEFT);
+          return createChangeCaseProblem(qualifierCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.LEFT);
         }
 
         //case: text1.toLowerCase().equals(text2.toLowerCase())
         if (equalTo instanceof PsiMethodCallExpression) {
           PsiMethodCallExpression secondCall = (PsiMethodCallExpression)equalTo;
           if (isEqualChangeCaseCall(qualifierCall, secondCall)) {
-            return createProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
+            return createChangeCaseProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
           }
         }
       }
@@ -246,15 +246,16 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Nullable
-    private ProblemDescriptor createProblem(PsiMethodCallExpression equalsToCallExpression,
-                                            PsiElement anchor,
-                                            RemoveRedundantChangeCaseFix.PlaceCaseEqualType type) {
+    private ProblemDescriptor createChangeCaseProblem(PsiMethodCallExpression equalsToCallExpression,
+                                                      PsiElement anchor,
+                                                      RemoveRedundantChangeCaseFix.PlaceCaseEqualType type) {
       String nameMethod = equalsToCallExpression.getMethodExpression().getReferenceName();
       if (nameMethod == null) {
         return null;
       }
       return myManager.createProblemDescriptor(anchor, (TextRange)null,
-                                               InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                               InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y",
+                                                                               nameMethod, EQUALS_IGNORE_CASE),
                                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
                                                new RemoveRedundantChangeCaseFix(nameMethod, type));
     }
