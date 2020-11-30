@@ -14,11 +14,10 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.ReturnToListComponent
+import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.coroutines.extra.Lifetime
 import runtime.reactive.MutableProperty
 import runtime.reactive.SequentialLifetimes
-import java.awt.BorderLayout
-import javax.swing.JPanel
 
 internal class SpaceReviewDetails(project: Project,
                                   lifetime: Lifetime,
@@ -28,7 +27,7 @@ internal class SpaceReviewDetails(project: Project,
                                   private val currentReview: MutableProperty<CodeReviewListItem?>) {
   private val sequentialLifetimes: SequentialLifetimes = SequentialLifetimes(lifetime)
 
-  val view: JPanel = JPanel(BorderLayout()).apply {
+  val view: BorderLayoutPanel = BorderLayoutPanel().apply {
     background = UIUtil.getListBackground()
   }
 
@@ -74,7 +73,7 @@ internal class SpaceReviewDetails(project: Project,
         addTab(commitsTabInfo)
       }
 
-      view.add(tabs, BorderLayout.CENTER)
+      view.addToCenter(tabs)
       view.validate()
       view.repaint()
     }
