@@ -1,3 +1,4 @@
 /kotlinc/
 /jdk/
 kotlin-plugin*.zip
+dependencies/buildSrc/build

@@ -6,10 +6,8 @@
 .idea/shelf
 .idea/usage.statistics.xml
 .idea/workspace.xml
-/android
 /config
 /out
-/python/helpers/.idea
 /system
 /test-config
 /test-system
@@ -18,3 +16,4 @@ build/dependencies/build
 edu/dependencies/.gradle
 edu/dependencies/build
 stale_outputs_checked
+/android
