@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.find.FindInProjectSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -51,8 +52,6 @@ public interface CreateFromTemplateHandler {
   String getErrorMessage();
 
   void prepareProperties(@NotNull Map<String, Object> props);
-
-  default void prepareProperties(@NotNull Map<String, Object> props, String fileName, @NotNull FileTemplate template) {}
 
   default void prepareProperties(@NotNull Map<String, Object> props,
                                  String fileName,

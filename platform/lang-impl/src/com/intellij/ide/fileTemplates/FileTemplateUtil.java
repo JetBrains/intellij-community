@@ -321,7 +321,6 @@ public final class FileTemplateUtil {
     }
 
     handler.prepareProperties(propsMap, fileName, template, project);
-    handler.prepareProperties(propsMap, fileName, template);
     handler.prepareProperties(propsMap);
 
     Map<String, Object> props_ = propsMap;
