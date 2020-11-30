@@ -114,7 +114,7 @@ final class MacDmgBuilder {
       javaExePath = "../${rootDir}/Contents/Home/bin/java"
     }
 
-    def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
+    Path productJsonDir = buildContext.paths.tempDir.resolve("mac.dist.product-info.json.dmg$suffix")
     MacDistributionBuilder.generateProductJson(buildContext, productJsonDir, javaExePath)
 
     def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
@@ -128,7 +128,7 @@ final class MacDmgBuilder {
     def sitFile = new File(artifactsPath, "${targetName}.sit")
     ant.copy(file: macZipPath, tofile: sitFile.path)
     ant.zip(destfile: sitFile.path, update: true) {
-      zipfileset(dir: productJsonDir, prefix: zipRoot)
+      zipfileset(dir: productJsonDir.toString(), prefix: zipRoot)
     }
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP) || !isMac()) {
       ftpAction("mkdir") {}

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.lang.JavaVersion
@@ -6,6 +6,8 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
@@ -50,18 +52,18 @@ class ClassVersionChecker {
     version.isEmpty() ? -1 : JavaVersion.parse(version).feature + 44  // 1.1 = 45
   }
 
-  void checkVersions(BuildContext buildContext, File root) {
+  void checkVersions(BuildContext buildContext, Path root) {
     buildContext.messages.block("Verifying class file versions") {
       myJars = 0
       myClasses = 0
       myErrors = []
 
       buildContext.messages.info("Checking with ${myRules.size()} rules in ${root} ...")
-      if (root.isDirectory()) {
-        visitDirectory(root, "")
+      if (Files.isDirectory(root)) {
+        visitDirectory(root.toFile(), "")
       }
       else {
-        visitFile(root.path, "", null)
+        visitFile(root.toString(), "", null)
       }
 
       if (myClasses == 0) {

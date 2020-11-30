@@ -78,11 +78,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.bundledJreManager.repackageX86Jre(OsFamily.LINUX)
       }
 
-      String jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
-      buildTarGz(jreDirectoryPath, osSpecificDistPath, "")
+      Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
+      buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "")
 
       if (jreDirectoryPath != null) {
-        buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
+        buildSnapPackage(jreDirectoryPath.toString(), osSpecificDistPath)
       }
       else {
         buildContext.messages.info("Skipping building Snap packages because no modular JRE are available")
@@ -144,8 +144,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       ["product_full"   : fullName,
        "product"        : buildContext.productProperties.baseFileName,
        "product_vendor" : buildContext.applicationInfo.shortCompanyName,
-       "system_selector": buildContext.systemSelector], "@@")
-    BuildUtils.convertLineSeparators(unixDistPath.resolve("bin/Install-Linux-tar.txt"), "\n")
+       "system_selector": buildContext.systemSelector], "@@", "\n")
   }
 
   @Override
@@ -279,10 +278,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      generateProductJson(Paths.get(unixSnapDistPath), "jbr/bin/java")
-      new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, "", [unixSnapDistPath, jreDirectoryPath], [])
+      Path unixSnapDistDir = Paths.get(unixSnapDistPath)
+      generateProductJson(unixSnapDistDir, "jbr/bin/java")
+      new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistDir, "", [unixSnapDistPath, jreDirectoryPath], [])
 
-      buildContext.ant.mkdir(dir: "${snapDir}/result")
+      Files.createDirectories(Paths.get(snapDir, "result"))
       buildContext.messages.progress("Building package")
 
       def snapArtifact = "${customizer.snapName}_${version}_amd64.snap"

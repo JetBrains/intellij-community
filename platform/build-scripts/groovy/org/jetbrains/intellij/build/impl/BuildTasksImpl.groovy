@@ -99,17 +99,17 @@ final class BuildTasksImpl extends BuildTasks {
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
-  void buildProvidedModulesList(String targetFilePath, List<String> modules) {
+  private void buildProvidedModulesList(Path targetFile, List<String> modules) {
     buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
       buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
       buildContext.messages.debug("Building provided modules list for the following modules: $modules")
-      FileUtil.delete(new File(targetFilePath))
-      // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
-      runApplicationStarter(buildContext, Paths.get(buildContext.paths.temp, "builtinModules"), modules, ['listBundledPlugins', targetFilePath])
-      if (!new File(targetFilePath).exists()) {
-        buildContext.messages.error("Failed to build provided modules list: $targetFilePath doesn't exist")
+      FileUtil.delete(targetFile)
+      // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
+      runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("builtinModules"), modules, ["listBundledPlugins", targetFile.toString()])
+      if (!Files.exists(targetFile)) {
+        buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
       }
-      buildContext.notifyArtifactBuilt(targetFilePath)
+      buildContext.notifyArtifactBuilt(targetFile.toString())
     })
   }
 
@@ -238,7 +238,7 @@ idea.fatal.error.notification=disabled
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  void layoutShared() {
+  private void layoutShared() {
     buildContext.messages.block("Copy files shared among all distributions") {
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/bin") {
         fileset(dir: "$buildContext.paths.communityHome/bin") {
@@ -340,11 +340,11 @@ idea.fatal.error.notification=disabled
       DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish))
 
     if (buildContext.shouldBuildDistributions()) {
-      def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.applicationInfo.productCode}-builtinModules.json"
-      buildProvidedModulesList(providedModulesFilePath, moduleNames)
+      Path providedModulesFile = Paths.get(buildContext.paths.artifacts, "${buildContext.applicationInfo.productCode}-builtinModules.json")
+      buildProvidedModulesList(providedModulesFile, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-          pluginsToPublish.addAll(new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish())
+          pluginsToPublish.addAll(new PluginsCollector(buildContext, providedModulesFile.toString()).collectCompatiblePluginsToPublish())
         }
         else {
           buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
@@ -477,7 +477,7 @@ idea.fatal.error.notification=disabled
 
             Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
             if (checkerConfig != null) {
-              new ClassVersionChecker(checkerConfig).checkVersions(buildContext, new File(monsterZip))
+              new ClassVersionChecker(checkerConfig).checkVersions(buildContext, Paths.get(monsterZip))
             }
           }
         }
@@ -781,13 +781,15 @@ idea.fatal.error.notification=disabled
         List<V> results = new ArrayList<>(futures.size())
         for (Pair<BuildTaskRunnable<V>, Future<Pair<V, Long>>> item : futures) {
           Throwable error = errorRef.get()
+
+          Pair<V, Long> result = item.second.get()
+
           if (error != null) {
             buildContext.messages.error("Cannot execute task", error)
             // unreachable code - BuildException will be thrown
             return results
           }
 
-          Pair<V, Long> result = item.second.get()
           if (result == null) {
             continue
           }
@@ -833,6 +835,7 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   void buildUpdaterJar() {
     new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
       jar("updater.jar") {
@@ -871,7 +874,7 @@ idea.fatal.error.notification=disabled
     layoutShared()
     Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
-      new ClassVersionChecker(checkerConfig).checkVersions(buildContext, new File(buildContext.paths.distAll))
+      new ClassVersionChecker(checkerConfig).checkVersions(buildContext, Paths.get(buildContext.paths.distAll))
     }
   }
 
@@ -888,7 +891,7 @@ idea.fatal.error.notification=disabled
     buildContext.options.targetOS = currentOs.osId
 
     setupBundledMaven()
-    def patchedApplicationInfo = patchApplicationInfo()
+    Path patchedApplicationInfo = patchApplicationInfo()
     compileModulesForDistribution(patchedApplicationInfo).buildJARs()
     if (includeBinAndRuntime) {
       setupJBre()
@@ -896,7 +899,7 @@ idea.fatal.error.notification=disabled
     layoutShared()
 
     if (includeBinAndRuntime) {
-      def propertiesFile = patchIdeaPropertiesFile()
+      Path propertiesFile = patchIdeaPropertiesFile()
       OsSpecificDistributionBuilder builder
       switch (currentOs) {
         case OsFamily.WINDOWS:
@@ -910,10 +913,10 @@ idea.fatal.error.notification=disabled
           break
       }
       builder.copyFilesForOsDistribution(targetDirectory)
-      def jbrTargetDir = buildContext.bundledJreManager.extractJre(currentOs)
+      Path jbrTargetDir = buildContext.bundledJreManager.extractJre(currentOs)
       if (currentOs == OsFamily.WINDOWS) {
         buildContext.ant.move(todir: targetDirectory.toString()) {
-          fileset(dir: jbrTargetDir)
+          fileset(dir: jbrTargetDir.toString())
         }
       }
       else {

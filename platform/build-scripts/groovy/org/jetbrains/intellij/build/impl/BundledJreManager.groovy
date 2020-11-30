@@ -10,7 +10,11 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
@@ -35,25 +39,26 @@ class BundledJreManager {
     new File(buildContext.paths.communityHome, 'build/dependencies')
   }
 
-  String extractJre(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    String targetDir = "${buildContext.paths.buildOutputRoot}/jre_${os.jbrArchiveSuffix}_$arch"
-    if (new File(targetDir).exists()) {
+  Path extractJre(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
+    Path targetDir = Paths.get(buildContext.paths.buildOutputRoot, "jre_${os.jbrArchiveSuffix}_$arch")
+    if (Files.isDirectory(targetDir)) {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
     }
 
     File archive = findArchive(os, jreBuild, arch)
-    if (archive == null) return null
-
-    String destination = "${targetDir}/jbr"
-    buildContext.messages.block("Extracting ${archive} into ${destination}") {
-      File destinationDir = new File(destination)
-      if (destinationDir.exists()) destinationDir.deleteDir()
-      untar(archive, destination)
-      fixJbrPermissions(destination, os == OsFamily.WINDOWS)
+    if (archive == null) {
+      return null
     }
 
-    targetDir
+    Path destinationDir = targetDir.resolve("jbr")
+    buildContext.messages.block("Extracting $archive into $destinationDir") {
+      destinationDir.deleteDir()
+      untar(archive, destinationDir.toString())
+      fixJbrPermissions(destinationDir, os == OsFamily.WINDOWS)
+    }
+
+    return targetDir
   }
 
   File findJreArchive(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
@@ -102,17 +107,16 @@ class BundledJreManager {
     }
   }
 
-  private static void fixJbrPermissions(String destination, boolean forWin) {
+  private static void fixJbrPermissions(Path destinationDir, boolean forWin) {
     Set<PosixFilePermission> exeOrDir = EnumSet.noneOf(PosixFilePermission.class)
     Collections.addAll(exeOrDir, OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE)
-    
+
     Set<PosixFilePermission> regular = EnumSet.of(OWNER_READ, OWNER_WRITE, GROUP_READ, OTHERS_READ)
 
-    Path root = Paths.get(destination)
-    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(destinationDir, new SimpleFileVisitor<Path>() {
       @Override
       FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        if (dir != root && SystemInfo.isUnix) {
+        if (dir != destinationDir && SystemInfo.isUnix) {
           Files.setPosixFilePermissions(dir, exeOrDir)
         }
         return FileVisitResult.CONTINUE
@@ -201,7 +205,7 @@ class BundledJreManager {
       return
     }
 
-    String jreDirectoryPath = extractJre(osFamily, JvmArchitecture.x32)
+    Path jreDirectoryPath = extractJre(osFamily, JvmArchitecture.x32)
     if (jreDirectoryPath == null) {
       buildContext.messages.warning("... skipped: JRE archive not found")
       return

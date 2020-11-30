@@ -5,6 +5,10 @@ import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.apache.commons.compress.archivers.zip.ParallelScatterZipCreator
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.apache.commons.compress.parallel.InputStreamSupplier
 import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Main
@@ -15,9 +19,15 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.library.JpsOrderRootType
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.BasicFileAttributes
+import java.util.concurrent.Executors
 import java.util.function.Consumer
+import java.util.zip.ZipEntry
 
 @CompileStatic
 final class BuildUtils {
@@ -74,9 +84,13 @@ final class BuildUtils {
     return text
   }
 
-  static void copyAndPatchFile(@NotNull Path sourcePath, @NotNull Path targetPath, Map<String, String> replacements, String marker = "__") {
+  static void copyAndPatchFile(@NotNull Path sourcePath, @NotNull Path targetPath, Map<String, String> replacements, String marker = "__", String lineSeparator = "") {
     Files.createDirectories(targetPath.parent)
-    Files.writeString(targetPath, replaceAll(Files.readString(sourcePath), replacements, marker))
+    String content = replaceAll(Files.readString(sourcePath), replacements, marker)
+    if (!lineSeparator.isEmpty()) {
+      content = StringUtilRt.convertLineSeparators(content, lineSeparator)
+    }
+    Files.writeString(targetPath, content)
   }
 
   static PrintStream getRealSystemOut() {
@@ -169,10 +183,10 @@ final class BuildUtils {
                                  args
       buildContext.messages.debug("Execute: " + processArgs)
       Process process = new ProcessBuilder(processArgs).start()
-      redirectOutput(new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+      redirectOutput(new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
         buildContext.messages.info(it)
       }
-      redirectOutput(new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+      redirectOutput(new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
         buildContext.messages.warning(it)
       }
 
@@ -216,6 +230,58 @@ final class BuildUtils {
     String convertedData = StringUtilRt.convertLineSeparators(data, newLineSeparator)
     if (data != convertedData) {
       Files.writeString(file, convertedData)
+    }
+  }
+
+  // symlinks not supported but can be easily implemented - see CollectingVisitor.visitFile
+  static void zipForWindows(@NotNull Path targetFile, Iterable<Path> dirs) {
+    ParallelScatterZipCreator zipCreator = new ParallelScatterZipCreator(Executors.newWorkStealingPool())
+    // note - dirs contain duplicated directories (you cannot simply add directory entry on visit - uniqueness must be preserved)
+    // anyway, directory entry are not added
+    CollectingVisitor visitor = new CollectingVisitor(zipCreator)
+    for (Path dir : dirs) {
+      visitor.collect(dir)
+    }
+    ZipArchiveOutputStream out = new ZipArchiveOutputStream(Files.newByteChannel(targetFile, EnumSet.of(StandardOpenOption.WRITE,
+                                                                                                        StandardOpenOption.CREATE)))
+    try {
+      zipCreator.writeTo(out)
+    }
+    finally {
+      out.close()
+    }
+  }
+
+  private static final class CollectingVisitor extends SimpleFileVisitor<Path> {
+    private Path rootDir
+    final ParallelScatterZipCreator zipCreator
+
+    CollectingVisitor(ParallelScatterZipCreator zipCreator) {
+      this.zipCreator = zipCreator
+    }
+
+    void collect(Path rootDir) {
+      this.rootDir = rootDir
+      Files.walkFileTree(rootDir, this)
+    }
+
+    @Override
+    FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+      if (attrs.isSymbolicLink()) {
+        throw new RuntimeException("Symlinks are not allowed for Windows archive")
+      }
+
+      ZipArchiveEntry entry = new ZipArchiveEntry(rootDir.relativize(file).toString().replace('\\' as char, '/' as char))
+      entry.setMethod(ZipEntry.DEFLATED)
+      entry.setSize(attrs.size())
+      entry.setLastModifiedTime(attrs.lastModifiedTime())
+      zipCreator.addArchiveEntry(entry, new InputStreamSupplier() {
+        @Override
+        InputStream get() {
+          return new BufferedInputStream(Files.newInputStream(file), 32_000)
+        }
+      })
+      return FileVisitResult.CONTINUE
     }
   }
 }

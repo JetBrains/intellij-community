@@ -8,6 +8,8 @@ import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
+import java.nio.file.Path
+
 import static org.jetbrains.intellij.build.pycharm.PyCharmPropertiesBase.downloadMiniconda
 
 /**
@@ -55,9 +57,9 @@ class PyCharmCommunityCondaProperties extends PyCharmCommunityProperties {
 
 
       @Override
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+      void copyAdditionalFiles(BuildContext context, Path targetDirectory) {
         super.copyAdditionalFiles(context, targetDirectory)
-        downloadMiniconda(context, targetDirectory, "Linux")
+        downloadMiniconda(context, targetDirectory.toString(), "Linux")
       }
     }
   }

@@ -283,9 +283,9 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       def targetPath = "${buildContext.paths.artifacts}/${baseName}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
 
-      def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath
+      Path productJsonDir = buildContext.paths.tempDir.resolve("mac.dist.product-info.json.zip")
       generateProductJson(buildContext, productJsonDir, null)
-      allPaths.add(productJsonDir)
+      allPaths.add(productJsonDir.toString())
 
       def executableFilePatterns = generateExecutableFilesPatterns(false)
       buildContext.ant.zip(zipfile: targetPath) {
@@ -323,9 +323,9 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
   }
 
-  static void generateProductJson(BuildContext buildContext, String productJsonDir, String javaExecutablePath) {
+  static void generateProductJson(BuildContext buildContext, Path productJsonDir, String javaExecutablePath) {
     String executable = buildContext.productProperties.baseFileName
-    new ProductInfoGenerator(buildContext).generateProductJson(Paths.get("$productJsonDir/Resources"), "../bin", null,
+    new ProductInfoGenerator(buildContext).generateProductJson(productJsonDir.resolve("Resources"), "../bin", null,
                                                                "../MacOS/${executable}", javaExecutablePath,
                                                                "../bin/${executable}.vmoptions", OsFamily.MACOS)
   }
