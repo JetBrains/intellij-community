@@ -179,7 +179,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private void diagnoseUnknownParent() {
     CompositeElement parent = getTreeParent();
     IElementType i = parent.getElementType();
-    StringBuilder msg = new StringBuilder("Unknown parent for java code reference: '").append(parent).append("'; Type: ").append(i).append(";\n");
+    StringBuilder msg = new StringBuilder("Unknown parent for java code reference: '").append(parent)
+      .append("'; Type: ").append(i).append(";\n")
+      .append(" Class: ").append(parent.getClass()).append('\n');
     while (parent != null && parent.getPsi() instanceof PsiExpression) {
       parent = parent.getTreeParent();
       msg.append(" Parent: '").append(parent).append("'; \n");
