@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.CourseManager
@@ -43,9 +44,7 @@ import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
 import training.util.findLanguageByID
 import training.util.isLearningProject
-import java.awt.FontFormatException
 import java.io.IOException
-import java.util.concurrent.ExecutionException
 
 class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
 
@@ -66,20 +65,30 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
   }
 
   @Synchronized
-  @Throws(IOException::class, FontFormatException::class, InterruptedException::class, ExecutionException::class)
   private fun openLesson(projectWhereToStartLesson: Project, lesson: Lesson) {
     LOG.debug("${projectWhereToStartLesson.name}: start openLesson method")
+
+    // Stop the current lesson (if any)
+    LessonManager.instance.stopLesson()
+
+    val activeToolWindow = LearningUiManager.activeToolWindow
+                           ?: LearnToolWindowFactory.learnWindowPerProject[projectWhereToStartLesson].also {
+                             LearningUiManager.activeToolWindow = it
+                           }
+
+    if (activeToolWindow != null && activeToolWindow.project != projectWhereToStartLesson) {
+      // maybe we need to add some confirmation dialog?
+      activeToolWindow.setModulesPanel()
+    }
+
+    if (lesson.passed && LessonManager.instance.currentLesson != lesson) {
+      // TODO: Do not stop lesson in another toolwindow IFT-110
+      LearningUiManager.activeToolWindow?.setLearnPanel() ?: error("No active toolwindow in $projectWhereToStartLesson")
+      LessonManager.instance.openLessonPassed(lesson as KLesson, projectWhereToStartLesson)
+      return
+    }
+
     try {
-      // Stop the current lesson (if any)
-      LessonManager.instance.stopLesson()
-
-      val activeToolWindow = LearningUiManager.activeToolWindow
-      if (activeToolWindow != null && activeToolWindow.project != projectWhereToStartLesson) {
-        // maybe we need to add some confirmation dialog?
-        activeToolWindow.setModulesPanel()
-      }
-      LearningUiManager.activeToolWindow = LearnToolWindowFactory.learnWindowPerProject[projectWhereToStartLesson]
-
       val langSupport = LangManager.getInstance().getLangSupport() ?: throw Exception("Language for learning plugin is not defined")
 
       var learnProject = LearningUiManager.learnProject
@@ -91,11 +100,9 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       LOG.debug("${projectWhereToStartLesson.name}: trying to find LearnProject in opened projects ${learnProject != null}")
       if (learnProject != null) LearningUiManager.learnProject = learnProject
 
-      val vf: VirtualFile? = when {
-        needOpenLessonAsCompleted(lesson) -> null
+      when {
         lesson.lessonType == LessonType.SCRATCH -> {
           LOG.debug("${projectWhereToStartLesson.name}: scratch based lesson")
-          getScratchFile(projectWhereToStartLesson, lesson, langSupport.filename)
         }
         learnProject == null || learnProject.isDisposed -> {
           if (!isLearningProject(projectWhereToStartLesson, langSupport)) {
@@ -109,10 +116,10 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
             return
           }
           else {
-            LOG.debug("${projectWhereToStartLesson.name}: 0. learnProject is null but the current project (${projectWhereToStartLesson.name})" +
-                      "is LearnProject then just getFileInLearnProject")
+            LOG.debug(
+              "${projectWhereToStartLesson.name}: 0. learnProject is null but the current project (${projectWhereToStartLesson.name})" +
+              "is LearnProject then just getFileInLearnProject")
             LearningUiManager.learnProject = projectWhereToStartLesson
-            getFileInLearnProject(lesson)
           }
         }
         learnProject.isOpen && projectWhereToStartLesson != learnProject -> {
@@ -122,102 +129,107 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
         }
         learnProject.isOpen && projectWhereToStartLesson == learnProject -> {
           LOG.debug("${projectWhereToStartLesson.name}: 4. LearnProject is the current project")
-          getFileInLearnProject(lesson)
         }
         else -> {
           throw Exception("Unable to start Learn project")
         }
       }
 
-      val currentProject =
-        when {
-          needOpenLessonAsCompleted(lesson) -> projectWhereToStartLesson
-          lesson.lessonType != LessonType.SCRATCH -> LearningUiManager.learnProject!!.also {
-            // close all tabs in the currently opened learning project
-            ProjectUtils.closeAllEditorsInProject(it)
-          }
-          else -> projectWhereToStartLesson
-        }
-
-      if (!needOpenLessonAsCompleted(lesson) &&
-          (lesson.lessonType != LessonType.SCRATCH || LearningUiManager.learnProject == projectWhereToStartLesson)) {
-        // do not change view environment for scratch lessons in user project
-        hideOtherViews(projectWhereToStartLesson)
+      if (projectWhereToStartLesson != learnProject) {
+        LOG.error(Exception("Invalid learning project initialization: projectWhereToStartLesson = $projectWhereToStartLesson, learnProject = $learnProject"))
+        return
       }
 
-      LOG.debug("${projectWhereToStartLesson.name}: Add listeners to lesson")
-      addStatisticLessonListenerIfNeeded(currentProject, lesson)
-
-      //open next lesson if current is passed
-      LOG.debug("${projectWhereToStartLesson.name}: Set lesson view")
-      LearningUiManager.activeToolWindow?.setLearnPanel()
-      LOG.debug("${projectWhereToStartLesson.name}: XmlLesson onStart()")
-      if (!needOpenLessonAsCompleted(lesson) && lesson.lessonType == LessonType.PROJECT)
-        LessonManager.instance.cleanUpBeforeLesson(projectWhereToStartLesson)
-      lesson.onStart()
-
-      //to start any lesson we need to do 4 steps:
-      //1. open editor or find editor
-      LOG.debug("${projectWhereToStartLesson.name}: PREPARING TO START LESSON:")
-      LOG.debug("${projectWhereToStartLesson.name}: 1. Open or find editor")
-      var textEditor: TextEditor? = null
-      if (vf != null && FileEditorManager.getInstance(projectWhereToStartLesson).isFileOpen(vf)) {
-        val editors = FileEditorManager.getInstance(projectWhereToStartLesson).getEditors(vf)
-        for (fileEditor in editors) {
-          if (fileEditor is TextEditor) {
-            textEditor = fileEditor
-          }
-        }
-      }
-      if (vf != null && textEditor == null) {
-        val editors = FileEditorManager.getInstance(projectWhereToStartLesson).openFile(vf, true, true)
-        for (fileEditor in editors) {
-          if (fileEditor is TextEditor) {
-            textEditor = fileEditor
-          }
-        }
-        if (textEditor == null) {
-          LOG.error("Cannot open editor for $vf")
-          if (lesson.lessonType == LessonType.SCRATCH) {
-            invokeLater {
-              runWriteAction {
-                vf.delete(this)
-              }
-            }
-          }
-        }
-      }
-
-      //2. set the focus on this editor
-      //FileEditorManager.getInstance(project).setSelectedEditor(vf, TextEditorProvider.getInstance().getEditorTypeId());
-      LOG.debug("${projectWhereToStartLesson.name}: 2. Set the focus on this editor")
-      if (vf != null)
-        FileEditorManager.getInstance(projectWhereToStartLesson).openEditor(OpenFileDescriptor(projectWhereToStartLesson, vf), true)
-
-      //4. Process lesson
-      LOG.debug("${projectWhereToStartLesson.name}: 4. Process lesson")
-      if (lesson is KLesson) processDslLesson(lesson, textEditor, projectWhereToStartLesson)
-      else error("Unknown lesson format")
+      openLessonForPreparedProject(projectWhereToStartLesson, lesson)
     }
     catch (e: Exception) {
       LOG.error(e)
     }
   }
 
-  private fun processDslLesson(lesson: KLesson, textEditor: TextEditor?, projectWhereToStartLesson: Project) {
-    if (needOpenLessonAsCompleted(lesson)) {
-      LessonManager.instance.openLessonPassed(lesson, projectWhereToStartLesson)
+  private fun openLessonForPreparedProject(project: Project, lesson: Lesson) {
+    val langSupport = LangManager.getInstance().getLangSupport() ?: throw Exception("Language should be defined by now")
+
+    val vf: VirtualFile? = if (lesson.lessonType == LessonType.SCRATCH) {
+      LOG.debug("${project.name}: scratch based lesson")
+      getScratchFile(project, lesson, langSupport.filename)
     }
     else {
-      val executor = LessonExecutor(lesson, projectWhereToStartLesson, textEditor?.editor)
-      val lessonContext = LessonContextImpl(executor)
-      LessonManager.instance.initDslLesson(textEditor?.editor, lesson, executor)
-      lesson.lessonContent(lessonContext)
-      executor.startLesson()
+      LOG.debug("${project.name}: 4. LearnProject is the current project")
+      getFileInLearnProject(lesson)
     }
+
+    if (lesson.lessonType != LessonType.SCRATCH) {
+      ProjectUtils.closeAllEditorsInProject(project)
+    }
+
+    if (lesson.lessonType != LessonType.SCRATCH || LearningUiManager.learnProject == project) {
+      // do not change view environment for scratch lessons in user project
+      hideOtherViews(project)
+    }
+
+    LOG.debug("${project.name}: Add listeners to lesson")
+    addStatisticLessonListenerIfNeeded(project, lesson)
+
+    //open next lesson if current is passed
+    LOG.debug("${project.name}: Set lesson view")
+    LearningUiManager.activeToolWindow?.setLearnPanel()
+    LOG.debug("${project.name}: XmlLesson onStart()")
+    if (lesson.lessonType == LessonType.PROJECT)
+      LessonManager.instance.cleanUpBeforeLesson(project)
+    lesson.onStart()
+
+    //to start any lesson we need to do 4 steps:
+    //1. open editor or find editor
+    LOG.debug("${project.name}: PREPARING TO START LESSON:")
+    LOG.debug("${project.name}: 1. Open or find editor")
+    var textEditor: TextEditor? = null
+    if (vf != null && FileEditorManager.getInstance(project).isFileOpen(vf)) {
+      val editors = FileEditorManager.getInstance(project).getEditors(vf)
+      for (fileEditor in editors) {
+        if (fileEditor is TextEditor) {
+          textEditor = fileEditor
+        }
+      }
+    }
+    if (vf != null && textEditor == null) {
+      val editors = FileEditorManager.getInstance(project).openFile(vf, true, true)
+      for (fileEditor in editors) {
+        if (fileEditor is TextEditor) {
+          textEditor = fileEditor
+        }
+      }
+      if (textEditor == null) {
+        LOG.error("Cannot open editor for $vf")
+        if (lesson.lessonType == LessonType.SCRATCH) {
+          invokeLater {
+            runWriteAction {
+              vf.delete(this)
+            }
+          }
+        }
+      }
+    }
+
+    //2. set the focus on this editor
+    //FileEditorManager.getInstance(project).setSelectedEditor(vf, TextEditorProvider.getInstance().getEditorTypeId());
+    LOG.debug("${project.name}: 2. Set the focus on this editor")
+    if (vf != null)
+      FileEditorManager.getInstance(project).openEditor(OpenFileDescriptor(project, vf), true)
+
+    //4. Process lesson
+    LOG.debug("${project.name}: 4. Process lesson")
+    if (lesson is KLesson) processDslLesson(lesson, textEditor, project)
+    else error("Unknown lesson format")
   }
 
-  private fun needOpenLessonAsCompleted(lesson: Lesson) = lesson.passed && LessonManager.instance.currentLesson != lesson
+  private fun processDslLesson(lesson: KLesson, textEditor: TextEditor?, projectWhereToStartLesson: Project) {
+    val executor = LessonExecutor(lesson, projectWhereToStartLesson, textEditor?.editor)
+    val lessonContext = LessonContextImpl(executor)
+    LessonManager.instance.initDslLesson(textEditor?.editor, lesson, executor)
+    lesson.lessonContent(lessonContext)
+    executor.startLesson()
+  }
 
   private fun hideOtherViews(project: Project) {
     ApplicationManager.getApplication().invokeLater {
@@ -252,6 +264,7 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
     toolWindowManager.getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)?.show(null)
   }
 
+  @RequiresEdt
   private fun openLessonWhenLearnProjectStart(lesson: Lesson, myLearnProject: Project) {
     if (lesson.properties.canStartInDumbMode) {
       openLesson(myLearnProject, lesson)
