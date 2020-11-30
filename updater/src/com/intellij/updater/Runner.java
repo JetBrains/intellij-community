@@ -12,7 +12,6 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -41,18 +40,7 @@ public class Runner {
       List<String> effectiveArgs = new ArrayList<>();
       for (String arg : args) {
         if (arg.startsWith("@")) {
-          FileInputStream fis = new FileInputStream(arg.substring(1));
-          try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));
-            while (true) {
-              String line = reader.readLine();
-              if (line == null) break;
-              effectiveArgs.add(line);
-            }
-          }
-          finally {
-            fis.close();
-          }
+          effectiveArgs.addAll(Files.readAllLines(Paths.get(arg.substring(1))));
         }
         else {
           effectiveArgs.add(arg);
