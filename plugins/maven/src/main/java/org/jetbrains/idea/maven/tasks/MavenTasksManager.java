@@ -38,10 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @State(name = "MavenCompilerTasksManager")
 public final class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState> {
   private final AtomicBoolean isInitialized = new AtomicBoolean();
-
   private MavenTasksManagerState myState = new MavenTasksManagerState();
-
-  private final MavenProjectsManager myProjectsManager;
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -64,8 +61,6 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
 
   public MavenTasksManager(@NotNull Project project) {
     super(project);
-
-    myProjectsManager = MavenProjectsManager.getInstance(project);
   }
 
   @Override
@@ -122,10 +117,11 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
         tasks = Sets.union(before ? myState.beforeRebuildTask : myState.afterRebuildTask, tasks);
       }
 
+      MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(myProject);
       for (MavenCompilerTask each : tasks) {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each.getProjectPath());
         if (file == null) continue;
-        MavenExplicitProfiles explicitProfiles = myProjectsManager.getExplicitProfiles();
+        MavenExplicitProfiles explicitProfiles = mavenProjectsManager.getExplicitProfiles();
         parametersList.add(new MavenRunnerParameters(true,
                                                      file.getParent().getPath(),
                                                      file.getName(),
