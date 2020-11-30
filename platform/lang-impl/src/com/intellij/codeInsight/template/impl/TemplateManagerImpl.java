@@ -249,9 +249,10 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, TemplateSettings.getInstance());
     TemplateActionContext templateActionContext = TemplateActionContext.expanding(file, editor);
+    boolean multiCaretMode = editor.getCaretModel().getCaretCount() > 1;
     List<CustomLiveTemplate> customCandidates = ContainerUtil.findAll(CustomLiveTemplate.EP_NAME.getExtensions(), customLiveTemplate ->
       shortcutChar == customLiveTemplate.getShortcut() &&
-      (editor.getCaretModel().getCaretCount() <= 1 || supportsMultiCaretMode(customLiveTemplate)) &&
+      (!multiCaretMode || supportsMultiCaretMode(customLiveTemplate)) &&
       isApplicable(customLiveTemplate, templateActionContext));
     if (!customCandidates.isEmpty()) {
       int caretOffset = editor.getCaretModel().getOffset();
@@ -262,7 +263,12 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
           int offsetBeforeKey = caretOffset - key.length();
           CharSequence text = editor.getDocument().getImmutableCharSequence();
           if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
-            return () -> customLiveTemplate.expand(key, templateCallback);
+            return () -> {
+              customLiveTemplate.expand(key, templateCallback);
+              if (multiCaretMode) {
+                PsiDocumentManager.getInstance(templateCallback.getProject()).commitDocument(editor.getDocument());
+              }
+            };
           }
         }
       }
