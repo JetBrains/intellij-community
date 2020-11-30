@@ -40,7 +40,6 @@ public class MavenProjectsManagerWatcher {
   private final MavenGeneralSettings myGeneralSettings;
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenProjectsAware myProjectsAware;
-  private final ExternalSystemProjectTracker myProjectTracker;
   private final ExecutorService myBackgroundExecutor;
   private final Disposable myDisposable;
 
@@ -56,7 +55,6 @@ public class MavenProjectsManagerWatcher {
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
     myProjectsAware = new MavenProjectsAware(project, projectsTree, manager, this, myBackgroundExecutor);
-    myProjectTracker = ExternalSystemProjectTracker.getInstance(project);
     myDisposable = Disposer.newDisposable(MavenProjectsManagerWatcher.class.toString());
   }
 
@@ -65,8 +63,9 @@ public class MavenProjectsManagerWatcher {
     busConnection.subscribe(ProjectTopics.MODULES, new MavenIgnoredModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
     registerGeneralSettingsWatcher(myManager, this, myBackgroundExecutor, myDisposable);
-    myProjectTracker.register(myProjectsAware, myManager);
-    myProjectTracker.activate(myProjectsAware.getProjectId());
+    ExternalSystemProjectTracker projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
+    projectTracker.register(myProjectsAware, myManager);
+    projectTracker.activate(myProjectsAware.getProjectId());
   }
 
   @TestOnly
@@ -97,10 +96,6 @@ public class MavenProjectsManagerWatcher {
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
     scheduleUpdateAll(false, false);
-  }
-
-  void scheduleReloadNotificationUpdate() {
-    myProjectTracker.scheduleProjectNotificationUpdate();
   }
 
   /**
