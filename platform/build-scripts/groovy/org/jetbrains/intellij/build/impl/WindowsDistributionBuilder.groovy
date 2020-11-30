@@ -170,16 +170,12 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private static String generateAppUserModelId(BuildContext buildContext) {
-    // result example: "JetBrains.IntelliJIDEACommunityEdition.2020-3"
+    // result example: "JetBrains.IntelliJIDEACommunityEdition"
 
     final def shortCompanyName = buildContext.applicationInfo.shortCompanyName.replace('.', '-')
     final def productName = buildContext.applicationInfo.productNameWithEdition.replace('.', '-')
 
-    final def majorVersion = StringUtil.isEmptyOrSpaces(buildContext.applicationInfo.majorVersion) ? "0" : buildContext.applicationInfo.majorVersion
-    final def minorVersion = StringUtil.isEmptyOrSpaces(buildContext.applicationInfo.minorVersion) ? "0" : buildContext.applicationInfo.minorVersion
-    final def version = (majorVersion + "." + minorVersion).replace('.', '-')
-
-    final def result = (shortCompanyName + "." + productName + "." + version).replaceAll("\\s+", "")
+    final def result = (shortCompanyName + "." + productName).replaceAll("\\s+", "")
     if (result.length() > 128) { // AppUserModelId can have no more than 128 characters
       buildContext.messages.error("Generated AppUserModelId is too long (> 128 characters): \"$result\"")
     }
