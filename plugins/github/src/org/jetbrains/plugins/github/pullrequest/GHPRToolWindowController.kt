@@ -19,7 +19,7 @@ import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import kotlin.properties.Delegates.observable
 
 @Service
-internal class GHPRToolWindowTabsManager(private val project: Project) : Disposable {
+internal class GHPRToolWindowController(private val project: Project) : Disposable {
   private val repositoryManager = project.service<GHProjectRepositoriesManager>()
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
 
@@ -96,7 +96,7 @@ internal class GHPRToolWindowTabsManager(private val project: Project) : Disposa
 
   companion object {
     private fun muteTabDisposalListener(project: Project) {
-      project.service<GHPRToolWindowTabsManager>().tabDisposalListener.muted = true
+      project.service<GHPRToolWindowController>().tabDisposalListener.muted = true
     }
   }
 

@@ -13,10 +13,10 @@ class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.setToHideOnEmptyContent(true)
     toolWindow.setTitleActions(listOf(GHPRViewFilePullRequestAction()))
-    project.service<GHPRToolWindowTabsManager>().contentManager = GHPRToolWindowTabsContentManager(project, toolWindow.contentManager)
+    project.service<GHPRToolWindowController>().contentManager = GHPRToolWindowTabsContentManager(project, toolWindow.contentManager)
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean = invokeAndWaitIfNeeded { project.service<GHPRToolWindowTabsManager>().isAvailable() }
+  override fun shouldBeAvailable(project: Project): Boolean = invokeAndWaitIfNeeded { project.service<GHPRToolWindowController>().isAvailable() }
 
   companion object {
     const val ID = "Pull Requests"

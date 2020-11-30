@@ -87,7 +87,7 @@
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"/>
 
-    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$BeforeProjectCloseListener"
+    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController$BeforeProjectCloseListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
@@ -105,7 +105,7 @@
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
               topic="git4idea.repo.GitRepositoryChangeListener"/>
 
-    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$BeforePluginUnloadListener"
+    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController$BeforePluginUnloadListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
   </projectListeners>

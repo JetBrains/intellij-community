@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager
+import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.util.function.Supplier
 
@@ -16,5 +16,5 @@ class GithubViewPullRequestsAction :
                                   AllIcons.Vcs.Vendors.Github) {
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repository: GHGitRepositoryMapping) =
-    project.service<GHPRToolWindowTabsManager>().showTab(repository.repository)
+    project.service<GHPRToolWindowController>().showTab(repository.repository)
 }

@@ -8,7 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager
+import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
 import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import java.util.function.Supplier
 
@@ -35,7 +35,7 @@ class GHPRViewFilePullRequestAction : DumbAwareAction(GithubBundle.messagePointe
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(PlatformDataKeys.PROJECT)
     val file = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRVirtualFile>().first()
-    project.service<GHPRToolWindowTabsManager>().showTab(file.repository) {
+    project.service<GHPRToolWindowController>().showTab(file.repository) {
       it?.viewPullRequest(file.pullRequest)
     }
   }
