@@ -18,6 +18,9 @@ package org.jetbrains.intellij.build.impl
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
 
+import java.nio.file.Path
+import java.nio.file.Paths
+
 class AndroidStudioBundledJreManager extends BundledJreManager {
   BuildContext buildContext
   String baseDirectoryForJdk
@@ -28,12 +31,12 @@ class AndroidStudioBundledJreManager extends BundledJreManager {
     this.baseDirectoryForJdk = "$communityHome/../../prebuilts/studio/jdk/jdk11-runtime"
   }
 
-  String extractJre(String osName) {
-    return "$baseDirectoryForJdk/$osName"
+  Path extractJre(String osName) {
+    return Paths.get(baseDirectoryForJdk, osName)
   }
 
   @Override
-  String extractJre(OsFamily os) {
+  Path extractJre(OsFamily os) {
     return extractJre(os.jbrArchiveSuffix)
   }
 }
