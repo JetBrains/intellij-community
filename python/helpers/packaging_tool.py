@@ -89,20 +89,6 @@ def do_pyvenv(args):
         error("Standard Python 'venv' module not found", ERROR_EXCEPTION)
 
 
-def mkdtemp_ifneeded():
-    try:
-        ind = sys.argv.index('--build-dir')
-        if not os.path.exists(sys.argv[ind + 1]):
-            import tempfile
-
-            sys.argv[ind + 1] = tempfile.mkdtemp('pycharm-packaging')
-            return sys.argv[ind + 1]
-    except:
-        pass
-
-    return None
-
-
 def main():
     try:
         # As a workaround for #885 in setuptools, don't expose other helpers
@@ -124,15 +110,8 @@ def main():
             if len(sys.argv) < 2:
                 usage()
 
-            rmdir = mkdtemp_ifneeded()
-
             pkgs = sys.argv[2:]
-            try:
-                do_install(pkgs)
-            finally:
-                if rmdir is not None:
-                    import shutil
-                    shutil.rmtree(rmdir)
+            do_install(pkgs)
 
         elif cmd == 'uninstall':
             if len(sys.argv) < 2:
