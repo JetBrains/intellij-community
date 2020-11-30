@@ -8,10 +8,12 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
+import java.util.function.Supplier;
 
 final class PropertiesColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS;
@@ -21,7 +23,7 @@ final class PropertiesColorsPage implements ColorSettingsPage {
     TextAttributesKey[] keys = PropertiesHighlighter.DISPLAY_NAMES.keySet().toArray(TextAttributesKey.EMPTY_ARRAY);
     for (int i = 0; i < keys.length; i++) {
       TextAttributesKey key = keys[i];
-      String name = PropertiesHighlighter.DISPLAY_NAMES.get(key).getFirst();
+      Supplier<@Nls String> name = PropertiesHighlighter.DISPLAY_NAMES.get(key).getFirst();
       ATTRS[i] = new AttributesDescriptor(name, key);
     }
   }
@@ -56,10 +58,10 @@ final class PropertiesColorsPage implements ColorSettingsPage {
   @Override
   @NotNull
   public String getDemoText() {
-    return "# Comment on keys and values\n" +
-           "key1=value1\n" +
-           "! other values:\n" +
-           "a\\=\\fb : x\\ty\\n\\x\\uzzzz\n"
+    return "# This comment starts with '#'\n" +
+           "greetings=Hello\n" +
+           "! This comment starts with '!'\n" +
+           "what\\=to\\=greet : \\'W\\o\\rld\\',\\tUniverse\\n\\uXXXX\n"
       ;
   }
 

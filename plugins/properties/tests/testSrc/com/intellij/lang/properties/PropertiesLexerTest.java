@@ -167,7 +167,7 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
       "Properties:KEY_CHARACTERS", "x",
       "WHITE_SPACE", "  ",
       "INVALID_UNICODE_ESCAPE_TOKEN", "\\uxyzt",
-      "INVALID_CHARACTER_ESCAPE_TOKEN", "\\p",
+      "VALID_STRING_ESCAPE_TOKEN", "\\p",
       "Properties:VALUE_CHARACTERS", "z",
       "VALID_STRING_ESCAPE_TOKEN", "\\t",
       "Properties:VALUE_CHARACTERS", "p",
@@ -183,24 +183,25 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
       "Properties:KEY_VALUE_SEPARATOR", "=",
       "VALID_STRING_ESCAPE_TOKEN", "\\ ",
       "Properties:VALUE_CHARACTERS", "z",
-      "INVALID_CHARACTER_ESCAPE_TOKEN", "\\ ",
+      "VALID_STRING_ESCAPE_TOKEN", "\\ ",
       "Properties:VALUE_CHARACTERS", "t",
       "VALID_STRING_ESCAPE_TOKEN", "\\ ",
       "VALID_STRING_ESCAPE_TOKEN", "\\ ",
     });
   }
   public void testSpecialCharsInValue() {
-    doTestHL("xxx=\\ x\\ y\\!\\=\\#\\:", new String[]{
+    doTestHL("xxx=\\ x\\ y\\!\\=\\#\\:\\z", new String[]{
       "Properties:KEY_CHARACTERS", "xxx",
       "Properties:KEY_VALUE_SEPARATOR", "=",
       "VALID_STRING_ESCAPE_TOKEN", "\\ ",
       "Properties:VALUE_CHARACTERS", "x",
-      "INVALID_CHARACTER_ESCAPE_TOKEN", "\\ ",
+      "VALID_STRING_ESCAPE_TOKEN", "\\ ",
       "Properties:VALUE_CHARACTERS", "y",
       "VALID_STRING_ESCAPE_TOKEN", "\\!",
       "VALID_STRING_ESCAPE_TOKEN", "\\=",
       "VALID_STRING_ESCAPE_TOKEN", "\\#",
       "VALID_STRING_ESCAPE_TOKEN", "\\:",
+      "VALID_STRING_ESCAPE_TOKEN", "\\z",
     });
   }
 
