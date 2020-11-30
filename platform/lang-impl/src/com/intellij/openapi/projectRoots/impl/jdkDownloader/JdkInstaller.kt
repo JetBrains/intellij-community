@@ -2,6 +2,8 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.google.common.hash.Hashing
+import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -82,7 +84,15 @@ class JdkInstaller {
 
   private operator fun File.div(path: String) = File(this, path).absoluteFile
 
-  fun defaultInstallDir() : Path {
+  @JvmOverloads fun defaultInstallDir(wslDistribution: WSLDistribution? = null) : Path {
+    wslDistribution?.let { dist ->
+      dist.userHome?.let { home ->
+        dist.getWindowsPath("$home/.jdks")?.let {
+          return Paths.get(it)
+        }
+      }
+    }
+
     val explicitHome = System.getProperty("jdk.downloader.home")
     if (explicitHome != null) {
       return Paths.get(explicitHome)
@@ -98,8 +108,8 @@ class JdkInstaller {
     }
   }
 
-  fun defaultInstallDir(newVersion: JdkItem) : Path {
-    val targetDir = defaultInstallDir().resolve(newVersion.installFolderName)
+  fun defaultInstallDir(newVersion: JdkItem, wslDistribution: WSLDistribution? = null) : Path {
+    val targetDir = defaultInstallDir(wslDistribution).resolve(newVersion.installFolderName)
     var count = 1
     var uniqueDir = targetDir
     while (uniqueDir.exists()) {
@@ -316,7 +326,7 @@ class JdkInstaller {
                          .firstOrNull { it.isFile() } ?: return null
 
       val json = JdkListParser.readTree(markerFile.readBytes())
-      return JdkListParser.parseJdkItem(json, JdkPredicate.createInstance())
+      return JdkListParser.parseJdkItem(json, JdkPredicate.createInstance()).firstOrNull { it.os == JdkPredicate.currentOS }
     }
     catch (e: Throwable) {
       return null

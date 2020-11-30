@@ -14,7 +14,7 @@ import org.junit.Test
 class JdkListTest {
   private val om = ObjectMapper()
 
-  private fun buildPredicate(build: String) = JdkPredicate(BuildNumber.fromString(build)!!, "any")
+  private fun buildPredicate(build: String) = JdkPredicate(BuildNumber.fromString(build)!!)
 
   @Test
   fun `parse feed v1`() {
@@ -172,8 +172,8 @@ class JdkListTest {
 
   private inline fun assertForEachOS(json: ObjectNode, assert: ListAssert<JdkItem>.() -> Unit) {
     for (osType in listOf("windows", "linux", "macOS")) {
-      val predicate = JdkPredicate(BuildNumber.fromString("201.123")!!, osType)
-      val data = JdkListParser.parseJdkList(json, predicate)
+      val predicate = JdkPredicate(BuildNumber.fromString("201.123")!!)
+      val data = JdkListParser.parseJdkList(json, predicate).filter { it.os == osType }
       assertThat(data)
         .withFailMessage("should have items for $osType")
         .assert()
