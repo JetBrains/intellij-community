@@ -59,6 +59,8 @@ class CwmMessageBusTest : LightPlatformTestCase() {
       bus.syncPublisher(topic1).run()
     }
 
+    Disposer.dispose(bus)
+
     assertEventsOrder(eventsLog, MESSAGE_1_HANDLER_1, MESSAGE_1_HANDLER_2, MESSAGE_2_HANDLER_1)
   }
 
