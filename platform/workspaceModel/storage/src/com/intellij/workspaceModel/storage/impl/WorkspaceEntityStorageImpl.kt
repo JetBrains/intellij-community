@@ -6,8 +6,10 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.Compressor
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
@@ -18,9 +20,10 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.ints.IntSet
+import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.name
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -988,14 +991,20 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
     val dumpDirectory = getStoreDumpDirectory()
     _message += "\nSaving store content at: $dumpDirectory"
-    serializeContentToFolder(dumpDirectory, left, right, resulting)
-    LOG.error(_message, e, *createAttachmentsForReport(left, right, resulting))
+    val zipFile = serializeContentToFolder(dumpDirectory, left, right, resulting)
+    if (zipFile != null) {
+      val attachment = Attachment("workspaceModelDump.zip", zipFile.readBytes(), "Zip of workspace model store")
+      attachment.isIncluded = true
+      LOG.error(_message, e, attachment)
+    } else {
+      LOG.error(_message, e)
+    }
   }
 
   private fun serializeContentToFolder(contentFolder: Path,
                                        left: WorkspaceEntityStorage,
                                        right: WorkspaceEntityStorage,
-                                       resulting: WorkspaceEntityStorage) {
+                                       resulting: WorkspaceEntityStorage): File? {
     serializeEntityStorage(contentFolder.resolve("Left_Store"), left)
     serializeEntityStorage(contentFolder.resolve("Right_Store"), right)
     serializeEntityStorage(contentFolder.resolve("Res_Store"), resulting)
@@ -1007,27 +1016,13 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
         serializer.serializeDiffLog(stream, right.changeLog)
       }
     }
-  }
 
-  private fun createAttachmentsForReport(left: WorkspaceEntityStorage,
-                                         right: WorkspaceEntityStorage,
-                                         resulting: WorkspaceEntityStorage): Array<Attachment> {
-    val displayText = "Content of the workspace model in binary format"
-    val leftAttachment = left.asAttachment("Left_Store", displayText)
-    val rightAttachment = right.asAttachment("Right_Store", displayText)
-    val resAttachment = resulting.asAttachment("Res_Store", displayText)
-    val classToIntConverterAttachment = createAttachment("ClassToIntConverter", "Class to int converter") { serializer, stream ->
-      serializer.serializeClassToIntConverter(stream)
-    }
-
-    var attachments = arrayOf(leftAttachment, rightAttachment, resAttachment, classToIntConverterAttachment)
-    if (right is WorkspaceEntityStorageBuilder) {
-      attachments += createAttachment("Right_Diff_Log", "Log of right builder") { serializer, stream ->
-        right as WorkspaceEntityStorageBuilderImpl
-        serializer.serializeDiffLog(stream, right.changeLog)
-      }
-    }
-    return attachments
+    return if (!executingOnTC()) {
+      val zipFile = contentFolder.parent.resolve(contentFolder.name + ".zip").toFile()
+      Compressor.Zip(zipFile).use { it.addDirectory(contentFolder.toFile()) }
+      FileUtil.delete(contentFolder)
+      zipFile
+    } else null
   }
 
   private fun assertResolvable(clazz: Int, id: Int) {

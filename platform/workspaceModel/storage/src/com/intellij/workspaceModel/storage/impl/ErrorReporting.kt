@@ -2,11 +2,9 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.OutputStream
 import java.nio.file.Path
@@ -14,28 +12,6 @@ import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
-
-internal inline fun createAttachment(path: String,
-                                     displayText: String,
-                                     howToSerialize: (EntityStorageSerializerImpl, OutputStream) -> Unit): Attachment {
-  val stream = ByteArrayOutputStream()
-  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
-  howToSerialize(serializer, stream)
-  val bytes = stream.toByteArray()
-  return createAttachment(path, bytes, displayText)
-}
-
-internal fun createAttachment(path: String, bytes: ByteArray, displayText: String): Attachment {
-  val attachment = Attachment(path, bytes, displayText)
-  attachment.isIncluded = true
-  return attachment
-}
-
-internal fun WorkspaceEntityStorage.asAttachment(path: String, displayText: String): Attachment {
-  return createAttachment(path, displayText) { serializer, stream ->
-    serializer.serializeCache(stream, this.makeSureItsStore())
-  }
-}
 
 internal fun serializeContent(path: Path, howToSerialize: (EntityStorageSerializerImpl, OutputStream) -> Unit) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
@@ -64,6 +40,7 @@ internal fun getStoreDumpDirectory(): Path {
   } else Paths.get(property)
 }
 
+internal fun executingOnTC() = System.getProperty("ide.new.project.model.store.dump.directory") != null
 
 private fun cleanOldFiles(parentDir: File) {
   val children = parentDir.listFiles() ?: return
