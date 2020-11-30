@@ -17,6 +17,7 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Nls;
@@ -729,6 +730,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
           @Override
           public Future<?> executeTask(@NotNull Runnable task) {
             return SharedThreadPool.getInstance().submit(task);
+          }
+
+          @NotNull
+          @Override
+          protected BaseOutputReader.Options readerOptions() {
+            return BaseOutputReader.Options.NON_BLOCKING;
           }
         };
       }
