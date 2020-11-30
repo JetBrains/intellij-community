@@ -110,9 +110,6 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     }
     try {
       expand(key, callback, defaultGenerator, Collections.emptyList(), true, Registry.intValue("emmet.segments.limit"));
-      if (callback.getEditor().getCaretModel().getCaretCount() > 1) {
-        PsiDocumentManager.getInstance(callback.getProject()).commitDocument(callback.getEditor().getDocument());
-      }
     }
     catch (EmmetException e) {
       CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), XmlBundle.message("emmet.error"), "");
