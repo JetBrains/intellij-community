@@ -56,7 +56,6 @@ public final class DvcsUtil {
 
   private static final Logger LOG = Logger.getInstance(DvcsUtil.class);
 
-  private static final Logger LOGGER = Logger.getInstance(DvcsUtil.class);
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
 
   /**
@@ -381,7 +380,7 @@ public final class DvcsUtil {
     // for a file inside .jar/.zip consider the .jar/.zip file itself
     VirtualFile root = vcsManager.getVcsRootFor(VfsUtilCore.getVirtualFileForJar(file));
     if (root != null) {
-      LOGGER.debug("Found root for zip/jar file: " + root);
+      LOG.debug("Found root for zip/jar file: " + root);
       return root;
     }
 
@@ -398,7 +397,7 @@ public final class DvcsUtil {
     }
 
     if (libraryRoots.isEmpty()) {
-      LOGGER.debug("No library roots");
+      LOG.debug("No library roots");
       return null;
     }
 
@@ -412,7 +411,7 @@ public final class DvcsUtil {
         topLibraryRoot = libRoot;
       }
     }
-    LOGGER.debug("Several library roots, returning " + topLibraryRoot);
+    LOG.debug("Several library roots, returning " + topLibraryRoot);
     return topLibraryRoot;
   }
 
@@ -422,7 +421,7 @@ public final class DvcsUtil {
     if (file != null) {
       root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
       if (root == null) {
-        LOGGER.debug("Cannot get root by file. Trying with get by library: " + file);
+        LOG.debug("Cannot get root by file. Trying with get by library: " + file);
         root = getVcsRootForLibraryFile(project, file);
       }
     }
@@ -437,7 +436,7 @@ public final class DvcsUtil {
     for (VcsFullCommitDetails commit : commits) {
       R repository = repoManager.getRepositoryForRoot(commit.getRoot());
       if (repository == null) {
-        LOGGER.info("No repository found for commit " + commit);
+        LOG.info("No repository found for commit " + commit);
         continue;
       }
       List<VcsFullCommitDetails> commitsInRoot = groupedCommits.computeIfAbsent(repository, __ -> new ArrayList<>());
