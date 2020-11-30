@@ -89,8 +89,8 @@ public class DynamicBundle extends AbstractBundle {
   public static final class LanguageBundleEP implements PluginAware {
     public static final ExtensionPointName<LanguageBundleEP> EP_NAME = new ExtensionPointName<>("com.intellij.languageBundle");
 
-    @Attribute("lang")
-    public String lang = Locale.ENGLISH.getLanguage();
+    @Attribute("locale")
+    public String locale = Locale.ENGLISH.getLanguage();
     public PluginDescriptor pluginDescriptor;
 
     @Override
@@ -132,7 +132,7 @@ public class DynamicBundle extends AbstractBundle {
 
   public static void loadLocale(@Nullable LanguageBundleEP langBundle) {
     if (langBundle != null) {
-      ourLangTag = langBundle.lang;
+      ourLangTag = langBundle.locale;
       clearGlobalLocaleCache();
       ourBundlesForForms.clear();
     }
