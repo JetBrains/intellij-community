@@ -13,6 +13,9 @@ import org.jetbrains.annotations.TestOnly
  * For global usage [CancellationCheck.runWithCancellationCheck] could be used:
  * - it has to be enabled with a registry key `ide.cancellation.check.enabled`, it is disabled by default
  * - threshold (in ms) is specified with a registry key `ide.cancellation.check.threshold`, default is 500
+ * - additional flag `trackTrace` could be enabled by setting a registry key `ide.cancellation.check.trace.all` to `true`
+ *   (default is false), which will make the checker attach the last cancellation check trace, id adds additional overhead
+ *   but simplifies the results interpretation.
  */
 class CancellationCheck private constructor(
   val thresholdMs: () -> Long,
@@ -21,7 +24,7 @@ class CancellationCheck private constructor(
 ) {
 
   @TestOnly
-  internal constructor(thresholdMs: Long) : this(thresholdMs = { thresholdMs }, checkEnabled = { true }, trackTrace = { false })
+  internal constructor(thresholdMs: Long) : this(thresholdMs = { thresholdMs }, checkEnabled = { true }, trackTrace = { true })
 
   private val statusRecord = ThreadLocal.withInitial { CanceledStatusRecord() }
 
