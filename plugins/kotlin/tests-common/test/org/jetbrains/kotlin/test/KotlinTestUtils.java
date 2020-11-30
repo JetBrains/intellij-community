@@ -135,9 +135,8 @@ public class KotlinTestUtils {
 
         if ((androidSdkDir == null || !androidSdkDir.isDirectory()) && (androidSdkEnvDir == null || !androidSdkEnvDir.isDirectory())) {
             throw new RuntimeException(
-                    "Unable to get a valid path from 'android.sdk' property (" +
-                    androidSdkProp +
-                    "), please point it to the android SDK location");
+                    "Unable to get a valid path from 'android.sdk' property (" + androidSdkProp + "), " +
+                    "please point it to the android SDK location");
         }
 
         if (androidSdkDir != null) {

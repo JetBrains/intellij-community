@@ -18,7 +18,6 @@ import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.runners.Parameterized
 import java.io.File
-import java.util.*
 
 abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
     public override fun getModule(name: String?): Module = super.getModule(name)
@@ -27,7 +26,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     protected open fun testDataDirectory(): File {
         val baseDir = IDEA_TEST_DATA_DIR.resolve("gradle/${testDataDirName()}")
-        return File(baseDir, getTestName(true).substringBefore("_"))
+        return File(baseDir, getTestName(true).substringBefore("_").substringBefore(" "))
     }
 
     protected fun configureKotlinVersionAndProperties(text: String, properties: Map<String, String>? = null): String {

@@ -11,6 +11,7 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Rule
 import org.junit.runners.Parameterized
@@ -64,7 +65,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             "mavenCentral()",
             "mavenLocal()",
             "google()",
-            "jcenter()"
+            "jcenter()",
+            "gradlePluginPortal()"
         )
 
         fun addCustomRepository(url: String) {
@@ -84,6 +86,24 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         unitedProperties["kotlin_plugin_repositories"] = repositories(false)
         unitedProperties["kts_kotlin_plugin_repositories"] = repositories(true)
         return super.configureByFiles(unitedProperties)
+    }
+
+
+    protected open fun checkProjectStructure(
+        exhaustiveModuleList: Boolean = true,
+        exhaustiveSourceSourceRootList: Boolean = true,
+        exhaustiveDependencyList: Boolean = true,
+        body: ProjectInfo.() -> Unit = {}
+    ) {
+        org.jetbrains.kotlin.gradle.checkProjectStructure(
+            myProject,
+            projectPath,
+            exhaustiveModuleList,
+            exhaustiveSourceSourceRootList,
+            exhaustiveDependencyList,
+            false,
+            body
+        )
     }
 }
 

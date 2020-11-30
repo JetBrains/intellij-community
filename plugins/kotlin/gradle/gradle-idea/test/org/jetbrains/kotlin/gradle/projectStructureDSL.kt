@@ -394,10 +394,10 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
 fun checkProjectStructure(
     project: Project,
     projectPath: String,
-    exhaustiveModuleList: Boolean,
-    exhaustiveSourceSourceRootList: Boolean,
-    exhaustiveDependencyList: Boolean,
-    exhaustiveTestsList: Boolean,
+    exhaustiveModuleList: Boolean = false ,
+    exhaustiveSourceSourceRootList: Boolean = false,
+    exhaustiveDependencyList: Boolean = false,
+    exhaustiveTestsList: Boolean = false,
     body: ProjectInfo.() -> Unit = {}
 ) {
     ProjectInfo(
