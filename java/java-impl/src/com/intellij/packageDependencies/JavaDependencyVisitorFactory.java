@@ -54,15 +54,6 @@ public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      PsiElement resolved = reference.resolve();
-      PsiElement namedElement = reference.getReferenceNameElement();
-      if(resolved != null && namedElement != null) {
-        myProcessor.process(namedElement, resolved);
-      }
-    }
-
-    @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) { }
 
     @Override
