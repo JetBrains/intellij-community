@@ -243,7 +243,7 @@ public final class DvcsUtil {
       return tryLoadFile(file, encoding);
     }
     catch (RepoStateException e) {
-      LOG.error(e);
+      LOG.warn(e);
       return defaultValue;
     }
   }
