@@ -411,7 +411,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         suggestedNames: List<Collection<String>>,
         postProcess: (KtDeclaration) -> Unit
     ) {
-        StartMarkAction.canStart(project)?.let { return }
+        StartMarkAction.canStart(editor)?.let { return }
 
         val builder = TemplateBuilderImpl(declaration)
         for ((index, entry) in declaration.entries.withIndex()) {
@@ -510,9 +510,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         val typeArgumentList = getQualifiedTypeArgumentList(KtPsiUtil.safeDeparenthesize(physicalExpression))
 
-        val isInplaceAvailable = editor != null
-                && editor.settings.isVariableInplaceRenameEnabled
-                && !ApplicationManager.getApplication().isUnitTestMode
+        val isInplaceAvailable = editor != null && !ApplicationManager.getApplication().isUnitTestMode
 
         val allOccurrences = occurrencesToReplace ?: expression.findOccurrences(occurrenceContainer)
 
