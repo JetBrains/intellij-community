@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.Ignored;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -170,6 +171,11 @@ public class MavenServerConnector implements @NotNull Disposable {
       myMavenServer.set(myLogger, myDownloadListener, MavenRemoteObjectWrapper.ourToken);
     }
     catch (Exception e) {
+      if(mySupport !=null){
+        try {
+          shutdown(false);
+        } catch (Throwable ignored){}
+      }
       throw new CannotStartServerException(e);
     }
   }
