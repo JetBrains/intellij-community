@@ -255,7 +255,7 @@ class AddFunctionParametersFix(
         }
 
         private fun Diagnostic.valueArgument(): Pair<KtValueArgument, KtValueArgumentList>? {
-            val element = DiagnosticFactory.cast(this, Errors.TYPE_MISMATCH).psiElement
+            val element = DiagnosticFactory.cast(this, Errors.TYPE_MISMATCH, Errors.CONSTANT_EXPECTED_TYPE_MISMATCH).psiElement
             val valueArgument = element.getStrictParentOfType<KtValueArgument>() ?: return null
             val valueArgumentList = valueArgument.getStrictParentOfType<KtValueArgumentList>() ?: return null
             return valueArgument to valueArgumentList

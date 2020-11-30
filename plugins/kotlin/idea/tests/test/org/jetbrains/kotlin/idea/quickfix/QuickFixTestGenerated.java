@@ -2049,6 +2049,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/changeSignature/addConstructorParameter.kt");
         }
 
+        @TestMetadata("addConstructorParameterDataClassForConstantTypeMismatch.kt")
+        public void testAddConstructorParameterDataClassForConstantTypeMismatch() throws Exception {
+            runTest("testData/quickfix/changeSignature/addConstructorParameterDataClassForConstantTypeMismatch.kt");
+        }
+
+        @TestMetadata("addConstructorParameterForConstantTypeMismatch.kt")
+        public void testAddConstructorParameterForConstantTypeMismatch() throws Exception {
+            runTest("testData/quickfix/changeSignature/addConstructorParameterForConstantTypeMismatch.kt");
+        }
+
         @TestMetadata("addEnumConstructorParameter.kt")
         public void testAddEnumConstructorParameter() throws Exception {
             runTest("testData/quickfix/changeSignature/addEnumConstructorParameter.kt");
@@ -2097,6 +2107,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("addFunctionParameterAndChangeTypes.kt")
         public void testAddFunctionParameterAndChangeTypes() throws Exception {
             runTest("testData/quickfix/changeSignature/addFunctionParameterAndChangeTypes.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForConstantTypeMismatch.kt")
+        public void testAddFunctionParameterForConstantTypeMismatch() throws Exception {
+            runTest("testData/quickfix/changeSignature/addFunctionParameterForConstantTypeMismatch.kt");
         }
 
         @TestMetadata("addFunctionParameterForReferencedArgument.kt")
