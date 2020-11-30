@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -681,10 +682,12 @@ public final class WinShellIntegration implements Disposable {
   private static final String appUserModelIdProperty;
 
   static {
-    appUserModelIdProperty = ApplicationInfoEx.getInstanceEx().getWin32AppUserModelId();
+    final var app = ApplicationInfoEx.getInstanceEx();
+    final var appMgr = ApplicationManagerEx.getApplicationEx();
 
-    //final boolean dependentFeaturesAreEnabled = Registry.is("windows.jumplist");
+    final boolean shouldBeDisabled = appMgr.isHeadlessEnvironment() || appMgr.isLightEditMode();
 
-    isAvailable = SystemInfo.isWin8OrNewer && !StringUtilRt.isEmptyOrSpaces(appUserModelIdProperty) /*&& dependentFeaturesAreEnabled*/;
+    appUserModelIdProperty = app.getWin32AppUserModelId();
+    isAvailable = SystemInfo.isWin8OrNewer && !shouldBeDisabled && !StringUtilRt.isEmptyOrSpaces(appUserModelIdProperty);
   }
 }
