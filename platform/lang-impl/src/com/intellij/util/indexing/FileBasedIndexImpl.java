@@ -1442,8 +1442,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, currentFC);
       } catch (MapReduceIndex.MapInputException e) {
-        LOG.info(e);
-        dropNontrivialIndexedStates(inputId, indexId);
+        LOG.error(e);
+        if (currentFC != null) {
+          setIndexedState(index, currentFC, inputId, false);
+        }
         return null;
       } finally {
         mapInputTime = System.nanoTime() - mapInputTime;
