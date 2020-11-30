@@ -698,7 +698,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("inspection.redundant.string.fix.family.name");
+      return InspectionGadgetsBundle.message("use.equalsignorecase.for.case.insensitive.comparison");
     }
 
     @Override
