@@ -10,6 +10,7 @@ import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -20,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
@@ -36,11 +37,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenCompilerTasksManager")
-public final class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState> {
+public final class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState>,
+                                                                                    Disposable {
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private MavenTasksManagerState myState = new MavenTasksManagerState();
 
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
   public enum Phase {
     BEFORE_COMPILE("maven.tasks.goal.before.compile"),
@@ -105,6 +107,11 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     compilerManager.addBeforeTask(new MyCompileTask(true));
     compilerManager.addAfterTask(new MyCompileTask(false));
+  }
+
+  @Override
+  public void dispose() {
+    myListeners.clear();
   }
 
   private boolean doExecute(boolean before, CompileContext context) {
@@ -203,8 +210,16 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
     return StringUtil.join(result, ", ");
   }
 
+  /**
+   * @deprecated use #addListener(Listener, Disposable)
+   */
+  @Deprecated
   public void addListener(Listener l) {
     myListeners.add(l);
+  }
+
+  public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
+    myListeners.add(l, disposable);
   }
 
   public void fireTasksChanged() {

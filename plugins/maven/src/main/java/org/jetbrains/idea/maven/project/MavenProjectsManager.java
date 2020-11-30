@@ -167,6 +167,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void dispose() {
+    myManagerListeners.clear();
   }
 
   public ModificationTracker getModificationTracker() {
@@ -1353,7 +1354,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void addProjectsTreeListener(MavenProjectsTree.Listener listener) {
-    myProjectsTreeDispatcher.addListener(listener);
+    myProjectsTreeDispatcher.addListener(listener, this);
   }
 
   public void addProjectsTreeListener(@NotNull MavenProjectsTree.Listener listener, @NotNull Disposable parentDisposable) {
