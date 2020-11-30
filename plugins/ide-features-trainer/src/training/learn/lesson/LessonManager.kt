@@ -63,12 +63,13 @@ class LessonManager {
   }
 
   internal fun openLessonPassed(lesson: KLesson, project: Project) {
+    val learnPanel = learnPanel ?: error("No learn panel")
     initLesson(null, lesson)
-    learnPanel?.scrollToNewMessages = false
+    learnPanel.scrollToNewMessages = false
     OpenPassedContext(project).apply(lesson.lessonContent)
-    learnPanel?.scrollRectToVisible(Rectangle(0, 0, 1, 1))
-    learnPanel?.makeNextButtonSelected()
-    learnPanel?.learnToolWindow?.showGotItAboutRestart()
+    learnPanel.scrollRectToVisible(Rectangle(0, 0, 1, 1))
+    learnPanel.makeNextButtonSelected()
+    learnPanel.learnToolWindow?.showGotItAboutRestart()
   }
 
   internal fun initDslLesson(editor: Editor?, cLesson: Lesson, lessonExecutor: LessonExecutor) {
