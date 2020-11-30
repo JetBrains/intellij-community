@@ -1440,8 +1440,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       Computable<Boolean> storageUpdate;
       long mapInputTime = System.nanoTime();
       try {
-        // Propagate MapReduceIndex.MapInputException and ProcessCancelledException happening on input mapping.
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, currentFC);
+      } catch (MapReduceIndex.MapInputException e) {
+        LOG.info(e);
+        dropNontrivialIndexedStates(inputId, indexId);
+        return null;
       } finally {
         mapInputTime = System.nanoTime() - mapInputTime;
       }
