@@ -191,7 +191,7 @@ public class PluginManagerConfigurable
 
     myPluginUpdatesService = PluginUpdatesService.connectWithCounter(countValue -> {
       int count = countValue == null ? 0 : countValue;
-      String text = String.valueOf(count);
+      String text = Integer.toString(count);
       boolean visible = count > 0;
 
       myUpdateAll.setEnabled(true);
@@ -329,6 +329,7 @@ public class PluginManagerConfigurable
   void resetPanelsWithoutClearCache(){
     myTagsSorted = null;
     myVendorsSorted = null;
+
 
     myPluginUpdatesService.recalculateUpdates();
 

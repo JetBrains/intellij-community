@@ -197,6 +197,11 @@ public class PluginUpdatesService {
       myCache = null;
     }
 
+    // for example, if executed as part of Traverse UI - don't wait check updates
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return;
+    }
+
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       UpdateChecker.CheckPluginsUpdateResult updates = UpdateChecker.checkPluginsUpdate(new EmptyProgressIndicator());
 
