@@ -1042,6 +1042,16 @@
         <constraint name="PARAM2" nameOfExprType="kotlinx.coroutines.channels.Channel" target="true" within="" contains="" />
         <constraint name="PARAM3" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Don't use Channel in function signatures, consider using Send/ReceiveChannel" text="class $Class$($PARAM1$: $T1$, $PARAM2$: $T2$, $PARAM3$: $T3$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="PARAM1" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="PARAM2" nameOfExprType="kotlinx.coroutines.channels.Channel" target="true" within="" contains="" />
+        <constraint name="PARAM3" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Class" within="" contains="" />
+        <constraint name="T1" within="" contains="" />
+        <constraint name="T2" within="" contains="" />
+        <constraint name="T3" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" text="$ref$ is $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
