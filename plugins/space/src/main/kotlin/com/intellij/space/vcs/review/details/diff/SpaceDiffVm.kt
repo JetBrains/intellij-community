@@ -18,4 +18,6 @@ internal interface SpaceDiffVm {
 
   val selectedCommits: Property<List<ReviewCommitListItem>>
   val selectedChanges: MutableProperty<ListSelection<SpaceReviewChange>>
+
+  val spaceReviewDiffLoader: SpaceReviewDiffLoader
 }

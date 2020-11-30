@@ -17,6 +17,7 @@ import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVmImpl
+import com.intellij.space.vcs.review.details.diff.SpaceReviewDiffLoader
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.*
@@ -93,7 +94,7 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
     mutableProperty(ListSelection.create(emptyList<SpaceReviewChange>(), null))
 
   val spaceDiffVm: Property<SpaceDiffVm> = mutableProperty(
-    SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, spaceReviewChange))
+    SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, spaceReviewChange, SpaceReviewDiffLoader(lifetime, client)))
 
   val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(
     lifetime, client, projectKey, review.value.identifier,

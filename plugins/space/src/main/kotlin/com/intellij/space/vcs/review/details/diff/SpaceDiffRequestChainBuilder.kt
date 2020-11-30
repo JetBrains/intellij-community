@@ -1,11 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details.diff
 
-import circlet.client.api.CodeViewService
 import circlet.client.api.ProjectKey
-import circlet.client.codeView
-import com.intellij.diff.DiffContentFactoryImpl
-import com.intellij.diff.DiffVcsDataKeys
 import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
@@ -13,18 +9,15 @@ import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.space.vcs.review.details.*
-import git4idea.GitRevisionNumber
-import kotlinx.coroutines.asCoroutineDispatcher
+import com.intellij.space.vcs.review.details.SpaceReviewChange
+import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
+import com.intellij.space.vcs.review.details.SpaceReviewParticipantsVm
 import libraries.coroutines.extra.Lifetime
-import libraries.coroutines.extra.runBlocking
 import runtime.reactive.Property
 import runtime.reactive.SequentialLifetimes
 
@@ -59,9 +52,7 @@ internal class SpaceDiffRequestChainBuilder(parentLifetime: Lifetime,
   }
 }
 
-private val coroutineContext = ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()
-
-internal class SpaceDiffRequestProducer(
+private class SpaceDiffRequestProducer(
   private val project: Project,
   private val requestProducerLifetime: Lifetime,
   private val spaceDiffVm: SpaceDiffVm,
@@ -69,7 +60,6 @@ internal class SpaceDiffRequestProducer(
   private val spaceReviewChange: SpaceReviewChange,
 ) : DiffRequestProducer {
   override fun getName(): String = spaceReviewChange.filePath.path
-
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
     val projectKey = spaceDiffVm.projectKey
     val selectedCommitHashes = spaceDiffVm.selectedCommits.value
@@ -77,58 +67,28 @@ internal class SpaceDiffRequestProducer(
       .map { it.commitWithGraph.commit.id }
 
     return if (selectedCommitHashes.isNotEmpty()) {
-      createSpaceDiffRequest(spaceDiffVm.client.codeView, projectKey, selectedCommitHashes, changesVm)
+      createSpaceDiffRequest(projectKey, selectedCommitHashes, changesVm)
     }
     else LoadingDiffRequest("")
   }
 
-  private fun createSpaceDiffRequest(codeViewService: CodeViewService,
-                                     projectKey: ProjectKey,
+  private fun createSpaceDiffRequest(projectKey: ProjectKey,
                                      selectedCommitHashes: List<String>,
                                      changesVm: SpaceReviewChangesVm): SimpleDiffRequest {
-    return runBlocking(requestProducerLifetime, coroutineContext) {
-      val gitCommitChange = spaceReviewChange.gitCommitChange
-      val sideBySideDiff = codeViewService.getSideBySideDiff(projectKey,
-                                                             spaceReviewChange.repository,
-                                                             gitCommitChange,
-                                                             false,
-                                                             selectedCommitHashes)
+    val pair = spaceDiffVm.spaceReviewDiffLoader.loadDiff(project, projectKey, spaceReviewChange, selectedCommitHashes)
 
-      val leftFileText = getFileContent(sideBySideDiff.left)
-      val rightFileText = getFileContent(sideBySideDiff.right)
+    val diffRequestData = SpaceReviewDiffRequestData(SequentialLifetimes(requestProducerLifetime),
+                                                     spaceDiffVm,
+                                                     changesVm,
+                                                     spaceReviewChange,
+                                                     changesVm.participantsVm)
 
-      val (oldFilePath, newFilePath) = spaceReviewChange.changeFilePathInfo
-      val diffContentFactory = DiffContentFactoryImpl.getInstanceEx()
-      val titles = listOf(
-        gitCommitChange.old?.let { "${it.commit} (${oldFilePath!!.name})" },
-        gitCommitChange.new?.let { "${it.commit} (${newFilePath!!.name})" }
-      )
-      val documents = listOf(
-        oldFilePath?.let {
-          diffContentFactory.create(project, leftFileText, it).apply {
-            putUserData(DiffVcsDataKeys.REVISION_INFO, Pair.create(it, GitRevisionNumber(gitCommitChange.old!!.commit)))
-          }
-        } ?: diffContentFactory.createEmpty(),
-        newFilePath?.let {
-          diffContentFactory.create(project, rightFileText, it).apply {
-            putUserData(DiffVcsDataKeys.REVISION_INFO, Pair.create(it, GitRevisionNumber(gitCommitChange.new!!.commit)))
-          }
-        } ?: diffContentFactory.createEmpty()
-      )
-
-      val diffRequestData = SpaceReviewDiffRequestData(SequentialLifetimes(requestProducerLifetime),
-                                                       spaceDiffVm,
-                                                       changesVm,
-                                                       spaceReviewChange,
-                                                       changesVm.participantsVm)
-
-      return@runBlocking SpaceReviewDiffRequest(spaceReviewChange.filePath.path, documents, titles, requestProducerLifetime,
-                                                diffRequestData)
-    }
+    return SpaceReviewDiffRequest(spaceReviewChange.filePath.path, pair.first, pair.second, requestProducerLifetime,
+                                  diffRequestData)
   }
 }
 
-internal class SpaceReviewDiffRequest(
+private class SpaceReviewDiffRequest(
   @NlsSafe dialogTitle: String,
   diffContents: List<DiffContent>,
   titles: List<String?>,

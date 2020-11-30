@@ -17,4 +17,5 @@ internal class SpaceDiffVmImpl(
   override val projectKey: ProjectKey,
   override val selectedCommits: Property<List<ReviewCommitListItem>>,
   override val selectedChanges: MutableProperty<ListSelection<SpaceReviewChange>>,
+  override val spaceReviewDiffLoader: SpaceReviewDiffLoader,
 ) : SpaceDiffVm
