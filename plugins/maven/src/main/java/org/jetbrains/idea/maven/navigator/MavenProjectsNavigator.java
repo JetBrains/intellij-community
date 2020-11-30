@@ -10,8 +10,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -55,7 +57,6 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   private SimpleTree myTree;
   private MavenProjectsStructure myStructure;
-  private ToolWindow myToolWindow;
 
   public static MavenProjectsNavigator getInstance(Project project) {
     return project.getService(MavenProjectsNavigator.class);
@@ -167,7 +168,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   @Override
   public void dispose() {
-    myToolWindow = null;
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID);
+    if (toolWindow == null) return;
+    toolWindow.remove();
   }
 
   private void listenForProjectsChanges() {
@@ -225,11 +228,14 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     AnAction editSource = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.EditRunConfiguration"));
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
 
-    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT, this, true);
-    myToolWindow.setIcon(MavenIcons.ToolWindowMaven);
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.notClosable(TOOL_WINDOW_ID, ToolWindowAnchor.RIGHT));
+    Disposer.register(this, toolWindow.getDisposable());
+    toolWindow.setIcon(MavenIcons.ToolWindowMaven);
     final ContentFactory contentFactory = ApplicationManager.getApplication().getService(ContentFactory.class);
     final Content content = contentFactory.createContent(panel, "", false);
-    ContentManager contentManager = myToolWindow.getContentManager();
+    ContentManager contentManager = toolWindow.getContentManager();
+    Disposer.register(this, contentManager);
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, false);
 
@@ -238,8 +244,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
       @Override
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        if (myToolWindow.isDisposed()) return;
-        boolean visible = myToolWindow.isVisible();
+        if (toolWindow.isDisposed()) return;
+        boolean visible = toolWindow.isVisible();
         if (!visible || wasVisible) {
           return;
         }
@@ -257,7 +263,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     group.add(actionManager.getAction("Maven.AlwaysShowArtifactId"));
     group.add(actionManager.getAction("Maven.ShowVersions"));
 
-    ((ToolWindowEx)myToolWindow).setAdditionalGearActions(group);
+    ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);
   }
 
   private void initTree() {
@@ -334,16 +340,15 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       return;
     }
 
-    if (myToolWindow == null) return;
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID);
+    if (toolWindow == null) return;
 
     MavenUtil.invokeLater(myProject, () -> {
       boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
-
-      if (myToolWindow.isAvailable() != hasMavenProjects) {
-        myToolWindow.setAvailable(hasMavenProjects);
-
+      if (toolWindow.isAvailable() != hasMavenProjects) {
+        toolWindow.setAvailable(hasMavenProjects);
         if (hasMavenProjects) {
-          myToolWindow.activate(null);
+          toolWindow.activate(null);
         }
       }
 
