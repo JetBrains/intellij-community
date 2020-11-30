@@ -1446,7 +1446,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  public static void executeChangeCaseSensitivity(@NotNull VirtualFile file, FileAttributes.CaseSensitivity newCaseSensitivity) {
+  public static void executeChangeCaseSensitivity(@NotNull VirtualFile file, @NotNull FileAttributes.CaseSensitivity newCaseSensitivity) {
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
     setFlag(directory, Flags.CHILDREN_CASE_SENSITIVE, newCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE);
     setFlag(directory, Flags.CHILDREN_CASE_SENSITIVITY_CACHED, true);

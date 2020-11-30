@@ -15,9 +15,10 @@ import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -305,15 +306,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     String symlinkTarget = attributes.isSymLink() ? delegate.resolveSymLink(fake) : null;
     ChildInfo[] children = isEmptyDirectory ? ChildInfo.EMPTY_ARRAY : null;
     VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, symlinkTarget, true, children);
-    RefreshQueue.getInstance().processSingleEvent(event);
-    updateCaseSensitivityIfUnknown(realName);
+    RefreshQueue.getInstance().processSingleEvent(false, event);
     return findChild(realName);
   }
 
   private void updateCaseSensitivityIfUnknown(@NotNull String childName) {
-    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(this, childName);
+    VFilePropertyChangeEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(this, childName);
     if (caseSensitivityEvent != null) {
-      RefreshQueue.getInstance().processSingleEvent(caseSensitivityEvent);
+      PersistentFSImpl.executeChangeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
+      // fire event asynchronously to avoid deadlocks with possibly currently-held VFP/Refresh queue locks
+      RefreshQueue.getInstance().processSingleEvent(true, caseSensitivityEvent);
     }
   }
 

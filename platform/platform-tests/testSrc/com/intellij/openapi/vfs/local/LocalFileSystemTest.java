@@ -291,7 +291,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       assertNotNull(root);
       root2 = myFS.findFileByPath("//SOME-UNC-SERVER/SOME-UNC-SHARE");
       assertSame(String.valueOf(root), root, root2);
-      RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
+      RefreshQueue.getInstance().processSingleEvent(false, new VFileDeleteEvent(this, root, false));
     }
     else if (SystemInfo.isUnix) {
       VirtualFile root = myFS.findFileByPath("/");
@@ -360,7 +360,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       assertThat(uncRootFile.getChildren()).isEmpty();
     }
     finally {
-      RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, uncRootFile, false));
+      RefreshQueue.getInstance().processSingleEvent(false, new VFileDeleteEvent(this, uncRootFile, false));
       assertFalse("still valid: " + uncRootFile, uncRootFile.isValid());
     }
   }
