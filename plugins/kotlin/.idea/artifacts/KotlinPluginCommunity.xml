@@ -197,7 +197,7 @@
           <element id="module-output" name="kotlin.compiler-plugins.parcelize" />
         </element>
         <element id="archive" name="parcelize-compiler-plugin-for-ide.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/1.4.20/parcelize-compiler-plugin-for-ide-1.4.20.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/1.4.20-release-335/parcelize-compiler-plugin-for-ide-1.4.20-release-335.jar" path-in-jar="/" />
         </element>
       </element>
       <element id="directory" name="kotlinc">
