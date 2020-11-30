@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.WindowMoveListener;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.emojipicker.Emoji;
 import org.jetbrains.plugins.emojipicker.EmojiCategory;
@@ -24,9 +24,8 @@ import java.util.function.Consumer;
 
 
 public class EmojiPicker extends JLayeredPane {
-  private static final Dimension DEFAULT_SIZE = new Dimension(358, 415);
+  private static final JBDimension DEFAULT_SIZE = new JBDimension(358, 415);
 
-  private final Dimension myMinSize = new Dimension(JBUIScale.scale(DEFAULT_SIZE.width), JBUIScale.scale(DEFAULT_SIZE.height));
   private final List<EmojiCategory> myCategories;
   private final EmojiSearchField mySearchField;
   private final EmojiCategoryPanel myCategoryPanel;
@@ -42,7 +41,7 @@ public class EmojiPicker extends JLayeredPane {
   private EmojiPicker() {
     myCategories = EmojiService.getInstance().getCategories();
 
-    setPreferredSize(myMinSize);
+    setPreferredSize(DEFAULT_SIZE.size());
     setLayout(new JPanelFillLayout());
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.fill = GridBagConstraints.BOTH;
@@ -155,7 +154,7 @@ public class EmojiPicker extends JLayeredPane {
       .setResizable(false)
       .setMovable(true)
       .setLocateWithinScreenBounds(true)
-      .setMinSize(picker.myMinSize)
+      .setMinSize(DEFAULT_SIZE.size())
       .setShowBorder(false)
       .createPopup();
     picker.myInputCallback = emoji -> {
