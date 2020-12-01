@@ -36,6 +36,7 @@ import runtime.reactive.*
 import java.io.*
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.io.path.name
 
 private val log = logger<SpaceKtsModelBuilder>()
 
@@ -156,33 +157,34 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
 
           if (compileResultCode != 0) {
             _config.value = null
-            _error.value = "Compilation failed, $compileResultCode"
+            _error.value = SpaceBundle.message("kts.toolwindow.error.compilation.failed.code", compileResultCode)
             return@using
           }
 
           if (!Files.isRegularFile(compiledJarPath)) {
             _config.value = null
-            _error.value = "Compilation failed: can't find output file ${compiledJarPath}"
+            _error.value = SpaceBundle.message("kts.toolwindow.error.missing.compiled.jar", compiledJarPath.name)
             return@using
           }
 
           // See AutomationCompiler.kt (in space project) where we copy the runtime jar into the output folder for all resolver types
           if (!Files.exists(scriptRuntimePath)) {
             _config.value = null
-            _error.value = "script-automation-runtime.jar is missing after script compilation."
+            _error.value = SpaceBundle.message("kts.toolwindow.error.missing.runtime.jar", scriptRuntimePath.name)
             return@using
           }
 
           val evaluator = AutomationDslEvaluationBootstrap(log = eventLogger, configuration = configuration).loadEvaluatorForIdea()
           if (evaluator == null) {
             _config.value = null
-            _error.value = "DSL evaluation service not found."
+            _error.value = SpaceBundle.message("kts.toolwindow.error.evaluation.service.not.found")
             return@using
           }
           val evalResult = evaluator.evaluateAndValidate(compiledJarPath, scriptRuntimePath)
 
           if (evalResult.validationErrors.any()) {
-            val message = evalResult.validationErrors.joinToString("\n", prefix = "Validation errors:\n")
+            val validationErrorsPrefix = SpaceBundle.message("kts.toolwindow.validation.errors.prefix")
+            val message = evalResult.validationErrors.joinToString("\n", prefix = "$validationErrorsPrefix\n")
             logData.error(message)
             _config.value = null
             _error.value = message
