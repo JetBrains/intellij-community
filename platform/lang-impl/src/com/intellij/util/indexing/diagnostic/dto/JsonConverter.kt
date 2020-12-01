@@ -73,7 +73,6 @@ fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory =
     totalNumberOfFiles = scanningStatistics.map { it.numberOfScannedFiles }.sum(),
     totalNumberOfUpToDateFiles = scanningStatistics.map { it.numberOfUpToDateFiles }.sum(),
     times = times.toJson(),
-    numberOfIndexingThreads = numberOfIndexingThreads,
     totalNumberOfTooLargeForIndexingFiles = totalNumberOfTooLargeFiles.toPositiveInt(),
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.percentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.percentages },

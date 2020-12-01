@@ -17,8 +17,6 @@ data class ProjectIndexingHistory(val project: Project) {
 
   val times = IndexingTimes()
 
-  var numberOfIndexingThreads: Int = 0
-
   val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
   val providerStatistics = arrayListOf<JsonFileProviderIndexStatistics>()
