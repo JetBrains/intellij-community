@@ -724,18 +724,8 @@ public class ListPluginComponent extends JPanel {
 
     SelectionBasedPluginModelAction.addActionsTo(
       group,
-      state -> createEnableDisableAction(
-        state.isPerProject() ? null : new CustomShortcutSet(KeyEvent.VK_SPACE),
-        state,
-        selection
-      ),
-      () -> {
-        ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
-        return createUninstallAction(
-          deleteShortcutSet != null ? deleteShortcutSet : new CustomShortcutSet(EventHandler.DELETE_CODE),
-          selection
-        );
-      }
+      action -> createEnableDisableAction(action, selection),
+      () -> createUninstallAction(selection)
     );
   }
 
@@ -858,18 +848,8 @@ public class ListPluginComponent extends JPanel {
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
                                                                                                                       @NotNull List<ListPluginComponent> selection) {
-    return createEnableDisableAction(
-      null,
-      action,
-      selection
-    );
-  }
-
-  private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@Nullable ShortcutSet shortcutSet,
-                                                                                                                      @NotNull PluginEnableDisableAction action,
-                                                                                                                      @NotNull List<ListPluginComponent> selection) {
     return new SelectionBasedPluginModelAction.EnableDisableAction<>(
-      shortcutSet,
+      action.isPerProject() ? null : new CustomShortcutSet(KeyEvent.VK_SPACE),
       myPluginModel,
       action,
       selection,
@@ -877,17 +857,11 @@ public class ListPluginComponent extends JPanel {
     );
   }
 
-  private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<ListPluginComponent> selection) {
-    return createUninstallAction(
-      null,
-      selection
-    );
-  }
+  private SelectionBasedPluginModelAction.@NotNull UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<ListPluginComponent> selection) {
 
-  private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@Nullable ShortcutSet shortcutSet,
-                                                                                                              @NotNull List<ListPluginComponent> selection) {
+    ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
     return new SelectionBasedPluginModelAction.UninstallAction<>(
-      shortcutSet,
+      deleteShortcutSet != null ? deleteShortcutSet : new CustomShortcutSet(EventHandler.DELETE_CODE),
       myPluginModel,
       this,
       selection,
