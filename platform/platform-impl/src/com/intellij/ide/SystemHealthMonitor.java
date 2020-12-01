@@ -142,8 +142,9 @@ final class SystemHealthMonitor extends PreloadingActivity {
     if (SystemInfo.isUnix & JnaLoader.isLoaded()) {
       try {
         Memory sa = new Memory(256);
-        if (LibC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
-          LibC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE);
+        LibC libC = LibC.INSTANCE;
+        if (libC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
+          libC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE);
           LOG.info("restored ignored INT handler");
         }
       }
@@ -267,12 +268,9 @@ final class SystemHealthMonitor extends PreloadingActivity {
     }, 1, TimeUnit.SECONDS);
   }
 
-  private static final class LibC {
-    static {
-      Native.register(LibC.class, NativeLibrary.getInstance("c"));
-    }
-
-    static final Pointer SIG_IGN = new Pointer(1L);
+  private interface LibC extends Library {
+    LibC INSTANCE = JnaLoader.supportsDirectMapping ? new LibCDirect() : Native.load("c", LibC.class);
+    Pointer SIG_IGN = new Pointer(1L);
 
     interface Handler extends Callback {
       void callback(int sig);
@@ -280,7 +278,16 @@ final class SystemHealthMonitor extends PreloadingActivity {
       Handler TERMINATE = sig -> System.exit(128 + sig);  // ref: java.lang.Terminator
     }
 
-    static native int sigaction(int sig, Pointer action, Pointer oldAction);
-    static native Pointer signal(int sig, Handler handler);
+    int sigaction(int sig, Pointer action, Pointer oldAction);
+    Pointer signal(int sig, Handler handler);
+
+    final class LibCDirect implements LibC {
+      static {
+        Native.register(LibCDirect.class, "c");
+      }
+
+      @Override public native int sigaction(int sig, Pointer action, Pointer oldAction);
+      @Override public native Pointer signal(int sig, LibC.Handler handler);
+    }
   }
 }

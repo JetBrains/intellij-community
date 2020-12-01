@@ -31,4 +31,16 @@ public final class JnaLoader {
     }
     return ourJnaLoaded;
   }
+
+  /**
+   * {@code true}, if JNA's direct mapping feature ({@code Native.register}) is available.
+   * If {@code false}, use JNA's standard library loading ({@code Native.load}) instead.
+   * <p>
+   * Direct mapping currently crashes JRE on function invocation on macOS arm64. Reproducible via JNA's {@code DirectCallbacksTest}.
+   *
+   * @see Native#register
+   * @see Native#load
+   * @see com.intellij.ide.SystemHealthMonitor.LibC#INSTANCE
+   */
+  public static final boolean supportsDirectMapping = !SystemInfo.isMac || !SystemInfo.isArm64;
 }
