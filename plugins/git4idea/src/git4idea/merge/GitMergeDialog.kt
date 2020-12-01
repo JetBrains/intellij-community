@@ -221,7 +221,7 @@ class GitMergeDialog(private val project: Project,
   private fun validateBranchField() = validateBranchField(branchField, "merge.no.branch.selected.error")
 
   private fun updateBranchesField() {
-    var branchToSelect = branchField.getText()
+    var branchToSelect = branchField.item
 
     val branches = splitAndSortBranches(getBranches())
 
@@ -239,7 +239,7 @@ class GitMergeDialog(private val project: Project,
       startTrackingValidation()
     }
 
-    branchField.selectedItem = branchToSelect
+    branchField.item = branchToSelect
   }
 
   private fun splitAndSortBranches(branches: List<@NlsSafe String>): List<@NlsSafe String> {
