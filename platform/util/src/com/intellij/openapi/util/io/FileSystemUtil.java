@@ -11,7 +11,8 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
 import com.sun.jna.*;
-import com.sun.jna.platform.win32.WTypes;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -566,23 +567,30 @@ public final class FileSystemUtil {
   @NotNull
   private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(@NotNull String path) {
     try {
+      Kernel32 kernel32 = Kernel32.INSTANCE;
       NtOsKrnl ntOsKrnl = NtOsKrnl.INSTANCE;
 
-      NtOsKrnl.OBJECT_ATTRIBUTES_P objectAttributes = new NtOsKrnl.OBJECT_ATTRIBUTES_P();
-      objectAttributes.ObjectName = new NtOsKrnl.UNICODE_STRING_P("\\??\\" + path);
+      String name = "\\\\?\\" + path;
+      WinNT.HANDLE handle = kernel32.CreateFile(name, 0, NtOsKrnl.FILE_SHARE_ALL, null, WinNT.OPEN_EXISTING, WinNT.FILE_FLAG_BACKUP_SEMANTICS, null);
+      if (handle == WinBase.INVALID_HANDLE_VALUE) {
+        if (LOG.isDebugEnabled()) LOG.debug("CreateFile(" + path + "): 0x" + Integer.toHexString(kernel32.GetLastError()));
+        return FileAttributes.CaseSensitivity.UNKNOWN;
+      }
 
       NtOsKrnl.FILE_CASE_SENSITIVE_INFORMATION_P fileInformation = new NtOsKrnl.FILE_CASE_SENSITIVE_INFORMATION_P();
 
-      int result = ntOsKrnl.NtQueryInformationByName(
-        objectAttributes,
+      int result = ntOsKrnl.NtQueryInformationFile(
+        handle,
         new NtOsKrnl.IO_STATUS_BLOCK_P(),
         fileInformation,
         fileInformation.size(),
         NtOsKrnl.FileCaseSensitiveInformation);
 
+      kernel32.CloseHandle(handle);
+
       if (result != 0) {
         // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
-        if (LOG.isDebugEnabled()) LOG.debug("NtQueryInformationByName(" + path + "): 0x" + Integer.toHexString(result));
+        if (LOG.isDebugEnabled()) LOG.debug("NtQueryInformationFile(" + path + "): 0x" + Integer.toHexString(result));
       }
       else if (fileInformation.Flags == 0) {
         return FileAttributes.CaseSensitivity.INSENSITIVE;
@@ -591,7 +599,7 @@ public final class FileSystemUtil {
         return FileAttributes.CaseSensitivity.SENSITIVE;
       }
       else {
-        LOG.warn("NtQueryInformationByName(" + path + "): unexpected 'FileCaseSensitiveInformation' value " + fileInformation.Flags);
+        LOG.warn("NtQueryInformationFile(" + path + "): unexpected 'FileCaseSensitiveInformation' value " + fileInformation.Flags);
       }
     }
     catch (Throwable t) {
@@ -604,27 +612,7 @@ public final class FileSystemUtil {
   private interface NtOsKrnl extends StdCallLibrary, WinNT {
     NtOsKrnl INSTANCE = Native.load("NtDll", NtOsKrnl.class, W32APIOptions.UNICODE_OPTIONS);
 
-    @Structure.FieldOrder({"Length", "MaximumLength", "Buffer"})
-    class UNICODE_STRING_P extends Structure implements Structure.ByReference {
-      public short Length;
-      public short MaximumLength;
-      public WTypes.LPWSTR Buffer;
-
-      UNICODE_STRING_P(String value) {
-        Buffer = new WTypes.LPWSTR(value);
-        Length = MaximumLength = (short)(value.length() * 2);
-      }
-    }
-
-    @Structure.FieldOrder({"Length", "RootDirectory", "ObjectName", "Attributes", "SecurityDescriptor", "SecurityQualityOfService"})
-    class OBJECT_ATTRIBUTES_P extends Structure implements Structure.ByReference {
-      public long Length = size();
-      public WinNT.HANDLE RootDirectory;
-      public UNICODE_STRING_P ObjectName;
-      public long Attributes;
-      public Pointer SecurityDescriptor;
-      public Pointer SecurityQualityOfService;
-    }
+    int FILE_SHARE_ALL = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 
     @Structure.FieldOrder({"Pointer", "Information"})
     class IO_STATUS_BLOCK_P extends Structure implements Structure.ByReference {
@@ -635,13 +623,13 @@ public final class FileSystemUtil {
     @Structure.FieldOrder("Flags")
     class FILE_CASE_SENSITIVE_INFORMATION_P extends Structure implements Structure.ByReference {
       // initialize with something crazy to make sure the native call did write 0 or 1 to this field
-      public long Flags=0xffff_ffffL;  // FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1
+      public long Flags = 0xFFFF_FFFFL;  // FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1
     }
 
     int FileCaseSensitiveInformation = 71;
 
-    int NtQueryInformationByName(
-      OBJECT_ATTRIBUTES_P objectAttributes,
+    int NtQueryInformationFile(
+      HANDLE FileHandle,
       IO_STATUS_BLOCK_P ioStatusBlock,
       Structure fileInformation,
       long length,
