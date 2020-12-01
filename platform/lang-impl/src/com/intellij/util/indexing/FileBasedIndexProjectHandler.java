@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 
 public final class FileBasedIndexProjectHandler {
@@ -111,7 +113,7 @@ public final class FileBasedIndexProjectHandler {
       } finally {
         Instant now = Instant.now();
         projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(indexingStart, now));
-        projectIndexingHistory.getTimes().setUpdatingEnd(now);
+        projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
       }
       ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
       scanningStatistics.setNumberOfScannedFiles(files.size());

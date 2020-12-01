@@ -1,14 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.dto.*
+import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
+import org.junit.Assert
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.ZonedDateTime
 import kotlin.streams.toList
 
 /**
@@ -44,5 +51,86 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     val allDirs = Files.list(indexingDiagnosticDir).use { it.toList() }
     val projectDir = myFixture.project.getProjectCachePath(IndexDiagnosticDumper.indexingDiagnosticDir)
     assertEquals(listOf(projectDir), allDirs)
+  }
+
+  fun `test index diagnostics json can be deserialized back`() {
+    val indexDiagnostic = JsonIndexDiagnostic(
+      JsonIndexDiagnosticAppInfo.create(),
+      JsonRuntimeInfo.create(),
+      JsonProjectIndexingHistory(
+        "projectName",
+        123,
+        456,
+        789,
+        JsonProjectIndexingHistoryTimes(
+          JsonDuration(123),
+          JsonDuration(456),
+          JsonDuration(789),
+          JsonDuration(234),
+          JsonDuration(345),
+          JsonDateTime(ZonedDateTime.now()),
+          JsonDateTime(ZonedDateTime.now()),
+          JsonDuration(333),
+          false
+        ),
+        33,
+        listOf(
+          JsonProjectIndexingHistory.JsonStatsPerFileType(
+            "java",
+            JsonPercentages(0.3),
+            JsonPercentages(0.4),
+            22,
+            JsonFileSize(333),
+            JsonProcessingSpeed(444, 555),
+            listOf(
+              JsonProjectIndexingHistory.JsonStatsPerFileType.JsonBiggestFileTypeContributor(
+                "providerName",
+                444,
+                JsonFileSize(555),
+                JsonPercentages(0.8)
+              )
+            )
+          )
+        ),
+        listOf(
+          JsonProjectIndexingHistory.JsonStatsPerIndexer(
+            "IdIndex",
+            JsonPercentages(0.5),
+            444,
+            555,
+            JsonFileSize(123),
+            JsonProcessingSpeed(111, 222)
+          )
+        ),
+        listOf(
+          JsonScanningStatistics(
+            "providerName",
+            333,
+            55,
+            33,
+            JsonDuration(123),
+            JsonDuration(456),
+            JsonDuration(789),
+            JsonDuration(222)
+          )
+        ),
+        listOf(
+          JsonFileProviderIndexStatistics(
+            "providerName",
+            444,
+            33,
+            JsonDuration(123),
+            1,
+            listOf(
+              PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java")
+            )
+          )
+        )
+      )
+    )
+
+    val mapper = jacksonObjectMapper().registerKotlinModule()
+    val deserialized = mapper.readValue<JsonIndexDiagnostic>(mapper.writeValueAsString(indexDiagnostic))
+    Assert.assertEquals(indexDiagnostic, deserialized)
   }
 }

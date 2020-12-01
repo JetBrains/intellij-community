@@ -7,6 +7,8 @@ import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 typealias TimeMillis = Long
 typealias TimeNano = Long
@@ -15,7 +17,7 @@ typealias BytesNumber = Long
 data class ProjectIndexingHistory(val project: Project) {
   private val biggestContributorsPerFileTypeLimit = 10
 
-  val times = IndexingTimes(Instant.now())
+  val times = IndexingTimes(ZonedDateTime.now(ZoneOffset.UTC))
 
   val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
@@ -88,8 +90,8 @@ data class ProjectIndexingHistory(val project: Project) {
   )
 
   data class IndexingTimes(
-    var updatingStart: Instant,
-    var updatingEnd: Instant = updatingStart,
+    val updatingStart: ZonedDateTime,
+    var updatingEnd: ZonedDateTime = updatingStart,
     var indexingDuration: Duration = Duration.ZERO,
     var pushPropertiesDuration: Duration = Duration.ZERO,
     var indexExtensionsDuration: Duration = Duration.ZERO,

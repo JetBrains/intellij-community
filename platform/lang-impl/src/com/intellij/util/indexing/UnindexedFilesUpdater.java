@@ -38,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -370,7 +372,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
     ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject);
-    projectIndexingHistory.getTimes().setUpdatingStart(Instant.now());
     myIndex.filesUpdateStarted(myProject);
     try {
       updateUnindexedFiles(projectIndexingHistory, indicator);
@@ -384,7 +385,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
     finally {
       myIndex.filesUpdateFinished(myProject);
-      projectIndexingHistory.getTimes().setUpdatingEnd(Instant.now());
+      projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
       IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
     }
   }
