@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
-import circlet.client.api.Navigator
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.englishFullName
 import circlet.platform.client.resolve
@@ -14,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.review.SpaceReviewDataKeys.REVIEWS_LIST_VM
 import com.intellij.space.vcs.review.SpaceReviewDataKeys.SELECTED_REVIEW
 import org.jetbrains.annotations.Nls
@@ -35,8 +35,7 @@ class SpaceReviewOpenInBrowserAction : DumbAwareAction(SpaceBundle.messagePointe
   override fun actionPerformed(e: AnActionEvent) {
     val data = e.getData(SELECTED_REVIEW) ?: return
     val review = data.review.resolve()
-    val server = SpaceWorkspaceComponent.getInstance().workspace.value!!.client.server
-    val reviewLink = Navigator.p.project(review.project).review(review.number).absoluteHref(server)
+    val reviewLink = SpaceUrls.review(review.project, review.number)
 
     BrowserUtil.browse(reviewLink)
   }
@@ -79,8 +78,8 @@ class SpaceReviewAuthorActionGroup : ActionGroup() {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       return arrayOf(
-        GoToAction(SpaceBundle.messagePointer("action.go.to.chat.text"), Navigator.im.p2pChat(profile).absoluteHref(server)),
-        GoToAction(SpaceBundle.messagePointer("action.go.to.profile.text"), Navigator.m.member(profile.username).absoluteHref(server))
+        GoToAction(SpaceBundle.messagePointer("action.go.to.chat.text"), SpaceUrls.p2pChat(profile)),
+        GoToAction(SpaceBundle.messagePointer("action.go.to.profile.text"), SpaceUrls.member(profile.username))
       )
     }
 

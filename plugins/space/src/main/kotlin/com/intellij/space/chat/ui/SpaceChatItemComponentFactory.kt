@@ -2,7 +2,6 @@
 package com.intellij.space.chat.ui
 
 import circlet.client.api.M2TextItemContent
-import circlet.client.api.Navigator
 import circlet.client.api.mc.MCMessage
 import circlet.code.api.*
 import circlet.platform.client.resolve
@@ -25,6 +24,7 @@ import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
@@ -96,7 +96,7 @@ internal class SpaceChatItemComponentFactory(
         }
         is ReviewCompletionStateChangedEvent -> EventMessagePanel(createSimpleMessageComponent(item))
         is ReviewerChangedEvent -> {
-          val user = details.uid.resolve().link(server)
+          val user = details.uid.resolve().link()
           val text = when (details.changeType) {
             ReviewerChangedType.Joined -> SpaceBundle.message("chat.reviewer.added", user)
             ReviewerChangedType.Left -> SpaceBundle.message("chat.reviewer.removed", user)
@@ -137,7 +137,7 @@ internal class SpaceChatItemComponentFactory(
       }
     return Item(
       item.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarProvider.iconSize.get()),
-      MessageTitleComponent(lifetime, item, server),
+      MessageTitleComponent(lifetime, item),
       SpaceChatMessagePendingHeader(item),
       createEditableContent(component, item)
     )
@@ -159,13 +159,12 @@ internal class SpaceChatItemComponentFactory(
       commits.resolveAll().forEach { commit ->
         val location = when (changeType) {
           ReviewRevisionsChangedType.Removed -> {
-            Navigator.p.project(review.project).revision(commit.repositoryName, commit.revision)
+            SpaceUrls.revision(review.project, commit.repositoryName, commit.revision)
           }
           else -> {
-            Navigator.p.project(review.project)
-              .reviewFiles(review.number, revisions = listOf(commit.revision))
+            SpaceUrls.reviewFiles(review.project, review.number, listOf(commit.revision))
           }
-        }.absoluteHref(server)
+        }
         add(LinkLabel<Any?>(
           commit.message?.let { getCommitMessageSubject(it) } ?: SpaceBundle.message("chat.untitled.commit.label"), // NON-NLS
           AllIcons.Vcs.CommitNode,

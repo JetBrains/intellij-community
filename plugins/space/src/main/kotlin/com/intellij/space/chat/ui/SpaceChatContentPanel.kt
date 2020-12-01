@@ -2,7 +2,6 @@
 package com.intellij.space.chat.ui
 
 import circlet.client.api.M2ChannelRecord
-import circlet.client.api.Navigator
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.fullName
 import circlet.completion.mentions.MentionConverter
@@ -19,6 +18,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItemWithThread
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.ColorUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
@@ -51,7 +51,7 @@ internal class SpaceChatContentPanel(
       launch(lifetime, Ui) {
         val chatItems = messagesViewModel.messages.map { messageViewModel ->
           async(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
-            messageViewModel.convertToChatItemWithThread(lifetime, channelsVm, messageViewModel.getLink(server))
+            messageViewModel.convertToChatItemWithThread(lifetime, channelsVm, messageViewModel.getLink())
           }
         }.awaitAll()
         itemsListModel.messageListUpdated(chatItems)
@@ -90,17 +90,17 @@ internal suspend fun M2ChannelVm.awaitFullLoad(lifetime: Lifetime) {
   }
 }
 
-internal fun M2MessageVm.getLink(hostUrl: String): String? =
+internal fun M2MessageVm.getLink(): String? =
   if (canCopyLink && !message.isTemporary()) {
-    Navigator.im.message(channelVm.key.value, message).absoluteHref(hostUrl)
+    SpaceUrls.message(channelVm.key.value, message)
   }
   else {
     null
   }
 
 @Nls
-internal fun TD_MemberProfile.link(server: String): HtmlChunk =
-  HtmlChunk.link(Navigator.m.member(username).absoluteHref(server), name.fullName()) // NON-NLS
+internal fun TD_MemberProfile.link(): HtmlChunk =
+  HtmlChunk.link(SpaceUrls.member(username), name.fullName()) // NON-NLS
 
 @NlsSafe
 internal fun processItemText(server: String, @NlsSafe text: String, isEdited: Boolean) = MentionConverter.html(text, server).let {

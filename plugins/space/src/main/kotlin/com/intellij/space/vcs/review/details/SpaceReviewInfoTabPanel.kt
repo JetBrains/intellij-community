@@ -10,7 +10,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.utils.Urls
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.ScrollPaneFactory
@@ -61,7 +61,7 @@ internal class SpaceReviewInfoTabPanel(detailsVm: SpaceReviewDetailsVm<out CodeR
                  JBUI.scale(gap))).apply {
 
       @NlsSafe val projectName = detailsVm.spaceProjectInfo.project.name
-      val projectLink = link(projectName, Urls.spaceProject(detailsVm.projectKey))
+      val projectLink = link(projectName, SpaceUrls.project(detailsVm.projectKey))
       val reviewLinkLabel = link(detailsVm.reviewKey ?: "", detailsVm.reviewUrl)
 
       add(projectLink)

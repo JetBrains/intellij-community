@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
-import circlet.client.api.Navigator
 import circlet.client.api.ProjectKey
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.identifier
@@ -12,7 +11,7 @@ import circlet.platform.api.TID
 import circlet.platform.client.*
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
-import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
@@ -35,7 +34,7 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   val projectKey: ProjectKey = review.value.project
   val reviewKey: String? = review.value.key
 
-  val reviewUrl: String = buildReviewUrl(projectKey, review.value.number)
+  val reviewUrl: String = SpaceUrls.review(projectKey, review.value.number)
 
   val reviewId: TID = review.value.id
 
@@ -94,7 +93,8 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
     mutableProperty(ListSelection.create(emptyList<SpaceReviewChange>(), null))
 
   val spaceDiffVm: Property<SpaceDiffVm> = mutableProperty(
-    SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, spaceReviewChange, SpaceReviewDiffLoader(lifetime, client)))
+    SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, spaceReviewChange,
+                    SpaceReviewDiffLoader(lifetime, client)))
 
   val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(
     lifetime, client, projectKey, review.value.identifier,
@@ -126,12 +126,6 @@ internal class CommitSetReviewDetailsVm(
   refMrRecord: Ref<CommitSetReviewRecord>,
   client: KCircletClient
 ) : SpaceReviewDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client)
-
-fun buildReviewUrl(projectKey: ProjectKey, reviewNumber: Int): String {
-  return Navigator.p.project(projectKey)
-    .review(reviewNumber)
-    .absoluteHref(SpaceSettings.getInstance().serverSettings.server)
-}
 
 internal fun createReviewDetailsVm(lifetime: Lifetime,
                                    project: Project,

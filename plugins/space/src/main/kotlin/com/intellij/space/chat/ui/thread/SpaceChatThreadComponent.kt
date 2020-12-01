@@ -36,7 +36,7 @@ internal fun createThreadComponent(
     itemsListModel.messageListUpdated(
       messageList.messages
         .drop(if (withFirst) 0 else 1)
-        .map { it.convertToChatItem(it.getLink(server)) }
+        .map { it.convertToChatItem(it.getLink()) }
     )
   }
 

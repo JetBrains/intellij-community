@@ -4,7 +4,6 @@ package com.intellij.space.chat.ui.message
 import circlet.client.api.CExternalServicePrincipalDetails
 import circlet.client.api.CPrincipal
 import circlet.client.api.CUserPrincipalDetails
-import circlet.client.api.Navigator
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.link
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.AnimatedIcon
@@ -31,8 +31,7 @@ import javax.swing.JPanel
 
 internal class MessageTitleComponent(
   private val lifetime: Lifetime,
-  message: SpaceChatItem,
-  private val server: String
+  message: SpaceChatItem
 ) : JPanel(HorizontalLayout(JBUI.scale(5))) {
   val actionsPanel = JPanel(HorizontalLayout(JBUI.scale(5))).apply {
     isOpaque = false
@@ -68,12 +67,11 @@ internal class MessageTitleComponent(
     when (val details = author.details) {
       is CUserPrincipalDetails -> {
         val user = details.user.resolve()
-        user.link(server)
+        user.link()
       }
       is CExternalServicePrincipalDetails -> {
         val service = details.service.resolve()
-        val location = Navigator.manage.oauthServices.service(service)
-        HtmlChunk.link(location.href, service.name) // NON-NLS
+        HtmlChunk.link(SpaceUrls.service(service), service.name) // NON-NLS
       }
       else -> {
         HtmlChunk.text(author.name) // NON-NLS

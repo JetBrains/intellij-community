@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.settings
 
-import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
@@ -16,6 +15,7 @@ import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.cleanupUrl
 import com.intellij.space.ui.resizeIcon
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.labels.LinkLabel
@@ -128,7 +128,7 @@ class SpaceSettingsPanel :
       is SpaceLoginState.Connected -> {
         linkLabel.isVisible = true
         val profile = SpaceWorkspaceComponent.getInstance().workspace.value?.me?.value ?: return
-        val gitConfigPage = Navigator.m.member(profile.username).git.absoluteHref(st.server)
+        val gitConfigPage = SpaceUrls.git(profile.username)
         linkLabel.setListener({ _, _ -> BrowserUtil.browse(gitConfigPage) }, null)
       }
       else -> {
