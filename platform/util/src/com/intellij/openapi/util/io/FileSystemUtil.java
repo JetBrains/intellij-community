@@ -467,30 +467,20 @@ public final class FileSystemUtil {
    * via different names.
    */
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull File anyChild) {
-    File parent = anyChild.getParentFile();
-
-    if (JnaLoader.isLoaded()) {
-      String path = (parent != null ? parent : anyChild).getAbsolutePath();
-      FileAttributes.CaseSensitivity detected = FileAttributes.CaseSensitivity.UNKNOWN;
-      if (SystemInfo.isWin10OrNewer && OSAgnosticPathUtil.isAbsoluteDosPath(path)) {
-        detected = getNtfsCaseSensitivity(path);
-      }
-      else if (SystemInfo.isMac) {
-        detected = getMacOsCaseSensitivity(path);
-      }
-      else if (SystemInfo.isLinux) {
-        detected = getLinuxCaseSensitivity(path);
-      }
-      if (detected != FileAttributes.CaseSensitivity.UNKNOWN) {
-        return detected;
-      }
-    }
+    FileAttributes.CaseSensitivity detected = readCaseSensitivityByNativeAPI(anyChild);
+    if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
 
     // when native queries failed, fallback to the Java File IO:
+    return readParentCaseSensitivityByJavaIO(anyChild);
+  }
+
+  @NotNull
+  static FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull File anyChild) {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
     if (!anyChild.exists()) {
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
+    File parent = anyChild.getParentFile();
     if (parent == null) {
       String probe = findCaseToggleableChild(anyChild);
       if (probe == null) return FileAttributes.CaseSensitivity.UNKNOWN;
@@ -532,6 +522,25 @@ public final class FileSystemUtil {
 
     // it's the different file indeed, what a bad luck
     return FileAttributes.CaseSensitivity.SENSITIVE;
+  }
+
+  @NotNull
+  static FileAttributes.CaseSensitivity readCaseSensitivityByNativeAPI(@NotNull File anyChild) {
+    FileAttributes.CaseSensitivity detected = FileAttributes.CaseSensitivity.UNKNOWN;
+    if (JnaLoader.isLoaded()) {
+      File parent = anyChild.getParentFile();
+      String path = (parent != null ? parent : anyChild).getAbsolutePath();
+      if (SystemInfo.isWin10OrNewer && OSAgnosticPathUtil.isAbsoluteDosPath(path)) {
+        detected = getNtfsCaseSensitivity(path);
+      }
+      else if (SystemInfo.isMac) {
+        detected = getMacOsCaseSensitivity(path);
+      }
+      else if (SystemInfo.isLinux) {
+        detected = getLinuxCaseSensitivity(path);
+      }
+    }
+    return detected;
   }
 
   private static String toggleCase(@NotNull String name) {

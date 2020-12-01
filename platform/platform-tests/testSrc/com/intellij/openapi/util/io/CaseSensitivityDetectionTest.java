@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vfs.local;
+package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
@@ -121,5 +121,21 @@ public class CaseSensitivityDetectionTest {
 
     CaseSensitivity expected = SystemInfo.isWindows || SystemInfo.isMac ? CaseSensitivity.INSENSITIVE : CaseSensitivity.SENSITIVE;
     assertEquals(expected, FileSystemUtil.readParentCaseSensitivity(file));
+  }
+
+  @Test
+  public void caseSensitivityNativeWrappersMustWorkAtLeastInSimpleCases() {
+    FileAttributes.CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(myTempDir.newFile("dir0/child.txt")));
+    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(myTempDir.newFile("dir0/0"))); // there's toggleable "child.txt" in this dir already
+    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(myTempDir.newFile("dir1/0")));
+  }
+
+  @Test
+  public void caseSensitivityMustBeDeducibleByPureJavaIOAtLeastInSimpleCases() {
+    FileAttributes.CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(myTempDir.newFile("dir0/child.txt")));
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(myTempDir.newFile("dir0/0"))); // there's toggleable "child.txt" in this dir already
+    //assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(myTempDir.newFile("dir1/0")));
   }
 }
