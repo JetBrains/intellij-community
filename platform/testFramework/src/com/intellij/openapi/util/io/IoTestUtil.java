@@ -375,10 +375,10 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
-            GeneralCommandLine cmd = new GeneralCommandLine("cmd", "/C", "mklink", link.toString(),
-                                                            target.getFileName().toString()).withRedirectErrorStream(true);
-            ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 30_000);
-            return output.getExitCode() == 0 ? Boolean.FALSE : null;
+            //noinspection SSBasedInspection
+            Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
+            runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
+            return Boolean.FALSE;
           }
         }
         finally {
@@ -389,9 +389,9 @@ public final class IoTestUtil {
         Files.delete(target);
       }
     }
-    catch (Exception e) {
+    catch (Throwable t) {
       //noinspection SSBasedInspection
-      Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
+      Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(t);
       return null;
     }
   }
