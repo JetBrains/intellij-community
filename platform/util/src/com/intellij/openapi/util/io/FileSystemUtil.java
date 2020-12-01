@@ -56,7 +56,8 @@ public final class FileSystemUtil {
         if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
           return check(new IdeaWin32MediatorImpl());
         }
-        else if ((SystemInfo.isLinux || SystemInfo.isMac && !SystemInfo.isArm64 || SystemInfo.isSolaris || SystemInfo.isFreeBSD) && JnaLoader.isLoaded()) {
+        else if ((SystemInfo.isLinux || SystemInfo.isMac && !SystemInfo.isArm64 || SystemInfo.isSolaris || SystemInfo.isFreeBSD) &&
+                 JnaLoader.isLoaded() && JnaLoader.supportsDirectMapping) {
           return check(new JnaUnixMediatorImpl());
         }
       }
@@ -276,6 +277,8 @@ public final class FileSystemUtil {
     private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
     JnaUnixMediatorImpl() {
+      assert JnaLoader.supportsDirectMapping : "Direct mapping not available on " + Platform.RESOURCE_PREFIX;
+
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
       else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_ARM32;
