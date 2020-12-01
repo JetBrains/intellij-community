@@ -127,8 +127,8 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
   }
 
   @Override
-  public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long computed, long time) {
-    myQueue.offer(() -> myWriter.onValueInvalidated(frameId, place, computed, time));
+  public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long used, long time) {
+    myQueue.offer(() -> myWriter.onValueInvalidated(frameId, place, used, time));
   }
 
   @Override
@@ -319,13 +319,13 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long computed, long time) {
+    public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long used, long time) {
       try {
         myWriter.beginObject();
         myWriter.name("type").value("value-invalidated");
         myWriter.name("frame").value(frameId);
         myWriter.name("place").value(placeToString(place.get()));
-        myWriter.name("computed").value(computed);
+        myWriter.name("computed").value(used);
         myWriter.name("time").value(time);
         myWriter.endObject();
       }

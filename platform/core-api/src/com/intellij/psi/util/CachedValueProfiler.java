@@ -29,7 +29,7 @@ public final class CachedValueProfiler {
 
     void onValueUsed(long frameId, Supplier<StackTraceElement> place, long computed, long time);
 
-    void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long computed, long time);
+    void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long used, long time);
 
     void onValueRejected(long frameId, Supplier<StackTraceElement> place, long start, long computed, long time);
   }
@@ -200,6 +200,7 @@ public final class CachedValueProfiler {
     final Supplier<StackTraceElement> place;
     final long start;
     final long computed;
+    volatile long used;
 
     ValueTracker(@NotNull Supplier<StackTraceElement> place, long start, long computed) {
       this.place = place;
@@ -211,12 +212,13 @@ public final class CachedValueProfiler {
       long time = currentTime();
       ThreadContext context = ourContext.get();
       if (context.consumer == null || context.consumer != ourEventConsumer) return;
-      context.consumer.onValueInvalidated(context.topFrame == null ? 0 : context.topFrame.id, place, computed, time);
+      context.consumer.onValueInvalidated(context.topFrame == null ? 0 : context.topFrame.id, place, used, time);
       ourTrackerOverhead.overhead.addAndGet(currentTime() - time);
     }
 
     public void onValueUsed() {
       long time = currentTime();
+      used = time;
       ThreadContext context = ourContext.get();
       if (context.consumer == null || context.consumer != ourEventConsumer) return;
       context.consumer.onValueUsed(context.topFrame == null ? 0 : context.topFrame.id, place, computed, time);
