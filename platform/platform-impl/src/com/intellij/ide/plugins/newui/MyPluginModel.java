@@ -909,11 +909,16 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     PluginId pluginId = descriptor.getPluginId();
     Pair<PluginEnableDisableAction, PluginEnabledState> oldPair = myDiff.get(descriptor);
 
+    PluginEnabledState oldState = oldPair != null ? oldPair.getSecond() : null;
     PluginEnabledState newState = pair.getSecond();
-    if (oldPair == null) {
-      myDiff.put(descriptor, Pair.create(pair.getFirst(), getState(pluginId)));
+    if (oldState != newState) {
+      PluginEnabledState state = oldState != null ? oldState : getState(pluginId);
+      myDiff.put(
+        descriptor,
+        Pair.create(pair.getFirst(), state)
+      );
     }
-    else if (oldPair.getSecond() == newState) {
+    else {
       myDiff.remove(descriptor);
     }
 
