@@ -18,7 +18,7 @@ import kotlin.reflect.full.memberProperties
  *   - The entity should inherit [WorkspaceEntityBase]
  *   - Properties (not references to other entities) should be listed in a primary constructor as val's
  *   - If the entity has PersistentId, the entity should extend [WorkspaceEntityWithPersistentId]
- *   - If the entity has references to other entities, they should be implement using property delegation objects listed in [references] package.
+ *   - If the entity has references to other entities, they should be implement using property delegation objects listed in [com.intellij.workspaceModel.storage.impl.references] package.
  *       E.g. [OneToMany] or [ManyToOne.NotNull]
  *
  *   Example:
@@ -48,7 +48,7 @@ import kotlin.reflect.full.memberProperties
  *   - If the entity contains soft references to other entities (persistent id to other entities), entity data should extend SoftLinkable
  *        interface and implement the required methods. Check out the [FacetEntityData] implementation, but keep in mind the this might
  *        be more complicated like in [ModuleEntityData].
- *   - Entity data should implement the methods from [WorkspaceEntityData]: [createEntity]. This methods should return an instance of
+ *   - Entity data should implement [WorkspaceEntityData.createEntity] method. This method should return an instance of
  *        [WorkspaceEntity]. This instance should be passed to [addMetaData] after creation!
  *        E.g.:
  *
