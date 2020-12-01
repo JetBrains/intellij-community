@@ -72,6 +72,12 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
     Disposer.register(parent, this);
+    setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
+      @Override
+      public Component getDefaultComponent(Container aContainer) {
+        return getTerminalPanel();
+      }
+    });
   }
 
   @Nullable
