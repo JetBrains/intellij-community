@@ -16,7 +16,7 @@ import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
-internal class StateWidgetManager(val project: Project) {
+class StateWidgetManager(val project: Project) {
   @ApiStatus.Internal
   interface StateWidgetManagerListener {
     fun configurationChanged()
@@ -134,5 +134,9 @@ internal class StateWidgetManager(val project: Project) {
 
   fun getProcessByExecutionId(executionId: Long): StateWidgetProcess? {
     return processIdByExecutionId[executionId]?.let { processById[it] }
+  }
+
+  fun getActiveExecutionEnvironments(): Set<ExecutionEnvironment> {
+    return executions.values.toSet()
   }
 }

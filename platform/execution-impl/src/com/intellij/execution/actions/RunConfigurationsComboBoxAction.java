@@ -69,7 +69,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-  private static void updatePresentation(@Nullable ExecutionTarget target,
+  protected static void updatePresentation(@Nullable ExecutionTarget target,
                                          @Nullable RunnerAndConfigurationSettings settings,
                                          @Nullable Project project,
                                          @NotNull Presentation presentation,

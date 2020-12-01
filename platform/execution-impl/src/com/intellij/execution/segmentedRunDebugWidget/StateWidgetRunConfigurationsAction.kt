@@ -51,15 +51,22 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.project?.let {
-      val count = StateWidgetManager.getInstance(it).getActiveCount()
+    e.project?.let { project ->
+      val stateWidgetManager = StateWidgetManager.getInstance(project)
+
+      val count = stateWidgetManager.getActiveCount()
       if (count > 1) {
         e.presentation.text = ExecutionBundle.message("state.widget.active.processes.text", count)
-        e.presentation.icon = AllIcons.Nodes.Project
+        e.presentation.icon = AllIcons.RunConfigurations.Application
         return
+      } else if(count == 1) {
+        stateWidgetManager.getActiveExecutionEnvironments().firstOrNull()?.let {
+          updatePresentation(it.executionTarget, it.runnerAndConfigurationSettings, project, e.presentation, e.place)
+          return
+        }
       }
-
     }
+
     super.update(e)
   }
 
