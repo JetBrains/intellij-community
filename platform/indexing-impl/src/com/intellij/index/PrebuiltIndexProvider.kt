@@ -33,7 +33,7 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
   protected abstract val indexExternalizer: DataExternalizer<Value>
 
   companion object {
-    private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexProviderBase")
+    private val LOG = Logger.getInstance(PrebuiltIndexProvider::class.java)
 
     @JvmField
     val DEBUG_PREBUILT_INDICES: Boolean = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false)

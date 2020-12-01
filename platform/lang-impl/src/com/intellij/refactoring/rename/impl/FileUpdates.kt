@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename.impl
 
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -98,6 +99,7 @@ internal class FileUpdates(
   }
 
   companion object {
+    internal val LOG: Logger = Logger.getInstance(FileUpdates::class.java)
 
     fun merge(left: FileUpdates?, right: FileUpdates?): FileUpdates? {
       return when {

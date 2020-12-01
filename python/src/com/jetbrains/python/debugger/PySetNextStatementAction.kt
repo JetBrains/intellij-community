@@ -76,6 +76,6 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
   }
 
   companion object {
-    private val LOG = Logger.getInstance("#com.jetbrains.python.debugger.PySetNextStatementAction")
+    private val LOG = Logger.getInstance(PySetNextStatementAction::class.java)
   }
 }

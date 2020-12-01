@@ -38,7 +38,6 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
 
-internal val LOG: Logger = Logger.getInstance("#com.intellij.refactoring.rename.impl")
 
 internal typealias UsagePointer = Pointer<out RenameUsage>
 

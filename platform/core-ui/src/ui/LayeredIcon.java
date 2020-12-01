@@ -23,7 +23,7 @@ import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements DarkIconProvider, CompositeIcon, IconWithToolTip {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
+  private static final Logger LOG = Logger.getInstance(LayeredIcon.class);
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;
   private final boolean[] myDisabledLayers;

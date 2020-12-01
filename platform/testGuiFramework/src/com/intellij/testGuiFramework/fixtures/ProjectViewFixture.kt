@@ -281,7 +281,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
 
   companion object {
 
-    private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.fixtures.ProjectViewFixture")
+    private val LOG = Logger.getInstance(ProjectViewFixture::class.java)
 
     private fun getNodeText(node: Any): String? {
       assert(node is PresentableNodeDescriptor<*>)

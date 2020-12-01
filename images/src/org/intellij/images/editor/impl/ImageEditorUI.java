@@ -389,7 +389,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
             return Math.max(1, SVGLoader.getMaxZoomFactor(file.getPath(), new ByteArrayInputStream(file.contentsToByteArray()), ScaleContext.create(editor.getComponent())));
           }
           catch (Throwable t) {
-            Logger.getInstance("#org.intellij.images.editor.impl.ImageEditorUI").warn(t);
+            Logger.getInstance(ImageEditorUI.class).warn(t);
           }
         }
         return Double.MAX_VALUE;

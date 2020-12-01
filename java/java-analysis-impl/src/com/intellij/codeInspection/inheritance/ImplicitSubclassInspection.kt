@@ -127,7 +127,7 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
     : LocalQuickFixOnPsiElement(uDeclaration.sourcePsi!!) {
 
     companion object {
-      private val LOG = Logger.getInstance("#com.intellij.codeInspection.inheritance.MakeExtendableFix")
+      private val LOG = Logger.getInstance(MakeExtendableFix::class.java)
     }
 
     private val actionsToPerform = SmartList<IntentionAction>()
