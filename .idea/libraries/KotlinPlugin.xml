@@ -3,12 +3,10 @@
   <library name="KotlinPlugin">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/allopen-compiler-plugin-for-ide.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-compiler-plugin-for-ide.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/completion-ranking-kotlin-0.1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/completion-ranking-kotlin-0.2.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/javaslang-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/javaslang-match-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/javax.inject-1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-android-extensions-runtime.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-common.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-compiler-plugins-allopen.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-compiler-plugins-annotation-based-compiler-support.jar!/" />
@@ -65,17 +63,17 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin-for-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/noarg-compiler-plugin-for-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/sam-with-receiver-compiler-plugin-for-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/parcelize-compiler-plugin-for-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-parcelize.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
     <excluded>
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/allopen-compiler-plugin-for-ide.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-compiler-plugin-for-ide.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/completion-ranking-kotlin-0.1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/completion-ranking-kotlin-0.2.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/javaslang-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/javaslang-match-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/javax.inject-1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-android-extensions-runtime.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-common.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-compiler-plugins-allopen.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-compiler-plugins-annotation-based-compiler-support.jar!/" />
@@ -132,6 +130,8 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin-for-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/noarg-compiler-plugin-for-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/sam-with-receiver-compiler-plugin-for-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/parcelize-compiler-plugin-for-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-parcelize.jar!/" />
     </excluded>
   </library>
 </component>
