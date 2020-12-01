@@ -6,26 +6,39 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.SystemDock;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author Nikita Provotorov
  */
 public final class WinDockDelegateInitializer implements SystemDock.Delegate.Initializer {
   @Override
-  public void onUiInitialization() {
-    if (wsi != null) {
-      wsi.updateAppUserModelId();
-    }
+  public synchronized void onUiInitialization() {
+    final var app = ApplicationManagerEx.getApplicationEx();
+    shouldBeDisabled = app.isHeadlessEnvironment() || app.isLightEditMode();
+    if (shouldBeDisabled)
+      return;
+
+    // Unfortunately the Registry component is not loaded yet at this point
+    // So we can't write something like
+    //  if (!Registry.is("windows.jumplist"))
+    //    return;
+    // to avoid loading WinShellIntegration's native
+
+    if (!WinShellIntegration.isAvailable)
+      return;
+
+    wsi = Objects.requireNonNull(WinShellIntegration.getInstance());
+
+    wsi.updateAppUserModelId();
   }
 
   @Override
-  public @Nullable SystemDock.Delegate onUiInitialized() {
-    if (wsi == null)
+  public synchronized @Nullable SystemDock.Delegate onUiInitialized() {
+    if (shouldBeDisabled)
       return null;
 
-    final var app = ApplicationManagerEx.getApplicationEx();
-
-    final boolean shouldBeDisabled = app.isHeadlessEnvironment() || app.isLightEditMode();
-    if (shouldBeDisabled)
+    if (wsi == null)
       return null;
 
     if (!Registry.is("windows.jumplist"))
@@ -35,5 +48,6 @@ public final class WinDockDelegateInitializer implements SystemDock.Delegate.Ini
   }
 
 
-  private final @Nullable WinShellIntegration wsi = WinShellIntegration.getInstance();
+  private boolean shouldBeDisabled = true;
+  private @Nullable WinShellIntegration wsi = null;
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.MacDockDelegateInitializer;
 import com.intellij.ui.win.WinDockDelegateInitializer;
@@ -26,24 +27,37 @@ public final class SystemDock {
 
 
   synchronized public static void onUiInitialization() {
-    ourDelegateInitializer.onUiInitialization();
+    try {
+      ourDelegateInitializer.onUiInitialization();
+    } catch (Throwable err) {
+      log.error(err);
+    }
   }
 
   synchronized public static void onUiInitialized() {
-    final var delegateInitializer = ourDelegateInitializer;
-    ourDelegateInitializer = null;
+    try {
+      final var delegateInitializer = ourDelegateInitializer;
+      ourDelegateInitializer = null;
 
-    ourDelegate = delegateInitializer.onUiInitialized();
-  }
-
-
-  synchronized public static void updateMenu() {
-    if (ourDelegate != null) {
-      ourDelegate.updateRecentProjectsMenu();
+      ourDelegate = delegateInitializer.onUiInitialized();
+    } catch (Throwable err) {
+      log.error(err);
     }
   }
 
 
+  synchronized public static void updateMenu() {
+    try {
+      if (ourDelegate != null) {
+        ourDelegate.updateRecentProjectsMenu();
+      }
+    } catch (Throwable err) {
+      log.error(err);
+    }
+  }
+
+
+  private static final Logger log = Logger.getInstance(SystemDock.class);
   private static Delegate.Initializer ourDelegateInitializer;
   private static @Nullable Delegate ourDelegate = null;
 
