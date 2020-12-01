@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Represents string which value is only partially known because of some variables concatenated with or interpolated into the string.
  *
- * For UAST languages it could be obtained from [UStringConcatenationsFacade.asPartiallyKnownString].
+ * For UAST languages it could be obtained from `UStringConcatenationsFacade.asPartiallyKnownString`.
  *
  * The common use case is a search for a place in partially known content to inject a reference.
  */
