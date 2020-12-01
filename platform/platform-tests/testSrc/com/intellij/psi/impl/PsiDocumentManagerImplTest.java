@@ -175,7 +175,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   private static void changeDocument(Document document, PsiDocumentManagerImpl manager) {
-    DocumentEventImpl event = new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false);
+    DocumentEventImpl event = new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false, 0, 0, 0);
     manager.beforeDocumentChange(event);
     manager.documentChanged(event);
   }

@@ -740,7 +740,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   private void throwGuardedFragment(@NotNull RangeMarker guard, int offset, @NotNull CharSequence oldString, @NotNull CharSequence newString) {
     if (myCheckGuardedBlocks > 0 && !myGuardsSuppressed) {
-      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false);
+      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false, offset, oldString.length(),
+                                                  offset);
       throw new ReadOnlyFragmentModificationException(event, guard);
     }
   }
