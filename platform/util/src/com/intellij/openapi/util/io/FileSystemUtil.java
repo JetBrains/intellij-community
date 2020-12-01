@@ -125,11 +125,10 @@ public final class FileSystemUtil {
     try {
       String realPath;
       if (LOG.isTraceEnabled()) {
-        LOG.trace("resolveSymLink(" + path + ")");
         long t = System.nanoTime();
         realPath = ourMediator.resolveSymLink(path);
-        t = (System.nanoTime() - t) / 1000;
-        LOG.trace("  " + t + " mks");
+        t = System.nanoTime() - t;
+        LOG.trace("resolveSymLink(" + path + ") = "+realPath+" in " + TimeUnit.NANOSECONDS.toMicros(t) + " mks");
       }
       else {
         realPath = ourMediator.resolveSymLink(path);
