@@ -133,8 +133,9 @@ class KotlinSuggestedRefactoringExecution(
             newReturnTypeInfo = returnTypeInfo,
             parameterInfos = parameters,
             receiver = receiver,
-            checkUnusedParameter = true,
+            checkUsedParameters = true,
         )
+        
         val processor = KotlinChangeSignatureProcessor(project, changeInfo, "")
         processor.run()
     }

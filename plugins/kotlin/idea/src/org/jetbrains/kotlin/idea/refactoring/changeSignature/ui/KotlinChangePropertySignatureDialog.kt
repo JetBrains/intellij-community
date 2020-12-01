@@ -152,7 +152,7 @@ class KotlinChangePropertySignatureDialog(
             emptyList(),
             receiver,
             originalDescriptor.method,
-            checkUnusedParameter = true,
+            checkUsedParameters = true,
         )
 
         invokeRefactoring(KotlinChangeSignatureProcessor(myProject, changeInfo, commandName ?: title))

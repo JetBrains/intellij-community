@@ -278,5 +278,5 @@ fun createChangeInfo(
         adjustedDescriptor,
         defaultValueContext
     ) as KotlinChangeSignatureProcessor
-    return processor.ktChangeInfo.also { it.checkUnusedParameter = true }
+    return processor.ktChangeInfo.also { it.checkUsedParameters = true }
 }

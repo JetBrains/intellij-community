@@ -1,5 +1,5 @@
 fun foo(s: String, k: Int): Boolean {
-    return this.k + s.length - k - l > 0
+    return s.length - k > 0
 }
 
 class X(val k: Int, val l: Int)

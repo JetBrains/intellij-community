@@ -389,6 +389,36 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
+    fun testRemoveUsedReceiver() {
+        doTestConflict {
+            removeParameter(0)
+        }
+    }
+
+    fun testRemoveUsedReceiver2() {
+        doTestConflict {
+            removeParameter(0)
+        }
+    }
+
+    fun testRemoveUsedInParametersReceiver() {
+        doTestConflict {
+            removeParameter(0)
+        }
+    }
+
+    fun testRemoveUsedInParametersReceiver2() {
+        doTestConflict {
+            removeParameter(0)
+        }
+    }
+
+    fun testRemoveUsedReceiverExplicitThis() {
+        doTestConflict {
+            removeParameter(0)
+        }
+    }
+
     fun testFunctionsAddRemoveArgumentsConflict2() {
         doTestConflict {
             newVisibility = DescriptorVisibilities.INTERNAL
@@ -794,8 +824,16 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         doTest { removeParameter(0) }
     }
 
+    fun testRemoveReceiverConflict() {
+        doTestConflict { removeParameter(0) }
+    }
+
     fun testRemoveReceiverForMember() {
         doTest { removeParameter(0) }
+    }
+
+    fun testRemoveReceiverForMemberConflict() {
+        doTestConflict { removeParameter(0) }
     }
 
     fun testConvertParameterToReceiver1() {

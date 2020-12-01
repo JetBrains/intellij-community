@@ -64,6 +64,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceivers
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -587,8 +588,9 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
         }
 
-        if (ktChangeInfo.checkUnusedParameter) {
+        if (ktChangeInfo.checkUsedParameters) {
             checkParametersToDelete(ktChangeInfo, result)
+            findReceiverUsages(ktChangeInfo, result)
         }
 
         for (parameter in ktChangeInfo.getNonReceiverParameters()) {
@@ -637,6 +639,40 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         }
 
         return result
+    }
+
+    private fun findReceiverUsages(changeInfo: KotlinChangeInfo, result: MultiMap<PsiElement, String>) {
+        val callableDeclaration = changeInfo.method as? KtCallableDeclaration ?: return
+        val newReceiverInfo = changeInfo.receiverParameterInfo
+        val originalReceiverInfo = changeInfo.methodDescriptor.receiver
+        if (newReceiverInfo != null || originalReceiverInfo == null || originalReceiverInfo in changeInfo.getNonReceiverParameters()) return
+        
+        var hasUsage = false
+        callableDeclaration.accept(referenceExpressionRecursiveVisitor(fun(referenceExpression: KtReferenceExpression) {
+            if (hasUsage) return
+
+            val context = referenceExpression.analyze(BodyResolveMode.PARTIAL)
+            val target = referenceExpression.getResolvedCall(context) ?: return
+            val descriptorsToCheck = if (referenceExpression.parent is KtThisExpression)
+                listOfNotNull(target.resultingDescriptor as? ReceiverParameterDescriptor)
+            else
+                target.getImplicitReceivers().mapNotNull { it.getReceiverTargetDescriptor(context) }
+
+            for (descriptor in descriptorsToCheck) {
+                val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(callableDeclaration.project, descriptor) ?: continue
+                if (declaration == callableDeclaration || declaration == callableDeclaration.receiverTypeReference) {
+                    hasUsage = true
+                    return
+                }
+            }
+        }))
+
+        if (hasUsage) {
+            result.putValue(
+                callableDeclaration.receiverTypeReference,
+                KotlinBundle.message("parameter.used.in.declaration.body.warning", KotlinBundle.message("text.receiver")),
+            )
+        }
     }
 
     private fun checkParametersToDelete(info: KotlinChangeInfo, result: MultiMap<PsiElement, String>) {

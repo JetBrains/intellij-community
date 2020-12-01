@@ -62,7 +62,7 @@ open class KotlinChangeInfo(
     receiver: KotlinParameterInfo? = methodDescriptor.receiver,
     val context: PsiElement,
     primaryPropagationTargets: Collection<PsiElement> = emptyList(),
-    var checkUnusedParameter: Boolean = false,
+    var checkUsedParameters: Boolean = false,
 ) : ChangeInfo, UserDataHolder by UserDataHolderBase() {
     private class JvmOverloadSignature(
         val method: PsiMethod,
