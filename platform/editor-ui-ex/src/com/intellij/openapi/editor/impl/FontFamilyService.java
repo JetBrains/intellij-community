@@ -1,0 +1,131 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.editor.impl;
+
+import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.FontInfo;
+import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Standard Java font API doesn't allow accessing fonts by their typographic family/subfamily names
+ * (see https://docs.microsoft.com/en-us/typography/opentype/spec/name#name-ids). This service allows to fill this gap,
+ * if the runtime in use provides required support (see {@link #isServiceSupported()}).
+ */
+public abstract class FontFamilyService {
+  /**
+   * Tells whether the runtime being used provides the ability to access fonts, available to the runtime, by their
+   * typographic family/subfamily names. Latest version of JetBrains Runtime is supposed to provide such support.
+   * If such support isn't available, the rest of methods in this class will operate in a 'fallback' mode, using standard Java API
+   * (using usual family/subfamily names instead of typographic ones).
+   */
+  public static boolean isServiceSupported() {
+    FontFamilyService instance = getInstance();
+    return instance != null && instance.isSupportedImpl();
+  }
+
+  /**
+   * Returns typographic family names for fonts available to the runtime environment.
+   */
+  public static @NotNull Set<String> getAvailableFamilies() {
+    FontFamilyService instance = getInstance();
+    return instance == null ? ContainerUtil.set(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames())
+                            : instance.getAvailableFamiliesImpl();
+  }
+
+  /**
+   * Tells whether given font family is monospaced. This property is assumed to be applicable for the whole family, so the implementation
+   * usually performs the check only for a single font from the family.
+   */
+  public static boolean isMonospaced(@NotNull String family) {
+    FontFamilyService instance = getInstance();
+    return instance == null ? FontInfo.isMonospaced(new Font(family, Font.PLAIN, EditorFontsConstants.getDefaultEditorFontSize()))
+                            : instance.isMonospacedImpl(family);
+  }
+
+  /**
+   * Returns subfamilies available in the given typographic family.
+   */
+  public static @NotNull List<@NotNull String> getSubFamilies(@NotNull String family) {
+    FontFamilyService instance = getInstance();
+    return instance == null ? Arrays.asList(MAIN_FALLBACK_SUB_FAMILY, BOLD_FALLBACK_SUB_FAMILY) : instance.getSubFamiliesImpl(family);
+  }
+
+  /**
+   * Returns subfamily that should be used for 'normal' text, if a user didn't express any preferences.
+   */
+  public static @NotNull String getRecommendedSubFamily(@NotNull String family) {
+    FontFamilyService instance = getInstance();
+    return instance == null ? MAIN_FALLBACK_SUB_FAMILY : instance.getRecommendedSubFamilyImpl(family);
+  }
+
+  /**
+   * Returns subfamily that should be used for 'bold' text, if specified subfamily is selected for displaying 'normal' text.
+   */
+  public static @NotNull String getRecommendedBoldSubFamily(@NotNull String family, @NotNull String mainSubFamily) {
+    FontFamilyService instance = getInstance();
+    return instance == null ? BOLD_FALLBACK_SUB_FAMILY : instance.getRecommendedBoldSubFamilyImpl(family, mainSubFamily);
+  }
+
+  /**
+   * Given the typographic family name and (optionally) the subfamily names to be used for 'normal' and 'bold' text, selected by a user,
+   * returns font instance, representing given Java font style (plain, bold, italic or bold italic). Size of returned font isn't specified.
+   */
+  public static @NotNull Font getFont(@NotNull String family,
+                                      @Nullable String regularSubFamily,
+                                      @Nullable String boldSubFamily,
+                                      @JdkConstants.FontStyle int style) {
+    FontFamilyService instance = getInstance();
+    return instance == null ? new Font(family, style, 1) : instance.getFontImpl(family, regularSubFamily, boldSubFamily, style);
+  }
+
+  /**
+   * Same as {@link #getFont(String, String, String, int)}, but also allows to specify required font size.
+   */
+  public static @NotNull Font getFont(@NotNull String family,
+                                      @Nullable String regularSubFamily,
+                                      @Nullable String boldSubFamily,
+                                      @JdkConstants.FontStyle int style,
+                                      int size) {
+    return getFont(family, regularSubFamily, boldSubFamily, style).deriveFont((float)size);
+  }
+
+  /**
+   * Returns font with given typographic family/subfamily and size. This is an alternative to {@link Font#Font(String, int, int)},
+   * allowing to use typographic family/subfamily instead of 'standard' family and Java font style.
+   */
+  public static @NotNull Font getFont(@NotNull String family, @NotNull String subFamily, int size) {
+    return getFont(family, subFamily, subFamily, Font.PLAIN, size);
+  }
+
+  private static FontFamilyService getInstance() {
+    return ApplicationManager.getApplication().getService(FontFamilyService.class);
+  }
+
+  private static final String MAIN_FALLBACK_SUB_FAMILY = "Regular";
+  private static final String BOLD_FALLBACK_SUB_FAMILY = "Bold";
+
+  protected abstract @NotNull Font getFontImpl(@NotNull String family,
+                                               @Nullable String regularSubFamily,
+                                               @Nullable String boldSubFamily,
+                                               @JdkConstants.FontStyle int style);
+
+  protected abstract boolean isSupportedImpl();
+
+  protected abstract @NotNull Set<String> getAvailableFamiliesImpl();
+
+  protected abstract boolean isMonospacedImpl(@NotNull String family);
+
+  protected abstract @NotNull List<@NotNull String> getSubFamiliesImpl(@NotNull String family);
+
+  protected abstract @NotNull String getRecommendedSubFamilyImpl(@NotNull String family);
+
+  protected abstract @NotNull String getRecommendedBoldSubFamilyImpl(@NotNull String family, @NotNull String mainSubFamily);
+}

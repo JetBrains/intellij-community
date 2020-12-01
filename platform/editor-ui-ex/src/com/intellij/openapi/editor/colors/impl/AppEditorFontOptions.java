@@ -31,6 +31,8 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
   public static class PersistentFontPreferences {
     public int FONT_SIZE = FontPreferences.DEFAULT_FONT_SIZE;
     public @NlsSafe @NotNull String FONT_FAMILY = FontPreferences.DEFAULT_FONT_NAME;
+    public @NlsSafe @Nullable String FONT_REGULAR_SUB_FAMILY;
+    public @NlsSafe @Nullable String FONT_BOLD_SUB_FAMILY;
     public float FONT_SCALE = 1.0f;
     public float LINE_SPACING = FontPreferences.DEFAULT_LINE_SPACING;
     public boolean USE_LIGATURES = false;
@@ -44,6 +46,8 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
 
     public PersistentFontPreferences(FontPreferences fontPreferences) {
       FONT_FAMILY = fontPreferences.getFontFamily();
+      FONT_REGULAR_SUB_FAMILY = fontPreferences.getRegularSubFamily();
+      FONT_BOLD_SUB_FAMILY = fontPreferences.getBoldSubFamily();
       FONT_SIZE = fontPreferences.getSize(FONT_FAMILY);
       FONT_SCALE = UISettings.getDefFontScale();
       LINE_SPACING = fontPreferences.getLineSpacing();
@@ -80,6 +84,8 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     fontPreferences.clear();
     int fontSize = UISettings.restoreFontSize(state.FONT_SIZE, state.FONT_SCALE);
     fontPreferences.register(state.FONT_FAMILY, fontSize);
+    fontPreferences.setRegularSubFamily(state.FONT_REGULAR_SUB_FAMILY);
+    fontPreferences.setBoldSubFamily(state.FONT_BOLD_SUB_FAMILY);
     fontPreferences.setLineSpacing(state.LINE_SPACING);
     fontPreferences.setUseLigatures(state.USE_LIGATURES);
     if (state.SECONDARY_FONT_FAMILY != null) {
