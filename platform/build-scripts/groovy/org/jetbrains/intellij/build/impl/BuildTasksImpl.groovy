@@ -118,7 +118,7 @@ final class BuildTasksImpl extends BuildTasks {
                                     List<String> modules,
                                     List<String> arguments,
                                     Map<String, Object> systemProperties = Collections.emptyMap(),
-                                    List<String> vmOptions = List.of("-ea", "-Xmx512m"),
+                                    List<String> vmOptions = List.of("-Xmx512m"),
                                     List<String> pluginsToDisable = Collections.emptyList()) {
     Files.createDirectories(tempDir)
 
@@ -159,7 +159,7 @@ final class BuildTasksImpl extends BuildTasks {
 
     disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), pluginsToDisable)
 
-    BuildUtils.runJava(
+    BuildHelper.runJava(
       context,
       "com.intellij.idea.Main",
       arguments,
@@ -410,8 +410,7 @@ idea.fatal.error.notification=disabled
       }
       else {
         buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
-        // todo jar-order.txt is used only by reorderJARs method but we don't call it here - should we remove buildOrderFiles call here?
-        ReorderJarTask.createReorderJarTask(buildContext.paths.tempDir.resolve("jar-order.txt"), distributionJARsBuilder.platform).execute(buildContext)
+        DistributionJARsBuilder.reorderJars(buildContext)
         DistributionJARsBuilder.createBuildSearchableOptionsTask(distributionJARsBuilder.getModulesForPluginsToPublish()).execute(buildContext)
         distributionJARsBuilder.buildNonBundledPlugins()
       }

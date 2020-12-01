@@ -3,11 +3,10 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.io.write
+import com.intellij.util.lang.ClassPath
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.reflect.full.memberFunctions
-import kotlin.reflect.jvm.isAccessible
 import kotlin.system.exitProcess
 
 /**
@@ -24,60 +23,34 @@ internal class JarOrderStarter : ApplicationStarter {
 
   override fun main(args: List<String>) {
     try {
-      generateJarAccessLog(JarOrderStarter::class.java.classLoader, Paths.get(args[1]))
-      generateClassesAccessLog(JarOrderStarter::class.java.classLoader, Paths.get(args[2]))
+      generateJarAccessLog(Paths.get(args[1]))
     }
     catch (e: Throwable) {
       logger<JarOrderStarter>().error(e)
+      exitProcess(1)
     }
     finally {
       exitProcess(0)
     }
   }
 
-  /**
-   * Generates module loading order file.
-   *
-   * We cannot start this code on the final jar-s so the output contains mostly module paths (jar only for libraries):
-   * path/to/intellij.platform.bootstrap
-   * path/to/intellij.platform.impl
-   * path/to/log4j-1.4.5.jar
-   * path/to/intellij.platform.api
-   * ...
-   * Afterward the build scripts convert the output file to the final list of jar files (classpath-order.txt)
-   */
-  fun generateJarAccessLog(loader: ClassLoader, path: Path) {
-    // must use reflection because the classloader class is loaded with a different classloader
-    val accessor = loader::class.memberFunctions.find { it.name == "getJarAccessLog" }
-                   ?: throw Exception("Can't find getJarAccessLog() method")
-    val log = accessor.call(loader) as? Collection<String> ?: throw Exception("Unexpected return type of getJarAccessLog()")
-    val result = log.joinToString("\n") { it.removePrefix("jar:").removePrefix("file:").removeSuffix("!/").removeSuffix("/") }
-    if (result.isNotEmpty()) {
-      path.write(result)
-    }
-  }
+  fun generateJarAccessLog(outFile: Path) {
+    val classLoader = JarOrderStarter::class.java.classLoader
+    val getClassPath = classLoader::class.java.getDeclaredMethod("getClassPath")
+    getClassPath.isAccessible = true
+    val getLoadedClasses = getClassPath.invoke(classLoader)::class.java.getDeclaredMethod("getLoadedClasses")
+    getLoadedClasses.isAccessible = true
+    val itemsFromBootstrap = getLoadedClasses.invoke(null) as Collection<Map.Entry<String, Path>>
+    val itemsFromCore = ClassPath.getLoadedClasses()
+    val items = LinkedHashSet<Map.Entry<String, Path>>(itemsFromBootstrap.size + itemsFromCore.size)
+    items.addAll(itemsFromBootstrap)
+    items.addAll(itemsFromCore)
 
-  /**
-   * Generates class loading order file.
-   *
-   * Format:
-   * com/package/ClassName.class:path/to/intellij.platform.impl
-   * com/package2/ClassName2.class:path/to/module
-   * com/package3/ClassName3.class:path/to/some.jar
-   */
-  private fun generateClassesAccessLog(loader: ClassLoader, path: Path) {
-    val classPathMember = loader::class.memberFunctions.find { it.name == "getClassPath" }
-    classPathMember?.isAccessible = true
-    val result = classPathMember?.call(loader) ?: return
-    val javaClass = result.javaClass
-    val field = javaClass.getDeclaredField("ourLoadedClasses")
-    field.isAccessible = true
-
-    val log = field.get(null) as? Collection<String> ?: throw Exception("Unexpected type of ourLoadedClasses")
-    if (log.isNotEmpty()) {
-      synchronized(log) {
-        path.write(log.joinToString(separator = "\n"))
-      }
+    val builder = StringBuilder()
+    for (item in items) {
+      builder.append(item.key).append(':').append(item.value)
+      builder.append('\n')
     }
+    Files.writeString(outFile, builder)
   }
 }

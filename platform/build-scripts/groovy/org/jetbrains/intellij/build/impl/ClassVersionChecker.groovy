@@ -1,16 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.Nullable
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipFile
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 
+import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
-
+import java.nio.file.StandardOpenOption
 /**
  * <p>
  *   Recursively checks .class files in directories and .jar/.zip files to ensure that their versions
@@ -25,8 +28,8 @@ import java.util.zip.ZipInputStream
  * <p>Example: <code>["": "1.8", "lib/idea_rt.jar": "1.3"]</code>.</p>
  */
 @CompileStatic
-class ClassVersionChecker {
-  private static class Rule {
+final class ClassVersionChecker {
+  private static final class Rule {
     final String path
     final int version
 
@@ -60,10 +63,10 @@ class ClassVersionChecker {
 
       buildContext.messages.info("Checking with ${myRules.size()} rules in ${root} ...")
       if (Files.isDirectory(root)) {
-        visitDirectory(root.toFile(), "")
+        visitDirectory(root, "")
       }
       else {
-        visitFile(root.toString(), "", null)
+        visitFile(root, "")
       }
 
       if (myClasses == 0) {
@@ -75,7 +78,7 @@ class ClassVersionChecker {
         buildContext.messages.error("Failed with ${myErrors.size()} problems")
       }
 
-      def unusedRules = myRules - myUsedRules
+      List<Rule> unusedRules = myRules - myUsedRules
       if (!unusedRules.isEmpty()) {
         buildContext.messages.error("Class version check rules for the following paths don't match any files, probably entries in " +
                                     "ProductProperties::versionCheckerConfig are incorrect:\n" +
@@ -84,48 +87,64 @@ class ClassVersionChecker {
     }
   }
 
-  private void visitDirectory(File directory, String relPath) {
-    for (File child in directory.listFiles()) {
-      if (child.isDirectory()) {
-        visitDirectory(child, join(relPath, '/', child.name))
+  private void visitDirectory(Path directory, String relPath) {
+    DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory)
+    try {
+      for (Path child in dirStream) {
+        if (Files.isDirectory(child)) {
+          visitDirectory(child, join(relPath, '/', child.fileName.toString()))
+        }
+        else {
+          visitFile(child, join(relPath, '/', child.fileName.toString()))
+        }
       }
-      else {
-        visitFile(child.path, join(relPath, '/', child.name), null)
-      }
+    }
+    finally {
+      dirStream.close()
     }
   }
 
-  private void visitFile(String fullPath, String relPath, @Nullable ZipInputStream input) {
+  private void visitFile(@NotNull Path file, String relPath) {
+    String fullPath = file.toString()
     if (fullPath.endsWith(".zip") || fullPath.endsWith(".jar")) {
-      if (input != null) {
-        visitZip(fullPath, relPath, new ZipInputStream(input))
-      }
-      else {
-        new ZipInputStream(new FileInputStream(fullPath)).withStream { visitZip(fullPath, relPath, it) }
-      }
+      visitZip(fullPath, relPath, new ZipFile(Files.newByteChannel(file, EnumSet.of(StandardOpenOption.READ))))
     }
-    else if (fullPath.endsWith(".class") && !(fullPath.endsWith("module-info.class") || fullPath.contains("/META-INF/versions/"))) {
-      if (input != null) {
-        checkVersion(relPath, input)
-      }
-      else {
-        new FileInputStream(fullPath).withStream { checkVersion(relPath, it) }
-      }
+    else if (fullPath.endsWith(".class") && !fullPath.endsWith("module-info.class") && !isMultiVersion(fullPath)) {
+      new BufferedInputStream(Files.newInputStream(file)).withCloseable { checkVersion(relPath, it) }
     }
   }
 
-  private void visitZip(String fullPath, String relPath, ZipInputStream input) {
-    myJars++
-    ZipEntry entry
-    while ((entry = input.nextEntry) != null) {
-      if (!entry.isDirectory()) {
-        visitFile(fullPath + "!/" + entry.name, join(relPath, "!/", entry.name), input)
+  private static boolean isMultiVersion(String path) {
+    return path.startsWith("META-INF/versions/") || path.contains("/META-INF/versions/") || (SystemInfoRt.isWindows && path.contains("\\META-INF\\versions\\"))
+  }
+
+  // use ZipFile - avoid a lot of small lookups to read entry headers (ZipFile uses central directory)
+  private void visitZip(String zipPath, String zipRelPath, ZipFile file) {
+    try {
+      myJars++
+      Enumeration<ZipArchiveEntry> entries = file.entries
+      while (entries.hasMoreElements()) {
+        ZipArchiveEntry entry = entries.nextElement()
+        if (entry.isDirectory()) {
+          continue
+        }
+
+        String name = entry.name
+        if (name.endsWith(".zip") || name.endsWith(".jar")) {
+          visitZip(zipPath + "!/" + name, join(zipRelPath, "!/", name), new ZipFile(new SeekableInMemoryByteChannel(file.getInputStream(entry).readAllBytes())))
+        }
+        else if (name.endsWith(".class") && !name.endsWith("module-info.class") && !isMultiVersion(name)) {
+          checkVersion(join(zipRelPath, "!/", name), file.getInputStream(entry))
+        }
       }
+    }
+    finally {
+      file.close()
     }
   }
 
   private static String join(String prefix, String separator, String suffix) {
-    prefix.isEmpty() ? suffix : prefix + separator + suffix
+    return prefix.isEmpty() ? suffix : (prefix + separator + suffix)
   }
 
   private void checkVersion(String path, InputStream stream) {

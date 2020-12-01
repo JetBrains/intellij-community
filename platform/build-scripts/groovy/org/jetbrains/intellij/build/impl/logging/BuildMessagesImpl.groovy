@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LogMessage
 
+import java.text.MessageFormat
 import java.util.function.BiFunction
 import java.util.function.Supplier
 
@@ -25,6 +26,40 @@ class BuildMessagesImpl implements BuildMessages {
   private final List<LogMessage> delayedMessages = []
   private final UniqueNameGenerator taskNameGenerator = new UniqueNameGenerator()
   private final Stack<String> blockNames = new Stack<>()
+
+  @Override
+  String getName() {
+    return ""
+  }
+
+  @Override
+  boolean isLoggable(System.Logger.Level level) {
+    return level.severity > System.Logger.Level.TRACE.severity
+  }
+
+  @Override
+  void log(System.Logger.Level level, ResourceBundle bundle, String message, Throwable thrown) {
+    if (level == System.Logger.Level.INFO) {
+      assert thrown == null
+      info(message)
+    }
+    else if (level == System.Logger.Level.ERROR) {
+      error(message, thrown)
+    }
+    else if (level == System.Logger.Level.WARNING) {
+      assert thrown == null
+      warning(message)
+    }
+    else {
+      assert thrown == null
+      debug(message)
+    }
+  }
+
+  @Override
+  void log(System.Logger.Level level, ResourceBundle bundle, String message, Object... params) {
+    log(level, null, message == null ? message : MessageFormat.format(message, params), null as Throwable)
+  }
 
   static BuildMessagesImpl create(Project antProject) {
     String key = "IntelliJBuildMessages"

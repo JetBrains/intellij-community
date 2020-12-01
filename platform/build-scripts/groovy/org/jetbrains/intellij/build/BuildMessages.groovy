@@ -6,7 +6,7 @@ import groovy.transform.CompileStatic
 import java.util.function.Supplier
 
 @CompileStatic
-interface BuildMessages {
+interface BuildMessages extends System.Logger {
   void info(String message)
 
   void warning(String message)

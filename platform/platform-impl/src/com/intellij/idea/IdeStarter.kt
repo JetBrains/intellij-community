@@ -22,9 +22,11 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.WindowManagerEx
@@ -64,7 +66,9 @@ open class IdeStarter : ApplicationStarter {
   override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
 
   override fun main(args: List<String>) {
-    if (Main.isLightEdit() && !Main.isHeadless()) {
+    val app = ApplicationManagerEx.getApplicationEx()
+
+    if (app.isLightEditMode && !app.isHeadlessEnvironment) {
       // In a light mode UI is shown very quickly, tab layout requires ActionManager but it is forbidden to init ActionManager in EDT,
       // so, preload
       AppExecutorUtil.getAppExecutorService().execute {
@@ -84,8 +88,6 @@ open class IdeStarter : ApplicationStarter {
         IdeEventQueue.getInstance().setWindowManager(windowManager)
       }
     }
-
-    val app = ApplicationManager.getApplication()
 
     // temporary check until the JRE implementation has been checked and bundled
     if (java.lang.Boolean.getBoolean("ide.popup.enablePopupType")) {
@@ -223,7 +225,7 @@ private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): P
 }
 
 private fun postOpenUiTasks(app: Application) {
-  if (SystemInfo.isMac) {
+  if (SystemInfoRt.isMac) {
     NonUrgentExecutor.getInstance().execute {
       runActivity("mac touchbar on app init") {
         TouchBarsManager.onApplicationInitialized()
@@ -233,7 +235,7 @@ private fun postOpenUiTasks(app: Application) {
       }
     }
   }
-  else if (SystemInfo.isXWindow && SystemInfo.isJetBrainsJvm) {
+  else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
     NonUrgentExecutor.getInstance().execute {
       runActivity("input method disabling on Linux") {
         disableInputMethodsIfPossible()
@@ -282,6 +284,7 @@ private fun reportPluginErrors() {
       }
       else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
         DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToEnable, true)
+        @Suppress("SSBasedInspection")
         PluginManagerMain.notifyPluginsUpdated(null)
       }
 

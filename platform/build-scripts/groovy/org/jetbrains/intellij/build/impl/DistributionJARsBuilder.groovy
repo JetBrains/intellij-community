@@ -283,30 +283,42 @@ final class DistributionJARsBuilder {
   void buildJARs() {
     validateModuleStructure()
 
-    List<BuildTaskRunnable<Void>> tasks = new ArrayList<>(8)
-    tasks.add(SVGPreBuilder.createPrebuildSvgIconsTask())
-
-    Path loadingOrderFilePath = buildContext.paths.tempDir.resolve("jar-order.txt")
-
-    boolean isGenerateJarOrderStepEnabled = !buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)
-    if (isGenerateJarOrderStepEnabled) {
-      tasks.add(ReorderJarTask.createReorderJarTask(loadingOrderFilePath, platform))
-    }
-
-    tasks.add(createBuildSearchableOptionsTask(getModulesForPluginsToPublish()))
-    tasks.add(BrokenPluginsBuildFileService.createBuildBrokenPluginListTask())
-    tasks.add(createBuildThirdPartyLibrariesListTask(projectStructureMapping))
-
-    BuildTasksImpl.runInParallel(tasks, buildContext)
+    BuildTasksImpl.runInParallel(List.<BuildTaskRunnable<Void>>of(
+      SVGPreBuilder.createPrebuildSvgIconsTask(),
+      createBuildSearchableOptionsTask(getModulesForPluginsToPublish()),
+      createBuildBrokenPluginListTask(),
+      createBuildThirdPartyLibrariesListTask(projectStructureMapping)
+    ), buildContext)
 
     buildLib()
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
+
+    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
+      reorderJars(buildContext)
+    }
+
     buildNonBundledPlugins()
     buildNonBundledPluginsBlockMaps()
+  }
 
-    if (isGenerateJarOrderStepEnabled && Files.exists(loadingOrderFilePath)) {
-      ReorderJarTask.reorderJARs(loadingOrderFilePath, buildContext, platform)
+  static void reorderJars(@NotNull BuildContext buildContext) {
+    Path distDir = Paths.get(buildContext.paths.distAll)
+    BuildHelper.getInstance(buildContext).reorderJars.invokeWithArguments(distDir, distDir,
+                                                                          buildContext.getBootClassPathJarNames(),
+                                                                          buildContext.paths.tempDir,
+                                                                          buildContext.messages)
+  }
+
+  private static BuildTaskRunnable<Void> createBuildBrokenPluginListTask() {
+    return BuildTaskRunnable.task(BuildOptions.BROKEN_PLUGINS_LIST_STEP, "Build broken plugin list") { BuildContext buildContext ->
+      Path targetFile = Paths.get(buildContext.paths.temp, "brokenPlugins.db")
+      String currentBuildString = buildContext.buildNumber
+      BuildHelper.getInstance(buildContext).brokenPluginsTask.invokeWithArguments(targetFile,
+                                                                                  currentBuildString,
+                                                                                  buildContext.options.isInDevelopmentMode,
+                                                                                  buildContext.messages)
+      buildContext.addResourceFile(targetFile)
     }
   }
 
@@ -377,7 +389,7 @@ final class DistributionJARsBuilder {
             productLayout.productImplementationModules +
             productLayout.additionalPlatformJars.values() +
             toolModules + buildContext.productProperties.additionalModulesToCompile +
-            SVGPreBuilder.getModulesToInclude()
+            ["intellij.idea.community.build.tasks", "intellij.platform.images.build"]
     modulesToInclude - productLayout.excludedModuleNames
   }
 

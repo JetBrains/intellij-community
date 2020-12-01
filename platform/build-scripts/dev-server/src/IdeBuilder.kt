@@ -14,7 +14,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEnt
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
@@ -116,8 +115,7 @@ private fun createLibClassPath(buildContext: BuildContext,
   for (entry in projectStructureMapping.entries) {
     when (entry) {
       is ModuleOutputEntry -> {
-        // File.toURL adds ending slash for directory
-        classPath.add(buildContext.getModuleOutputPath(buildContext.findRequiredModule(entry.moduleName)) + File.separatorChar)
+        classPath.add(buildContext.getModuleOutputPath(buildContext.findRequiredModule(entry.moduleName)))
       }
       is ProjectLibraryEntry -> {
         classPath.add(entry.libraryFilePath)

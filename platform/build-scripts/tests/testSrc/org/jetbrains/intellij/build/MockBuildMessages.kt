@@ -2,9 +2,20 @@
 package org.jetbrains.intellij.build
 
 import junit.framework.AssertionFailedError
+import java.util.*
 import java.util.function.Supplier
 
 class MockBuildMessages : BuildMessages {
+  override fun getName() = ""
+
+  override fun isLoggable(level: System.Logger.Level) = false
+
+  override fun log(level: System.Logger.Level, bundle: ResourceBundle?, msg: String?, thrown: Throwable?) {
+  }
+
+  override fun log(level: System.Logger.Level?, bundle: ResourceBundle?, format: String?, vararg params: Any?) {
+  }
+
   override fun info(message: String?) {
   }
 

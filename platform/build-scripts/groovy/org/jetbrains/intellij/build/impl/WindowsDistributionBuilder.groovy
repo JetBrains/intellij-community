@@ -307,7 +307,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
 
       List<Path> dirs = [Paths.get(buildContext.paths.distAll), winDistPath, productJsonDir] + jreDirectoryPaths
-      BuildUtils.zipForWindows(targetFile, dirs)
+      BuildHelper.zipForWindows(buildContext, targetFile, dirs)
       new ProductInfoValidator(buildContext).checkInArchive(targetFile.toString(), "")
       buildContext.notifyArtifactBuilt(targetFile.toString())
       return targetFile

@@ -11,9 +11,8 @@ import java.nio.file.Paths
 internal class GenerateJarAccessLogAction : AnAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val path = Messages.showInputDialog(event.project, "Enter path to save log to:", "Jar access log", null) ?: return
-    val classLoader = GenerateJarAccessLogAction::class.java.classLoader
     try {
-      JarOrderStarter().generateJarAccessLog(classLoader, Paths.get(path))
+      JarOrderStarter().generateJarAccessLog(Paths.get(path))
     }
     catch (e: Exception) {
       Messages.showMessageDialog(event.project, e.message, "Jar access log", null)

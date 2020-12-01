@@ -13,10 +13,6 @@ import java.util.function.Consumer
 
 @CompileStatic
 final class SVGPreBuilder {
-  static final List<String> getModulesToInclude() {
-    return List.of("intellij.platform.images.build")
-  }
-
   static BuildTaskRunnable<Void> createPrebuildSvgIconsTask() {
     return BuildTaskRunnable.task(BuildOptions.SVGICONS_PREBUILD_STEP, "Prebuild SVG icons", new Consumer<BuildContext>() {
       @Override
@@ -42,7 +38,7 @@ final class SVGPreBuilder {
     String dbFile = "$buildContext.paths.temp/icons.db"
 
     List<String> args = [dbFile, requestFile.toString()] + buildContext.applicationInfo.svgProductIcons
-    BuildUtils.runJava(buildContext,
+    BuildHelper.runJava(buildContext,
                        "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
                        args,
                        List.of("-Xmx1024m"),

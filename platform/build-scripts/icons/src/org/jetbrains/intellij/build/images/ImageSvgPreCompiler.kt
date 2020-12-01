@@ -17,6 +17,7 @@ import org.jetbrains.mvstore.type.LongDataType
 import java.awt.image.BufferedImage
 import java.nio.file.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.exitProcess
 
@@ -52,6 +53,8 @@ internal class ImageSvgPreCompiler {
   private val totalFiles = AtomicLong(0)
 
   private val collisionGuard = ConcurrentHashMap<Long, FileInfo>()
+  // System.out is blocking and can lead to deadlock
+  private val errorMessages = ConcurrentLinkedQueue<String>()
 
   companion object {
     @JvmStatic
@@ -120,6 +123,8 @@ internal class ImageSvgPreCompiler {
       dirs.parallelStream().forEach { dir ->
         processDir(dir, dir, 1, rootRobotData, getMapByScale)
       }
+
+      System.err.println(errorMessages.joinToString(separator = "\n"))
     }
     finally {
       println("Saving rasterized SVG database (${totalFiles.get()} icons)...")
@@ -211,7 +216,7 @@ internal class ImageSvgPreCompiler {
     val light1xBytes = light1xData.toByteArray()
     val imageKey = getImageKey(light1xBytes, light1x.fileName.toString())
 
-    if (checkCollision(collisionGuard, imageKey, light1x, light1xBytes)) {
+    if (checkCollision(imageKey, light1x, light1xBytes)) {
       return
     }
 
@@ -229,21 +234,21 @@ internal class ImageSvgPreCompiler {
       addEntry(getMapByScale(scale, true), image, dimension, dark1x, imageKey)
     }
   }
-}
 
-private fun checkCollision(map: MutableMap<Long, FileInfo>, imageKey: Long, file: Path, fileNormalizedData: ByteArray): Boolean {
-  val duplicate = map.putIfAbsent(imageKey, FileInfo(file))
-  if (duplicate == null) {
-    return false
+  private fun checkCollision(imageKey: Long, file: Path, fileNormalizedData: ByteArray): Boolean {
+    val duplicate = collisionGuard.putIfAbsent(imageKey, FileInfo(file))
+    if (duplicate == null) {
+      return false
+    }
+
+    if (duplicate.checksum.contentEquals(FileInfo.digest(fileNormalizedData))) {
+      errorMessages.add("${duplicate.file} duplicates $file")
+      // skip - do not add
+      return true
+    }
+
+    throw IllegalStateException("Hash collision:\n  file1=${duplicate.file},\n  file2=${file},\n  imageKey=$imageKey")
   }
-
-  if (duplicate.checksum.contentEquals(FileInfo.digest(fileNormalizedData))) {
-    println("${duplicate.file} duplicates $file")
-    // skip - do not add
-    return true
-  }
-
-  throw IllegalStateException("Hash collision:\n  file1=${duplicate.file},\n  file2=${file},\n  imageKey=$imageKey")
 }
 
 private fun addEntry(map: MutableMap<Long, ImageValue>,
