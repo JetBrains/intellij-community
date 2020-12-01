@@ -1114,7 +1114,7 @@ final class DistributionJARsBuilder {
                                                         "<mouse-shortcut keystroke=\"alt shift button1\"/>")
     Path patchedKeyMapDir = Paths.get(buildContext.paths.temp, "patched-keymap")
     Path targetFile = patchedKeyMapDir.resolve("keymaps/\$default.xml")
-    Files.createDirectories(targetFile)
+    Files.createDirectories(targetFile.parent)
     Files.writeString(targetFile, defaultKeymapContent)
     return patchedKeyMapDir
   }
