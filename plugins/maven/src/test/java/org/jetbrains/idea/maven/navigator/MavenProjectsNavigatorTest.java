@@ -33,7 +33,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     initProjectsManager(false);
 
     myNavigator = MavenProjectsNavigator.getInstance(myProject);
-    myNavigator.headlessInit();
+    myNavigator.initForTests();
     myNavigator.setGroupModules(true);
 
     myStructure = myNavigator.getStructureForTests();

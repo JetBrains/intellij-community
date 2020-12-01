@@ -151,12 +151,35 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     doInit();
   }
 
-  //tests and server entities
-  public void headlessInit() {
+  @TestOnly
+  public void initForTests() {
     doInit();
     initTree();
     initStructure();
+  }
+
+  //tests and server entities
+  public void headlessInit() {
+    //initToolWindow();
+    listenForProjectsChanges();
+    boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
+
+    if (myToolWindow.isAvailable() != hasMavenProjects) {
+      myToolWindow.setAvailable(hasMavenProjects);
+
+      if (hasMavenProjects) {
+        myToolWindow.activate(null);
+      }
+    }
+
+    boolean shouldCreate = myStructure == null;
+    if (shouldCreate) {
+      initStructure();
+    }
+
     myStructure.update();
+
+    TreeState.createFrom(myState.treeState).applyTo(myTree);
   }
 
   private void doInit() {

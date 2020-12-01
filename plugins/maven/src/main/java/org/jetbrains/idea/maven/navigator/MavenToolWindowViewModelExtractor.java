@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -16,7 +17,9 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.viewModel.definition.*;
 import com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor;
+import com.intellij.util.ui.EmptyIcon;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,9 +63,14 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
     final ArrayList<ActionViewModel> iconActions = new ArrayList<>();
 
     for (AnAction action : childrenActions) {
-      new IconAction(action.getTemplatePresentation().getIcon(), "", () -> {
+      Icon icon = action.getTemplatePresentation().getIcon();
+      if (icon == null) {
+        icon = EmptyIcon.ICON_0;
+      }
+      IconAction iconAction = new IconAction(icon, "tooltip text", () -> {
         action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
       });
+      iconActions.add(iconAction);
     }
 
     return new ActionBarViewModel(iconActions);

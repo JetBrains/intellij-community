@@ -21,7 +21,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
     super.setUp()
     initProjectsManager(false)
     myNavigator = MavenProjectsNavigator.getInstance(myProject)
-    myNavigator.headlessInit()
+    myNavigator.initForTests()
     myNavigator.setGroupModules(true)
   }
 
