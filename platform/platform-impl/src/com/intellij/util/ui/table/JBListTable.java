@@ -220,6 +220,7 @@ public abstract class JBListTable {
     private final Int2ObjectMap<RowAnimationState> myRowAnimationStates = new Int2ObjectOpenHashMap<>();
     private final Timer myAnimationTimer = TimerUtil.createNamedTimer("JBListTableTimer", ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
+    private boolean myDisposed;
 
     RowResizeAnimator(JTable table) {
       myTable = table;
@@ -235,15 +236,20 @@ public abstract class JBListTable {
       doAnimationStep(e.getWhen());
     }
 
+    void revive() {
+      myDisposed = false;
+    }
+
     @Override
     public void dispose() {
+      myDisposed = true;
       stopAnimation();
       // enforce all animations are completed
       doAnimationStep(Long.MAX_VALUE);
     }
 
     private void startAnimation() {
-      if (!myAnimationTimer.isRunning() && !Disposer.isDisposed(this)) {
+      if (!myAnimationTimer.isRunning() && !myDisposed) {
         myAnimationTimer.start();
       }
     }
@@ -466,6 +472,12 @@ public abstract class JBListTable {
       Object value = getValueAt(row, column);
       boolean isSelected = isCellSelected(row, column);
       return editor.getTableCellEditorComponent(this, value, isSelected, row, column);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      myRowResizeAnimator.revive();
     }
 
     @Override
