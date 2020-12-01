@@ -25,8 +25,6 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
 
   val statsPerFileType = hashMapOf<String /* File type name */, StatsPerFileType>()
 
-  val tooLargeForIndexingFiles: LimitedPriorityQueue<TooLargeForIndexingFile> = LimitedPriorityQueue(5, compareBy { it.fileSize })
-
   val indexedFiles = arrayListOf<PortableFilePath>()
 
   data class StatsPerIndexer(
@@ -77,13 +75,9 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     }
   }
 
-  fun addTooLargeForIndexingFile(
-    file: VirtualFile,
-    tooLargeForIndexingFile: TooLargeForIndexingFile
-  ) {
+  fun addTooLargeForIndexingFile(file: VirtualFile) {
     numberOfIndexedFiles++
     numberOfTooLargeForIndexingFiles++
-    tooLargeForIndexingFiles.addElement(tooLargeForIndexingFile)
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
       indexedFiles += getIndexedFilePath(file)
     }

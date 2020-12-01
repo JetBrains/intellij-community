@@ -34,7 +34,6 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
     totalIndexingTime = JsonDuration(totalIndexingTime),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles.toPositiveInt(),
-    tooLargeForIndexingFiles = tooLargeForIndexingFiles.biggestElements.map { it.toJson() }.takeIf { it.isNotEmpty() },
     indexedFiles = indexedFilePaths
   )
 }
@@ -76,7 +75,6 @@ fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory =
     times = times.toJson(),
     numberOfIndexingThreads = numberOfIndexingThreads,
     totalNumberOfTooLargeForIndexingFiles = totalNumberOfTooLargeFiles.toPositiveInt(),
-    tooLargeForIndexingFiles = totalTooLargeFiles.biggestElements.map { it.toJson() }.takeIf { it.isNotEmpty() },
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.percentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.percentages },
     scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },
