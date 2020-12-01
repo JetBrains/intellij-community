@@ -262,7 +262,7 @@
     <registryKey key="maven.print.import.stacktraces" defaultValue="false"
                  description="Print maven server stacktraces in log"/>
 
-    <registryKey key="maven.always.remove.bad.entries" defaultValue="false" description="Delete invalid maven Entries"/>
+    <registryKey key="maven.always.remove.bad.entries" defaultValue="true" description="Delete invalid maven Entries"/>
 
     <registryKey key="maven.new.project.model" defaultValue="false" description="Maven new project model"
                  restartRequired="true"/>
