@@ -237,7 +237,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       PluginEnabledState newState = getState(pluginId);
 
       if (oldState != newState ||
-          !newState.isEnabled() && myErrorPluginsToDisable.contains(pluginId)) {
+          newState.isDisabled() && myErrorPluginsToDisable.contains(pluginId)) {
         descriptorsByAction
           .computeIfAbsent(pair.getFirst(), __ -> new ArrayList<>())
           .add(descriptor);

@@ -316,14 +316,14 @@ public class InstalledPluginsTableModel {
 
   protected static boolean isEnabled(@NotNull PluginId pluginId,
                                      @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
-    PluginEnabledState enabled = enabledMap.get(pluginId);
-    return enabled == null || enabled.isEnabled();
+    PluginEnabledState state = enabledMap.get(pluginId);
+    return state == null || state.isEnabled();
   }
 
   protected static boolean isDisabled(@NotNull PluginId pluginId,
                                       @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
-    PluginEnabledState enabled = enabledMap.get(pluginId);
-    return enabled == null || !enabled.isEnabled();
+    PluginEnabledState state = enabledMap.get(pluginId);
+    return state == null || state.isDisabled();
   }
 
   protected static boolean isLoaded(@NotNull PluginId pluginId,

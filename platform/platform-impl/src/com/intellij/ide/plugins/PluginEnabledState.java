@@ -49,6 +49,10 @@ public enum PluginEnabledState {
     return myEnabled;
   }
 
+  public boolean isDisabled() {
+    return !myEnabled;
+  }
+
   public boolean isPerProject() {
     return myPerProject;
   }

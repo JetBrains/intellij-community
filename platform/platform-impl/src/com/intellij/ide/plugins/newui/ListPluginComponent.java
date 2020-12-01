@@ -194,7 +194,7 @@ public class ListPluginComponent extends JPanel {
             myEnableDisableButton = createEnableDisableButton(
               __ -> myPluginModel.changeEnableDisable(
                 Set.of(myPlugin),
-                PluginEnableDisableAction.globally(myPluginModel.getState(myPlugin).isEnabled())
+                PluginEnableDisableAction.globally(myPluginModel.getState(myPlugin).isDisabled())
               )
             );
           }
