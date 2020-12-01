@@ -184,8 +184,8 @@ public class ListPluginComponent extends JPanel {
         else {
           if (Registry.is("ide.plugins.per.project", false)) {
             myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
-              newState -> createEnableDisableAction(newState, List.of(this)),
-              () -> createUninstallAction(List.of())
+              action -> createEnableDisableAction(action, List.of(this)),
+              () -> createUninstallAction(List.of(this))
             );
             myEnableDisableButton.setBorder(JBUI.Borders.emptyLeft(5));
             myEnableDisableButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
