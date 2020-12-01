@@ -40,7 +40,7 @@ internal class SpaceReviewDetails(project: Project,
 
       val uiDisposable = Disposer.newDisposable()
 
-      val detailsTabInfo = TabInfo(DetailedInfoPanel(detailsVm)).apply {
+      val detailsTabInfo = TabInfo(SpaceReviewInfoTabPanel(detailsVm)).apply {
         text = SpaceBundle.message("review.tab.name.details")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
           currentReview.value = null
