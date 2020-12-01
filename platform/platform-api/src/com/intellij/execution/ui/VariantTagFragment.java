@@ -30,7 +30,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
                                                                BiConsumer<? super T, ? super V> setter,
                                                                Predicate<? super T> initialSelection) {
     Ref<VariantTagFragment<T, V>> ref = new Ref<>();
-    TagButton tagButton = new TagButton(name, () -> ref.get().toggle(false, null));
+    TagButton tagButton = new TagButton(name, (e) -> ref.get().toggle(false, null));
     VariantTagFragment<T, V> fragment = new VariantTagFragment<>(id, name, group, tagButton, variantsProvider, getter, setter, initialSelection);
     Disposer.register(fragment, tagButton);
     ref.set(fragment);

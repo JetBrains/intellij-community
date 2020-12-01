@@ -38,6 +38,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
@@ -78,7 +79,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   }
 
   private TaskButton createTag(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
-    TaskButton button = new TaskButton(provider, () -> {
+    TaskButton button = new TaskButton(provider, (e) -> {
       myChangeListener.run();
       updateAddLabel();
       myTagListener.accept(provider.getId(), false);
@@ -260,7 +261,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     private final JLabel myDropPlace = new JLabel(AllIcons.General.DropPlace);
     private BeforeRunTask<?> myTask;
 
-    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, @NotNull Runnable action) {
+    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, Consumer<AnActionEvent> action) {
       super(provider.getName(), action);
       Disposer.register(BeforeRunComponent.this, this);
       add(myDropPlace, JLayeredPane.DRAG_LAYER);

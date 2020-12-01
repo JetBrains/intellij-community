@@ -97,7 +97,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                                                          Predicate<? super Settings> getter,
                                                                          BiConsumer<? super Settings, ? super Boolean> setter) {
     Ref<SettingsEditorFragment<Settings, ?>> ref = new Ref<>();
-    TagButton tagButton = new TagButton(name, () -> ref.get().setSelected(false));
+    TagButton tagButton = new TagButton(name, (e) -> {
+      ref.get().setSelected(false);
+      ref.get().logChange(false, e);
+    });
     SettingsEditorFragment<Settings, ?> fragment = new SettingsEditorFragment<Settings, JComponent>(id, name, group, tagButton,
                                                                                                     (settings, button) -> button.setVisible(getter.test(settings)),
                                                                                                     (settings, button) -> setter.accept(settings, button.isVisible()),
