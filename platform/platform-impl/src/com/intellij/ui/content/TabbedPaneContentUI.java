@@ -4,6 +4,7 @@ package com.intellij.ui.content;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
@@ -163,6 +164,9 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
             int index = ui.tabForCoordinate(this, e.getX(), e.getY());
             if (index != -1) {
               setSelectedIndex(index);
+              // Always request a focus for tab component when user clicks on tab header.
+              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+                () -> IdeFocusManager.getGlobalInstance().requestFocus(MyTabbedPaneWrapper.this.getComponent(), true));
             }
             hideMenu();
           }
