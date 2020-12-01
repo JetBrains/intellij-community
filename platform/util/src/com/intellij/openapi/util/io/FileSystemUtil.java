@@ -29,6 +29,7 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public final class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
@@ -77,11 +78,10 @@ public final class FileSystemUtil {
   public static @Nullable FileAttributes getAttributes(@NotNull String path) {
     try {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("getAttributes(" + path + ")");
         long t = System.nanoTime();
         FileAttributes result = ourMediator.getAttributes(path);
-        t = (System.nanoTime() - t) / 1000;
-        LOG.trace("  " + t + " mks");
+        t = System.nanoTime() - t;
+        LOG.trace("getAttributes(" + path + ") = " + result + " in " + TimeUnit.NANOSECONDS.toMicros(t) + " mks");
         return result;
       }
       else {
@@ -89,7 +89,7 @@ public final class FileSystemUtil {
       }
     }
     catch (Exception e) {
-      LOG.warn(e);
+      LOG.warn("getAttributes(" + path + ")", e);
     }
     return null;
   }
@@ -611,7 +611,7 @@ public final class FileSystemUtil {
       public short MaximumLength;
       public WTypes.LPWSTR Buffer;
 
-      public UNICODE_STRING_P(String value) {
+      UNICODE_STRING_P(String value) {
         Buffer = new WTypes.LPWSTR(value);
         Length = MaximumLength = (short)(value.length() * 2);
       }
@@ -635,7 +635,8 @@ public final class FileSystemUtil {
 
     @Structure.FieldOrder("Flags")
     class FILE_CASE_SENSITIVE_INFORMATION_P extends Structure implements Structure.ByReference {
-      public long Flags;  // FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1
+      // initialize with something crazy to make sure the native call did write 0 or 1 to this field
+      public long Flags=0xffff_ffffL;  // FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1
     }
 
     int FileCaseSensitiveInformation = 71;

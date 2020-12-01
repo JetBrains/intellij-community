@@ -501,7 +501,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
            + ") ";
   }
 
-  private static void error(@NonNls String message, VirtualFileSystemEntry[] array, @NonNls Object... details) {
+  private static void error(@NonNls String message, VirtualFileSystemEntry @NotNull [] array, @NonNls Object @NotNull ... details) {
     String children = StringUtil.join(array, VirtualDirectoryImpl::verboseToString, "\n");
     String detailsStr = StringUtil.join(ContainerUtil.<Object, Object>map(details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o), "\n");
     throw new AssertionError(message + "; children: " + children + "\nDetails: " + detailsStr);
@@ -576,7 +576,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         fileCreated.consume(file, info);
       }
       VfsData vfsData = getVfsData();
-      List<ChildInfo> existingChildren = new AbstractList<ChildInfo>() {
+      List<ChildInfo> existingChildren = new AbstractList<>() {
         @Override
         public ChildInfo get(int index) {
           int id = oldIds[index];
@@ -607,15 +607,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myData.removeAdoptedName(childName);
       int indexInReal = findIndex(myData.myChildrenIds, childName);
       if (indexInReal < 0) {
-        insertChildAt(child, indexInReal);
+        int i = -indexInReal -1;
+        insertChildAt(child, i);
       }
       // else already stored
       assertConsistency(caseSensitive, child);
     }
   }
 
-  private void insertChildAt(@NotNull VirtualFileSystemEntry file, int negativeIndex) {
-    int i = -negativeIndex -1;
+  private void insertChildAt(@NotNull VirtualFileSystemEntry file, int i) {
     int id = file.getId();
     assert id > 0 : file +": "+id;
     myData.myChildrenIds = ArrayUtil.insert(myData.myChildrenIds, i, id);
@@ -702,7 +702,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  private void validateAgainst(@NotNull List<VFileCreateEvent> childrenToCreate, @NotNull Set<CharSequence> existingNames) {
+  private void validateAgainst(@NotNull List<VFileCreateEvent> childrenToCreate, @NotNull Set<? extends CharSequence> existingNames) {
     for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
       VFileCreateEvent event = childrenToCreate.get(i);
       String childName = event.getChildName();
