@@ -14,21 +14,22 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class CachedValueProfiler {
   private static final Logger LOG = Logger.getInstance(CachedValueProfiler.class);
 
   public interface EventConsumer {
-    void onFrameEnter(long frameId, StackTraceElement place, long parentId, long time);
+    void onFrameEnter(long frameId, Supplier<StackTraceElement> place, long parentId, long time);
 
     void onFrameExit(long frameId, long start, long computed, long time);
 
-    void onValueComputed(long frameId, StackTraceElement place, long start, long time);
+    void onValueComputed(long frameId, Supplier<StackTraceElement> place, long start, long time);
 
-    void onValueUsed(long frameId, StackTraceElement place, long start, long time);
+    void onValueUsed(long frameId, Supplier<StackTraceElement> place, long start, long time);
 
-    void onValueInvalidated(long frameId, StackTraceElement place, long start, long time);
+    void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long start, long time);
   }
 
   private static final ThreadLocal<ThreadContext> ourContext = ThreadLocal.withInitial(() -> new ThreadContext());
@@ -58,7 +59,7 @@ public final class CachedValueProfiler {
     final long id = ourFrameId.incrementAndGet();
     final Frame parent;
 
-    private final Map<CachedValueProvider.Result<?>, StackTraceElement> places = new HashMap<>();
+    private final Map<CachedValueProvider.Result<?>, Supplier<StackTraceElement>> places = new HashMap<>();
     private long timeConfigured, timeComputed;
 
     Frame() {
@@ -67,7 +68,7 @@ public final class CachedValueProfiler {
       context.topFrame = this;
       if (context.consumer == null || context.consumer != ourEventConsumer) return;
 
-      StackTraceElement place = findCallerPlace();
+      Supplier<StackTraceElement> place = place(CachedValueProfiler::findCallerPlace);
       context.consumer.onFrameEnter(id, place, parent == null ? 0 : parent.id, start);
       timeConfigured = currentTime();
       ourFrameOverhead.count.incrementAndGet();
@@ -115,9 +116,10 @@ public final class CachedValueProfiler {
     Frame frame = context.topFrame;
     if (frame == null) return;
 
-    StackTraceElement place = original == null ? findComputationPlace() :
-                              original instanceof CachedValueProvider.Result ? frame.places.get(original) :
-                              original instanceof Function ? findCallerPlace() : null;
+    Supplier<StackTraceElement> place =
+      original == null ? place(CachedValueProfiler::findComputationPlace) :
+      original instanceof CachedValueProvider.Result ? frame.places.get(original) :
+      original instanceof Function ? place(CachedValueProfiler::findCallerPlace) : null;
     if (place == null) return;
 
     frame.places.put(result, place);
@@ -130,16 +132,23 @@ public final class CachedValueProfiler {
     ThreadContext context = ourContext.get();
     if (context.consumer == null) return null;
 
-    StackTraceElement place = frame.places.get(result);
-    if (place == null) place = findCallerPlace();
+    Supplier<StackTraceElement> place = frame.places.get(result);
+    if (place == null) place = place(CachedValueProfiler::findCallerPlace);
 
     context.consumer.onValueComputed(frame.id, place, frame.timeConfigured, time);
     return new ValueTracker(place, time);
   }
 
+  static Supplier<StackTraceElement> place(Function<Throwable, StackTraceElement> function) {
+    // Use async stack trace processing to reduce overhead.
+    // Both plain Throwable#getStackTrace and StackWalker API are slower.
+    Throwable throwable = new Throwable();
+    return () -> function.apply(throwable);
+  }
+
   @Nullable
-  static StackTraceElement findComputationPlace() {
-    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+  static StackTraceElement findComputationPlace(Throwable stackTraceHolder) {
+    StackTraceElement[] stackTrace = stackTraceHolder.getStackTrace();
     int idx, len;
     for (idx = 2, len = stackTrace.length; idx < len; idx ++) {
       String method = stackTrace[idx].getMethodName();
@@ -167,9 +176,8 @@ public final class CachedValueProfiler {
   }
 
   @NotNull
-  static StackTraceElement findCallerPlace() {
-    // todo use StackWalker api
-    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+  static StackTraceElement findCallerPlace(Throwable stackTraceHolder) {
+    StackTraceElement[] stackTrace = stackTraceHolder.getStackTrace();
     for (int idx = 2, len = stackTrace.length; idx < len; idx++) {
       String className = stackTrace[idx].getClassName();
       if (className.startsWith("com.intellij.util.CachedValue")) continue;
@@ -187,10 +195,10 @@ public final class CachedValueProfiler {
   }
 
   public static final class ValueTracker {
-    final StackTraceElement place;
+    final Supplier<StackTraceElement> place;
     final long start;
 
-    ValueTracker(@NotNull StackTraceElement place, long time) {
+    ValueTracker(@NotNull Supplier<StackTraceElement> place, long time) {
       this.place = place;
       this.start = time;
     }

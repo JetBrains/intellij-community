@@ -34,6 +34,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -106,7 +107,7 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
   }
 
   @Override
-  public void onFrameEnter(long frameId, StackTraceElement place, long parentId, long time) {
+  public void onFrameEnter(long frameId, Supplier<StackTraceElement> place, long parentId, long time) {
     myQueue.offer(() -> myWriter.onFrameEnter(frameId, place, parentId, time));
   }
 
@@ -116,17 +117,17 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
   }
 
   @Override
-  public void onValueComputed(long frameId, StackTraceElement place, long start, long time) {
+  public void onValueComputed(long frameId, Supplier<StackTraceElement> place, long start, long time) {
     myQueue.offer(() -> myWriter.onValueComputed(frameId, place, start, time));
   }
 
   @Override
-  public void onValueUsed(long frameId, StackTraceElement place, long start, long time) {
+  public void onValueUsed(long frameId, Supplier<StackTraceElement> place, long start, long time) {
     myQueue.offer(() -> myWriter.onValueUsed(frameId, place, start, time));
   }
 
   @Override
-  public void onValueInvalidated(long frameId, StackTraceElement place, long start, long time) {
+  public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long start, long time) {
     myQueue.offer(() -> myWriter.onValueInvalidated(frameId, place, start, time));
   }
 
@@ -249,12 +250,12 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onFrameEnter(long frameId, StackTraceElement place, long parentId, long time) {
+    public void onFrameEnter(long frameId, Supplier<StackTraceElement> place, long parentId, long time) {
       try {
         myWriter.beginObject();
         myWriter.name("type").value("frame-enter");
         myWriter.name("frame").value(frameId);
-        myWriter.name("place").value(placeToString(place));
+        myWriter.name("place").value(placeToString(place.get()));
         myWriter.name("parent").value(parentId);
         myWriter.name("time").value(time);
         myWriter.endObject();
@@ -281,12 +282,12 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onValueComputed(long frameId, StackTraceElement place, long start, long time) {
+    public void onValueComputed(long frameId, Supplier<StackTraceElement> place, long start, long time) {
       try {
         myWriter.beginObject();
         myWriter.name("type").value("value-computed");
         myWriter.name("frame").value(frameId);
-        myWriter.name("place").value(placeToString(place));
+        myWriter.name("place").value(placeToString(place.get()));
         myWriter.name("start").value(start);
         myWriter.name("time").value(time);
         myWriter.endObject();
@@ -297,12 +298,12 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onValueUsed(long frameId, StackTraceElement place, long start, long time) {
+    public void onValueUsed(long frameId, Supplier<StackTraceElement> place, long start, long time) {
       try {
         myWriter.beginObject();
         myWriter.name("type").value("value-used");
         myWriter.name("frame").value(frameId);
-        myWriter.name("place").value(placeToString(place));
+        myWriter.name("place").value(placeToString(place.get()));
         myWriter.name("start").value(start);
         myWriter.name("time").value(time);
         myWriter.endObject();
@@ -313,12 +314,12 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onValueInvalidated(long frameId, StackTraceElement place, long start, long time) {
+    public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long start, long time) {
       try {
         myWriter.beginObject();
         myWriter.name("type").value("value-invalidated");
         myWriter.name("frame").value(frameId);
-        myWriter.name("place").value(placeToString(place));
+        myWriter.name("place").value(placeToString(place.get()));
         myWriter.name("start").value(start);
         myWriter.name("time").value(time);
         myWriter.endObject();
@@ -345,15 +346,15 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
 
       reader.beginArray();
       String type = "";
-      Map<String, StackTraceElement> places = FactoryMap.create(CachedValueProfilerDumpHelper::placeFromString);
+      Map<String, StackTraceElement> places = FactoryMap.create(o -> placeFromString(o));
       while (reader.hasNext()) {
-        StackTraceElement place = null;
+        StackTraceElement place0 = null;
         long frame = 0, parent = 0, start = 0, computed = 0, time = 0;
         reader.beginObject();
         while (reader.hasNext()) {
           String name = reader.nextName();
           if ("type".equals(name)) type = reader.nextString();
-          else if ("place".equals(name)) place = places.get(reader.nextString());
+          else if ("place".equals(name)) place0 = places.get(reader.nextString());
           else if ("frame".equals(name)) frame = reader.nextLong();
           else if ("parent".equals(name)) parent = reader.nextLong();
           else if ("start".equals(name)) start = reader.nextLong();
@@ -362,11 +363,12 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
           else throw new IOException("unexpected: " + name);
         }
         reader.endObject();
-        if ("frame-enter".equals(type)) consumer.onFrameEnter(frame, place, parent, time);
+        StackTraceElement place = place0;
+        if ("frame-enter".equals(type)) consumer.onFrameEnter(frame, () -> place, parent, time);
         else if ("frame-exit".equals(type)) consumer.onFrameExit(frame, start, computed, time);
-        else if ("value-computed".equals(type)) consumer.onValueComputed(frame, place, start, time);
-        else if ("value-used".equals(type)) consumer.onValueUsed(frame, place, start, time);
-        else if ("value-invalidated".equals(type)) consumer.onValueInvalidated(frame, place, start, time);
+        else if ("value-computed".equals(type)) consumer.onValueComputed(frame, () -> place, start, time);
+        else if ("value-used".equals(type)) consumer.onValueUsed(frame, () -> place, start, time);
+        else if ("value-invalidated".equals(type)) consumer.onValueInvalidated(frame, () -> place, start, time);
       }
       reader.endArray();
       reader.endObject();
