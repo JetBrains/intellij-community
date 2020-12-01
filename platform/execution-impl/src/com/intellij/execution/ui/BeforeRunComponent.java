@@ -6,6 +6,7 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.impl.UnknownBeforeRunTaskProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
@@ -37,6 +38,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
@@ -77,7 +79,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   }
 
   private TaskButton createTag(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
-    TaskButton button = new TaskButton(provider, () -> {
+    TaskButton button = new TaskButton(provider, (e) -> {
       myChangeListener.run();
       updateAddLabel();
       myTagListener.accept(provider.getId(), false);
@@ -149,7 +151,12 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     myTags.clear();
     List<BeforeRunTask<?>> tasks = s.getManager().getBeforeRunTasks(s.getConfiguration());
     for (BeforeRunTask<?> task : tasks) {
-      createTag(ContainerUtil.find(getProviders(), provider -> task.getProviderId() == provider.getId())).setTask(task);
+      BeforeRunTaskProvider taskProvider =
+        ContainerUtil.find(getProviders(), provider -> task.getProviderId() == provider.getId());
+      if (taskProvider == null) {
+        taskProvider = new UnknownBeforeRunTaskProvider(task.getProviderId().toString());
+      }
+      createTag(taskProvider).setTask(task);
     }
     buildPanel();
   }
@@ -254,7 +261,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     private final JLabel myDropPlace = new JLabel(AllIcons.General.DropPlace);
     private BeforeRunTask<?> myTask;
 
-    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, @NotNull Runnable action) {
+    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, Consumer<AnActionEvent> action) {
       super(provider.getName(), action);
       Disposer.register(BeforeRunComponent.this, this);
       add(myDropPlace, JLayeredPane.DRAG_LAYER);

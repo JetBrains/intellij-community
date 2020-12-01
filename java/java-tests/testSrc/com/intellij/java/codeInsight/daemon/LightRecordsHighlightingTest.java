@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.java.refactoring.RenameFieldTest;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -90,6 +91,15 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
 
   public void testRenameGetterOverloadPresent() {
     doTestRename();
+  }
+  public void testRenameComponentUsedInOuterClass() {
+    doTestRename();
+  }
+
+  public void testRenameOverloads() {
+    doTest();
+    RenameFieldTest.performRenameWithAutomaticRenamers("baz", getEditor(), getProject());
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
   private void doTestRename() {

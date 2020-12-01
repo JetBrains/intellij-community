@@ -114,6 +114,10 @@ public class ExternalSystemException extends RuntimeException {
       }
       if (first) {
         first = false;
+        // do not append same exception.message twice
+        if (m.equals(message)) {
+          continue;
+        }
       }
       else if (buffer.length() > 0) {
         buffer.append("\n");

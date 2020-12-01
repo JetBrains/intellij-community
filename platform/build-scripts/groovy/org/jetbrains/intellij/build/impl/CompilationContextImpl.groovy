@@ -7,7 +7,11 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.GradleRunner
 import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.jps.model.JpsElementFactory
@@ -25,6 +29,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 
@@ -492,13 +497,13 @@ class CompilationContextImpl implements CompilationContext {
 @CompileStatic
 class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
-    this.communityHome = communityHome
+    super(Paths.get(communityHome), Paths.get("$buildOutputRoot/temp"))
+
     this.projectHome = projectHome
     this.buildOutputRoot = buildOutputRoot
     this.jdkHome = jdkHome
     this.kotlinHome = kotlinHome
     artifacts = "$buildOutputRoot/artifacts"
     distAll = "$buildOutputRoot/dist.all"
-    temp = "$buildOutputRoot/temp"
   }
 }

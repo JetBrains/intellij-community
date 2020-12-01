@@ -8,7 +8,8 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 
 final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
-  private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = (RefHashMap<K, ValueReference<K,V>>)ContainerUtil.<K, ValueReference<K,V>>createSoftMap();
+  @SuppressWarnings("deprecation")
+  private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = new SoftHashMap<>(4);
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
   SoftKeySoftValueHashMap() {

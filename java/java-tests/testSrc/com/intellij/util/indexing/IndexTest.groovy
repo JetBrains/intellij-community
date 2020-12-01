@@ -32,6 +32,7 @@ import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -57,6 +58,7 @@ import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
 import com.intellij.psi.search.*
 import com.intellij.psi.stubs.*
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -78,7 +80,7 @@ import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
-import com.intellij.util.io.PersistentHashMapImpl
+import com.intellij.util.io.PersistentMapImpl
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
@@ -978,8 +980,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     try {
       MapIndexStorage<String, String> storage = assertInstanceOf(index, MapReduceIndex.class).getStorage()
       PersistentHashMap<String, UpdatableValueContainer<String>> map = storage.getIndexMap()
-      assertTrue(PersistentHashMapImpl.unwrap(map).getReadOnly())
-      assertTrue(PersistentHashMapImpl.unwrap(map).getValueStorage().isReadOnly())
+      assertTrue(PersistentMapImpl.unwrap(map).getReadOnly())
+      assertTrue(PersistentMapImpl.unwrap(map).getValueStorage().isReadOnly())
     }
     finally {
       index.dispose()
@@ -1410,19 +1412,19 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     // index queries aren't cached
     5.times {
-      assert clazz == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) { stubQuery.getValue() }
+      assert clazz == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(stubQuery))
     }
     assert indexQueries >= 5
 
     indexQueries = 0
-    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) { idQuery.getValue() }
-    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) { idQuery.getValue() }
+    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, asComputable(idQuery))
+    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(idQuery))
     assert indexQueries >= 2
 
     // non-index queries should work as usual
     3.times {
-      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) { plainValue.getValue() }
-      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) { plainValue.getValue() }
+      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, asComputable(plainValue))
+      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(plainValue))
     }
     assert plainQueries > 0 && plainQueries < 3*2
 
@@ -1465,4 +1467,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   }
 
+  private <T> ThrowableComputable<T, RuntimeException> asComputable(CachedValue<T> cachedValue) {
+    return new ThrowableComputable<T, RuntimeException>() {
+      @Override
+      T compute() throws RuntimeException {
+        return cachedValue.getValue()
+      }
+    }
+  }
 }

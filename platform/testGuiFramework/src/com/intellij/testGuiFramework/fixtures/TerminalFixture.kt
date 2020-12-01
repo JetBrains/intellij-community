@@ -32,7 +32,7 @@ class TerminalFixture(project: Project, robot: Robot, toolWindowId: String) : To
 
   private val myJBTerminalPanel: JBTerminalPanel
   private val terminalTextBuffer: TerminalTextBuffer
-  private val LOG: Logger = Logger.getInstance("#com.intellij.testGuiFramework.fixtures.TerminalFixture")
+  private val LOG: Logger = Logger.getInstance(TerminalFixture::class.java)
 
   init {
     val content: Content = this.getContent(getActiveTabName()) ?: throw Exception("Unable to get content of terminal tool window")

@@ -53,7 +53,6 @@ import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -156,19 +155,9 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       patchJavaCommandLineParams((JavaCommandLine)state, env);
     }
 
-    AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
-    state.prepareTargetToCommandExecution(env, () -> {
-      RunContentDescriptor descriptor = null;
-      try {
-        descriptor = executeJavaState(state, env, null);
-      }
-      catch (Throwable e) {
-        LOG.warn("Failed to execute java run configuration async", e);
-        promise.setError(e.getLocalizedMessage());
-      }
-      promise.setResult(descriptor);
+    return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute java run configuration async", () -> {
+      return executeJavaState(state, env, null);
     });
-    return promise;
   }
 
   private @Nullable RunContentDescriptor executeJavaState(@NotNull RunProfileState state,

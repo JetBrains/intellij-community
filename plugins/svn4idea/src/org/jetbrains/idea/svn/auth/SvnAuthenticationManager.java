@@ -21,8 +21,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
 import static org.jetbrains.idea.svn.config.SvnIniFile.*;
 
-public class SvnAuthenticationManager {
-
+public final class SvnAuthenticationManager {
   // TODO Looks reasonable to introduce some AuthType/AuthKind class
   public static final @NonNls String PASSWORD = "svn.simple";
   public static final @NonNls String SSL = "svn.ssl.client-passphrase";
@@ -33,29 +32,23 @@ public class SvnAuthenticationManager {
 
   private final @NotNull Project myProject;
   private final @NotNull Path myConfigDirectory;
-  private final NotNullLazyValue<Couple<SvnIniFile>> myConfigFile = new NotNullLazyValue<Couple<SvnIniFile>>() {
-    @NotNull
-    @Override
-    protected Couple<SvnIniFile> compute() {
-      SvnIniFile userConfig = new SvnIniFile(myConfigDirectory.resolve(CONFIG_FILE_NAME));
-      SvnIniFile systemConfig = new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(CONFIG_FILE_NAME));
-      return Couple.of(systemConfig, userConfig);
-    }
-  };
-  private final NotNullLazyValue<Couple<SvnIniFile>> myServersFile = new NotNullLazyValue<Couple<SvnIniFile>>() {
-    @NotNull
-    @Override
-    protected Couple<SvnIniFile> compute() {
-      SvnIniFile userConfig = new SvnIniFile(myConfigDirectory.resolve(SERVERS_FILE_NAME));
-      SvnIniFile systemConfig = new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME));
-      return Couple.of(systemConfig, userConfig);
-    }
-  };
+  private final NotNullLazyValue<Couple<SvnIniFile>> myConfigFile;
+  private final NotNullLazyValue<Couple<SvnIniFile>> myServersFile;
   private AuthenticationProvider myProvider;
 
   public SvnAuthenticationManager(@NotNull Project project, @NotNull Path configDirectory) {
     myProject = project;
     myConfigDirectory = configDirectory;
+    myConfigFile = NotNullLazyValue.lazy(() -> {
+        SvnIniFile userConfig = new SvnIniFile(myConfigDirectory.resolve(CONFIG_FILE_NAME));
+        SvnIniFile systemConfig = new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(CONFIG_FILE_NAME));
+        return Couple.of(systemConfig, userConfig);
+      });
+    myServersFile = NotNullLazyValue.lazy(() -> {
+        SvnIniFile userConfig = new SvnIniFile(myConfigDirectory.resolve(SERVERS_FILE_NAME));
+        SvnIniFile systemConfig = new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME));
+        return Couple.of(systemConfig, userConfig);
+      });
   }
 
   public AuthenticationData requestFromCache(String kind, String realm) {

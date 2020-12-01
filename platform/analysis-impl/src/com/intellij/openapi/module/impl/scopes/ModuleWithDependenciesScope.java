@@ -14,8 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private final ProjectFileIndexImpl myProjectFileIndex;
 
   private volatile Set<Module> myModules;
-  private final TObjectIntHashMap<VirtualFile> myRoots;
+  private final Object2IntOpenHashMap<VirtualFile> myRoots;
 
   ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
     super(module.getProject());
@@ -49,7 +48,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     myRoots = calcRoots(null);
   }
 
-  private TObjectIntHashMap<VirtualFile> calcRoots(@Nullable ModelBranch branch) {
+  private Object2IntOpenHashMap<VirtualFile> calcRoots(@Nullable ModelBranch branch) {
     Set<VirtualFile> roots = new LinkedHashSet<>();
     if (hasOption(CONTENT)) {
       Set<Module> modules = calcModules();
@@ -73,7 +72,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     }
 
     int i = 1;
-    TObjectIntHashMap<VirtualFile> map = new TObjectIntHashMap<>();
+    Object2IntOpenHashMap<VirtualFile> map = new Object2IntOpenHashMap<>(roots.size());
     for (VirtualFile root : roots) {
       map.put(root, i++);
     }
@@ -128,7 +127,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     Set<Module> allModules = myModules;
     if (allModules == null) {
-      myModules = allModules = new THashSet<>(calcModules());
+      myModules = allModules = new HashSet<>(calcModules());
     }
     return allModules.contains(aModule);
   }
@@ -146,23 +145,23 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
-    TObjectIntHashMap<VirtualFile> roots = getRoots(file);
+    Object2IntOpenHashMap<VirtualFile> roots = getRoots(file);
     if (hasOption(CONTENT)) {
-      return roots.contains(ProjectFileIndexImpl.getContentRootForFile(info, file, true));
+      return roots.containsKey(ProjectFileIndexImpl.getContentRootForFile(info, file, true));
     }
-    if (ProjectFileIndexImpl.isFileInContent(file, info) && roots.contains(ProjectFileIndexImpl.getSourceRootForFile(file, info))) {
+    if (ProjectFileIndexImpl.isFileInContent(file, info) && roots.containsKey(ProjectFileIndexImpl.getSourceRootForFile(file, info))) {
       return true;
     }
-    return roots.contains(ProjectFileIndexImpl.getClassRootForFile(file, info));
+    return roots.containsKey(ProjectFileIndexImpl.getClassRootForFile(file, info));
   }
 
-  private TObjectIntHashMap<VirtualFile> getRoots(@NotNull VirtualFile file) {
+  private Object2IntOpenHashMap<VirtualFile> getRoots(@NotNull VirtualFile file) {
     ModelBranch branch = ModelBranch.getFileBranch(file);
     return branch != null ? obtainBranchRoots(branch) : myRoots;
   }
 
-  private TObjectIntHashMap<VirtualFile> obtainBranchRoots(ModelBranch branch) {
-    Pair<Long, TObjectIntHashMap<VirtualFile>> pair = branch.getUserData(BRANCH_ROOTS);
+  private Object2IntOpenHashMap<VirtualFile> obtainBranchRoots(ModelBranch branch) {
+    Pair<Long, Object2IntOpenHashMap<VirtualFile>> pair = branch.getUserData(BRANCH_ROOTS);
     long modCount = branch.getBranchedVfsStructureModificationCount();
     if (pair == null || pair.first != modCount) {
       pair = Pair.create(modCount, calcRoots(branch));
@@ -170,7 +169,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     return pair.second;
   }
 
-  private static final Key<Pair<Long, TObjectIntHashMap<VirtualFile>>> BRANCH_ROOTS = Key.create("BRANCH_ROOTS");
+  private static final Key<Pair<Long, Object2IntOpenHashMap<VirtualFile>>> BRANCH_ROOTS = Key.create("BRANCH_ROOTS");
 
   @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
@@ -181,9 +180,9 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     if (r1 == null) return -1;
     if (r2 == null) return 1;
 
-    TObjectIntHashMap<VirtualFile> roots = getRoots(file1);
-    int i1 = roots.get(r1);
-    int i2 = roots.get(r2);
+    Object2IntOpenHashMap<VirtualFile> roots = getRoots(file1);
+    int i1 = roots.getInt(r1);
+    int i2 = roots.getInt(r2);
     if (i1 == 0 && i2 == 0) return 0;
     if (i1 > 0 && i2 > 0) return i2 - i1;
     return i1 > 0 ? 1 : -1;
@@ -198,8 +197,8 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @TestOnly
   public Collection<VirtualFile> getRoots() {
-    @SuppressWarnings("unchecked") List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
-    result.sort(Comparator.comparingInt(myRoots::get));
+    List<VirtualFile> result = new ArrayList<>(myRoots.keySet());
+    result.sort(Comparator.comparingInt(myRoots::getInt));
     return result;
   }
 

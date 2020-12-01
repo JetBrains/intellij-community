@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
@@ -58,6 +59,14 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     if (file != null) {
       return VfsPresentationUtil.getPresentableNameForUI(element.getProject(), file);
     }
+
+    if (element instanceof NavigationItem) {
+      String name = Optional.ofNullable(((NavigationItem)element).getPresentation())
+        .map(presentation -> presentation.getPresentableText())
+        .orElse(null);
+      if (name != null) return name;
+    }
+
     String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
     return StringUtil.notNullize(name, "<unnamed>");
   }

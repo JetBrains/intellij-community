@@ -8,6 +8,7 @@ import com.intellij.ui.ClickListener
 import com.intellij.util.ui.*
 import com.intellij.util.ui.codereview.SingleValueModel
 import com.intellij.util.ui.codereview.SingleValueModelImpl
+import com.intellij.util.ui.codereview.timeline.thread.TimelineThreadCommentsPanel.Companion.FOLD_THRESHOLD
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.*
 import java.awt.event.MouseEvent
@@ -18,91 +19,121 @@ import javax.swing.ListModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
+/**
+ * Shows thread items with folding if there are more than [FOLD_THRESHOLD] of them
+ */
 class TimelineThreadCommentsPanel<T>(
-  commentsModel: ListModel<T>,
-  commentComponentFactory: (T) -> JComponent,
+  private val commentsModel: ListModel<T>,
+  private val commentComponentFactory: (T) -> JComponent,
   offset: Int = UI.scale(8)
-) : JPanel(VerticalLayout(offset)) {
+) : BorderLayoutPanel() {
   companion object {
     private const val FOLD_THRESHOLD = 3
   }
 
-  init {
+  private val foldModel = SingleValueModelImpl(true)
+
+  private val unfoldButtonPanel = BorderLayoutPanel().apply {
     isOpaque = false
-    putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-    UnfoldController(commentsModel, this, commentComponentFactory)
+    border = JBUI.Borders.emptyLeft(30)
+
+    addToLeft(UnfoldButton(foldModel).apply {
+      foreground = UIUtil.getLabelForeground()
+      font = UIUtil.getButtonFont()
+    })
   }
 
-  private class UnfoldController<T>(
-    private val model: ListModel<T>,
-    private val panel: JPanel,
-    private val componentFactory: (T) -> JComponent
-  ) {
+  private val foldablePanel = FoldablePanel(unfoldButtonPanel, offset).apply {
+    for (i in 0 until commentsModel.size) {
+      addComponent(commentComponentFactory(commentsModel.getElementAt(i)), i)
+    }
+  }
 
-    private val foldModel = SingleValueModelImpl(true)
-    private val unfoldButtonPanel = BorderLayoutPanel().apply {
-      isOpaque = false
-      border = JBUI.Borders.emptyLeft(30)
+  init {
+    isOpaque = false
+    addToCenter(foldablePanel)
+    putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
 
-      addToLeft(UnfoldButton(foldModel).apply {
-        foreground = UIUtil.getLabelForeground()
-        font = UIUtil.getButtonFont()
-      })
+    commentsModel.addListDataListener(object : ListDataListener {
+      override fun intervalRemoved(e: ListDataEvent) {
+        for (i in e.index1 downTo e.index0) {
+          foldablePanel.removeComponent(i)
+        }
+        updateFolding(foldModel.value)
+        foldablePanel.revalidate()
+        foldablePanel.repaint()
+      }
+
+      override fun intervalAdded(e: ListDataEvent) {
+        for (i in e.index0..e.index1) {
+          foldablePanel.addComponent(commentComponentFactory(commentsModel.getElementAt(i)), i)
+        }
+        foldablePanel.revalidate()
+        foldablePanel.repaint()
+      }
+
+      override fun contentsChanged(e: ListDataEvent) {
+        for (i in e.index1 downTo e.index0) {
+          foldablePanel.removeComponent(i)
+        }
+        for (i in e.index0..e.index1) {
+          foldablePanel.addComponent(commentComponentFactory(commentsModel.getElementAt(i)), i)
+        }
+        foldablePanel.validate()
+        foldablePanel.repaint()
+      }
+    })
+
+    foldModel.addValueUpdatedListener { updateFolding(it) }
+    updateFolding(true)
+  }
+
+  private fun updateFolding(folded: Boolean) {
+    val shouldFold = folded && commentsModel.size > FOLD_THRESHOLD
+    unfoldButtonPanel.isVisible = shouldFold
+
+    if (commentsModel.size == 0) {
+      return
     }
 
+    foldablePanel.getModelComponent(0).isVisible = true
+    foldablePanel.getModelComponent(commentsModel.size - 1).isVisible = true
+
+    for (i in 1 until commentsModel.size - 1) {
+      foldablePanel.getModelComponent(i).isVisible = !shouldFold
+    }
+  }
+
+  /**
+   * [FoldablePanel] hides [unfoldButton] and allows to use this panel like it doesn't contain it
+   */
+  private class FoldablePanel(private val unfoldButton: JComponent, offset: Int) : JPanel(VerticalLayout(offset)) {
     init {
-      model.addListDataListener(object : ListDataListener {
-        override fun intervalRemoved(e: ListDataEvent) {
-          for (i in e.index1 downTo e.index0) {
-            panel.remove(i + 1)
-          }
-          updateFolding(foldModel.value)
-          panel.revalidate()
-          panel.repaint()
-        }
-
-        override fun intervalAdded(e: ListDataEvent) {
-          for (i in e.index0..e.index1) {
-            panel.add(componentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i + 1)
-          }
-          panel.validate()
-          panel.repaint()
-        }
-
-        override fun contentsChanged(e: ListDataEvent) {
-          panel.revalidate()
-          panel.repaint()
-        }
-      })
-      foldModel.addValueUpdatedListener { updateFolding(it) }
-
-      if (model.size != 0) {
-        panel.add(componentFactory(model.getElementAt(0)), VerticalLayout.FILL_HORIZONTAL)
-      }
-      panel.add(unfoldButtonPanel)
-
-      for (i in 1 until model.size) {
-        panel.add(componentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL)
-      }
-      updateFolding(foldModel.value)
+      isOpaque = false
+      add(unfoldButton, VerticalLayout.FILL_HORIZONTAL)
     }
 
-    private fun updateFolding(folded: Boolean) {
-      val shouldFold = folded && model.size > FOLD_THRESHOLD
-      unfoldButtonPanel.isVisible = shouldFold
-
-      if (model.size == 0) {
-        return
-      }
-
-      val lastComponentIdx = panel.componentCount - 1
-      for (i in 2 until lastComponentIdx) {
-        panel.getComponent(i).isVisible = !shouldFold
-      }
-      if (shouldFold) {
-        panel.getComponent(lastComponentIdx).isVisible = true
-      }
+    fun addComponent(component: JComponent, index: Int) {
+      remove(unfoldButton)
+      add(component, VerticalLayout.FILL_HORIZONTAL, index)
+      add(unfoldButton, VerticalLayout.FILL_HORIZONTAL, 1)
     }
+
+    fun removeComponent(index: Int) {
+      remove(unfoldButton)
+      remove(index)
+
+      val unfoldButtonIndex = if (components.isEmpty()) 0 else 1
+      add(unfoldButton, VerticalLayout.FILL_HORIZONTAL, unfoldButtonIndex)
+    }
+
+    fun getModelComponent(modelIndex: Int): Component =
+      if (modelIndex == 0) {
+        getComponent(0)
+      }
+      else {
+        getComponent(modelIndex + 1)
+      }
   }
 
   private class UnfoldButton(model: SingleValueModel<Boolean>) : JComponent() {

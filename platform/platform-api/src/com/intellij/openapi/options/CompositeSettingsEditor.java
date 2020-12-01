@@ -11,13 +11,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<Settings> {
   public static final Logger LOG = Logger.getInstance(CompositeSettingsEditor.class);
 
-  private Collection<SettingsEditor<Settings>> myEditors;
+  private Collection<SettingsEditor<Settings>> myEditors = Collections.emptyList();
   private SettingsEditorListener<Settings> myChildSettingsListener;
   private SynchronizationController mySyncController;
   private boolean myIsDisposed;

@@ -179,7 +179,13 @@ public class MavenServerCMDState extends CommandLineState {
       mavenVersion = distribution.getVersion();
     }
     MavenLog.LOG.debug("", distribution, " chosen as maven home");
-    assert mavenVersion != null;
+    if(mavenVersion == null ){
+      if(ApplicationManager.getApplication().isInternal()) {
+        throw new RuntimeException("Cannot resolve embedded maven home. Consider running setupBundledMaven.gradle script");
+      } else {
+        throw new RuntimeException("Cannot resolve embedded maven home");
+      }
+    }
     return new Pair<>(mavenHome, mavenVersion);
   }
 

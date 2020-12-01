@@ -3,14 +3,12 @@ package com.intellij.execution.process.elevation.settings
 
 import com.intellij.execution.process.elevation.ElevationBundle
 import com.intellij.ide.nls.NlsMessages
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import java.awt.Component
 import javax.swing.DefaultListCellRenderer
@@ -27,30 +25,25 @@ class ElevationSettingsConfigurable : BoundConfigurable(ElevationBundle.message(
 
   override fun createPanel(): DialogPanel = panel {
     row {
-      val productName = ApplicationNamesInfo.getInstance().fullProductName
       val firstSentence =
         if (SystemInfo.isUnix) ElevationBundle.message("text.running.privileged.processes.requires.sudo.authorization")
         else ElevationBundle.message("text.running.privileged.processes.requires.uac.authorization")
-      val explanatoryText = ElevationBundle.message("text.elevation.explanatory.comment", productName)
-      val warningHtml = ElevationBundle.message("text.elevation.explanatory.warning.html")
-      JLabel(HtmlBuilder()
-               .append(HtmlChunk.p().addText(firstSentence)).br()
-               .append(HtmlChunk.p().addText(explanatoryText)).br()
-               .append(HtmlChunk.p().addRaw(warningHtml))
-               .wrapWithHtmlBody()
-               .toString())  // UI DSL label() doesn't support HTML
-        .invoke(grow)
-    }.largeGapAfter()
+      JLabel().apply { // UI DSL label() doesn't support HTML
+        text = ExplanatoryTextUiUtil.message(firstSentence, fontMetrics = getFontMetrics(font))
+      }.invoke(grow)
+    }
 
     row {
-      val keepAuth = checkBox(if (SystemInfo.isUnix) ElevationBundle.message("checkbox.keep.sudo.authorization.for")
-                              else ElevationBundle.message("checkbox.keep.uac.authorization.for"),
-                              settings::isKeepAuth)
+      lateinit var keepAuth: CellBuilder<JBCheckBox>
+      cell {
+        keepAuth = checkBox(if (SystemInfo.isUnix) ElevationBundle.message("checkbox.keep.sudo.authorization.for")
+                            else ElevationBundle.message("checkbox.keep.uac.authorization.for"),
+                            settings::isKeepAuth)
 
-      comboBox(CollectionComboBoxModel(getTimeLimitItems(settings.quotaTimeLimitMs)),
-               settings::quotaTimeLimitMs, DurationListCellRenderer())
-        .enableIf(keepAuth.selected)
-
+        comboBox(CollectionComboBoxModel(getTimeLimitItems(settings.quotaTimeLimitMs)),
+                 settings::quotaTimeLimitMs, DurationListCellRenderer())
+          .enableIf(keepAuth.selected)
+      }
       row {
         checkBox(ElevationBundle.message("checkbox.refresh.time.limit.after.each.process"),
                  settings::isRefreshable)

@@ -39,12 +39,13 @@ public class EmojiSearchField extends ExtendableTextField {
 
   private final EmojiPicker myEmojiPicker;
   private final EmojiPickerStyle myStyle;
-  private final List<ExtendableTextComponent.Extension> extensions;
+  private final List<ExtendableTextComponent.Extension> myExtensions;
+  private final ExtendableTextComponent.Extension mySkinToneExtension;
 
   EmojiSearchField(EmojiPicker emojiPicker, EmojiPickerStyle style) {
     myEmojiPicker = emojiPicker;
     myStyle = style;
-    extensions = List.of(SEARCH_ICON_EXTENSION, new ExtendableTextComponent.Extension() {
+    myExtensions = List.of(SEARCH_ICON_EXTENSION, mySkinToneExtension = new ExtendableTextComponent.Extension() {
       @Override
       public Icon getIcon(boolean hovered) {
         return emojiPicker.getCurrentSkinToneIcon(hovered);
@@ -106,7 +107,12 @@ public class EmojiSearchField extends ExtendableTextField {
   }
 
   void update() {
-    setExtensions(extensions);
+    setExtensions(myExtensions);
+  }
+
+  public Point getSkinToneIconCenter() {
+    return new Point(getWidth() - getInsets().right - mySkinToneExtension.getIconGap() -
+                     mySkinToneExtension.getIcon(false).getIconWidth() / 2, getHeight() / 2);
   }
 
   @Override
@@ -114,9 +120,9 @@ public class EmojiSearchField extends ExtendableTextField {
     super.paintComponent(g);
     if (myEmojiPicker.getCurrentFocusTarget() instanceof EmojiSkinTonesPanel) {
       g.setColor(myStyle.myFocusBorderColor);
-      Insets i = getInsets();
-      final int SIZE = 30;
-      g.drawRoundRect(getWidth() - i.right - SIZE - 8, getHeight() / 2 - SIZE / 2, SIZE, SIZE, 6, 6);
+      final int SIZE = JBUIScale.scale(30);
+      Point center = getSkinToneIconCenter();
+      g.drawRoundRect(center.x - SIZE / 2, center.y - SIZE / 2, SIZE, SIZE, 6, 6);
     }
   }
 }

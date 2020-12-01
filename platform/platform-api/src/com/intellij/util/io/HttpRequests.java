@@ -28,6 +28,8 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -87,6 +89,8 @@ public final class HttpRequests {
     boolean isSuccessful() throws IOException;
 
     @NotNull File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
+
+    @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator) throws IOException;
 
     byte @NotNull [] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
 
@@ -439,7 +443,7 @@ public final class HttpRequests {
       FileUtilRt.createParentDirs(file);
 
       boolean deleteFile = true;
-      try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
+      try (OutputStream out = new FileOutputStream(file)) {
         NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
         deleteFile = false;
       }
@@ -452,6 +456,30 @@ public final class HttpRequests {
       finally {
         if (deleteFile) {
           FileUtilRt.delete(file);
+        }
+      }
+
+      return file;
+    }
+
+    @Override
+    public @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator) throws IOException {
+      Files.createDirectories(file.getParent());
+
+      boolean deleteFile = true;
+      try (OutputStream out = Files.newOutputStream(file)) {
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+        deleteFile = false;
+      }
+      catch (HttpStatusException e) {
+        throw e;
+      }
+      catch (IOException e) {
+        throw new IOException(createErrorMessage(e, this, false), e);
+      }
+      finally {
+        if (deleteFile) {
+          Files.deleteIfExists(file);
         }
       }
 

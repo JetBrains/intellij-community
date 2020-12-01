@@ -85,6 +85,7 @@ public final class ClassUtils {
     immutableTypes.add("java.util.Locale");
     immutableTypes.add("java.util.UUID");
     immutableTypes.add("java.util.regex.Pattern");
+    immutableTypes.add("java.time.ZoneOffset");
   }
 
   private ClassUtils() {}
@@ -143,8 +144,16 @@ public final class ClassUtils {
       return true;
     }
     final String qualifiedName = aClass.getQualifiedName();
-    return qualifiedName != null &&
-           (immutableTypes.contains(qualifiedName) || qualifiedName.startsWith("com.google.common.collect.Immutable"));
+    if (qualifiedName != null &&
+        (immutableTypes.contains(qualifiedName) || qualifiedName.startsWith("com.google.common.collect.Immutable"))) {
+      return true;
+    }
+
+    return aClass.hasModifierProperty(PsiModifier.FINAL) &&
+           Arrays.stream(aClass.getAllFields())
+             .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
+             .map(field -> field.getType())
+             .allMatch(type -> TypeConversionUtil.isPrimitiveAndNotNull(type) || immutableTypes.contains(type.getCanonicalText()));
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1, @Nullable PsiElement element2) {

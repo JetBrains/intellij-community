@@ -71,11 +71,8 @@ import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -95,6 +92,8 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
   public static final String ID = "ShowUsages";
+
+  private static int ourPopupDelayTimeout = 300;
 
   public ShowUsagesAction() {
     setInjectedContext(true);
@@ -398,7 +397,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         if (!usageView.isDisposed()) {
           showPopupIfNeedTo(popup, parameters.popupPosition);
         }
-      }, 300, TimeUnit.MILLISECONDS);
+      }, ourPopupDelayTimeout, TimeUnit.MILLISECONDS);
     }
 
     UsageNode USAGES_OUTSIDE_SCOPE_NODE = new UsageNode(null, table.USAGES_OUTSIDE_SCOPE_SEPARATOR);
@@ -1179,5 +1178,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
                               @Nullable Editor editor,
                               int maxUsages) {
     startFindUsages(element, popupPosition, editor);
+  }
+
+  @TestOnly
+  public static void setPopupDelayTimeout(int timeout) {
+    ourPopupDelayTimeout = timeout;
   }
 }

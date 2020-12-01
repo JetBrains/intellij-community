@@ -3,8 +3,11 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
+import io.methvin.watcher.DirectoryChangeListener
+import io.methvin.watcher.DirectoryWatcher
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -13,6 +16,7 @@ import org.apache.log4j.Level
 import org.apache.log4j.PatternLayout
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -22,6 +26,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.exitProcess
 
 private const val SERVER_PORT = 20854
@@ -64,7 +69,7 @@ private fun start() {
   val httpServer = createHttpServer(buildServer)
   LOG.info("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
   @Suppress("SpellCheckingInspection")
-  LOG.info("Custom plugins: ${System.getProperty("additional.plugins") ?: "not set"} (use VM property -Dadditional.plugins to specify additional module ids)")
+  LOG.info("Custom plugins: ${getAdditionalModules()?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
   @Suppress("SpellCheckingInspection")
   LOG.info("Run IDE with VM property -Didea.use.dev.build.server=true to use it")
   httpServer.start()
@@ -72,10 +77,8 @@ private fun start() {
   val doneSignal = CountDownLatch(1)
 
   // wait for ctrl-c
-  Runtime.getRuntime().addShutdownHook(object : Thread() {
-    override fun run() {
-      doneSignal.countDown()
-    }
+  Runtime.getRuntime().addShutdownHook(Thread {
+    doneSignal.countDown()
   })
 
   try {
@@ -100,6 +103,8 @@ class BuildServer(val homePath: Path) {
 
   private val platformPrefixToPluginBuilder = HashMap<String, IdeBuilder>()
 
+  private val isDirWatcherStarted = AtomicBoolean()
+
   init {
     val jsonFormat = Json { isLenient = true }
     configuration = jsonFormat.decodeFromString(Configuration.serializer(), Files.readString(homePath.resolve("build/dev-build-server.json")))
@@ -118,7 +123,39 @@ class BuildServer(val homePath: Path) {
 
     ideBuilder = initialBuild(productConfiguration, homePath, outDir)
     platformPrefixToPluginBuilder.put(platformPrefix, ideBuilder)
+
+    if (isDirWatcherStarted.compareAndSet(false, true)) {
+      watchChanges()
+    }
     return ideBuilder
+  }
+
+  private fun watchChanges() {
+    val moduleNamePathOffset = outDir.toString().length + 1
+    val watcher = DirectoryWatcher.builder()
+      .paths(listOf(outDir))
+      .fileHashing(false)
+      .listener(DirectoryChangeListener { event ->
+        val path = event.path()
+        // getName API is convenient, but it involves offsets computation and new Path, String, byte[] allocations,
+        // so, use old good string
+        val p = path.toString()
+        if (p.endsWith("${File.separatorChar}classpath.index") || p.endsWith("${File.separatorChar}.DS_Store")) {
+          return@DirectoryChangeListener
+        }
+
+        val moduleName = p.substring(moduleNamePathOffset, p.indexOf(File.separatorChar, moduleNamePathOffset))
+        if (moduleName != "intellij.platform.ide.impl" && moduleName != "intellij.platform.ide") {
+          platformPrefixToPluginBuilder.values.forEach { it.moduleChanged(moduleName, path) }
+        }
+      })
+      .build()
+    watcher.watchAsync(AppExecutorUtil.getAppExecutorService())
+    Runtime.getRuntime().addShutdownHook(object : Thread() {
+      override fun run() {
+        watcher.close()
+      }
+    })
   }
 }
 

@@ -12,6 +12,7 @@ import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
@@ -72,10 +73,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -99,7 +97,6 @@ import com.intellij.util.ui.SingleComponentCenteringLayout;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.Equality;
-import gnu.trove.TIntFunction;
 import icons.PlatformDiffImplIcons;
 import org.jetbrains.annotations.*;
 
@@ -114,6 +111,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
@@ -143,6 +141,12 @@ public final class DiffUtil {
 
   public static boolean isDiffEditor(@NotNull Editor editor) {
     return editor.getEditorKind() == EditorKind.DIFF;
+  }
+
+  public static boolean isFileWithoutContent(@NotNull VirtualFile file) {
+    if (file instanceof VirtualFileWithoutContent) return true;
+    if (file instanceof DiffVirtualFile) return true;
+    return false;
   }
 
   @Nullable
@@ -281,37 +285,37 @@ public final class DiffUtil {
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
     assert foldingSupport.getCount() == 1;
-    TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(0);
+    IntUnaryOperator foldingLineConvertor = foldingSupport.getLineConvertor(0);
     editor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(foldingLineConvertor));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content) {
-    TIntFunction contentLineConvertor = getContentLineConvertor(content);
+    IntUnaryOperator contentLineConvertor = getContentLineConvertor(content);
     editor.getGutter().setLineNumberConverter(contentLineConvertor == null ? LineNumberConverter.DEFAULT
                                                                            : new LineNumberConverterAdapter(contentLineConvertor));
   }
 
-  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content,
+  public static void installLineConvertor(@NotNull EditorEx editor, @Nullable DocumentContent content,
                                           @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
-    TIntFunction contentLineConvertor = getContentLineConvertor(content);
-    TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
-    TIntFunction merged = mergeLineConverters(contentLineConvertor, foldingLineConvertor);
+    IntUnaryOperator contentLineConvertor = content != null ? getContentLineConvertor(content) : null;
+    IntUnaryOperator foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
+    IntUnaryOperator merged = mergeLineConverters(contentLineConvertor, foldingLineConvertor);
     editor.getGutter().setLineNumberConverter(merged == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged));
   }
 
   @Nullable
-  public static TIntFunction getContentLineConvertor(@NotNull DocumentContent content) {
+  public static IntUnaryOperator getContentLineConvertor(@NotNull DocumentContent content) {
     return content.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
   }
 
   @Nullable
-  public static TIntFunction mergeLineConverters(@Nullable TIntFunction convertor1, @Nullable TIntFunction convertor2) {
+  public static IntUnaryOperator mergeLineConverters(@Nullable IntUnaryOperator convertor1, @Nullable IntUnaryOperator convertor2) {
     if (convertor1 == null && convertor2 == null) return null;
     if (convertor1 == null) return convertor2;
     if (convertor2 == null) return convertor1;
     return value -> {
-      int value2 = convertor2.execute(value);
-      return value2 >= 0 ? convertor1.execute(value2) : value2;
+      int value2 = convertor2.applyAsInt(value);
+      return value2 >= 0 ? convertor1.applyAsInt(value2) : value2;
     };
   }
 
@@ -1821,44 +1825,5 @@ public final class DiffUtil {
       return replacement;
     }
     return null;
-  }
-
-  //
-  // Helpers
-  //
-
-  private static class SyncHeightComponent extends JPanel {
-    @NotNull private final List<? extends JComponent> myComponents;
-
-    SyncHeightComponent(@NotNull List<? extends JComponent> components, int index) {
-      super(new BorderLayout());
-      myComponents = components;
-      JComponent delegate = components.get(index);
-      if (delegate != null) add(delegate, BorderLayout.CENTER);
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      Dimension size = super.getMinimumSize();
-      size.height = getMaximumHeight(JComponent::getPreferredSize);
-      return size;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      size.height = getMaximumHeight(JComponent::getPreferredSize);
-      return size;
-    }
-
-    private int getMaximumHeight(@NotNull Function<? super JComponent, ? extends Dimension> getter) {
-      int height = 0;
-      for (JComponent component : myComponents) {
-        if (component != null) {
-          height = Math.max(height, getter.fun(component).height);
-        }
-      }
-      return height;
-    }
   }
 }

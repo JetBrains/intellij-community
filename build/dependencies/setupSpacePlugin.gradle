@@ -2,7 +2,7 @@
 import java.util.concurrent.TimeUnit
 
 task setupSpaceAutomationDefinitions {
-  def version = "1.0.59097"
+  def version = "1.0.60200"
   def artifact = file("$buildDir/space/space-idea-script-definition.jar")
   outputs.file(artifact)
   doLast {
@@ -15,5 +15,14 @@ task setupSpaceAutomationDefinitions {
   }
 }
 
+task setupSpaceAutomationDefinitionsLocal(type: Copy) {
+  def version = "1.0-dev"
+  from("${System.properties['user.home']}/.m2/repository/com/jetbrains/space-idea-script-definition/$version")
+  into(file("$buildDir/space"))
+}
+
 task setupSpaceAutomation(dependsOn: [setupKotlinPlugin, setupSpaceAutomationDefinitions]) {
+}
+
+task setupSpaceAutomationWithLocalDefinition(dependsOn: [setupKotlinPlugin, setupSpaceAutomationDefinitionsLocal]) {
 }

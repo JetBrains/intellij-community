@@ -85,16 +85,16 @@ public final class NotificationsUtil {
                                  @Nullable String titleColor,
                                  @Nullable String contentColor,
                                  @Nullable String contentStyle) {
-    if (StringUtil.isEmpty(title) && !StringUtil.isEmpty(subtitle)) {
+    if (Notification.isEmpty(title) && !Notification.isEmpty(subtitle)) {
       title = subtitle;
       subtitle = null;
     }
-    else if (!StringUtil.isEmpty(title) && !StringUtil.isEmpty(subtitle)) {
+    else if (!Notification.isEmpty(title) && !Notification.isEmpty(subtitle)) {
       title += ":";
     }
 
     HtmlBuilder htmlBuilder = new HtmlBuilder();
-    if (StringUtil.isNotEmpty(title)) {
+    if (!Notification.isEmpty(title)) {
       HtmlChunk.Element titleChunk = HtmlChunk.raw(title).bold();
       if (StringUtil.isNotEmpty(titleColor)) {
         titleChunk = titleChunk.attr("color", titleColor);
@@ -103,13 +103,13 @@ public final class NotificationsUtil {
       htmlBuilder.append(titleChunk);
     }
 
-    if (StringUtil.isNotEmpty(subtitle)) {
+    if (!Notification.isEmpty(subtitle)) {
       htmlBuilder.nbsp().append(StringUtil.isNotEmpty(titleColor) ?
                                 HtmlChunk.span().attr("color", titleColor).addText(subtitle) :
                                 HtmlChunk.raw(subtitle));
     }
 
-    if (StringUtil.isNotEmpty(content)) {
+    if (!Notification.isEmpty(content)) {
       HtmlChunk.Element contentChunk = HtmlChunk.raw(content).wrapWith(HtmlChunk.div());
       if (StringUtil.isNotEmpty(contentStyle)) {
         contentChunk = contentChunk.style(contentStyle);

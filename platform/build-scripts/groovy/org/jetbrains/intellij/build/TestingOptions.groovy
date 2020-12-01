@@ -36,6 +36,11 @@ class TestingOptions {
   boolean debugEnabled = SystemProperties.getBooleanProperty("intellij.build.test.debug.enabled", true)
 
   /**
+   * Specifies address on which the testing process will listen for connections, by default a localhost will be used.
+   */
+  String debugHost = System.getProperty("intellij.build.test.debug.host", "localhost")
+
+  /**
    * Specifies port on which the testing process will listen for connections, by default a random port will be used.
    */
   int debugPort = SystemProperties.getIntProperty("intellij.build.test.debug.port", OLD_DEBUG_PORT)

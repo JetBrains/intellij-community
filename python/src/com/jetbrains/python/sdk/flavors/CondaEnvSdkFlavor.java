@@ -49,6 +49,14 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
       for (String environment : environments) {
         results.addAll(ReadAction.compute(() -> findInRootDirectory(StandardFileSystems.local().findFileByPath(environment))));
       }
+      if (PyCondaSdkCustomizer.Companion.getInstance().getDisableEnvsSorting()) {
+        List<String> basePaths = ContainerUtil.filter(results, path -> PythonSdkUtil.isBaseConda(path));
+        for (String basePath : basePaths) {
+          if (results.remove(basePath)) {
+            results.add(0, basePath);
+          }
+        }
+      }
     }
     catch (ExecutionException e) {
       return Collections.emptyList();

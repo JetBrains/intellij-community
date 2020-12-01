@@ -6,11 +6,14 @@ import circlet.client.api.M2ItemContentDetails
 import circlet.m2.M2MessageEditingVm
 import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.KDateTime
+import circlet.platform.api.TID
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.codereview.timeline.TimelineItem
 import runtime.reactive.MutableProperty
 
 interface SpaceChatItem : TimelineItem {
+  val id: TID
+
   val chat: M2ChannelVm
 
   val author: CPrincipal
@@ -36,6 +39,8 @@ interface SpaceChatItem : TimelineItem {
   val isEditing: MutableProperty<Boolean>
 
   val canEdit: Boolean
+
+  val pending: Boolean?
 
   fun startEditing()
 

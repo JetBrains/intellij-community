@@ -1353,7 +1353,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       scheduleIncrementalListUpdate(elements, 0);
 
       boolean scopeExpanded =
-        FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> populateElements(elements));
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> populateElements(elements));
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
       AnchoredSet resultSet = new AnchoredSet(filter(elements));

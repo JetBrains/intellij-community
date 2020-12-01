@@ -18,8 +18,18 @@ abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Com
 
   fun getComplexPath(path: String): P = pathSerializer.deserialize(path)
 
+  private fun getComplexPathSafe(path: String): P? {
+    return try {
+      getComplexPath(path)
+    }
+    catch (e: Exception) {
+      LOG.warn("Cannot deserialize $path", e)
+      return null
+    }
+  }
+
   override fun findFileByPath(path: String): VirtualFile? {
-    val parsedPath = parsePath(path) ?: return null
+    val parsedPath = getComplexPathSafe(path) ?: return null
     val project = ProjectManagerEx.getInstanceEx().findOpenProjectByHash(parsedPath.projectHash) ?: return null
     return findOrCreateFile(project, parsedPath)
   }
@@ -48,16 +58,6 @@ abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Com
   interface ComplexPathSerializer<P : ComplexPath> {
     fun serialize(path: P): String
     fun deserialize(rawPath: String): P
-  }
-
-  private fun parsePath(path: String): P? {
-    return try {
-      getComplexPath(path)
-    }
-    catch (e: Exception) {
-      LOG.warn("Cannot deserialize $path", e)
-      return null
-    }
   }
 
   companion object {

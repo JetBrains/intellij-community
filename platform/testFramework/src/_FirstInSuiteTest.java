@@ -52,7 +52,7 @@ public class _FirstInSuiteTest extends TestCase {
     nothingIsCalled = true;
 
     suiteStarted = System.nanoTime();
-    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
     // in tests EDT inexplicably shuts down sometimes during the first access,
     // which leads to nasty problems in ApplicationImpl which assumes there is only one EDT.

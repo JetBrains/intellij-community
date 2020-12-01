@@ -18,6 +18,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -44,19 +45,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Queue;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
-import static com.intellij.openapi.util.Pair.pair;
-
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFS.class);
 
-  private final Map<String, VirtualFileSystemEntry> myRoots =
-    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), FileUtil.PATH_HASHING_STRATEGY);
+  private final Map<String, VirtualFileSystemEntry> myRoots;
 
   // FS roots must be in this map too. findFileById() relies on this.
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();
@@ -68,6 +67,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private final VfsData myVfsData = new VfsData();
 
   public PersistentFSImpl() {
+    if (SystemInfoRt.isFileSystemCaseSensitive) {
+      myRoots = new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount());
+    }
+    else {
+      myRoots = ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), HashingStrategy.caseInsensitive());
+    }
+
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
 
@@ -395,7 +401,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
       else {
         canonicalName = fs.getCanonicallyCasedName(new FakeVirtualFile(parent, childName));
-        if (StringUtil.isEmptyOrSpaces(canonicalName)) return children;
+        if (Strings.isEmptyOrSpaces(canonicalName)) {
+          return children;
+        }
 
         if (!childName.equals(canonicalName)) {
           child = findExistingChildInfo(parent, canonicalName, children.children, fs);
@@ -599,7 +607,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     try {
       assert length >= 0 : file;
-      return FileUtil.loadBytes(contentStream, (int)length);
+      return contentStream.readNBytes((int)length);
     }
     catch (IOException e) {
       FSRecords.handleError(e);
@@ -609,8 +617,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public byte @NotNull [] contentsToByteArray(int contentId) throws IOException {
-    final DataInputStream stream = readContentById(contentId);
-    return FileUtil.loadBytes(stream);
+    return readContentById(contentId).readAllBytes();
   }
 
   @Override
@@ -859,7 +866,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // some synthetic events really are composite events, e.g. VFileMoveEvent = VFileDeleteEvent+VFileCreateEvent,
       // so both paths should be checked for conflicts
       String path2 = getAlternativePath(event);
-      if (path2 != null && !FileUtil.PATH_HASHING_STRATEGY.equals(path2, path) && checkIfConflictingPaths(event, path2, filesInvolved, middleDirsInvolved)) {
+      if (path2 != null &&
+          !(SystemInfoRt.isFileSystemCaseSensitive ? path2.equals(path) : path2.equalsIgnoreCase(path)) &&
+          checkIfConflictingPaths(event, path2, filesInvolved, middleDirsInvolved)) {
         break;
       }
     }
@@ -1198,7 +1207,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       VirtualFile createdDir = createEvent.getFile();
       if (createdDir instanceof VirtualDirectoryImpl) {
         Queue<Pair<VirtualDirectoryImpl, ChildInfo[]>> queue = new ArrayDeque<>();
-        queue.add(pair((VirtualDirectoryImpl)createdDir, children));
+        queue.add(new Pair<>((VirtualDirectoryImpl)createdDir, children));
         while (!queue.isEmpty()) {
           Pair<VirtualDirectoryImpl, ChildInfo[]> queued = queue.remove();
           VirtualDirectoryImpl directory = queued.first;
@@ -1222,7 +1231,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           directory.createAndAddChildren(added, true, (childCreated, childInfo) -> {
             // enqueue recursive children
             if (childCreated instanceof VirtualDirectoryImpl && childInfo.getChildren() != null) {
-              queue.add(pair((VirtualDirectoryImpl)childCreated, childInfo.getChildren()));
+              queue.add(new Pair<>((VirtualDirectoryImpl)childCreated, childInfo.getChildren()));
             }
           });
         }
@@ -1437,7 +1446,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  public static void executeChangeCaseSensitivity(@NotNull VirtualFile file, FileAttributes.CaseSensitivity newCaseSensitivity) {
+  public static void executeChangeCaseSensitivity(@NotNull VirtualFile file, @NotNull FileAttributes.CaseSensitivity newCaseSensitivity) {
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
     setFlag(directory, Flags.CHILDREN_CASE_SENSITIVE, newCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE);
     setFlag(directory, Flags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
@@ -1507,7 +1516,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       attributes = fs.getAttributes(virtualFile);
       symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(virtualFile) : null;
     }
-    return attributes == null ? null : pair(attributes, symlinkTarget);
+    return attributes == null ? null : new Pair<>(attributes, symlinkTarget);
   }
 
   private void executeDelete(@NotNull VFileDeleteEvent event) {

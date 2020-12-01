@@ -17,11 +17,9 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -118,14 +116,14 @@ public final class AppUIUtil {
     return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm;
   }
 
-  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
-    return loadSmallApplicationIcon(ctx, 16);
+  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext scaleContext) {
+    return loadSmallApplicationIcon(scaleContext, 16);
   }
 
-  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
+  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext scaleContext, int size) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     String smallIconUrl = appInfo.getSmallApplicationSvgIconUrl();
-    Icon icon = smallIconUrl == null ? null : loadApplicationIcon(smallIconUrl, ctx, size);
+    Icon icon = smallIconUrl == null ? null : loadApplicationIcon(smallIconUrl, scaleContext, size);
     if (icon != null) {
       return icon;
     }
@@ -233,22 +231,15 @@ public final class AppUIUtil {
 
   // keep in sync with LinuxDistributionBuilder#getFrameClass
   public static String getFrameClass() {
-    String name = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductNameWithEdition())
+    String name = Strings.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductNameWithEdition())
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
-    if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug";
+    if (PluginManagerCore.isRunningFromSources()) {
+      wmClass += "-debug";
+    }
     return wmClass;
-  }
-
-  public static void hideToolWindowBalloon(@NotNull String id, @NotNull Project project) {
-    invokeLaterIfProjectAlive(project, () -> {
-      Balloon balloon = ToolWindowManager.getInstance(project).getToolWindowBalloon(id);
-      if (balloon != null) {
-        balloon.hide();
-      }
-    });
   }
 
   private static final int MIN_ICON_SIZE = 32;
@@ -450,7 +441,6 @@ public final class AppUIUtil {
     }
   }
 
-
   /**
    * Targets the component to a (screen) device before showing.
    * In case the component is already a part of UI hierarchy (and is thus bound to a device)
@@ -469,12 +459,10 @@ public final class AppUIUtil {
    * @param comp the component to target
    */
   public static void targetToDevice(@NotNull Component comp, @Nullable Component target) {
-    if (comp.isShowing()) return;
+    if (comp.isShowing()) {
+      return;
+    }
     GraphicsConfiguration gc = target != null ? target.getGraphicsConfiguration() : null;
-    setGraphicsConfiguration(comp, gc);
-  }
-
-  public static void setGraphicsConfiguration(@NotNull Component comp, @Nullable GraphicsConfiguration gc) {
     AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc);
   }
 
@@ -483,11 +471,12 @@ public final class AppUIUtil {
   }
 
   public static Object adjustFractionalMetrics(Object defaultValue) {
-    if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) return defaultValue;
+    if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) {
+      return defaultValue;
+    }
 
     GraphicsConfiguration gc =
       GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
-
     return (JBUIScale.sysScale(gc) == 1.0f)? RenderingHints.VALUE_FRACTIONALMETRICS_OFF : defaultValue;
   }
 }

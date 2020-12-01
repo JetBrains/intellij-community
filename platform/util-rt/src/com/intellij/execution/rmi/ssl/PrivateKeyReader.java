@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -167,7 +153,6 @@ public class PrivateKeyReader {
    *
    * @param keyBytes PKCS#1 encoded key
    * @return KeySpec
-   * @throws IOException
    */
   private static RSAPrivateCrtKeySpec getRSAKeySpec(byte[] keyBytes) throws IOException {
     DerParser parser = new DerParser(keyBytes);
@@ -262,7 +247,6 @@ class DerParser {
    * Create a new DER decoder from a byte array.
    *
    * @param bytes The encoded bytes
-   * @throws IOException
    */
   DerParser(byte[] bytes) throws IOException {
     this(new ByteArrayInputStream(bytes));
@@ -274,7 +258,6 @@ class DerParser {
    * parser from {@code Asn1Object.getParser}.
    *
    * @return A object
-   * @throws IOException
    */
   public Asn1Object read() throws IOException {
     int tag = in.read();
@@ -309,7 +292,6 @@ class DerParser {
    * </ul>
    *
    * @return The length as integer
-   * @throws IOException
    */
   private int getLength() throws IOException {
 
@@ -406,7 +388,6 @@ class Asn1Object {
    * For constructed field, return a parser for its content.
    *
    * @return A parser for the construct.
-   * @throws IOException
    */
   public DerParser getParser() throws IOException {
     if (!isConstructed()) {
@@ -420,7 +401,6 @@ class Asn1Object {
    * Get the value as integer
    *
    * @return BigInteger
-   * @throws IOException
    */
   public BigInteger getInteger() throws IOException {
     if (type != DerParser.INTEGER) {
@@ -435,7 +415,6 @@ class Asn1Object {
    * as Latin-1.
    *
    * @return Java string
-   * @throws IOException
    */
   public String getString() throws IOException {
 

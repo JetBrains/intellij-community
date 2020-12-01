@@ -581,7 +581,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     for (EditorWindow window : windows) {
       LOG.assertTrue(window.getSelectedEditor() != null);
       window.closeFile(file, false, moveFocus);
-      if (window.getTabCount() == 0 && nextFile != null && isProjectOpen) {
+      if (window.getTabCount() == 0 && nextFile != null && isProjectOpen && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
         EditorWithProviderComposite newComposite = myManager.newEditorComposite(nextFile);
         window.setEditor(newComposite, moveFocus); // newComposite can be null
       }

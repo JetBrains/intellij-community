@@ -10,8 +10,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.SHELF
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -30,9 +28,6 @@ import kotlin.properties.Delegates.observable
 private val isCommitToolWindowRegistryValue
   get() = Registry.get("vcs.commit.tool.window")
 
-// TODO allow specifying preferred tool window for ChangesViewContentEP
-private val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF || it == "Staging Area" }
-
 internal val Project.isCommitToolWindow: Boolean
   get() = ChangesViewContentManager.getInstanceImpl(this)?.isCommitToolWindow == true
 
@@ -46,14 +41,19 @@ private val LOG = logger<ChangesViewContentManager>()
 class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
   private val toolWindows = mutableSetOf<ToolWindow>()
   private val addedContents = mutableListOf<Content>()
+  private val commitToolWindowTabs = mutableSetOf<String>()
 
   private val contentManagers: Collection<ContentManager> get() = toolWindows.map { it.contentManager }
 
-  private fun getToolWindowIdFor(contentName: String): String {
-    return if (isCommitToolWindow && COMMIT_TOOL_WINDOW_CONTENT_FILTER(contentName)) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
+  internal fun getToolWindowId(shouldUseCommitToolWindow: Boolean): String {
+    return if (isCommitToolWindow && shouldUseCommitToolWindow) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
   }
 
-  private fun Content.resolveToolWindowId() = getToolWindowIdFor(tabName)
+  private fun isInCommitToolWindow(contentName: String): Boolean = commitToolWindowTabs.contains(contentName)
+
+  private fun Content.isInCommitToolWindow() = IS_IN_COMMIT_TOOLWINDOW_KEY.get(this) == true
+
+  private fun Content.resolveToolWindowId() = getToolWindowId(isInCommitToolWindow())
 
   private fun Content.resolveToolWindow(): ToolWindow? {
     val toolWindowId = resolveToolWindowId()
@@ -122,11 +122,16 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     else {
       addIntoCorrectPlace(contentManager, content)
     }
+    if (content.isInCommitToolWindow()) {
+      commitToolWindowTabs.add(content.tabName)
+    }
   }
 
   override fun removeContent(content: Content) = removeContent(content, true)
 
   private fun removeContent(content: Content, dispose: Boolean) {
+    commitToolWindowTabs.remove(content.tabName)
+
     val contentManager = content.manager
     if (contentManager == null || contentManager.isDisposed) {
       addedContents.remove(content)
@@ -210,6 +215,8 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
     @JvmField
     val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
+    @JvmField
+    val IS_IN_COMMIT_TOOLWINDOW_KEY = Key.create<Boolean>("IS_IN_COMMIT_TOOLWINDOW_KEY")
 
     @JvmStatic
     fun getInstance(project: Project) = project.service<ChangesViewContentI>()
@@ -218,8 +225,14 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       getInstance(project) as? ChangesViewContentManager
 
     @JvmStatic
-    fun getToolWindowIdFor(project: Project, contentName: String): String? =
-      getInstanceImpl(project)?.getToolWindowIdFor(contentName)
+    fun isCommitToolWindow(project: Project): Boolean = getInstanceImpl(project)?.isCommitToolWindow == true
+
+    @JvmStatic
+    fun getToolWindowIdFor(project: Project, contentName: String): String? {
+      val shouldUseCommitToolWindow = getInstanceImpl(project)?.isInCommitToolWindow(contentName) == true ||
+                                      VcsToolWindowFactory.isInCommitToolWindow(project, contentName)
+      return getInstanceImpl(project)?.getToolWindowId(shouldUseCommitToolWindow)
+    }
 
     @JvmStatic
     fun getToolWindowFor(project: Project, contentName: String): ToolWindow? =

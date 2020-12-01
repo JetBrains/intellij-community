@@ -5,6 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -226,9 +228,18 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
       if (ref != null) return isDeclaredVariable(ref.resolve(), declaredVariables);
       PsiArrayAccessExpression arrayAccess = tryCast(operand, PsiArrayAccessExpression.class);
       if (arrayAccess == null) return true;
-      return ExpressionUtils.nonStructuralChildren(arrayAccess.getArrayExpression())
-        .map(child -> tryCast(child, PsiReferenceExpression.class)).filter(Objects::nonNull)
-        .allMatch(r -> isDeclaredVariable(r.resolve(), declaredVariables));
+      return loopOnlyVariablesChanged(arrayAccess, declaredVariables);
+    }
+
+    private static boolean loopOnlyVariablesChanged(@NotNull PsiArrayAccessExpression arrayAccess,
+                                                    @NotNull Set<PsiVariable> declaredVariables) {
+      return ExpressionUtils.nonStructuralChildren(arrayAccess.getArrayExpression()).allMatch(child -> {
+        PsiArrayAccessExpression childArrayAccess = tryCast(child, PsiArrayAccessExpression.class);
+        if (childArrayAccess != null) return loopOnlyVariablesChanged(childArrayAccess, declaredVariables);
+        PsiReferenceExpression childRef = tryCast(child, PsiReferenceExpression.class);
+        if (childRef != null) return isDeclaredVariable(childRef.resolve(), declaredVariables);
+        return true;
+      });
     }
 
     private static boolean isDeclaredVariable(PsiElement element, Set<PsiVariable> declaredVariables) {

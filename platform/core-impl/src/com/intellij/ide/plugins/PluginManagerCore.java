@@ -21,10 +21,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -37,7 +41,6 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.lang.ref.Reference;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -104,11 +107,6 @@ public final class PluginManagerCore {
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
   public static boolean ourDisableNonBundledPlugins;
-
-  /**
-   * Broken plugins stored in IDEA
-   */
-  private static final @NonNls String BROKEN_PLUGIN_FILE = "/brokenPlugins.txt";
 
   /**
    * Bundled plugins that were updated.
@@ -202,15 +200,7 @@ public final class PluginManagerCore {
   }
 
   public static boolean isDisabled(@NotNull PluginId pluginId) {
-    return DisabledPluginsState.getDisabledIds().contains(pluginId);
-  }
-
-  /**
-   * @deprecated Use {@link #isDisabled(PluginId)}
-   */
-  @Deprecated
-  public static boolean isDisabled(@NotNull String pluginId) {
-    return DisabledPluginsState.getDisabledIds().contains(PluginId.getId(pluginId));
+    return DisabledPluginsState.isDisabled(pluginId);
   }
 
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
@@ -228,7 +218,9 @@ public final class PluginManagerCore {
   }
 
   private static @NotNull Map<PluginId, Set<String>> getBrokenPluginVersions() {
-    if (IGNORE_DISABLED_PLUGINS) return Collections.emptyMap();
+    if (IGNORE_DISABLED_PLUGINS) {
+      return Collections.emptyMap();
+    }
 
     Map<PluginId, Set<String>> result = SoftReference.dereference(ourBrokenPluginVersions);
     if (result == null) {
@@ -238,57 +230,44 @@ public final class PluginManagerCore {
     return result;
   }
 
-  private static Map<PluginId, Set<String>> readBrokenPluginFile() {
-    try (InputStream stream = PluginManagerCore.class.getResourceAsStream(BROKEN_PLUGIN_FILE)) {
-      if (stream == null) return Collections.emptyMap();
-
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))){
-        Map<PluginId, Set<String>> result = new HashMap<>();
-
-        String line;
-        while ((line = reader.readLine()) != null) {
-          line = line.trim();
-          if (line.isEmpty() || line.startsWith("//")) continue;
-          List<String> tokens = ParametersListUtil.parse(line);
-          if (tokens.size() == 1) {
-            throw new RuntimeException(BROKEN_PLUGIN_FILE + " is broken. The line contains plugin name, but does not contains version: " + line);
-          }
-          PluginId pluginId = PluginId.getId(tokens.get(0));
-          List<String> versions = tokens.subList(1, tokens.size());
-          result.computeIfAbsent(pluginId, k -> new HashSet<>()).addAll(versions);
-        }
-
-        return result;
+  private static @NotNull Map<PluginId, Set<String>> readBrokenPluginFile() {
+    Path distDir = Paths.get(PathManager.getHomePath());
+    Path dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve("brokenPlugins.db");
+    try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(dbFile), 32_000))) {
+      int version = stream.readUnsignedByte();
+      if (version != 1) {
+        getLogger().error("Unsupported version of " + dbFile + "(fileVersion=" + version + ", supportedVersion=1)");
+        return Collections.emptyMap();
       }
+
+      int count = stream.readInt();
+      Map<PluginId, Set<String>> result = new HashMap<>(count);
+      for (int i = 0; i < count; i++) {
+        PluginId pluginId = PluginId.getId(stream.readUTF());
+        String[] versions = new String[stream.readUnsignedShort()];
+        for (int j = 0; j < versions.length; j++) {
+          versions[j] = stream.readUTF();
+        }
+        //noinspection SSBasedInspection
+        result.put(pluginId, versions.length == 1 ? Collections.singleton(versions[0]) : new HashSet<>(Arrays.asList(versions)));
+      }
+      return result;
+    }
+    catch (NoSuchFileException ignore) {
     }
     catch (IOException e) {
-      throw new RuntimeException("Failed to read " + BROKEN_PLUGIN_FILE, e);
+      getLogger().error("Failed to read " + dbFile, e);
     }
-  }
-
-  public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file, boolean append) throws IOException {
-    Files.createDirectories(file.getParent());
-    try (BufferedWriter writer = (append ? Files.newBufferedWriter(file, StandardOpenOption.APPEND, StandardOpenOption.CREATE) : Files.newBufferedWriter(file))) {
-      writePluginsList(ids, writer);
-    }
+    return Collections.emptyMap();
   }
 
   public static void writePluginsList(@NotNull Collection<PluginId> ids, @NotNull Writer writer) throws IOException {
     List<PluginId> sortedIds = new ArrayList<>(ids);
     sortedIds.sort(null);
-    String separator = LineSeparator.getSystemLineSeparator().getSeparatorString();
     for (PluginId id : sortedIds) {
       writer.write(id.getIdString());
-      writer.write(separator);
+      writer.write('\n');
     }
-  }
-
-  /**
-   * @deprecated Use {@link #disablePlugin(PluginId)}
-   */
-  @Deprecated
-  public static boolean disablePlugin(@NotNull String id) {
-    return disablePlugin(PluginId.getId(id));
   }
 
   public static boolean disablePlugin(@NotNull PluginId id) {
@@ -298,15 +277,6 @@ public final class PluginManagerCore {
   public static boolean enablePlugin(@NotNull PluginId id) {
     return DisabledPluginsState.enablePlugin(id);
   }
-
-  /**
-   * @deprecated Use {@link #enablePlugin(PluginId)}
-   */
-  @Deprecated
-  public static boolean enablePlugin(@NotNull String id) {
-    return enablePlugin(PluginId.getId(id));
-  }
-
 
   public static boolean isModuleDependency(@NotNull PluginId dependentPluginId) {
     return dependentPluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX);
@@ -430,7 +400,7 @@ public final class PluginManagerCore {
    * for such plugins to avoid breaking compatibility with them.
    */
   static @Nullable IdeaPluginDescriptorImpl getImplicitDependency(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                  @NotNull Supplier<? extends IdeaPluginDescriptorImpl> javaDepGetter) {
+                                                                  @NotNull Supplier<IdeaPluginDescriptorImpl> javaDepGetter) {
     // skip our plugins as expected to be up-to-date whether bundled or not
     if (descriptor.isBundled() ||
         descriptor.getPluginId() == CORE_ID ||
@@ -474,7 +444,7 @@ public final class PluginManagerCore {
     for (IdeaPluginDescriptor descriptor : plugins) {
       StringBuilder target;
       if (!descriptor.isEnabled()) {
-        if (!DisabledPluginsState.getDisabledIds().contains(descriptor.getPluginId())) {
+        if (!DisabledPluginsState.isDisabled(descriptor.getPluginId())) {
           // plugin will be logged as part of "Problems found loading plugins"
           continue;
         }
@@ -492,7 +462,7 @@ public final class PluginManagerCore {
     }
     for (IdeaPluginDescriptorImpl plugin : incompletePlugins) {
       // log only explicitly disabled plugins
-      if (DisabledPluginsState.getDisabledIds().contains(plugin.getPluginId()) && !disabledPlugins.contains(plugin.getPluginId())) {
+      if (DisabledPluginsState.isDisabled(plugin.getPluginId()) && !disabledPlugins.contains(plugin.getPluginId())) {
         appendPlugin(plugin, disabled);
       }
     }
@@ -529,7 +499,7 @@ public final class PluginManagerCore {
   }
 
   private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, PluginLoadingError> pluginErrors,
-                                                        @NotNull List<? extends Supplier<? extends @NlsContexts.DetailedDescription String>> globalErrors,
+                                                        @NotNull List<? extends Supplier<@NlsContexts.DetailedDescription String>> globalErrors,
                                                         @NotNull List<? extends Supplier<? extends HtmlChunk>> actions) {
     ourPluginLoadingErrors = pluginErrors;
 
@@ -540,7 +510,8 @@ public final class PluginManagerCore {
                    Stream.concat(globalErrors.stream().map(Supplier::get),
                                  pluginErrors.entrySet().stream()
                                    .sorted(Map.Entry.comparingByKey())
-                                   .map(e -> e.getValue().getInternalMessage())).collect(Collectors.joining("\n  "));
+                                   .map(e -> e.getValue().getInternalMessage()))
+                     .collect(Collectors.joining("\n  "));
     }
     else {
       logMessage = null;
@@ -606,7 +577,7 @@ public final class PluginManagerCore {
                                                                                @NotNull Function<? super PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
                                                                                boolean withOptional,
                                                                                boolean hasAllModules,
-                                                                               @NotNull Supplier<? extends IdeaPluginDescriptorImpl> javaDep,
+                                                                               @NotNull Supplier<IdeaPluginDescriptorImpl> javaDep,
                                                                                @NotNull Set<? super IdeaPluginDescriptorImpl> uniqueCheck) {
     List<PluginDependency> dependencies = rootDescriptor.pluginDependencies;
     List<PluginId> incompatibleModuleIds = rootDescriptor.incompatibilities == null ? Collections.emptyList() : rootDescriptor.incompatibilities;
@@ -693,7 +664,7 @@ public final class PluginManagerCore {
         descriptor.setEnabled(false);
       }
       String pluginsString = component.stream().map(it -> "'" + it.getName() + "'").collect(Collectors.joining(", "));
-      errors.add(() -> CoreBundle.message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginsString));
+      errors.add(message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginsString));
     }
   }
 
@@ -939,8 +910,8 @@ public final class PluginManagerCore {
       Set<String> set = brokenPluginVersions.get(descriptor.getPluginId());
       if (set != null && set.contains(descriptor.getVersion())) {
         descriptor.setEnabled(false);
-        PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.marked.as.broken", descriptor.getName(), descriptor.getVersion()),
-                                  CoreBundle.messagePointer("plugin.loading.error.short.marked.as.broken")).register(errors);
+        PluginLoadingError.create(descriptor, message("plugin.loading.error.long.marked.as.broken", descriptor.getName(), descriptor.getVersion()),
+                                  message("plugin.loading.error.short.marked.as.broken")).register(errors);
       }
       else if (explicitlyEnabled != null) {
         if (!explicitlyEnabled.contains(descriptor)) {
@@ -953,14 +924,14 @@ public final class PluginManagerCore {
       }
       else if (!shouldLoadPlugins) {
         descriptor.setEnabled(false);
-        PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.plugin.loading.disabled", descriptor.getName()),
-                                  CoreBundle.messagePointer("plugin.loading.error.short.plugin.loading.disabled")).register(errors);
+        PluginLoadingError.create(descriptor, message("plugin.loading.error.long.plugin.loading.disabled", descriptor.getName()),
+                                  message("plugin.loading.error.short.plugin.loading.disabled")).register(errors);
       }
       else if (isNonBundledPluginDisabled && !descriptor.isBundled()) {
         descriptor.setEnabled(false);
         PluginLoadingError.create(descriptor,
-                                  CoreBundle.messagePointer("plugin.loading.error.long.custom.plugin.loading.disabled", descriptor.getName()),
-                                  CoreBundle.messagePointer("plugin.loading.error.short.custom.plugin.loading.disabled"), false).register(errors);
+                                  message("plugin.loading.error.long.custom.plugin.loading.disabled", descriptor.getName()),
+                                  message("plugin.loading.error.short.custom.plugin.loading.disabled"), false).register(errors);
       }
     }
   }
@@ -1000,23 +971,23 @@ public final class PluginManagerCore {
       BuildNumber sinceBuildNumber = sinceBuild == null ? null : BuildNumber.fromString(sinceBuild, null, null);
       if (sinceBuildNumber != null && sinceBuildNumber.compareTo(ideBuildNumber) > 0) {
         if (beforeCreateErrorCallback != null) beforeCreateErrorCallback.run();
-        return PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.incompatible.since.build", descriptor.getName(), descriptor.getVersion(), sinceBuild, ideBuildNumber),
-                                         CoreBundle.messagePointer("plugin.loading.error.short.incompatible.since.build", sinceBuild));
+        return PluginLoadingError.create(descriptor, message("plugin.loading.error.long.incompatible.since.build", descriptor.getName(), descriptor.getVersion(), sinceBuild, ideBuildNumber),
+                                         message("plugin.loading.error.short.incompatible.since.build", sinceBuild));
       }
 
       BuildNumber untilBuildNumber = untilBuild == null ? null : BuildNumber.fromString(untilBuild, null, null);
       if (untilBuildNumber != null && untilBuildNumber.compareTo(ideBuildNumber) < 0) {
         if (beforeCreateErrorCallback != null) beforeCreateErrorCallback.run();
-        return PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.incompatible.until.build", descriptor.getName(), descriptor.getVersion(), untilBuild, ideBuildNumber),
-                                         CoreBundle.messagePointer("plugin.loading.error.short.incompatible.until.build", untilBuild));
+        return PluginLoadingError.create(descriptor, message("plugin.loading.error.long.incompatible.until.build", descriptor.getName(), descriptor.getVersion(), untilBuild, ideBuildNumber),
+                                         message("plugin.loading.error.short.incompatible.until.build", untilBuild));
       }
       return null;
     }
     catch (Exception e) {
       getLogger().error(e);
       return PluginLoadingError.create(descriptor,
-                                       CoreBundle.messagePointer("plugin.loading.error.long.failed.to.load.requirements.for.ide.version", descriptor.getName()),
-                                       CoreBundle.messagePointer("plugin.loading.error.short.failed.to.load.requirements.for.ide.version"));
+                                       message("plugin.loading.error.long.failed.to.load.requirements.for.ide.version", descriptor.getName()),
+                                       message("plugin.loading.error.short.failed.to.load.requirements.for.ide.version"));
     }
   }
 
@@ -1267,8 +1238,8 @@ public final class PluginManagerCore {
 
       result = false;
       String presentableName = incompatibleId.getIdString();
-      PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.ide.contains.conflicting.module", descriptor.getName(), presentableName),
-                                CoreBundle.messagePointer("plugin.loading.error.short.ide.contains.conflicting.module", presentableName), notifyUser).register(errors);
+      PluginLoadingError.create(descriptor, message("plugin.loading.error.long.ide.contains.conflicting.module", descriptor.getName(), presentableName),
+                                message("plugin.loading.error.short.ide.contains.conflicting.module", presentableName), notifyUser).register(errors);
     }
 
     // no deps at all
@@ -1293,23 +1264,33 @@ public final class PluginManagerCore {
       if (depName == null) {
         @NlsSafe String depPresentableId = depId.getIdString();
         if (errors.containsKey(depId)) {
-          PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.getName(), depPresentableId),
-                                    CoreBundle.messagePointer("plugin.loading.error.short.depends.on.failed.to.load.plugin", depPresentableId), notifyUser).register(errors);
+          PluginLoadingError.create(descriptor, message("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.getName(), depPresentableId),
+                                    message("plugin.loading.error.short.depends.on.failed.to.load.plugin", depPresentableId), notifyUser).register(errors);
         }
         else {
-          PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.getName(), depPresentableId),
-                                    CoreBundle.messagePointer("plugin.loading.error.short.depends.on.not.installed.plugin", depPresentableId), notifyUser).register(errors);
+          PluginLoadingError.create(descriptor, message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.getName(), depPresentableId),
+                                    message("plugin.loading.error.short.depends.on.not.installed.plugin", depPresentableId), notifyUser).register(errors);
         }
       }
       else {
         PluginLoadingError
-          error = PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.getName(), depName),
-                                            CoreBundle.messagePointer("plugin.loading.error.short.depends.on.disabled.plugin", depName), notifyUser);
+          error = PluginLoadingError.create(descriptor, message("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.getName(), depName),
+                                            message("plugin.loading.error.short.depends.on.disabled.plugin", depName), notifyUser);
         error.setDisabledDependency(dep.getPluginId());
         error.register(errors);
       }
     }
     return result;
+  }
+
+  private static @NotNull @Nls Supplier<String> message(@NotNull @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String key, Object @NotNull ... params) {
+    //noinspection Convert2Lambda
+    return new Supplier<String>() {
+      @Override
+      public String get() {
+        return CoreBundle.message(key, params);
+      }
+    };
   }
 
   /**
@@ -1512,15 +1493,35 @@ public final class PluginManagerCore {
      return enabledPlugins;
    }
 
-  /**
-   * @deprecated Use {@link PluginManager#addDisablePluginListener}
-   */
-  @Deprecated
-  public static void addDisablePluginListener(@NotNull Runnable listener) {
-    PluginManager.getInstance().addDisablePluginListener(listener);
-  }
-
   public static synchronized boolean isUpdatedBundledPlugin(@NotNull PluginDescriptor plugin) {
     return ourShadowedBundledPlugins != null && ourShadowedBundledPlugins.contains(plugin.getPluginId());
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated Use {@link #isDisabled(PluginId)} */
+  @Deprecated
+  public static boolean isDisabled(@NotNull String pluginId) {
+    return isDisabled(PluginId.getId(pluginId));
+  }
+
+  /** @deprecated Use {@link #disablePlugin(PluginId)} */
+  @Deprecated
+  public static boolean disablePlugin(@NotNull String id) {
+    return disablePlugin(PluginId.getId(id));
+  }
+
+  /** @deprecated Use {@link #enablePlugin(PluginId)} */
+  @Deprecated
+  public static boolean enablePlugin(@NotNull String id) {
+    return enablePlugin(PluginId.getId(id));
+  }
+
+  /** @deprecated Use {@link DisabledPluginsState#addDisablePluginListener} directly
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  public static void addDisablePluginListener(@NotNull Runnable listener) {
+    DisabledPluginsState.addDisablePluginListener(listener);
+  }
+  //</editor-fold>
 }

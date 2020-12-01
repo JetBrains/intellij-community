@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class PsiAugmentProvider {
   private static final Logger LOG = Logger.getInstance(PsiAugmentProvider.class);
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
-  private static final @NotNull ExtensionPoint<PsiAugmentProvider> EP = EP_NAME.getPoint();
+  private static final @NotNull NotNullLazyValue<ExtensionPoint<PsiAugmentProvider>> EP = NotNullLazyValue.lazy(() -> EP_NAME.getPoint());
   @SuppressWarnings("rawtypes")
   private /* non-static */ final Key<CachedValue<Map<Class, List>>> myCacheKey = Key.create(getClass().getName());
 
@@ -75,6 +76,15 @@ public abstract class PsiAugmentProvider {
   @ApiStatus.Experimental
   protected List<PsiMethod> getExtensionMethods(@NotNull PsiClass aClass, @NotNull String nameHint, @NotNull PsiElement context) {
     return Collections.emptyList();
+  }
+
+  /**
+   * @param method a method to resolve
+   * @return target static method, or null if the supplied method is not an extension method
+   */
+  @ApiStatus.Experimental
+  protected @Nullable PsiMethod getTargetMethod(@NotNull PsiMethod method) {
+    return null;
   }
   
   /**
@@ -175,6 +185,24 @@ public abstract class PsiAugmentProvider {
     return extensionMethods;
   }
 
+  /**
+   * @param method a method to resolve
+   * @return target static method, or null if the supplied method is not an extension method
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  public static PsiMethod resolveExtensionMethod(PsiMethod method) {
+    Ref<PsiMethod> result = Ref.create();
+    forEach(method.getProject(), provider -> {
+      PsiMethod target = provider.getTargetMethod(method);
+      if (target != null) {
+        result.set(target);
+        return false;
+      }
+      return true;
+    });
+    return result.get();
+  }
 
   @Nullable
   public static PsiType getInferredType(@NotNull PsiTypeElement typeElement) {
@@ -233,7 +261,7 @@ public abstract class PsiAugmentProvider {
 
   private static void forEach(Project project, Processor<? super PsiAugmentProvider> processor) {
     boolean dumb = DumbService.isDumb(project);
-    for (PsiAugmentProvider provider : EP.getExtensionList()) {
+    for (PsiAugmentProvider provider : EP.getValue().getExtensionList()) {
       if (!dumb || DumbService.isDumbAware(provider)) {
         try {
           boolean goOn = processor.process(provider);

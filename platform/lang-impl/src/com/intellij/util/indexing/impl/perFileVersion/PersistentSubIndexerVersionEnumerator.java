@@ -74,7 +74,7 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
   }
 
   private void init() throws IOException {
-    myMap = PersistentHashMapBuilder.newBuilder(myFile.toPath(), mySubIndexerTypeDescriptor, EnumeratorIntegerDescriptor.INSTANCE)
+    myMap = PersistentMapBuilder.newBuilder(myFile.toPath(), mySubIndexerTypeDescriptor, EnumeratorIntegerDescriptor.INSTANCE)
       //.wantNonNegativeIntegralValues()
     .build();
       // getSize/remove are required here
@@ -90,7 +90,7 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
   }
 
   public void clear() throws IOException {
-    PersistentHashMap.deleteMap(myMap);
+    myMap.closeAndClean();
     init();
   }
 

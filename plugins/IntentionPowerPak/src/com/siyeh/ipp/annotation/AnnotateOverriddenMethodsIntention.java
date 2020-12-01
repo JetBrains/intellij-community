@@ -20,18 +20,19 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
   @NotNull
@@ -107,11 +108,19 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
     final Collection<PsiMethod> overridingMethods = OverridingMethodsSearch.search(method).findAll();
     final List<PsiMethod> prepare = new ArrayList<>();
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
+    final Map<PsiMethod, ExternalAnnotationsManager.AnnotationPlace> annotationPlaces = new LinkedHashMap<>();
     for (PsiMethod overridingMethod : overridingMethods) {
-      if (annotationsManager.chooseAnnotationsPlace(overridingMethod) == ExternalAnnotationsManager.AnnotationPlace.IN_CODE) {
+      annotationPlaces.put(overridingMethod, annotationsManager.chooseAnnotationsPlaceNoUi(overridingMethod));
+    }
+
+    askAboutSourceRootsWithoutExternalAnnotations(project, overridingMethods, annotationsManager, annotationPlaces);
+
+    for (PsiMethod overridingMethod : overridingMethods) {
+      if (annotationPlaces.get(overridingMethod) == ExternalAnnotationsManager.AnnotationPlace.IN_CODE) {
         prepare.add(overridingMethod);
       }
     }
+    
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(prepare)) {
       return;
     }
@@ -119,13 +128,13 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
     try {
       for (PsiMethod overridingMethod : overridingMethods) {
         if (parameterIndex == -1) {
-          annotate(overridingMethod, annotationName, attributes, annotationsToRemove, annotationsManager);
+          annotate(overridingMethod, annotationName, attributes, annotationsToRemove, annotationPlaces.get(overridingMethod), annotationsManager);
         }
         else {
           final PsiParameterList parameterList = overridingMethod.getParameterList();
           final PsiParameter[] parameters = parameterList.getParameters();
           final PsiParameter parameter = parameters[parameterIndex];
-          annotate(parameter, annotationName, attributes, annotationsToRemove, annotationsManager);
+          annotate(parameter, annotationName, attributes, annotationsToRemove, annotationPlaces.get(overridingMethod), annotationsManager);
         }
       }
     }
@@ -137,14 +146,35 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
     }
   }
 
+  private static void askAboutSourceRootsWithoutExternalAnnotations(Project project,
+                                                                    Collection<PsiMethod> overridingMethods,
+                                                                    ExternalAnnotationsManager annotationsManager,
+                                                                    Map<PsiMethod, ExternalAnnotationsManager.AnnotationPlace> annotationPlaces) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    Map<VirtualFile, ExternalAnnotationsManager.AnnotationPlace> sourceRoots = new HashMap<>();
+    for (PsiMethod overridingMethod : overridingMethods) {
+      ExternalAnnotationsManager.AnnotationPlace annotationPlace = annotationPlaces.get(overridingMethod);
+      if (annotationPlace == ExternalAnnotationsManager.AnnotationPlace.NEED_ASK_USER) {
+        //ask once per source root
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(overridingMethod);
+        VirtualFile sourceRoot = virtualFile != null ? fileIndex.getSourceRootForFile(virtualFile) : null;
+        if (sourceRoot != null) {
+          annotationPlaces
+            .put(overridingMethod,
+                 sourceRoots.computeIfAbsent(sourceRoot, __ -> annotationsManager.chooseAnnotationsPlace(overridingMethod)));
+        }
+      }
+    }
+  }
+
   private static void annotate(PsiModifierListOwner modifierListOwner,
                                String annotationName,
                                PsiNameValuePair[] attributes,
                                List<String> annotationsToRemove,
+                               ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace,
                                ExternalAnnotationsManager annotationsManager) throws ProcessCanceledException {
     PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(modifierListOwner, annotationName);
     if (target == null || target.hasAnnotation(annotationName)) return;
-    final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace = annotationsManager.chooseAnnotationsPlace(modifierListOwner);
     if (annotationAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.NOWHERE) {
       return;
     }

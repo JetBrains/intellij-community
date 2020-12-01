@@ -41,7 +41,7 @@ async def f42(x):
 
 
 async def f43(x):
-    y = {z: 10 for <error descr="Can't assign to await expression">await z</error> in []}  # fail
+    y = {z: 10 for <error descr="Cannot assign to await expression">await z</error> in []}  # fail
     await x
 
 

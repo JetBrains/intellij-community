@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -490,24 +489,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
 
     if (LOG.isDebugEnabled()) {
-      final boolean changed = !ArrayUtil.equals(orderEntries, newOrder, Comparator.naturalOrder());
+      boolean changed = !Arrays.equals(orderEntries, newOrder);
       LOG.debug(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
     }
     modifiableRootModel.rearrangeOrderEntries(newOrder);
-  }
-
-  private static int findNewPlace(OrderEntry[] newOrder, int newIndex) {
-    int idx = newIndex;
-    while (idx < 0 || (idx < newOrder.length && newOrder[idx] != null)) {
-      idx++;
-    }
-    if (idx >= newOrder.length) {
-      idx = newIndex - 1;
-      while (idx >= 0 && (idx >= newOrder.length || newOrder[idx] != null)) {
-        idx--;
-      }
-    }
-    return idx;
   }
 
   private void importModuleSdk(@NotNull ModifiableRootModel modifiableRootModel, E data) {

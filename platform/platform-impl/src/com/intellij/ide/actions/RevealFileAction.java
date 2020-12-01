@@ -67,7 +67,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
           LOG.warn("invalid URL: " + url, ex);
         }
       }
-      notification.expire();
+      notification.hideBalloon();
     }
   };
 

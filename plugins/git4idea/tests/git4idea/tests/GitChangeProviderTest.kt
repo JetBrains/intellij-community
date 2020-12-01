@@ -22,7 +22,7 @@ import git4idea.status.GitChangeProvider
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.addCommit
 import git4idea.test.createFileStructure
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import junit.framework.TestCase
 import org.junit.Assume
 import java.io.File
@@ -105,7 +105,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
     val builder = MockChangelistBuilder()
     changeProvider.getChanges(dirtyScope, builder, EmptyProgressIndicator(), MockChangeListManagerGate(changeListManager))
     val changes = builder.changes
-    val map = THashMap<FilePath, Change>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)
+    val map = Object2ObjectOpenCustomHashMap<FilePath, Change>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)
     return changes.associateByTo(map) { ChangesUtil.getFilePath(it) }
   }
 

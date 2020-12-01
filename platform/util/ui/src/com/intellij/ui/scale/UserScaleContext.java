@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.util.Pair;
@@ -185,17 +185,16 @@ public class UserScaleContext {
   /**
    * Updates the context with the state of the provided one.
    *
-   * @param ctx the new context
+   * @param scaleContext the new context
    * @return whether any of the scale factors has been updated
    */
-  public boolean update(@Nullable UserScaleContext ctx) {
-    if (ctx == null) return update();
-    return onUpdated(updateAll(ctx));
+  public boolean update(@Nullable UserScaleContext scaleContext) {
+    return scaleContext == null ? update() : onUpdated(updateAll(scaleContext));
   }
 
-  protected <T extends UserScaleContext> boolean updateAll(@NotNull T ctx) {
-    boolean updated = setScale(ctx.usrScale);
-    return setScale(ctx.objScale) || updated;
+  protected <T extends UserScaleContext> boolean updateAll(@NotNull T scaleContext) {
+    boolean updated = setScale(scaleContext.usrScale);
+    return setScale(scaleContext.objScale) || updated;
   }
 
   @Override

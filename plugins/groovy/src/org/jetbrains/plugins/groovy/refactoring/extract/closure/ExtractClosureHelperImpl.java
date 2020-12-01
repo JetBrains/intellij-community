@@ -6,7 +6,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
 
   private final String myName;
   private final boolean myFinal;
-  private final TIntArrayList myToRemove;
+  private final IntList myToRemove;
   private final boolean myGenerateDelegate;
   @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
   private final int myReplaceFieldsWithGetters;
@@ -40,7 +40,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   public ExtractClosureHelperImpl(IntroduceParameterInfo info,
                                   String name,
                                   boolean declareFinal,
-                                  TIntArrayList toRemove,
+                                  IntList toRemove,
                                   boolean generateDelegate,
                                   @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
                                   int replaceFieldsWithGetters,
@@ -82,7 +82,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   }
 
   @Override
-  public TIntArrayList parametersToRemove() {
+  public IntList parametersToRemove() {
     return myToRemove;
   }
 

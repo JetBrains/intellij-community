@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.BuildContext
 
+@CompileStatic
 final class KeymapPluginsBuilder {
-
   static List<PluginRepositorySpec> buildKeymapPlugins(BuildContext buildContext, String targetDir) {
     return [
       keymapPlugin(["Mac OS X", "Mac OS X 10.5+"], buildContext, targetDir),
@@ -25,6 +26,7 @@ final class KeymapPluginsBuilder {
     ]
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   static PluginRepositorySpec keymapPlugin(List<String> keymaps, BuildContext buildContext, String targetDir) {
     def keymapPath = "$buildContext.paths.communityHome/platform/platform-resources/src/keymaps"
     def longName = keymaps[0].replace("Mac OS X", "macOS").replaceAll("Default for |[.0-9]", "").trim()

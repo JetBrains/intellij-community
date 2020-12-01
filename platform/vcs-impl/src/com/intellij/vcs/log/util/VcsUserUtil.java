@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class VcsUserUtil {
-  @NotNull private static final Pattern NAME_PATTERN = Pattern.compile("(\\w+)[\\W_](\\w+)");
+  @NotNull private static final Pattern NAME_PATTERN = Pattern.compile("(\\w+)[\\p{Punct}\\s](\\w+)");
   @NotNull private static final Pattern PRINTABLE_ASCII_PATTERN = Pattern.compile("[ -~]*");
 
   @NotNull

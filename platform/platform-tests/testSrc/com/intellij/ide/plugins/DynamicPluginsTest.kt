@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -97,11 +98,11 @@ class DynamicPluginsTest {
 
     DynamicPlugins.loadPlugin(descriptor)
 
-    DisabledPluginsState.saveDisabledPlugins(arrayListOf(PluginId.getId(builder.id)), false)
+    DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir(), builder.id)
     DynamicPlugins.unloadPlugin(descriptor, DynamicPlugins.UnloadPluginOptions(disable = true))
     assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
 
-    DisabledPluginsState.saveDisabledPlugins(arrayListOf(), false)
+    DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir())
     val newDescriptor = loadDescriptorInTest(path)
     PluginManagerCore.createClassLoaderConfiguratorForDynamicPlugin(newDescriptor).configure(newDescriptor)
     DynamicPlugins.loadPlugin(newDescriptor)
@@ -479,17 +480,17 @@ class DynamicPluginsTest {
 
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(pluginBuilder.id))!!
 
-    val disabled = ProjectPluginTrackerManager.updatePluginsState(
+    val disabled = ProjectPluginTrackerManager.getInstance().updatePluginsState(
       listOf(pluginDescriptor),
-      PluginEnabledState.DISABLED,
+      PluginEnableDisableAction.DISABLE_GLOBALLY,
     )
     assertThat(disabled).isTrue()
     assertThat(pluginDescriptor.isEnabled).isFalse()
     assertThat(app.getService(MyPersistentComponent::class.java)).isNull()
 
-    val enabled = ProjectPluginTrackerManager.updatePluginsState(
+    val enabled = ProjectPluginTrackerManager.getInstance().updatePluginsState(
       listOf(pluginDescriptor),
-      PluginEnabledState.ENABLED,
+      PluginEnableDisableAction.ENABLE_GLOBALLY,
     )
     assertThat(enabled).isTrue()
     assertThat(pluginDescriptor.isEnabled).isTrue()

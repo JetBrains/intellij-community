@@ -91,6 +91,9 @@ public interface ModelBranch extends UserDataHolder {
     if (element instanceof PsiDirectory) {
       return getFileBranch(((PsiDirectory)element).getVirtualFile());
     }
+    if (element instanceof BranchableSyntheticPsiElement) {
+      return ((BranchableSyntheticPsiElement)element).getModelBranch();
+    }
     PsiFile psiFile = element.getContainingFile();
     return psiFile == null ? null : getFileBranch(psiFile.getViewProvider().getVirtualFile());
   }
@@ -104,7 +107,6 @@ public interface ModelBranch extends UserDataHolder {
     }
     return file instanceof BranchedVirtualFile ? ((BranchedVirtualFile)file).getBranch() : null;
   }
-
 
   
   // ----------------- other

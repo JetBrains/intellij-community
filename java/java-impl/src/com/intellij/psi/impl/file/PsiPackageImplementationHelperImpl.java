@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -141,10 +142,17 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
         final Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
         if (module != null) {
           final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiFile);
-          final boolean isInTests =
-            virtualFile != null && ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(virtualFile);
-          if (isInTests) {
-            directories = psiPackage.getDirectories(GlobalSearchScope.moduleTestsWithDependentsScope(module));
+          if (virtualFile != null) {
+            if (ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(virtualFile)) {
+              directories = psiPackage.getDirectories(GlobalSearchScope.moduleTestsWithDependentsScope(module));
+            }
+
+            if (directories == null || directories.length == 0) {
+              VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);
+              if (contentRootForFile != null) {
+                directories = psiPackage.getDirectories(GlobalSearchScopes.directoriesScope(project, true, contentRootForFile));
+              }
+            }
           }
 
           if (directories == null || directories.length == 0) {

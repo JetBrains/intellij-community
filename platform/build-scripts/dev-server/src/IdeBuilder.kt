@@ -2,10 +2,10 @@
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.util.PathUtilRt
-import com.intellij.util.concurrency.AppExecutorUtil
-import io.methvin.watcher.DirectoryChangeListener
-import io.methvin.watcher.DirectoryWatcher
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -20,7 +20,16 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
-class IdeBuilder(val pluginBuilder: PluginBuilder, builder: DistributionJARsBuilder, homePath: Path, runDir: Path) {
+class IdeBuilder(val pluginBuilder: PluginBuilder,
+                 builder: DistributionJARsBuilder,
+                 homePath: Path,
+                 runDir: Path,
+                 private val moduleNameToPlugin: HashMap<String, BuildItem>) {
+  fun moduleChanged(moduleName: String, reason: Any) {
+    val plugin = moduleNameToPlugin.get(moduleName) ?: return
+    pluginBuilder.addDirtyPluginDir(plugin, reason)
+  }
+
   init {
     Files.writeString(runDir.resolve("libClassPath.txt"), createLibClassPath(pluginBuilder.buildContext, builder, homePath))
   }
@@ -93,50 +102,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   LOG.info("Initial full build of ${pluginLayouts.size} plugins in ${TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start)}s")
 
   val pluginBuilder = PluginBuilder(builder, buildContext, outDir)
-  watchChanges(pluginBuilder, moduleNameToPlugin, outDir, buildContext.messages)
-  return IdeBuilder(pluginBuilder, builder, homePath, runDir)
-}
-
-private fun watchChanges(pluginBuilder: PluginBuilder, moduleNameToPlugin: Map<String, BuildItem>, outDir: Path, logger: BuildMessages) {
-  val moduleDirs = ArrayList<Path>(moduleNameToPlugin.size)
-  val isDebugEnabled = LOG.isDebugEnabled
-  if (isDebugEnabled) {
-    LOG.debug("Modules to watch: ${moduleNameToPlugin.keys.sorted().joinToString() }}")
-  }
-  for (entry in moduleNameToPlugin) {
-    val dir = outDir.resolve(entry.key)
-    moduleDirs.add(dir)
-  }
-
-  val moduleNamePathOffset = outDir.toString().length + 1
-  val watcher = DirectoryWatcher.builder()
-    .paths(moduleDirs)
-    .fileHashing(false)
-    .listener(DirectoryChangeListener { event ->
-      val path = event.path()
-      // getName API is convenient, but it involves offsets computation and new Path, String, byte[] allocations,
-      // so, use old good string
-      val p = path.toString()
-      if (p.endsWith("${File.separatorChar}classpath.index") || p.endsWith("${File.separatorChar}.DS_Store")) {
-        return@DirectoryChangeListener
-      }
-
-      val moduleName = p.substring(moduleNamePathOffset, p.indexOf(File.separatorChar, moduleNamePathOffset))
-      val plugin = moduleNameToPlugin.get(moduleName)
-      if (plugin == null) {
-        logger.error("Cannot find plugin info by module name $moduleName")
-      }
-      else {
-        pluginBuilder.addDirtyPluginDir(plugin, path)
-      }
-    })
-    .build()
-  watcher.watchAsync(AppExecutorUtil.getAppExecutorService())
-  Runtime.getRuntime().addShutdownHook(object : Thread() {
-    override fun run() {
-      watcher.close()
-    }
-  })
+  return IdeBuilder(pluginBuilder, builder, homePath, runDir, moduleNameToPlugin)
 }
 
 private fun createLibClassPath(buildContext: BuildContext,
@@ -177,10 +143,16 @@ private fun createLibClassPath(buildContext: BuildContext,
 
 private fun getBundledMainModuleNames(productProperties: ProductProperties): List<String> {
   val bundledPlugins = productProperties.productLayout.bundledPluginModules
-  System.getProperty("additional.plugins")?.let {
-    return bundledPlugins + it.splitToSequence(',')
+  getAdditionalModules()?.let {
+    return bundledPlugins + it
   }
   return bundledPlugins
+}
+
+fun getAdditionalModules(): Sequence<String>? {
+  return (System.getProperty("additional.modules") ?: System.getProperty("additional.plugins") ?: return null)
+    .splitToSequence(',')
+    .map(String::trim)
 }
 
 private fun createRunDirForProduct(homePath: Path, platformPrefix: String): Path {

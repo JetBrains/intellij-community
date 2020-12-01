@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -602,7 +602,7 @@ public class SwingHelper {
     else {
       textPane = new JEditorPane();
     }
-    UISettings.setupComponentAntialiasing(textPane);
+    GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAAHintForSwingComponent());
     textPane.setFont(font != null ? font : UIUtil.getLabelFont());
     textPane.setEditorKit(UIUtil.getHTMLEditorKit());
     textPane.setEditable(false);

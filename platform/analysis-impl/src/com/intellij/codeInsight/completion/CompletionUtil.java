@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -13,6 +12,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class CompletionUtil {
+  private static final ExtensionPointName<CompletionDataEP> EP_NAME = new ExtensionPointName<>("com.intellij.completionData");
 
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
     {
@@ -65,7 +66,7 @@ public final class CompletionUtil {
 
   @Nullable
   private static CompletionData getCompletionDataByFileType(FileType fileType) {
-    for(CompletionDataEP ep: CompletionDataEP.EP_NAME.getExtensionList()) {
+    for (CompletionDataEP ep: EP_NAME.getExtensionList()) {
       if (ep.fileType.equals(fileType.getName())) {
         return ep.getHandler();
       }

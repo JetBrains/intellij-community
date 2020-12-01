@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +25,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
   private static final int NON_ID_WEIGHT = (Rule.DEFAULT_WEIGHT - 1) / 2;
 
   /** Holds symbols wrap rules by symbol. */
-  private final TIntObjectHashMap<Rule> myRules = new TIntObjectHashMap<>();
+  private final Int2ObjectOpenHashMap<Rule> myRules = new Int2ObjectOpenHashMap<>();
   private final Storage myOffset2weight = new Storage();
 
   @Override
@@ -96,7 +82,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
 
       // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++.
       // Also don't wrap before non-id symbol preceded by a space - wrap on space instead;
-      if (!isIdSymbol(c) && i > startOffset + 1 && isIdSymbol(text.charAt(i - 1)) && !myRules.contains(text.charAt(i - 1))) {
+      if (!isIdSymbol(c) && i > startOffset + 1 && isIdSymbol(text.charAt(i - 1)) && !myRules.containsKey(text.charAt(i - 1))) {
         myOffset2weight.store(i, NON_ID_WEIGHT);
       }
     }
@@ -121,7 +107,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       if (!canUseOffset(document, i, isSoftWrap)) {
         continue;
       }
-      
+
       Rule rule = myRules.get(c);
       if (rule != null) {
         switch (rule.condition) {

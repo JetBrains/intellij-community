@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review
 
-import circlet.code.api.CodeReviewWithCount
-import circlet.m2.ChannelsVm
-import circlet.m2.channel.M2DraftsVm
+import circlet.code.api.CodeReviewListItem
 import circlet.platform.client.property
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
@@ -37,19 +35,17 @@ internal fun openReviewInEditor(
   project: Project,
   workspace: Workspace,
   projectInfo: SpaceProjectInfo,
-  reviewWithCount: CodeReviewWithCount
+  codeReviewListItem: CodeReviewListItem
 ) {
-  val review = reviewWithCount.review.resolve()
+  val review = codeReviewListItem.review.resolve()
   val reviewProperty = review.property(workspace.client)
   val titleProperty = workspace.lifetime.map(reviewProperty) { it.title }
   val reviewStateProperty = workspace.lifetime.map(reviewProperty) { it.state }
   val chatRef = review.feedChannel ?: return
-  val client = workspace.client
-  val completionVm = workspace.completion
   val chatFile = SpaceChatFile(
     "space-review/${review.key}",
     SpaceBundle.message("review.chat.editor.tab.name", review.key, review.title),
-    ChannelsVm(client, workspace.me, completionVm, M2DraftsVm(client, completionVm, null), workspace.featureFlags.featureFlags),
+    workspace.chatVm.channels,
     chatRef,
     SpaceChatReviewHeaderDetails(projectInfo, reviewStateProperty, titleProperty, review.key) // NON-NLS
   )

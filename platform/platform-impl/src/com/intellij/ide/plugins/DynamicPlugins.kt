@@ -147,8 +147,6 @@ object DynamicPlugins {
     plugins: Collection<IdeaPluginDescriptor>,
     load: Boolean
   ): List<IdeaPluginDescriptorImpl>? {
-    plugins.forEach { it.isEnabled = load }
-
     val loadedPlugins = PluginManagerCore.getLoadedPlugins()
     val descriptors = plugins
       .asSequence()

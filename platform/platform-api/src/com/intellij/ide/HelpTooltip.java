@@ -100,10 +100,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  */
 
 public class HelpTooltip {
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolTip.background", new JBColor(0xf7f7f7, 0x474a4c));
-  private static final Color SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
   private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
-  private static final Color BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
 
   private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
@@ -320,7 +317,7 @@ public class HelpTooltip {
     myPopupBuilder = JBPopupFactory.getInstance().
         createComponentPopupBuilder(tipPanel, null).
         setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
-        setBorderColor(BORDER_COLOR).setShowShadow(true);
+        setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor()).setShowShadow(true);
   }
 
   protected void initPopupBuilder(@NotNull HelpTooltip instance) {
@@ -352,7 +349,7 @@ public class HelpTooltip {
   protected final JPanel createTipPanel() {
     JPanel tipPanel = new JPanel();
     tipPanel.setLayout(new VerticalLayout(VGAP.get()));
-    tipPanel.setBackground(BACKGROUND_COLOR);
+    tipPanel.setBackground(UIUtil.getToolTipBackground());
 
     boolean hasTitle = StringUtil.isNotEmpty(title);
     boolean hasDescription = StringUtil.isNotEmpty(description);
@@ -370,7 +367,7 @@ public class HelpTooltip {
     if (!hasTitle && StringUtil.isNotEmpty(shortcut)) {
       JLabel shortcutLabel = new JLabel(shortcut);
       shortcutLabel.setFont(deriveDescriptionFont(shortcutLabel.getFont(), false));
-      shortcutLabel.setForeground(SHORTCUT_COLOR);
+      shortcutLabel.setForeground(JBUI.CurrentTheme.Tooltip.shortcutForeground());
 
       tipPanel.add(shortcutLabel, VerticalLayout.TOP);
     }
@@ -523,7 +520,8 @@ public class HelpTooltip {
   public static @NotNull String getShortcutAsHtml(@Nullable String shortcut) {
     return StringUtil.isEmpty(shortcut)
            ? ""
-           : String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(SHORTCUT_COLOR), shortcut);
+           : String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(JBUI.CurrentTheme.Tooltip.shortcutForeground()),
+                           shortcut);
   }
 
   private static class BoundWidthLabel extends JLabel {

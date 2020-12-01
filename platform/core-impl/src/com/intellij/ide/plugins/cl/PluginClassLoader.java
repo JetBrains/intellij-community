@@ -312,12 +312,18 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
         return c;
       }
 
+      Writer logStream = PluginClassLoader.logStream;
       try {
         c = _findClass(name);
       }
       catch (LinkageError e) {
+        if (logStream != null) {
+          logClass(name, logStream, e);
+        }
         flushDebugLog();
-        throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, pluginId);
+        throw new PluginException("Cannot load class " + name + " (" +
+                                  "\n  error: " + e.getMessage() +
+                                  ",\n  classLoader=" + this + "\n)", e, pluginId);
       }
 
       if (c == null) {
@@ -325,18 +331,20 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       }
 
       loadedClassCounter.incrementAndGet();
-      Writer logStream = PluginClassLoader.logStream;
       if (logStream != null) {
-        try {
-          // must be as one write call since write is performed from multiple threads
-          String specifier = getClass() == PluginClassLoader.class ? "m" : "s = " + ((IdeaPluginDescriptor)pluginDescriptor).getDescriptorPath();
-          logStream.write(name + " [" + specifier + "] " + pluginId.getIdString() + (packagePrefix == null ? "" : (':' + packagePrefix)) + '\n');
-        }
-        catch (IOException ignored) {
-        }
+        logClass(name, logStream, null);
       }
-
       return c;
+    }
+  }
+
+  private void logClass(@NotNull String name, @NotNull Writer logStream, @Nullable LinkageError exception) {
+    try {
+      // must be as one write call since write is performed from multiple threads
+      String specifier = getClass() == PluginClassLoader.class ? "m" : "s = " + ((IdeaPluginDescriptor)pluginDescriptor).getDescriptorPath();
+      logStream.write(name + " [" + specifier + "] " + pluginId.getIdString() + (packagePrefix == null ? "" : (':' + packagePrefix)) + '\n' + (exception == null ? "" : exception.getMessage()));
+    }
+    catch (IOException ignored) {
     }
   }
 

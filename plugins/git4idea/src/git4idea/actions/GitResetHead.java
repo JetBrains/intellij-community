@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static git4idea.GitNotificationIdsHolder.RESET_FAILED;
+
 /**
  * The reset action
  */
@@ -49,7 +51,7 @@ public class GitResetHead extends GitRepositoryAction {
         try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError("git.reset.failed",
+            VcsNotifier.getInstance(project).notifyError(RESET_FAILED,
                                                          GitBundle.message("resetting.title"),
                                                          result.getErrorOutputAsHtmlString(),
                                                          true);

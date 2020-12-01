@@ -14,7 +14,7 @@ class LearnIdeTabFactory: WelcomeTabFactory {
     return object : TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.learnIde.title", ApplicationNamesInfo.getInstance().fullProductName),
                                                                 WelcomeScreenEventCollector.TabType.TabNavTutorials) {
       override fun buildComponent(): JComponent {
-        return LearnIdeContentPanel()
+        return LearnIdeContentPanel(parentDisposable)
       }
     }
   }

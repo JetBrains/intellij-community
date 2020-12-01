@@ -24,6 +24,8 @@ abstract class ExternalSystemModulePropertyManager {
   abstract fun unlinkExternalOptions()
   fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?) =
     setExternalOptions(id, moduleData, projectData, null)
+
+  // diff from modelsProvider will be used for storing values. Next `get...` call won't give you these external options
   abstract fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?,
                                   modelsProvider: IdeModifiableModelsProvider?)
   abstract fun setExternalId(id: ProjectSystemId)

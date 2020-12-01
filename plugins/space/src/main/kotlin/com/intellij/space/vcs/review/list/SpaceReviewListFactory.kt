@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
-import circlet.code.api.CodeReviewWithCount
+import circlet.code.api.CodeReviewListItem
 import circlet.platform.client.BatchResult
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.util.Disposer
 import com.intellij.space.ui.LoadableListVmImpl
 import com.intellij.space.ui.bindScroll
 import com.intellij.space.ui.toLoadable
+import com.intellij.space.vcs.review.SpaceReviewDataKeys
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ListUtil
 import com.intellij.ui.PopupHandler
@@ -16,13 +19,14 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.ui.frame.ProgressStripe
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 
 object SpaceReviewListFactory {
   fun create(listVm: SpaceReviewsListVm): JComponent {
-    val listModel: CollectionListModel<CodeReviewWithCount> = CollectionListModel()
+    val listModel: CollectionListModel<CodeReviewListItem> = CollectionListModel()
 
     val reviewsList: SpaceReviewsList = SpaceReviewsList(listModel, listVm.lifetime).apply {
       installPopup(this)
@@ -38,7 +42,7 @@ object SpaceReviewListFactory {
 
     listVm.reviews.forEach(listVm.lifetime) { xList ->
       listModel.removeAll()
-      xList.batches.forEach(listVm.lifetime) { batchResult: BatchResult<CodeReviewWithCount> ->
+      xList.batches.forEach(listVm.lifetime) { batchResult: BatchResult<CodeReviewListItem> ->
         when (batchResult) {
           is BatchResult.More -> listModel.add(batchResult.items)
           is BatchResult.Reset -> listModel.removeAll()
@@ -46,17 +50,33 @@ object SpaceReviewListFactory {
       }
     }
 
-    listVm.isLoading.forEach(listVm.lifetime) {
-      reviewsList.setPaintBusy(it)
-    }
-
     bindScroll(listVm.lifetime, scrollableList, LoadableListVmImpl(listVm.isLoading, listVm.reviews.toLoadable()), reviewsList)
 
     DataManager.registerDataProvider(scrollableList) { dataId ->
-      if (SpaceReviewListDataKeys.REVIEWS_LIST_VM.`is`(dataId)) listVm else null
+      if (SpaceReviewDataKeys.REVIEWS_LIST_VM.`is`(dataId)) listVm else null
     }
 
-    return scrollableList
+    val disposable = Disposer.newDisposable()
+    listVm.lifetime.add {
+      Disposer.dispose(disposable)
+    }
+
+    val progressStripe = ProgressStripe(
+      scrollableList,
+      disposable,
+      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+    )
+
+    listVm.isLoading.forEach(listVm.lifetime) { isLoading ->
+      if (isLoading) {
+        progressStripe.startLoading()
+      }
+      else {
+        progressStripe.stopLoading()
+      }
+    }
+
+    return progressStripe
   }
 
   private fun installPopup(list: SpaceReviewsList) {

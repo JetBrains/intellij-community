@@ -1,16 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet;
 
-import com.google.common.base.Strings;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,9 +28,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
-
 public class XmlEmmetParser extends EmmetParser {
   public static final String DEFAULT_ATTRIBUTE_NAME = "%default";
   public static final String BOOLEAN_ATTRIBUTE_VALUE = "%boolean";
@@ -46,21 +43,21 @@ public class XmlEmmetParser extends EmmetParser {
   private final Stack<String> tagLevel = new Stack<>();
 
   private static final Map<String, String> parentChildTagMapping = ContainerUtil.newHashMap(
-    pair("p", "span"),
-    pair("ul", "li"),
-    pair("ol", "li"),
-    pair("table", "tr"),
-    pair("tr", "td"),
-    pair("tbody", "tr"),
-    pair("thead", "tr"),
-    pair("tfoot", "tr"),
-    pair("colgroup", "col"),
-    pair("select", "option"),
-    pair("optgroup", "option"),
-    pair("audio", "source"),
-    pair("video", "source"),
-    pair("object", "param"),
-    pair("map", "area"));
+    Pair.pair("p", "span"),
+    Pair.pair("ul", "li"),
+    Pair.pair("ol", "li"),
+    Pair.pair("table", "tr"),
+    Pair.pair("tr", "td"),
+    Pair.pair("tbody", "tr"),
+    Pair.pair("thead", "tr"),
+    Pair.pair("tfoot", "tr"),
+    Pair.pair("colgroup", "col"),
+    Pair.pair("select", "option"),
+    Pair.pair("optgroup", "option"),
+    Pair.pair("audio", "source"),
+    Pair.pair("video", "source"),
+    Pair.pair("object", "param"),
+    Pair.pair("map", "area"));
 
   private final boolean isHtml;
 
@@ -150,7 +147,7 @@ public class XmlEmmetParser extends EmmetParser {
     if (token instanceof IdentifierToken) {
       templateKey = ((IdentifierToken)token).getText();
       advance();
-      if (startsWithIgnoreCase(templateKey, LOREM_KEYWORD) || startsWithIgnoreCase(templateKey, LIPSUM_KEYWORD)) {
+      if (StringUtil.startsWithIgnoreCase(templateKey, LOREM_KEYWORD) || StringUtil.startsWithIgnoreCase(templateKey, LIPSUM_KEYWORD)) {
         return parseLorem(templateKey);
       }
       mustHaveSelector = false;
@@ -198,7 +195,7 @@ public class XmlEmmetParser extends EmmetParser {
   protected ZenCodingNode parseMoreOperation(@Nullable ZenCodingNode leftPart) {
     String parentTag = getParentTag(leftPart);
     boolean hasParent = false;
-    if (!Strings.isNullOrEmpty(parentTag)) {
+    if (!Strings.isEmpty(parentTag)) {
       hasParent = true;
       tagLevel.push(parentTag);
     }

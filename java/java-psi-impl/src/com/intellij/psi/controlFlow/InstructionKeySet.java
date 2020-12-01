@@ -18,7 +18,7 @@ import java.util.Arrays;
  *
  * @author Pavel.Dolgov
  */
-class InstructionKeySet {
+final class InstructionKeySet {
   private final @NotNull Node myRoot;
 
   InstructionKeySet(int initialCapacity) {

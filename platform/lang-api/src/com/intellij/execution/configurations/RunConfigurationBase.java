@@ -138,6 +138,14 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     return true;
   }
 
+  public String getProjectPathOnTarget() {
+    return getOptions().getProjectPathOnTarget();
+  }
+
+  public void setProjectPathOnTarget(String path) {
+    getOptions().setProjectPathOnTarget(path);
+  }
+
   @Override
   public final boolean equals(final Object obj) {
     return super.equals(obj);

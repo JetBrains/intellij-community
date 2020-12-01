@@ -72,12 +72,15 @@ class ProjectPluginTracker(
 
   private val disabledPluginIds get() = state.disabledPlugins.findPluginId()
 
-  fun startTrackingPerProject(pluginId: PluginId, enable: Boolean) {
-    state.register(pluginId, enable)
+  fun startTrackingPerProject(
+    pluginIds: Iterable<PluginId>,
+    enable: Boolean,
+  ) {
+    pluginIds.forEach { state.register(it, enable) }
   }
 
-  fun stopTrackingPerProject(pluginId: PluginId) {
-    state.unregister(pluginId)
+  fun stopTrackingPerProject(pluginIds: Iterable<PluginId>) {
+    pluginIds.forEach(state::unregister)
   }
 
   fun isEnabled(pluginId: PluginId) = state.enabledPlugins.contains(pluginId.idString)
@@ -93,7 +96,7 @@ class ProjectPluginTracker(
   internal fun disabledPluginIds(trackers: List<ProjectPluginTracker> = listOf()): Collection<PluginId> {
     return disabledPluginIds
       .filterNot { pluginId ->
-        DisabledPluginsState.disabledPlugins().contains(pluginId) ||
+        DisabledPluginsState.isDisabled(pluginId) ||
         trackers.isNotEmpty() && trackers.all { it.isDisabled(pluginId) }
       }
   }

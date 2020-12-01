@@ -39,24 +39,28 @@ class EditorDiffPreviewFilesManager(private val project: Project) :
     }
 
   fun openFile(file: PreviewDiffVirtualFile, focusEditor: Boolean): Array<out FileEditor> {
-    with(FileEditorManager.getInstance(project) as FileEditorManagerImpl) {
-      if (!shouldOpenInNewWindow) {
-        return openFile(file, focusEditor, true)
+    val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
+    if (editorManager.isFileOpen(file)) {
+      if (focusEditor) {
+        focusEditor(file)
       }
-
-      if (isFileOpen(file)) {
-        if (focusEditor) {
-          findFloatingWindowForFile(file)?.run {
-            requestFocus(true)
-            return findFileComposite(file)?.also { setSelectedEditor(it, focusEditor) }?.editors.orEmpty()
-          }
-        }
-
-        return getEditors(file)
-      }
-
-      return openFileInNewWindow(file).first
+      return emptyArray()
     }
+
+    if (shouldOpenInNewWindow) {
+      return editorManager.openFileInNewWindow(file).first
+    }
+    else {
+      return editorManager.openFile(file, focusEditor, true)
+    }
+  }
+
+  private fun focusEditor(file: PreviewDiffVirtualFile) {
+    val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
+    val window = editorManager.windows.find { it.isFileOpen(file) } ?: return
+    val composite = window.findFileComposite(file) ?: return
+    window.setSelectedEditor(composite, true)
+    window.requestFocus(true)
   }
 
   override fun dispose() {}

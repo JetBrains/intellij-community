@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileTypes.FileType
@@ -17,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SimpleModificationTracker
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -27,24 +25,24 @@ internal data class PluginAdvertiserExtensionsData(
   val plugins: Set<PluginsAdvertiser.Plugin>
 )
 
-@State(name = "PluginAdvertiserExtensions", storages = [Storage("pluginAdvertiser.xml")])
-internal class PluginAdvertiserExtensionsStateService : PersistentStateComponent<PluginAdvertiserExtensionsStateService.State> {
+@State(name = "PluginAdvertiserExtensions", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+@Service(Service.Level.APP)
+internal class PluginAdvertiserExtensionsStateService : SimpleModificationTracker(), PersistentStateComponent<PluginAdvertiserExtensionsStateService.State> {
   companion object {
     @JvmStatic
     fun getInstance(): PluginAdvertiserExtensionsStateService = service()
   }
 
   class State {
-    var localState = mutableMapOf<String, PluginsAdvertiser.Plugin>()
+    val localState = LinkedHashMap<String, PluginsAdvertiser.Plugin>()
   }
 
   private var state = State()
 
-  internal val cache: Cache<String, Optional<PluginAdvertiserExtensionsData>> =
-    CacheBuilder
-      .newBuilder()
-      .expireAfterWrite(1, TimeUnit.HOURS)
-      .build()
+  internal val cache = Caffeine
+    .newBuilder()
+    .expireAfterWrite(1, TimeUnit.HOURS)
+    .build<String, Optional<PluginAdvertiserExtensionsData>>()
 
   override fun getState(): State = state
 
@@ -53,14 +51,17 @@ internal class PluginAdvertiserExtensionsStateService : PersistentStateComponent
   }
 
   fun registerLocalPlugin(extensionOrFileName: String, plugin: PluginDescriptor) {
-    state.localState[extensionOrFileName] = PluginsAdvertiser.Plugin(plugin.pluginId.idString, plugin.name, plugin.isBundled, false)
+    state.localState.put(extensionOrFileName, PluginsAdvertiser.Plugin(plugin.pluginId.idString, plugin.name, plugin.isBundled, false))
+    // no need to waste time to check that map is really changed - registerLocalPlugin is not called often after start-up,
+    // so, mod count will be not incremented too often
+    incModificationCount()
   }
 
   fun getLocalPlugin(fileName: String, fullExtension: String?): PluginAdvertiserExtensionsData? {
-    state.localState[fileName]?.let { plugin ->
+    state.localState.get(fileName)?.let { plugin ->
       return PluginAdvertiserExtensionsData(fileName, setOf(plugin))
     }
-    fullExtension?.let { state.localState[it] }?.let { plugin ->
+    fullExtension?.let { state.localState.get(it) }?.let { plugin ->
       return PluginAdvertiserExtensionsData(fullExtension, setOf(plugin))
     }
     return null
@@ -86,12 +87,13 @@ internal class PluginAdvertiserExtensionsState(private val project: Project, pri
   private val enabledExtensionOrFileNames: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
 
   fun addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName: String) {
-    enabledExtensionOrFileNames += extensionOrFileName
+    enabledExtensionOrFileNames.add(extensionOrFileName)
     invalidateCacheDataForKey(extensionOrFileName)
   }
 
-  private fun getCachedData(extensionOrFileName: String): PluginAdvertiserExtensionsData? =
-    service.cache.getIfPresent(extensionOrFileName)?.orElse(null)
+  private fun getCachedData(extensionOrFileName: String): PluginAdvertiserExtensionsData? {
+    return service.cache.getIfPresent(extensionOrFileName)?.orElse(null)
+  }
 
   fun updateCache(extensionOrFileName: String): Boolean {
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed)
@@ -100,11 +102,7 @@ internal class PluginAdvertiserExtensionsState(private val project: Project, pri
     if (service.cache.getIfPresent(extensionOrFileName) != null) {
       return false
     }
-    val knownExtensions = PluginsAdvertiser.loadExtensions()
-    if (knownExtensions == null) {
-      return false
-    }
-
+    val knownExtensions = PluginsAdvertiser.loadExtensions() ?: return false
     val newData = requestData(extensionOrFileName, knownExtensions)
     service.cache.put(extensionOrFileName, Optional.ofNullable(newData))
     return true
@@ -169,31 +167,32 @@ internal class PluginAdvertiserExtensionsState(private val project: Project, pri
     return null
   }
 
-  private fun requestData(
-    extensionOrFileName: String,
-    knownExtensions: PluginsAdvertiser.KnownExtensions
-  ): PluginAdvertiserExtensionsData? {
-    val allPlugins = knownExtensions.find(extensionOrFileName)?.toSet()
+  private fun requestData(extensionOrFileName: String,
+                          knownExtensions: PluginsAdvertiser.KnownExtensions): PluginAdvertiserExtensionsData? {
+    val allPlugins = knownExtensions.find(extensionOrFileName)?.toHashSet()
     if (allPlugins == null || allPlugins.isEmpty()) {
       LOG.debug("No features for extension $extensionOrFileName")
       return null
     }
+
     val pluginIdsFromMarketplace = MarketplaceRequests.getInstance()
       .getLastCompatiblePluginUpdate(allPlugins.map { it.myPluginId }, null).map { it.pluginId }.toSet()
-    val compatiblePlugins = allPlugins.filter {
+    val compatiblePlugins = allPlugins
+      .asSequence()
+      .filter {
       it.myFromCustomRepository
       || it.myBundled
       || pluginIdsFromMarketplace.contains(it.myPluginId)
-    }.toSet()
-    if (compatiblePlugins.isNotEmpty()) {
-      LOG.debug(String.format(
-        "Found following plugins for '%s': [%s]", extensionOrFileName,
-        compatiblePlugins.map { it.myPluginId }.joinToString { it })
-      )
-      return PluginAdvertiserExtensionsData(extensionOrFileName, compatiblePlugins)
+    }.toHashSet()
+    if (compatiblePlugins.isEmpty()) {
+      LOG.debug("No plugins for extension $extensionOrFileName")
+      return null
     }
-    LOG.debug("No plugins for extension $extensionOrFileName")
-    return null
+
+    LOG.debug {
+      "Found following plugins for '${extensionOrFileName}': ${compatiblePlugins.map { it.myPluginId }.joinToString { it }}"
+    }
+    return PluginAdvertiserExtensionsData(extensionOrFileName, compatiblePlugins)
   }
 
   private fun isIgnored(extensionOrFileName: String): Boolean {

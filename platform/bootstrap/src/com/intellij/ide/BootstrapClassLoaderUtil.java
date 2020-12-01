@@ -12,13 +12,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.ProtectionDomain;
@@ -196,20 +199,21 @@ public final class BootstrapClassLoaderUtil {
     addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl);
   }
 
-  private static List<String> loadJarOrder() {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") InputStream resource = BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE);
-    if (resource != null) {
-      try (BufferedReader stream = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
-        List<String> lines = new ArrayList<>();
-        String line;
-        while ((line = stream.readLine()) != null) {
-          lines.add(line);
-        }
-        return lines;
+  private static @NotNull List<String> loadJarOrder() {
+    Path distDir = Paths.get(PathManager.getHomePath());
+    Path file = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve(CLASSPATH_ORDER_FILE);
+    try (BufferedReader stream = Files.newBufferedReader(file)) {
+      List<String> lines = new ArrayList<>();
+      String line;
+      while ((line = stream.readLine()) != null) {
+        lines.add(line);
       }
-      catch (Exception ignored) {
-        // skip, we can load the app
-      }
+      return lines;
+    }
+    catch (NoSuchFileException ignored) {
+    }
+    catch (Exception e) {
+      getLogger().error("Cannot read " + file + ": ", e);
     }
     return Collections.emptyList();
   }

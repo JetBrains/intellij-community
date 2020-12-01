@@ -30,7 +30,7 @@ class CurrentBranchConditionCache(private val logData: VcsLogData, parent: Dispo
     if (oldCondition.isOutdated()) {
       val inProgress = oldCondition.inProgress()
       if (holder.compareAndSet(oldCondition, inProgress)) {
-        executor.submit {
+        executor.execute {
           if (holder.get() == inProgress) {
             holder.compareAndSet(inProgress, ConditionHolder(doGetContainedInCurrentBranchCondition(root), State.VALID))
           }

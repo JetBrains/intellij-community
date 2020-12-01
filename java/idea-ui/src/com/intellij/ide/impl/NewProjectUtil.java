@@ -144,7 +144,7 @@ public final class NewProjectUtil {
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         boolean needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
-        StartupManager.getInstance(newProject).registerPostStartupActivity(() -> {
+        StartupManager.getInstance(newProject).runAfterOpened(() -> {
           // ensure the dialog is shown after all startup activities are done
           ApplicationManager.getApplication().invokeLater(() -> {
             if (needToOpenProjectStructure) {

@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -61,13 +62,13 @@ public class RegExHelpPopup extends JPanel {
     myEditorPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     myEditorPane.setBackground(HintUtil.getInformationColor());
 
-    String text;
+    @NlsSafe String text;
     try {
       text = ResourceUtil.loadText(ResourceUtil.getResourceAsStream(getClass(), "messages", "RegExHelpPopup.html"));
     }
     catch (IOException e) {
       LOG.error(e);
-      text = "Failed to load help page: " + e.getMessage();
+      text = LangBundle.message("text.failed.to.load.help.page", e.getMessage());
     }
     myEditorPane.setText(StringUtil.replace(text, "LABEL_BACKGROUND", ColorUtil.toHtmlColor(UIUtil.getLabelBackground())));
 
@@ -122,7 +123,7 @@ public class RegExHelpPopup extends JPanel {
           .setRequestFocus(true)
           .setMovable(true)
           .setResizable(true)
-          .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton("Hide"))
+          .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton(LangBundle.message("tooltip.hide")))
           .setTitle(LangBundle.message("popup.title.regular.expressions.syntax")).setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
         Disposer.register(helpPopup, new Disposable() {
           @Override

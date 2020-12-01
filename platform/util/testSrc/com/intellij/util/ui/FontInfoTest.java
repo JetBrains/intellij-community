@@ -16,8 +16,8 @@ public final class FontInfoTest extends TestCase {
       assertEquals(info, FontInfo.get(name.toUpperCase(Locale.ENGLISH)));
       assertEquals(info, FontInfo.get(name.toLowerCase(Locale.ENGLISH)));
     }
-    exist = false; // because predefined names are not real font names
-    assertEquals(exist, null != FontInfo.get(new Font(name, Font.PLAIN, 12)));
+    // because predefined names are not real font names
+    assertNull(FontInfo.get(new Font(name, Font.PLAIN, 12)));
   }
 
   public void testDialog() {

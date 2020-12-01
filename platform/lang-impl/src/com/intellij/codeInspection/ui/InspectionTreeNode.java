@@ -5,13 +5,13 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
 import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,12 +70,10 @@ public abstract class InspectionTreeNode implements TreeNode {
     return true;
   }
 
-  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+  protected void visitProblemSeverities(@NotNull Object2IntOpenHashMap<HighlightDisplayLevel> counter) {
     for (InspectionTreeNode child : getChildren()) {
       for (LevelAndCount levelAndCount : child.getProblemLevels()) {
-        if (!counter.adjustValue(levelAndCount.getLevel(), levelAndCount.getCount())) {
-          counter.put(levelAndCount.getLevel(), levelAndCount.getCount());
-        }
+        counter.addTo(levelAndCount.getLevel(), levelAndCount.getCount());
       }
     }
   }
@@ -198,14 +196,13 @@ public abstract class InspectionTreeNode implements TreeNode {
     private volatile LevelAndCount[] myLevels;
 
     private LevelAndCount @NotNull [] compute() {
-      TObjectIntHashMap<HighlightDisplayLevel> counter = new TObjectIntHashMap<>();
+      Object2IntOpenHashMap<HighlightDisplayLevel> counter = new Object2IntOpenHashMap<>();
       visitProblemSeverities(counter);
       LevelAndCount[] arr = new LevelAndCount[counter.size()];
       final int[] i = {0};
-      counter.forEachEntry((l, c) -> {
-        arr[i[0]++] = new LevelAndCount(l, c);
-        return true;
-      });
+      for (Object2IntMap.Entry<HighlightDisplayLevel> entry : counter.object2IntEntrySet()) {
+        arr[i[0]++] = new LevelAndCount(entry.getKey(), entry.getIntValue());
+      }
       Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity())
         .reversed());
       return doesNeedInternProblemLevels() ? LEVEL_AND_COUNT_INTERNER.intern(arr) : arr;

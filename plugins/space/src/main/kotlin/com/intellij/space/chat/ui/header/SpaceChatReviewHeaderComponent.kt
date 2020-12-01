@@ -4,14 +4,12 @@ package com.intellij.space.chat.ui.header
 import circlet.code.api.CodeReviewState
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.impl.SpaceChatReviewHeaderDetails
-import com.intellij.space.chat.ui.SpaceChatContentPanel
+import com.intellij.space.chat.ui.SpaceChatAvatarType
+import com.intellij.space.chat.ui.getGrayTextHtml
 import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
-import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.VcsCodeReviewIcons
 import libraries.coroutines.extra.Lifetime
@@ -34,7 +32,7 @@ internal class SpaceChatReviewHeaderComponent(
   }
 
   private val stateIconSize: Int
-    get() = (SpaceChatContentPanel.getChatAvatarSize().get() * STATE_ICON_FACTOR).toInt()
+    get() = (SpaceChatAvatarType.MAIN_CHAT.size.get() * STATE_ICON_FACTOR).toInt()
 
   init {
     isOpaque = false
@@ -82,7 +80,7 @@ internal class SpaceChatReviewHeaderComponent(
     if (reviewKey != null) {
       builder
         .nbsp()
-        .append(HtmlChunk.span("color: ${ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())}").addRaw(reviewKey))
+        .appendRaw(getGrayTextHtml(reviewKey))
     }
     return builder.toString()
   }

@@ -40,6 +40,7 @@ import training.learn.lesson.LessonManager
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.lesson.kimpl.LessonUtil.checkPositionOfEditor
+import training.learn.lesson.kimpl.LessonUtil.highlightBreakpointGutter
 import training.learn.lesson.kimpl.LessonUtil.sampleRestoreNotification
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
@@ -52,6 +53,7 @@ import javax.swing.text.JTextComponent
 abstract class CommonDebugLesson(module: Module, id: String, languageId: String)
   : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name"), module, languageId) {
   protected abstract val sample: LessonSample
+  protected abstract var logicalPosition: LogicalPosition
   protected abstract val configurationName: String
   protected abstract val quickEvaluationArgument: String
   protected abstract val expressionToBeEvaluated: String
@@ -64,16 +66,12 @@ abstract class CommonDebugLesson(module: Module, id: String, languageId: String)
 
   protected var mayBeStopped: Boolean = false
   private var debugSession: XDebugSession? by WeakReferenceDelegator()
-  private var logicalPosition: LogicalPosition = LogicalPosition(0, 0)
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
 
     prepareTask()
 
-    prepareRuntimeTask {
-      logicalPosition = editor.offsetToLogicalPosition(sample.startOffset)
-    }
     toggleBreakpointTask(sample, { logicalPosition }) {
       LessonsBundle.message("debug.workflow.toggle.breakpoint", action("ToggleLineBreakpoint"))
     }
@@ -423,7 +421,7 @@ abstract class CommonDebugLesson(module: Module, id: String, languageId: String)
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val line = editor.offsetToVisualLine(offset, true)
         val y = editor.visualLineToY(line)
-        return@l Rectangle(2, y, ui.width - 60, editor.lineHeight)
+        return@l Rectangle(2, y, ui.iconsAreaWidth + 6, editor.lineHeight)
       }
     }
   }
@@ -466,13 +464,7 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample,
                                        logicalPosition: () -> LogicalPosition,
                                        checkLine: Boolean = true,
                                        @Nls message: TaskContext.() -> String) {
-  task {
-    triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
-      if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
-      val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
-      return@l Rectangle(20, y, ui.width - 26, editor.lineHeight)
-    }
-  }
+  highlightBreakpointGutter(logicalPosition())
 
   prepareRuntimeTask {
     runWriteAction {

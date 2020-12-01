@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.PathKt;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -299,7 +298,7 @@ public class FTManager {
   private void saveTemplates(boolean removeDeleted) {
     final Set<String> allNames = new THashSet<>();
     final Path configRoot = getConfigRoot();
-    final Map<String, Path> templatesOnDisk = new THashMap<>();
+    final Map<String, Path> templatesOnDisk = new HashMap<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(getConfigRoot(), file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
       for (Path file : stream) {
         String fileName = file.getFileName().toString();
@@ -313,7 +312,7 @@ public class FTManager {
       LOG.error(e);
     }
 
-    final Map<String, FileTemplateBase> templatesToSave = new THashMap<>();
+    final Map<String, FileTemplateBase> templatesToSave = new HashMap<>();
 
     for (FileTemplateBase template : getAllTemplates(true)) {
       processTemplate(allNames, templatesToSave, template);

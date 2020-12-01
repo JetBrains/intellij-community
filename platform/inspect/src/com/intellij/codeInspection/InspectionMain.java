@@ -26,6 +26,7 @@ public class InspectionMain implements ApplicationStarter {
       printHelp();
     }
 
+    InspectionApplication.LOG.info("Command line arguments: " + args);
     //System.setProperty("idea.load.plugins.category", "inspection");
     myApplication = new InspectionApplication();
 

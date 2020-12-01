@@ -80,7 +80,7 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
-    DisabledPluginsState.dontLoadDisabledPlugins();
+    DisabledPluginsState.setIgnoreDisabledPlugins(true);
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 

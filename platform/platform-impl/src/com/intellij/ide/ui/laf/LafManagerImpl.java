@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
@@ -38,6 +39,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
@@ -107,7 +109,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   });
 
   private final UIManager.LookAndFeelInfo myDefaultLightLaf = getDefaultLightTheme();
-  private final UIManager.LookAndFeelInfo myDefaultDarkLaf = new DarculaLookAndFeelInfo();
+  private final UIManager.LookAndFeelInfo myDefaultDarkLaf = getDefaultDarkTheme();
   private final Map<Object, Object> ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
 
   private UIManager.LookAndFeelInfo myCurrentLaf;
@@ -158,7 +160,27 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
     LOG.error("Can't load " + DEFAULT_LIGHT_THEME_ID);
-    return new IntelliJLookAndFeelInfo();
+
+    String lafInfoFQN = ApplicationInfoEx.getInstanceEx().getDefaultLightLaf();
+    UIManager.LookAndFeelInfo lookAndFeelInfo = StringUtil.isNotEmpty(lafInfoFQN) ? createLafInfo(lafInfoFQN) : null;
+    return lookAndFeelInfo != null ? lookAndFeelInfo : new IntelliJLookAndFeelInfo();
+  }
+
+  private static UIManager.LookAndFeelInfo getDefaultDarkTheme() {
+    String lafInfoFQN = ApplicationInfoEx.getInstanceEx().getDefaultDarkLaf();
+    UIManager.LookAndFeelInfo lookAndFeelInfo = StringUtil.isNotEmpty(lafInfoFQN) ? createLafInfo(lafInfoFQN) : null;
+    return lookAndFeelInfo != null ? lookAndFeelInfo : new DarculaLookAndFeelInfo();
+  }
+
+  @Nullable
+  private static UIManager.LookAndFeelInfo createLafInfo(@NotNull String fqn) {
+    try {
+      Class<?> lafInfoClass = Class.forName(fqn);
+      return (UIManager.LookAndFeelInfo)lafInfoClass.getDeclaredConstructor().newInstance();
+    }
+    catch (Throwable e) {
+      return null;
+    }
   }
 
   private @NotNull List<UIManager.LookAndFeelInfo> computeLafList() {
@@ -329,6 +351,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private @Nullable UIManager.LookAndFeelInfo findLaf(@Nullable String lafClassName, @Nullable String themeId) {
     if (lafClassName != null && ourLafClassesAliases.containsKey(lafClassName)) {
       lafClassName = ourLafClassesAliases.get(lafClassName);
+    }
+
+    if ("com.sun.java.swing.plaf.windows.WindowsLookAndFeel".equals(lafClassName)) {
+      return myDefaultLightLaf;
     }
 
     if (themeId != null) {
@@ -1223,9 +1249,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static final class DefaultMenuArrowIcon extends MenuArrowIcon {
     private static final BooleanSupplier dark = () -> ColorUtil.isDark(UIManager.getColor("MenuItem.selectionBackground"));
     private DefaultMenuArrowIcon() {
-      super(AllIcons.Icons.Ide.NextStep,
-            dark.getAsBoolean() ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep,
-            IconLoader.getDisabledIcon(AllIcons.Icons.Ide.NextStep));
+      super(() -> AllIcons.Icons.Ide.NextStep,
+            () -> dark.getAsBoolean() ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep,
+            () -> IconLoader.getDisabledIcon(AllIcons.Icons.Ide.NextStep));
     }
   }
 

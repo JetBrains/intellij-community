@@ -41,6 +41,9 @@ import java.util.Map;
 
 import static com.intellij.openapi.util.Pair.pair;
 
+/**
+ * Class must be accessed from EDT only
+ */
 public abstract class AppIcon {
   private static final Logger LOG = Logger.getInstance(AppIcon.class);
 
@@ -403,6 +406,8 @@ public abstract class AppIcon {
   private static final class Win7AppIcon extends BaseIcon {
     @Override
     public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      EDT.assertIsEdt();
+
       myCurrentProcessId = processId;
 
       if (Math.abs(myLastValue - value) < 0.02d) {
@@ -425,6 +430,7 @@ public abstract class AppIcon {
 
     @Override
     public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
+      EDT.assertIsEdt();
       if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) {
         return false;
       }
@@ -548,6 +554,7 @@ public abstract class AppIcon {
 
     @Override
     public void _setTextBadge(@Nullable JFrame frame, String text) {
+      EDT.assertIsEdt();
       if (!isValid(frame)) {
         return;
       }
@@ -602,6 +609,7 @@ public abstract class AppIcon {
 
     @Override
     public void _setOkBadge(@Nullable JFrame frame, boolean visible) {
+      EDT.assertIsEdt();
       if (!isValid(frame)) {
         return;
       }
@@ -636,6 +644,7 @@ public abstract class AppIcon {
 
     @Override
     public void _requestAttention(@Nullable JFrame frame, boolean critical) {
+      EDT.assertIsEdt();
       try {
         if (isValid(frame)) {
           Win7TaskBar.attention(frame);

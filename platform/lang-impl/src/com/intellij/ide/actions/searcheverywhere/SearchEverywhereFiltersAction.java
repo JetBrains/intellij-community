@@ -8,13 +8,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-class SearchEverywhereFiltersAction<T> extends ShowFilterAction {
+public class SearchEverywhereFiltersAction<T> extends ShowFilterAction {
   final PersistentSearchEverywhereContributorFilter<T> filter;
   final Runnable rebuildRunnable;
   final ElementsChooser.StatisticsCollector<T> myStatisticsCollector;
 
-  SearchEverywhereFiltersAction(@NotNull PersistentSearchEverywhereContributorFilter<T> filter,
-                                @NotNull Runnable rebuildRunnable) {
+  public SearchEverywhereFiltersAction(@NotNull PersistentSearchEverywhereContributorFilter<T> filter,
+                                       @NotNull Runnable rebuildRunnable) {
     this(filter, rebuildRunnable, null);
   }
 

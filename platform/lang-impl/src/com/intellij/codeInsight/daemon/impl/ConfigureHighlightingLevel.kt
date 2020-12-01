@@ -11,6 +11,8 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
 import com.intellij.openapi.editor.markup.InspectionsLevel
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -44,7 +46,7 @@ fun getConfigureHighlightingLevelPopup(context: DataContext): JBPopup? {
 
 
 private class LevelAction(val level: InspectionsLevel, val provider: FileViewProvider, val language: Language)
-  : ToggleAction(level.toString()) {
+  : ToggleAction(level.toString()), DumbAware {
 
   override fun isSelected(event: AnActionEvent): Boolean {
     val file = provider.getPsi(language) ?: return false
@@ -70,7 +72,7 @@ private class LevelAction(val level: InspectionsLevel, val provider: FileViewPro
 }
 
 
-internal class ConfigureHighlightingLevelAction : AnAction() {
+internal class ConfigureHighlightingLevelAction : DumbAwareAction() {
 
   override fun update(event: AnActionEvent) {
     val enabled = event.getData(PSI_FILE)?.viewProvider?.languages?.isNotEmpty()

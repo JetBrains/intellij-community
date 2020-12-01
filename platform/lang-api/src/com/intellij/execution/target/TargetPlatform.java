@@ -14,7 +14,7 @@ public class TargetPlatform {
   @NotNull private final Arch myArch;
 
   public TargetPlatform() {
-    this(CURRENT.getPlatform(), CURRENT.getArch());
+    this(Platform.UNIX, Arch.x64bit);
   }
 
   public TargetPlatform(@NotNull Platform platform, @NotNull Arch arch) {

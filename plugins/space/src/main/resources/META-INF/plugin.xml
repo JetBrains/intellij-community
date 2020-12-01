@@ -55,15 +55,15 @@
     <fileEditorProvider implementation="com.intellij.space.chat.editor.SpaceChatEditorProvider"/>
     <editorTabTitleProvider implementation="com.intellij.space.chat.editor.SpaceChatFileTabTitleProvider"/>
 
-    <!--registry keys-->
-    <!--suppress PluginXmlCapitalization -->
-    <registryKey key="space.code.review.enabled"
-                 defaultValue="false"
-                 description="Space Code Review"
-                 restartRequired="true"/>
-
     <fileEditorProvider implementation="com.intellij.space.vcs.review.details.diff.SpaceDiffEditorProvider"/>
-    <diff.DiffExtension implementation="com.intellij.space.vcs.review.details.diff.SpaceReviewCommentsDiffExtension"/>
+    <diff.DiffExtension implementation="com.intellij.space.vcs.review.details.diff.SpaceReviewCommentDiffExtension"/>
+
+    <diff.actions.ShowDiffAction.ExtensionProvider
+      implementation="com.intellij.space.vcs.review.details.diff.SpaceReviewOpenDiffActionProvider"
+      order="first"
+    />
+
+    <statistics.notificationIdsHolder implementation="com.intellij.space.notification.SpaceNotificationIdsHolder"/>
   </extensions>
 
   <actions>
@@ -128,6 +128,16 @@
       <action id="com.intellij.space.vcs.review.list.SpaceReviewAuthorActionGroup"
               class="com.intellij.space.vcs.review.list.SpaceReviewAuthorActionGroup"/>
 
+    </group>
+
+    <group id="space.review.changes.toolbar">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="EditSource"/>
+    </group>
+
+    <group id="space.review.changes.popup">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="EditSource"/>
     </group>
   </actions>
 

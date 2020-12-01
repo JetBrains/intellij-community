@@ -1448,6 +1448,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addConditionalErrorThrow();
       PsiType boxedType = TypeConversionUtil.isPrimitiveWrapper(expectedType) ? expectedType : 
                           ((PsiPrimitiveType)actualType).getBoxedType(context);
+      PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(boxedType);
+      if (unboxedType != null && !unboxedType.equals(actualType)) {
+        addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
+      }
       addInstruction(new BoxingInstruction(boxedType));
     }
     else if (actualType != expectedType &&
@@ -1684,6 +1688,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new MethodCallInstruction(expression, myFactory.createValue(expression), contracts));
       anchor = expression;
     }
+    processFailResult(contracts, anchor);
+
+    addMethodThrows(method, anchor);
+    if (expression != null) {
+      addNullCheck(expression);
+    }
+  }
+
+  private void processFailResult(List<? extends MethodContract> contracts, PsiExpression anchor) {
     if (contracts.stream().anyMatch(c -> c.getReturnValue().isFail())) {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
@@ -1694,11 +1707,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new ReturnInstruction(myFactory.controlTransfer(myExceptionCache.get(JAVA_LANG_THROWABLE), myTrapStack), anchor));
 
       ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
-    }
-
-    addMethodThrows(method, anchor);
-    if (expression != null) {
-      addNullCheck(expression);
     }
   }
 
@@ -1730,14 +1738,20 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PushInstruction(length, null, true));
       // stack: ... var.length
       final PsiExpression[] dimensions = expression.getArrayDimensions();
-      if (dimensions.length > 0) {
-        boolean sizeOnStack = false;
+      int dims = dimensions.length;
+      if (dims > 0) {
         for (final PsiExpression dimension : dimensions) {
           dimension.accept(this);
-          if (sizeOnStack) {
+          generateBoxingUnboxingInstructionFor(dimension, PsiType.INT);
+        }
+        DfaControlTransferValue transfer =
+          shouldHandleException() ?
+          myFactory.controlTransfer(myExceptionCache.get("java.lang.NegativeArraySizeException"), myTrapStack) : null;
+        for (int i = dims - 1; i >= 0; i--) {
+          addInstruction(new ArraySizeCheckInstruction(dimensions[i], transfer));
+          if (i != 0) {
             addInstruction(new PopInstruction());
           }
-          sizeOnStack = true;
         }
       }
       else {
@@ -1782,7 +1796,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addConditionalErrorThrow();
       DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
       List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() : JavaMethodContractUtil.getMethodContracts(constructor);
-      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, DfaUtil.addRangeContracts(constructor, contracts)));
+      contracts = DfaUtil.addRangeContracts(constructor, contracts);
+      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
+      processFailResult(contracts, expression);
 
       addMethodThrows(constructor, expression);
     }

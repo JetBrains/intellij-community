@@ -2,13 +2,17 @@
 package training.learn.lesson.kimpl
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -34,9 +38,9 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil
-import training.util.useNewLearningUi
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.Rectangle
 import java.awt.event.KeyEvent
 import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
@@ -101,7 +105,7 @@ object LessonUtil {
   private fun TaskRuntimeContext.checkCaretOnText(text: String): Boolean {
     val caretOffset = editor.caretModel.offset
     val textStartOffset = editor.document.charsSequence.indexOf(text)
-    if (textStartOffset == -1) throw IllegalArgumentException("Not found text: '$text' in the document")
+    if (textStartOffset == -1) return false
     val textEndOffset = textStartOffset + text.length
     return caretOffset in textStartOffset..textEndOffset
   }
@@ -181,15 +185,20 @@ object LessonUtil {
     val x = location?.x
     return x != 0
   }
+
+  fun LessonContext.highlightBreakpointGutter(logicalPosition: LogicalPosition) {
+    task {
+      triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
+        if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
+        val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition).line)
+        return@l Rectangle(20, y, ui.width - 26, editor.lineHeight)
+      }
+    }
+  }
 }
 
 fun LessonContext.firstLessonCompletedMessage() {
-  if (useNewLearningUi) {
-    text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
-  }
-  else {
-    text(LessonsBundle.message("goto.action.propose.to.go.next"))
-  }
+  text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
 fun TaskContext.toolWindowShowed(toolWindowId: String) {

@@ -2,15 +2,15 @@
 package com.intellij.ide
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.marketplace.FeatureImpl
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.Experiments
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
@@ -21,30 +21,46 @@ class LanguageDetector : StartupActivity.Background {
   override fun runActivity(project: Project) {
     if (!Experiments.getInstance().isFeatureEnabled("language.detect.notification")) return
 
-    // todo provide structure search when it's supported by marketplace
-    val query = "search=Language%20Pack%20EAP"
-    val list = MarketplaceRequests.getInstance().searchPlugins(query, 10)
+    findPlugin()?.let { notify(project, it) }
+  }
 
-    // todo match locale
-    //val languageTag = locale.toLanguageTag()
-    val languageTag = "zh"
-    val pluginNode = list.find { it.pluginId.idString.substringAfter("com.intellij.") == languageTag }
-    val pluginId = pluginNode?.pluginId
+  companion object {
+    private fun matchedLanguagePlugins(): List<FeatureImpl> {
+      val features = getFeatures(Locale.getDefault().toLanguageTag())
+      if (features.isNotEmpty()) return features
 
-    if (pluginId == null) return
-    if (PluginManagerCore.isPluginInstalled(pluginId)) return
+      return getFeatures(Locale.getDefault().language)
+    }
 
-    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Language Plugins Notifications")
-    val app = ApplicationManagerEx.getApplicationEx()
+    private fun getFeatures(languageTag: String): List<FeatureImpl> {
+      val build = MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests()
+      val params = mapOf("featureType" to "com.intellij.locale", "implementationName" to languageTag, "build" to build)
+      return MarketplaceRequests.getInstance().getFeatures(params)
+    }
 
-    val notificationTitle = ApplicationBundle.message("notification.title.language.plugin.enable", ApplicationInfo.getInstance().fullApplicationName)
-    val notification = notificationGroup.createNotification(notificationTitle, null, null)
-    val action = NotificationAction.create(ApplicationBundle.message("notification.action.language.plugin.install.and.enable"), { _, _ ->
-      PluginsAdvertiser.installAndEnable(project, setOf(pluginId), false, Runnable {
-        notification.expire()
-        app.restart(true)
-      })
-    })
-    notification.addAction(action).notify(project)
+    private fun verifiedLanguagePlugins() = MarketplaceRequests.getInstance().searchPlugins("tags=Language%20Pack", 10)
+
+    private fun installAction(project: Project, matchedVerifiedPlugin: PluginNode, notification: Notification) =
+      NotificationAction.create(ApplicationBundle.message("notification.action.language.plugin.install.and.enable")) { _, _ ->
+        PluginsAdvertiser.installAndEnable(project, setOf(matchedVerifiedPlugin.pluginId), false, Runnable {
+          notification.expire()
+          ApplicationManagerEx.getApplicationEx().restart(true)
+        })
+      }
+
+    private fun findPlugin() = verifiedLanguagePlugins()
+      .firstOrNull {
+        matchedLanguagePlugins().any { matched -> matched.pluginId == it.pluginId.idString }
+        && !PluginManagerCore.isPluginInstalled(it.pluginId)
+      }
+
+    private fun notify(project: Project, plugin: PluginNode) {
+      val notificationTitle = ApplicationBundle.message("notification.title.language.plugin.enable",
+                                                        ApplicationInfo.getInstance().fullApplicationName)
+      NotificationGroupManager.getInstance().getNotificationGroup("Language Plugins Notifications")
+        .createNotification(notificationTitle, null, null)
+        .also { it.addAction(installAction(project, plugin, it)) }
+        .notify(project)
+    }
   }
 }

@@ -29,6 +29,7 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public final class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
@@ -77,11 +78,10 @@ public final class FileSystemUtil {
   public static @Nullable FileAttributes getAttributes(@NotNull String path) {
     try {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("getAttributes(" + path + ")");
         long t = System.nanoTime();
         FileAttributes result = ourMediator.getAttributes(path);
-        t = (System.nanoTime() - t) / 1000;
-        LOG.trace("  " + t + " mks");
+        t = System.nanoTime() - t;
+        LOG.trace("getAttributes(" + path + ") = " + result + " in " + TimeUnit.NANOSECONDS.toMicros(t) + " mks");
         return result;
       }
       else {
@@ -89,7 +89,7 @@ public final class FileSystemUtil {
       }
     }
     catch (Exception e) {
-      LOG.warn(e);
+      LOG.warn("getAttributes(" + path + ")", e);
     }
     return null;
   }
@@ -125,11 +125,10 @@ public final class FileSystemUtil {
     try {
       String realPath;
       if (LOG.isTraceEnabled()) {
-        LOG.trace("resolveSymLink(" + path + ")");
         long t = System.nanoTime();
         realPath = ourMediator.resolveSymLink(path);
-        t = (System.nanoTime() - t) / 1000;
-        LOG.trace("  " + t + " mks");
+        t = System.nanoTime() - t;
+        LOG.trace("resolveSymLink(" + path + ") = "+realPath+" in " + TimeUnit.NANOSECONDS.toMicros(t) + " mks");
       }
       else {
         realPath = ourMediator.resolveSymLink(path);
@@ -582,7 +581,8 @@ public final class FileSystemUtil {
         NtOsKrnl.FileCaseSensitiveInformation);
 
       if (result != 0) {
-        if (LOG.isTraceEnabled()) LOG.trace("NtQueryInformationByName(" + path + "): " + result);
+        // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
+        if (LOG.isDebugEnabled()) LOG.debug("NtQueryInformationByName(" + path + "): 0x" + Integer.toHexString(result));
       }
       else if (fileInformation.Flags == 0) {
         return FileAttributes.CaseSensitivity.INSENSITIVE;
@@ -610,7 +610,7 @@ public final class FileSystemUtil {
       public short MaximumLength;
       public WTypes.LPWSTR Buffer;
 
-      public UNICODE_STRING_P(String value) {
+      UNICODE_STRING_P(String value) {
         Buffer = new WTypes.LPWSTR(value);
         Length = MaximumLength = (short)(value.length() * 2);
       }
@@ -634,7 +634,8 @@ public final class FileSystemUtil {
 
     @Structure.FieldOrder("Flags")
     class FILE_CASE_SENSITIVE_INFORMATION_P extends Structure implements Structure.ByReference {
-      public long Flags;  // FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1
+      // initialize with something crazy to make sure the native call did write 0 or 1 to this field
+      public long Flags=0xffff_ffffL;  // FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1
     }
 
     int FileCaseSensitiveInformation = 71;
@@ -690,7 +691,7 @@ public final class FileSystemUtil {
     try {
       Memory buf = new Memory(256);
       if (LibC.INSTANCE.statfs(path, buf) != 0) {
-        if (LOG.isTraceEnabled()) LOG.trace("statfs(" + path + "): error");
+        if (LOG.isDebugEnabled()) LOG.debug("statfs(" + path + "): error");
       }
       else {
         long fs = SystemInfo.is32Bit ? buf.getInt(0) : buf.getLong(0);
@@ -705,11 +706,13 @@ public final class FileSystemUtil {
         // Ext*, F2FS
         if ((fs == 0xef53 || fs == 0xf2f52010) && ourLibExt2FsPresent) {
           LongByReference flags = new LongByReference();
-          if (E2P.INSTANCE.fgetflags(path, flags) == 0) {
-            if (LOG.isTraceEnabled()) LOG.trace("fgetflags(" + path + "): error");
+          if (E2P.INSTANCE.fgetflags(path, flags) != 0) {
+            if (LOG.isDebugEnabled()) LOG.debug("fgetflags(" + path + "): error");
           }
           else {
-            return (flags.getValue() & E2P.CASE_FOLD) != 0 ? FileAttributes.CaseSensitivity.INSENSITIVE : FileAttributes.CaseSensitivity.SENSITIVE;
+            // Ext4/F2FS inodes on file systems with "casefold" option enable may have EXT4_CASEFOLD_FL (F2FS_CASEFOLD_FL) attribute
+            // see e.g. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b886ee3e778ec2ad43e276fd378ab492cf6819b7
+            return (flags.getValue() & E2P.EXT4_CASEFOLD_FL) == 0 ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
           }
         }
       }
@@ -736,7 +739,7 @@ public final class FileSystemUtil {
   interface E2P extends Library {
     E2P INSTANCE = Native.load("e2p", E2P.class);
 
-    long CASE_FOLD = 0x4000_0000L;
+    long EXT4_CASEFOLD_FL = 0x4000_0000L;
 
     int fgetflags(String path, LongByReference flags);
   }

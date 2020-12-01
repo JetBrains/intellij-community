@@ -4,7 +4,6 @@ package git4idea.index.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.util.EventDispatcher
 import java.util.*
 
@@ -26,11 +25,6 @@ class GitStageUiSettingsImpl(val project: Project) : SimplePersistentStateCompon
   override fun setIgnoredFilesShown(value: Boolean) {
     state.ignoredFilesShown = value
     eventDispatcher.multicaster.settingsChanged()
-  }
-
-  override fun noStateLoaded() {
-    val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
-    state.ignoredFilesShown = changesViewManager.state.myShowIgnored
   }
 
   override fun addListener(listener: GitStageUiSettingsListener, disposable: Disposable) {

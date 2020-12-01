@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.JBColor
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
@@ -12,7 +10,7 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
 import javax.swing.Box
-import javax.swing.JLabel
+import javax.swing.JButton
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 import kotlin.reflect.KProperty1
@@ -40,7 +38,7 @@ class UISettings {
   val radioButtonGap: Int by lazy { JBUI.scale(3) }
 
   val lessonNameGap: Int by lazy { JBUI.scale(5) }
-  val beforeButtonGap: Int by lazy { JBUI.scale(20) }
+  val beforeButtonGap: Int by lazy { JBUI.scale(24) }
   val afterButtonGap: Int by lazy { JBUI.scale(44) }
   val afterCaptionGap: Int by lazy { JBUI.scale(12) }
   val groupGap: Int by lazy { JBUI.scale(24) }
@@ -50,14 +48,25 @@ class UISettings {
   val languagePanelButtonsGap: Int by lazy { JBUI.scale(8) }
 
   //FONTS
-  val fontSize: Float by lazy { UISettings.instance.fontSize.ifZero(JBUI.scale(13)) * 1f }
-  val fontFace: String by lazy { UISettings.instance.fontFace ?: JLabel().font.fontName }
-  val moduleNameFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize + 1f) }
-  val plainFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize) }
-  val italicFont: Font by lazy { plainFont.deriveFont(Font.ITALIC) }
-  val boldFont: Font by lazy { plainFont.deriveFont(Font.BOLD) }
-  val lessonHeaderFont: Font by lazy { UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(JBUIScale.scale(18.0f)) }
-  val helpHeaderFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize + 1f).deriveFont(Font.BOLD) }
+  val fontSize: Float
+    get() = JBUI.Fonts.label().size2D
+  //TODO: remove in 2021.1
+  val fontFace: String
+    get() = JBUI.Fonts.label().fontName
+  val modulesFont: Font
+    get() = JBUI.Fonts.label().deriveFont(Font.BOLD)
+  val moduleNameFont: Font
+    get() = JBUI.Fonts.label().deriveFont(fontSize + 1)
+  val plainFont: Font
+    get() = JBUI.Fonts.label()
+  val italicFont: Font
+    get() = plainFont.deriveFont(Font.ITALIC)
+  val boldFont: Font
+    get() = plainFont.deriveFont(Font.BOLD)
+  val lessonHeaderFont: Font
+    get() = JBUI.Fonts.label().deriveFont(fontSize + 5).deriveFont(Font.BOLD)
+  val helpHeaderFont: Font
+    get() = JBUI.Fonts.label().deriveFont(fontSize + 1).deriveFont(Font.BOLD)
 
   //COLORS
   val defaultTextColor = JBColor(Color(30, 30, 30), Color(208, 208, 208))
@@ -69,10 +78,12 @@ class UISettings {
   val codeForegroundColor = JBColor.namedColor("ParameterInfo.foreground", JBColor(0x1D1D1D, 0xBBBBBB))
   val codeBorderColor = JBColor.namedColor("Button.disabledBorderColor", JBColor(0xC4C4C4, 0x5E6060))
   val passedColor = JBColor(Color(200, 200, 200), Color(103, 103, 103))
+  val moduleProgressColor = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
   val backgroundColor = UIUtil.getTreeBackground()
   val descriptionColor = Color(128, 128, 128)
-  val completedColor = JBColor(Color(50, 100, 50), Color(100, 150, 100))
+  val completedColor = JBColor(0x368746, 0x50A661)
   var questionColor = lessonActiveColor
+  val activeTaskBorder = JBColor.namedColor("Component.focusedBorderColor", JBColor(0x87AFDA, 0x466d94))
 
   //BORDERS
   val emptyBorder: Border
@@ -89,6 +100,10 @@ class UISettings {
 
   val checkmarkShiftBorder: Border
     get() = EmptyBorder(0, checkIndent, 0, 0)
+
+  val checkmarkShiftButtonBorder: Border by lazy {
+    return@lazy EmptyBorder(0, checkIndent - JButton().insets.left, 0, 0)
+  }
 
   val checkIndent: Int
     get() = checkWidth + checkRightIndent
@@ -109,7 +124,5 @@ class UISettings {
     }
   }
 
-  private fun Int.ifZero(nonZeroValue: Int): Int =
-    if (this == 0) nonZeroValue else this
 }
 

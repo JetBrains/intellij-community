@@ -43,6 +43,10 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
     return mySubstituteFileType;
   }
 
+  public void setSubstituteFileType(@NotNull FileType substituteFileType) {
+    mySubstituteFileType = substituteFileType;
+  }
+
   @NotNull
   @Override
   public VirtualFile getFile() {

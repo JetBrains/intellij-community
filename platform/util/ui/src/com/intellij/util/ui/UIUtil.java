@@ -193,22 +193,20 @@ public final class UIUtil {
     return 500;
   }
 
-  private static final AtomicNotNullLazyValue<Boolean> X_RENDER_ACTIVE = new AtomicNotNullLazyValue<Boolean>() {
-    @Override
-    protected @NotNull Boolean compute() {
-      if (!SystemInfo.isXWindow) {
-        return false;
-      }
-      try {
-        final Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass("sun.awt.X11GraphicsEnvironment");
-        final Method method = clazz.getMethod("isXRenderAvailable");
-        return (Boolean)method.invoke(null);
-      }
-      catch (Throwable e) {
-        return false;
-      }
+  private static final NotNullLazyValue<Boolean> X_RENDER_ACTIVE = NotNullLazyValue.atomicLazy(() -> {
+    if (!SystemInfo.isXWindow) {
+      return false;
     }
-  };
+
+    try {
+      Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass("sun.awt.X11GraphicsEnvironment");
+      Method method = clazz.getMethod("isXRenderAvailable");
+      return (Boolean)method.invoke(null);
+    }
+    catch (Throwable e) {
+      return false;
+    }
+  });
 
   private static final String[] STANDARD_FONT_SIZES =
     {"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
@@ -1922,7 +1920,7 @@ public final class UIUtil {
   /**
    * @param component to check whether it can be focused or not
    * @return {@code true} if component is not {@code null} and can be focused
-   * @see Component#isRequestFocusAccepted(boolean, boolean, FocusEvent.Cause) 
+   * @see Component#isRequestFocusAccepted(boolean, boolean, FocusEvent.Cause)
    */
   public static boolean isFocusable(@Nullable Component component) {
     return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();

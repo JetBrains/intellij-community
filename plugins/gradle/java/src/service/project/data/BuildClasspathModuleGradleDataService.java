@@ -41,8 +41,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemConstants.UNORDERED)
-public class BuildClasspathModuleGradleDataService extends AbstractProjectDataService<BuildScriptClasspathData, Module> {
-
+public final class BuildClasspathModuleGradleDataService extends AbstractProjectDataService<BuildScriptClasspathData, Module> {
   private static final Logger LOG = Logger.getInstance(BuildClasspathModuleGradleDataService.class);
 
   @NotNull
@@ -76,23 +75,19 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
     final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
 
     Interner<List<String>> interner = new HashSetInterner<>();
-    final NotNullLazyValue<List<String>> externalProjectGradleSdkLibs = new NotNullLazyValue<List<String>>() {
-      @NotNull
-      @Override
-      protected List<String> compute() {
-        final Set<String> gradleSdkLibraries = new LinkedHashSet<>();
-        File gradleHome = gradleInstallationManager.getGradleHome(project, linkedExternalProjectPath);
-        if (gradleHome != null && gradleHome.isDirectory()) {
-          final Collection<File> libraries = gradleInstallationManager.getClassRoots(project, linkedExternalProjectPath);
-          if (libraries != null) {
-            for (File library : libraries) {
-              gradleSdkLibraries.add(FileUtil.toCanonicalPath(library.getPath()));
-            }
+    final NotNullLazyValue<List<String>> externalProjectGradleSdkLibs = NotNullLazyValue.lazy(() -> {
+      final Set<String> gradleSdkLibraries = new LinkedHashSet<>();
+      File gradleHome = gradleInstallationManager.getGradleHome(project, linkedExternalProjectPath);
+      if (gradleHome != null && gradleHome.isDirectory()) {
+        final Collection<File> libraries = gradleInstallationManager.getClassRoots(project, linkedExternalProjectPath);
+        if (libraries != null) {
+          for (File library : libraries) {
+            gradleSdkLibraries.add(FileUtil.toCanonicalPath(library.getPath()));
           }
         }
-        return interner.intern(new ArrayList<>(gradleSdkLibraries));
       }
-    };
+      return interner.intern(new ArrayList<>(gradleSdkLibraries));
+    });
 
     final Map<String, ExternalProjectBuildClasspathPojo> localProjectBuildClasspath = new THashMap<>(localSettings.getProjectBuildClasspath());
 

@@ -18,6 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.Hash
 import com.intellij.xml.util.XmlStringUtil
+import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_PATCH_APPLIED
+import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_UNRESOLVED_CONFLICTS
 import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.changes.GitCommittedChangeList
@@ -104,11 +106,10 @@ object GitStashOperations {
   @JvmStatic
   fun unstash(project: Project, stash: StashInfo, branch: String?, popStash: Boolean, reinstateIndex: Boolean): Boolean {
     val completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
-        //better to use quick to keep consistent state with ui
-        unstash(project, mapOf(Pair(stash.root, stash.hash)),
-                { unstashHandler(project, stash, branch, popStash, reinstateIndex) },
-                UnstashConflictResolver(project, stash))
+      ThrowableComputable {
+        return@ThrowableComputable unstash(project, mapOf(Pair(stash.root, stash.hash)),
+                                           { unstashHandler(project, stash, branch, popStash, reinstateIndex) },
+                                           UnstashConflictResolver(project, stash))
       },
       GitBundle.message("unstash.unstashing"),
       true,
@@ -116,7 +117,7 @@ object GitStashOperations {
     )
     if (!completed) return false
 
-    VcsNotifier.getInstance(project).notifySuccess("git.unstash.patch.applied", "",
+    VcsNotifier.getInstance(project).notifySuccess(UNSTASH_PATCH_APPLIED, "",
                                                    VcsBundle.message("patch.apply.success.applied.text"))
     return true
   }
@@ -146,7 +147,7 @@ private class UnstashConflictResolver(project: Project,
   GitConflictResolver(project, setOf(stashInfo.root), makeParams(project, stashInfo)) {
 
   override fun notifyUnresolvedRemain() {
-    VcsNotifier.getInstance(myProject).notifyImportantWarning("git.unstash.with.unresolved.conflicts",
+    VcsNotifier.getInstance(myProject).notifyImportantWarning(UNSTASH_UNRESOLVED_CONFLICTS,
                                                               GitBundle.message(
                                                                 "unstash.dialog.unresolved.conflict.warning.notification.title"),
                                                               GitBundle.message(

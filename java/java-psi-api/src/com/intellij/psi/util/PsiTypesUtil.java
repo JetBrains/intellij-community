@@ -11,13 +11,15 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class PsiTypesUtil {
   @NonNls private static final Map<String, String> ourUnboxedTypes = new HashMap<>();
@@ -190,7 +192,7 @@ public final class PsiTypesUtil {
       }
       else {
         PsiElement parent = call.getContext();
-        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parent).getElementType()
+        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)parent).getElementType()
                                                                                        : parent.getNode().getElementType())) {
           parent = parent.getContext();
         }
@@ -345,8 +347,16 @@ public final class PsiTypesUtil {
 
       @Override
       public Boolean visitClassType(@NotNull PsiClassType classType) {
-        return super.visitClassType(classType) ||
-               ContainerUtil.exists(classType.getParameters(), t -> t.accept(this));
+        if (super.visitClassType(classType)) {
+          return true;
+        }
+
+        for (PsiType t1 : classType.getParameters()) {
+          if (t1.accept(this)) {
+            return true;
+          }
+        }
+        return false;
       }
 
       @Override
@@ -361,12 +371,22 @@ public final class PsiTypesUtil {
 
       @Override
       public Boolean visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
-        return ContainerUtil.exists(intersectionType.getConjuncts(), t -> t.accept(this));
+        for (PsiType t1 : intersectionType.getConjuncts()) {
+          if (t1.accept(this)) {
+            return true;
+          }
+        }
+        return false;
       }
 
       @Override
       public Boolean visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
-        return ContainerUtil.exists(disjunctionType.getDisjunctions(), t -> t.accept(this));
+        for (PsiType t1 : disjunctionType.getDisjunctions()) {
+          if (t1.accept(this)) {
+            return true;
+          }
+        }
+        return false;
       }
     });
   }
@@ -524,9 +544,15 @@ public final class PsiTypesUtil {
       PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       if (PsiUtil.isRawSubstitutor(method, substitutor)) {
         Set<PsiTypeParameter> typeParameters = new HashSet<>(substitutor.getSubstitutionMap().keySet());
-        Arrays.stream(method.getTypeParameters()).forEach(typeParameters::remove);
-        return Arrays.stream(method.getParameterList().getParameters())
-          .anyMatch(parameter -> mentionsTypeParametersOrUnboundedWildcard(parameter.getType(), typeParameters, true));
+        for (PsiTypeParameter parameter : method.getTypeParameters()) {
+          typeParameters.remove(parameter);
+        }
+        for (PsiParameter t : method.getParameterList().getParameters()) {
+          if (mentionsTypeParametersOrUnboundedWildcard(t.getType(), typeParameters, true)) {
+            return true;
+          }
+        }
+        return false;
       }
     }
     return false;

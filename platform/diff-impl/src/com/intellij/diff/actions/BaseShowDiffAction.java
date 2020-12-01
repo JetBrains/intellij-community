@@ -23,6 +23,8 @@ import com.intellij.diff.actions.impl.MutableDiffRequestChain;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.editor.DiffVirtualFile;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -59,8 +61,8 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
 
   protected abstract boolean isAvailable(@NotNull AnActionEvent e);
 
-  protected static boolean hasContent(VirtualFile file) {
-    return !(file instanceof VirtualFileWithoutContent);
+  protected static boolean hasContent(@NotNull VirtualFile file) {
+    return !DiffUtil.isFileWithoutContent(file);
   }
 
   @Nullable

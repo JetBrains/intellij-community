@@ -11,19 +11,17 @@ import org.jetbrains.annotations.NotNull;
 public class TurnOnOffCachedValueProfilerAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    CachedValueProfiler profiler = CachedValueProfiler.getInstance();
-    if (profiler.isEnabled()) {
-      Project project = e.getData(CommonDataKeys.PROJECT);
-      if (project != null) {
-        DumpCachedValueProfilerInfoAction.dumpResults(project);
-      }
-    }
-    profiler.setEnabled(!profiler.isEnabled());
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    CachedValueProfilerDumpHelper.toggleProfiling(project);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    CachedValueProfiler profiler = CachedValueProfiler.getInstance();
-    e.getPresentation().setText(profiler.isEnabled() ? "Finish Cached Value Profiling" : "Start Cached Value Profiling");
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    boolean enabled = project != null;
+    boolean running = CachedValueProfiler.isProfiling();
+    e.getPresentation().setEnabledAndVisible(enabled);
+    e.getPresentation().setText(running ? "Stop Cached Value Profiling" : "Start Cached Value Profiling");
   }
 }

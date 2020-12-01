@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.SplitAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -54,6 +55,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.docking.DockContainer;
@@ -681,6 +683,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(@NotNull VirtualFile file) {
+    if (forbidSplitFor(file)) {
+      closeFile(file);
+    }
     return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
   }
 
@@ -766,6 +771,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     }
+  }
+
+  public static boolean forbidSplitFor(@NotNull VirtualFile file) {
+    return Boolean.TRUE.equals(file.getUserData(SplitAction.FORBID_TAB_SPLIT));
   }
 
   @Override
@@ -1122,21 +1131,23 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   @Override
-  public @NotNull List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+  public @NotNull List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
     return openEditorImpl(descriptor, focusEditor).first;
   }
 
   /**
    * @return the list of opened editors, and the one of them that was selected (if any)
    */
-  private Pair<List<FileEditor>, FileEditor> openEditorImpl(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+  private Pair<List<FileEditor>, FileEditor> openEditorImpl(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
     assertDispatchThread();
-    OpenFileDescriptor realDescriptor;
-    if (descriptor.getFile() instanceof VirtualFileWindow) {
+    FileEditorNavigatable realDescriptor;
+    if (descriptor instanceof OpenFileDescriptor && descriptor.getFile() instanceof VirtualFileWindow) {
+      OpenFileDescriptor openFileDescriptor = (OpenFileDescriptor)descriptor;
       VirtualFileWindow delegate = (VirtualFileWindow)descriptor.getFile();
-      int hostOffset = delegate.getDocumentWindow().injectedToHost(descriptor.getOffset());
-      realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
-      realDescriptor.setUseCurrentWindow(descriptor.isUseCurrentWindow());
+      int hostOffset = delegate.getDocumentWindow().injectedToHost(openFileDescriptor.getOffset());
+      OpenFileDescriptor fixedDescriptor = new OpenFileDescriptor(openFileDescriptor.getProject(), delegate.getDelegate(), hostOffset);
+      fixedDescriptor.setUseCurrentWindow(openFileDescriptor.isUseCurrentWindow());
+      realDescriptor = fixedDescriptor;
     }
     else {
       realDescriptor = descriptor;
@@ -1176,7 +1187,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return Pair.create(result, selectedEditor.get());
   }
 
-  private boolean navigateAndSelectEditor(@NotNull NavigatableFileEditor editor, @NotNull OpenFileDescriptor descriptor) {
+  private boolean navigateAndSelectEditor(@NotNull NavigatableFileEditor editor, @NotNull Navigatable descriptor) {
     if (editor.canNavigateTo(descriptor)) {
       setSelectedEditor(editor);
       editor.navigateTo(descriptor);
@@ -1212,7 +1223,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return textEditor == null ? null : textEditor.getEditor();
   }
 
-  private @Nullable TextEditor doOpenTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+  private @Nullable TextEditor doOpenTextEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
     Pair<List<FileEditor>, FileEditor> editorsWithSelected = openEditorImpl(descriptor, focusEditor);
     Collection<FileEditor> fileEditors = editorsWithSelected.first;
     FileEditor selectedEditor = editorsWithSelected.second;

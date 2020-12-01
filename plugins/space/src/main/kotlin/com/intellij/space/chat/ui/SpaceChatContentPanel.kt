@@ -13,20 +13,17 @@ import circlet.platform.api.Ref
 import circlet.platform.api.isTemporary
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItemWithThread
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.ColorUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
-import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitAll
 import libraries.coroutines.extra.Lifetime
@@ -36,60 +33,21 @@ import libraries.coroutines.extra.launch
 import org.jetbrains.annotations.Nls
 import runtime.Ui
 import runtime.reactive.awaitTrue
-import java.awt.BorderLayout
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionAdapter
 import javax.swing.JPanel
 
-class SpaceChatContentPanel(
+internal class SpaceChatContentPanel(
   private val project: Project,
   private val lifetime: Lifetime,
   parent: Disposable,
   private val channelsVm: ChannelsVm,
-  private val chatRecord: Ref<M2ChannelRecord>,
-) : BorderLayoutPanel() {
-  companion object {
-    fun getChatAvatarSize() = JBValue.UIInteger("space.chat.avatar.size", 30)
-  }
-
+  chatRecord: Ref<M2ChannelRecord>,
+) : SpaceChatContentPanelBase(lifetime, parent, channelsVm, chatRecord) {
   private val server = channelsVm.client.server
-  private val loadingPanel = JBLoadingPanel(BorderLayout(), parent).apply {
-    startLoading()
-    isOpaque = false
-  }
 
-  init {
-    isOpaque = true
-    background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-
-    addToCenter(loadingPanel)
-
-    addHoveringSupport()
-    loadContentAsync()
-  }
-
-  private fun addHoveringSupport() {
-    var lastHoveredMessagePanel: HoverableJPanel? = null
-    addMouseMotionListener(object : MouseMotionAdapter() {
-      override fun mouseMoved(e: MouseEvent?) {
-        e ?: return
-        val component = UIUtil.getDeepestComponentAt(this@SpaceChatContentPanel, e.x, e.y) ?: return
-        val messageComponent = ComponentUtil.getParentOfType(HoverableJPanel::class.java, component)
-        if (messageComponent != lastHoveredMessagePanel) {
-          lastHoveredMessagePanel?.hoverStateChanged(false)
-          lastHoveredMessagePanel = messageComponent
-          messageComponent?.hoverStateChanged(true)
-        }
-      }
-    })
-  }
-
-  private fun loadContentAsync() = launch(lifetime, Ui) {
-    val chatVM = loadChatVM()
+  override fun onChatLoad(chatVm: M2ChannelVm) {
     val itemsListModel = SpaceChatItemListModel()
-    val contentPanel = createContentPanel(itemsListModel, chatVM)
-
-    chatVM.mvms.forEach(lifetime) { messagesViewModel ->
+    val contentPanel = createContentPanel(itemsListModel, chatVm)
+    chatVm.mvms.forEach(lifetime) { messagesViewModel ->
       launch(lifetime, Ui) {
         val chatItems = messagesViewModel.messages.map { messageViewModel ->
           async(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
@@ -97,22 +55,13 @@ class SpaceChatContentPanel(
           }
         }.awaitAll()
         itemsListModel.messageListUpdated(chatItems)
-        if (loadingPanel.isLoading) {
-          loadingPanel.add(contentPanel, BorderLayout.CENTER)
-          loadingPanel.stopLoading()
-          loadingPanel.revalidate()
-          loadingPanel.repaint()
-        }
+        stopLoadingContent(contentPanel)
       }
     }
   }
 
-  private suspend fun loadChatVM(): M2ChannelVm = channelsVm.channel(lifetime, chatRecord).also {
-    it.awaitFullLoad(lifetime)
-  }
-
   private fun createContentPanel(model: SpaceChatItemListModel, chatVM: M2ChannelVm): JPanel {
-    val avatarSize = getChatAvatarSize()
+    val avatarSize = SpaceChatAvatarType.MAIN_CHAT.size
     val avatarProvider = SpaceAvatarProvider(lifetime, this, avatarSize)
     val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
     val timeline = TimelineComponent(model, itemComponentFactory, offset = 0).apply {
@@ -122,7 +71,7 @@ class SpaceChatContentPanel(
     return JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       add(timeline, VerticalLayout.FILL_HORIZONTAL)
-      add(createNewMessageField(chatVM), VerticalLayout.FILL_HORIZONTAL)
+      add(createNewMessageField(chatVM, SpaceChatAvatarType.MAIN_CHAT), VerticalLayout.FILL_HORIZONTAL)
     }
   }
 }
@@ -154,4 +103,15 @@ internal fun TD_MemberProfile.link(server: String): HtmlChunk =
   HtmlChunk.link(Navigator.m.member(username).absoluteHref(server), name.fullName()) // NON-NLS
 
 @NlsSafe
-internal fun processItemText(server: String, @NlsSafe text: String) = MentionConverter.html(text, server)
+internal fun processItemText(server: String, @NlsSafe text: String, isEdited: Boolean) = MentionConverter.html(text, server).let {
+  if (isEdited) {
+    it + " " + getGrayTextHtml(SpaceBundle.message("chat.message.edited.text"))
+  }
+  else {
+    it
+  }
+}
+
+@NlsSafe
+internal fun getGrayTextHtml(@Nls text: String): String =
+  HtmlChunk.span("color: ${ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())}").addRaw(text).toString()

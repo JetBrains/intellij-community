@@ -29,7 +29,13 @@ class GitStashContentProvider(private val project: Project) : ChangesViewContent
     project.service<GitStashTracker>().scheduleRefresh()
 
     disposable = Disposer.newDisposable("Git Stash Content Provider")
-    return GitStashUi(project, false, disposable!!).mainComponent
+    val gitStashUi = GitStashUi(project, ChangesViewContentManager.isCommitToolWindow(project), disposable!!)
+    project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+      override fun toolWindowMappingChanged() {
+        gitStashUi.setDiffPreviewInEditor(ChangesViewContentManager.isCommitToolWindow(project))
+      }
+    })
+    return gitStashUi.mainComponent
   }
 
   override fun disposeContent() {
@@ -42,15 +48,14 @@ class GitStashContentProvider(private val project: Project) : ChangesViewContent
   }
 }
 
-class GitStashContentPreloader : ChangesViewContentProvider.Preloader {
+class GitStashContentPreloader(val project: Project) : ChangesViewContentProvider.Preloader {
   override fun preloadTabContent(content: Content) {
-    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
-                        ChangesViewContentManager.TabOrderWeight.SHELF.weight + 1)
+    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.SHELF.weight + 1)
   }
 }
 
 class GitStashContentVisibilityPredicate : NotNullFunction<Project, Boolean> {
-  override fun `fun`(project: Project) = isStashToolWindowAvailable()
+  override fun `fun`(project: Project) = isStashToolWindowAvailable(project)
 }
 
 class GitStashDisplayNameSupplier : Supplier<String> {
@@ -64,7 +69,7 @@ class GitStashStartupActivity : StartupActivity.Background {
     val gitStashTracker = project.service<GitStashTracker>()
     stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
-        if (isStashToolWindowAvailable()) {
+        if (isStashToolWindowAvailable(project)) {
           gitStashTracker.scheduleRefresh()
         }
         project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()

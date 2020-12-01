@@ -57,7 +57,6 @@ import java.awt.BorderLayout
 import java.io.OutputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Function
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
@@ -542,8 +541,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       return resolvedPromise()
     }
 
-    val targetName = (environment.runProfile as TargetEnvironmentAwareRunProfile).defaultTargetName
-    if (targetName == null) {
+    val targetEnvironmentAwareRunProfile = environment.runProfile as TargetEnvironmentAwareRunProfile
+    if (!targetEnvironmentAwareRunProfile.needPrepareTarget()) {
       return resolvedPromise()
     }
 
@@ -554,7 +553,9 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     val component = TargetPrepareComponent(consoleView)
     val buildContentManager = BuildContentManager.getInstance(environment.project)
-    val contentName = ExecutionBundle.message("tab.title.prepare.environment", targetName, environment.runProfile.name)
+    val contentName = targetEnvironmentAwareRunProfile.defaultTargetName?.let {
+      ExecutionBundle.message("tab.title.prepare.environment", it, environment.runProfile.name)
+    } ?: ExecutionBundle.message("tab.title.prepare.target.environment", environment.runProfile.name)
     val toolWindow = buildContentManager.orCreateToolWindow
     val contentManager: ContentManager = toolWindow.contentManager
     val contentImpl = ContentImpl(component, contentName, true)
@@ -691,20 +692,6 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         false
       }
     })
-  }
-
-  fun getRunning(executorIds: List<String>): Map<String, List<RunnerAndConfigurationSettings>> {
-    val result = HashMap<String, MutableList<RunnerAndConfigurationSettings>>()
-    for (entry in runningConfigurations) {
-      val id = entry.executor.id
-      if (executorIds.contains(id)) {
-        val processHandler = entry.descriptor.processHandler
-        if (processHandler != null && !processHandler.isProcessTerminated && entry.settings != null) {
-          result.computeIfAbsent(id, Function { SmartList() }).add(entry.settings)
-        }
-      }
-    }
-    return result
   }
 
   fun getRunningDescriptors(condition: Condition<in RunnerAndConfigurationSettings>): List<RunContentDescriptor> {

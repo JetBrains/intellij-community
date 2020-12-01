@@ -173,7 +173,7 @@ class AgreementUi private constructor(val htmlText: String) {
     return this
   }
 
-  fun setAcceptButton(text: String, isEnabled: Boolean = true, action: (DialogWrapper) -> Unit): AgreementUi {
+  fun setAcceptButton(text: @NlsContexts.Button String, isEnabled: Boolean = true, action: (DialogWrapper) -> Unit): AgreementUi {
     acceptButton?.text = text
     if (acceptButtonActionListener != null)
       acceptButton?.removeActionListener(acceptButtonActionListener)
@@ -195,7 +195,7 @@ class AgreementUi private constructor(val htmlText: String) {
     return this
   }
 
-  fun setDeclineButton(text: String, action: (DialogWrapper) -> Unit): AgreementUi {
+  fun setDeclineButton(text: @NlsContexts.Button String, action: (DialogWrapper) -> Unit): AgreementUi {
     declineButton?.text = text
     if (declineButtonActionListener != null)
       declineButton?.removeActionListener(declineButtonActionListener)

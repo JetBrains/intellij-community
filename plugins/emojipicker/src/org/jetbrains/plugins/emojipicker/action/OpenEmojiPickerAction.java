@@ -86,7 +86,7 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean enabled = SystemInfo.isLinux && getContext(e, true) == Context.FOUND;
+    boolean enabled = SystemInfo.isLinux && EmojiPicker.isAvailable() && getContext(e, true) == Context.FOUND;
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 

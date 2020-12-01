@@ -4,25 +4,32 @@ package training.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBScrollPane
+import org.fest.swing.timing.Timeout
 import training.actions.ChooseProgrammingLanguageForLearningAction
 import training.lang.LangManager
+import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
 import training.ui.views.LanguageChoosePanel
 import training.ui.views.LearnPanel
 import training.ui.views.ModulesPanel
+import java.util.concurrent.TimeUnit
 
-
-class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow) : SimpleToolWindowPanel(true, true), DataProvider {
+class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow)
+  : SimpleToolWindowPanel(true, true), DataProvider {
   val parentDisposable: Disposable = wholeToolWindow.disposable
 
   private var scrollPane: JBScrollPane
   var learnPanel: LearnPanel? = null
     private set
-  private val modulesPanel: ModulesPanel = ModulesPanel(this)
+  private val modulesPanel: ModulesPanel = ModulesPanel()
 
   init {
     setChooseLanguageButton()
@@ -45,11 +52,30 @@ class LearnToolWindow internal constructor(val project: Project, private val who
   }
 
   fun setLearnPanel() {
-    wholeToolWindow.setTitleActions(listOf(ActionManager.getInstance().getAction("RestartLessonAction")))
+    wholeToolWindow.setTitleActions(listOf(restartAction()))
     scrollPane.setViewportView(learnPanel)
     scrollPane.revalidate()
     scrollPane.repaint()
   }
+
+  fun showGotItAboutRestart() {
+    val gotIt = GotItTooltip("reset.lesson.got.it",
+                             LearnBundle.message("completed.lessons.got.it"),
+                             parentDisposable)
+    if (gotIt.canShow()) {
+      val needToFindButton = restartAction() ?: return
+      ApplicationManager.getApplication().executeOnPooledThread {
+        val button = LearningUiUtil.findShowingComponentWithTimeout(
+          null, ActionButton::class.java, Timeout.timeout(500, TimeUnit.MILLISECONDS)
+        ) { it.action == needToFindButton }
+        invokeLater {
+          gotIt.show(button, GotItTooltip.BOTTOM_MIDDLE)
+        }
+      }
+    }
+  }
+
+  private fun restartAction() = ActionManager.getInstance().getAction("RestartLessonAction")
 
   fun setModulesPanel() {
     setChooseLanguageButton()
@@ -64,13 +90,7 @@ class LearnToolWindow internal constructor(val project: Project, private val who
     wholeToolWindow.setTitleActions(listOf(ChooseProgrammingLanguageForLearningAction(this)))
   }
 
-  fun setChooseLanguageView() {
-    scrollPane.setViewportView(LanguageChoosePanel(this))
-    scrollPane.revalidate()
-    scrollPane.repaint()
-  }
-
-  fun updateScrollPane() {
+  private fun updateScrollPane() {
     scrollPane.viewport.revalidate()
     scrollPane.viewport.repaint()
     scrollPane.revalidate()
@@ -80,10 +100,5 @@ class LearnToolWindow internal constructor(val project: Project, private val who
   fun reinitViews() {
     reinitViewsInternal()
     updateScrollPane()
-  }
-
-  fun scrollToTheEnd() {
-    val vertical = scrollPane.verticalScrollBar
-    vertical.value = vertical.maximum
   }
 }

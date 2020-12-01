@@ -21,7 +21,7 @@ public class ClassNameRuleValidator extends CustomValidationRule {
   protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
     if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
-    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(data);
+    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(getClassName(data));
     context.setPluginInfo(info);
 
     if (info.getType() == PluginType.UNKNOWN) {
@@ -29,5 +29,13 @@ public class ClassNameRuleValidator extends CustomValidationRule {
       return ValidationResultType.REJECTED;
     }
     return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
+  }
+
+  private static @NotNull String getClassName(@NotNull String data) {
+    int i = data.indexOf("$$Lambda$");
+    if (i == -1) {
+      return data;
+    }
+    return data.substring(0, i);
   }
 }

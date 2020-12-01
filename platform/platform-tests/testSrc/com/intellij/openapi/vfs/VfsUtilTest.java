@@ -315,7 +315,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     AtomicReference<Project> project = new AtomicReference<>();
     checkNewDirAndRefresh(
       temp -> {
-        Project p = PlatformTestUtil.loadAndOpenProject(temp);
+        Project p = PlatformTestUtil.loadAndOpenProject(temp, getTestRootDisposable());
         project.set(p);
         assertTrue(p.isOpen());
       },
@@ -326,7 +326,6 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         finally {
           // this concoction is to ensure close() is called on the mock ProjectManagerImpl
           assertTrue(project.get().isOpen());
-          PlatformTestUtil.forceCloseProjectWithoutSaving(project.get());
         }
       }
     );
@@ -477,7 +476,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   @Test
   public void testVfsUtilCopyMustCopyBOMCorrectlyForFileUnderProjectRoot() throws IOException {
     File dir1 = myTempDir.newDirectory("dir1");
-    Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()));
+    Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()), getTestRootDisposable());
     WriteAction.runAndWait(() -> {
       VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
       Module module1 = PsiTestUtil.addModule(project, ModuleType.EMPTY, "module1", root);
@@ -500,7 +499,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   @Test
   public void testVfsUtilCopyMustCopyBOMLessFileCorrectlyWhenEncodingProjectManagerBOMForNewFilesOptionIsSetToTrue() throws IOException {
     File dir1 = myTempDir.newDirectory("dir1");
-    Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()));
+    Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()), getTestRootDisposable());
     WriteAction.runAndWait(() -> {
       ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project)).setBOMForNewUtf8Files(
         EncodingProjectManagerImpl.BOMForNewUTF8Files.ALWAYS);

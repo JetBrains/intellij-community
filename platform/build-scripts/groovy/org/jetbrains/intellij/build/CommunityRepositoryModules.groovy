@@ -8,10 +8,12 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.module.JpsModule
 
+import java.nio.file.Files
+
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
 @CompileStatic
-class CommunityRepositoryModules {
+final class CommunityRepositoryModules {
   /**
    * List of modules which are included into lib/platform-api.jar in all IntelliJ based IDEs. Build scripts of IDEs aren't supposed to use this
    * property directly, it's used by the build scripts internally.
@@ -259,7 +261,7 @@ class CommunityRepositoryModules {
         File generateResources(BuildContext context) {
           def gradleRunner = context.getGradle()
           gradleRunner.run("Download Space Automation definitions", "setupSpaceAutomationDefinitions")
-          return new File("${context.paths.communityHome}/build/dependencies/build/space")
+          return context.paths.communityHomeDir.resolve("build/dependencies/build/space").toFile()
         }
       }, "lib")
     },
@@ -291,7 +293,7 @@ class CommunityRepositoryModules {
       directoryName = "android"
       mainJarName = "android.jar"
       withCustomVersion({pluginXmlFile, ideVersion ->
-        def text = pluginXmlFile.text
+        String text = Files.readString(pluginXmlFile)
         def declaredVersion = text.substring(text.indexOf("<version>") + "<version>".length(), text.indexOf("</version>"))
         return "$declaredVersion.$ideVersion"
       })

@@ -14,6 +14,7 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import java.awt.Font
 import java.util.function.Consumer
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -86,6 +87,7 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
     val panel = panel {
       row {
         val separator = TitledSeparator(language.getRuntimeType().configurableDescription)
+        separator.titleFont = separator.titleFont.deriveFont(Font.BOLD)
         separator(CCFlags.growX, CCFlags.pushX)
         gearButton(DuplicateRuntimeAction(language), RemoveRuntimeAction(language))
       }

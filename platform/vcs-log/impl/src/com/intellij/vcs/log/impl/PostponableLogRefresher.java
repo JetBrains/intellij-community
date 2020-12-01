@@ -36,8 +36,9 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   public @NotNull Disposable addLogWindow(@NotNull VcsLogWindow window) {
-    LOG.assertTrue(!ContainerUtil.exists(myLogWindows, w -> w.getId().equals(window.getId())),
-                   "Log window with id '" + window.getId() + "' was already added.");
+    if (ContainerUtil.exists(myLogWindows, w -> w.getId().equals(window.getId()))) {
+      throw new CannotAddVcsLogWindowException("Log window with id '" + window.getId() + "' was already added.");
+    }
 
     myLogWindows.add(window);
     refresherActivated(window.getRefresher(), true);

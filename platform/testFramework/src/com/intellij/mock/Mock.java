@@ -359,7 +359,7 @@ public class Mock {
 
     @Override
     @NotNull
-    public List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+    public List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
       return Collections.emptyList();
     }
 
@@ -455,8 +455,8 @@ public class Mock {
     }
 
     @Override
-    public InputStream getInputStream() {
-      return null;
+    public @NotNull InputStream getInputStream() {
+      throw new UnsupportedOperationException();
     }
 
     @Override

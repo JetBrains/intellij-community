@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
@@ -34,9 +35,10 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /**
  * @author Alexander Lobas
@@ -50,7 +52,7 @@ public class ListPluginComponent extends JPanel {
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
-  public IdeaPluginDescriptor myPlugin;
+  private @NotNull IdeaPluginDescriptor myPlugin;
   private boolean myUninstalled;
   private boolean myOnlyUpdateMode;
   public IdeaPluginDescriptor myUpdateDescriptor;
@@ -171,7 +173,7 @@ public class ListPluginComponent extends JPanel {
       if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
         myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
-        myUninstalled = true;
+        myPluginModel.addUninstalled(myPlugin);
       }
       else {
         InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
@@ -180,11 +182,10 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          PluginEnabledState state = myPluginModel.getState(myPlugin);
-          if (state.isPerProject()) {
+          if (Registry.is("ide.plugins.per.project", false)) {
             myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
-              newState -> new EnableDisableAction(newState, List.of(this)),
-              () -> new UninstallAction(List.of())
+              newState -> createEnableDisableAction(newState, List.of(this)),
+              () -> createUninstallAction(List.of())
             );
             myEnableDisableButton.setBorder(JBUI.Borders.emptyLeft(5));
             myEnableDisableButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
@@ -193,7 +194,7 @@ public class ListPluginComponent extends JPanel {
             myEnableDisableButton = createEnableDisableButton(
               __ -> myPluginModel.changeEnableDisable(
                 Set.of(myPlugin),
-                state.getInverted()
+                PluginEnableDisableAction.globally(myPluginModel.getState(myPlugin).isDisabled())
               )
             );
           }
@@ -471,8 +472,9 @@ public class ListPluginComponent extends JPanel {
       }
     }
     if (calcColor && !myMarketplace) {
-      boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || isEnabledState());
-      if (!enabled) {
+      boolean disabled = myPluginModel.isUninstalled(myPlugin) ||
+                         !MyPluginModel.isInstallingOrUpdate(myPlugin) && !isEnabledState();
+      if (disabled) {
         nameForeground = otherForeground = DisabledColor;
       }
     }
@@ -498,7 +500,7 @@ public class ListPluginComponent extends JPanel {
     Ref<@Nls String> enableAction = new Ref<>();
     String message = myOnlyUpdateMode ? null : myPluginModel.getErrorMessage(myPlugin, enableAction);
     boolean errors = message != null;
-    updateIcon(errors, myUninstalled || !isEnabledState());
+    updateIcon(errors, myPluginModel.isUninstalled(myPlugin) || !isEnabledState());
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null);
@@ -604,7 +606,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateEnabledState() {
-    if (!myUninstalled) {
+    if (!myPluginModel.isUninstalled(myPlugin)) {
       updateEnabledStateUI();
     }
 
@@ -622,7 +624,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
-    myUninstalled = true;
+    myPluginModel.addUninstalled(myPlugin);
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
   }
@@ -722,14 +724,14 @@ public class ListPluginComponent extends JPanel {
 
     SelectionBasedPluginModelAction.addActionsTo(
       group,
-      state -> new EnableDisableAction(
+      state -> createEnableDisableAction(
         state.isPerProject() ? null : new CustomShortcutSet(KeyEvent.VK_SPACE),
         state,
         selection
       ),
       () -> {
         ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
-        return new UninstallAction(
+        return createUninstallAction(
           deleteShortcutSet != null ? deleteShortcutSet : new CustomShortcutSet(EventHandler.DELETE_CODE),
           selection
         );
@@ -802,10 +804,14 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else if (!restart && !update) {
+      if (keyCode == KeyEvent.VK_SPACE && event.getComponent() instanceof JCheckBox) {
+        return;
+      }
+
       DumbAwareAction action = keyCode == KeyEvent.VK_SPACE && event.getModifiersEx() == 0 ?
-                               createEnableDisableAction(selection) :
+                               createEnableDisableAction(getEnableDisableAction(selection), selection) :
                                keyCode == EventHandler.DELETE_CODE ?
-                               new UninstallAction(selection) :
+                               createUninstallAction(selection) :
                                null;
 
       if (action != null) {
@@ -827,85 +833,66 @@ public class ListPluginComponent extends JPanel {
     parent.repaint();
   }
 
-  @NotNull
-  public IdeaPluginDescriptor getPluginDescriptor() {
+  public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
     return myPlugin;
   }
 
-  private @NotNull ListPluginComponent.EnableDisableAction createEnableDisableAction(@NotNull List<ListPluginComponent> selection) {
-    boolean firstEnabled = selection.get(0).isEnabledState();
-    boolean setTrue = false;
+  public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+    myPlugin = plugin;
+  }
 
-    for (ListIterator<ListPluginComponent> iterator = selection.listIterator(1); iterator.hasNext(); ) {
-      if (firstEnabled != iterator.next().isEnabledState()) {
-        setTrue = true;
-        break;
+  private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<ListPluginComponent> selection) {
+    Iterator<ListPluginComponent> iterator = selection.iterator();
+    BooleanSupplier isGloballyEnabledGenerator = () ->
+      myPluginModel.getState(iterator.next().myPlugin) == PluginEnabledState.ENABLED;
+
+    boolean firstDisabled = !isGloballyEnabledGenerator.getAsBoolean();
+    while (iterator.hasNext()) {
+      if (firstDisabled == isGloballyEnabledGenerator.getAsBoolean()) {
+        return PluginEnableDisableAction.ENABLE_GLOBALLY;
       }
     }
 
-    return new EnableDisableAction(
-      PluginEnabledState.getState(setTrue || !firstEnabled),
+    return PluginEnableDisableAction.globally(firstDisabled);
+  }
+
+  private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
+                                                                                                                      @NotNull List<ListPluginComponent> selection) {
+    return createEnableDisableAction(
+      null,
+      action,
       selection
     );
   }
 
-  private final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> {
-
-    private EnableDisableAction(@NotNull PluginEnabledState newState,
-                                @NotNull List<ListPluginComponent> selection) {
-      this(
-        null,
-        newState,
-        selection
-      );
-    }
-
-    private EnableDisableAction(@Nullable ShortcutSet shortcutSet,
-                                @NotNull PluginEnabledState newState,
-                                @NotNull List<ListPluginComponent> selection) {
-      super(
-        shortcutSet,
-        ListPluginComponent.this.myPluginModel,
-        newState,
-        selection
-      );
-    }
-
-    @Override
-    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
-      return component.myPlugin;
-    }
+  private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@Nullable ShortcutSet shortcutSet,
+                                                                                                                      @NotNull PluginEnableDisableAction action,
+                                                                                                                      @NotNull List<ListPluginComponent> selection) {
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(
+      shortcutSet,
+      myPluginModel,
+      action,
+      selection,
+      ListPluginComponent::getPluginDescriptor
+    );
   }
 
-  private final class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> {
+  private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<ListPluginComponent> selection) {
+    return createUninstallAction(
+      null,
+      selection
+    );
+  }
 
-    private UninstallAction(@NotNull List<ListPluginComponent> selection) {
-      this(
-        null,
-        selection
-      );
-    }
-
-    private UninstallAction(@Nullable ShortcutSet shortcutSet,
-                            @NotNull List<ListPluginComponent> selection) {
-      super(
-        shortcutSet,
-        ListPluginComponent.this.myPluginModel,
-        ListPluginComponent.this,
-        selection
-      );
-    }
-
-    @Override
-    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
-      return component.myPlugin;
-    }
-
-    @Override
-    protected boolean isBundled(@NotNull ListPluginComponent component) {
-      return component.myUninstalled ||
-             super.isBundled(component);
-    }
+  private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@Nullable ShortcutSet shortcutSet,
+                                                                                                              @NotNull List<ListPluginComponent> selection) {
+    return new SelectionBasedPluginModelAction.UninstallAction<>(
+      shortcutSet,
+      myPluginModel,
+      this,
+      selection,
+      ListPluginComponent::getPluginDescriptor
+    );
   }
 
   @NotNull

@@ -415,6 +415,54 @@ public class JBUI {
       }
     }
 
+    public static final class Button {
+      @NotNull
+      public static Color buttonColorStart() {
+        return JBColor.namedColor("Button.startBackground", JBColor.namedColor("Button.darcula.startColor", 0x555a5c));
+      }
+
+      @NotNull
+      public static Color buttonColorEnd() {
+        return JBColor.namedColor("Button.endBackground", JBColor.namedColor("Button.darcula.endColor", 0x414648));
+      }
+
+      @NotNull
+      public static Color defaultButtonColorStart() {
+        return JBColor.namedColor("Button.default.startBackground", JBColor.namedColor("Button.darcula.defaultStartColor", 0x384f6b));
+      }
+
+      @NotNull
+      public static Color defaultButtonColorEnd() {
+        return JBColor.namedColor("Button.default.endBackground", JBColor.namedColor("Button.darcula.defaultEndColor", 0x233143));
+      }
+
+      @NotNull
+      public static Color focusBorderColor(boolean isDefaultButton) {
+        return isDefaultButton ?
+               JBColor.namedColor("Button.default.focusedBorderColor", JBColor.namedColor("Button.darcula.defaultFocusedOutlineColor", 0x87afda)) :
+               JBColor.namedColor("Button.focusedBorderColor", JBColor.namedColor("Button.darcula.focusedOutlineColor", 0x87afda));
+      }
+
+      @NotNull
+      public static Color buttonOutlineColorStart(boolean isDefaultButton) {
+        return isDefaultButton ?
+               JBColor.namedColor("Button.default.startBorderColor", JBColor.namedColor("Button.darcula.outlineDefaultStartColor", Gray.xBF)) :
+               JBColor.namedColor("Button.startBorderColor",  JBColor.namedColor("Button.darcula.outlineStartColor", Gray.xBF));
+      }
+
+      @NotNull
+      public static Color buttonOutlineColorEnd(boolean isDefaultButton) {
+        return isDefaultButton ?
+               JBColor.namedColor("Button.default.endBorderColor", JBColor.namedColor("Button.darcula.outlineDefaultEndColor", Gray.xB8)) :
+               JBColor.namedColor("Button.endBorderColor",  JBColor.namedColor("Button.darcula.outlineEndColor", Gray.xB8));
+      }
+
+      @NotNull
+      public static Color disabledOutlineColor() {
+        return JBColor.namedColor("Button.disabledBorderColor", JBColor.namedColor("Button.darcula.disabledOutlineColor", Gray.xCF));
+      }
+    }
+
     public static final class CustomFrameDecorations {
       @NotNull
       public static Color separatorForeground() {
@@ -967,6 +1015,18 @@ public class JBUI {
       @NotNull
       public static Color linkSecondaryColor() {
         return JBColor.namedColor("Link.secondaryForeground", new JBColor(0x779dbd, 0x5676a0));
+      }
+    }
+
+    public static final class Tooltip {
+      @NotNull
+      public static Color shortcutForeground () {
+        return JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
       }
     }
 

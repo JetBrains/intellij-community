@@ -185,7 +185,8 @@ final class TreeAction extends AbstractAction implements UIResource {
       selectFirst(type, tree);
     }
     else if (tree.isExpanded(lead) || isLeaf(tree, lead)) {
-      select(type, tree, row + 1);
+      TreePath path = tree.getPathForRow(row + 1);
+      if (!TreeUtil.isLoadingPath(path)) select(type, tree, path, row + 1);
     }
     else {
       tree.expandPath(lead);
@@ -216,7 +217,8 @@ final class TreeAction extends AbstractAction implements UIResource {
           select(type, tree, parent);
         }
         else if (row > 0) {
-          select(type, tree, row - 1);
+          TreePath path = TreeUtil.previousVisiblePath(tree, row, false, tree::isExpanded);
+          select(type, tree, path != null ? path : tree.getPathForRow(0), path == null ? 0 : tree.getRowForPath(path));
         }
       }
     }

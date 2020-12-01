@@ -6,9 +6,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.usages.rules.UsageInFiles;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public final class UsageDataUtil {
@@ -17,8 +17,7 @@ public final class UsageDataUtil {
       return null;
     }
 
-    final Set<VirtualFile> result = new THashSet<>();
-
+    Set<VirtualFile> result = new HashSet<>();
     if (usages != null) {
       for (Usage usage : usages) {
         if (usage instanceof UsageInFile) {

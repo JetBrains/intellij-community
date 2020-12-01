@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
-
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
@@ -14,13 +13,16 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.util.*;
 
 public class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
@@ -28,7 +30,6 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   private final int myRuleIndex;
   private int myRecursiveUsageCount; // EDT only access
   private final List<Node> myChildren = new SmartList<>(); // guarded by this
-
 
   private GroupNode(@NotNull Node parent, @NotNull UsageGroup group, int ruleIndex) {
     setUserObject(group);
@@ -164,33 +165,30 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     ApplicationManager.getApplication().assertIsDispatchThread();
     int removed = 0;
     synchronized (this) {
-      Set<UsageNode> usagesToPassFurther = new LinkedHashSet<>();
       List<MutableTreeNode> removedNodes = new SmartList<>();
-      for (UsageNode usageNode : usages) {
-        if (myChildren.remove(usageNode)) {
-          removedNodes.add(usageNode);
+      for (UsageNode usage : usages) {
+        if (myChildren.remove(usage)) {
+          removedNodes.add(usage);
           removed++;
         }
-        else {
-          usagesToPassFurther.add(usageNode);
-        }
       }
-      myChildren.removeAll(removedNodes);
 
-      if (!usagesToPassFurther.isEmpty()) {
+      if (removed == 0) {
         for (GroupNode groupNode : getSubGroups()) {
-          int delta = groupNode.removeUsagesBulk(usagesToPassFurther, treeModel);
+          int delta = groupNode.removeUsagesBulk(usages, treeModel);
           if (delta > 0) {
             if (groupNode.getRecursiveUsageCount() == 0) {
               myChildren.remove(groupNode);
               removedNodes.add(groupNode);
             }
             removed += delta;
-            if (removed == usagesToPassFurther.size()) break;
+            if (removed == usages.size()) break;
           }
         }
       }
-      removeNodesFromParent(treeModel, this, removedNodes);
+      if (!myChildren.isEmpty()) {
+        removeNodesFromParent(treeModel, this, removedNodes);
+      }
     }
 
     if (removed > 0) {
@@ -211,26 +209,24 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
    * @param parent    the parent
    * @param nodes     must all be children of parent
    */
-  public static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel, @NotNull GroupNode parent,
-                                           @NotNull List<? extends MutableTreeNode> nodes) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
+  private static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel, @NotNull GroupNode parent,
+                                            @NotNull List<? extends MutableTreeNode> nodes) {
     int count = nodes.size();
     if (count == 0) {
       return;
     }
-    ObjectIntHashMap<MutableTreeNode> ordering = new ObjectIntHashMap<>(count);
+    Object2IntOpenHashMap<MutableTreeNode> ordering = new Object2IntOpenHashMap<>(count);
+    ordering.defaultReturnValue(-1);
     for (MutableTreeNode node : nodes) {
       ordering.put(node, parent.getIndex(node));
     }
-    nodes.sort(Comparator.comparingInt(ordering::get)); // need ascending order
-    int[] indices = ordering.getValues();
+    nodes.sort(Comparator.comparingInt(ordering::getInt)); // need ascending order
+    int[] indices = ordering.values().toIntArray();
     Arrays.sort(indices);
     for (int i = count - 1; i >= 0; i--) {
       parent.remove(indices[i]);
     }
     treeModel.nodesWereRemoved(parent, indices, nodes.toArray());
-    treeModel.nodeStructureChanged(parent);
   }
 
   @NotNull

@@ -603,7 +603,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final SyntaxTreeBuilder.Marker ifStatement = myBuilder.mark();
     final SyntaxTreeBuilder.Marker ifPart = myBuilder.mark();
     myBuilder.advanceLexer();
-    if (!getExpressionParser().parseSingleExpression(false)) {
+    if (!getExpressionParser().parseNamedTestExpression(false, false)) {
       myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
     }
     parseColonAndSuite();
@@ -611,7 +611,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     SyntaxTreeBuilder.Marker elifPart = myBuilder.mark();
     while (myBuilder.getTokenType() == elifKeyword) {
       myBuilder.advanceLexer();
-      if (!getExpressionParser().parseSingleExpression(false)) {
+      if (!getExpressionParser().parseNamedTestExpression(false, false)) {
         myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
       }
       parseColonAndSuite();
@@ -670,7 +670,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   protected void parseForPart() {
     final SyntaxTreeBuilder.Marker forPart = myBuilder.mark();
     myBuilder.advanceLexer();
-    getExpressionParser().parseExpression(true, true);
+    getExpressionParser().parseStarTargets();
     checkMatches(PyTokenTypes.IN_KEYWORD, PyPsiBundle.message("PARSE.expected.in"));
     getExpressionParser().parseExpression();
     parseColonAndSuite();
@@ -682,7 +682,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final SyntaxTreeBuilder.Marker statement = myBuilder.mark();
     final SyntaxTreeBuilder.Marker whilePart = myBuilder.mark();
     myBuilder.advanceLexer();
-    if (!getExpressionParser().parseSingleExpression(false)) {
+    if (!getExpressionParser().parseNamedTestExpression(false, false)) {
       myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
     }
     parseColonAndSuite();
@@ -768,7 +768,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     myBuilder.advanceLexer();
     while (true) {
       SyntaxTreeBuilder.Marker withItem = myBuilder.mark();
-      getExpressionParser().parseExpression();
+      if (!getExpressionParser().parseSingleExpression(false)) {
+        myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
+      }
       if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         myBuilder.advanceLexer();
         if (!getExpressionParser().parseSingleExpression(true)) {

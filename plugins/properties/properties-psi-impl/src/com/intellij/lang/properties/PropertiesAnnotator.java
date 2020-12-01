@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.function.Supplier;
 
 public class PropertiesAnnotator implements Annotator {
   private static final ExtensionPointName<DuplicatePropertyKeyAnnotationSuppressor>
@@ -51,8 +52,11 @@ public class PropertiesAnnotator implements Annotator {
     if (!(element instanceof Property)) return;
     final Property property = (Property)element;
     PropertiesFile propertiesFile = property.getPropertiesFile();
-    Collection<IProperty> others = propertiesFile.findPropertiesByKey(property.getUnescapedKey());
+    final String key = property.getUnescapedKey();
+    if (key == null) return;
+    Collection<IProperty> others = propertiesFile.findPropertiesByKey(key);
     ASTNode keyNode = ((PropertyImpl)property).getKeyNode();
+    if (keyNode == null) return;
     if (others.size() != 1 &&
       EP_NAME.findFirstSafe(suppressor -> suppressor.suppressAnnotationFor(property)) == null) {
       holder.newAnnotation(HighlightSeverity.ERROR,PropertiesBundle.message("duplicate.property.key.error.message")).range(keyNode)
@@ -75,8 +79,8 @@ public class PropertiesAnnotator implements Annotator {
       IElementType elementType = lexer.getTokenType();
       TextAttributesKey[] keys = highlighter.getTokenHighlights(elementType);
       for (TextAttributesKey key : keys) {
-        Pair<@Nls String,HighlightSeverity> pair = PropertiesHighlighter.DISPLAY_NAMES.get(key);
-        String displayName = pair.getFirst();
+        Pair<Supplier<@Nls String>, HighlightSeverity> pair = PropertiesHighlighter.DISPLAY_NAMES.get(key);
+        String displayName = pair.getFirst().get();
         HighlightSeverity severity = pair.getSecond();
         if (severity != null) {
           int start = lexer.getTokenStart() + node.getTextRange().getStartOffset();

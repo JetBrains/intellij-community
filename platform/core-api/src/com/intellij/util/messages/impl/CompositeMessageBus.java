@@ -53,7 +53,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final boolean hasChildren() {
+  final boolean hasChildren() {
     return !childBuses.isEmpty();
   }
 
@@ -83,7 +83,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final <L> @NotNull MessagePublisher<L> createPublisher(@NotNull Topic<L> topic, @NotNull BroadcastDirection direction) {
+  final <L> @NotNull MessagePublisher<L> createPublisher(@NotNull Topic<L> topic, @NotNull BroadcastDirection direction) {
     if (direction == BroadcastDirection.TO_PARENT) {
       return new ToParentMessagePublisher<>(topic, this);
     }
@@ -103,7 +103,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     }
 
     @Override
-    protected final boolean publish(@NotNull Method method, Object[] args, @Nullable JobQueue jobQueue) {
+    final boolean publish(@NotNull Method method, Object[] args, @Nullable JobQueue jobQueue) {
       List<Throwable> exceptions = null;
       boolean hasHandlers = false;
 
@@ -125,7 +125,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
           List<L> result = new ArrayList<>();
           //noinspection unchecked
           childBus.doComputeSubscribers((Topic<L>)topic1, result, /* subscribeLazyListeners = */ !childBus.owner.isParentLazyListenersIgnored());
-          return (result.isEmpty() ? Collections.emptyList() : result);
+          return result.isEmpty() ? Collections.emptyList() : result;
         });
         if (handlers.isEmpty()) {
           continue;
@@ -143,7 +143,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final @NotNull <L> List<L> computeSubscribers(@NotNull Topic<L> topic) {
+  final @NotNull <L> List<L> computeSubscribers(@NotNull Topic<L> topic) {
     // light project
     if (owner.isDisposed()) {
       return Collections.emptyList();
@@ -152,7 +152,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final <L> void doComputeSubscribers(@NotNull Topic<L> topic, @NotNull List<? super L> result, boolean subscribeLazyListeners) {
+  final <L> void doComputeSubscribers(@NotNull Topic<L> topic, @NotNull List<? super L> result, boolean subscribeLazyListeners) {
     if (subscribeLazyListeners) {
       subscribeLazyListeners(topic);
     }
@@ -200,7 +200,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final void notifyOnSubscriptionToTopicToChildren(@NotNull Topic<?> topic) {
+  final void notifyOnSubscriptionToTopicToChildren(@NotNull Topic<?> topic) {
     for (MessageBusImpl childBus : childBuses) {
       childBus.subscriberCache.remove(topic);
       childBus.notifyOnSubscriptionToTopicToChildren(topic);
@@ -232,13 +232,13 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final void clearSubscriberCache(Object @NotNull [] topicAndHandlerPairs) {
+  final void clearSubscriberCache(Object @NotNull [] topicAndHandlerPairs) {
     super.clearSubscriberCache(topicAndHandlerPairs);
     childBuses.forEach(childBus -> childBus.clearSubscriberCache(topicAndHandlerPairs));
   }
 
   @Override
-  protected final void removeEmptyConnectionsRecursively() {
+  final void removeEmptyConnectionsRecursively() {
     super.removeEmptyConnectionsRecursively();
 
     childBuses.forEach(MessageBusImpl::removeEmptyConnectionsRecursively);

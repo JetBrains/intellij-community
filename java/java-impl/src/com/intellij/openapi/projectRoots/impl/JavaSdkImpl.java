@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
@@ -178,7 +179,11 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String getVMExecutablePath(@NotNull Sdk sdk) {
-    return getBinPath(sdk) + File.separator + VM_EXE_NAME;
+    String binPath = getBinPath(sdk);
+    if (binPath.startsWith(WSLDistribution.UNC_PREFIX)) {
+      return binPath + "/java";
+    }
+    return binPath + File.separator + VM_EXE_NAME;
   }
 
   private static String getConvertedHomePath(Sdk sdk) {

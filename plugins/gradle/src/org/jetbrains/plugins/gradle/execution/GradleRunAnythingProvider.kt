@@ -37,7 +37,7 @@ import javax.swing.Icon
 class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
   override fun getIcon(value: String): Icon? = GradleIcons.Gradle
 
-  override fun getHelpGroupTitle() = "Gradle"
+  override fun getHelpGroupTitle() = "Gradle" //NON-NLS
 
   override fun getCompletionGroupTitle() = GradleBundle.message("popup.title.gradle.tasks")
 

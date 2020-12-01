@@ -593,8 +593,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  private boolean resolvesToSameGlobal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner,
-                                       PsiElement resolveResult) {
+  private boolean resolvesToSameGlobal(@NotNull PsiElement element,
+                                       @Nullable String elementName,
+                                       @NotNull ScopeOwner ourScopeOwner,
+                                       @NotNull ScopeOwner theirScopeOwner,
+                                       @Nullable PsiElement resolveResult) {
     // Handle situations when there is no top-level declaration for globals and transitive resolve doesn't help
     final PsiFile ourFile = getElement().getContainingFile();
     final PsiFile theirFile = element.getContainingFile();
@@ -607,8 +610,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     final var resolvedScopeOwner = ScopeUtil.getScopeOwner(resolveResult);
-    final var resolvedFile = resolveResult.getContainingFile();
-    if (resolvedScopeOwner != null && resolvedFile == theirFile) {
+    if (resolvedScopeOwner != null && resolveResult.getContainingFile() == theirFile) {
       if (ControlFlowCache.getScope(resolvedScopeOwner).isGlobal(elementName) &&
           ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
         return true;

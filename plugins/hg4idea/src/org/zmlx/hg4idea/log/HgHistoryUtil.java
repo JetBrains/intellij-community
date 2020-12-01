@@ -40,6 +40,8 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.LOG_CMD_EXEC_ERROR;
+
 public final class HgHistoryUtil {
 
   private static final Logger LOG = Logger.getInstance(HgHistoryUtil.class);
@@ -101,7 +103,7 @@ public final class HgHistoryUtil {
     }
     catch (VcsException e) {
       if (!silent) {
-        VcsNotifier.getInstance(project).notifyError("hg.log.command.execution.error",
+        VcsNotifier.getInstance(project).notifyError(LOG_CMD_EXEC_ERROR,
                                                      HgBundle.message("hg4idea.error.log.command.execution"),
                                                      e.getMessage());
       }
@@ -320,7 +322,7 @@ public final class HgHistoryUtil {
         }
         else {
           String message = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errors, HtmlChunk::text)).toString();
-          VcsNotifier.getInstance(project).notifyError("hg.log.command.execution.error",
+          VcsNotifier.getInstance(project).notifyError(LOG_CMD_EXEC_ERROR,
                                                        HgBundle.message("hg4idea.error.log.command.execution"),
                                                        message);
         }

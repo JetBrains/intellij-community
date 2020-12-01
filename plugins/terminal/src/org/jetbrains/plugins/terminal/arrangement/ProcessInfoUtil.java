@@ -25,7 +25,7 @@ import java.util.concurrent.Future;
 public final class ProcessInfoUtil {
   private static final Logger LOG = Logger.getInstance(ProcessInfoUtil.class);
   private static final int TIMEOUT_MILLIS = 2000;
-  // restrict amount of concurrent cwd fetchings to not utilize all the threads in case of unpredicted hangings
+  // restrict amount of concurrent cwd fetching to not utilize all the threads in case of unpredicted hangings
   private static final ExecutorService POOL = AppExecutorUtil.createBoundedScheduledExecutorService("Terminal CWD", 1);
 
   private ProcessInfoUtil() {}

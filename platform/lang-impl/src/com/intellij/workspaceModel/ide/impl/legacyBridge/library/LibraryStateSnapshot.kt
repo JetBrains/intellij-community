@@ -76,18 +76,7 @@ internal class LibraryStateSnapshot(
     return roots[rootType.toLibraryRootType()]?.getFiles() ?: VirtualFile.EMPTY_ARRAY
   }
 
-  fun getUrls(rootType: OrderRootType): Array<String> {
-    val fileContainerDescription = roots[rootType.toLibraryRootType()]
-    return if (fileContainerDescription != null) {
-      val urlSize = fileContainerDescription.urls.size
-
-      Array(urlSize + fileContainerDescription.jarDirectories.size) {
-        if (it < urlSize) fileContainerDescription.urls[it].url
-        else fileContainerDescription.jarDirectories[it - urlSize].directoryUrl.url
-      }
-    }
-    else ArrayUtil.EMPTY_STRING_ARRAY
-  }
+  fun getUrls(rootType: OrderRootType): Array<String> = roots[rootType.toLibraryRootType()]?.getUrls() ?: ArrayUtil.EMPTY_STRING_ARRAY
 
   val excludedRootUrls: Array<String>
     get() = excludedRootsContainer?.getUrls() ?: ArrayUtil.EMPTY_STRING_ARRAY

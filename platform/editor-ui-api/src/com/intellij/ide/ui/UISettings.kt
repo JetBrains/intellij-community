@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.JreHiDpiUtil
@@ -455,13 +456,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   companion object {
     init {
-      verbose("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale)
-    }
-
-    @JvmStatic
-    private fun verbose(msg: String, vararg args: Any) {
       if (JBUIScale.SCALE_VERBOSE) {
-        LOG.info(String.format(msg, *args))
+        LOG.info(String.format("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale))
       }
     }
 
@@ -540,9 +536,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       setupFractionalMetrics(g)
     }
 
-    /**
-     * @see #setupAntialiasing(Graphics)
-     */
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
       GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
@@ -579,14 +572,16 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     fun restoreFontSize(readSize: Int, readScale: Float?): Int {
       var size = readSize
       if (readScale == null || readScale <= 0) {
-        verbose("Reset font to default")
+        if (JBUIScale.SCALE_VERBOSE) LOG.info("Reset font to default")
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (JreHiDpiUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UISettingsState.defFontSize
+        if (!SystemInfoRt.isMac && JreHiDpiUtil.isJreHiDPIEnabled()) {
+          size = UISettingsState.defFontSize
+        }
       }
       else if (readScale != defFontScale) {
         size = ((readSize / readScale) * defFontScale).roundToInt()
       }
-      LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
+      if (JBUIScale.SCALE_VERBOSE) LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
     }
 

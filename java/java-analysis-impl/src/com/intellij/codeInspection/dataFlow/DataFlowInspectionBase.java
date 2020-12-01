@@ -641,6 +641,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         holder.registerProblem(indexExpression, JavaAnalysisBundle.message("dataflow.message.array.index.out.of.bounds"));
       }
     });
+    visitor.negativeArraySizes().forEach(dimExpression -> {
+      holder.registerProblem(dimExpression, JavaAnalysisBundle.message("dataflow.message.negative.array.size"));
+    });
   }
 
   private static void reportArrayStoreProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {

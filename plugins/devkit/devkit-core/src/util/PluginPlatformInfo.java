@@ -111,17 +111,35 @@ public final class PluginPlatformInfo {
 
     final String libraryName = entry.getPresentableName();
 
-    String versionSuffix = StringUtil.substringAfterLast(libraryName, ":20");
-    if (versionSuffix == null ||
-        !StringUtil.containsChar(versionSuffix, '.')) {
-      return UNRESOLVED_INSTANCE;
-    }
-    versionSuffix = StringUtil.replace(versionSuffix, ".", "");
-    if (versionSuffix.length() < 3) {
+    String version = StringUtil.substringAfterLast(libraryName, ":");
+    if (version == null) {
       return UNRESOLVED_INSTANCE;
     }
 
-    final String branch =  versionSuffix.substring(0, 3);
+    if (version.contains("-")) {
+      version = StringUtil.substringBefore(version, "-");
+      assert version != null;
+    }
+
+    String major = version.contains(".") ? StringUtil.substringBefore(version, ".") : version;
+    if (major == null) {
+      return UNRESOLVED_INSTANCE;
+    }
+
+    String branch;
+    if (major.length() == 4 && version.length() >= 6) {
+      version = StringUtil.replace(version, ".", "").substring(2);
+
+      if (version.length() < 3) {
+        return UNRESOLVED_INSTANCE;
+      }
+      branch = version.substring(0, 3);
+    } else if (major.length() == 3) {
+        branch = version;
+    } else {
+      return UNRESOLVED_INSTANCE;
+    }
+
     final BuildNumber number = BuildNumber.fromStringOrNull(branch);
     if (number == null) {
       return UNRESOLVED_INSTANCE;

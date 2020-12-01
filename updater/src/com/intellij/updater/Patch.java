@@ -61,6 +61,7 @@ public class Patch {
     Set<String> ignored = new HashSet<>(spec.getIgnoredFiles());
     Set<String> critical = new HashSet<>(spec.getCriticalFiles());
     Set<String> optional = new HashSet<>(spec.getOptionalFiles());
+    Set<String> strict = new HashSet<>(spec.getStrictFiles());
 
     Map<String, Long> oldChecksums = digestFiles(olderDir, ignored, isNormalized());
     Map<String, Long> newChecksums = digestFiles(newerDir, ignored, false);
@@ -104,6 +105,7 @@ public class Patch {
         actions.add(action);
         action.setCritical(critical.contains(action.getPath()));
         action.setOptional(optional.contains(action.getPath()));
+        action.setStrict(strict.contains(action.getPath()));
       }
     }
     return actions;

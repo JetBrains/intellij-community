@@ -14,8 +14,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.vcs.review.list.SpaceReviewListDataKeys.REVIEWS_LIST_VM
-import com.intellij.space.vcs.review.list.SpaceReviewListDataKeys.SELECTED_REVIEW
+import com.intellij.space.vcs.review.SpaceReviewDataKeys.REVIEWS_LIST_VM
+import com.intellij.space.vcs.review.SpaceReviewDataKeys.SELECTED_REVIEW
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import java.util.function.Supplier

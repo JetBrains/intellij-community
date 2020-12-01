@@ -26,6 +26,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 
 public class GitRebaser {
@@ -96,7 +97,7 @@ public class GitRebaser {
     task.setProgressIndicator(myProgressIndicator);
     task.executeAsync(new GitTaskResultNotificationHandler(
       myProject,
-      "git.rebase.abort.rebase",
+      REBASE_ABORT,
       GitBundle.message("rebase.update.project.notification.abort.success.message"),
       GitBundle.message("rebase.update.project.notification.abort.cancel.message"),
       GitBundle.message("rebase.update.project.notification.abort.error.message")
@@ -222,7 +223,7 @@ public class GitRebaser {
         LOG.info("Failed to work around 'no changes' error.", e);
         VcsNotifier.getInstance(myProject)
           .notifyError(
-            "git.rebase.update.project.error",
+            REBASE_UPDATE_PROJECT_ERROR,
             GitBundle.message("rebase.update.project.notification.failed.title"),
             GitBundle.message("rebase.update.project.notification.failed.message", e.getMessage()));
         return false;
@@ -232,7 +233,7 @@ public class GitRebaser {
       LOG.info("handleRebaseFailure error " + h.errors());
       VcsNotifier.getInstance(myProject)
         .notifyError(
-          "git.rebase.update.project.error",
+          REBASE_UPDATE_PROJECT_ERROR,
           GitBundle.message("rebase.update.project.notification.failed.title"),
           "",
           h.errors());
@@ -295,7 +296,7 @@ public class GitRebaser {
     else if (localChangesDetector.wasMessageDetected()) {
       LocalChangesWouldBeOverwrittenHelper.showErrorNotification(
         myProject,
-        "git.merge.local.changes.detected",
+        LOCAL_CHANGES_DETECTED,
         root,
         GitBundle.getString("rebase.git.operation.name"),
         localChangesDetector.getRelativeFilePaths()
@@ -304,7 +305,7 @@ public class GitRebaser {
     }
     else {
       LOG.info("handleRebaseFailure error " + handler.errors());
-      VcsNotifier.getInstance(myProject).notifyError("git.rebase.update.project.error",
+      VcsNotifier.getInstance(myProject).notifyError(REBASE_UPDATE_PROJECT_ERROR,
                                                      GitBundle.getString("rebase.update.project.notification.failed.title"),
                                                      result.getErrorOutputAsHtmlString(),
                                                      true);

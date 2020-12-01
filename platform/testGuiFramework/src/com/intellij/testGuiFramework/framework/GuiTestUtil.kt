@@ -79,7 +79,7 @@ import javax.swing.text.JTextComponent
 object GuiTestUtil {
   const val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
 
-  private val LOG = Logger.getInstance("#com.intellij.tests.gui.framework.GuiTestUtil")
+  private val LOG = Logger.getInstance(GuiTestUtil::class.java)
 
   /**
    * Environment variable pointing to the JDK to be used for tests

@@ -10,10 +10,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.use
+import com.intellij.testFramework.*
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
@@ -91,7 +88,7 @@ internal class HeavyBuiltInWebServerTest {
   @Test
   fun `path outside of project`() {
     val projectDir = tempDirManager.newPath()
-    PlatformTestUtil.loadAndOpenProject(projectDir).use { project ->
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).use { project ->
       projectDir.createDirectories()
       createModule(projectDir, project)
 
@@ -102,10 +99,14 @@ internal class HeavyBuiltInWebServerTest {
     }
   }
 
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
+
   @Test
   fun `file in hidden folder`() {
     val projectDir = tempDirManager.newPath()
-    PlatformTestUtil.loadAndOpenProject(projectDir).use { project ->
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).use { project ->
       projectDir.createDirectories()
       createModule(projectDir, project)
 

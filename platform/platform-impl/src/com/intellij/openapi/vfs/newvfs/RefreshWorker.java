@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
@@ -143,7 +144,9 @@ final class RefreshWorker {
     List<String> persistedNames = snapshot.getFirst();
     List<VirtualFile> children = snapshot.getSecond();
 
-    String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
+    Map<String, FileAttributes> childrenWithAttributes = fs instanceof BatchingFileSystem ? ((BatchingFileSystem)fs).listWithAttributes(dir) : null;
+    String[] listDir = childrenWithAttributes != null ? ArrayUtil.toStringArray(childrenWithAttributes.keySet()) : fs.list(dir);
+    String[] upToDateNames = VfsUtil.filterNames(listDir);
     Set<String> newNames = new HashSet<>(upToDateNames.length);
     ContainerUtil.addAll(newNames, upToDateNames);
     if (dir.allChildrenLoaded() && children.size() < upToDateNames.length) {
@@ -179,7 +182,8 @@ final class RefreshWorker {
     List<VirtualFile> chs = ContainerUtil.filter(children, file -> !deletedNames.contains(file.getName()));
 
     if (fs instanceof BatchingFileSystem) {
-      Map<String, FileAttributes> map = ((BatchingFileSystem)fs).listWithAttributes(dir, ContainerUtil.map(chs, file -> file.getName()));
+      Set<String> names = ContainerUtil.map2Set(chs, file -> file.getName());
+      Map<String, FileAttributes> map = ContainerUtil.filter(childrenWithAttributes, s -> names.contains(s));
       Map<String, VirtualFile> nameToFile = new HashMap<>();
       for (VirtualFile file : chs) {
         nameToFile.put(file.getName(), file);

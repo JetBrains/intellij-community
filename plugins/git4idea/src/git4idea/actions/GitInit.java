@@ -26,6 +26,8 @@ import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
+import static git4idea.GitNotificationIdsHolder.INIT_FAILED;
+
 public class GitInit extends DumbAwareAction {
 
   @Override
@@ -62,7 +64,7 @@ public class GitInit extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           GitCommandResult result = Git.getInstance().init(project, root);
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError("git.init.failed", GitBundle.message("action.Git.Init.error"), result.getErrorOutputAsHtmlString(), true);
+            VcsNotifier.getInstance(project).notifyError(INIT_FAILED, GitBundle.message("action.Git.Init.error"), result.getErrorOutputAsHtmlString(), true);
             return;
           }
 

@@ -44,7 +44,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     final Set<PsiFile> allFiles = new HashSet<>();
 
-    fileBasedIndex.ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
         final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
           TodoIndex.NAME,
@@ -58,7 +58,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
           });
         }
       }
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
 
     return allFiles.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilCore.toPsiFileArray(allFiles);
   }
@@ -110,10 +110,10 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
 
   private int fetchTodoCountFromIndex(@NotNull VirtualFile file, IndexPattern @NotNull [] indexPatterns) {
     Ref<Map<TodoIndexEntry, Integer>> inputData = Ref.create();
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       Map<TodoIndexEntry, Integer> data = FileBasedIndex.getInstance().getFileData(TodoIndex.NAME, file, myProject);
       inputData.set(data);
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
     return getTodoCountForInputData(inputData.get(), indexPatterns);
   }
 

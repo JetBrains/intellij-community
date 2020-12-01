@@ -11,10 +11,9 @@ import com.intellij.space.vcs.review.list.SpaceReviewListFactory
 import com.intellij.space.vcs.review.list.SpaceReviewListFiltersPanel
 import com.intellij.space.vcs.review.list.SpaceReviewsListVm
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.coroutines.extra.Lifetime
-import java.awt.BorderLayout
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 internal class SpaceReviewComponent(project: Project,
                                     lifetime: Lifetime,
@@ -37,10 +36,9 @@ internal class SpaceReviewComponent(project: Project,
     val filtersPanel = SpaceReviewListFiltersPanel(listVm)
     val reviewsList: JComponent = SpaceReviewListFactory.create(listVm)
 
-    val reviewsListPanel = JPanel(BorderLayout()).apply {
-      add(filtersPanel.view, BorderLayout.NORTH)
-      add(reviewsList, BorderLayout.CENTER)
-    }
+    val reviewsListPanel = BorderLayoutPanel()
+      .addToTop(filtersPanel.view)
+      .addToCenter(reviewsList)
 
     setContent(reviewsListPanel)
 

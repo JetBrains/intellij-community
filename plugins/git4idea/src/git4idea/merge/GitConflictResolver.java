@@ -4,6 +4,8 @@ package git4idea.merge;
 import static com.intellij.openapi.util.NlsContexts.NotificationContent;
 import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
+import static git4idea.GitNotificationIdsHolder.CANNOT_RESOLVE_CONFLICT;
+import static git4idea.GitNotificationIdsHolder.CONFLICT_RESOLVING_ERROR;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -197,7 +199,7 @@ public class GitConflictResolver {
 
   protected void notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String content) {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null,
-                                                                                "git.cannot.resolve.conflict");
+                                                                                CANNOT_RESOLVE_CONFLICT);
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
       notification.expire();
       BackgroundTaskUtil.executeOnPooledThread(GitDisposable.getInstance(myProject), () -> mergeNoProceed());
@@ -250,7 +252,7 @@ public class GitConflictResolver {
       myParams.myErrorNotificationAdditionalDescription
     );
     VcsNotifier.getInstance(myProject).notifyError(
-      "git.conflict.resolving.error",myParams.myErrorNotificationTitle,
+      CONFLICT_RESOLVING_ERROR, myParams.myErrorNotificationTitle,
       new HtmlBuilder().appendRaw(description).br().appendRaw(e.getLocalizedMessage()).toString()
     );
   }

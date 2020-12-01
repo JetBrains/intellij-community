@@ -295,7 +295,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     return myProjectGenerator;
   }
 
-  public final String getProjectLocation() {
+  public String getProjectLocation() {
     return FileUtil.expandUserHome(FileUtil.toSystemIndependentName(myLocationField.getText()));
   }
 
@@ -303,7 +303,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     myLocationField.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(location)));
   }
 
-  protected final LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
+  protected LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
     myLocationField = new TextFieldWithBrowseButton();
     myProjectDirectory = findSequentNonExistingUntitled();
     final String projectLocation = myProjectDirectory.toString();

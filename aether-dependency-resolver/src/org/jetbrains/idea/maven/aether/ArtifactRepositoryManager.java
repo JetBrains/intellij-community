@@ -141,7 +141,7 @@ public final class ArtifactRepositoryManager {
             if (progressConsumer.isCanceled()) {
               throw new TransferCancelledException();
             }
-            progressConsumer.consume(event.toString());
+            progressConsumer.consume(event.toString()); //NON-NLS
           }
         });
       }

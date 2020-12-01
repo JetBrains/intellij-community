@@ -57,17 +57,31 @@ public final class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  private static final int VERSION = 57 +
-                                     (WE_HAVE_CONTENT_HASHES ? 0x10 : 0) +
-                                     (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0x37 : 0) +
-                                     (bulkAttrReadSupport ? 0x27 : 0) +
-                                     (inlineAttributes ? 0x31 : 0) +
-                                     (ourStoreRootsSeparately ? 0x63 : 0) +
-                                     (useCompressionUtil ? 0x7f : 0) +
-                                     (useSmallAttrTable ? 0x31 : 0) +
-                                     (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 0x15 : 0) +
-                                     (FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS ? 0x3b : 0) +
-                                     (ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP ? 0x4f : 0);
+  private static int nextMask(int value, int bits, int prevMask) {
+    assert value < (1<<bits) && value >= 0 : value;
+    int mask = (prevMask << bits) | value;
+    if (mask < 0) {
+      throw new IllegalStateException("Too many flags, int mask overflown");
+    }
+    return mask;
+  }
+  private static int nextMask(boolean value, int prevMask) {
+    return nextMask(value ? 1 : 0, 1, prevMask);
+  }
+  private static int nextMask(int versionValue, int prevMask) {
+    return nextMask(versionValue, 8, prevMask);
+  }
+  private static final int VERSION = nextMask(58,  // acceptable range is [0..255]
+                                     nextMask(WE_HAVE_CONTENT_HASHES,
+                                     nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
+                                     nextMask(bulkAttrReadSupport,
+                                     nextMask(inlineAttributes,
+                                     nextMask(ourStoreRootsSeparately,
+                                     nextMask(useCompressionUtil,
+                                     nextMask(useSmallAttrTable,
+                                     nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+                                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                                     nextMask(ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP,0)))))))))));
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;

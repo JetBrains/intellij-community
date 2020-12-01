@@ -254,7 +254,7 @@ public final class FileTemplateUtil {
     Map<String, Object> map;
     if (props != null) {
       map = new HashMap<>();
-      copyAllAsIs(map, props);
+      putAll(map, props);
     }
     else {
       map = null;
@@ -271,7 +271,7 @@ public final class FileTemplateUtil {
     Map<String, Object> map;
     if (props != null) {
       map = new HashMap<>();
-      copyAllAsIs(map, props);
+      putAll(map, props);
     }
     else {
       map = null;
@@ -291,12 +291,12 @@ public final class FileTemplateUtil {
     if (propsMap == null) {
       Properties p = FileTemplateManager.getInstance(project).getDefaultProperties();
       propsMap = new HashMap<>();
-      copyAllAsIs(propsMap, p);
+      putAll(propsMap, p);
     }
 
     Properties p = new Properties();
     fillDefaultProperties(p, directory);
-    copyAllAsIs(propsMap, p);
+    putAll(propsMap, p);
 
     final CreateFromTemplateHandler handler = findHandler(template);
     if (fileName != null && propsMap.get(FileTemplate.ATTRIBUTE_NAME) == null) {
@@ -320,7 +320,7 @@ public final class FileTemplateUtil {
       propsMap.put(dummyRef, "");
     }
 
-    handler.prepareProperties(propsMap, fileName, template);
+    handler.prepareProperties(propsMap, fileName, template, project);
     handler.prepareProperties(propsMap);
 
     Map<String, Object> props_ = propsMap;
@@ -341,7 +341,7 @@ public final class FileTemplateUtil {
   }
 
   @Nullable
-  private static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
+  public static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
     VirtualFile baseDir = directory.getProject().getBaseDir();
     return baseDir != null ? VfsUtilCore.getRelativePath(directory.getVirtualFile(), baseDir) : null;
   }
@@ -388,29 +388,12 @@ public final class FileTemplateUtil {
     return getFileType(fileTemplate).getIcon();
   }
 
-  /**
-   * @deprecated Copies only string values which is an unexpected behavior.
-   * Please use {@link #copyAllAsStrings(Map, Properties)} or {@link #copyAllAsIs(Map, Properties)} instead.
-   */
-  @Deprecated(since = "2020.3")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static void putAll(@NotNull Map<String, Object> props, @NotNull Properties p) {
-    copyAllAsStrings(props, p);
-  }
-
-  public static void copyAllAsIs(@NotNull Map<String, Object> props, @NotNull Properties p){
+  public static void putAll(@NotNull Map<String, Object> props, @NotNull Properties p){
     for (Enumeration<?> e = p.propertyNames(); e.hasMoreElements(); ) {
       String s = (String)e.nextElement();
 
       //noinspection UseOfPropertiesAsHashtable
       props.putIfAbsent(s, p.get(s)); // DO NOT CALL getProperty() cause it returns STRING | NULL
-    }
-  }
-
-  public static void copyAllAsStrings(@NotNull Map<String, Object> props, @NotNull Properties p) {
-    for (Enumeration<?> e = p.propertyNames(); e.hasMoreElements(); ) {
-      String s = (String)e.nextElement();
-      props.putIfAbsent(s, p.getProperty(s));
     }
   }
 

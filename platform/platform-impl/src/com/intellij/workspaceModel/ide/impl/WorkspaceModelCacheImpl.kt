@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.google.common.base.Stopwatch
-import com.google.common.hash.Hashing
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
@@ -15,7 +14,6 @@ import com.intellij.openapi.project.clearCachesForAllProjects
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.div
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.lastModified
@@ -24,8 +22,12 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntityStorageSerializer
+import com.intellij.workspaceModel.storage.EntityTypesResolver
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
+import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -37,7 +39,7 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
-class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable): Disposable {
+class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable) : Disposable {
   private val cacheFile: Path
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
@@ -66,11 +68,13 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
       return testFile
     }
 
-    return project.getProjectDataPath(DATA_DIR_NAME) / "cache.data"
+    return project.getProjectDataPath(DATA_DIR_NAME).resolve("cache.data")
   }
 
   private val saveAlarm = pooledThreadSingleAlarm(1000, this) {
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
+
+    if (!storage.isConsistent) invalidateCaches()
 
     if (!cachesInvalidated.get()) {
       LOG.debug("Saving project model cache to $cacheFile")
@@ -101,7 +105,8 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
       LOG.debug("Loaded project model cache from $cacheFile in ${stopWatch.stop()}")
 
       return builder
-    } catch (t: Throwable) {
+    }
+    catch (t: Throwable) {
       LOG.warn("Could not deserialize project model cache from $cacheFile", t)
       return null
     }
@@ -120,19 +125,21 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
         LOG.warn(e)
         Files.move(tmpFile.toPath(), cacheFile, StandardCopyOption.REPLACE_EXISTING)
       }
-    } finally {
+    }
+    finally {
       tmpFile.delete()
     }
   }
 
-  object PluginAwareEntityTypesResolver: EntityTypesResolver {
+  object PluginAwareEntityTypesResolver : EntityTypesResolver {
     override fun getPluginId(clazz: Class<*>): String? = PluginManager.getInstance().getPluginOrPlatformByClassName(clazz.name)?.idString
 
     override fun resolveClass(name: String, pluginId: String?): Class<*> {
       val id = pluginId?.let { PluginId.getId(it) }
       val classloader = if (id == null) {
         ApplicationManager::class.java.classLoader
-      } else {
+      }
+      else {
         val plugin = PluginManagerCore.getPlugin(id) ?: error("Could not resolve plugin by id '$pluginId' for type: $name")
         plugin.pluginClassLoader ?: ApplicationManager::class.java.classLoader
       }

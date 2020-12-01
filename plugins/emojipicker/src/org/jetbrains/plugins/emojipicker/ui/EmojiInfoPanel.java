@@ -35,11 +35,11 @@ public class EmojiInfoPanel extends JPanel {
       g.setColor(myStyle.myBorderColor);
       g.drawLine(0, 0, getWidth(), 0);
       new TextLayout(myCurrentEmoji, myStyle.myEmojiFont, ((Graphics2D)g).getFontRenderContext())
-        .draw((Graphics2D)g, 16, getHeight() - 17);
+        .draw((Graphics2D)g, JBUIScale.scale(16), getHeight() - JBUIScale.scale(17));
       if (myCurrentEmojiName != null) {
         g.setFont(myStyle.myFont);
         g.setColor(myStyle.myTextColor);
-        g.drawString(myCurrentEmojiName, 49, getHeight() - 20);
+        g.drawString(myCurrentEmojiName, JBUIScale.scale(49), getHeight() - JBUIScale.scale(20));
       }
     }
   }

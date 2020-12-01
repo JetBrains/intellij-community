@@ -146,7 +146,8 @@ private fun getGeneratedResources(plugin: PluginLayout, buildContext: BuildConte
 
   val generatedResources = ArrayList<Pair<File, String>>(plugin.resourceGenerators.size)
   for (resourceGenerator in plugin.resourceGenerators) {
-    if (resourceGenerator.first::class.java.name == "org.jetbrains.intellij.build.sharedIndexes.PreSharedIndexesGenerator") {
+    val className = resourceGenerator.first::class.java.name
+    if (className == "org.jetbrains.intellij.build.sharedIndexes.PreSharedIndexesGenerator" || className.endsWith("PrebuiltIndicesResourcesGenerator")) {
       continue
     }
 

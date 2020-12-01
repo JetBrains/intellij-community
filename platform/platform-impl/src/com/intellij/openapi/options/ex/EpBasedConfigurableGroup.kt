@@ -15,11 +15,9 @@ import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
 import javax.swing.JComponent
-import kotlin.collections.ArrayList
 
 /**
  * This class provides logic for handling change in EPs and sends the update signals to the listeners.
@@ -147,8 +145,7 @@ private fun collect(configurableWrappers: MutableList<ConfigurableWrapper>, conf
       continue
     }
 
-    var children: Array<Configurable>
-    children = try {
+    val children: Array<Configurable> = try {
       configurable.configurables
     }
     catch (e: ProcessCanceledException) {

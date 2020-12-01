@@ -112,6 +112,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final XCorrector myCorrector;
     private final Graphics2D myGraphics;
     private final Rectangle myClip;
+    private final Insets myInsets;
     private final int myYShift;
     private final int myStartVisualLine;
     private final int myEndVisualLine;
@@ -142,7 +143,8 @@ public final class EditorPainter implements TextDrawingCallback {
       myText = myDocument.getImmutableCharSequence();
       myDocMarkup = myEditor.getFilteredDocumentMarkupModel();
       myEditorMarkup = myEditor.getMarkupModel();
-      myCorrector = XCorrector.create(myView);
+      myInsets = myView.getInsets();
+      myCorrector = XCorrector.create(myView, myInsets);
       myGraphics = g;
       myClip = myGraphics.getClipBounds();
       myYShift = -myClip.y;
@@ -224,7 +226,7 @@ public final class EditorPainter implements TextDrawingCallback {
       String toDisplay = SwingUtilities.layoutCompoundLabel(myGraphics.getFontMetrics(), hintString, null, 0, 0, 0, 0,
                                                     SwingUtilities.calculateInnerArea(editorComponent, null), // account for insets
                                                     new Rectangle(), new Rectangle(), 0);
-      myGraphics.drawString(toDisplay, myView.getInsets().left, myView.getInsets().top + myAscent + myYShift);
+      myGraphics.drawString(toDisplay, myInsets.left, myInsets.top + myAscent + myYShift);
       return true;
     }
 
@@ -329,9 +331,9 @@ public final class EditorPainter implements TextDrawingCallback {
         });
       }
 
-      int startX = myView.getInsets().left;
+      int startX = myInsets.left;
       int endX = myClip.x + myClip.width;
-      int prevY = Math.max(myView.getInsets().top, myClip.y) + myYShift;
+      int prevY = Math.max(myInsets.top, myClip.y) + myYShift;
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, myStartVisualLine);
       while (!visLinesIterator.atEnd()) {
         int visualLine = visLinesIterator.getVisualLine();
@@ -1160,7 +1162,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
     private void paintBlockInlays() {
       if (!myEditor.getInlayModel().hasBlockElements()) return;
-      int startX = myView.getInsets().left;
+      int startX = myInsets.left;
       int lineCount = myEditor.getVisibleLineCount();
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, myStartVisualLine);
       while (!visLinesIterator.atEnd()) {
@@ -1263,7 +1265,7 @@ public final class EditorPainter implements TextDrawingCallback {
       EditorSettings settings = myEditor.getSettings();
       Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
       if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
-      int minX = myView.getInsets().left;
+      int minX = myInsets.left;
       for (EditorImpl.CaretRectangle location : locations) {
         float x = (float)location.myPoint.getX();
         int y = (int)location.myPoint.getY() - topOverhang + myYShift;
@@ -1538,17 +1540,17 @@ public final class EditorPainter implements TextDrawingCallback {
     List<Integer> softMarginsX();
 
     @NotNull
-    static XCorrector create(@NotNull EditorView view) {
-      return view.getEditor().isRightAligned() ? new RightAligned(view) : new LeftAligned(view);
+    static XCorrector create(@NotNull EditorView view, @NotNull Insets insets) {
+      return view.getEditor().isRightAligned() ? new RightAligned(view) : new LeftAligned(view, insets);
     }
 
     final class LeftAligned implements XCorrector {
       private final EditorView myView;
       private final int myLeftInset;
 
-      private LeftAligned(@NotNull EditorView view) {
+      private LeftAligned(@NotNull EditorView view, @NotNull Insets insets) {
         myView = view;
-        myLeftInset = myView.getInsets().left;
+        myLeftInset = insets.left;
       }
 
       @Override

@@ -111,6 +111,15 @@ fun JpsImportedEntitySource.toExternalSource(): ProjectModelExternalSource = Ext
 object NonPersistentEntitySource : EntitySource
 
 /**
+ * Represents entities which are imported from some external model, but still have some *.iml file associated with them. That iml file
+ * will be used to save configuration of facets added to the module. This is a temporary solution, later we should invent a way to store
+ * such settings in their own files.
+ */
+interface CustomModuleEntitySource : EntitySource {
+  val internalSource: JpsFileEntitySource
+}
+
+/**
  * Returns `null` for the default project
  */
 val Project.configLocation: JpsProjectConfigLocation?

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * @author yole
+ * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
 public class PyFunctionFindUsagesHandler extends PyFindUsagesHandler {
   private final List<PsiElement> myAllElements;

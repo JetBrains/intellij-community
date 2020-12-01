@@ -2,6 +2,8 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.NodeSortOrder;
+import com.intellij.ide.projectView.NodeSortSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundIconProvider;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -334,6 +336,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   }
 
   @Override
+  public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+    return settings.isFoldersAlwaysOnTop() ? NodeSortOrder.FOLDER : super.getSortOrder(settings);
+  }
+
+  @Override
   public Comparable getSortKey() {
     if (ProjectAttachProcessor.canAttachToProject()) {
       // primary module is always on top; attached modules are sorted alphabetically
@@ -349,13 +356,8 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   @Override
   public Comparable getTypeSortKey() {
     VirtualFile file = getVirtualFile();
-    if (file != null) {
-      String extension = file.getExtension();
-      if (extension != null) {
-        return new PsiFileNode.ExtensionSortKey(extension);
-      }
-    }
-    return null;
+    String extension = file == null ? null : file.getExtension();
+    return extension == null ? null : new PsiFileNode.ExtensionSortKey(extension);
   }
 
   @Override

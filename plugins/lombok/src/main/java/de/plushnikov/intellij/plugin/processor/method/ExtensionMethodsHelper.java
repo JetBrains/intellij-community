@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.method;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -99,13 +100,15 @@ public class ExtensionMethodsHelper {
     PsiClass providerClass = Objects.requireNonNull(staticMethod.getContainingClass());
     PsiMethodCallExpression staticMethodCall;
     try {
-      staticMethodCall = (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(staticMethod.getProject())
-        .createExpressionFromText(providerClass.getQualifiedName() + "." + staticMethod.getName() + "()", callExpression);
-      PsiExpressionList argList = staticMethodCall.getArgumentList();
-      argList.add(Objects.requireNonNull(callExpression.getMethodExpression().getQualifierExpression()));
-      for (PsiExpression expression : callExpression.getArgumentList().getExpressions()) {
-        argList.add(expression);
+      StringBuilder args = new StringBuilder(Objects.requireNonNull(callExpression.getMethodExpression().getQualifierExpression()).getText());
+      PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
+      if (expressions.length > 0) {
+        args.append(", ");
       }
+      args.append(StringUtil.join(expressions, expression -> expression.getText(), ","));
+
+      staticMethodCall = (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(staticMethod.getProject())
+        .createExpressionFromText(providerClass.getQualifiedName() + "." + staticMethod.getName() + "(" + args + ")", callExpression);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -121,10 +124,7 @@ public class ExtensionMethodsHelper {
     if (!method.equals(staticMethod) || !((MethodCandidateInfo)result).isApplicable()) return null;
     PsiSubstitutor substitutor = result.getSubstitutor();
 
-    final LombokLightMethodBuilder lightMethod = new LombokLightMethodBuilder(staticMethod.getManager(), staticMethod.getName()) {
-      @Override
-      public boolean isEquivalentTo(final PsiElement another) { return staticMethod.isEquivalentTo(another); }
-    };
+    final LombokLightMethodBuilder lightMethod = new LombokExtensionMethod(staticMethod);
     lightMethod
       .addModifiers(PsiModifier.PUBLIC);
     PsiParameter @NotNull [] parameters = staticMethod.getParameterList().getParameters();
@@ -154,5 +154,24 @@ public class ExtensionMethodsHelper {
     lightMethod.setNavigationElement(staticMethod);
     lightMethod.setContainingClass(targetClass);
     return lightMethod;
+  }
+
+  public static @Nullable PsiMethod resolve(@NotNull PsiMethod method) {
+    if (method instanceof LombokExtensionMethod) {
+      return ((LombokExtensionMethod)method).myStaticMethod;
+    }
+    return null;
+  }
+
+  private static class LombokExtensionMethod extends LombokLightMethodBuilder {
+    private final @NotNull PsiMethod myStaticMethod;
+
+    LombokExtensionMethod(@NotNull PsiMethod staticMethod) {
+      super(staticMethod.getManager(), staticMethod.getName());
+      myStaticMethod = staticMethod;
+    }
+
+    @Override
+    public boolean isEquivalentTo(final PsiElement another) { return myStaticMethod.isEquivalentTo(another); }
   }
 }

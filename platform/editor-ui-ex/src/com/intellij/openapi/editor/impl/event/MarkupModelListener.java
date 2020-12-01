@@ -18,6 +18,11 @@ public interface MarkupModelListener extends EventListener {
   default void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
   }
 
+  default void attributesChanged(@NotNull RangeHighlighterEx highlighter,
+                                 boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
+    attributesChanged(highlighter, renderersChanged, fontStyleChanged || foregroundColorChanged);
+  }
+
   /**
    * @deprecated Use {@link MarkupModelListener} directly.
    */

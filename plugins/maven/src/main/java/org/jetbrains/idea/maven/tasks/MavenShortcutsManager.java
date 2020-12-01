@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -41,11 +42,16 @@ public final class MavenShortcutsManager implements Disposable {
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
   @NotNull
   public static MavenShortcutsManager getInstance(Project project) {
     return project.getService(MavenShortcutsManager.class);
+  }
+
+  @Nullable
+  public static MavenShortcutsManager getInstanceIfCreated(@NotNull Project project) {
+    return project.getServiceIfCreated(MavenShortcutsManager.class);
   }
 
   public MavenShortcutsManager(@NotNull Project project) {
@@ -65,7 +71,7 @@ public final class MavenShortcutsManager implements Disposable {
     MyProjectsTreeListener listener = new MyProjectsTreeListener();
     MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(project);
     mavenProjectManager.addManagerListener(listener);
-    mavenProjectManager.addProjectsTreeListener(listener);
+    mavenProjectManager.addProjectsTreeListener(listener, this);
 
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
     busConnection.subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
@@ -88,6 +94,7 @@ public final class MavenShortcutsManager implements Disposable {
     }
 
     MavenKeymapExtension.clearActions(myProject);
+    myListeners.clear();
   }
 
   @NotNull
@@ -129,8 +136,16 @@ public final class MavenShortcutsManager implements Disposable {
     }
   }
 
-  public void addListener(Listener listener) {
-    myListeners.add(listener);
+  /**
+   * @deprecated use #addListener(Listener, Disposable)
+   */
+  @Deprecated
+  public void addListener(Listener l) {
+    myListeners.add(l);
+  }
+
+  public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
+    myListeners.add(l, disposable);
   }
 
   @FunctionalInterface

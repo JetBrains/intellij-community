@@ -4,6 +4,7 @@ package com.intellij.codeInspection.targets
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ex.*
+import com.intellij.configurationStore.JbXmlOutputter.Companion.collapseMacrosAndWrite
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -11,10 +12,13 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
+import com.intellij.profile.ProfileEx
 import org.jdom.Element
+import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardOpenOption.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.exitProcess
 
@@ -42,15 +46,35 @@ class QodanaRunner(val application: InspectionApplication,
     converter.projectData(project, outPath.resolve("projectStructure"))
 
     application.writeDescriptions(baseProfile, converter)
+    writeProfile(baseProfile, outPath, project)
 
     if (!launch(converter)) {
-      application.reportMessage(1, "Inspection run was stopped cause it's reached threshold: ${config.stopThreshold}. Problems count: ${inspectionCounter.get()}")
+      application.reportMessage(1,
+                                "Inspection run was stopped cause it's reached threshold: ${config.stopThreshold}. Problems count: ${inspectionCounter.get()}")
     }
 
     if (config.failThreshold in 0 until inspectionCounter.get()) {
       application.reportMessage(1,
-                                "Inspection run is terminating with exit code ${config.failExitCode} cause it's reached fail threshold: ${config.failThreshold}. Problems count: ${inspectionCounter.get()}")
-      exitProcess(config.failExitCode)
+                                "Inspection run is terminating with exit code ${DEFAULT_FAIL_EXIT_CODE} cause it's reached fail threshold: ${config.failThreshold}. Problems count: ${inspectionCounter.get()}")
+      exitProcess(DEFAULT_FAIL_EXIT_CODE)
+    }
+  }
+
+  private fun writeProfile(profile: InspectionProfileImpl, outPath: Path, project: Project) {
+    profile.initInspectionTools(project)
+    val profileElement = Element(ProfileEx.PROFILE)
+    profile.writeExternal(profileElement)
+    profileElement.setAttribute("version", "1.0")
+
+    val rootElement = Element("component")
+      .setAttribute("name", "InspectionProjectProfileManager")
+      .addContent(profileElement)
+
+    val path = outPath.resolve("profile.xml")
+    val writer: Writer = Files.newBufferedWriter(path, TRUNCATE_EXISTING, CREATE, WRITE)
+
+    writer.use {
+      collapseMacrosAndWrite(rootElement, project, writer)
     }
   }
 
@@ -75,7 +99,8 @@ class QodanaRunner(val application: InspectionApplication,
     try {
       val syncResults = launchInspections(outputPath, context, progressIndicator)
       converter.convert(outputPath.toString(), outputPath.toString(), emptyMap(), syncResults.map { it.toFile() })
-    } finally {
+    }
+    finally {
       consumer.close()
     }
 

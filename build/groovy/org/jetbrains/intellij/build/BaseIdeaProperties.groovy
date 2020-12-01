@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
 import java.util.function.Consumer
@@ -8,6 +10,7 @@ import java.util.function.Consumer
 /**
  * Base class for all editions of IntelliJ IDEA
  */
+@CompileStatic
 abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   public static final List<String> JAVA_IDE_API_MODULES = [
     "intellij.xml.dom",
@@ -78,6 +81,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.webp",
     "intellij.grazie",
     "intellij.featuresTrainer",
+    "intellij.space",
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     ""                                                          : "11",
@@ -160,6 +164,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
       fileset(dir: "$context.paths.communityHome/java/jdkAnnotations")

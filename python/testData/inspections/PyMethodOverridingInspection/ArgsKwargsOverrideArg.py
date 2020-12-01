@@ -9,7 +9,7 @@ class C1(B):
 
 
 class C2(B):
-    def foo<warning descr="Signature of method 'C2.foo()' does not match signature of base method in class 'B'">(self)</warning>:
+    def foo<warning descr="Signature of method 'C2.foo()' does not match signature of the base method in class 'B'">(self)</warning>:
         pass
 
 

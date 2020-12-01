@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -82,6 +83,8 @@ public class FoldingTest extends AbstractEditorTest {
   }
 
   public void testAddEmptyRegion() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
     FoldRegion region = null;
     try {
       region = myModel.addFoldRegion(5, 5, "...");

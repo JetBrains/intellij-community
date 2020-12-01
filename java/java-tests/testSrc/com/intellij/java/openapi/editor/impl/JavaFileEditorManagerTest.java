@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
@@ -13,6 +14,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.ui.tabs.TabInfo;
 import org.jdom.JDOMException;
 
 import java.io.File;
@@ -65,6 +67,18 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(2, regions.length);
     assertTrue(regions[0].isExpanded());
     assertTrue(regions[1].isExpanded());
+  }
+
+  public void testOpenModuleDescriptorFile() {
+    VirtualFile moduleInfoFile = getFile("/src/module-info.java");
+    assertNotNull(moduleInfoFile);
+
+    myManager.openFile(moduleInfoFile, false);
+
+    EditorTabbedContainer openedTabPane = myManager.getCurrentWindow().getTabbedPane();
+    assertEquals(1, openedTabPane.getTabCount());
+    TabInfo firstTab = openedTabPane.getTabs().getTabAt(0);
+    assertEquals("module-info.java (test.module)", firstTab.getText());
   }
 
   @Override

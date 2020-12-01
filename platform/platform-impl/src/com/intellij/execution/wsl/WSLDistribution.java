@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
+import com.google.common.net.InetAddresses;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialPromptDialog;
 import com.intellij.execution.CommandLineUtil;
@@ -13,6 +14,8 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -29,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -38,7 +42,6 @@ import static com.intellij.execution.wsl.WSLUtil.LOG;
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
  *
  * @see WSLUtil
- * @see WSLDistributionWithRoot
  */
 public class WSLDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
@@ -51,6 +54,7 @@ public class WSLDistribution {
 
   @NotNull private final WslDistributionDescriptor myDescriptor;
   @Nullable private final Path myExecutablePath;
+  private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(() -> readHostIp());
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -305,7 +309,7 @@ public class WSLDistribution {
     }
   }
 
-  static @Nullable Path findWslExe() {
+   public static @Nullable Path findWslExe() {
     File file = PathEnvironmentVariableUtil.findInPath("wsl.exe");
     return file != null ? file.toPath() : null;
   }
@@ -417,13 +421,28 @@ public class WSLDistribution {
    */
 
   public @Nullable @NlsSafe String getWindowsPath(@NotNull String wslPath) {
-    return WSLUtil.getWindowsPath(wslPath, getMntRoot());
+    if (wslPath.startsWith(getMntRoot())) {
+      return WSLUtil.getWindowsPath(wslPath, getMntRoot());
+    }
+    return getUNCRoot() + FileUtil.toSystemDependentName(wslPath);
   }
 
   /**
    * @return Linux path for a file pointed by {@code windowsPath} or null if unavailable, like \\MACHINE\path
    */
   public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
+    if (FileUtil.toSystemDependentName(windowsPath).startsWith(UNC_PREFIX)) {
+      windowsPath = StringUtil.trimStart(FileUtil.toSystemDependentName(windowsPath), UNC_PREFIX);
+      int index = windowsPath.indexOf('\\');
+      if (index == -1) return null;
+
+      String distName = windowsPath.substring(0, index);
+      if (!distName.equals(myDescriptor.getMsId())) {
+        throw new IllegalArgumentException("Trying to get WSL path from a different WSL distribution");
+      }
+      return FileUtil.toSystemIndependentName(windowsPath.substring(index));
+    }
+
     //noinspection deprecation
     if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
       return getMntRoot() + convertWindowsPath(windowsPath);
@@ -436,6 +455,10 @@ public class WSLDistribution {
    */
   public final @NotNull @NlsSafe String getMntRoot(){
     return myDescriptor.getMntRoot();
+  }
+
+  public final @Nullable @NlsSafe String getUserHome() {
+    return myDescriptor.getUserHome();
   }
 
   /**
@@ -510,5 +533,40 @@ public class WSLDistribution {
     }
     File uncRoot = getUNCRoot();
     return uncRoot.exists() ? VfsUtil.findFileByIoFile(uncRoot, refreshIfNeed) : null;
+  }
+
+  // https://docs.microsoft.com/en-us/windows/wsl/compare-versions#accessing-windows-networking-apps-from-linux-host-ip
+  public String getHostIp() {
+    return myHostIp.getValue();
+  }
+
+  public InetAddress getHostIpAddress() {
+    return InetAddresses.forString(getHostIp());
+  }
+
+  @Nullable
+  private String readHostIp() {
+    final String releaseInfo = "/etc/resolv.conf"; // available for all distributions
+    final ProcessOutput output;
+    try {
+      output = executeOnWsl(10000, "cat", releaseInfo);
+    }
+    catch (ExecutionException e) {
+      return null;
+    }
+    if (LOG.isDebugEnabled()) LOG.debug("Reading release info: " + getId());
+    if (!output.checkSuccess(LOG)) return null;
+    for (String line : output.getStdoutLines(true)) {
+      if (line.startsWith("nameserver")) {
+        return line.substring("nameserver".length()).trim();
+      }
+    }
+    return null;
+  }
+
+  @NonNls
+  @Nullable
+  public String getEnvironmentVariable(String name) {
+    return myDescriptor.getEnvironmentVariable(name);
   }
 }

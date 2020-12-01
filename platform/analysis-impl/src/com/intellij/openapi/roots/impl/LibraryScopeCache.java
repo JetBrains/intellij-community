@@ -16,7 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -35,9 +35,9 @@ public final class LibraryScopeCache {
 
   private final Project myProject;
   private final ConcurrentMap<Module[], GlobalSearchScope> myLibraryScopes =
-    ConcurrentCollectionFactory.createMap(new TObjectHashingStrategy<>() {
+    ConcurrentCollectionFactory.createMap(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(Module[] object) {
+      public int hashCode(Module[] object) {
         return Arrays.hashCode(object);
       }
 

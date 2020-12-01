@@ -162,7 +162,8 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
   static final class Activity extends PreloadingActivity implements StartupActivity.DumbAware {
     Activity() {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || 
+          ApplicationManager.getApplication().isHeadlessEnvironment()) {
         throw ExtensionNotApplicableException.INSTANCE;
       }
     }

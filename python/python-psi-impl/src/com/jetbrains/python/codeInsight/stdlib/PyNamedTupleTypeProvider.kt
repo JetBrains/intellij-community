@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.mapSmartNotNull
 import com.jetbrains.python.PyNames
@@ -70,11 +71,13 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return when {
         referenceTarget is PyFunction && anchor is PyCallExpression -> getNamedTupleFunctionType(referenceTarget, context, anchor)
         referenceTarget is PyTargetExpression -> getNamedTupleTypeForTarget(referenceTarget, context)
-        referenceTarget is PyClass && anchor is PyCallExpression -> {
-          getNamedTupleTypeForNTInheritorAsCallee(referenceTarget, context) ?:
-          PyUnionType.union(
-            referenceTarget.multiFindInitOrNew(false, context).mapSmartNotNull { getNamedTupleFunctionType(it, context, anchor) }
-          )
+        referenceTarget is PyClass && anchor is PyCallExpression -> getNamedTupleTypeForClass(referenceTarget, context, anchor)
+        referenceTarget is PyParameter && anchor is PyCallExpression && referenceTarget.isSelf -> {
+          PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
+            ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
+            ?.let { method ->
+              method.containingClass?.let { getNamedTupleTypeForClass(it, context, anchor) }
+            }
         }
         else -> null
       }
@@ -156,6 +159,13 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
         .overStub { getNamedTupleTypeFromStub(target, it, context) }
         .withStubBuilder { PyNamedTupleStubImpl.create(it) }
         .compute(context)
+    }
+
+    private fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext, call: PyCallExpression): PyType? {
+      return getNamedTupleTypeForNTInheritorAsCallee(cls, context)
+             ?: PyUnionType.union(
+               cls.multiFindInitOrNew(false, context).mapSmartNotNull { getNamedTupleFunctionType(it, context, call) }
+             )
     }
 
     private fun getNamedTupleTypeForNTInheritorAsCallee(cls: PyClass, context: TypeEvalContext): PyType? {

@@ -681,9 +681,9 @@ public final class ActionsTree {
         String name = super.getAccessibleName();
 
         // Add shortcuts labels if available
-        String shortcutName = null;
+        @NlsSafe String shortcutName = null;
         TreePath path = myTree.getPathForRow(myRow);
-        if (path == null) return "unknown";
+        if (path == null) return KeyMapBundle.message("accessible.name.unknown");
         Object node = path.getLastPathComponent();
         if (node instanceof DefaultMutableTreeNode) {
           Object data = ((DefaultMutableTreeNode)node).getUserObject();
@@ -695,7 +695,7 @@ public final class ActionsTree {
               for (Shortcut shortcut : shortcuts) {
                 if (sb.length() > 0)
                   sb.append(", ");
-                sb.append("shortcut: ");
+                sb.append(KeyMapBundle.message("accessible.name.shortcut"));
                 sb.append(KeymapUtil.getShortcutText(shortcut));
               }
               if (sb.length() > 0) {

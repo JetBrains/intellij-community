@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nls
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.CourseManager
-import training.learn.NewLearnProjectUtil
 import training.learn.interfaces.Lesson
 import training.learn.lesson.LessonManager
 import training.learn.lesson.LessonStateManager
@@ -29,7 +28,6 @@ import java.awt.Desktop
 import java.net.URI
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import javax.swing.Icon
 
 fun createNamedSingleThreadExecutor(name: String): ExecutorService =
   Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(name).build())
@@ -62,15 +60,6 @@ val featureTrainerVersion: String by lazy {
   PluginManagerCore.getPlugin(featureTrainerPluginId)?.version ?: "UNKNOWN"
 }
 
-fun createAnAction(icon: Icon, action: (AnActionEvent) -> Unit): AnAction {
-  return object : AnAction(icon) {
-    override fun isDumbAware() = true
-    override fun actionPerformed(e: AnActionEvent) {
-      action(e)
-    }
-  }
-}
-
 fun clearTrainingProgress() {
   LessonManager.instance.stopLesson()
   LessonStateManager.resetPassedStatus()
@@ -94,14 +83,15 @@ fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
 
 fun findLanguageSupport(project: Project): LangSupport? {
   val langSupport = LangManager.getInstance().getLangSupport() ?: return null
-  if (FileUtil.pathsEqual(project.basePath, NewLearnProjectUtil.projectFilePath(langSupport))) {
+  if (isLearningProject(project, langSupport)) {
     return langSupport
   }
   return null
 }
 
-val useNewLearningUi: Boolean
-  get() = Registry.`is`("ide.features.trainer.new.ui", false)
+fun isLearningProject(project: Project, langSupport: LangSupport): Boolean {
+  return FileUtil.pathsEqual(project.basePath, LangManager.getInstance().getLearningProjectPath(langSupport))
+}
 
 val switchOnExperimentalLessons: Boolean
   get() = Registry.`is`("ift.experimental.lessons", false)

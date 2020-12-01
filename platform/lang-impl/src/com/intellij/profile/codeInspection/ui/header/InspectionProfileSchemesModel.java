@@ -119,7 +119,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
     disposeUI();
     myDeletedProfiles.clear();
     getSortedProfiles(myApplicationProfileManager, myProjectProfileManager)
-      .stream()
+      .parallelStream()
       .map(source -> {
         try {
           return new InspectionProfileModifiableModel(source);

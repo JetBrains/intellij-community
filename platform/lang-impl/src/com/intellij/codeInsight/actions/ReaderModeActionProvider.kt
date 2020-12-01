@@ -34,7 +34,7 @@ import java.awt.Insets
 import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 
-class ReaderModeActionProvider : InspectionWidgetActionProvider {
+private class ReaderModeActionProvider : InspectionWidgetActionProvider {
   override fun createAction(editor: Editor): AnAction? {
     val project: Project? = editor.project
     return if (project == null || project.isDefault) null
@@ -130,7 +130,7 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
       val project = e.project ?: return
 
       ReaderModeSettings.instance(project).enabled = !ReaderModeSettings.instance(project).enabled
-      project.messageBus.syncPublisher(READER_MODE_TOPIC).modeChanged(project)
+      project.messageBus.syncPublisher(ReaderModeSettingsListener.TOPIC).modeChanged(project)
     }
 
     override fun update(e: AnActionEvent) {

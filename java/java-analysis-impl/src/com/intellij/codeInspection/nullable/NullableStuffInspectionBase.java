@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -607,20 +608,26 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       reportPrimitiveType(holder, annotation, owner);
     }
     if (owner instanceof PsiParameter) {
-      checkLoopParameterNullability(holder, annotated.notNull, annotated.nullable,
-                                    DfaPsiUtil.inferParameterNullability((PsiParameter)owner));
+      PsiParameter parameter = (PsiParameter)owner;
+      Nullability expectedNullability = DfaPsiUtil.inferParameterNullability(parameter);
+      if (annotated.notNull != null && expectedNullability == Nullability.NULLABLE) {
+        reportParameterNullabilityMismatch(parameter, annotated.notNull, holder, JavaAnalysisBundle.message("parameter.can.be.null"));
+      }
+      else if (annotated.nullable != null && expectedNullability == Nullability.NOT_NULL) {
+        reportParameterNullabilityMismatch(parameter, annotated.nullable, holder, JavaAnalysisBundle.message("parameter.is.always.not.null"));
+      }
     }
     return annotated;
   }
 
-  private static void checkLoopParameterNullability(ProblemsHolder holder, @Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable, Nullability expectedNullability) {
-    if (notNull != null && expectedNullability == Nullability.NULLABLE) {
-      holder.registerProblem(notNull, JavaAnalysisBundle.message("parameter.can.be.null"),
-                             new RemoveAnnotationQuickFix(notNull, null));
-    }
-    else if (nullable != null && expectedNullability == Nullability.NOT_NULL) {
-      holder.registerProblem(nullable, JavaAnalysisBundle.message("parameter.is.always.not.null"),
-                             new RemoveAnnotationQuickFix(nullable, null));
+  private static void reportParameterNullabilityMismatch(@NotNull PsiParameter owner,
+                                                         @NotNull PsiAnnotation annotation,
+                                                         @NotNull ProblemsHolder holder, 
+                                                         @NotNull @Nls String message) {
+    PsiElement anchor = annotation.isPhysical() ? annotation : owner.getNameIdentifier();
+    if (anchor != null) {
+      holder.registerProblem(anchor, message,
+                             new RemoveAnnotationQuickFix(annotation, owner));
     }
   }
 

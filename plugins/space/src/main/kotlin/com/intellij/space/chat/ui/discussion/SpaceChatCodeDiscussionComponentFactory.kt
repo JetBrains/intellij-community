@@ -7,10 +7,10 @@ import circlet.m2.channel.M2ChannelVm
 import circlet.platform.client.property
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.chat.ui.processItemText
 import com.intellij.space.chat.ui.thread.createThreadComponent
 import com.intellij.space.messages.SpaceBundle
@@ -25,7 +25,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
+import com.intellij.util.ui.codereview.SingleValueModel
 import com.intellij.util.ui.codereview.SingleValueModelImpl
+import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.coroutines.extra.Lifetime
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -44,7 +46,8 @@ class SpaceChatCodeDiscussionComponentFactory(
 ) {
   fun createComponent(event: CodeDiscussionAddedFeedEvent, thread: M2ChannelVm): JComponent? {
     val discussion = event.codeDiscussion.resolve()
-    val resolved = lifetime.map(event.codeDiscussion.property()) { it.resolved }
+    val discussionProperty = event.codeDiscussion.property()
+    val resolved = lifetime.map(discussionProperty) { it.resolved }
     val collapseButton = InlineIconButton(AllIcons.General.CollapseComponent, AllIcons.General.CollapseComponentHover)
     val expandButton = InlineIconButton(AllIcons.General.ExpandComponent, AllIcons.General.ExpandComponentHover)
 
@@ -79,26 +82,81 @@ class SpaceChatCodeDiscussionComponentFactory(
       add(reviewCommentComponent, VerticalLayout.FILL_HORIZONTAL)
     }
 
-    thread.mvms.forEach(lifetime) {
-      val comment = it.messages.first()
-      reviewCommentComponent.setBody(processItemText(server, comment.message.text))
-      reviewCommentComponent.repaint()
+    val threadActionsFactory = SpaceChatDiscussionActionsFactory(
+      discussionProperty,
+      withOffset = true,
+      avatarType = SpaceChatAvatarType.THREAD
+    )
+    val threadComponent = createThreadComponent(project, lifetime, thread, threadActionsFactory, withFirst = false)
+    val outerActionsPanel = BorderLayoutPanel().apply {
+      isOpaque = false
+      border = JBUI.Borders.emptyTop(UI.scale(4))
+      val outerActionsFactory = SpaceChatDiscussionActionsFactory(
+        discussionProperty,
+        withOffset = false,
+        avatarType = SpaceChatAvatarType.THREAD
+      )
+      addToCenter(outerActionsFactory.createActionsComponent(thread))
     }
-    val threadComponent = createThreadComponent(project, lifetime, thread, withFirst = false)
+    val collapseModel = SingleValueModelImpl(true)
 
-    return JPanel(VerticalLayout(0)).apply {
+    val component = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       add(panel, VerticalLayout.FILL_HORIZONTAL)
       add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
+      add(outerActionsPanel, VerticalLayout.FILL_HORIZONTAL)
       addDiscussionExpandCollapseHandling(
         this,
-        listOf(threadComponent, reviewCommentComponent, diffEditorComponent),
+        collapseModel,
+        listOf(threadComponent, reviewCommentComponent, diffEditorComponent, outerActionsPanel),
         collapseButton,
         expandButton,
         resolved
       )
     }
 
+    collapseModel.addValueUpdatedListener { collapsed ->
+      if (!collapsed) {
+        val messagesCount = thread.mvms.value.messages.size
+        updateActionsComponentsVisibility(threadComponent, outerActionsPanel, component, null, messagesCount)
+      }
+    }
+
+    thread.mvms.forEachWithPrevious(lifetime) { prev, new ->
+      val messages = new.messages
+      val comment = messages.first()
+      reviewCommentComponent.setBody(processItemText(server, comment.message.text, comment.message.edited != null))
+      reviewCommentComponent.repaint()
+      if (!collapseModel.value) {
+        updateActionsComponentsVisibility(threadComponent, outerActionsPanel, component, prev?.messages?.size, messages.size)
+      }
+    }
+
+    return component
+  }
+
+  private fun updateActionsComponentsVisibility(
+    threadComponent: JComponent,
+    outerActionsPanel: JComponent,
+    parent: JComponent,
+    prevMessagesCount: Int?,
+    newMessagesCount: Int
+  ) {
+    if (newMessagesCount == 1) {
+      threadComponent.isVisible = false
+      outerActionsPanel.isVisible = true
+      parent.revalidate()
+      parent.repaint()
+    }
+    else {
+      if (prevMessagesCount == null || prevMessagesCount == 1) {
+        // update only for 1 -> 1+ messages count change
+        threadComponent.isVisible = true
+        outerActionsPanel.isVisible = false
+        parent.revalidate()
+        parent.repaint()
+      }
+    }
   }
 
   private fun createFileNameComponent(
@@ -138,21 +196,20 @@ class SpaceChatCodeDiscussionComponentFactory(
     }
   }
 
-
   // TODO: Extract it to code-review module
   private fun addDiscussionExpandCollapseHandling(
     parentComponent: JComponent,
+    collapseModel: SingleValueModel<Boolean>,
     componentsToHide: Collection<JComponent>,
     collapseButton: InlineIconButton,
     expandButton: InlineIconButton,
     resolved: Property<Boolean>
   ) {
-    val collapseModel = SingleValueModelImpl(true)
-    collapseButton.actionListener = ActionListener { collapseModel.value = true }
-    expandButton.actionListener = ActionListener { collapseModel.value = false }
-
-    resolved.forEach(lifetime) {
-      collapseModel.value = it
+    collapseButton.actionListener = ActionListener {
+      collapseModel.value = true
+    }
+    expandButton.actionListener = ActionListener {
+      collapseModel.value = false
     }
 
     fun stateUpdated(collapsed: Boolean) {
@@ -168,6 +225,9 @@ class SpaceChatCodeDiscussionComponentFactory(
     collapseModel.addValueUpdatedListener {
       stateUpdated(it)
     }
-    stateUpdated(true)
+
+    resolved.forEach(lifetime) {
+      collapseModel.value = it
+    }
   }
 }

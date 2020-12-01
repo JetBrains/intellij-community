@@ -15,7 +15,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.GraphGenerator;
@@ -30,33 +29,34 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 @Service
 public final class PluginManager {
   public static final String INSTALLED_TXT = "installed.txt";
 
-  private final List<Runnable> disabledPluginListeners = new CopyOnWriteArrayList<>();
-
   public static @NotNull PluginManager getInstance() {
     return ApplicationManager.getApplication().getService(PluginManager.class);
   }
 
-  private PluginManager() {
-    DisabledPluginsState.setDisabledPluginListener(() -> {
-      for (Runnable listener : disabledPluginListeners) {
-        listener.run();
-      }
-    });
-  }
+  private PluginManager() {}
 
+  /**
+   * @deprecated Use {@link DisabledPluginsState#addDisablePluginListener} directly
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public void addDisablePluginListener(@NotNull Runnable listener) {
-    disabledPluginListeners.add(listener);
+    DisabledPluginsState.addDisablePluginListener(listener);
   }
 
+  /**
+   * @deprecated Use {@link DisabledPluginsState#removeDisablePluginListener} directly
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public void removeDisablePluginListener(@NotNull Runnable listener) {
-    disabledPluginListeners.remove(listener);
+    DisabledPluginsState.removeDisablePluginListener(listener);
   }
 
   /**
@@ -136,14 +136,6 @@ public final class PluginManager {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static @NotNull List<String> getDisabledPlugins() {
     return DisabledPluginsState.getDisabledPlugins();
-  }
-
-  /**
-   * @deprecated Use {@link DisabledPluginsState#saveDisabledPlugins(Collection, boolean)}
-   */
-  @Deprecated
-  public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
-    DisabledPluginsState.saveDisabledPlugins(ContainerUtil.map(ids, PluginId::getId), append);
   }
 
   public static boolean disablePlugin(@NotNull String id) {

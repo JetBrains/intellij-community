@@ -84,6 +84,7 @@ import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static final ExtensionPointName<ActionConfigurationCustomizer> EP =
@@ -415,7 +416,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     if (name == null) {
       name = id.getIdString();
     }
-    return " Plugin: " + name;
+    return " (Plugin: " + name + ")";
   }
 
   private static @NotNull DataContext getContextBy(Component contextComponent) {
@@ -1265,8 +1266,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     synchronized (myLock) {
       if (addToMap(actionId, action, pluginId, projectType) == null) return;
       if (actionToId.containsKey(action)) {
-        reportActionError(pluginId, "action was already registered for another ID. ID is " + actionToId.get(action) +
-                                    getPluginInfo(pluginId));
+        reportActionError(pluginId,
+                          "ID \"" + actionToId.get(action) + "\" is already taken by action \"" + action + "\"" + getPluginInfo(pluginId) +
+                          ". ID \"" + actionId + "\" cannot be registered for the same action");
         return;
       }
       idToIndex.put(actionId, myRegisteredActionsCount++);
@@ -1320,10 +1322,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     AnAction old = chameleonAction.addAction(action, type);
     if (old != null) {
+      String oldPluginInfo = pluginToId.keySet().stream()
+        .filter(p -> pluginToId.get(p).contains(actionId))
+        .map(ActionManagerImpl::getPluginInfo).collect(Collectors.joining(","));
       reportActionError(pluginId,
-                        "action with the ID \"" + actionId + "\" was already registered. Action being registered is " + action +
-                        "; Registered action is " +
-                        idToAction.get(actionId) + getPluginInfo(pluginId));
+                        "ID \"" + actionId + "\" is already taken by action \"" + idToAction.get(actionId) + "\"" + oldPluginInfo +
+                        ". Action \"" + action + "\"" + getPluginInfo(pluginId) + " cannot use the same ID");
       return null;
     }
     return chameleonAction;

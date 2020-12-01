@@ -19,7 +19,7 @@ class GradleProjectResolverTest : GradleProjectResolverTestCase() {
       withRegisteredSdks(jdk) {
         assertUnexpectedSdksRegistration {
           loadProject()
-          assertSdks(jdk.name, "project", "project.main", "project.test")
+          assertSdks(jdk, "project", "project.main", "project.test")
         }
       }
     }
@@ -32,9 +32,9 @@ class GradleProjectResolverTest : GradleProjectResolverTestCase() {
 
     environment.withVariables(JAVA_HOME to jdk.homePath) {
       withoutRegisteredSdks {
-        assertNewlyRegisteredSdks({ jdk }) {
+        assertNewlyRegisteredSdks({ jdk }, isAssertSdkName = false) {
           loadProject()
-          assertSdks(jdk.name, "project", "project.main", "project.test")
+          assertSdks(jdk, "project", "project.main", "project.test", isAssertSdkName = false)
         }
       }
     }
@@ -50,13 +50,13 @@ class GradleProjectResolverTest : GradleProjectResolverTestCase() {
       withRegisteredSdks(jdk, sdk) {
         assertUnexpectedSdksRegistration {
           loadProject()
-          assertSdks(jdk.name, "project", "project.main", "project.test")
+          assertSdks(jdk, "project", "project.main", "project.test")
 
           withProjectSdk(sdk) {
-            assertSdks(sdk.name, "project", "project.main", "project.test")
+            assertSdks(sdk, "project", "project.main", "project.test")
 
             reloadProject()
-            assertSdks(sdk.name, "project", "project.main", "project.test")
+            assertSdks(sdk, "project", "project.main", "project.test")
           }
         }
       }

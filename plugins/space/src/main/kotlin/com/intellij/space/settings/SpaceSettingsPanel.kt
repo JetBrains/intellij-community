@@ -23,9 +23,9 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.coroutines.extra.LifetimeSource
 import libraries.klogging.logger
-import java.awt.BorderLayout
 import java.awt.GridBagLayout
 import javax.swing.*
 
@@ -40,7 +40,7 @@ class SpaceSettingsPanel :
 
   private val settings = SpaceSettings.getInstance()
 
-  private val accountPanel = JPanel(BorderLayout())
+  private val accountPanel = BorderLayoutPanel()
 
   private val linkLabel: LinkLabel<Any> = LinkLabel<Any>(
     SpaceBundle.message("settings.panel.configure.git.ssh.keys.http.password.link"),
@@ -54,7 +54,7 @@ class SpaceSettingsPanel :
   init {
     SpaceWorkspaceComponent.getInstance().loginState.forEach(uiLifetime) { st ->
       accountPanel.removeAll()
-      accountPanel.add(createView(st), BorderLayout.NORTH)
+      accountPanel.addToCenter(createView(st))
       updateUi(st)
       accountPanel.revalidate()
       accountPanel.repaint()

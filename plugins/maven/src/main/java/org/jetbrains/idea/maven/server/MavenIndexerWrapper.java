@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,12 +17,11 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
 public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<MavenServerIndexer> {
-  private final TIntObjectHashMap<IndexData> myDataMap = new TIntObjectHashMap<>();
+  private final Int2ObjectOpenHashMap<IndexData> myDataMap = new Int2ObjectOpenHashMap<>();
 
   public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
     super(parent);
@@ -31,7 +31,8 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   protected synchronized void onError() {
     super.onError();
     MavenLog.LOG.debug("MavenIndexerWrapper on error:");
-    for (int each : myDataMap.keys()) {
+    for (IntIterator iterator = myDataMap.keySet().iterator(); iterator.hasNext(); ) {
+      int each = iterator.nextInt();
       MavenLog.LOG.debug("clear remote id for " + each);
       myDataMap.get(each).remoteId = -1;
     }
@@ -128,9 +129,8 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   private synchronized int getRemoteId(int localId) throws RemoteException, MavenServerIndexerException {
     IndexData result = myDataMap.get(localId);
     if(result == null) {
-      MavenLog.LOG.error("index " + localId + " not found, known ids are:" + Arrays.asList(myDataMap.keys()));
+      MavenLog.LOG.error("index " + localId + " not found, known ids are:" + myDataMap.keySet());
     }
-
 
     if (result.remoteId == -1) {
       result.remoteId = getOrCreateWrappee().createIndex(result.indexId, result.repositoryId, result.file, result.url, result.indexDir,

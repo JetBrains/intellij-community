@@ -22,7 +22,9 @@ import kotlin.system.exitProcess
 
 private class FileInfo(val file: Path) {
   companion object {
-    fun digest(file: Path): ByteArray = DigestUtil.sha512().digest(loadAndNormalizeSvgFile(file).toByteArray())
+    fun digest(file: Path) = digest(loadAndNormalizeSvgFile(file).toByteArray())
+
+    fun digest(fileNormalizedData: ByteArray): ByteArray = DigestUtil.sha256().digest(fileNormalizedData)
   }
 
   val checksum: ByteArray by lazy { digest(file) }
@@ -206,9 +208,10 @@ internal class ImageSvgPreCompiler {
     totalFiles.addAndGet(variants.size.toLong())
 
     // key is the same for all variants
-    val imageKey = getImageKey(light1xData.toByteArray(), light1x.fileName.toString())
+    val light1xBytes = light1xData.toByteArray()
+    val imageKey = getImageKey(light1xBytes, light1x.fileName.toString())
 
-    if (checkCollision(collisionGuard, imageKey, light1x)) {
+    if (checkCollision(collisionGuard, imageKey, light1x, light1xBytes)) {
       return
     }
 
@@ -228,13 +231,13 @@ internal class ImageSvgPreCompiler {
   }
 }
 
-private fun checkCollision(map: MutableMap<Long, FileInfo>, imageKey: Long, file: Path): Boolean {
+private fun checkCollision(map: MutableMap<Long, FileInfo>, imageKey: Long, file: Path, fileNormalizedData: ByteArray): Boolean {
   val duplicate = map.putIfAbsent(imageKey, FileInfo(file))
   if (duplicate == null) {
     return false
   }
 
-  if (duplicate.checksum.contentEquals(FileInfo.digest(file))) {
+  if (duplicate.checksum.contentEquals(FileInfo.digest(fileNormalizedData))) {
     println("${duplicate.file} duplicates $file")
     // skip - do not add
     return true

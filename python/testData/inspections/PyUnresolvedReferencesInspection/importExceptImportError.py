@@ -12,7 +12,7 @@ def f(x):
 
 def f(x):
     try:
-        from foo import <warning descr="'StringIO' in try block with 'except ImportError' should also be defined in except block">StringIO</warning>
+        from foo import <warning descr="'StringIO' in the try block with 'except ImportError' should also be defined in the except block">StringIO</warning>
     except ImportError:
         pass
     return StringIO(x)
@@ -82,7 +82,7 @@ except ImportError:
 
 # PY-8933: Import referenced by inner scope should be reported
 try:
-    from foo import <warning descr="'UsedInsideFunction' in try block with 'except ImportError' should also be defined in except block">UsedInsideFunction</warning>
+    from foo import <warning descr="'UsedInsideFunction' in the try block with 'except ImportError' should also be defined in the except block">UsedInsideFunction</warning>
 except ImportError:
     pass
 

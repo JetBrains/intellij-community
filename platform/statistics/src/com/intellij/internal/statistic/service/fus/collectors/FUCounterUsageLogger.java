@@ -114,6 +114,17 @@ public final class FUCounterUsageLogger {
       if (group != null) {
         FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED);
       }
+      else {
+        try {
+          // get group id to check that either group or group id is overridden
+          if (StringUtil.isEmpty(collector.getGroupId())) {
+            LOG.error("Please override either getGroupId() or getGroup() with not empty string in " + collector.getClass().getName());
+          }
+        }
+        catch (IllegalStateException e) {
+          LOG.error(e.getMessage() + " in " + collector.getClass().getName());
+        }
+      }
     }
   }
 

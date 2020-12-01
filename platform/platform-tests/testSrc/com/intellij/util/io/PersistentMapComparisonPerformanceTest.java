@@ -8,7 +8,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.mvstore.MVStore;
-import org.jetbrains.mvstore.index.MVStorePersistentHashMap;
+import org.jetbrains.mvstore.index.MVStorePersistentMap;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,7 +18,7 @@ import java.util.List;
 
 public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
   @Nullable
-  private static List<Pair<Integer, String>> ourData;
+  private List<Pair<Integer, String>> myData;
   @NotNull
   private Path myTempDirectory;
 
@@ -29,16 +29,16 @@ public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
     myTempDirectory = FileUtil.createTempDirectory("persistent-map", "comparison").toPath();
   }
 
-  public synchronized static @NotNull List<Pair<Integer, String>> getData() {
-    if (ourData == null) {
+  private synchronized @NotNull List<Pair<Integer, String>> getData() {
+    if (myData == null) {
       int size = 500_000;
-      ourData = new ArrayList<>(size);
+      myData = new ArrayList<>(size);
       for (int i = 0; i < size; i++) {
-        ourData.add(Pair.create(i, PersistentMapTestBase.createRandomString()));
+        myData.add(Pair.create(i, PersistentMapTestBase.createRandomString()));
       }
-      ourData.sort(Comparator.comparingLong(p -> p.getSecond().length()));
+      myData.sort(Comparator.comparingLong(p -> p.getSecond().length()));
     }
-    return ourData;
+    return myData;
   }
 
   public void testMVStoreMap() throws IOException {
@@ -47,11 +47,14 @@ public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
       .autoCommitDelay(5_000)
       .compressHigh()
       .openOrNewOnIoError(myTempDirectory.resolve("mvstore"), true, e -> LOG.error(e));
-    MVStorePersistentHashMap<Integer, String> map =
-      new MVStorePersistentHashMap<>("test-map",
-                                     mvStore,
-                                     EnumeratorIntegerDescriptor.INSTANCE,
-                                     EnumeratorStringDescriptor.INSTANCE);
+
+    PersistentHashMap<Integer, String> map =
+      new PersistentHashMap<>(
+        new MVStorePersistentMap<>("test-map",
+                                   mvStore,
+                                   EnumeratorIntegerDescriptor.INSTANCE,
+                                   EnumeratorStringDescriptor.INSTANCE));
+
     try {
       PlatformTestUtil.startPerformanceTest("put/get MVStore", 2000, () -> {
         doPutGetTest(map);
@@ -64,10 +67,10 @@ public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
   }
 
   public void testPersistentHashMap() throws IOException {
-    PersistentHashMap<Integer, String> phm = PersistentHashMapBuilder
+    PersistentHashMap<Integer, String> phm = PersistentMapBuilder
       .newBuilder(myTempDirectory.resolve("phm"), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE).build();
     try {
-      PlatformTestUtil.startPerformanceTest("put/get PHM", 2000, () -> {
+      PlatformTestUtil.startPerformanceTest("put/get PHM", 4000, () -> {
         doPutGetTest(phm);
       }).ioBound().assertTiming();
     }
@@ -76,7 +79,7 @@ public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
     }
   }
 
-  private static void doPutGetTest(@NotNull AppendablePersistentMap<Integer, String> mapBase) throws IOException {
+  private void doPutGetTest(@NotNull PersistentMap<Integer, String> mapBase) throws IOException {
     for (Pair<Integer, String> datum : getData()) {
       mapBase.put(datum.getFirst(), datum.getSecond());
     }

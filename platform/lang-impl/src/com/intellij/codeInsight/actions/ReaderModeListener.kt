@@ -15,10 +15,13 @@ interface ReaderModeListener : EventListener {
   fun modeChanged(project: Project)
 }
 
-@Topic.ProjectLevel
-val READER_MODE_TOPIC = Topic(ReaderModeListener::class.java)
-
 class ReaderModeSettingsListener : ReaderModeListener {
+  companion object {
+    @Topic.ProjectLevel
+    @JvmStatic
+    val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
+  }
+
   override fun modeChanged(project: Project) {
     FileEditorManager.getInstance(project).allEditors.forEach {
       if (it !is PsiAwareTextEditorImpl) return

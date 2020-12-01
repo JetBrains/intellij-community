@@ -148,7 +148,7 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
-    <group id="GitHub.MainMenu" popup="true" text="GitHub">
+    <group id="GitHub.MainMenu" popup="true">
       <reference ref="Github.Share"/>
       <reference ref="Github.Create.Pull.Request"/>
       <reference ref="Github.View.Pull.Request"/>

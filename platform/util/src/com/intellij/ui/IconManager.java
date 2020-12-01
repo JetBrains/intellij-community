@@ -32,6 +32,8 @@ public interface IconManager {
     IconManagerHelper.deactivate();
   }
 
+  @NotNull Icon getStubIcon();
+
   @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass);
 
   /**
@@ -114,6 +116,11 @@ final class DummyIconManager implements IconManager {
   static final IconManager INSTANCE = new DummyIconManager();
 
   private DummyIconManager() {
+  }
+
+  @Override
+  public @NotNull Icon getStubIcon() {
+    return DummyIcon.INSTANCE;
   }
 
   @NotNull

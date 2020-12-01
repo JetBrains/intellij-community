@@ -31,7 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Konstantin Bulenkov
  */
-public class SearchEverywhereAction extends SearchEverywhereBaseAction implements CustomComponentAction, DumbAware, DataProvider {
+public class SearchEverywhereAction extends SearchEverywhereBaseAction
+  implements CustomComponentAction, RightAlignedToolbarAction, DumbAware, DataProvider {
 
   public static final Key<ConcurrentHashMap<ClientId, JBPopup>> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
 

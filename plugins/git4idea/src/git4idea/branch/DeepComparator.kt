@@ -31,6 +31,7 @@ import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
 import com.intellij.vcs.log.util.*
 import com.intellij.vcs.log.visible.VisiblePack
 import git4idea.GitBranch
+import git4idea.GitNotificationIdsHolder.Companion.COULD_NOT_COMPARE_WITH_BRANCH
 import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -209,7 +210,7 @@ class DeepComparator(private val project: Project,
     override fun onSuccess() {
       if (exception != null) {
         nonPickedCommits = null
-        VcsNotifier.getInstance(project).notifyError("git.could.not.compare.with.branch",
+        VcsNotifier.getInstance(project).notifyError(COULD_NOT_COMPARE_WITH_BRANCH,
                                                      GitBundle.message("git.log.cherry.picked.highlighter.error.message", comparedBranch),
                                                      exception!!.message)
         return

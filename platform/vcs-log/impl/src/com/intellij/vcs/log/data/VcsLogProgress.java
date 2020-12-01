@@ -119,7 +119,7 @@ public class VcsLogProgress implements Disposable {
   private void fireNotification(@NotNull Consumer<? super ProgressListener> action) {
     synchronized (myLock) {
       List<ProgressListener> list = new ArrayList<>(myListeners);
-      ApplicationManager.getApplication().invokeLater(() -> list.forEach(action));
+      ApplicationManager.getApplication().invokeLater(() -> list.forEach(action), o -> Disposer.isDisposed(this));
     }
   }
 

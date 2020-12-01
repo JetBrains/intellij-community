@@ -1,23 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public final class LoaderFactory implements Disposable {
 
   public LoaderFactory(final Project project) {
     myProject = project;
-    myModule2ClassLoader = ContainerUtil.createConcurrentWeakMap();
+    myModule2ClassLoader = CollectionFactory.createConcurrentWeakMap();
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
@@ -63,7 +63,7 @@ public final class LoaderFactory implements Disposable {
   }
 
   @NotNull public ClassLoader getLoader(final VirtualFile formFile) {
-    final Module module = ModuleUtil.findModuleForFile(formFile, myProject);
+    final Module module = ModuleUtilCore.findModuleForFile(formFile, myProject);
     if (module == null) {
       return getClass().getClassLoader();
     }
@@ -102,7 +102,7 @@ public final class LoaderFactory implements Disposable {
     while (tokenizer.hasMoreTokens()) {
       final String s = tokenizer.nextToken();
       try {
-        VirtualFile vFile = manager.findFileByUrl(VfsUtil.pathToUrl(s));
+        VirtualFile vFile = manager.findFileByUrl(VfsUtilCore.pathToUrl(s));
         final File realFile = fileSystem.getMirroredFile(vFile);
         urls.add(realFile != null ? realFile.toURI().toURL() : new File(s).toURI().toURL());
       }

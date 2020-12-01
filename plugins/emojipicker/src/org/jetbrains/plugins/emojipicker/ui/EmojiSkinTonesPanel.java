@@ -5,6 +5,7 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
 import org.jetbrains.plugins.emojipicker.service.EmojiService;
 
@@ -15,11 +16,11 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class EmojiSkinTonesPanel extends JPanel {
-  private static final int ITEM_SIZE = 34;
   @NlsSafe private static final String ITEM_EMOJI = "🖐";
 
   private final EmojiPickerStyle myStyle;
   private final Map<EmojiSkinTone, Item> myItemMap = new EnumMap<>(EmojiSkinTone.class);
+  private final int myItemSize = JBUIScale.scale(34);
   private EmojiSkinTone myCurrentSkinTone = EmojiService.getInstance().getCurrentSkinTone();
   private int myFocusedItem = -1;
 
@@ -46,7 +47,7 @@ public class EmojiSkinTonesPanel extends JPanel {
     super.paint(g);
     if (myFocusedItem != -1) {
       g.setColor(myStyle.myFocusBorderColor);
-      g.drawRoundRect(3, myFocusedItem * ITEM_SIZE + 3, ITEM_SIZE - 4, ITEM_SIZE - 4, 6, 6);
+      g.drawRoundRect(3, myFocusedItem * myItemSize + 3, myItemSize - 4, myItemSize - 4, 6, 6);
     }
   }
 
@@ -73,12 +74,12 @@ public class EmojiSkinTonesPanel extends JPanel {
     }
   }
 
-  void open(JComponent textField) {
+  void open(EmojiSearchField searchField) {
     myFocusedItem = -1;
-    Insets i = textField.getInsets();
-    setBounds(textField.getX() + textField.getWidth() - i.right - ITEM_SIZE - 1 - 6,
-              textField.getY() + textField.getHeight() / 2 - ITEM_SIZE / 2 - 1,
-              ITEM_SIZE + 2, ITEM_SIZE * myItemMap.size() + 2);
+    Point center = searchField.getSkinToneIconCenter();
+    setBounds(searchField.getX() + center.x - myItemSize / 2 - 1,
+              searchField.getY() + center.y - myItemSize / 2 - 1,
+              myItemSize + 2, myItemSize * myItemMap.size() + 2);
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = 0;
     removeAll();
@@ -134,12 +135,12 @@ public class EmojiSkinTonesPanel extends JPanel {
 
       @Override
       public int getIconWidth() {
-        return ITEM_SIZE;
+        return myItemSize;
       }
 
       @Override
       public int getIconHeight() {
-        return ITEM_SIZE;
+        return myItemSize;
       }
     }
   }

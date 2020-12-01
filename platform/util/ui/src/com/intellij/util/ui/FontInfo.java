@@ -101,11 +101,22 @@ public final class FontInfo {
 
   private static FontInfo find(List<FontInfo> list, String name) {
     for (FontInfo info : list) {
-      if (info.toString().equalsIgnoreCase(name)) {
+      if (matches(info, name)) {
         return info;
       }
     }
     return null;
+  }
+
+  private static boolean matches(FontInfo info, String name) {
+    return info.toString().equalsIgnoreCase(name);
+  }
+
+  private boolean isLogicalFont() {
+    for (String logicalFontName : DEFAULT) {
+      if (matches(this, logicalFontName)) return true;
+    }
+    return false;
   }
 
   private static FontInfo byName(String name) {
@@ -138,11 +149,9 @@ public final class FontInfo {
     List<FontInfo> list = new ArrayList<>(fonts.length);
     for (Font font : fonts) {
       FontInfo info = byFont(font);
-      if (info != null) list.add(info);
-    }
-    for (String name : DEFAULT) {
-      FontInfo info = find(list, name);
-      if (info != null) list.remove(info);
+      if (info != null && !info.isLogicalFont()) {
+        list.add(info);
+      }
     }
     list.sort(COMPARATOR);
     return Collections.unmodifiableList(list);

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.RunProfile;
@@ -39,6 +40,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
 
   private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
+           || ActionPlaces.NEW_TOOLBAR.equals(e.getPlace())
+           || ActionPlaces.STATE_WIDGET_ACTION_BAR.equals(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
@@ -112,7 +115,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
 
       Pair<List<HandlerItem>, HandlerItem>
-        handlerItems = getItemsList(stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
+        handlerItems = getItemsList(project, stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
       if (handlerItems == null || handlerItems.first.isEmpty()) {
         return;
       }
@@ -184,6 +187,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       InputEvent inputEvent = e.getInputEvent();
       Component component = inputEvent != null ? inputEvent.getComponent() : null;
       if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
+                                || ActionPlaces.NEW_TOOLBAR.equals(e.getPlace())
+                                || ActionPlaces.STATE_WIDGET_ACTION_BAR.equals(e.getPlace())
                                 || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace()))) {
         popup.showUnderneathOf(component);
       }
@@ -200,7 +205,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Nullable
-  private static Pair<List<HandlerItem>, HandlerItem> getItemsList(List<? extends RunContentDescriptor> descriptors, RunContentDescriptor toSelect) {
+  private Pair<List<HandlerItem>, HandlerItem> getItemsList(Project project, List<? extends RunContentDescriptor> descriptors, RunContentDescriptor toSelect) {
     if (descriptors.isEmpty()) {
       return null;
     }
@@ -210,7 +215,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     for (final RunContentDescriptor descriptor : descriptors) {
       final ProcessHandler handler = descriptor.getProcessHandler();
       if (handler != null) {
-        HandlerItem item = new HandlerItem(descriptor.getDisplayName(), descriptor.getIcon(), false) {
+        HandlerItem item = new HandlerItem(getDisplayName(project, descriptor), descriptor.getIcon(), false) {
           @Override
           void stop() {
             ExecutionManagerImpl.stopProcess(descriptor);
@@ -224,6 +229,11 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     }
 
     return Pair.create(items, selected);
+  }
+
+  @BuildEventsNls.Title
+  protected String getDisplayName(final Project project, final RunContentDescriptor descriptor) {
+    return descriptor.getDisplayName();
   }
 
   @Nullable

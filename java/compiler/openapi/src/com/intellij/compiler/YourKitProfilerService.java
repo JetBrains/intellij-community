@@ -7,4 +7,5 @@ import java.nio.file.Path;
 public interface YourKitProfilerService {
   void copyYKLibraries(Path destination) throws IOException;
   String getYKAgentFullName();
+  String getYKAgentFullNameForWSL();
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
@@ -50,9 +50,10 @@ public class LayeredIconPaintTest extends CompositeIconPaintTestHelper {
 
   @Override
   protected String[] getCellIconsPaths() {
+    String platformTestDataPath = PlatformTestUtil.getPlatformTestDataPath();
     return new String[] {
-      PlatformTestUtil.getPlatformTestDataPath() + "ui/db_set_breakpoint.png",
-      PlatformTestUtil.getPlatformTestDataPath() + "ui/question_badge.png"
+      platformTestDataPath + "ui/db_set_breakpoint.png",
+      platformTestDataPath + "ui/question_badge.png"
     };
   }
 }

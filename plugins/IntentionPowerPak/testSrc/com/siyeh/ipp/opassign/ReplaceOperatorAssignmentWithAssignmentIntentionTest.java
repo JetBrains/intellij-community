@@ -16,6 +16,9 @@ public class ReplaceOperatorAssignmentWithAssignmentIntentionTest extends IPPTes
   public void testConditionalAssignment() { doTest(CommonQuickFixBundle.message("fix.replace.x.with.y",  "*=", "=")); }
   public void testIncomplete() { doTest(); }
   public void testCastNecessary() { doTest(); }
+  public void testAssignmentAssign() { doTest(); }
+  public void testAdditionAssignmentAssign() { doTest(); }
+  public void testInstanceofAssign() { doTest(); }
 
   @Override
   protected String getIntentionName() {

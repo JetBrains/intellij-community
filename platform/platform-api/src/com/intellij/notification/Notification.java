@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,7 +190,7 @@ public class Notification {
   }
 
   public boolean hasTitle() {
-    return !StringUtil.isEmptyOrSpaces(myTitle) || !StringUtil.isEmptyOrSpaces(mySubtitle);
+    return !isEmpty(myTitle) || !isEmpty(mySubtitle);
   }
 
   @NotNull
@@ -222,7 +223,12 @@ public class Notification {
   }
 
   public boolean hasContent() {
-    return !StringUtil.isEmptyOrSpaces(myContent);
+    return !isEmpty(myContent);
+  }
+
+  @Contract(value = "null -> true", pure = true)
+  public static boolean isEmpty(@Nullable String text) {
+    return StringUtil.isEmptyOrSpaces(text) || StringUtil.isEmptyOrSpaces(StringUtil.stripHtml(text, false));
   }
 
   @NotNull

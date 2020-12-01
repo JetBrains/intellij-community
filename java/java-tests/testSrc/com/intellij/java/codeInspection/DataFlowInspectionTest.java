@@ -679,9 +679,12 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testProtobufNotNullGetters() { doTest(); }
   public void testAIOOBETransfer() { doTest(); }
   public void testBoxingShortByte() { doTest(); }
+  public void testUnboxingWithConversionCalls() { doTest(); }
   public void testNullableAliasing() { doTest(); }
   public void testReapplyTypeArguments() { doTest(); }
   public void testDoubleArrayDiff() { doTest(); }
   public void testInferenceInPrivateOrLocalClass() { doTest(); }
   public void testArraysCopyOf() { doTest(); }
+  public void testArrayNegativeSize() { doTest(); }
+  public void testPresizedList() { doTest(); }
 }

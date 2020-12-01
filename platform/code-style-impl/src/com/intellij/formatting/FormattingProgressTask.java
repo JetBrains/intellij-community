@@ -21,12 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
-
+public final class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
   public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = ThreadLocal.withInitial(() -> false);
 
   private static final double MAX_PROGRESS_VALUE = 1;

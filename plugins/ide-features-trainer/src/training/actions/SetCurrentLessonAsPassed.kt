@@ -7,9 +7,8 @@ import training.learn.lesson.LessonManager
 
 class SetCurrentLessonAsPassed: AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
     val currentLesson = LessonManager.instance.currentLesson ?: return
-    LessonManager.instance.passLesson(project, currentLesson)
+    LessonManager.instance.passLesson(currentLesson)
   }
 
   override fun update(e: AnActionEvent) {

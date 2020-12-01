@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog.events
 
 import com.google.gson.GsonBuilder
-import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
@@ -16,7 +15,12 @@ import kotlin.system.exitProcess
 object EventsSchemeBuilder {
   data class FieldDescriptor(val path: String, val value: Set<String>)
   data class EventDescriptor(val event: String, val fields: Set<FieldDescriptor>)
-  data class GroupDescriptor(val id: String, val type: String, val version: Int, val schema: Set<EventDescriptor>)
+  data class GroupDescriptor(val id: String,
+                             val type: String,
+                             val version: Int,
+                             val schema: Set<EventDescriptor>,
+                             val className: String)
+  data class EventsScheme(val commitHash: String?, val scheme: List<GroupDescriptor>)
 
   private fun fieldSchema(field: EventField<*>, fieldName: String): Set<FieldDescriptor> {
     if (field == EventFields.PluginInfo || field == EventFields.PluginInfoFromInstance) {
@@ -55,11 +59,12 @@ object EventsSchemeBuilder {
                                   collectors: Collection<FeatureUsagesCollector>): MutableList<GroupDescriptor> {
     val result = mutableListOf<GroupDescriptor>()
     for (collector in collectors) {
+      val collectorClass = if (collector.javaClass.enclosingClass != null) collector.javaClass.enclosingClass else collector.javaClass
       val group = collector.group ?: continue
       val eventsDescriptors = group.events.groupBy { it.eventId }
         .map { (name, events) -> EventDescriptor(name, buildFields(events)) }
         .toHashSet()
-      val groupDescriptor = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors)
+      val groupDescriptor = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name)
       result.add(groupDescriptor)
     }
     return result
@@ -80,8 +85,9 @@ class EventsSchemeBuilderAppStarter : ApplicationStarter {
   override fun main(args: List<String>) {
     val outputFile = args.getOrNull(1)
     val pluginsFile = args.getOrNull(2)
-    val groups = EventsSchemeBuilder.buildEventsScheme()
-    val text = GsonBuilder().setPrettyPrinting().create().toJson(groups)
+    val eventsScheme = EventsSchemeBuilder.EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
+                                                        EventsSchemeBuilder.buildEventsScheme())
+    val text = GsonBuilder().setPrettyPrinting().create().toJson(eventsScheme)
     logEnabledPlugins(pluginsFile)
     if (outputFile != null) {
       FileUtil.writeToFile(File(outputFile), text)

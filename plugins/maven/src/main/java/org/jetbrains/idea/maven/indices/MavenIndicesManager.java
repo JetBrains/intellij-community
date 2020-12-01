@@ -127,7 +127,10 @@ public final class MavenIndicesManager implements Disposable {
 
   private synchronized void doShutdown() {
     if (myDownloadListener != null) {
-      MavenServerManager.getInstance().removeDownloadListener(myDownloadListener);
+      MavenServerManager mavenServerManager = MavenServerManager.getInstanceIfCreated();
+      if (mavenServerManager != null) {
+        mavenServerManager.removeDownloadListener(myDownloadListener);
+      }
       myDownloadListener = null;
     }
 

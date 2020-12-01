@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.project.Project;
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * @author Anton Katilin
@@ -36,19 +37,19 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   private final Project myProject;
   private final Property[] myChildren;
 
-  private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = new NotNullLazyValue<PropertyRenderer<BorderType>>() {
-    @NotNull
-    @Override
-    protected PropertyRenderer<BorderType> compute() {
-      return new LabelPropertyRenderer<BorderType>() {
-        @Override
-        protected void customize(@NotNull final BorderType value) {
-          @NlsSafe String name = value.getName();
-          setText(name);
-        }
-      };
-    }
-  };
+  private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = NotNullLazyValue.lazy(
+    new Supplier<PropertyRenderer<BorderType>>() {
+      @Override
+      public PropertyRenderer<BorderType> get() {
+        return new LabelPropertyRenderer<>() {
+          @Override
+          protected void customize(@NotNull final BorderType value) {
+            @NlsSafe String name = value.getName();
+            setText(name);
+          }
+        };
+      }
+    });
 
   public BorderProperty(final Project project) {
     super(null, NAME);

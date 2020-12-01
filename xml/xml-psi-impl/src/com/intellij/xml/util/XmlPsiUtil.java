@@ -49,11 +49,11 @@ public final class XmlPsiUtil {
                                            final boolean wideFlag,
                                            final PsiFile baseFile,
                                            boolean processIncludes) {
-    return new XmlElementProcessor(processor, baseFile).processXmlElements(element, deepFlag, wideFlag, processIncludes);
+    return new XmlElementProcessor(baseFile, processor).processXmlElements(element, deepFlag, wideFlag, processIncludes);
   }
 
   public static boolean processXmlElementChildren(final XmlElement element, final PsiElementProcessor<? super PsiElement> processor, final boolean deepFlag) {
-    final XmlPsiUtil.XmlElementProcessor p = new XmlPsiUtil.XmlElementProcessor(processor, element.getContainingFile());
+    final XmlPsiUtil.XmlElementProcessor p = new XmlPsiUtil.XmlElementProcessor(element.getContainingFile(), processor);
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (!p.processElement(child, deepFlag, false, true)) return false;
@@ -84,7 +84,7 @@ public final class XmlPsiUtil {
     private final PsiFile targetFile;
     private final Set<String> visitedEntities = new HashSet<>();
 
-    XmlElementProcessor(PsiElementProcessor<? super PsiElement> _processor, PsiFile _targetFile) {
+    XmlElementProcessor(PsiFile _targetFile, @NotNull PsiElementProcessor<? super PsiElement> _processor) {
       processor = _processor;
       targetFile = _targetFile;
     }

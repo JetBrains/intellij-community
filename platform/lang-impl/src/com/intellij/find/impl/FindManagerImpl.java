@@ -899,7 +899,6 @@ public final class FindManagerImpl extends FindManager {
     else {
       buffer.append(toReplace.substring(1));
     }
-    System.out.println(foundString + "/"+toReplace+ "->" + buffer.toString());
     return buffer.toString();
   }
 

@@ -9,7 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -56,7 +56,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.AtomicNotNullLazyValue.createValue;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.SystemProperties.getUserHome;
@@ -70,14 +69,16 @@ public final class SvnUtil {
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
 
-  public static final AtomicNotNullLazyValue<Path> USER_CONFIGURATION_PATH = createValue(
-    () -> SystemInfo.isWindows
-          ? Paths.get(Objects.requireNonNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
-          : Paths.get(getUserHome(), ".subversion"));
-  public static final AtomicNotNullLazyValue<Path> SYSTEM_CONFIGURATION_PATH = createValue(
-    () -> SystemInfo.isWindows
-          ? Paths.get(Objects.requireNonNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
-          : Paths.get("/etc/subversion"));
+  public static final NotNullLazyValue<Path> USER_CONFIGURATION_PATH = NotNullLazyValue.atomicLazy(() -> {
+    return SystemInfo.isWindows
+           ? Paths.get(Objects.requireNonNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
+           : Paths.get(getUserHome(), ".subversion");
+  });
+  public static final NotNullLazyValue<Path> SYSTEM_CONFIGURATION_PATH = NotNullLazyValue.atomicLazy(() -> {
+    return SystemInfo.isWindows
+           ? Paths.get(Objects.requireNonNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
+           : Paths.get("/etc/subversion");
+  });
 
   private static final Logger LOG = Logger.getInstance(SvnUtil.class);
 

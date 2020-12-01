@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.externalDependencies.DependencyOnPlugin;
-import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
@@ -35,7 +33,9 @@ public class InstalledPluginsTableModel {
 
   public InstalledPluginsTableModel(@Nullable Project project) {
     myProject = project;
-    myPluginTracker = ProjectPluginTrackerManager.createPluginTrackerOrNull(myProject);
+    myPluginTracker = myProject == null ?
+                      null :
+                      ProjectPluginTrackerManager.getInstance().createPluginTracker(myProject);
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
@@ -70,15 +70,6 @@ public class InstalledPluginsTableModel {
   @Nullable
   public Set<PluginId> getRequiredPlugins(PluginId pluginId) {
     return myDependentToRequiredListMap.get(pluginId);
-  }
-
-  public boolean isRequiredPlugin(@NotNull IdeaPluginDescriptor descriptor) {
-    return myProject != null &&
-           ExternalDependenciesManager.getInstance(myProject)
-             .getDependencies(DependencyOnPlugin.class)
-             .stream()
-             .map(DependencyOnPlugin::getPluginId)
-             .anyMatch(descriptor.getPluginId().getIdString()::equals);
   }
 
   public final boolean isLoaded(@NotNull PluginId pluginId) {
@@ -162,25 +153,27 @@ public class InstalledPluginsTableModel {
   }
 
   protected final void enableRows(@NotNull Set<? extends IdeaPluginDescriptor> ideaPluginDescriptors,
-                                  @NotNull PluginEnabledState newState) {
+                                  @NotNull PluginEnableDisableAction action) {
     Map<PluginId, PluginEnabledState> tempEnabled = new HashMap<>(myEnabled);
+
     setNewEnabled(
       ideaPluginDescriptors,
       tempEnabled,
-      newState,
-      (d, s) -> {
+      action,
+      (descriptor, pair) -> {
       }
     );
 
+    boolean enabled = action.isEnable();
     Set<Pair<@Nullable ? extends IdeaPluginDescriptor, @NotNull String>> dependencies = getDependenciesToUpdateState(
       ideaPluginDescriptors,
       tempEnabled,
-      newState
+      enabled
     );
 
     if (!dependencies.isEmpty() &&
         !createUpdateDependenciesDialog(
-          newState.isEnabled(),
+          enabled,
           ideaPluginDescriptors.size(),
           ContainerUtil.map(dependencies, pair -> pair.getSecond())
         ).ask(getProject())) {
@@ -189,37 +182,40 @@ public class InstalledPluginsTableModel {
 
     setNewEnabled(
       ContainerUtil.mapNotNull(dependencies, pair -> pair.getFirst()),
-      newState
+      action
     );
     setNewEnabled(
       ideaPluginDescriptors,
-      newState
+      action
     );
     updatePluginDependencies();
   }
 
   private void setNewEnabled(@NotNull Collection<@NotNull ? extends IdeaPluginDescriptor> dependencies,
-                             @NotNull PluginEnabledState newState) {
+                             @NotNull PluginEnableDisableAction action) {
     setNewEnabled(
       dependencies,
       myEnabled,
-      newState,
+      action,
       this::handleBeforeChangeEnableState
     );
   }
 
   private static void setNewEnabled(@NotNull Collection<@NotNull ? extends IdeaPluginDescriptor> descriptors,
                                     @NotNull Map<PluginId, PluginEnabledState> enabledMap,
-                                    @NotNull PluginEnabledState newState,
-                                    @NotNull BiConsumer<@NotNull ? super IdeaPluginDescriptor, @NotNull PluginEnabledState> beforeHandler) {
+                                    @NotNull PluginEnableDisableAction action,
+                                    @NotNull BiConsumer<@NotNull ? super IdeaPluginDescriptor, @NotNull Pair<PluginEnableDisableAction, PluginEnabledState>> beforeHandler) {
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      beforeHandler.accept(descriptor, newState);
-
       PluginId pluginId = descriptor.getPluginId();
-      enabledMap.put(
-        pluginId,
-        isLoaded(pluginId, enabledMap) ? newState : PluginEnabledState.DISABLED
-      );
+      PluginEnabledState oldState = enabledMap.get(pluginId);
+
+      PluginEnabledState newState = oldState == null ?
+                                    null :
+                                    action.apply(oldState);
+      if (newState != null) {
+        beforeHandler.accept(descriptor, Pair.create(action, newState));
+        enabledMap.put(pluginId, newState);
+      }
     }
   }
 
@@ -238,9 +234,7 @@ public class InstalledPluginsTableModel {
   // todo to be defined static
   private @NotNull Set<@NotNull Pair<@Nullable ? extends IdeaPluginDescriptor, @NotNull String>> getDependenciesToUpdateState(@NotNull Set<? extends IdeaPluginDescriptor> descriptorsWithChangedEnabledState,
                                                                                                                               @NotNull Map<PluginId, PluginEnabledState> enabledMap,
-                                                                                                                              @NotNull PluginEnabledState newState) {
-    boolean enabled = newState.isEnabled();
-
+                                                                                                                              boolean enabled) {
     List<IdeaPluginDescriptor> descriptorsToCheckDependencies =
       new ArrayList<>(enabled ? descriptorsWithChangedEnabledState : getAllPlugins());
     if (!enabled) {
@@ -297,32 +291,39 @@ public class InstalledPluginsTableModel {
                                                                                int updatedDescriptorsCount,
                                                                                @NotNull List<String> dependencies) {
 
-    return MessageDialogBuilder.okCancel(
-      IdeBundle.message(enabled ? "dialog.title.enable.required.plugins" : "dialog.title.disable.dependent.plugins"),
-      IdeBundle.message(
+    String message;
+    if (updatedDescriptorsCount == 1 && dependencies.size() == 1) {
+      message = IdeBundle.message(enabled ? "dialog.message.enable.required.plugin" : "dialog.message.disable.dependent.plugin",
+                                  dependencies.get(0));
+    }
+    else {
+      message = IdeBundle.message(
         enabled ? "dialog.message.enable.required.plugins" : "dialog.message.disable.dependent.plugins",
         enabled ? updatedDescriptorsCount : dependencies.size(),
         enabled ? dependencies.size() : updatedDescriptorsCount,
         StringUtil.join(dependencies, id -> "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + id, "<br>")
-      )
+      );
+    }
+    return MessageDialogBuilder.okCancel(
+      IdeBundle.message(enabled ? "dialog.title.enable.required.plugins" : "dialog.title.disable.dependent.plugins"), message
     ).yesText(IdeBundle.message(enabled ? "button.enable" : "button.disable"))
       .noText(Messages.getCancelButton());
   }
 
   protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor,
-                                               @NotNull PluginEnabledState newState) {
+                                               @NotNull Pair<PluginEnableDisableAction, PluginEnabledState> pair) {
   }
 
   protected static boolean isEnabled(@NotNull PluginId pluginId,
                                      @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
-    PluginEnabledState enabled = enabledMap.get(pluginId);
-    return enabled == null || enabled.isEnabled();
+    PluginEnabledState state = enabledMap.get(pluginId);
+    return state == null || state.isEnabled();
   }
 
   protected static boolean isDisabled(@NotNull PluginId pluginId,
                                       @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
-    PluginEnabledState enabled = enabledMap.get(pluginId);
-    return enabled == null || !enabled.isEnabled();
+    PluginEnabledState state = enabledMap.get(pluginId);
+    return state == null || state.isDisabled();
   }
 
   protected static boolean isLoaded(@NotNull PluginId pluginId,

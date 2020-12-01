@@ -37,7 +37,16 @@ public class Runner {
   public static void main(String[] args) {
     initLogger();
     try {
-      _main(args);
+      List<String> effectiveArgs = new ArrayList<>();
+      for (String arg : args) {
+        if (arg.startsWith("@")) {
+          effectiveArgs.addAll(Files.readAllLines(Paths.get(arg.substring(1))));
+        }
+        else {
+          effectiveArgs.add(arg);
+        }
+      }
+      _main(effectiveArgs.toArray(new String[0]));
     }
     catch (Throwable t) {
       logger().error("internal error", t);
@@ -98,6 +107,7 @@ public class Runner {
       }
 
       List<String> ignoredFiles = extractArguments(args, "ignored");
+      List<String> strictFiles = extractArguments(args, "strictfiles");
       List<String> criticalFiles = extractArguments(args, "critical");
       List<String> optionalFiles = extractArguments(args, "optional");
       List<String> deleteFiles = extractArguments(args, "delete");
@@ -116,6 +126,7 @@ public class Runner {
         .setNormalized(normalized)
         .setIgnoredFiles(ignoredFiles)
         .setCriticalFiles(criticalFiles)
+        .setStrictFiles(strictFiles)
         .setOptionalFiles(optionalFiles)
         .setDeleteFiles(deleteFiles)
         .setWarnings(warnings);
@@ -234,6 +245,7 @@ public class Runner {
       "  <file_set>: Can be one of:\n" +
       "    ignored: The set of files that will not be included in the patch.\n" +
       "    critical: Fully included in the patch, so they can be replaced at the destination even if they have changed.\n" +
+      "    strictfiles: A set of files for which conflicts can't be ignored (a mismatch forbids patch installation).\n" +
       "    optional: A set of files that is okay for them not to exist when applying the patch.\n" +
       "    delete: A set of regular expressions for paths that is safe to delete without user confirmation.\n" +
       "  <flags>: Can be:\n" +

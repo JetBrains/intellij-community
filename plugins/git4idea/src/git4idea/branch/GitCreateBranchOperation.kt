@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
+import git4idea.GitNotificationIdsHolder.Companion.BRANCH_CREATE_ROLLBACK_ERROR
+import git4idea.GitNotificationIdsHolder.Companion.BRANCH_CREATE_ROLLBACK_SUCCESS
 import git4idea.commands.Git
 import git4idea.commands.GitCompoundResult
 import git4idea.i18n.GitBundle
@@ -67,12 +69,12 @@ internal class GitCreateBranchOperation(
 
     val vcsNotifier = VcsNotifier.getInstance(myProject)
     if (deleteResult.totalSuccess()) {
-      vcsNotifier.notifySuccess("git.created.branch.rollback.successful",
+      vcsNotifier.notifySuccess(BRANCH_CREATE_ROLLBACK_SUCCESS,
                                 GitBundle.message("create.branch.operation.rollback.successful"),
                                 GitBundle.message("create.branch.operation.deleted.branch", branchName))
     }
     else {
-      vcsNotifier.notifyError("git.created.branch.rollback.error",
+      vcsNotifier.notifyError(BRANCH_CREATE_ROLLBACK_ERROR,
                               GitBundle.message("create.branch.operation.error.during.rollback"),
                               deleteResult.errorOutputWithReposIndication,
                               true)

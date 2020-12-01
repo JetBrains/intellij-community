@@ -17,7 +17,10 @@ package com.intellij.testFramework.codeInsight.hierarchy;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import groovy.lang.GroovyObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -27,6 +30,15 @@ import java.io.IOException;
  * Checks tree structure for Type Hierarchy (Ctrl+H), Call Hierarchy (Ctrl+Alt+H), Method Hierarchy (Ctrl+Shift+H).
  */
 public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    // BundledGroovyClassFinder tries to load this jar
+    String groovyJar = PathManager.getJarPathForClass(GroovyObject.class);
+    if (groovyJar != null) {
+      VfsRootAccess.allowRootAccess(getTestRootDisposable(), groovyJar);
+    }
+  }
 
   protected abstract String getBasePath();
 

@@ -67,11 +67,12 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
     val distributions = enumerateWslDistributions()
     assumeTrue("No WSL distributions found", distributions.isNotEmpty())
 
+    wsl = distributions[0]
+    assumeTrue("WSL distribution ${wsl} doesn't seem to be alive", reanimateWslDistribution(wsl))
+
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
-    wsl = distributions[0]
     tempDir = Files.createTempDirectory(Paths.get("\\\\wsl$\\${wsl}\\tmp"), "${UsefulTestCase.TEMP_DIR_MARKER}${getTestName(false)}_")
-
     fs = LocalFileSystem.getInstance()
     vfsTempDir = refresh(tempDir.toFile())
 

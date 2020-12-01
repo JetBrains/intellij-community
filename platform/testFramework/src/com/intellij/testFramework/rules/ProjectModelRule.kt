@@ -63,11 +63,11 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
       projectRootDir = baseProjectDir.root.toPath()
       if (forceEnableWorkspaceModel) {
         WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
-          project = PlatformTestUtil.loadAndOpenProject(projectRootDir)
+          project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
         }
       }
       else {
-        project = PlatformTestUtil.loadAndOpenProject(projectRootDir)
+        project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
       }
       filePointerTracker = VirtualFilePointerTracker()
     }

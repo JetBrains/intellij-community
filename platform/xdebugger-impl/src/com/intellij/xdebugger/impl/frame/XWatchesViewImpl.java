@@ -282,6 +282,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void removeInlineWatches(Collection<InlineWatch> watches) {
     InlineWatchesRootNode rootNode = (InlineWatchesRootNode)myRootNode;
+    @SuppressWarnings("unchecked")
     List<? extends XDebuggerTreeNode> nodesToRemove =
       (List<? extends XDebuggerTreeNode>)ContainerUtil.filter(rootNode.getInlineWatchChildren(), node -> watches.contains(node.getWatch()));
 
@@ -388,6 +389,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void removeAllWatches() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (inlineWatchesEnabled) {
+      List<? extends InlineWatchNode> children = ((InlineWatchesRootNode)myRootNode).getInlineWatchChildren();
+      if (!children.isEmpty()) {
+        //noinspection unchecked
+        removeInlineNodes((List<? extends XDebuggerTreeNode>)children, true);
+      }
+    }
     myRootNode.removeAllChildren();
     updateSessionData();
   }

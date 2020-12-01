@@ -14,8 +14,7 @@ import com.intellij.util.indexing.IndexingBundle
 class LibraryIndexableFilesIterator(val library: Library) : IndexableFilesIterator {
   override fun getDebugName() = "Library ${library.presentableName}"
 
-  override fun getIndexingProgressText(): String? =
-    IndexingBundle.message("indexable.files.provider.indexing.library.name", library.presentableName)
+  override fun getIndexingProgressText(): String = IndexingBundle.message("indexable.files.provider.indexing.library.name", library.presentableName)
 
   override fun getRootsScanningProgressText(): String {
     val libraryName = library.name

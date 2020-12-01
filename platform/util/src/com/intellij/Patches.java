@@ -30,17 +30,6 @@ public final class Patches {
   public static final boolean SUN_BUG_ID_6486393 = SystemInfoRt.isXWindow;
 
   /**
-   * Enable a workaround for JDK bug with leaking TargetVM.EventController, see IDEA-163334
-   */
-  public static final boolean JDK_BUG_EVENT_CONTROLLER_LEAK = !SystemInfo.isJetBrainsJvm;
-
-  /**
-   * NPE from com.sun.jdi.ReferenceType#constantPool()
-   * See <a href="https://bugs.openjdk.java.net/browse/JDK-6822627">JDK-6822627</a>
-   */
-  public static final boolean JDK_BUG_ID_6822627 = !SystemInfo.isJetBrainsJvm;
-
-  /**
    * Debugger hangs in trace mode with TRACE_SEND when method argument is a {@link com.sun.jdi.StringReference}
    */
   public static final boolean JDK_BUG_ID_21275177 = true;

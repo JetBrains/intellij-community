@@ -6,15 +6,11 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -22,8 +18,7 @@ import java.util.function.Function;
  *
  * @see NestingTreeStructureProvider
  */
-public class FileNestingBuilder {
-
+public final class FileNestingBuilder {
   public static FileNestingBuilder getInstance() {
     return ApplicationManager.getApplication().getService(FileNestingBuilder.class);
   }
@@ -109,9 +104,9 @@ public class FileNestingBuilder {
         if (!matchesChild && !matchesParent) continue;
 
         if (baseNameAndRuleToEdge == null) {
-          baseNameAndRuleToEdge = new THashMap<>();
+          baseNameAndRuleToEdge = new HashMap<>();
           parentToChildren = new MultiMap<>();
-          allChildNodes = new THashSet<>();
+          allChildNodes = new HashSet<>();
         }
 
         if (matchesParent) {

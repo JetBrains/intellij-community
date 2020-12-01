@@ -204,6 +204,16 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return false;
   }
 
+  /**
+   * This method is intended to separate the sorting of folders and files and
+   * to simplify implementing the {@link #getSortKey} and {@link #getTypeSortKey} methods.
+   *
+   * @return the top-level groups for sorting the tree nodes
+   */
+  public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+    return settings.isManualOrder() ? NodeSortOrder.MANUAL : NodeSortOrder.UNSPECIFIED;
+  }
+
   public int getTypeSortWeight(boolean sortByType) {
     return 0;
   }

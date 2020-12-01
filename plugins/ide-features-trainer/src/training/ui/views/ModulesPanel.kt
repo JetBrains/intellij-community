@@ -1,11 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.views
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.actionSystem.ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.guessCurrentProject
@@ -22,12 +18,9 @@ import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.interfaces.Module
-import training.ui.LearnToolWindow
 import training.ui.UISettings
 import training.util.DataLoader
-import training.util.createAnAction
 import training.util.createBalloon
-import training.util.useNewLearningUi
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
@@ -38,9 +31,9 @@ import javax.swing.text.BadLocationException
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
-class ModulesPanel(private val learnToolWindow: LearnToolWindow?) : JPanel() {
+class ModulesPanel : JPanel() {
 
-  private val modulesPanel: JPanel = if (useNewLearningUi) LearningItems() else JPanel()
+  private val modulesPanel: JPanel = LearningItems()
 
   private val module2linklabel = BidirectionalMap<Module, LinkLabel<Any>>()
 
@@ -53,9 +46,6 @@ class ModulesPanel(private val learnToolWindow: LearnToolWindow?) : JPanel() {
     //Obligatory block
     setupFontStyles()
     initModulesPanel()
-    if (!useNewLearningUi) {
-      add(createSettingsButtonPanel())
-    }
     add(modulesPanel)
     add(Box.createVerticalGlue())
 
@@ -160,39 +150,10 @@ class ModulesPanel(private val learnToolWindow: LearnToolWindow?) : JPanel() {
                                LOG.warn(e)
                              }
                            }, null)
-    moduleName.font = UISettings.instance.moduleNameFont
+    moduleName.font = UISettings.instance.modulesFont
     moduleName.alignmentY = Component.BOTTOM_ALIGNMENT
     moduleName.alignmentX = Component.LEFT_ALIGNMENT
     return moduleName
-  }
-
-  private fun createSettingsButtonPanel(): JPanel {
-    val settingsAction = createAnAction(AllIcons.General.Settings) { learnToolWindow?.setChooseLanguageView() }
-    val settingsButton = ActionButton(settingsAction,
-                                      Presentation(LearnBundle.message("deprecated.action.settings.text")).apply {
-                                        icon = AllIcons.Nodes.Editorconfig
-                                        isEnabled = true
-                                      },
-                                      "learn.tool.window.module", NAVBAR_MINIMUM_BUTTON_SIZE)
-      .apply {
-        minimumSize = NAVBAR_MINIMUM_BUTTON_SIZE
-        preferredSize = NAVBAR_MINIMUM_BUTTON_SIZE
-        maximumSize = NAVBAR_MINIMUM_BUTTON_SIZE
-        alignmentX = Component.RIGHT_ALIGNMENT
-        isOpaque = false
-        isEnabled = true
-      }
-
-    return JPanel().apply {
-      name = "settingsButtonPanel"
-      isFocusable = false
-      alignmentX = Component.LEFT_ALIGNMENT
-      border = UISettings.instance.smallEastBorder
-      isOpaque = false
-      layout = BoxLayout(this, BoxLayout.X_AXIS)
-      add(Box.createHorizontalGlue())
-      add(settingsButton)
-    }
   }
 
   private fun delegateToLinkLabel(descriptionPane: ModuleDescriptionPane, moduleName: LinkLabel<*>): MouseListener {

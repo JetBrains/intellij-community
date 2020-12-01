@@ -19,6 +19,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -140,6 +142,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @NotNull
   private final InputFilter myInputMessageFilter;
+  private volatile List<Filter> myPredefinedFilters = Collections.emptyList();
 
   public ConsoleViewImpl(@NotNull Project project, boolean viewer) {
     this(project, GlobalSearchScope.allScope(project), viewer, true);
@@ -222,6 +225,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
     });
+    if (myUsePredefinedMessageFilter) {
+      updatePredefinedFilters();
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          updatePredefinedFilters();
+        }
+
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          updatePredefinedFilters();
+        }
+      });
+    }
+  }
+
+  private void updatePredefinedFilters() {
+    myPredefinedFilters = ConsoleViewUtil.computeConsoleFilters(myProject, this, mySearchScope);
   }
 
   private static synchronized void initTypedHandler() {
@@ -398,12 +420,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @NotNull
   protected CompositeFilter createCompositeFilter() {
-    List<Filter> predefinedFilters = myUsePredefinedMessageFilter ?
-                                       ConsoleViewUtil.computeConsoleFilters(myProject, this, mySearchScope) :
-                                       Collections.emptyList();
     CompositeFilter compositeFilter = new CompositeFilter(myProject, myCustomFilters);
     compositeFilter.setForceUseAllFilters(true);
-    predefinedFilters.forEach(compositeFilter::addFilter);
+    myPredefinedFilters.forEach(compositeFilter::addFilter);
     return compositeFilter;
   }
 

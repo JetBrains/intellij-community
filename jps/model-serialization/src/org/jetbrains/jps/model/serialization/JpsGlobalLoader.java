@@ -38,6 +38,9 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
   }
 
   public static void loadGlobalSettings(JpsGlobal global, String optionsPath) throws IOException {
+    if (System.getProperty("jps.in.wsl") != null) {
+      global.setPathMapper(new JpsWslPathMapper());
+    }
     Path optionsDir = Paths.get(FileUtil.toCanonicalPath(optionsPath));
     Map<String, String> pathVariables = loadPathVariables(global, optionsDir);
     new JpsGlobalLoader(global, pathVariables).load(optionsDir);
@@ -110,7 +113,7 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
 
     @Override
     public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      JpsLibraryTableSerializer.loadLibraries(componentTag, global.getLibraryCollection());
+      JpsLibraryTableSerializer.loadLibraries(componentTag, global.getPathMapper(), global.getLibraryCollection());
     }
   }
 
@@ -121,7 +124,7 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
 
     @Override
     public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      JpsSdkTableSerializer.loadSdks(componentTag, global.getLibraryCollection());
+      JpsSdkTableSerializer.loadSdks(componentTag, global.getLibraryCollection(), global.getPathMapper());
     }
   }
 

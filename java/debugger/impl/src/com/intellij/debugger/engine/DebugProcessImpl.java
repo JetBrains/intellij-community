@@ -57,6 +57,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -111,7 +112,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
 
   private volatile ExecutionResult myExecutionResult;
-  private RemoteConnection myConnection;
+  private volatile RemoteConnection myConnection;
   private JavaDebugProcess myXDebugProcess;
 
   private volatile Map<String, Connector.Argument> myArguments;
@@ -123,7 +124,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = CompoundPositionManager.EMPTY;
-  private final DebuggerManagerThreadImpl myDebuggerManagerThread;
+  private volatile @NotNull DebuggerManagerThreadImpl myDebuggerManagerThread;
 
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
@@ -750,6 +751,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myEvaluationDispatcher.removeListener(evaluationListener);
   }
 
+
+  @Override
+  public void addDebugProcessListener(DebugProcessListener listener, Disposable parentDisposable) {
+    myDebugProcessDispatcher.addListener(listener, parentDisposable);
+  }
+
   @Override
   public void addDebugProcessListener(DebugProcessListener listener) {
     myDebugProcessDispatcher.addListener(listener);
@@ -902,16 +909,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private void detachProcess(boolean closedByUser, Consumer<@Nullable VirtualMachineData> callback) {
+  private void detachProcess(boolean closedByUser, boolean keepManagerThread, Consumer<@Nullable VirtualMachineData> callback) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     if (myState.compareAndSet(State.INITIAL, State.DETACHING) || myState.compareAndSet(State.ATTACHED, State.DETACHING)) {
       try {
-        getManagerThread().close();
+        if (!keepManagerThread) {
+          getManagerThread().close();
+        }
       }
       finally {
         if (!(myConnection instanceof RemoteConnectionStub)) {
-          VirtualMachineData vmData = new VirtualMachineData(myVirtualMachineProxy, myConnection);
+          VirtualMachineData vmData = new VirtualMachineData(myVirtualMachineProxy, myConnection, myDebuggerManagerThread);
           myVirtualMachineProxy = null;
           myPositionManager = CompoundPositionManager.EMPTY;
           myReturnValueWatcher = null;
@@ -931,7 +940,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   protected void closeProcess(boolean closedByUser) {
-    detachProcess(closedByUser, vmData -> {
+    detachProcess(closedByUser, false, vmData -> {
       //if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
       //  XDebugSession session = mySession.getXDebugSession();
       //  if (session != null) {
@@ -1035,8 +1044,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public DebuggerManagerThreadImpl getManagerThread() {
+  public @NotNull DebuggerManagerThreadImpl getManagerThread() {
     return myDebuggerManagerThread;
+  }
+
+  public boolean isCurrentVirtualMachine(@NotNull VirtualMachineProxyImpl vmProxy) {
+    VirtualMachine vm = ObjectUtils.doIfNotNull(myVirtualMachineProxy, it -> it.getVirtualMachine());
+    return vmProxy.getVirtualMachine() == vm;
   }
 
   private static int getInvokePolicy(SuspendContext suspendContext) {
@@ -2030,8 +2044,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public void reattach(final DebugEnvironment environment, boolean keepCurrentVM, Runnable vmReadyCallback) {
     reattach(environment, () -> {
       if (keepCurrentVM) {
-        detachProcess(false, vmData -> {
+        detachProcess(false, true, vmData -> {
           myStashedVirtualMachines.addFirst(vmData);
+          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
         });
       } else {
         closeProcess(false);
@@ -2042,6 +2057,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private void unstashAndReattach() {
     VirtualMachineData vmData = myStashedVirtualMachines.pollFirst();
     if (vmData != null && vmData.vm != null) {
+      myDebuggerManagerThread = vmData.debuggerManagerThread;
       reattach(vmData.connection, () -> {}, () -> {
         afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
@@ -2449,10 +2465,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private static class VirtualMachineData {
     public final VirtualMachineProxyImpl vm;
     public final RemoteConnection connection;
+    public final DebuggerManagerThreadImpl debuggerManagerThread;
 
-    private VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection) {
+    private VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection, DebuggerManagerThreadImpl debuggerManagerThread) {
       this.vm = vm;
       this.connection = connection;
+      this.debuggerManagerThread = debuggerManagerThread;
     }
   }
 }

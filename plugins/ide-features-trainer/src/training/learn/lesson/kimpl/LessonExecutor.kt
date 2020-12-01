@@ -21,21 +21,23 @@ import training.learn.ActionsRecorder
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
 import training.ui.LearnToolWindowFactory
-import training.util.useNewLearningUi
+import training.util.WeakReferenceDelegator
 import java.awt.Component
 import kotlin.math.max
 
-class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
+class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?) : Disposable {
   private data class TaskInfo(val content: () -> Unit,
                               var restoreIndex: Int,
-                              var messagesNumber: Int,
+                              var taskProperties: TaskProperties?,
                               val taskContent: (TaskContext.() -> Unit)?,
                               var messagesNumberBeforeStart: Int = 0,
                               var rehighlightComponent: (() -> Component)? = null,
                               var userVisibleInfo: PreviousTaskInfo? = null)
 
+  private val predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
+
   private val selectedEditor
-    get() = FileEditorManager.getInstance(project).selectedTextEditor
+    get() = FileEditorManager.getInstance(project).selectedTextEditor ?: predefinedEditor?.takeIf { !it.isDisposed }
 
   val editor: Editor
     get() = selectedEditor ?: throw NoTextEditor()
@@ -63,9 +65,9 @@ class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
     Disposer.register(parentDisposable, this)
   }
 
-  private fun addTaskAction(messagesNumber: Int = 0, taskContent: (TaskContext.() -> Unit)? = null, content: () -> Unit) {
+  private fun addTaskAction(taskProperties: TaskProperties? = null, taskContent: (TaskContext.() -> Unit)? = null, content: () -> Unit) {
     val previousIndex = max(taskActions.size - 1, 0)
-    taskActions.add(TaskInfo(content, previousIndex, messagesNumber, taskContent))
+    taskActions.add(TaskInfo(content, previousIndex, taskProperties, taskContent))
   }
 
   fun getUserVisibleInfo(index: Int): PreviousTaskInfo {
@@ -87,13 +89,11 @@ class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
     val taskProperties = LessonExecutorUtil.taskProperties(taskContent, project)
-    addTaskAction(taskProperties.messagesNumber, taskContent) {
-      if (useNewLearningUi) {
-        val taskInfo = taskActions[currentTaskIndex]
-        taskInfo.messagesNumber.takeIf { it != 0 }?.let {
-          LessonManager.instance.removeInactiveMessages(it)
-          taskInfo.messagesNumber = 0 // Here could be runtime messages
-        }
+    addTaskAction(taskProperties, taskContent) {
+      val taskInfo = taskActions[currentTaskIndex]
+      taskInfo.taskProperties?.messagesNumber?.let {
+        LessonManager.instance.removeInactiveMessages(it)
+        taskInfo.taskProperties?.messagesNumber = 0 // Here could be runtime messages
       }
       processTask(taskContent)
     }
@@ -123,7 +123,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
     get() = FileDocumentManager.getInstance().getFile(editor.document) ?: error("No Virtual File")
 
   fun startLesson() {
-    if (useNewLearningUi) addAllInactiveMessages()
+    addAllInactiveMessages()
     processNextTask(0)
   }
 
@@ -141,7 +141,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
     LessonManager.instance.clearRestoreMessage()
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (currentTaskIndex == taskActions.size) {
-      LessonManager.instance.passLesson(project, lesson)
+      LessonManager.instance.passLesson(lesson)
       disposeRecorders()
       return
     }
@@ -282,8 +282,15 @@ class LessonExecutor(val lesson: KLesson, val project: Project) : Disposable {
 
   fun text(@Language("HTML") text: String) {
     val taskInfo = taskActions[currentTaskIndex]
-    taskInfo.messagesNumber++ // Here could be runtime messages
-    LessonManager.instance.addMessage(text)
+    taskInfo.taskProperties?.let { it.messagesNumber++ } // Here could be runtime messages
+    var hasDetection = false
+    for (i in currentTaskIndex until taskActions.size) {
+      if (taskInfo.taskProperties?.hasDetection == true) {
+        hasDetection = true
+        break
+      }
+    }
+    LessonManager.instance.addMessage(text, !hasDetection)
   }
 
   private fun addAllInactiveMessages() {

@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,12 +37,11 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -67,19 +66,15 @@ import java.util.stream.Collectors;
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
   private final Map<RefEntity, UnusedDeclarationHint> myFixedElements =
     ConcurrentCollectionFactory.createConcurrentIdentityMap();
-  private final Set<RefEntity> myExcludedElements = ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy());
+  private final Set<RefEntity> myExcludedElements = ConcurrentCollectionFactory.createConcurrentIdentitySet();
 
   private final WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
-  private final AtomicNotNullLazyValue<InspectionToolWrapper> myDummyWrapper = new AtomicNotNullLazyValue<>() {
-    @NotNull
-    @Override
-    protected InspectionToolWrapper compute() {
-      InspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
-      toolWrapper.initialize(myContext);
-      return toolWrapper;
-    }
-  };
+  private final NotNullLazyValue<InspectionToolWrapper> myDummyWrapper = NotNullLazyValue.atomicLazy(() -> {
+    InspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
+    toolWrapper.initialize(myContext);
+    return toolWrapper;
+  });
 
   @NonNls private static final String DELETE = "delete";
   @NonNls private static final String COMMENT = "comment";
@@ -673,14 +668,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+    protected void visitProblemSeverities(@NotNull Object2IntOpenHashMap<HighlightDisplayLevel> counter) {
       if (!isExcluded() && isLeaf() && !getPresentation().isProblemResolved(getElement()) && !getPresentation()
         .isSuppressed(getElement())) {
         HighlightSeverity severity = InspectionToolResultExporter.getSeverity(getElement(), null, getPresentation());
         HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
-        if (!counter.adjustValue(level, 1)) {
-          counter.put(level, 1);
-        }
+        counter.addTo(level, 1);
         return;
       }
       super.visitProblemSeverities(counter);

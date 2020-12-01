@@ -3,6 +3,7 @@ package org.jetbrains.plugins.emojipicker.ui;
 
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.plugins.emojipicker.EmojiCategory;
@@ -27,6 +28,7 @@ class EmojiCategoryPanel extends JPanel {
     gbc.gridy = 0;
     gbc.insets = JBUI.insets(0, 4);
     setLayout(new GridBagLayout());
+    final JBDimension buttonSize = new JBDimension(30, 30);
     for (EmojiCategory category : categories) {
       @Nls String name = EmojiCategoriesBundle.findNameForCategory(category);
       InplaceButton button = new InplaceButton(name, category.getIcon(), e -> emojiPicker.selectCategory(category, true)) {
@@ -34,9 +36,10 @@ class EmojiCategoryPanel extends JPanel {
         protected void paintComponent(Graphics g) {
           super.paintComponent(g);
           if (emojiPicker.getCurrentFocusTarget() == category) {
+            buttonSize.update();
             int x = getWidth() / 2, y = getHeight() / 2;
             g.setColor(myStyle.myFocusBorderColor);
-            g.drawRoundRect(x - 15, y - 15, 30, 30, 4, 4);
+            g.drawRoundRect(x - buttonSize.width / 2, y - buttonSize.height / 2, buttonSize.width, buttonSize.height, 4, 4);
           }
           if (myActiveCategory == category) {
             g.setColor(myStyle.mySelectedCategoryColor);
@@ -44,7 +47,7 @@ class EmojiCategoryPanel extends JPanel {
           }
         }
       };
-      button.setPreferredSize(new Dimension(30, 30));
+      button.setPreferredSize(buttonSize);
       add(button, gbc);
     }
   }

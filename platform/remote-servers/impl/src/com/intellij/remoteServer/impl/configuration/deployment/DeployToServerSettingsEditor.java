@@ -79,6 +79,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
       myDeploymentSettingsComponent.removeAll();
       myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selectedSource, selectedServer);
       if (myDeploymentSettingsEditor != null) {
+        myDeploymentSettingsEditor.addSettingsEditorListener(e -> fireEditorStateChanged());
         Disposer.register(this, myDeploymentSettingsEditor);
         myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
       }

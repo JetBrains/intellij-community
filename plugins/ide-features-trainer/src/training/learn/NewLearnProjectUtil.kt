@@ -2,22 +2,28 @@
 package training.learn
 
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.util.TipDialog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.SystemDependent
+import training.actions.OpenLessonAction
 import training.lang.LangSupport
 import training.learn.exceptons.NoSdkException
 import training.project.ProjectUtils
 
 object NewLearnProjectUtil {
+  private val LOG = logger<NewLearnProjectUtil>()
 
   fun createLearnProject(projectToClose: Project?, langSupport: LangSupport, postInitCallback: (learnProject: Project) -> Unit) {
     val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
 
     ProjectUtils.importOrOpenProject(langSupport, projectToClose) { newProject ->
+      TipDialog.DISABLE_TIPS_FOR_PROJECT.set(newProject, true)
       try {
         val sdkForProject = langSupport.getSdkForProject(newProject)
         if (sdkForProject != null) {
@@ -25,7 +31,7 @@ object NewLearnProjectUtil {
         }
       }
       catch (e: NoSdkException) {
-        Messages.showMessageDialog(newProject, e.localizedMessage, LearnBundle.message("dialog.noSdk.title"), Messages.getErrorIcon())
+        LOG.error(e)
       }
 
       if (!unitTestMode) newProject.save()

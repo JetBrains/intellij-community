@@ -94,10 +94,15 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
   override fun shutdown() {}
 
   private inner class Volume(override val localRoot: Path, override val targetRoot: String) : UploadableVolume {
+
     @Throws(IOException::class)
-    override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator): String {
+    override fun resolveTargetPath(relativePath: String): String {
       val localPath = FileUtil.toCanonicalPath(FileUtil.join(localRoot.toString(), relativePath))
       return toLinuxPath(localPath)!!
+    }
+
+    @Throws(IOException::class)
+    override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator) {
     }
   }
 }

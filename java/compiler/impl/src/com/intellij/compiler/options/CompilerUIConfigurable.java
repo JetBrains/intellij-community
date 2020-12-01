@@ -244,7 +244,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       applyResourcePatterns(extensionString, configuration);
     }
 
-    BuildManager.getInstance().clearState(myProject);
+    if (!myProject.isDefault()) {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   public static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)

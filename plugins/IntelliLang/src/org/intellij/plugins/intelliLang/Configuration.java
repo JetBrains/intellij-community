@@ -46,8 +46,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean;
@@ -291,7 +289,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
     List<Element> injectionElements = element.getChildren("injection");
     if (!injectionElements.isEmpty()) {
-      final Map<String, LanguageInjectionSupport> supports = new THashMap<>();
+      final Map<String, LanguageInjectionSupport> supports = new HashMap<>();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         supports.put(support.getId(), support);
       }
@@ -329,7 +327,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   private static List<BaseInjection> loadDefaultInjections() {
     final List<Configuration> cfgList = new ArrayList<>();
-    final Set<Object> visited = new THashSet<>();
+    final Set<Object> visited = new HashSet<>();
     for (LanguageInjectionConfigBean configBean : LanguageInjectionSupport.CONFIG_EP_NAME.getExtensionList()) {
       PluginDescriptor descriptor = configBean.getPluginDescriptor();
       final ClassLoader loader = descriptor.getPluginClassLoader();

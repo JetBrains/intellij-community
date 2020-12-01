@@ -50,6 +50,8 @@
 
     <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run" id="debug"/>
 
+    <stateWidgetProcess implementation="com.intellij.execution.stateExecutionWidget.StateWidgetDebugProcess"/>
+
     <copyPastePreProcessor implementation="com.intellij.xdebugger.impl.ui.DebuggerCopyPastePreprocessor"/>
 
     <virtualFileSystem key="lazyAttachVfs" implementationClass="com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS"/>
@@ -89,6 +91,18 @@
     <group id="XDebugger.AttachGroup">
       <action id="XDebugger.AttachToProcess" class="com.intellij.xdebugger.impl.actions.AttachToProcessAction"/>
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
+    </group>
+
+    <group id="StateWidgetDebugGroup">
+      <separator text="Debug"/>
+      <reference ref="XDebugger.AttachGroup"/>
+      <add-to-group group-id="StateWidgetMoreActionGroup"/>
+    </group>
+
+    <group id="StateWidgetDebuggerAdditionalActions">
+      <action class="com.intellij.xdebugger.impl.actions.StateWidgetResumeAction" icon="AllIcons.Actions.Resume"/>
+      <action class="com.intellij.xdebugger.impl.actions.StateWidgetPauseAction" icon="AllIcons.Actions.Pause"/>
+      <add-to-group group-id="StateWidgetAdditionalActions"/>
     </group>
 
     <group id="MemoryView.SettingsPopupActionGroup">

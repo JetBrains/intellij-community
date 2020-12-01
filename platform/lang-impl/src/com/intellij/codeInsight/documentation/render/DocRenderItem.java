@@ -134,7 +134,7 @@ public final class DocRenderItem {
     else {
       if (editor.getUserData(LISTENERS_DISPOSABLE) == null) {
         MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-        connection.setDefaultHandler((event, params) -> updateInlays(editor, true));
+        connection.setDefaultHandler(() -> updateInlays(editor, true));
         connection.subscribe(EditorColorsManager.TOPIC);
         connection.subscribe(LafManagerListener.TOPIC);
         EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {

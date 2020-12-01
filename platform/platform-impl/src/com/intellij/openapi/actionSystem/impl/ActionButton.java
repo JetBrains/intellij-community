@@ -212,12 +212,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected void showGroupInPopup(AnActionEvent e, ActionGroup actionGroup) {
-    ListPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actionGroup, e.getDataContext(), false,
+    PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actionGroup, e.getDataContext(), false,
                                                             false, true, false,
                                                             null, -1, null,
                                                             ActionPlaces.getActionGroupPopupPlace(e.getPlace()),
                                                             createPresentationFactory(), false);
 
+    popup.setShowSubmenuOnHover(true);
     popup.showUnderneathOf(e.getInputEvent().getComponent());
   }
 

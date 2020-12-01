@@ -21,7 +21,6 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public final class SerializedStubTree {
-
   // serialized tree
   final byte[] myTreeBytes;
   final int myTreeByteLength;
@@ -232,7 +231,7 @@ public final class SerializedStubTree {
     }
 
     @Override
-    public ObjectStubSerializer getStubType() {
+    public ObjectStubSerializer<?, ?> getStubType() {
       return null;
     }
 

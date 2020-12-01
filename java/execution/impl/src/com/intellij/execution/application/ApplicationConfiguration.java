@@ -287,6 +287,11 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
+  public boolean needPrepareTarget() {
+    return getDefaultTargetName() != null || runsUnderWslJdk();
+  }
+
+  @Override
   public @NotNull List<EventPair<?>> getAdditionalUsageData() {
     PsiClass mainClass = getMainClass();
     if (mainClass == null) {

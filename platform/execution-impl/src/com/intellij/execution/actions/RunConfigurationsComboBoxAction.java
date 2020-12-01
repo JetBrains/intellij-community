@@ -34,7 +34,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
 
-public final class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
+public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final String BUTTON_MODE = "ButtonMode";
 
   public static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
@@ -69,7 +69,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
     }
   }
 
-  private static void updatePresentation(@Nullable ExecutionTarget target,
+  protected static void updatePresentation(@Nullable ExecutionTarget target,
                                          @Nullable RunnerAndConfigurationSettings settings,
                                          @Nullable Project project,
                                          @NotNull Presentation presentation,
@@ -100,7 +100,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
     }
   }
 
-  private static void setConfigurationIcon(final Presentation presentation,
+  protected static void setConfigurationIcon(final Presentation presentation,
                                            final RunnerAndConfigurationSettings settings,
                                            final Project project) {
     try {
@@ -210,7 +210,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
         DefaultActionGroup group = folderName == null ? actionGroup : DefaultActionGroup.createPopupGroup(() -> folderName);
         group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
         for (RunnerAndConfigurationSettings settings : entry.getValue()) {
-          group.add(new SelectConfigAction(settings, project));
+          group.add(createFinalAction(settings, project));
         }
         if (group != actionGroup) {
           actionGroup.add(group);
@@ -221,6 +221,10 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
       allActionsGroup.addSeparator();
     }
     return allActionsGroup;
+  }
+
+  protected AnAction createFinalAction(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Project project) {
+    return new SelectConfigAction(configuration, project);
   }
 
   private static final class SaveTemporaryAction extends DumbAwareAction {

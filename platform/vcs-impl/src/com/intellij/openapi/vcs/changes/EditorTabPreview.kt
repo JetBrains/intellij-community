@@ -1,14 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.chains.DiffRequestChain
+import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.DumbAwareAction
@@ -26,6 +30,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import kotlin.streams.toList
 
 abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
   protected val project get() = diffProcessor.project!!
@@ -125,7 +130,14 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     updatePreviewProcessor?.refresh(false)
     if (!hasContent()) return false
 
-    openPreview(project, previewFile, focusEditor, escapeHandler)
+    val editors = openPreview(project, previewFile, focusEditor)
+
+    escapeHandler?.let { handler ->
+      for (editor in editors) {
+        registerEscapeHandler(editor, handler)
+      }
+    }
+
     return true
   }
 
@@ -139,13 +151,12 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
   }
 
   companion object {
-    fun openPreview(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean, escapeHandler: Runnable? = null) {
-      val wasAlreadyOpen = FileEditorManager.getInstance(project).isFileOpen(file)
-      val diffPreviewFilesManager = EditorDiffPreviewFilesManager.getInstance(project)
-      val editor = diffPreviewFilesManager.openFile(file, focusEditor).singleOrNull() ?: return
+    fun openPreview(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean): Array<out FileEditor> {
+      return EditorDiffPreviewFilesManager.getInstance(project).openFile(file, focusEditor)
+    }
 
-      if (wasAlreadyOpen || escapeHandler == null) return
-      EditorTabPreviewEscapeAction(escapeHandler).registerCustomShortcutSet(ESCAPE, editor.component, editor)
+    fun registerEscapeHandler(editor: FileEditor, handler: Runnable) {
+      EditorTabPreviewEscapeAction(handler).registerCustomShortcutSet(ESCAPE, editor.component, editor)
     }
   }
 }
@@ -157,11 +168,21 @@ internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable)
 private class EditorTabDiffPreviewProvider(
   private val diffProcessor: DiffRequestProcessor,
   private val tabNameProvider: () -> String?
-) : DiffPreviewProvider {
-
+) : ChainBackedDiffPreviewProvider {
   override fun createDiffRequestProcessor(): DiffRequestProcessor = diffProcessor
 
   override fun getOwner(): Any = this
 
   override fun getEditorTabName(): @Nls String = tabNameProvider().orEmpty()
+
+  override fun createDiffRequestChain(): DiffRequestChain? {
+    if (diffProcessor is ChangeViewDiffRequestProcessor) {
+      val selection = ListSelection.create(diffProcessor.allChanges.toList(), diffProcessor.currentChange)
+      val producers = selection.map { it!!.createProducer(diffProcessor.project) }
+      val chain = SimpleDiffRequestChain.fromProducers(producers.list)
+      chain.index = producers.selectedIndex
+      return chain
+    }
+    return null
+  }
 }

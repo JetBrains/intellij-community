@@ -50,7 +50,7 @@ class JavaSmartTypeCompletionLesson(module: Module)
     caret(20, 16)
     task {
       text(JavaLessonsBundle.message("java.smart.type.completion.return", action("SmartTypeCompletion"), action("EditorChooseLookupItem")))
-      triggers("SmartTypeCompletion", "SmartTypeCompletion")
+      triggers("SmartTypeCompletion")
       trigger("EditorChooseLookupItem")
       restoreIfModifiedOrMoved()
     }

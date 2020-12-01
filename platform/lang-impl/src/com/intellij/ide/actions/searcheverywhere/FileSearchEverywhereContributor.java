@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
@@ -85,7 +86,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @NotNull
   @Override
   public ListCellRenderer<Object> getElementsRenderer() {
-    return new SERenderer() {
+    return new SearchEverywherePsiRenderer() {
       @NotNull
       @Override
       protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {

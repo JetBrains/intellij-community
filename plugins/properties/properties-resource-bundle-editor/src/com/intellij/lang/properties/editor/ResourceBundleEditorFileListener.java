@@ -25,15 +25,14 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-/**
- * @author Dmitry Batkovich
- */
-class ResourceBundleEditorFileListener implements VirtualFileListener {
+final class ResourceBundleEditorFileListener implements VirtualFileListener {
   private static final Logger LOG = Logger.getInstance(ResourceBundleEditorFileListener.class);
   private static final Update FORCE_UPDATE = new Update("FORCE_UPDATE") {
     @Override
@@ -93,14 +92,10 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
             public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
               if (!myEditor.isValid()) return null;
               Runnable toDo = null;
-              NotNullLazyValue<Set<VirtualFile>> resourceBundleAsSet = new NotNullLazyValue<Set<VirtualFile>>() {
-                @NotNull
-                @Override
-                protected Set<VirtualFile> compute() {
-                  return myEditor.getResourceBundle().getPropertiesFiles().stream().map(PropertiesFile::getVirtualFile)
-                    .collect(Collectors.toSet());
-                }
-              };
+              NotNullLazyValue<Set<VirtualFile>> resourceBundleAsSet = NotNullLazyValue.lazy(() -> {
+                return myEditor.getResourceBundle().getPropertiesFiles().stream().map(PropertiesFile::getVirtualFile)
+                  .collect(Collectors.toSet());
+              });
               for (EventWithType e : myEvents) {
                 if (e.getType() == EventType.FILE_DELETED || (e.getType() == EventType.PROPERTY_CHANGED && e.getPropertyName().equals(VirtualFile.PROP_NAME))) {
                   if (myEditor.getTranslationEditors().containsKey(e.getFile())) {

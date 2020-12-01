@@ -22,7 +22,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
-private val LOG by lazy { Logger.getInstance("#${LocalCompiler::class.qualifiedName}") }
+private val LOG by lazy { Logger.getInstance(LocalCompiler::class.java) }
 private const val TEST_CLASS_NAME = "CurrentTest"
 
 /**

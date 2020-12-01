@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.util.ArrayUtil;
@@ -89,15 +89,6 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     return ContainerUtil.concat(myChildren, children);
   }
 
-  /**
-   * @deprecated use {@link #getWatchChildren()} instead
-   */
-  @Deprecated
-  @NotNull
-  public List<? extends WatchNode> getAllChildren() {
-    return getWatchChildren();
-  }
-
   @NotNull
   public List<? extends WatchNode> getWatchChildren() {
     return myChildren;
@@ -111,17 +102,6 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
 
   public void computeWatches() {
     myChildren.forEach(WatchNodeImpl::computePresentationIfNeeded);
-  }
-
-  /**
-   * @deprecated Use {@link #addWatchExpression(XStackFrame, XExpression, int, boolean)}
-   */
-  @Deprecated
-  public void addWatchExpression(@Nullable XDebuggerEvaluator evaluator,
-                                 @NotNull XExpression expression,
-                                 int index,
-                                 boolean navigateToWatchNode) {
-    addWatchExpression((XStackFrame)null, expression, index, navigateToWatchNode);
   }
 
   public void addWatchExpression(@Nullable XStackFrame stackFrame,

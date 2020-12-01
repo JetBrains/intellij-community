@@ -12,7 +12,9 @@ import circlet.platform.api.TID
 import circlet.platform.client.FluxSourceItem
 import circlet.platform.client.KCircletClient
 import circlet.platform.client.durableInitializedFluxChannel
+import com.intellij.openapi.ListSelection
 import com.intellij.space.SpaceVmWithClient
+import com.intellij.space.vcs.SpaceRepoInfo
 import kotlinx.coroutines.channels.ReceiveChannel
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.LifetimeSource
@@ -23,13 +25,16 @@ import runtime.reactive.*
 
 private const val MAX_CHANGES_TO_LOAD = 1024
 
-class SpaceReviewChangesVmImpl(
+internal class SpaceReviewChangesVmImpl(
   override val lifetime: Lifetime,
   override val client: KCircletClient,
   override val projectKey: ProjectKey,
+  override val reviewIdentifier: ReviewIdentifier,
   override val reviewId: TID,
   override val selectedCommits: Property<List<ReviewCommitListItem>>,
-  override val selectedChange: MutableProperty<ChangeInReview?> = mutableProperty(null)
+  override val participantsVm: Property<SpaceReviewParticipantsVm?>,
+  override val listSelection: MutableProperty<ListSelection<SpaceReviewChange>>,
+  override val infoByRepos: Map<String, SpaceRepoInfo>,
 ) : SpaceReviewChangesVm,
     SpaceVmWithClient {
 
@@ -39,24 +44,13 @@ class SpaceReviewChangesVmImpl(
     selectedCommits
       .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
       .groupBy { it.repository }
-      .map { it.key to loadChanges(lifetimeSource, it.value) }
+      .map { it.key to loadChanges(lifetimeSource, it.value, it.key) }
       .toMap()
   }
 
-  override val selectedChangeDiscussions: Property<ObservableMutableMap<TID, PropagatedCodeDiscussion>?> =
-    mapInit(changes, selectedChange, null) { changes, selected ->
-
-      changes ?: return@mapInit null
-      selected ?: return@mapInit null
-      val repository = selected.repository
-
-      val changesWithDiscussion = changes[repository] ?: return@mapInit null
-
-      changesWithDiscussion.discussions
-    }
-
   private suspend fun loadChanges(lt: LifetimeSource,
-                                  revisions: List<RevisionInReview>): ChangesWithDiscussion {
+                                  revisions: List<RevisionInReview>,
+                                  repository: String): ChangesWithDiscussion {
     val reviewChanges: InitializedChannel<DiscussionEvent, DiscussionChannelInitialState<Batch<ChangeInReview>>> = client.codeReview.getReviewChanges(
       lt,
       BatchInfo("0", MAX_CHANGES_TO_LOAD),
@@ -65,7 +59,7 @@ class SpaceReviewChangesVmImpl(
       revisions)
 
     val observableMutableMap = createObservableMap(lt, reviewChanges)
-    return ChangesWithDiscussion(reviewChanges.initial.payload.data, observableMutableMap)
+    return ChangesWithDiscussion(reviewChanges.initial.payload.data, observableMutableMap, infoByRepos[repository])
   }
 
   private fun createObservableMap(lifetime: Lifetime,

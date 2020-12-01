@@ -33,6 +33,8 @@ import org.zmlx.hg4idea.util.HgPatchReferenceValidator;
 
 import java.util.Arrays;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.QRENAME_ERROR;
+
 public class HgQRenameCommand {
 
   private static final Logger LOG = Logger.getInstance(HgQRenameCommand.class);
@@ -67,7 +69,7 @@ public class HgQRenameCommand {
       HgCommandExecutor executor = new HgCommandExecutor(project);
       HgCommandResult result = executor.executeInCurrentThread(repository.getRoot(), "qrename", Arrays.asList(oldName, newName));
       if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-        new HgCommandResultNotifier(project).notifyError("hg.qrename.error",
+        new HgCommandResultNotifier(project).notifyError(QRENAME_ERROR,
                                                          result,
                                                          HgBundle.message("action.hg4idea.QRename.error"),
                                                          HgBundle.message("action.hg4idea.QRename.error.msg", oldName, newName));

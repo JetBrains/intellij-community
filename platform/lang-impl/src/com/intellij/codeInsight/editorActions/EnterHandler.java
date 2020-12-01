@@ -6,7 +6,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
@@ -308,7 +307,7 @@ public class EnterHandler extends BaseEnterHandler {
     final CharSequence docChars = document.getCharsSequence();
     int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n") + 1;
     int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
-    String newIndent = CodeStyleFacade.getInstance(editor.getProject()).getLineIndent(editor, language, offset, false);
+    String newIndent = CodeStyle.getLineIndent(editor, language, offset, false);
     if (newIndent == null) {
       return -1;
     }

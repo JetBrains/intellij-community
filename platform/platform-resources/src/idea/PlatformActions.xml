@@ -869,15 +869,14 @@
       <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction"/>
       <action id="OpenEditorInOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.OpenEditorInOppositeTabGroupAction"/>
       <reference ref="ChangeSplitOrientation"/>
+      <reference ref="Unsplit"/>
+      <reference ref="UnsplitAll"/>
       <separator/>
       <reference ref="PinActiveEditorTab"/>
       <reference ref="EditSourceInNewWindow"/>
       <reference ref="ConfigureEditorTabs"/>
       <separator/>
       <reference ref="ReopenClosedTab"/>
-      <separator/>
-      <reference ref="Unsplit"/>
-      <reference ref="UnsplitAll"/>
     </group>
 
     <group id="WelcomeScreen.QuickStart.EmptyState">
@@ -919,8 +918,7 @@
       <reference ref="EditCustomProperties"/>
       <reference ref="EditCustomVmOptions"/>
 
-      <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"
-              icon="AllIcons.Welcome.CreateDesktopEntry"/>
+      <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
 
       <reference ref="CheckForUpdate"/>
     </group>
@@ -1043,6 +1041,8 @@
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction"/>
       <action id="ResetGotItTooltips" internal="true" class="com.intellij.internal.ResetGotItTooltips"/>
       <group id="Internal.Performance" popup="true">
+        <action id="TurnOnOffCachedValueProfilerAction" internal="true"
+                class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"/>
         <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction"/>
       </group>
       <separator/>

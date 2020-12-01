@@ -28,6 +28,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Vladislav.Soroka
@@ -234,7 +235,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     if (externalSystemNodes.isEmpty()) return false;
 
     if (myChildrenList == NO_CHILDREN_LIST) {
-      myChildrenList = new ArrayList<>();
+      myChildrenList = new CopyOnWriteArrayList<>();
     }
 
     for (ExternalSystemNode<?> externalSystemNode : externalSystemNodes) {

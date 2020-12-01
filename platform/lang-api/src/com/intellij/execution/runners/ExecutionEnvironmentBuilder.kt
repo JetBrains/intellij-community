@@ -46,7 +46,7 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
     @Throws(ExecutionException::class)
     fun create(project: Project, executor: Executor, runProfile: RunProfile): ExecutionEnvironmentBuilder {
       return createOrNull(project, executor, runProfile)
-             ?: throw ExecutionException("Cannot find runner for ${runProfile.name}")
+             ?: throw ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner", runProfile.name))
     }
 
     @JvmStatic

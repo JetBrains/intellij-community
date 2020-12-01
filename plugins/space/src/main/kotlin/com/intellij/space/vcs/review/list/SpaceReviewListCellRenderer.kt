@@ -3,15 +3,15 @@ package com.intellij.space.vcs.review.list
 
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.englishFullName
+import circlet.code.api.CodeReviewListItem
 import circlet.code.api.CodeReviewParticipantRole
-import circlet.code.api.CodeReviewWithCount
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
-import com.intellij.space.utils.formatAbsolute
-import com.intellij.space.utils.toLocalDateTime
+import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.ReviewUiSpec.avatarSizeIntValue
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
@@ -24,40 +24,53 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
-import javax.swing.JLabel
+import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
+
 internal class SpaceReviewListCellRenderer(
   private val avatarProvider: SpaceAvatarProvider,
   private val openButtonViewModel: OpenReviewButtonViewModel
-) : ListCellRenderer<CodeReviewWithCount>,
+) : ListCellRenderer<CodeReviewListItem>,
     JPanel(null) {
 
-  private val titleLabel: JLabel = JLabel().apply {
+  private val commentIcon: Icon
+    get() = AllIcons.Ide.Notification.NoEvents
+
+  private val titleLabel: SimpleColoredComponent = SimpleColoredComponent().apply {
     isOpaque = false
   }
 
-  private val infoLabel: JLabel = JLabel().apply {
+  private val infoLabel: SimpleColoredComponent = SimpleColoredComponent().apply {
     font = JBUI.Fonts.smallFont()
     isOpaque = false
   }
 
   private val emptyAvatar = EmptyIcon.create(JBUI.scale(avatarSizeIntValue.get()))
 
-  private val authorAvatar: JLabel = JLabel(emptyAvatar)
-  private val commentsLabel: JLabel = JLabel(AllIcons.Ide.Notification.NoEvents) // TODO: add new icon for comments
+  private val authorAvatar: SimpleColoredComponent = SimpleColoredComponent().apply {
+    icon = emptyAvatar
+  }
 
-  private val firstReviewLabel: JLabel = JLabel(emptyAvatar)
-  private val secondReviewLabel: JLabel = JLabel(emptyAvatar)
+  private val commentsLabel: SimpleColoredComponent = SimpleColoredComponent().apply {
+    icon = commentIcon
+  }
+
+  private val firstReviewLabel: SimpleColoredComponent = SimpleColoredComponent().apply {
+    icon = emptyAvatar
+  }
+  private val secondReviewLabel: SimpleColoredComponent = SimpleColoredComponent().apply {
+    icon = emptyAvatar
+  }
 
   private val openCodeReviewButton = OpenReviewButton.createOpenReviewButton()
 
 
   init {
     val zero = "0"
-    val gap = "${JBUI.scale(10)}px"
+    val gap = "${JBUI.scale(8)}px"
     val gapTop = "${JBUI.scale(5)}px"
 
     layout = MigLayout(LC().gridGap(zero, zero)
@@ -65,7 +78,7 @@ internal class SpaceReviewListCellRenderer(
                          .fillX())
 
     add(authorAvatar, CC()
-      .gapAfter(gap)
+      .gapAfter(zero)
       .gapBefore(gap)
       .gapBottom(gap)
       .gapTop(gap)
@@ -121,8 +134,8 @@ internal class SpaceReviewListCellRenderer(
     }
   }
 
-  override fun getListCellRendererComponent(list: JList<out CodeReviewWithCount>,
-                                            value: CodeReviewWithCount,
+  override fun getListCellRendererComponent(list: JList<out CodeReviewListItem>,
+                                            value: CodeReviewListItem,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
@@ -130,9 +143,7 @@ internal class SpaceReviewListCellRenderer(
     val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
     val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
 
-    val (reviewRef, messagesCount, _, participantsRef) = value
-
-    val participants = participantsRef.resolve().participants
+    val participants = value.participants.resolve().participants
 
     val reviewers = participants?.filter {
       it.role == CodeReviewParticipantRole.Reviewer
@@ -142,12 +153,12 @@ internal class SpaceReviewListCellRenderer(
       it.role == CodeReviewParticipantRole.Author
     }
 
-    val review = reviewRef.resolve()
+    val review = value.review.resolve()
     val title = review.title
     val author = review.createdBy!!.resolve()
     val key = review.key ?: ""
-    val localDateTime = review.createdAt.toLocalDateTime()
-    val info = SpaceBundle.message("review.by.author.at.time", key, author.englishFullName(), localDateTime.formatAbsolute())
+    val createdAt = review.createdAt.formatPrettyDateTime()
+    val info = SpaceBundle.message("review.by.author.at.time", key, author.englishFullName(), createdAt)
 
     val fullToolTipText = StringBuilder().apply {
       append(title).append(BR)
@@ -170,13 +181,15 @@ internal class SpaceReviewListCellRenderer(
     }.toString().let { XmlStringUtil.wrapInHtml(it) } // NON-NLS
 
     titleLabel.apply {
-      text = title
+      clear()
+      append(title)
       foreground = primaryTextColor
       toolTipText = fullToolTipText
     }
 
     infoLabel.apply {
-      text = info
+      clear()
+      append(info)
       foreground = secondaryTextColor
       toolTipText = fullToolTipText
     }
@@ -184,7 +197,9 @@ internal class SpaceReviewListCellRenderer(
     configureMemberLabel(authorAvatar, author)
 
     commentsLabel.apply {
-      text = messagesCount.toString()
+      clear()
+      icon = commentIcon
+      append(value.discussionCount.resolve().counter.total.toString())// NON-NLS
     }
 
     firstReviewLabel.apply {
@@ -203,7 +218,7 @@ internal class SpaceReviewListCellRenderer(
   }
 
 
-  private fun configureMemberLabel(label: JLabel, profile: TD_MemberProfile?) {
+  private fun configureMemberLabel(label: SimpleColoredComponent, profile: TD_MemberProfile?) {
     if (profile != null) {
       label.icon = avatarProvider.getIcon(profile)
       label.toolTipText = profile.englishFullName() // NON-NLS

@@ -7,6 +7,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.auth.PluginAuthService;
+import com.intellij.ide.plugins.auth.PluginAuthSubscriber;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
@@ -75,7 +77,7 @@ import java.util.function.Supplier;
  * @author Alexander Lobas
  */
 public class PluginManagerConfigurable
-  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
+  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider, PluginAuthSubscriber {
 
   private static final Logger LOG = Logger.getInstance(PluginManagerConfigurable.class);
 
@@ -138,6 +140,7 @@ public class PluginManagerConfigurable
 
   public PluginManagerConfigurable() {
     this((Project)null);
+    PluginAuthService.INSTANCE.subscribe(this);
   }
 
   /**
@@ -188,7 +191,7 @@ public class PluginManagerConfigurable
 
     myPluginUpdatesService = PluginUpdatesService.connectWithCounter(countValue -> {
       int count = countValue == null ? 0 : countValue;
-      String text = String.valueOf(count);
+      String text = Integer.toString(count);
       boolean visible = count > 0;
 
       myUpdateAll.setEnabled(true);
@@ -261,8 +264,12 @@ public class PluginManagerConfigurable
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));
     actions.add(new ChangePluginStateAction(true));
-
     return actions;
+  }
+
+  @Override
+  public void pluginAuthCallback() {
+    ApplicationManager.getApplication().invokeLater(this::resetPanelsWithoutClearCache, ModalityState.any());
   }
 
   private static void showRightBottomPopup(@NotNull Component component, @NotNull @Nls String title, @NotNull ActionGroup group) {
@@ -316,8 +323,13 @@ public class PluginManagerConfigurable
   private void resetPanels() {
     CustomPluginRepositoryService.getInstance().clearCache();
 
+    resetPanelsWithoutClearCache();
+  }
+
+  void resetPanelsWithoutClearCache(){
     myTagsSorted = null;
     myVendorsSorted = null;
+
 
     myPluginUpdatesService.recalculateUpdates();
 
@@ -872,7 +884,7 @@ public class PluginManagerConfigurable
               null,
               (__, ___) -> myPluginModel.changeEnableDisable(
                 Set.copyOf(group.descriptors),
-                PluginEnabledState.getState(group.rightAction.getText().startsWith("Enable"))
+                PluginEnableDisableAction.globally(group.rightAction.getText().startsWith("Enable"))
               )
             );
             group.titleWithEnabled(myPluginModel);
@@ -1201,7 +1213,8 @@ public class PluginManagerConfigurable
       public void performCopy(@NotNull DataContext dataContext) {
         StringBuilder result = new StringBuilder();
         for (ListPluginComponent pluginComponent : component.getSelection()) {
-          result.append(pluginComponent.myPlugin.getName()).append(" (").append(pluginComponent.myPlugin.getVersion()).append(")\n");
+          IdeaPluginDescriptor descriptor = pluginComponent.getPluginDescriptor();
+          result.append(descriptor.getName()).append(" (").append(descriptor.getVersion()).append(")\n");
         }
         CopyPasteManager.getInstance().setContents(new TextTransferable(result.substring(0, result.length() - 1)));
       }
@@ -1558,7 +1571,7 @@ public class PluginManagerConfigurable
       }
       else {
         for (ListPluginComponent component : group.ui.plugins) {
-          IdeaPluginDescriptor plugin = component.myPlugin;
+          IdeaPluginDescriptor plugin = component.getPluginDescriptor();
           if (myPluginModel.isEnabled(plugin) != myEnable) {
             descriptors.add(plugin);
           }
@@ -1568,7 +1581,7 @@ public class PluginManagerConfigurable
       if (!descriptors.isEmpty()) {
         myPluginModel.changeEnableDisable(
           descriptors,
-          PluginEnabledState.getState(myEnable)
+          PluginEnableDisableAction.globally(myEnable)
         );
       }
     }
@@ -1647,6 +1660,8 @@ public class PluginManagerConfigurable
     InstalledPluginsState.getInstance().runShutdownCallback();
 
     InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
+
+    PluginAuthService.INSTANCE.unsubscribe(this);
   }
 
   @Override

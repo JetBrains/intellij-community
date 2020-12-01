@@ -2,77 +2,51 @@
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.function.Consumer
 
 @CompileStatic
-class SVGPreBuilder {
-  public static final String FILE_NAME = "icons.db"
-
+final class SVGPreBuilder {
   static final List<String> getModulesToInclude() {
-    return ["intellij.platform.images.build"]
+    return List.of("intellij.platform.images.build")
   }
 
-  private static String getDbFile(BuildContext buildContext) {
-    return "$buildContext.paths.temp/" + FILE_NAME
-  }
+  static BuildTaskRunnable<Void> createPrebuildSvgIconsTask() {
+    return BuildTaskRunnable.task(BuildOptions.SVGICONS_PREBUILD_STEP, "Prebuild SVG icons", new Consumer<BuildContext>() {
+      @Override
+      void accept(BuildContext buildContext) {
+        Path requestFile = buildContext.paths.tempDir.resolve("svg-prebuild-request.txt")
 
-  static copyIconDb(BuildContext buildContext, String newDirPath) {
-    Path from = Paths.get(getDbFile(buildContext))
-    Path newDir = Paths.get(newDirPath)
-    Files.createDirectories(newDir)
-    try {
-      Files.copy(from, newDir.resolve(from.fileName))
-    }
-    catch (NoSuchFileException ignore) {
-      // if for some reasons cache generation is failed or simply disabled, do not throw yet another error
-    }
-  }
+        StringBuilder requestBuilder = new StringBuilder()
+        // build for all modules - so, icon db will be suitable for any non-bundled plugin
+        for (JpsModule module : buildContext.getProject().getModules()) {
+          requestBuilder.append(buildContext.getModuleOutputPath(module)).append('\n')
+        }
+        Files.createDirectories(requestFile.getParent())
+        Files.writeString(requestFile, requestBuilder)
 
-  static void prebuildSVGIcons(BuildContext buildContext) {
-    buildContext.executeStep("Prebuild SVG icons", BuildOptions.SVGICONS_PREBUILD_STEP, {
-      buildContext.messages.progress("Prebuild SVG icons")
-
-      Path requestFile = Paths.get(buildContext.paths.temp, "svg-prebuild", "request.txt")
-
-      StringBuilder requestBuilder = new StringBuilder()
-      // build for all modules - so, icon db will be suitable for any non-bundled plugin
-      for (JpsModule module : buildContext.getProject().getModules()) {
-        requestBuilder.append(buildContext.getModuleOutputPath(module)).append('\n')
+        JpsModule buildModule = buildContext.findModule("intellij.platform.images.build")
+        List<String> svgToolClasspath = buildContext.getModuleRuntimeClasspath(buildModule, false)
+        runSVGTool(buildContext, svgToolClasspath, requestFile)
       }
-      Files.createDirectories(requestFile.getParent())
-      Files.writeString(requestFile, requestBuilder)
-
-      JpsModule buildModule = buildContext.findModule("intellij.platform.images.build")
-      List<String> svgToolClasspath = buildContext.getModuleRuntimeClasspath(buildModule, false)
-      runSVGTool(buildContext, svgToolClasspath, requestFile)
     })
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   private static void runSVGTool(BuildContext buildContext, List<String> svgToolClasspath, Path requestFile) {
-    buildContext.ant.java(classname: "org.jetbrains.intellij.build.images.ImageSvgPreCompiler", fork: true, failonerror: true) {
-      jvmarg(line: "-ea -Xmx768m")
-      sysproperty(key: "java.awt.headless", value: true)
-      arg(path: getDbFile(buildContext))
-      arg(path: requestFile.toString())
+    String dbFile = "$buildContext.paths.temp/icons.db"
 
-      buildContext.applicationInfo.svgProductIcons.forEach {
-        arg(value: "$it")
-      }
-
-      classpath() {
-        for (String element : svgToolClasspath) {
-          pathelement(location: "$element")
-        }
-      }
-    }
+    List<String> args = [dbFile, requestFile.toString()] + buildContext.applicationInfo.svgProductIcons
+    BuildUtils.runJava(buildContext,
+                       "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
+                       args,
+                       List.of("-Xmx1024m"),
+                       svgToolClasspath)
+    buildContext.addResourceFile(Paths.get(dbFile))
   }
 }

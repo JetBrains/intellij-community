@@ -171,6 +171,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     }
     else {
       for ((rowIndex, row) in physicalRows.withIndex()) {
+        row.rowConstraints = rowConstraints.index(rowIndex).constaints[rowIndex];
         if (row.noGrid) {
           rowConstraints.noGrid(rowIndex)
         }

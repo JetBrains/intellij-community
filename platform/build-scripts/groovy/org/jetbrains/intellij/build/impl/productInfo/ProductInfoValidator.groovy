@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.google.gson.Gson
@@ -10,8 +10,12 @@ import org.apache.tools.tar.TarInputStream
 import org.jetbrains.intellij.build.BuildContext
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.zip.GZIPInputStream
 import java.util.zip.ZipFile
+
 /**
  * Validates that paths specified in product-info.json file are correct
  */
@@ -32,7 +36,8 @@ class ProductInfoValidator {
       context.messages.error("Failed to validate product-info.json: cannot find '$productJsonPath' in $archivePath")
     }
 
-    validateProductJson(loadEntry(archivePath, productJsonPath), archivePath, "", [], [Pair.create(archivePath, pathInArchive)])
+    Path archiveFile = Paths.get(archivePath)
+    validateProductJson(loadEntry(archiveFile, productJsonPath), archiveFile, "", [], [new Pair<>(archivePath, pathInArchive)])
   }
 
   /**
@@ -41,24 +46,24 @@ class ProductInfoValidator {
    * @param installationArchives archives which will be unpacked and included into product installation (the first part specified path to archive,
    * the second part specifies path inside archive)
    */
-  void validateInDirectory(String directoryWithProductJson, String relativePathToProductJson, List<String> installationDirectories,
+  void validateInDirectory(Path directoryWithProductJson, String relativePathToProductJson, List<String> installationDirectories,
                            List<Pair<String, String>> installationArchives) {
-    def productJsonFile = new File(directoryWithProductJson, relativePathToProductJson + ProductInfoGenerator.FILE_NAME)
-    if (!productJsonFile.exists()) {
+    Path productJsonFile = directoryWithProductJson.resolve(relativePathToProductJson + ProductInfoGenerator.FILE_NAME)
+    if (!Files.exists(productJsonFile)) {
       context.messages.error("Failed to validate product-info.json: $productJsonFile doesn't exist")
     }
 
-    validateProductJson(productJsonFile.text, productJsonFile.absolutePath, relativePathToProductJson, installationDirectories, installationArchives)
+    validateProductJson(Files.readString(productJsonFile), productJsonFile, relativePathToProductJson, installationDirectories, installationArchives)
   }
 
-  private void validateProductJson(String jsonText, String presentablePathToProductJson, String relativePathToProductJson, List<String> installationDirectories,
+  private void validateProductJson(String jsonText, Path productJsonFile, String relativePathToProductJson, List<String> installationDirectories,
                                    List<Pair<String, String>> installationArchives) {
     ProductInfoData productJson
     try {
       productJson = new Gson().fromJson(jsonText, ProductInfoData.class)
     }
     catch (Exception e) {
-      context.messages.error("Failed to parse product-info.json at $presentablePathToProductJson: $e.message", e)
+      context.messages.error("Failed to parse product-info.json at $productJsonFile: $e.message", e)
       return
     }
 
@@ -111,21 +116,20 @@ class ProductInfoValidator {
     return false
   }
 
-  static String loadEntry(String archivePath, String entryPath) {
-    def archiveFile = new File(archivePath)
-    if (archiveFile.name.endsWith(".zip")) {
-      return new ZipFile(archiveFile).withCloseable {
+  private static String loadEntry(Path archiveFile, String entryPath) {
+    if (archiveFile.fileName.toString().endsWith(".zip")) {
+      return new ZipFile(archiveFile.toFile()).withCloseable {
         it.getInputStream(it.getEntry(entryPath)).text
       }
     }
 
-    if (archiveFile.name.endsWith(".tar.gz")) {
+    if (archiveFile.fileName.toString().endsWith(".tar.gz")) {
       return archiveFile.withInputStream {
-        def inputStream = new TarInputStream(new GZIPInputStream(it))
+        TarInputStream inputStream = new TarInputStream(new GZIPInputStream(it))
         TarEntry entry
-        while (null != (entry = inputStream.nextEntry)) {
+        while (null != (entry = inputStream.getNextEntry())) {
           if (entry.name == entryPath) {
-            def output = new ByteArrayOutputStream()
+            ByteArrayOutputStream output = new ByteArrayOutputStream()
             inputStream.copyEntryContents(output)
             return new String(output.toByteArray(), StandardCharsets.UTF_8)
           }

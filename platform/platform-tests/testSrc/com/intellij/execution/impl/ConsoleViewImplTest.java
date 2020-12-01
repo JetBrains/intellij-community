@@ -226,7 +226,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   @NotNull
-  static ConsoleViewImpl createConsole(boolean usePredefinedMessageFilter, Project project) {
+  public static ConsoleViewImpl createConsole(boolean usePredefinedMessageFilter, Project project) {
     ConsoleViewImpl console = new ConsoleViewImpl(project,
                                                   GlobalSearchScope.allScope(project),
                                                   false,

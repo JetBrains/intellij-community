@@ -107,7 +107,6 @@ import java.awt.font.TextHitInfo;
 import java.awt.geom.Point2D;
 import java.awt.im.InputMethodRequests;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
@@ -370,19 +369,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMarkupModelListener = new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+        TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
         onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
-                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme())));
+                             EditorUtil.attributesImpactFontStyle(attributes),
+                             EditorUtil.attributesImpactForegroundColor(attributes));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
         onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
-                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme())));
+                             EditorUtil.attributesImpactFontStyle(attributes),
+                             EditorUtil.attributesImpactForegroundColor(attributes));
       }
 
       @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
-        onHighlighterChanged(highlighter, renderersChanged, fontStyleOrColorChanged);
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter,
+                                    boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
+        onHighlighterChanged(highlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
       }
     };
 
@@ -408,38 +412,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myInlayModel.addListener(myCaretModel, myCaretModel);
 
     myIndentsModel = new IndentsModelImpl(this);
+    myCaretModel.addCaretListener(new IndentsModelCaretListener(this));
     myCaretModel.addCaretListener(new CaretListener() {
-      @Nullable private LightweightHint myCurrentHint;
-      @Nullable private IndentGuideDescriptor myCurrentCaretGuide;
-
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
         if (myStickySelection) {
           int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength());
           mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
-        }
-
-        final IndentGuideDescriptor newGuide = myIndentsModel.getCaretIndentGuide();
-        if (!Comparing.equal(myCurrentCaretGuide, newGuide)) {
-          repaintGuide(newGuide);
-          repaintGuide(myCurrentCaretGuide);
-          myCurrentCaretGuide = newGuide;
-
-          if (myCurrentHint != null) {
-            myCurrentHint.hide();
-            myCurrentHint = null;
-          }
-
-          if (newGuide != null) {
-            final Rectangle visibleArea = getScrollingModel().getVisibleArea();
-            final int endLine = newGuide.startLine;
-            if (logicalLineToY(endLine) < visibleArea.y) {
-              int startLine = Math.max(newGuide.codeConstructStartLine,
-                                       endLine - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(EditorImpl.this) + 1);
-              TextRange textRange = new TextRange(myDocument.getLineStartOffset(startLine), myDocument.getLineEndOffset(endLine));
-              myCurrentHint = EditorFragmentComponent.showEditorFragmentHint(EditorImpl.this, textRange, false, false);
-            }
-          }
         }
       }
 
@@ -535,12 +514,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
     myScrollingModel.addVisibleAreaListener(myMarkupModel);
 
-    PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent e) {
-        if (Document.PROP_WRITABLE.equals(e.getPropertyName())) {
-          myEditorComponent.repaint();
-        }
+    PropertyChangeListener propertyChangeListener = e -> {
+      if (Document.PROP_WRITABLE.equals(e.getPropertyName())) {
+        myEditorComponent.repaint();
       }
     };
     myDocument.addPropertyChangeListener(propertyChangeListener);
@@ -622,7 +598,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter, boolean canImpactGutterSize, boolean fontStyleOrColorChanged) {
+  private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter,
+                                    boolean canImpactGutterSize, boolean fontStyleChanged, boolean foregroundColorChanged) {
     if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
 
     if (canImpactGutterSize) {
@@ -642,8 +619,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
     int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
-    if (start != end && fontStyleOrColorChanged) {
-      myView.invalidateRange(start, end);
+    if (start != end && (fontStyleChanged || foregroundColorChanged)) {
+      myView.invalidateRange(start, end, fontStyleChanged);
     }
     if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
       repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
@@ -747,12 +724,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
     return new MyColorSchemeDelegate(customGlobalScheme);
-  }
-
-  private void repaintGuide(@Nullable IndentGuideDescriptor guide) {
-    if (guide != null) {
-      repaintLines(guide.startLine, guide.endLine);
-    }
   }
 
   @Override
@@ -1506,7 +1477,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            logicalToVisualPosition(new LogicalPosition(logicalLine, 0)).line;
   }
 
-  private int logicalLineToY(int line) {
+  int logicalLineToY(int line) {
     int visualLine = logicalToVisualLine(line);
     return visualLineToY(visualLine);
   }
@@ -1568,7 +1539,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     endOffset = Math.min(endOffset, myDocument.getTextLength());
 
     if (invalidateTextLayout) {
-      myView.invalidateRange(startOffset, endOffset);
+      myView.invalidateRange(startOffset, endOffset, true);
     }
 
     if (!isShowing()) {
@@ -1615,7 +1586,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @param startLine start logical line to repaint (inclusive)
    * @param endLine   end logical line to repaint (inclusive)
    */
-  private void repaintLines(int startLine, int endLine) {
+  void repaintLines(int startLine, int endLine) {
     if (!isShowing()) return;
 
     int startVisualLine = logicalToVisualLine(startLine);
@@ -3468,8 +3439,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       boolean oldAvailable = oldFilter == null || oldFilter.test(highlighter);
       boolean newAvailable = filter == null || filter.test(highlighter);
       if (oldAvailable != newAvailable) {
-        boolean styleOrColorChanged = EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme()));
-        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true, styleOrColorChanged);
+        TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
+        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
+                                                EditorUtil.attributesImpactFontStyle(attributes),
+                                                EditorUtil.attributesImpactForegroundColor(attributes));
         myMarkupModel.getErrorStripeMarkersModel().attributesChanged((RangeHighlighterEx)highlighter, true);
       }
     }

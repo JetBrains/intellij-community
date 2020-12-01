@@ -8,7 +8,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.ui.scale.DerivedScaleType;
@@ -30,10 +30,7 @@ import org.w3c.dom.NodeList;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -52,49 +49,51 @@ public final class SVGLoader {
 
   private static volatile boolean ourIsSelectionContext = false;
 
-  private static final SvgCacheManager persistentCache;
-  private static final SvgPrebuiltCacheManager prebuiltPersistentCache;
+  private static final class SvgCache {
+    private static final SvgCacheManager persistentCache;
+    private static final SvgPrebuiltCacheManager prebuiltPersistentCache;
 
-  static {
-    SvgPrebuiltCacheManager prebuiltCache;
-    try {
-      Path dbFile = null;
-      if (USE_CACHE) {
-        String dbPath = System.getProperty("idea.ui.icons.prebuilt.db");
-        if (!"false".equals(dbPath)) {
-          if (dbPath == null || dbPath.isEmpty()) {
-            Path distDir = Paths.get(PathManager.getHomePath());
-            dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve("icons.db");
-          }
-          else {
-            dbFile = Paths.get(dbPath);
+    static {
+      SvgPrebuiltCacheManager prebuiltCache;
+      try {
+        Path dbFile = null;
+        if (USE_CACHE) {
+          String dbPath = System.getProperty("idea.ui.icons.prebuilt.db");
+          if (!"false".equals(dbPath)) {
+            if (dbPath == null || dbPath.isEmpty()) {
+              Path distDir = Paths.get(PathManager.getHomePath());
+              dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve("icons.db");
+            }
+            else {
+              dbFile = Paths.get(dbPath);
+            }
           }
         }
+
+        prebuiltCache = dbFile != null && Files.exists(dbFile) ? new SvgPrebuiltCacheManager(dbFile) : null;
+      }
+      catch (Exception e) {
+        Logger.getInstance(SVGLoader.class).error("Cannot use prebuilt svg cache", e);
+        prebuiltCache = null;
       }
 
-      prebuiltCache = dbFile != null && Files.exists(dbFile) ? new SvgPrebuiltCacheManager(dbFile) : null;
-    }
-    catch (Exception e) {
-      Logger.getInstance(SVGLoader.class).error("Cannot use prebuilt svg cache", e);
-      prebuiltCache = null;
-    }
+      prebuiltPersistentCache = prebuiltCache;
 
-    prebuiltPersistentCache = prebuiltCache;
+      SvgCacheManager cache;
+      try {
+        cache = USE_CACHE ? new SvgCacheManager(Paths.get(PathManager.getSystemPath(), "icons-v2.db")) : null;
+      }
+      catch (Exception e) {
+        Logger.getInstance(SVGLoader.class).error(e);
+        cache = null;
+      }
 
-    SvgCacheManager cache;
-    try {
-      cache = USE_CACHE ? new SvgCacheManager(Paths.get(PathManager.getSystemPath(), "icons-v2.db")) : null;
+      persistentCache = cache;
     }
-    catch (Exception e) {
-      Logger.getInstance(SVGLoader.class).error(e);
-      cache = null;
-    }
-
-    persistentCache = cache;
   }
 
   public static @Nullable SvgCacheManager getCache() {
-    return persistentCache;
+    return SvgCache.persistentCache;
   }
 
   public static final int ICON_DEFAULT_SIZE = 16;
@@ -143,7 +142,7 @@ public final class SVGLoader {
       if (theme != null) {
         Image image;
         if (theme == DEFAULT_THEME && rasterizedCacheKey != 0) {
-          SvgPrebuiltCacheManager cache = prebuiltPersistentCache;
+          SvgPrebuiltCacheManager cache = SvgCache.prebuiltPersistentCache;
           if (cache != null) {
             image = cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize);
             if (image != null) {
@@ -163,7 +162,7 @@ public final class SVGLoader {
           stream.close();
         }
 
-        image = persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
+        image = SvgCache.persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
         if (image != null) {
           return image;
         }
@@ -215,7 +214,7 @@ public final class SVGLoader {
 
       if (theme != null) {
         svgBytes = stream.readAllBytes();
-        image = persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
+        image = SvgCache.persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
         if (image != null) {
           return image;
         }
@@ -252,7 +251,7 @@ public final class SVGLoader {
     if (theme != null) {
       try {
         long cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled();
-        persistentCache.storeLoadedImage(theme, svgBytes, scale, bufferedImage, docSize);
+        SvgCache.persistentCache.storeLoadedImage(theme, svgBytes, scale, bufferedImage, docSize);
         IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart);
       }
       catch (Exception e) {
@@ -312,10 +311,8 @@ public final class SVGLoader {
       }
       else if (checkClosingBracket && ch == '>') {
         buffer.write(new byte[]{'<', '/', 's', 'v', 'g', '>'});
-        @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-        InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(buffer.getInternalBuffer(), 0, buffer.size()),
-                                                                                                                 StandardCharsets.UTF_8);
-        return SvgTranscoder.getDocumentSize(scale, SvgDocumentFactoryKt.createSvgDocument(null, reader));
+        String string = new String(buffer.getInternalBuffer(), 0, buffer.size(), StandardCharsets.UTF_8);
+        return SvgTranscoder.getDocumentSize(scale, SvgDocumentFactoryKt.createSvgDocument(null, new StringReader(string)));
       }
     }
     return new ImageLoader.Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
@@ -398,7 +395,7 @@ public final class SVGLoader {
       private void patchColorAttribute(@NotNull Element svg, String attrName) {
         String color = svg.getAttribute(attrName);
         String opacity = svg.getAttribute(attrName + "-opacity");
-        if (!StringUtil.isEmpty(color)) {
+        if (!Strings.isEmpty(color)) {
           int alpha = 255;
           try {
             alpha = (int)Math.ceil(255f * Float.valueOf(opacity));
@@ -424,7 +421,7 @@ public final class SVGLoader {
   }
 
   private static String toCanonicalColor(String color) {
-    String s = StringUtil.toLowerCase(color);
+    String s = Strings.toLowerCase(color);
     //todo[kb]: add support for red, white, black, and other named colors
     if (s.startsWith("#") && s.length() < 7) {
       s = "#" + ColorUtil.toHex(ColorUtil.fromHex(s));

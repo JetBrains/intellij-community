@@ -57,8 +57,14 @@ public final class TextDiffViewerUtil {
   @NotNull
   public static FoldingModelSupport.Settings getFoldingModelSettings(@NotNull DiffContext context) {
     TextDiffSettings settings = getTextSettings(context);
+    return getFoldingModelSettings(settings);
+  }
+
+  @NotNull
+  public static FoldingModelSupport.Settings getFoldingModelSettings(@NotNull TextDiffSettings settings) {
     return new FoldingModelSupport.Settings(settings.getContextRange(), settings.isExpandByDefault());
   }
+
 
   @NotNull
   public static TextDiffSettings getTextSettings(@NotNull DiffContext context) {
@@ -353,12 +359,14 @@ public final class TextDiffViewerUtil {
     }
   }
 
-  public static abstract class ToggleExpandByDefaultAction extends ToggleActionButton implements DumbAware {
+  public static class ToggleExpandByDefaultAction extends ToggleActionButton implements DumbAware {
     @NotNull protected final TextDiffSettings mySettings;
+    private final FoldingModelSupport myFoldingSupport;
 
-    public ToggleExpandByDefaultAction(@NotNull TextDiffSettings settings) {
+    public ToggleExpandByDefaultAction(@NotNull TextDiffSettings settings, @NotNull FoldingModelSupport foldingSupport) {
       super(DiffBundle.message("collapse.unchanged.fragments"), AllIcons.Actions.Collapseall);
       mySettings = settings;
+      myFoldingSupport = foldingSupport;
     }
 
     @Override
@@ -379,7 +387,9 @@ public final class TextDiffViewerUtil {
       expandAll(expand);
     }
 
-    protected abstract void expandAll(boolean expand);
+    protected void expandAll(boolean expand) {
+      myFoldingSupport.expandAll(expand);
+    }
   }
 
   public static abstract class ReadOnlyLockAction extends ToggleAction implements DumbAware {

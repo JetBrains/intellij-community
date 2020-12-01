@@ -109,7 +109,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     throw new UnsupportedOperationException();
   }
 

@@ -1,14 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.IconUtil;
+import com.intellij.util.LazyInitializer.NotNullValue;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.ImageUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.browser.CefBrowser;
@@ -19,13 +26,18 @@ import org.cef.handler.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
@@ -66,6 +78,7 @@ public class JBCefBrowser implements JBCefDisposable {
   @NotNull private final CefFocusHandler myCefFocusHandler;
   @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @NotNull private final CefKeyboardHandler myKeyboardHandler;
+  @Nullable private final CefLoadHandler myLoadHandler;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
   private final boolean myIsDefaultClient;
@@ -74,6 +87,37 @@ public class JBCefBrowser implements JBCefDisposable {
   private JDialog myDevtoolsFrame = null;
   protected CefContextMenuHandler myDefaultContextMenuHandler;
   private final ReentrantLock myCookieManagerLock = new ReentrantLock();
+
+  private static final NotNullValue<String> LOAD_ERROR_PAGE = new NotNullValue<>() {
+    @Override
+    public @NotNull String initialize() {
+      try {
+        URL url = JBCefApp.class.getResource("resources/load_error.html");
+        if (url != null) return Files.readString(Paths.get(url.toURI()));
+      }
+      catch (IOException | URISyntaxException ex) {
+        Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", ex);
+      }
+      return "";
+    }
+  };
+
+  private static final NotNullValue<ScaleContext.Cache<String>> BASE64_ERR_IMAGE = new NotNullValue<>() {
+    @Override
+    public @NotNull ScaleContext.Cache<String> initialize() {
+      return new ScaleContext.Cache<>((ctx) -> {
+        BufferedImage image = ImageUtil.toBufferedImage(IconUtil.toImage(AllIcons.General.Error, ctx));
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+          ImageIO.write(image, "png", out);
+          return Base64.getEncoder().encodeToString(out.toByteArray());
+        }
+        catch (IOException ex) {
+          Logger.getInstance(JBCefBrowser.class).error("couldn't write an error image", ex);
+        }
+        return "";
+      });
+    }
+  };
 
   private static final class LoadDeferrer {
     @Nullable private final String myHtml;
@@ -238,9 +282,40 @@ public class JBCefBrowser implements JBCefDisposable {
             }
           }
         }, myCefBrowser);
+
+      myCefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
+        @Override
+        public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+          int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.33);
+          int bigFontSize = (int)(fontSize * 1.5);
+          int bigFontSize_div_2 = bigFontSize / 2;
+          int bigFontSize_div_3 = bigFontSize / 3;
+          Color bgColor = JBColor.background();
+          String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
+          Color fgColor = JBColor.foreground();
+          String fgWebColor = String.format("#%02x%02x%02x", fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue());
+          String fgWebColor_05 = fgWebColor + "50";
+
+          String html = LOAD_ERROR_PAGE.get();
+          html = html.replace("${fontSize}", String.valueOf(fontSize));
+          html = html.replace("${bigFontSize}", String.valueOf(bigFontSize));
+          html = html.replace("${bigFontSize_div_2}", String.valueOf(bigFontSize_div_2));
+          html = html.replace("${bigFontSize_div_3}", String.valueOf(bigFontSize_div_3));
+          html = html.replace("${bgWebColor}", bgWebColor);
+          html = html.replace("${fgWebColor}", fgWebColor);
+          html = html.replace("${fgWebColor_05}", fgWebColor_05);
+          html = html.replace("${errorText}", errorText);
+          html = html.replace("${failedUrl}", failedUrl);
+          html = html.replace("${base64Image}",
+                              ObjectUtils.notNull(BASE64_ERR_IMAGE.get().getOrProvide(ScaleContext.create(getComponent())), ""));
+
+          loadHTML(html);
+        }
+      }, myCefBrowser);
     }
     else {
       myLifeSpanHandler = null;
+      myLoadHandler = null;
     }
 
     myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
@@ -452,6 +527,7 @@ public class JBCefBrowser implements JBCefDisposable {
       myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
       myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
       if (myLifeSpanHandler != null) myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
+      if (myLoadHandler != null) myCefClient.removeLoadHandler(myLoadHandler, myCefBrowser);
       myCefBrowser.stopLoad();
       myCefBrowser.close(true);
       if (myIsDefaultClient) {

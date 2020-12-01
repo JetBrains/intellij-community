@@ -824,7 +824,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     });
   }
 
-  Map<VirtualFile, LogicalLock> getLogicallyLockedFolders() {
+  public Map<VirtualFile, LogicalLock> getLogicallyLockedFolders() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return new HashMap<>(myComposite.getLogicallyLockedFileHolder().getMap());
@@ -856,7 +856,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     });
   }
 
-  MultiMap<String, VirtualFile> getSwitchedFilesMap() {
+  public MultiMap<String, VirtualFile> getSwitchedFilesMap() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return myComposite.getSwitchedFileHolder().getBranchToFileMap();
@@ -865,7 +865,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   @Nullable
-  Map<VirtualFile, String> getSwitchedRoots() {
+  public Map<VirtualFile, String> getSwitchedRoots() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return myComposite.getRootSwitchFileHolder().getFilesMapCopy();
@@ -1388,6 +1388,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   @TestOnly
+  public void waitEverythingDoneAndStopInTestMode() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myScheduler.awaitAllAndStop();
+    myUpdater.stop();
+  }
+
+  @TestOnly
   public void waitEverythingDoneInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myScheduler.awaitAll();
@@ -1568,11 +1575,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     private final ArrayDeque<Future<?>> myFutures = new ArrayDeque<>();
 
     public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
+      if (myExecutor.isShutdown()) return;
+
       ScheduledFuture<?> future = myExecutor.schedule(new MyLoggingRunnable(command), delay, unit);
       if (myUnitTestMode) addFuture(future);
     }
 
     public void submit(@NotNull Runnable command) {
+      if (myExecutor.isShutdown()) return;
+
       Future<?> future = myExecutor.submit(new MyLoggingRunnable(command));
       if (myUnitTestMode) addFuture(future);
     }
@@ -1591,6 +1602,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
           future.cancel(true);
         }
         myFutures.clear();
+      }
+    }
+
+    @TestOnly
+    public void awaitAllAndStop() {
+      awaitAll();
+      synchronized (myFutures) {
+        cancelAll(); //interrupt running
+        myExecutor.shutdownNow();
       }
     }
 

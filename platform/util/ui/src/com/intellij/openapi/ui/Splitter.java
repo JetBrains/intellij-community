@@ -22,7 +22,7 @@ import java.awt.event.MouseEvent;
 public class Splitter extends JPanel implements Splittable {
   private static final Icon SplitGlueH = EmptyIcon.create(6, 17);
   private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Splitter");
+  private static final Logger LOG = Logger.getInstance(Splitter.class);
   @NonNls public static final String PROP_PROPORTION = "proportion";
   @NonNls public static final String PROP_ORIENTATION = "orientation";
 

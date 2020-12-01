@@ -145,7 +145,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     return "JetBrains".equals(getShortCompanyName());
   }
 
-  public abstract List<ProgressSlide> getProgressSlides();
+  public abstract @NotNull List<ProgressSlide> getProgressSlides();
 
   public abstract int getProgressHeight();
 
@@ -160,4 +160,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract @NotNull BuildNumber getApiVersionAsNumber();
 
   public abstract @NotNull List<PluginId> getEssentialPluginsIds();
+
+  public abstract @Nullable String getDefaultLightLaf();
+
+  public abstract @Nullable String getDefaultDarkLaf();
 }

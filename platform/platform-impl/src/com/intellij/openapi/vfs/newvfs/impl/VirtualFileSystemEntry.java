@@ -136,7 +136,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  void updateLinkStatus(boolean isSymlink, @NotNull VirtualFileSystemEntry parent) {
+  void updateLinkStatus(@NotNull VirtualFileSystemEntry parent) {
     setFlagInt(VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG, parent.thisOrParentHaveSymlink());
     registerLink(getFileSystem());
   }
@@ -398,7 +398,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
     getSegment().changeParent(myId, directory);
     directory.addChild(this);
-    updateLinkStatus(isSymlink(), directory);
+    updateLinkStatus(directory);
     ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
@@ -469,7 +469,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     if (UISettings.getInstance().getHideKnownExtensionInTabs() && !isDirectory()) {
       final String nameWithoutExtension = getNameWithoutExtension();
       return nameWithoutExtension.isEmpty() ? getName() : nameWithoutExtension;
@@ -637,7 +637,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       }
 
       @Override
-      public InputStream getInputStream() {
+      public @NotNull InputStream getInputStream() {
         throw new UnsupportedOperationException();
       }
     };

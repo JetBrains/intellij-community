@@ -9,7 +9,7 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
-import com.intellij.util.io.PersistentHashMapImpl.CompactionRecordInfo;
+import com.intellij.util.io.PersistentMapImpl.CompactionRecordInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;

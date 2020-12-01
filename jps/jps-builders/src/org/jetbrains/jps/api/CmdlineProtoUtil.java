@@ -3,6 +3,7 @@ package org.jetbrains.jps.api;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -32,7 +33,7 @@ public final class CmdlineProtoUtil {
     );
   }
 
-  public static CmdlineRemoteProto.Message.ControllerMessage createBuildRequest(String project,
+  public static CmdlineRemoteProto.Message.ControllerMessage createBuildRequest(@NotNull String project,
                                                                                 List<? extends TargetTypeBuildScope> scopes,
                                                                                 Collection<String> paths,
                                                                                 final Map<String, String> userData,
@@ -62,7 +63,7 @@ public final class CmdlineProtoUtil {
   }
 
   private static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
-                                                                                          String project,
+                                                                                          @NotNull String project,
                                                                                           List<? extends TargetTypeBuildScope> scopes,
                                                                                           Map<String, String> userData,
                                                                                           Collection<String> paths,

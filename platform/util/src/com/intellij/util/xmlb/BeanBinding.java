@@ -11,7 +11,6 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import it.unimi.dsi.fastutil.objects.Object2FloatMap;
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jdom.Comment;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -158,7 +157,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return true;
   }
 
-  public final @NotNull Object2FloatMap<String> computeBindingWeights(@NotNull ObjectLinkedOpenHashSet<String> accessorNameTracker) {
+  public final @NotNull Object2FloatMap<String> computeBindingWeights(@NotNull Set<String> accessorNameTracker) {
     Object2FloatMap<String> weights = new Object2FloatOpenHashMap<>(accessorNameTracker.size());
     float weight = 0;
     float step = (float)myBindings.length / (float)accessorNameTracker.size();

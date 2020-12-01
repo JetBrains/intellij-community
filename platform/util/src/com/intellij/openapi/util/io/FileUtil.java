@@ -1075,6 +1075,9 @@ public class FileUtil extends FileUtilRt {
   public static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
     writeToFile(file, text, false);
   }
+  public static void writeToFile(@NotNull File file, @NotNull String text, @NotNull Charset charset) throws IOException {
+    writeToFile(file, text.getBytes(charset));
+  }
   public static void writeToFile(@NotNull File file, @NotNull String text, boolean append) throws IOException {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), append);
   }

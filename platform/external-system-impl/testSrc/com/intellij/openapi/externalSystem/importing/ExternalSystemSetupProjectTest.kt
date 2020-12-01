@@ -7,18 +7,24 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   @Test
   fun `test project open`() {
     val projectInfo = generateProject("A")
-    openProjectFrom(projectInfo.projectFile).use {
+    waitForImport {
+      openProjectFrom(projectInfo.projectFile)
+    }.use {
       assertModules(it, projectInfo)
       assertDefaultProjectSettings(it)
+      assertDefaultProjectState(it)
     }
   }
 
   @Test
   fun `test project import`() {
     val projectInfo = generateProject("A")
-    importProjectFrom(projectInfo.projectFile).use {
+    waitForImport {
+      importProjectFrom(projectInfo.projectFile)
+    }.use {
       assertModules(it, projectInfo)
       assertDefaultProjectSettings(it)
+      assertDefaultProjectState(it)
     }
   }
 
@@ -26,9 +32,12 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   fun `test project attach`() {
     val projectInfo = generateProject("A")
     openPlatformProjectFrom(projectInfo.projectFile.parent).use {
-      attachProject(it, projectInfo.projectFile)
+      waitForImport {
+        attachProject(it, projectInfo.projectFile)
+      }
       assertModules(it, projectInfo)
       assertDefaultProjectSettings(it)
+      assertDefaultProjectState(it)
     }
   }
 
@@ -36,9 +45,12 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   fun `test project import from script`() {
     val projectInfo = generateProject("A")
     openPlatformProjectFrom(projectInfo.projectFile.parent).use {
-      attachProjectFromScript(it, projectInfo.projectFile)
+      waitForImport {
+        attachProjectFromScript(it, projectInfo.projectFile)
+      }
       assertModules(it, projectInfo)
       assertDefaultProjectSettings(it)
+      assertDefaultProjectState(it)
     }
   }
 
@@ -46,11 +58,16 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   fun `test module attach`() {
     val projectInfo = generateProject("A")
     val linkedProjectInfo = generateProject("L")
-    openProjectFrom(projectInfo.projectFile).use {
+    waitForImport {
+      openProjectFrom(projectInfo.projectFile)
+    }.use {
       assertModules(it, projectInfo)
-      attachProject(it, linkedProjectInfo.projectFile)
+      waitForImport {
+        attachProject(it, linkedProjectInfo.projectFile)
+      }
       assertModules(it, projectInfo, linkedProjectInfo)
       assertDefaultProjectSettings(it)
+      assertDefaultProjectState(it)
     }
   }
 
@@ -58,15 +75,21 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   fun `test project re-open`() {
     val projectInfo = generateProject("A")
     val linkedProjectInfo = generateProject("L")
-    openProjectFrom(projectInfo.projectFile).use(save = true) {
+    waitForImport {
+      openProjectFrom(projectInfo.projectFile)
+    }.use(save = true) {
       assertModules(it, projectInfo)
-      attachProject(it, linkedProjectInfo.projectFile)
+      waitForImport {
+        attachProject(it, linkedProjectInfo.projectFile)
+      }
       assertModules(it, projectInfo, linkedProjectInfo)
       assertDefaultProjectSettings(it)
+      assertDefaultProjectState(it)
     }
     openProjectFrom(projectInfo.projectFile).use {
       assertModules(it, projectInfo, linkedProjectInfo)
       assertDefaultProjectSettings(it)
+      assertDefaultProjectState(it)
     }
   }
 
@@ -74,15 +97,22 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   fun `test project re-import deprecation`() {
     val projectInfo = generateProject("A")
     val linkedProjectInfo = generateProject("L")
-    openProjectFrom(projectInfo.projectFile).use(save = true) {
+
+    waitForImport {
+      openProjectFrom(projectInfo.projectFile)
+    }.use(save = true) {
       assertModules(it, projectInfo)
-      attachProject(it, linkedProjectInfo.projectFile)
+      waitForImport {
+        attachProject(it, linkedProjectInfo.projectFile)
+      }
       assertModules(it, projectInfo, linkedProjectInfo)
       assertDefaultProjectSettings(it)
+      assertDefaultProjectState(it)
     }
     importProjectFrom(projectInfo.projectFile).use {
       assertModules(it, projectInfo, linkedProjectInfo)
       assertDefaultProjectSettings(it)
+      assertDefaultProjectState(it)
     }
   }
 }

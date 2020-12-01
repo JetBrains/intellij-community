@@ -87,7 +87,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     try {
       RunAll()
         .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
-        .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
+        .append(ThrowableRunnable { changeListManager.waitEverythingDoneAndStopInTestMode() })
         .append(ThrowableRunnable { if (::vcsNotifier.isInitialized) vcsNotifier.cleanup() })
         .append(ThrowableRunnable { waitForPendingTasks() })
         .run()
@@ -187,23 +187,20 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   }
 
 
-  protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
-    return assertNotification(NotificationType.INFORMATION, title, message, vcsNotifier.lastNotification)
+  protected fun assertSuccessfulNotification(title: String, message: String): Notification {
+    return assertHasNotification(NotificationType.INFORMATION, title, message, vcsNotifier.notifications)
   }
 
-  protected fun assertSuccessfulNotification(message: String) : Notification {
+  protected fun assertSuccessfulNotification(message: String): Notification {
     return assertSuccessfulNotification("", message)
   }
 
   protected fun assertWarningNotification(title: String, message: String) {
-    assertNotification(NotificationType.WARNING, title, message, vcsNotifier.lastNotification)
+    assertHasNotification(NotificationType.WARNING, title, message, vcsNotifier.notifications)
   }
 
-  protected fun assertErrorNotification(title: String, message: String) : Notification {
-    val notification = vcsNotifier.lastNotification
-    assertNotNull("No notification was shown", notification)
-    assertNotification(NotificationType.ERROR, title, message, notification)
-    return notification
+  protected fun assertErrorNotification(title: String, message: String): Notification {
+    return assertHasNotification(NotificationType.ERROR, title, message, vcsNotifier.notifications)
   }
 
   protected fun assertNoNotification() {

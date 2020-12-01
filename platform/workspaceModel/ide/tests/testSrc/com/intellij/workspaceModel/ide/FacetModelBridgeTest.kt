@@ -104,7 +104,7 @@ class FacetModelBridgeTest {
                            source)
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = PlatformTestUtil.loadAndOpenProject(iprFile)
+      val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
       Disposer.register(disposableRule.disposable, Disposable {
         PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       })

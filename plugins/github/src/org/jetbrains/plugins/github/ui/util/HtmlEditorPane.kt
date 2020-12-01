@@ -1,16 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.util
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.Graphics2DDelegate
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.codereview.BaseHtmlEditorPane
 import icons.GithubIcons
 import java.awt.*
 import java.awt.image.ImageObserver
 import javax.swing.text.Element
 import javax.swing.text.FlowView
+import javax.swing.text.ParagraphView
 import javax.swing.text.View
 import javax.swing.text.html.ImageView
+import javax.swing.text.html.StyleSheet
+import javax.swing.text.html.*
 
 internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
   constructor(@NlsSafe body: String) : this() {
@@ -25,7 +31,46 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
       if (view is ImageView) {
         return MyScalingImageView(elem)
       }
+      if (elem.name == "blockquote") {
+        return GitHubQuoteView(elem)
+      }
+      if (view is ParagraphView) {
+        return GHParagraphView(elem)
+      }
       return view
+    }
+  }
+
+  private class GitHubQuoteView(element: Element) : BlockView(element, Y_AXIS) {
+
+    override fun setPropertiesFromAttributes() {
+      super.setPropertiesFromAttributes()
+      setInsets(topInset, 0, bottomInset, rightInset)
+    }
+
+    override fun getStyleSheet(): StyleSheet = super.getStyleSheet().apply {
+      val borderWidth = JBUI.scale(2)
+      val borderColor = ColorUtil.toHex(DarculaUIUtil.getOutlineColor(true, false))
+      val padding = JBUI.scale(10)
+      //language=CSS
+      addRule("""
+        html body blockquote p {
+          border-left: ${borderWidth}px solid ${borderColor};
+          padding-left: ${padding}px;
+        }
+      """.trimIndent())
+    }
+  }
+
+  private class GHParagraphView(elem: Element) : MyParagraphView(elem) {
+    override fun getStyleSheet(): StyleSheet = super.getStyleSheet().apply {
+      val margin = JBUI.scale(10)
+      //language=CSS
+      addRule("""
+        p {
+          margin-bottom: ${margin}px;
+        }
+      """.trimIndent())
     }
   }
 

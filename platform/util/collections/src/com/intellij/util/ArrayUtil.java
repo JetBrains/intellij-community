@@ -527,7 +527,7 @@ public final class ArrayUtil {
   }
 
   /**
-   * @deprecated Use {@link #equals(Object[], Object[], Comparator)}
+   * @deprecated Use {@link Arrays#equals(Object[], Object[], Comparator)}
    */
   @Deprecated
   @Contract(pure=true)
@@ -550,7 +550,9 @@ public final class ArrayUtil {
     return true;
   }
 
-  @Contract(pure=true)
+  /**
+   * @deprecated Use {@link Arrays#equals(Object[], Object[], Comparator)}
+   */
   public static <T> boolean equals(T @NotNull [] a1, T @NotNull [] a2, @NotNull Comparator<? super T> comparator) {
     //noinspection ArrayEquality
     if (a1 == a2) {

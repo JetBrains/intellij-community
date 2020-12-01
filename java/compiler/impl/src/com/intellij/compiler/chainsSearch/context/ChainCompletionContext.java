@@ -17,7 +17,6 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -34,10 +33,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class ChainCompletionContext {
-  private static final String[] WIDELY_USED_CLASS_NAMES = new String [] {CommonClassNames.JAVA_LANG_STRING,
-                                                                  CommonClassNames.JAVA_LANG_OBJECT,
-                                                                  CommonClassNames.JAVA_LANG_CLASS};
-  private static final Set<String> WIDELY_USED_SHORT_NAMES = ContainerUtil.set("String", "Object", "Class");
+  private static final String[] WIDELY_USED_CLASS_NAMES = new String[]{
+    CommonClassNames.JAVA_LANG_STRING,
+    CommonClassNames.JAVA_LANG_OBJECT,
+    CommonClassNames.JAVA_LANG_CLASS
+  };
+  private static final Set<String> WIDELY_USED_SHORT_NAMES = Set.of("String", "Object", "Class");
 
   @NotNull
   private final ChainSearchTarget myTarget;
@@ -58,26 +59,7 @@ public final class ChainCompletionContext {
   @NotNull
   private final CompilerReferenceServiceEx myRefService;
 
-  private final NotNullLazyValue<Set<CompilerRef>> myContextClassReferences = new NotNullLazyValue<>() {
-    @NotNull
-    @Override
-    protected Set<CompilerRef> compute() {
-      Set<CompilerRef> set = new HashSet<>();
-      for (PsiType type : getContextTypes()) {
-        PsiClass c = PsiUtil.resolveClassInType(type);
-        if (c != null) {
-          String name = ClassUtil.getJVMClassName(c);
-          if (name != null) {
-            int n = myRefService.getNameId(name);
-            if (n != 0) {
-              set.add(new CompilerRef.JavaCompilerClassRef(n));
-            }
-          }
-        }
-      }
-      return set;
-    }
-  };
+  private final NotNullLazyValue<Set<CompilerRef>> myContextClassReferences;
 
   private ChainCompletionContext(@NotNull ChainSearchTarget target,
                                  @NotNull List<PsiNamedElement> contextElements,
@@ -92,6 +74,22 @@ public final class ChainCompletionContext {
     myQualifierClassResolver = new Int2ObjectOpenHashMap<>();
     myResolver = FactoryMap.create(sign -> sign.resolve());
     myRefService = compilerReferenceService;
+    myContextClassReferences = NotNullLazyValue.createValue(() -> {
+        Set<CompilerRef> set = new HashSet<>();
+        for (PsiType type : getContextTypes()) {
+          PsiClass c = PsiUtil.resolveClassInType(type);
+          if (c != null) {
+            String name = ClassUtil.getJVMClassName(c);
+            if (name != null) {
+              int n = myRefService.getNameId(name);
+              if (n != 0) {
+                set.add(new CompilerRef.JavaCompilerClassRef(n));
+              }
+            }
+          }
+        }
+        return set;
+      });
   }
 
   @NotNull
@@ -298,9 +296,18 @@ public final class ChainCompletionContext {
 
   public static boolean isWidelyUsed(@NotNull PsiType type) {
     type = type.getDeepComponentType();
-    if (type instanceof PsiPrimitiveType) return true;
-    if (!(type instanceof PsiClassType)) return false;
-    if (WIDELY_USED_SHORT_NAMES.contains(((PsiClassType)type).getClassName())) return false;
+    if (type instanceof PsiPrimitiveType) {
+      return true;
+    }
+    if (!(type instanceof PsiClassType)) {
+      return false;
+    }
+
+    String className = ((PsiClassType)type).getClassName();
+    if (className != null && WIDELY_USED_SHORT_NAMES.contains(className)) {
+      return false;
+    }
+
     final PsiClass resolvedClass = ((PsiClassType)type).resolve();
     if (resolvedClass == null) return false;
     final String qName = resolvedClass.getQualifiedName();

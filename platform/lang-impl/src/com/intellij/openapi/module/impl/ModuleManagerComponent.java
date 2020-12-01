@@ -46,7 +46,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     super(project);
 
     myMessageBusConnection = project.getMessageBus().connect(this);
-    myMessageBusConnection.setDefaultHandler((event, params) -> cleanCachedStuff());
+    myMessageBusConnection.setDefaultHandler(() -> cleanCachedStuff());
     myMessageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
 
     // default project doesn't have modules

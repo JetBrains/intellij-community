@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -30,6 +31,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
 
 public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, PrioritizedDocumentListener, Dumpable, ModificationTracker {
@@ -79,7 +82,9 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         for (Inlay inlay : myEditor.getInlayModel().getBlockElementsInRange(foldStartOffset, foldEndOffset)) {
           int offset = inlay.getOffset();
           boolean relatedToPrecedingText = inlay.isRelatedToPrecedingText();
-          if ((relatedToPrecedingText || offset != foldStartOffset) && (!relatedToPrecedingText || offset != foldEndOffset)) {
+          if ((relatedToPrecedingText || offset != foldStartOffset) &&
+              (!relatedToPrecedingText || offset != foldEndOffset) &&
+              !showWhenFolded(inlay)) {
             sum += inlay.getHeightInPixels();
           }
         }

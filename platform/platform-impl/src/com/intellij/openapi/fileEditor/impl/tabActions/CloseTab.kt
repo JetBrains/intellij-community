@@ -40,10 +40,11 @@ class CloseTab(c: JComponent,
     e.presentation.isVisible = instance.showCloseButton || pinned
     if (pinned && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
       e.presentation.text = ""
+      shortcutSet = CustomShortcutSet.EMPTY;
     }
     else {
       if (pinned) {
-        shortcutSet = ObjectUtils.notNull(KeymapUtil.getActiveKeymapShortcuts("PinActiveEditorTab"), CustomShortcutSet.EMPTY)
+        shortcutSet = CustomShortcutSet.EMPTY;
         e.presentation.text = TextWithMnemonic.parse(IdeBundle.message("action.unpin.tab")).dropMnemonic(true).text
       }
       else {

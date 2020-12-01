@@ -5,14 +5,12 @@ import com.intellij.execution.process.elevation.ElevationBundle
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages.CANCEL
 import com.intellij.openapi.ui.Messages.YES
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.messages.Topic
 import kotlin.time.ExperimentalTime
 import kotlin.time.minutes
@@ -63,8 +61,8 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
     }
 
   private var isSettingsUpdateDone: Boolean
-    get() = options.isSettingsUpdateDone
-    set(value) {
+    get() = synchronized(this) { options.isSettingsUpdateDone }
+    set(value) = synchronized(this) {
       options.isSettingsUpdateDone = value
     }
 
@@ -82,27 +80,27 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
   override fun getStateModificationCount() = options.modificationCount
 
   fun askEnableKeepAuthIfNeeded(): Boolean {
+    return isSettingsUpdateDone || invokeAndWaitIfNeeded { doAskEnableKeepAuthIfNeeded() }
+  }
+
+  private fun doAskEnableKeepAuthIfNeeded(): Boolean {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
     if (isSettingsUpdateDone) return true
 
-    val productName = ApplicationNamesInfo.getInstance().fullProductName
-    val firstSentence = ElevationBundle.message("text.you.are.about.to.run.privileges.process")
-    val explanatoryText = ElevationBundle.message("text.elevation.explanatory.comment", productName)
-    val warningHtml = ElevationBundle.message("text.elevation.explanatory.warning.html")
+    val yesText = ElevationBundle.message("keep.authorized.for.0", NlsMessages.formatDuration(DEFAULT_GRACE_PERIOD_MS))
+    val noText = ElevationBundle.message("authorize.every.time")
 
+    val message = ExplanatoryTextUiUtil.message(ElevationBundle.message("text.you.are.about.to.run.privileges.process"),
+                                                maxLineLength = 70)
     val title =
       if (SystemInfo.isMac) ElevationBundle.message("update.elevation.preferences")
       else ElevationBundle.message("update.elevation.settings")
 
     val yesNoCancelResult = MessageDialogBuilder
-      .yesNoCancel(title,
-                   HtmlBuilder()
-                     .append(HtmlChunk.p().addText(firstSentence)).br()
-                     .append(HtmlChunk.p().addText(explanatoryText)).br()
-                     .append(HtmlChunk.p().addRaw(warningHtml))
-                     .wrapWithHtmlBody()
-                     .toString())
-      .yesText(ElevationBundle.message("keep.authorized.for.0", NlsMessages.formatDuration(DEFAULT_GRACE_PERIOD_MS)))
-      .noText(ElevationBundle.message("authorize.every.time"))
+      .yesNoCancel(title, message)
+      .yesText(yesText)
+      .noText(noText)
       .guessWindowAndAsk()
 
     if (yesNoCancelResult == CANCEL) return false

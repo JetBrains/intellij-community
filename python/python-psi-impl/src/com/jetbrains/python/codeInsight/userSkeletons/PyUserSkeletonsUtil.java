@@ -53,7 +53,7 @@ import java.util.List;
  */
 public class PyUserSkeletonsUtil {
   public static final String USER_SKELETONS_DIR = "python-skeletons";
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil");
+  private static final Logger LOG = Logger.getInstance(PyUserSkeletonsUtil.class);
   public static final Key<Boolean> HAS_SKELETON = Key.create("PyUserSkeleton.hasSkeleton");
 
   private static final ImmutableSet<String> STDLIB_SKELETONS = ImmutableSet.of(

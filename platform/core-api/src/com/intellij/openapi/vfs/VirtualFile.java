@@ -579,6 +579,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
+  @NotNull
   public final OutputStream getOutputStream(Object requestor) throws IOException {
     return getOutputStream(requestor, -1, -1);
   }
@@ -678,6 +679,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
+  @NotNull
   public @NlsSafe String getPresentableName() {
     return getName();
   }
@@ -703,6 +705,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray
    */
+  @NotNull
   public abstract InputStream getInputStream() throws IOException;
 
   public byte @Nullable [] getBOM() {

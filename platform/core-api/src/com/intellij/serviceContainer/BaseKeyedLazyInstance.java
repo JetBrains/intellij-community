@@ -34,7 +34,7 @@ public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> 
   @Override
   protected abstract @Nullable String getImplementationClassName();
 
-  public @NotNull T getInstance() {
+  public final @NotNull T getInstance() {
     return getInstance(ApplicationManager.getApplication(), pluginDescriptor);
   }
 

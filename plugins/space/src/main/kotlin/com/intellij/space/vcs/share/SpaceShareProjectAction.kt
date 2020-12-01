@@ -28,6 +28,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.actions.SpaceActionUtils
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.notification.SpaceNotificationIdsHolder.Companion.GIT_REPO_INIT_ERROR
+import com.intellij.space.notification.SpaceNotificationIdsHolder.Companion.PROJECT_SHARED_SUCCESSFULLY
+import com.intellij.space.notification.SpaceNotificationIdsHolder.Companion.SHARING_NOT_FINISHED
 import com.intellij.space.settings.CloneType
 import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.vcs.SpaceHttpPasswordState
@@ -140,7 +143,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
         }
 
         VcsNotifier.getInstance(project).notifySuccess(
-          "space.project.shared.successfully",
+          PROJECT_SHARED_SUCCESSFULLY,
           SpaceBundle.message("share.project.success.notification.title"),
           formatLink(url, repoInfo.name), // NON-NLS
           NotificationListener.URL_OPENING_LISTENER
@@ -186,7 +189,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
     indicator.text = SpaceBundle.message("share.project.action.progress.title.initializing.repository.title")
     val result = Git.getInstance().init(project, root)
     if (!result.success()) {
-      VcsNotifier.getInstance(project).notifyError("space.git.repo.init.error",
+      VcsNotifier.getInstance(project).notifyError(GIT_REPO_INIT_ERROR,
                                                    GitBundle.message("initializing.title"),
                                                    result.errorOutputAsHtmlString)
       log.info { "Failed to create empty git repo: " + result.errorOutputAsJoinedString }
@@ -325,7 +328,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
 
   private fun notifyError(project: Project, @NotificationContent message: String) {
     VcsNotifier.getInstance(project).notifyError(
-      "space.sharing.not.finished",
+      SHARING_NOT_FINISHED,
       SpaceBundle.message("share.project.error.notification.title"),
       message,
       NotificationListener.URL_OPENING_LISTENER

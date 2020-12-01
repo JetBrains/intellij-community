@@ -58,23 +58,15 @@ import java.util.List;
  */
 public class SettingsEntryPointAction extends AnAction implements DumbAware, RightAlignedToolbarAction,
                                                                   AnAction.TransparentUpdate, TooltipDescriptionProvider {
-  private Icon myIcon;
-
   public SettingsEntryPointAction() {
     initPluginsListeners();
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    myIcon = AllIcons.General.GearPlain;
+    resetActionIcon();
 
     ListPopup popup = createMainPopup(e.getDataContext());
-    popup.addListener(new JBPopupListener() {
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        myIcon = null;
-      }
-    });
 
     InputEvent inputEvent = e.getInputEvent();
     if (inputEvent == null) {
@@ -96,7 +88,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
     Presentation presentation = e.getPresentation();
     presentation.setText("");
     presentation.setDescription(getActionTooltip());
-    presentation.setIcon(myIcon == null ? getActionIcon() : myIcon);
+    presentation.setIcon(getActionIcon());
 
     for (AnAction child : getTemplateActions()) {
       child.update(e);
@@ -236,6 +228,10 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
   private static void initPluginsListeners() {
     if (myUpdatesService == null) {
       myUpdatesService = PluginUpdatesService.connectWithUpdates(descriptors -> {
+        if (ContainerUtil.isEmpty(descriptors)) {
+          newPluginsUpdate(null, null);
+          return;
+        }
         List<PluginDownloader> downloaders = new ArrayList<>();
         try {
           for (IdeaPluginDescriptor descriptor : descriptors) {
@@ -266,9 +262,11 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
 
   private static CheckForUpdateResult myPlatformUpdateInfo;
   private static Collection<IdeaPluginDescriptor> myIncompatiblePlugins;
+  private static boolean myShowPlatformUpdateIcon;
 
   private static Collection<PluginDownloader> myUpdatedPlugins;
   private static Collection<IdeaPluginDescriptor> myCustomRepositoryPlugins;
+  private static boolean myShowPluginsUpdateIcon;
   private static boolean myEnableUpdateAction = true;
 
   private static void setEnableUpdateAction(boolean value) {
@@ -279,6 +277,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
                                        @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins) {
     myPlatformUpdateInfo = platformUpdateInfo;
     myIncompatiblePlugins = incompatiblePlugins;
+    myShowPlatformUpdateIcon = platformUpdateInfo != null;
     updateAction();
   }
 
@@ -286,6 +285,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
                                       @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
     myUpdatedPlugins = updatedPlugins;
     myCustomRepositoryPlugins = customRepositoryPlugins;
+    myShowPluginsUpdateIcon = updatedPlugins != null;
     updateAction();
   }
 
@@ -314,11 +314,15 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
            : IdeBundle.message("settings.entry.point.update.tooltip");
   }
 
+  private static void resetActionIcon() {
+    myShowPlatformUpdateIcon = myShowPluginsUpdateIcon = false;
+  }
+
   private static @NotNull Icon getActionIcon() {
-    if (myPlatformUpdateInfo != null) {
+    if (myShowPlatformUpdateIcon) {
       return AllIcons.Ide.Notification.IdeUpdate;
     }
-    if (myUpdatedPlugins != null) {
+    if (myShowPluginsUpdateIcon) {
       return AllIcons.Ide.Notification.PluginUpdate;
     }
     return AllIcons.General.GearPlain;
@@ -394,7 +398,6 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
 
   private static class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
     private StatusBar myStatusBar;
-    private Icon myIcon;
 
     private MyStatusBarWidget() {
       initPluginsListeners();
@@ -423,7 +426,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
     @Override
     public @Nullable Consumer<MouseEvent> getClickConsumer() {
       return event -> {
-        myIcon = AllIcons.General.GearPlain;
+        resetActionIcon();
         myStatusBar.updateWidget(WIDGET_ID);
 
         Component component = event.getComponent();
@@ -435,12 +438,6 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
             Dimension size = popup.getSize();
             popup.setLocation(new Point(location.x + component.getWidth() - size.width, location.y - size.height));
           }
-
-          @Override
-          public void onClosed(@NotNull LightweightWindowEvent event) {
-            myIcon = null;
-            myStatusBar.updateWidget(WIDGET_ID);
-          }
         });
         popup.show(component);
       };
@@ -448,7 +445,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
 
     @Override
     public @Nullable Icon getIcon() {
-      return myIcon == null ? getActionIcon() : myIcon;
+      return getActionIcon();
     }
 
     @Override

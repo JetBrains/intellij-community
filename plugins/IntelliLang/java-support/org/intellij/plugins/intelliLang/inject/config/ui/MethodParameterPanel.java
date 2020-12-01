@@ -37,8 +37,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
@@ -53,13 +51,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Enumeration;
+import java.util.*;
 
-public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
-
+public final class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
   LanguagePanel myLanguagePanel;  // read by reflection
   AdvancedPanel myAdvancedPanel;
 
@@ -71,7 +65,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private final ReferenceEditorWithBrowseButton myClassField;
   private DefaultMutableTreeNode myRootNode;
 
-  private final THashMap<PsiMethod, MethodParameterInjection.MethodInfo> myData = new THashMap<>();
+  private final Map<PsiMethod, MethodParameterInjection.MethodInfo> myData = new HashMap<>();
 
   public MethodParameterPanel(MethodParameterInjection injection, final Project project) {
     super(injection, project);
@@ -184,7 +178,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       final PsiClass[] classes = classType instanceof PsiClassType? JavaPsiFacade.getInstance(myProject).
         findClasses(classType.getCanonicalText(), GlobalSearchScope.allScope(myProject)) : PsiClass.EMPTY_ARRAY;
       if (classes.length == 0) return;
-      final THashSet<String> visitedSignatures = new THashSet<>();
+      final Set<String> visitedSignatures = new HashSet<>();
       for (PsiClass psiClass : classes) {
         for (PsiMethod method : psiClass.getMethods()) {
           final PsiModifierList modifiers = method.getModifierList();
@@ -244,7 +238,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     setPsiClass(myOrigInjection.getClassName());
 
     rebuildTreeModel();
-    final THashMap<String, MethodParameterInjection.MethodInfo> map = new THashMap<>();
+    final Map<String, MethodParameterInjection.MethodInfo> map = new HashMap<>();
     for (PsiMethod method : myData.keySet()) {
       final MethodParameterInjection.MethodInfo methodInfo = myData.get(method);
       map.put(methodInfo.getMethodSignature(), methodInfo);

@@ -49,7 +49,6 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +105,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
-  private final Map<String, Sheet> myType2Sheet = new THashMap<>();
+  private final Map<String, Sheet> myType2Sheet = new HashMap<>();
   private final RefreshAction myRefreshAction = new RefreshAction();
   private final SingleAlarm myCursorAlarm = new SingleAlarm(() -> setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)), 100, this);
   private SmartPsiElementPointer mySmartPsiElementPointer;
@@ -122,7 +121,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myCardLayout = new CardLayout();
     myTreePanel = new JPanel(myCardLayout);
 
-    Map<String, JTree> type2treeMap = new THashMap<>();
+    Map<String, JTree> type2treeMap = new HashMap<>();
     createTrees(type2treeMap);
 
     myI18nMap = getPresentableNameMap();

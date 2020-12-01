@@ -51,7 +51,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
   @NotNull
   private final GradleVersion myCurrentGradleVersion;
-  private ModelBuilderContext myModelBuilderContext;
+  private MyModelBuilderContext myModelBuilderContext;
   @Deprecated
   public static final ThreadLocal<ModelBuilderContext> CURRENT_CONTEXT = new ThreadLocal<ModelBuilderContext>();
 
@@ -99,8 +99,9 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
     if (myModelBuilderContext == null) {
       Gradle rootGradle = getRootGradle(project.getGradle());
-      myModelBuilderContext = new MyModelBuilderContext(rootGradle, parameter);
+      myModelBuilderContext = new MyModelBuilderContext(rootGradle);
     }
+    myModelBuilderContext.setParameter(parameter);
 
     CURRENT_CONTEXT.set(myModelBuilderContext);
     try {
@@ -172,11 +173,10 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   private static final class MyModelBuilderContext implements ModelBuilderContext {
     private final Map<DataProvider, Object> myMap = new IdentityHashMap<DataProvider, Object>();
     private final Gradle myGradle;
-    @Nullable private final ModelBuilderService.Parameter myParameter;
+    @Nullable private ModelBuilderService.Parameter myParameter = null;
 
-    private MyModelBuilderContext(Gradle gradle, @Nullable ModelBuilderService.Parameter parameter) {
+    private MyModelBuilderContext(Gradle gradle) {
       myGradle = gradle;
-      myParameter = parameter;
     }
 
     @NotNull
@@ -189,6 +189,10 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     @Override
     public String getParameter() {
       return myParameter != null ? myParameter.getValue() : null;
+    }
+
+    private void setParameter(@Nullable ModelBuilderService.Parameter parameter) {
+      myParameter = parameter;
     }
 
     @NotNull

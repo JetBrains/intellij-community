@@ -30,8 +30,14 @@ import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.jvmName
 
+private val LOG = logger<EntityStorageSerializerImpl>()
+
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
                                   private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
+  companion object {
+    const val SERIALIZER_VERSION = "v7"
+  }
+
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   @set:TestOnly
@@ -404,7 +410,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Read version
       val cacheVersion = input.readString()
       if (cacheVersion != serializerDataFormatVersion) {
-        logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+        LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
         return null
       }
 
@@ -470,7 +476,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Read version
       val cacheVersion = input.readString()
       if (cacheVersion != serializerDataFormatVersion) {
-        logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+        LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
         return null
       }
 
@@ -493,22 +499,15 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Read version
       val cacheVersion = input.readString()
       if (cacheVersion != serializerDataFormatVersion) {
-        logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+        LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
         return
       }
 
       val classes = kryo.readClassAndObject(input) as List<Pair<TypeInfo, Int>>
-
       val map = classes.map { (first, second) -> typesResolver.resolveClass(first.name, first.pluginId) to second }.toMap()
       ClassToIntConverter.fromMap(map)
     }
   }
 
   private data class TypeInfo(val name: String, val pluginId: String?)
-
-  companion object {
-    val logger = logger<EntityStorageSerializerImpl>()
-
-    const val SERIALIZER_VERSION = "v6"
-  }
 }

@@ -46,8 +46,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -342,7 +340,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                    final @NotNull List<? extends LocalInspectionToolWrapper> wrappers,
                                                    @NotNull Set<? extends PsiFile> alreadyVisitedInjected) {
     if (!myInspectInjectedPsi) return Collections.emptySet();
-    Set<PsiFile> injected = new THashSet<>();
+    Set<PsiFile> injected = new HashSet<>();
     for (PsiElement element : elements) {
       PsiFile containingFile = getFile();
       InjectedLanguageManager.getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false,
@@ -403,11 +401,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return b.create();
   }
 
-  private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>(); // accessed in EDT only
+  private final Map<TextRange, RangeMarker> ranges2markersCache = new HashMap<>(); // accessed in EDT only
   private final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
   private final List<HighlightInfo> infos = new ArrayList<>(2); // accessed in EDT only
   private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-  private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new THashSet<>());
+  private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new HashSet<>());
 
   private void addDescriptorIncrementally(final @NotNull ProblemDescriptor descriptor,
                                           final @NotNull LocalInspectionToolWrapper tool,
@@ -476,7 +474,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private void addHighlightsFromResults(@NotNull List<? super HighlightInfo> outInfos) {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
-    Set<Pair<TextRange, String>> emptyActionRegistered = new THashSet<>();
+    Set<Pair<TextRange, String>> emptyActionRegistered = new HashSet<>();
 
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
       ProgressManager.checkCanceled();

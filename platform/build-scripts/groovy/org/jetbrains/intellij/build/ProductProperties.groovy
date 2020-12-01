@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 
 /**
@@ -212,7 +213,9 @@ abstract class ProductProperties {
    * Paths to externally built plugins to be included into the IDE. They will be copied into the build, as well as included into
    * the IDE classpath when launching it to build search index, jar order, etc
    */
-  List<String> getAdditionalPluginPaths(BuildContext context) { null }
+  @NotNull List<String> getAdditionalPluginPaths(@NotNull BuildContext context) {
+    return Collections.emptyList()
+  }
 
   /**
    * @return custom properties for {@link org.jetbrains.intellij.build.impl.productInfo.ProductInfoData}

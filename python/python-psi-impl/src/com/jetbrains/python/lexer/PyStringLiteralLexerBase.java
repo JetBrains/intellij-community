@@ -9,7 +9,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PyStringLiteralLexerBase extends LexerBase {
-  protected static final Logger LOG = Logger.getInstance("#com.jetbrains.python.lexer.PyStringLiteralLexer");
+  protected static final Logger LOG = Logger.getInstance(PyStringLiteralLexer.class);
   protected final IElementType myOriginalLiteralToken;
   protected CharSequence myBuffer;
   protected int myBufferEnd;

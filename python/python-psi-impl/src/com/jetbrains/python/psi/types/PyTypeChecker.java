@@ -473,8 +473,13 @@ public final class PyTypeChecker {
             }
           }
           else {
+            final PyType actualParamType =
+              actualParam.isPositionalContainer() && couldBeMappedOntoPositionalContainer(expectedParam)
+              ? actualParam.getArgumentType(context)
+              : actualParam.getType(context);
+
             // actual callable type could accept more general parameter type
-            if (!match(actualParam.getType(context), expectedParam.getType(context), matchContext.reverseSubstitutions()).orElse(true)) {
+            if (!match(actualParamType, expectedParam.getType(context), matchContext.reverseSubstitutions()).orElse(true)) {
               return Optional.of(false);
             }
           }
@@ -486,6 +491,20 @@ public final class PyTypeChecker {
       return Optional.of(true);
     }
     return Optional.empty();
+  }
+
+  private static boolean couldBeMappedOntoPositionalContainer(@NotNull PyCallableParameter parameter) {
+    if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) return false;
+
+    final var psi = parameter.getParameter();
+    if (psi != null) {
+      final var namedPsi = psi.getAsNamed();
+      if (namedPsi != null && namedPsi.isKeywordOnly()) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private static boolean consistsOfSameElementNumberTuples(@NotNull PyUnionType unionType, int elementCount) {

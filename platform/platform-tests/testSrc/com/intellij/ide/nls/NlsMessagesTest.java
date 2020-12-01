@@ -81,6 +81,30 @@ public class NlsMessagesTest {
   }
 
   @Test
+  public void testFormatDurationApproximateNarrow() {
+    assertEquals("0\u2009ms", NlsMessages.formatDurationApproximateNarrow(0));
+
+    assertEquals("59\u2009sec 999\u2009ms", NlsMessages.formatDurationApproximateNarrow(60000 - 1));
+    assertEquals("1\u2009min", NlsMessages.formatDurationApproximateNarrow(60000));
+    assertEquals("1\u2009min 0\u2009sec", NlsMessages.formatDurationApproximateNarrow(60000 + 1));
+
+    assertEquals("2\u2009min", NlsMessages.formatDurationApproximateNarrow(120000 - 1));
+    assertEquals("2\u2009min", NlsMessages.formatDurationApproximateNarrow(120000));
+    assertEquals("2\u2009min 0\u2009sec", NlsMessages.formatDurationApproximateNarrow(120000 + 1));
+    assertEquals("2\u2009min 0\u2009sec", NlsMessages.formatDurationApproximateNarrow(120000 + 499));
+    assertEquals("2\u2009min 0\u2009sec", NlsMessages.formatDurationApproximateNarrow(120000 + 500));
+    assertEquals("2\u2009min 1\u2009sec", NlsMessages.formatDurationApproximateNarrow(120000 + 501));
+
+    assertEquals("2\u2009min 3\u2009sec", NlsMessages.formatDurationApproximateNarrow(123000));
+    assertEquals("2\u2009min 4\u2009sec", NlsMessages.formatDurationApproximateNarrow(123789));
+    assertEquals("2\u2009min 3\u2009sec", NlsMessages.formatDurationApproximateNarrow(123456));
+    assertEquals("1\u2009hr 1\u2009min", NlsMessages.formatDurationApproximateNarrow(3659009));
+    assertEquals("2\u2009hr", NlsMessages.formatDurationApproximateNarrow(7199000));
+    assertEquals("1\u2009day", NlsMessages.formatDurationApproximateNarrow((23 * 60 * 60 + 59 * 60 + 59) * 1000L));
+    assertEquals("391\u2009days 1\u2009hr", NlsMessages.formatDurationApproximateNarrow(33786061001L));
+  }
+
+  @Test
   public void testFormatDurationPadded() {
     assertEquals("0ms", NlsMessages.formatDurationPadded(0));
     assertEquals("1s 000ms", NlsMessages.formatDurationPadded(1000));

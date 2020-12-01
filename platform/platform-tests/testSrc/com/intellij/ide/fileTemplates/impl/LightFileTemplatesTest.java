@@ -22,7 +22,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.PathKt;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -97,20 +96,19 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertNotNull(myTemplateManager.getTemplate("foo.txt"));
 
     File foo = FileUtilRt.createTempDirectory("foo", null, false);
-    Project project = PlatformTestUtil.loadAndOpenProject(foo.toPath());
+    Project project = PlatformTestUtil.loadAndOpenProject(foo.toPath(), getTestRootDisposable());
     try {
       assertNotNull(project);
       assertNotNull(FileTemplateManager.getInstance(project).getTemplate("foo.txt"));
     }
     finally {
-      closeProject(project);
       FileUtilRt.delete(foo);
     }
   }
 
   public void testSurviveOnProjectReopen() throws Exception {
     Path foo = Files.createTempDirectory("surviveOnProjectReopen");
-    Project project = PlatformTestUtil.loadAndOpenProject(foo);
+    Project project = PlatformTestUtil.loadAndOpenProject(foo, getTestRootDisposable());
     Disposer.register(getTestRootDisposable(), () -> PathKt.delete(foo));
     String newText = "good bye";
     try {
@@ -127,22 +125,17 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }
 
-    Project reloaded = PlatformTestUtil.loadAndOpenProject(foo);
-    try {
-      FileTemplateManager manager = FileTemplateManager.getInstance(reloaded);
-      assertThat(manager.getCurrentScheme()).isEqualTo(manager.getProjectScheme());
-      //manager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
-      //manager.setCurrentScheme(manager.getProjectScheme()); // enforce reloading
-      assertThat(manager.getTemplate(TEST_TEMPLATE_TXT).getText()).isEqualTo(newText);
-    }
-    finally {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(reloaded);
-    }
+    Project reloaded = PlatformTestUtil.loadAndOpenProject(foo, getTestRootDisposable());
+    FileTemplateManager manager = FileTemplateManager.getInstance(reloaded);
+    assertThat(manager.getCurrentScheme()).isEqualTo(manager.getProjectScheme());
+    //manager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
+    //manager.setCurrentScheme(manager.getProjectScheme()); // enforce reloading
+    assertThat(manager.getTemplate(TEST_TEMPLATE_TXT).getText()).isEqualTo(newText);
   }
 
   public void testAddRemoveShared() throws Exception {
     File foo = FileUtilRt.createTempDirectory("foo", null, false);
-    Project project = PlatformTestUtil.loadAndOpenProject(foo.toPath());
+    Project project = PlatformTestUtil.loadAndOpenProject(foo.toPath(), getTestRootDisposable());
     try {
       assertThat(project).isNotNull();
       FileTemplateManager manager = FileTemplateManager.getInstance(project);
@@ -178,14 +171,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       assertThat(file).doesNotExist();
     }
     finally {
-      closeProject(project);
       FileUtilRt.delete(foo);
-    }
-  }
-
-  private static void closeProject(@Nullable Project project) {
-    if (project != null && !project.isDisposed()) {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }
   }
 

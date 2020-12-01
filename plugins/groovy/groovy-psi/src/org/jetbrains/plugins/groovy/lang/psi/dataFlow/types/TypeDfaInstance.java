@@ -71,7 +71,8 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
     updateVariableType(state, instruction, descriptor, () -> {
       ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
-      assert originalInstr != null && !originalInstr.isWrite();
+      assert originalInstr != null;
+      assert !originalInstr.isWrite();
 
       DFAType original = state.getOrCreateVariableType(descriptor);
       original.addMixin(instruction.inferMixinType(), instruction.getConditionInstruction());

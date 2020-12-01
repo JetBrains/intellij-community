@@ -204,6 +204,11 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     }
 
     @Override
+    public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+      return NodeSortOrder.SCRATCH_ROOT;
+    }
+
+    @Override
     public boolean contains(@NotNull VirtualFile file) {
       return ScratchUtil.isScratch(file);
     }

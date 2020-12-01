@@ -92,11 +92,19 @@ abstract class TargetEnvironment(
     val targetRoot: String
 
     /**
-     * Upload `"$localRootPath/$relativePath"` to `"$targetRoot/$relativePath"`.
-     * Returns the resulting remote path (even if it's predictable, many tests rely on specific, usually relative paths).
+     * Returns the resulting remote path (even if it's predictable, many tests rely on specific, usually relative paths)
+     * of uploading `"$localRootPath/$relativePath"` to `"$targetRoot/$relativePath"`.
+     * Does not perform actual upload.
      */
     @Throws(IOException::class)
-    fun upload(relativePath: String, targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator): String
+    fun resolveTargetPath(relativePath: String): String
+
+    /**
+     * Upload `"$localRootPath/$relativePath"` to `"$targetRoot/$relativePath"`
+     */
+    @Throws(IOException::class)
+    fun upload(relativePath: String,
+               targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator)
   }
 
   interface DownloadableVolume {  // TODO Would it be better if there is no inheritance from the upload Volume?

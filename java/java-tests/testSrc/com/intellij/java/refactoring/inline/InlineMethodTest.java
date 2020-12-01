@@ -221,6 +221,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testChainedConstructorWithSpacesInvalidation() {
+    doTest();
+  }
+
   public void testChainedConstructor1() {
     doTest();
   }
@@ -231,6 +235,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   public void testMethodUsedReflectively() {
     doTestConflict("Inlined method is used reflectively");
+  }
+
+  public void testInlineOnelinerToCondition() {
+    doTest();
   }
 
   public void testNotAStatement() {

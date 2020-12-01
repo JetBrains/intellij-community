@@ -138,29 +138,33 @@ public final class ClasspathCache {
     myLock.readLock().lock();
     Object o;
     try {
-      IntObjectHashMap map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ?
-                             myClassPackagesCache : myResourcePackagesCache;
-
+      IntObjectHashMap map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ? myClassPackagesCache : myResourcePackagesCache;
       o = map.get(getPackageNameHash(resourcePath));
     }
     finally {
       myLock.readLock().unlock();
     }
 
-    if (o == null) return null;
-    if (o instanceof Loader) return iterator.process((Loader)o, parameter, parameter2, shortName);
+    if (o == null) {
+      return null;
+    }
+    if (o instanceof Loader) {
+      return iterator.process((Loader)o, parameter, parameter2, shortName);
+    }
     Loader[] loaders = (Loader[])o;
     for (Loader l : loaders) {
       R result = iterator.process(l, parameter, parameter2, shortName);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }
 
   static int getPackageNameHash(@NotNull String resourcePath) {
-    final int idx = resourcePath.lastIndexOf('/');
+    int index = resourcePath.lastIndexOf('/');
     int h = 0;
-    for (int off = 0; off < idx; off++) {
+    for (int off = 0; off < index; off++) {
       h = 31 * h + resourcePath.charAt(off);
     }
     return h;
@@ -172,7 +176,9 @@ public final class ClasspathCache {
       map.put(hash, loader);
     }
     else if (o instanceof Loader) {
-      if (ClassPath.ourClassLoadingInfo) assert loader != o;
+      if (ClassPath.ourClassLoadingInfo) {
+        assert loader != o;
+      }
       map.put(hash, new Loader[]{(Loader)o, loader});
     }
     else {

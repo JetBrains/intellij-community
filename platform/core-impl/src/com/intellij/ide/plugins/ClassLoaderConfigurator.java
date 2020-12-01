@@ -240,6 +240,14 @@ final class ClassLoaderConfigurator {
     ClassLoader[] parentLoaders = loaders.isEmpty()
                                   ? PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY
                                   : loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY);
+    return createPluginClassLoader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader);
+  }
+
+  // static to ensure that anonymous classes will not hold ClassLoaderConfigurator
+  private static @NotNull PluginClassLoader createPluginClassLoader(@NotNull ClassLoader @NotNull [] parentLoaders,
+                                                                    @NotNull IdeaPluginDescriptorImpl descriptor,
+                                                                    @NotNull UrlClassLoader.Builder urlClassLoaderBuilder,
+                                                                    @NotNull ClassLoader coreLoader) {
     if (descriptor.id.getIdString().equals("com.intellij.properties")) {
       // todo ability to customize (cannot move due to backward compatibility)
       return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
@@ -254,31 +262,19 @@ final class ClassLoaderConfigurator {
              descriptor.descriptorPath == null &&
              descriptor.dependenciesDescriptor != null /* old plugin version */) {
       // kubernetes uses project libraries - not yet clear how to deal with that, that's why here we don't use default implementation
-      return createFilteringPluginClassLoader(descriptor, parentLoaders, createDependencyBasedPredicate(descriptor));
+      return new FilteringPluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor,
+                                            createDependencyBasedPredicate(descriptor), coreLoader);
     }
     else if (descriptor.contentDescriptor != null && descriptor.packagePrefix == null) {
       // Assertion based on package prefix is not enough because, surprise,
       // we cannot set package prefix for some plugins for now due to number of issues.
       // For example, for docker package prefix is not and cannot be set for now.
-      return createFilteringPluginClassLoader(descriptor, parentLoaders, createContentBasedPredicate(descriptor));
+      return new FilteringPluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, createContentBasedPredicate(descriptor), coreLoader);
     }
     else if (descriptor.contentDescriptor != null && descriptor.descriptorPath != null /* it is module and not a plugin */) {
       // see "The `content.module` element" section about content handling for a module
       Predicate<String> contentBasedPredicate = createContentBasedPredicate(descriptor);
-      return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
-                                   descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix) {
-        @Override
-        protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
-          if (!super.isDefinitelyAlienClass(name, packagePrefix)) {
-            return false;
-          }
-
-          // for a module, the referenced module doesn't have own classloader and is added directly to classpath,
-          // so, if name doesn't pass standard package prefix filter,
-          // check that it is not in content - if in content, then it means that class is not alien
-          return !contentBasedPredicate.test(name);
-        }
-      };
+      return new ContentPredicateBasedPluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, contentBasedPredicate, coreLoader);
     }
     else {
       return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
@@ -286,16 +282,49 @@ final class ClassLoaderConfigurator {
     }
   }
 
-  private @NotNull PluginClassLoader createFilteringPluginClassLoader(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                      @NotNull ClassLoader @NotNull[] parentLoaders,
-                                                                      @NotNull Predicate<String> dependencyBasedPredicate) {
-    return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
-                                 descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix) {
-      @Override
-      protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
-        return dependencyBasedPredicate.test(name);
+  private static final class ContentPredicateBasedPluginClassLoader extends PluginClassLoader {
+    private final Predicate<String> contentBasedPredicate;
+
+    private ContentPredicateBasedPluginClassLoader(@NotNull Builder builder,
+                                                   @NotNull ClassLoader @NotNull [] parentLoaders,
+                                                   @NotNull IdeaPluginDescriptorImpl descriptor,
+                                                   @NotNull Predicate<String> contentBasedPredicate,
+                                                   @NotNull ClassLoader coreLoader) {
+      super(builder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix);
+
+      this.contentBasedPredicate = contentBasedPredicate;
+    }
+
+    @Override
+    protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
+      if (!super.isDefinitelyAlienClass(name, packagePrefix)) {
+        return false;
       }
-    };
+
+      // for a module, the referenced module doesn't have own classloader and is added directly to classpath,
+      // so, if name doesn't pass standard package prefix filter,
+      // check that it is not in content - if in content, then it means that class is not alien
+      return !contentBasedPredicate.test(name);
+    }
+  }
+
+  private static final class FilteringPluginClassLoader extends PluginClassLoader {
+    private @NotNull final Predicate<String> dependencyBasedPredicate;
+
+    private FilteringPluginClassLoader(@NotNull Builder builder,
+                                       @NotNull ClassLoader @NotNull [] parentLoaders,
+                                       @NotNull IdeaPluginDescriptorImpl descriptor,
+                                       @NotNull Predicate<String> dependencyBasedPredicate,
+                                       @NotNull ClassLoader coreLoader) {
+      super(builder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix);
+
+      this.dependencyBasedPredicate = dependencyBasedPredicate;
+    }
+
+    @Override
+    protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
+      return dependencyBasedPredicate.test(name);
+    }
   }
 
   private static @NotNull Predicate<String> createDependencyBasedPredicate(@NotNull IdeaPluginDescriptorImpl descriptor) {

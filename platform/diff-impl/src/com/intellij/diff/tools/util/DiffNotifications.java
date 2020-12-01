@@ -2,10 +2,12 @@
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.DiffNotificationProvider;
+import com.intellij.diff.util.SyncHeightComponent;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,9 +89,16 @@ public final class DiffNotifications {
     final EditorNotificationPanel panel = new EditorNotificationPanel(background);
     panel.text(text);
     if (showHideAction) {
-      HyperlinkLabel link = panel.createActionLabel(DiffBundle.message("button.hide.notification"), () -> panel.setVisible(false));
+      HyperlinkLabel link = panel.createActionLabel(DiffBundle.message("button.hide.notification"), () -> hideNotification(panel));
       link.setToolTipText(DiffBundle.message("hide.this.notification"));
     }
     return panel;
+  }
+
+  public static void hideNotification(@NotNull EditorNotificationPanel panel) {
+    panel.setVisible(false);
+
+    SyncHeightComponent syncComponent = UIUtil.getParentOfType(SyncHeightComponent.class, panel);
+    if (syncComponent != null) syncComponent.revalidateAll();
   }
 }

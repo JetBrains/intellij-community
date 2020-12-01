@@ -53,7 +53,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
   @Test
   public void testJreHiDpi() throws MalformedURLException {
-    assumeTrue(SystemInfoRt.IS_AT_LEAST_JAVA9 || !SystemInfoRt.isLinux);
+    assumeTrue(!SystemInfoRt.isLinux);
 
     overrideJreHiDPIEnabled(true);
     try {
@@ -83,23 +83,27 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     //
     // 1. CachedImageIcon
     //
-    test(new CachedImageIcon(new File(getIconPath()).toURI().toURL()), context.copy());
+    test(createIcon(), context.copy());
 
     //
     // 2. DeferredIcon
     //
-    CachedImageIcon icon = new CachedImageIcon(new File(getIconPath()).toURI().toURL());
+    CachedImageIcon icon = createIcon();
     test(new DeferredIconImpl<>(icon, new Object(), false, o -> icon), UserScaleContext.create(context));
 
     //
     // 3. LayeredIcon
     //
-    test(new LayeredIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), UserScaleContext.create(context));
+    test(new LayeredIcon(createIcon()), UserScaleContext.create(context));
 
     //
     // 4. RowIcon
     //
-    test(new com.intellij.ui.RowIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), UserScaleContext.create(context));
+    test(new com.intellij.ui.RowIcon(createIcon()), UserScaleContext.create(context));
+  }
+
+  private static @NotNull CachedImageIcon createIcon() throws MalformedURLException {
+    return new CachedImageIcon(new File(getIconPath()).toURI().toURL(), false);
   }
 
   private static void test(@NotNull Icon icon, @NotNull UserScaleContext iconContext) {

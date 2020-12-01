@@ -477,6 +477,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(JavaBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
     descriptor.setDescription(JavaBundle.message("external.annotations.root.chooser.description"));
+    descriptor.setForcedToUseIdeaFileChooser(true);
     final VirtualFile newRoot = FileChooser.chooseFile(descriptor, project, null);
     if (newRoot == null) {
       notifyAfterAnnotationChanging(annotation.getOwner(), annotation.getAnnotationFQName(), false);

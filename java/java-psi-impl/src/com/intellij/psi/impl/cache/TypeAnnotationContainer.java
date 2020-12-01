@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.cache;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -31,7 +30,7 @@ import java.util.List;
  */
 public class TypeAnnotationContainer {
   /**
-   * A container that contains no type annotations. 
+   * A container that contains no type annotations.
    */
   public static final TypeAnnotationContainer EMPTY = new TypeAnnotationContainer(Collections.emptyList());
 
@@ -42,7 +41,7 @@ public class TypeAnnotationContainer {
   }
 
   /**
-   * @return type annotation container for array element 
+   * @return type annotation container for array element
    * (assuming that this type annotation container is used for the array type)
    */
   public @NotNull TypeAnnotationContainer forArrayElement() {
@@ -52,7 +51,7 @@ public class TypeAnnotationContainer {
   }
 
   /**
-   * @return type annotation container for enclosing class 
+   * @return type annotation container for enclosing class
    * (assuming that this type annotation container is used for the inner class)
    */
   public @NotNull TypeAnnotationContainer forEnclosingClass() {
@@ -62,7 +61,7 @@ public class TypeAnnotationContainer {
   }
 
   /**
-   * @return type annotation container for wildcard bound 
+   * @return type annotation container for wildcard bound
    * (assuming that this type annotation container is used for the bounded wildcard type)
    */
   public @NotNull TypeAnnotationContainer forBound() {
@@ -91,7 +90,7 @@ public class TypeAnnotationContainer {
 
   /**
    * @param parent parent element for annotations
-   * @return TypeAnnotationProvider that provides all the top-level annotations  
+   * @return TypeAnnotationProvider that provides all the top-level annotations
    */
   public TypeAnnotationProvider getProvider(PsiElement parent) {
     if (isEmpty()) return TypeAnnotationProvider.EMPTY;
@@ -113,7 +112,7 @@ public class TypeAnnotationContainer {
 
   /**
    * Creates PsiAnnotationStub elements for top-level annotations in this container
-   * 
+   *
    * @param parent parent stub
    */
   public void createAnnotationStubs(StubElement<?> parent) {
@@ -144,7 +143,7 @@ public class TypeAnnotationContainer {
 
   /**
    * Serializes TypeAnnotationContainer into the supplied stream.
-   * 
+   *
    * @param dataStream stream to write to
    * @param container a container to serialize
    * @throws IOException if the stream throws
@@ -161,7 +160,7 @@ public class TypeAnnotationContainer {
 
   /**
    * Reads TypeAnnotationContainer from the supplied stream.
-   * 
+   *
    * @param dataStream stream to read from
    * @return deserialized TypeAnnotationContainer
    * @throws IOException if the stream throws
@@ -183,20 +182,20 @@ public class TypeAnnotationContainer {
   public String toString() {
     return StringUtil.join(myList, "\n");
   }
-  
+
   public static class Collector {
     public static final byte ARRAY_ELEMENT = 0;
     public static final byte ENCLOSING_CLASS = 1;
     public static final byte WILDCARD_BOUND = 2;
     public static final byte TYPE_ARGUMENT = 3;
-    
+
     private final @NotNull ArrayList<TypeAnnotationEntry> myList = new ArrayList<>();
     protected final @NotNull TypeInfo myTypeInfo;
 
     public Collector(@NotNull TypeInfo info) {
       myTypeInfo = info;
     }
-    
+
     public void add(byte @NotNull [] path, @NotNull String text) {
       myList.add(new TypeAnnotationEntry(path, text));
     }
@@ -269,32 +268,24 @@ public class TypeAnnotationContainer {
     private final NotNullLazyValue<ClsAnnotationParameterListImpl> myParameterList;
     private final PsiElement myParent;
     private final String myText;
-    
+
     ClsTypeAnnotationImpl(PsiElement parent, String text) {
       myParent = parent;
       myText = text;
-      myReferenceElement = new AtomicNotNullLazyValue<ClsJavaCodeReferenceElementImpl>() {
-        @NotNull
-        @Override
-        protected ClsJavaCodeReferenceElementImpl compute() {
-          int index = myText.indexOf('(');
-          String refText = index > 0 ? myText.substring(1, index) : myText.substring(1);
-          return new ClsJavaCodeReferenceElementImpl(ClsTypeAnnotationImpl.this, refText);
-        }
-      };
-      myParameterList = new AtomicNotNullLazyValue<ClsAnnotationParameterListImpl>() {
-        @NotNull
-        @Override
-        protected ClsAnnotationParameterListImpl compute() {
-          PsiNameValuePair[] attrs = myText.indexOf('(') > 0
-                                     ? JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText(myText, myParent)
-                                       .getParameterList().getAttributes()
-                                     : PsiNameValuePair.EMPTY_ARRAY;
-          return new ClsAnnotationParameterListImpl(ClsTypeAnnotationImpl.this, attrs);
-        }
-      };
+      myReferenceElement = NotNullLazyValue.atomicLazy(() -> {
+        int index = myText.indexOf('(');
+        String refText = index > 0 ? myText.substring(1, index) : myText.substring(1);
+        return new ClsJavaCodeReferenceElementImpl(ClsTypeAnnotationImpl.this, refText);
+      });
+      myParameterList = NotNullLazyValue.atomicLazy(() -> {
+        PsiNameValuePair[] attrs = myText.indexOf('(') > 0
+                                   ? JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText(myText, myParent)
+                                     .getParameterList().getAttributes()
+                                   : PsiNameValuePair.EMPTY_ARRAY;
+        return new ClsAnnotationParameterListImpl(ClsTypeAnnotationImpl.this, attrs);
+      });
     }
-    
+
     @Override
     public @NotNull PsiAnnotationParameterList getParameterList() {
       return myParameterList.getValue();
@@ -357,7 +348,7 @@ public class TypeAnnotationContainer {
     public PsiElement getParent() {
       return myParent;
     }
-    
+
     @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
       if (visitor instanceof JavaElementVisitor) {
@@ -367,5 +358,5 @@ public class TypeAnnotationContainer {
         visitor.visitElement(this);
       }
     }
-  } 
+  }
 }

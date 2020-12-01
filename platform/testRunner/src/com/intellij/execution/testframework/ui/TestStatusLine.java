@@ -20,6 +20,7 @@ import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -112,7 +113,7 @@ public class TestStatusLine extends NonOpaquePanel {
 
     formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
 
-    @NlsSafe String fragment = " – " + StringUtil.formatDuration(duration, "\u2009");
+    @NlsSafe String fragment = " – " + NlsMessages.formatDurationApproximateNarrow(duration);
     myState.append(fragment, SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 

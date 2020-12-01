@@ -120,7 +120,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       map = constructor.createMap(file);
       //noinspection ConstantConditions
       if (isSmall) {
-        PersistentHashMapImpl.unwrap(map).compact();
+        PersistentMapImpl.unwrap(map).compact();
       }
       else {
         assertTrue(map.isDirty());  // autocompact on open should leave the map dirty
@@ -143,7 +143,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
   }
 
   private static <T> boolean makesSenseToCompact(PersistentHashMap<T, Integer> map) {
-    return PersistentHashMapImpl.unwrap(map).makesSenseToCompact();
+    return PersistentMapImpl.unwrap(map).makesSenseToCompact();
   }
 
   public void testOpeningWithCompact3() throws IOException {
@@ -186,7 +186,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     PersistentHashMap<Integer, Integer> map = null;
 
     try {
-      map = PersistentHashMapBuilder
+      map = PersistentMapBuilder
         .newBuilder(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
         .inlineValues()
         .build();
@@ -205,7 +205,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       map.close();
       LOG.debug("Done:" + (System.currentTimeMillis() - started));
       started = System.currentTimeMillis();
-      map = PersistentHashMapBuilder.newBuilder(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
+      map = PersistentMapBuilder.newBuilder(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
         .inlineValues()
         .build();
 
@@ -312,7 +312,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
 
   public void testPerformance() throws IOException {
     final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
-    PersistentHashMapImpl<String, String> unwrappedMap = PersistentHashMapImpl.unwrap(myMap);
+    PersistentMapImpl<String, String> unwrappedMap = PersistentMapImpl.unwrap(myMap);
     final IntObjectCache.DeletedPairsListener listener = (key, mapKey) -> {
       try {
         final String _mapKey = (String)mapKey;
@@ -345,7 +345,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
           myMap.remove(key);
         }
         stringCache.removeAll();
-        PersistentHashMapImpl.unwrap(myMap).compact();
+        PersistentMapImpl.unwrap(myMap).compact();
       }
       catch (IOException e) {
         throw new RuntimeException(e);

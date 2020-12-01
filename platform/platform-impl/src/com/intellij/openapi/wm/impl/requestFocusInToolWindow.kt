@@ -45,7 +45,7 @@ internal class FocusTask(private val toolWindow: ToolWindowImpl) : Runnable {
 }
 
 private fun bringOwnerToFront(toolWindow: ToolWindowImpl) {
-  val owner = SwingUtilities.getWindowAncestor(toolWindow.component)
+  val owner = SwingUtilities.getWindowAncestor(toolWindow.component) ?: return
   val activeFrame = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
   if (activeFrame != null && activeFrame !== owner) {
     owner.toFront()

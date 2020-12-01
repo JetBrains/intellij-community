@@ -15,40 +15,36 @@ import com.intellij.vcs.commit.CommitWorkflowManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
 
-internal class GitStageManager {
-  companion object {
-    @RequiresEdt
-    private fun onAvailabilityChanged(project: Project) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+@RequiresEdt
+private fun onAvailabilityChanged(project: Project) {
+  ApplicationManager.getApplication().assertIsDispatchThread()
 
-      if (isStagingAreaAvailable(project)) {
-        GitStageTracker.getInstance(project).scheduleUpdateAll()
-      }
-      project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-      ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
-      // Notify LSTM after CLM to let it save current partial changelists state
-      ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+  if (isStagingAreaAvailable(project)) {
+    GitStageTracker.getInstance(project).updateTrackerState()
+  }
+  project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+  ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
+  // Notify LSTM after CLM to let it save current partial changelists state
+  ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+}
+
+internal class GitStageStartupActivity : StartupActivity.Background {
+  override fun runActivity(project: Project) {
+    if (isStagingAreaAvailable(project)) {
+      GitStageTracker.getInstance(project) // initialize tracker
     }
   }
+}
 
-  internal class GitStageStartupActivity : StartupActivity.Background {
-    override fun runActivity(project: Project) {
-      if (isStagingAreaAvailable(project)) {
-        GitStageTracker.getInstance(project).scheduleUpdateAll()
-      }
-    }
+internal class StagingSettingsListener(val project: Project) : GitStagingAreaSettingsListener {
+  override fun settingsChanged() {
+    onAvailabilityChanged(project)
   }
+}
 
-  internal class StagingSettingsListener(val project: Project) : GitStagingAreaSettingsListener {
-    override fun settingsChanged() {
-      onAvailabilityChanged(project)
-    }
-  }
-
-  internal class CommitSettingsListener(val project: Project) : CommitWorkflowManager.SettingsListener {
-    override fun settingsChanged() {
-      onAvailabilityChanged(project)
-    }
+internal class CommitSettingsListener(val project: Project) : CommitWorkflowManager.SettingsListener {
+  override fun settingsChanged() {
+    onAvailabilityChanged(project)
   }
 }
 

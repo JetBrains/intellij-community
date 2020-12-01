@@ -8,12 +8,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
@@ -23,6 +25,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.Alarm
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.CourseManager
@@ -41,6 +44,7 @@ import training.project.ProjectUtils
 import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
 import training.util.findLanguageByID
+import training.util.isLearningProject
 import java.awt.FontFormatException
 import java.io.IOException
 import java.util.concurrent.ExecutionException
@@ -81,7 +85,7 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       val langSupport = LangManager.getInstance().getLangSupport() ?: throw Exception("Language for learning plugin is not defined")
 
       var learnProject = LearningUiManager.learnProject
-      if (learnProject != null && langSupport.defaultProjectName != learnProject.name) {
+      if (learnProject != null && !isLearningProject(learnProject, langSupport)) {
         learnProject = null // We are in the project from another course
       }
       LOG.debug("${projectWhereToStartLesson.name}: trying to get cached LearnProject ${learnProject != null}")
@@ -90,12 +94,14 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       if (learnProject != null) LearningUiManager.learnProject = learnProject
 
       val vf: VirtualFile? = when {
+        needOpenLessonAsCompleted(lesson) -> null
         lesson.lessonType == LessonType.SCRATCH -> {
           LOG.debug("${projectWhereToStartLesson.name}: scratch based lesson")
           getScratchFile(projectWhereToStartLesson, lesson, langSupport.filename)
         }
         learnProject == null || learnProject.isDisposed -> {
-          if (projectWhereToStartLesson.name != langSupport.defaultProjectName) { //1. learnProject == null and current project has different name then initLearnProject and register post startup open lesson
+          if (!isLearningProject(projectWhereToStartLesson, langSupport)) {
+            //1. learnProject == null and current project has different name then initLearnProject and register post startup open lesson
             LOG.debug("${projectWhereToStartLesson.name}: 1. learnProject is null or disposed")
             initLearnProject(projectWhereToStartLesson) {
               LOG.debug("${projectWhereToStartLesson.name}: 1. ... LearnProject has been started")
@@ -126,13 +132,17 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       }
 
       val currentProject =
-        if (lesson.lessonType != LessonType.SCRATCH) LearningUiManager.learnProject!!.also {
-          // close all tabs in the currently opened learning project
-          ProjectUtils.closeAllEditorsInProject(it)
+        when {
+          needOpenLessonAsCompleted(lesson) -> projectWhereToStartLesson
+          lesson.lessonType != LessonType.SCRATCH -> LearningUiManager.learnProject!!.also {
+            // close all tabs in the currently opened learning project
+            ProjectUtils.closeAllEditorsInProject(it)
+          }
+          else -> projectWhereToStartLesson
         }
-        else projectWhereToStartLesson
 
-      if (lesson.lessonType != LessonType.SCRATCH || LearningUiManager.learnProject == projectWhereToStartLesson) {
+      if (!needOpenLessonAsCompleted(lesson) &&
+          (lesson.lessonType != LessonType.SCRATCH || LearningUiManager.learnProject == projectWhereToStartLesson)) {
         // do not change view environment for scratch lessons in user project
         hideOtherViews(projectWhereToStartLesson)
       }
@@ -144,7 +154,8 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       LOG.debug("${projectWhereToStartLesson.name}: Set lesson view")
       LearningUiManager.activeToolWindow?.setLearnPanel()
       LOG.debug("${projectWhereToStartLesson.name}: XmlLesson onStart()")
-      if (lesson.lessonType == LessonType.PROJECT) LessonManager.instance.cleanUpBeforeLesson(projectWhereToStartLesson)
+      if (!needOpenLessonAsCompleted(lesson) && lesson.lessonType == LessonType.PROJECT)
+        LessonManager.instance.cleanUpBeforeLesson(projectWhereToStartLesson)
       lesson.onStart()
 
       //to start any lesson we need to do 4 steps:
@@ -191,11 +202,14 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       else error("Unknown lesson format")
     }
     catch (invalidSdkException: InvalidSdkException) {
-      Messages.showMessageDialog(projectWhereToStartLesson,
-                                 invalidSdkException.message,
-                                 LearnBundle.message("dialog.noSdk.title"), Messages.getErrorIcon())
-      if (ProjectSettingsService.getInstance(projectWhereToStartLesson).chooseAndSetSdk() != null) openLesson(projectWhereToStartLesson,
-                                                                                                              lesson)
+      LOG.error(invalidSdkException)
+      if (ProjectSettingsService.getInstance(projectWhereToStartLesson).chooseAndSetSdk() != null) {
+        LOG.error("Install SDK by deprecated way!")
+        openLesson(projectWhereToStartLesson, lesson)
+      }
+      else {
+        LOG.error("No SDK installed!")
+      }
     }
     catch (e: Exception) {
       LOG.error(e)
@@ -203,12 +217,19 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
   }
 
   private fun processDslLesson(lesson: KLesson, textEditor: TextEditor?, projectWhereToStartLesson: Project) {
-    val executor = LessonExecutor(lesson, projectWhereToStartLesson)
-    val lessonContext = LessonContextImpl(executor)
-    LessonManager.instance.initDslLesson(textEditor?.editor, lesson, executor)
-    lesson.lessonContent(lessonContext)
-    executor.startLesson()
+    if (needOpenLessonAsCompleted(lesson)) {
+      LessonManager.instance.openLessonPassed(lesson, projectWhereToStartLesson)
+    }
+    else {
+      val executor = LessonExecutor(lesson, projectWhereToStartLesson, textEditor?.editor)
+      val lessonContext = LessonContextImpl(executor)
+      LessonManager.instance.initDslLesson(textEditor?.editor, lesson, executor)
+      lesson.lessonContent(lessonContext)
+      executor.startLesson()
+    }
   }
+
+  private fun needOpenLessonAsCompleted(lesson: Lesson) = lesson.passed && LessonManager.instance.currentLesson != lesson
 
   private fun hideOtherViews(project: Project) {
     ApplicationManager.getApplication().invokeLater {
@@ -254,7 +275,15 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       if (learnToolWindow != null) {
         val runnable = if (lesson.properties.showLearnToolwindowAtStart) null else Runnable { learnToolWindow.hide() }
         learnToolWindow.show(runnable)
-        openLesson(myLearnProject, lesson)
+        DumbService.getInstance(myLearnProject).runWhenSmart {
+          // Try to fix PyChar double startup indexing :(
+          val openWhenSmart = {
+            DumbService.getInstance(myLearnProject).runWhenSmart {
+              openLesson(myLearnProject, lesson)
+            }
+          }
+          Alarm().addRequest(openWhenSmart, 500)
+        }
       }
     }
 
@@ -368,7 +397,9 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       NewLearnProjectUtil.createLearnProject(projectToClose, langSupport) { learnProject ->
         langSupport.applyToProjectAfterConfigure().invoke(learnProject)
         LearningUiManager.learnProject = learnProject
-        postInitCallback(learnProject)
+        runInEdt {
+          postInitCallback(learnProject)
+        }
       }
     }
     catch (e: IOException) {
@@ -378,7 +409,7 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
 
   private fun findLearnProjectInOpenedProjects(langSupport: LangSupport): Project? {
     val openProjects = ProjectManager.getInstance().openProjects
-    return openProjects.firstOrNull { it.name == langSupport.defaultProjectName }
+    return openProjects.firstOrNull { isLearningProject(it, langSupport) }
   }
 
   companion object {

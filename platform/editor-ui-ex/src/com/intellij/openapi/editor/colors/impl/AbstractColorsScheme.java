@@ -2,7 +2,7 @@
 
 package com.intellij.openapi.editor.colors.impl;
 
-import com.intellij.AbstractBundle;
+import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.configurationStore.SerializableScheme;
@@ -165,7 +165,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     String bundleKey = getMetaProperties().getProperty(NAME_KEY_PROPERTY);
     if (bundlePath != null && bundleKey != null) {
       ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(bundlePath, getClass().getClassLoader());
-      return AbstractBundle.message(bundle, bundleKey);
+      return BundleBase.messageOrDefault(bundle, bundleKey, null);
     }
     return null;
   }

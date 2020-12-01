@@ -8,10 +8,8 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
 import icons.MavenIcons
 import org.jetbrains.idea.maven.execution.RunnerBundle
-import java.util.concurrent.CompletableFuture
 
 class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TYPE_ID) {
   override val icon = MavenIcons.ExecuteMavenGoal
@@ -40,36 +38,8 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
   }
 
   override fun createIntrospector(config: MavenRuntimeTargetConfiguration): Introspector<MavenRuntimeTargetConfiguration>? {
-    if (config.homePath.isNotBlank() && config.versionString.isNotBlank()) return null
-
-    return object : Introspector<MavenRuntimeTargetConfiguration> {
-      override fun introspect(subject: Introspectable): CompletableFuture<MavenRuntimeTargetConfiguration> {
-        val home = if (config.homePath.isBlank()) {
-          subject.promiseEnvironmentVariable("M2_HOME")
-            .thenApply {
-              it?.let { config.homePath = it }
-            }
-        }
-        else {
-          Introspector.DONE
-        }
-
-        val version = if (config.versionString.isBlank()) {
-          subject.promiseExecuteScript("mvn -version")
-            .thenApply { output ->
-              output?.let { StringUtil.splitByLines(output, true) }
-                ?.firstOrNull() // todo more accurate maven version command output parsing
-                ?.let { config.versionString = it }
-            }
-        }
-        else {
-          Introspector.DONE
-        }
-
-        return CompletableFuture.allOf(home, version)
-          .thenApply { config }
-      }
-    }
+    if (config.homePath.isNotBlank()) return null
+    return MavenTargetConfigurationIntrospector(config)
   }
 
   override fun duplicateConfig(config: MavenRuntimeTargetConfiguration): MavenRuntimeTargetConfiguration =

@@ -343,6 +343,14 @@ public class IconUtil {
     return new IconSizeWrapper(icon, width, height);
   }
 
+  public static void paintSelectionAwareIcon(@NotNull Icon icon, @Nullable JComponent component, @NotNull Graphics g, int x, int y, boolean selected) {
+    if (selected) {
+      SVGLoader.paintIconWithSelection(icon, component, g, x, y);
+    } else {
+      icon.paintIcon(component, g, x, y);
+    }
+  }
+
   public static class IconSizeWrapper implements Icon {
     private final Icon myIcon;
     private final int myWidth;

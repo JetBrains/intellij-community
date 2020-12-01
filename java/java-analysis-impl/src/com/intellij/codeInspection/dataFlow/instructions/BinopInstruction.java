@@ -16,16 +16,14 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.JavaTokenType.*;
@@ -94,8 +92,14 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
       return PsiUtil.isIncrementDecrementOperation(anchor);
     }
     while (anchor != null && !(anchor instanceof PsiAssignmentExpression) && !(anchor instanceof PsiVariable)) {
+      if (anchor instanceof PsiExpressionList) {
+        PsiCallExpression parent = ObjectUtils.tryCast(anchor.getParent(), PsiCallExpression.class);
+        if (parent != null) {
+          PsiMethod method = parent.resolveMethod();
+          if (CustomMethodHandlers.find(method) == null) return false;
+        }
+      }
       if (anchor instanceof PsiStatement ||
-          anchor instanceof PsiExpressionList && anchor.getParent() instanceof PsiCallExpression ||
           anchor instanceof PsiArrayInitializerExpression || anchor instanceof PsiArrayAccessExpression ||
           anchor instanceof PsiBinaryExpression &&
           RelationType.fromElementType(((PsiBinaryExpression)anchor).getOperationTokenType()) != null) {

@@ -71,6 +71,7 @@ data class JdkItem(
   private val jdkVendorVersion: String?,
   val suggestedSdkName: String,
 
+  val os: String,
   val arch: String,
   val packageType: JdkPackageType,
   val url: String,
@@ -193,19 +194,19 @@ enum class JdkPackageType(@NonNls val type: String) {
 }
 
 data class JdkPredicate(
-  private val ideBuildNumber: BuildNumber,
-  private val expectedOS: String
+  private val ideBuildNumber: BuildNumber
 ) {
 
   companion object {
     fun createInstance(): JdkPredicate {
-      val expectedOS = when {
-        SystemInfo.isWindows -> "windows"
-        SystemInfo.isMac -> "macOS"
-        SystemInfo.isLinux -> "linux"
-        else -> error("Unsupported OS")
-      }
-      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, expectedOS)
+      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build)
+    }
+
+    val currentOS = when {
+      SystemInfo.isWindows -> "windows"
+      SystemInfo.isMac -> "macOS"
+      SystemInfo.isLinux -> "linux"
+      else -> error("Unsupported OS")
     }
   }
 
@@ -215,7 +216,6 @@ data class JdkPredicate(
   }
 
   fun testJdkPackage(pkg: ObjectNode): Boolean {
-    if (pkg["os"]?.asText() != expectedOS) return false
     if (pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) == null) return false
     return testPredicate(pkg["filter"]) == true
   }
@@ -304,52 +304,52 @@ object JdkListParser {
 
     val result = mutableListOf<JdkItem>()
     for (item in items.filterIsInstance<ObjectNode>()) {
-      result += parseJdkItem(item, filters) ?: continue
+      result += parseJdkItem(item, filters)
     }
 
     return result.toList()
   }
 
-  fun parseJdkItem(item: ObjectNode, filters: JdkPredicate): JdkItem? {
+  fun parseJdkItem(item: ObjectNode, filters: JdkPredicate): List<JdkItem> {
     // check this package is OK to show for that instance of the IDE
-    if (!filters.testJdkProduct(item)) return null
+    if (!filters.testJdkProduct(item)) return emptyList()
 
-    val packages = item["packages"] as? ArrayNode ?: return null
-    // take the first matching package
-    val pkg = packages.filterIsInstance<ObjectNode>().firstOrNull(filters::testJdkPackage) ?: return null
-
+    val packages = item["packages"] as? ArrayNode ?: return emptyList()
     val product = JdkProduct(
-      vendor = item["vendor"]?.asText() ?: return null,
+      vendor = item["vendor"]?.asText() ?: return emptyList(),
       product = item["product"]?.asText(),
       flavour = item["flavour"]?.asText()
     )
 
     val contents = ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(item)
-    return JdkItem(product = product,
-                   isDefaultItem = item["default"]?.let { filters.testPredicate(it) == true } ?: false,
-                   isVisibleOnUI = item["listed"]?.let { filters.testPredicate(it) == true } ?: true,
+    return packages.filterIsInstance<ObjectNode>().filter(filters::testJdkPackage).map { pkg ->
+      JdkItem(product = product,
+              isDefaultItem = item["default"]?.let { filters.testPredicate(it) == true } ?: false,
+              isVisibleOnUI = item["listed"]?.let { filters.testPredicate(it) == true } ?: true,
 
-                   jdkMajorVersion = item["jdk_version_major"]?.asInt() ?: return null,
-                   jdkVersion = item["jdk_version"]?.asText() ?: return null,
-                   jdkVendorVersion = item["jdk_vendor_version"]?.asText(),
-                   suggestedSdkName = item["suggested_sdk_name"]?.asText() ?: return null,
+              jdkMajorVersion = item["jdk_version_major"]?.asInt() ?: return emptyList(),
+              jdkVersion = item["jdk_version"]?.asText() ?: return emptyList(),
+              jdkVendorVersion = item["jdk_vendor_version"]?.asText(),
+              suggestedSdkName = item["suggested_sdk_name"]?.asText() ?: return emptyList(),
 
-                   arch = pkg["arch"]?.asText() ?: return null,
-                   packageType = pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) ?: return null,
-                   url = pkg["url"]?.asText() ?: return null,
-                   sha256 = pkg["sha256"]?.asText() ?: return null,
-                   archiveSize = pkg["archive_size"]?.asLong() ?: return null,
-                   archiveFileName = pkg["archive_file_name"]?.asText() ?: return null,
-                   packageRootPrefix = pkg["package_root_prefix"]?.asText() ?: return null,
-                   packageToBinJavaPrefix = pkg["package_to_java_home_prefix"]?.asText() ?: return null,
+              os = pkg["os"]?.asText() ?: return emptyList(),
+              arch = pkg["arch"]?.asText() ?: return emptyList(),
+              packageType = pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) ?: return emptyList(),
+              url = pkg["url"]?.asText() ?: return emptyList(),
+              sha256 = pkg["sha256"]?.asText() ?: return emptyList(),
+              archiveSize = pkg["archive_size"]?.asLong() ?: return emptyList(),
+              archiveFileName = pkg["archive_file_name"]?.asText() ?: return emptyList(),
+              packageRootPrefix = pkg["package_root_prefix"]?.asText() ?: return emptyList(),
+              packageToBinJavaPrefix = pkg["package_to_java_home_prefix"]?.asText() ?: return emptyList(),
 
-                   unpackedSize = pkg["unpacked_size"]?.asLong() ?: return null,
-                   installFolderName = pkg["install_folder_name"]?.asText() ?: return null,
+              unpackedSize = pkg["unpacked_size"]?.asLong() ?: return emptyList(),
+              installFolderName = pkg["install_folder_name"]?.asText() ?: return emptyList(),
 
-                   sharedIndexAliases = (item["shared_index_aliases"] as? ArrayNode)?.mapNotNull { it.asText() } ?: listOf(),
+              sharedIndexAliases = (item["shared_index_aliases"] as? ArrayNode)?.mapNotNull { it.asText() } ?: listOf(),
 
-                   saveToFile = { file -> file.write(contents) }
-    )
+              saveToFile = { file -> file.write(contents) }
+      )
+    }
   }
 }
 
@@ -384,7 +384,7 @@ abstract class JdkListDownloaderBase {
    * Entries are sorter from the best suggested to the worst suggested items.
    */
   fun downloadModelForJdkInstaller(progress: ProgressIndicator?): List<JdkItem> {
-    return downloadJdksListWithCache(feedUrl, progress)
+    return downloadJdksListWithCache(feedUrl, progress).filter { it.os == JdkPredicate.currentOS }
   }
 
   /**
@@ -399,10 +399,10 @@ abstract class JdkListDownloaderBase {
     jdksListCache.setValue(url, list)
 
     if (ApplicationManager.getApplication().isInternal) {
-      return list
+      return list.filter { it.os == JdkPredicate.currentOS }
     }
 
-    return list.filter { it.isVisibleOnUI }
+    return list.filter { it.isVisibleOnUI && it.os == JdkPredicate.currentOS }
   }
 
   private val jdksListCache = CachedValueWithTTL<List<JdkItem>>(15 to TimeUnit.MINUTES)

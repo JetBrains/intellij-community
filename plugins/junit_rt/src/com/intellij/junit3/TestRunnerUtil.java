@@ -20,7 +20,7 @@ import java.util.ResourceBundle;
 
 public final class TestRunnerUtil {
   /** @noinspection HardCodedStringLiteral*/
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.RuntimeBundle");
 
   public static Test getTestSuite(JUnit3IdeaTestRunner runner, String[] suiteClassNames){
     if (suiteClassNames.length == 0) {

@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.project.Project;
@@ -137,6 +138,7 @@ public final class ProjectViewTestUtil {
     }
 
     assert toolWindow != null;
+    LafManager.getInstance();
     ((ProjectViewImpl)ProjectView.getInstance(project)).setupImpl(toolWindow, loadPaneExtensions);
   }
 }

@@ -49,8 +49,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   private static final String EMMET_LAST_WRAP_ABBREVIATIONS_KEY = "emmet.last.wrap.abbreviations";
   private static final Logger LOG = Logger.getInstance(ZenCodingTemplate.class);
   private static final EmmetContextHelp CONTEXT_HELP =
-    new EmmetContextHelp(XmlBundle.message("zen.coding.context.help.tooltip"),
-                         XmlBundle.message("zen.coding.context.help.link"),
+    new EmmetContextHelp(XmlBundle.messagePointer("zen.coding.context.help.tooltip"),
+                         XmlBundle.messagePointer("zen.coding.context.help.link"),
                          "https://docs.emmet.io/actions/wrap-with-abbreviation/");
 
   @Nullable
@@ -110,9 +110,6 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     }
     try {
       expand(key, callback, defaultGenerator, Collections.emptyList(), true, Registry.intValue("emmet.segments.limit"));
-      if (callback.getEditor().getCaretModel().getCaretCount() > 1) {
-        PsiDocumentManager.getInstance(callback.getProject()).commitDocument(callback.getEditor().getDocument());
-      }
     }
     catch (EmmetException e) {
       CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), XmlBundle.message("emmet.error"), "");

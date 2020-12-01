@@ -17,7 +17,7 @@ class LessonSample(val text: String,
     get() = getPosition(0).selection
 
   fun getPosition(id: Int): LessonSamplePosition {
-    return positions[id] ?: error("No id $id")
+    return positions[id] ?: if (id == 0) LessonSamplePosition(0, 0) else error("No id $id")
   }
 }
 

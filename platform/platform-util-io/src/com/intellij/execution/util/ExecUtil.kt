@@ -20,19 +20,18 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.IdeUtilIoBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import java.io.*
 import java.nio.charset.Charset
 
 object ExecUtil {
-  private val hasGkSudo = PathExecLazyValue("gksudo")
-  private val hasKdeSudo = PathExecLazyValue("kdesudo")
-  private val hasPkExec = PathExecLazyValue("pkexec")
-  private val hasGnomeTerminal = PathExecLazyValue("gnome-terminal")
-  private val hasKdeTerminal = PathExecLazyValue("konsole")
-  private val hasUrxvt = PathExecLazyValue("urxvt")
-  private val hasXTerm = PathExecLazyValue("xterm")
-  private val hasSetsid = PathExecLazyValue("setsid")
+  private val hasGkSudo = PathExecLazyValue.create("gksudo")
+  private val hasKdeSudo = PathExecLazyValue.create("kdesudo")
+  private val hasPkExec = PathExecLazyValue.create("pkexec")
+  private val hasGnomeTerminal = PathExecLazyValue.create("gnome-terminal")
+  private val hasKdeTerminal = PathExecLazyValue.create("konsole")
+  private val hasUrxvt = PathExecLazyValue.create("urxvt")
+  private val hasXTerm = PathExecLazyValue.create("xterm")
+  private val hasSetsid = PathExecLazyValue.create("setsid")
 
   @field:NlsSafe
   private const val nicePath = "/usr/bin/nice"

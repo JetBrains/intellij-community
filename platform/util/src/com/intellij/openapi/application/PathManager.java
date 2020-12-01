@@ -368,6 +368,10 @@ public final class PathManager {
     return platformPath(selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", "");
   }
 
+  public static @NotNull String getDefaultUnixSystemPath(@NotNull String userHome, @NotNull String pathsSelector) {
+    return getUnixPlatformPath(userHome, pathsSelector, null, ".cache", "");
+  }
+
   public static @NotNull @NonNls String getTempPath() {
     return getSystemPath() + "/tmp";
   }
@@ -437,7 +441,7 @@ public final class PathManager {
         result = new File(resourceURL.toURI().getSchemeSpecificPart());
       }
       catch (URISyntaxException e) {
-        throw new IllegalArgumentException("URL='" + resourceURL.toString() + "'", e);
+        throw new IllegalArgumentException("URL='" + resourceURL + "'", e);
       }
       String path = result.getPath();
       String testPath = path.replace('\\', '/');
@@ -466,7 +470,7 @@ public final class PathManager {
   }
 
   // do not use URLUtil.splitJarUrl here - used in bootstrap
-  private static @Nullable String splitJarUrl(@NotNull String url) {
+  public static @Nullable String splitJarUrl(@NotNull String url) {
     int pivot = url.indexOf(URLUtil.JAR_SEPARATOR);
     if (pivot < 0) {
       return null;
@@ -499,7 +503,7 @@ public final class PathManager {
         result = new File(parsedUrl.toURI().getSchemeSpecificPart());
       }
       catch (URISyntaxException e) {
-        throw new IllegalArgumentException("URL='" + parsedUrl.toString() + "'", e);
+        throw new IllegalArgumentException("URL='" + parsedUrl + "'", e);
       }
       return result.getPath().replace('\\', '/');
     }
@@ -748,15 +752,23 @@ public final class PathManager {
     }
 
     if (SystemInfoRt.isUnix) {
-      String dir = System.getenv(xdgVar);
-      if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
-      dir = dir + '/' + vendorName;
-      if (!selector.isEmpty()) dir = dir + '/' + selector;
-      if (!xdgSub.isEmpty()) dir = dir + '/' + xdgSub;
-      return dir;
+      return getUnixPlatformPath(userHome, selector, xdgVar, xdgDfl, xdgSub);
     }
 
     throw new UnsupportedOperationException("Unsupported OS: " + SystemInfoRt.OS_NAME);
+  }
+
+  @NotNull
+  private static String getUnixPlatformPath(String userHome, @NonNls String selector,
+                                            @NonNls String xdgVar,
+                                            @NonNls String xdgDfl,
+                                            @NonNls String xdgSub) {
+    String dir = xdgVar != null ? System.getenv(xdgVar) : null;
+    if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
+    dir = dir + '/' + vendorName();
+    if (!selector.isEmpty()) dir = dir + '/' + selector;
+    if (!xdgSub.isEmpty()) dir = dir + '/' + xdgSub;
+    return dir;
   }
 
   private static String vendorName() {

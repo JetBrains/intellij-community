@@ -43,13 +43,13 @@ import static com.intellij.vcsUtil.VcsFileUtilKt.isUnder;
 /**
  * <p>
  *   Stores files which are untracked by the Git repository.
- *   Should be updated by calling {@link #add(VirtualFile)} and {@link #remove(Collection)}
+ *   Should be updated by calling {@link #add(FilePath)} and {@link #remove(Collection)}
  *   whenever the list of unversioned files changes.
  *   Able to get the list of unversioned files from Git.
  * </p>
  *
  * <p>
- *   This class is used by {@link git4idea.status.GitNewChangesCollector}.
+ *   This class is used by {@link git4idea.status.GitChangesCollector}.
  *   By keeping track of unversioned files in the Git repository we may invoke
  *   {@code 'git status --porcelain --untracked-files=no'} which gives a significant speed boost: the command gets more than twice
  *   faster, because it doesn't need to seek for untracked files.

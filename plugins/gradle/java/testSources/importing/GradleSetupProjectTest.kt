@@ -1,9 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -11,14 +15,39 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
+import org.jetbrains.plugins.gradle.util.waitForProjectReload
+import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
 import org.junit.runners.Parameterized
+import java.util.concurrent.atomic.AtomicInteger
 
 class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTestCase() {
+
+  private lateinit var testDisposable: Disposable
+  private lateinit var expectedImportActionsCounter: AtomicInteger
+  private lateinit var actualImportActionsCounter: AtomicInteger
+
+  override fun setUp() {
+    super.setUp()
+
+    testDisposable = Disposer.newDisposable()
+    expectedImportActionsCounter = AtomicInteger(0)
+    actualImportActionsCounter = AtomicInteger(0)
+
+    whenResolveTaskStarted({ actualImportActionsCounter.incrementAndGet() }, testDisposable)
+    AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
+  }
+
+  override fun tearDown() {
+    Disposer.dispose(testDisposable)
+
+    super.tearDown()
+  }
+
   override fun getSystemId(): ProjectSystemId = SYSTEM_ID
 
   override fun generateProject(id: String): ExternalSystemSetupProjectTestCase.ProjectInfo {
@@ -52,16 +81,25 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
     assertEquals(settings.storeProjectFilesExternally, true)
   }
 
-  override fun doAttachProject(project: Project, projectFile: VirtualFile) {
+  override fun assertDefaultProjectState(project: Project) {
+    val notificationAware = ProjectNotificationAware.getInstance(myProject)
+    invokeAndWaitIfNeeded {
+      assertEmpty(notificationAware.getProjectsWithNotification())
+    }
+    assertEquals(expectedImportActionsCounter.get(), actualImportActionsCounter.get())
+  }
+
+  override fun <R> waitForImport(action: () -> R): R {
+    expectedImportActionsCounter.incrementAndGet()
+    return waitForProjectReload(action)
+  }
+
+  override fun attachProject(project: Project, projectFile: VirtualFile) {
     AttachExternalProjectAction().perform(project, selectedFile = projectFile)
   }
 
-  override fun doAttachProjectFromScript(project: Project, projectFile: VirtualFile) {
+  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile) {
     ImportProjectFromScriptAction().perform(project, selectedFile = projectFile)
-  }
-
-  override fun waitForImportCompletion(project: Project) {
-    ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() }
   }
 
   override fun cleanupProjectTestResources(project: Project) {

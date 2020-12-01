@@ -36,6 +36,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgMergeCommand {
@@ -98,7 +99,7 @@ public class HgMergeCommand {
           if (HgErrorUtil.isAncestorMergeError(result)) {
             //skip and notify
             VcsNotifier.getInstance(project)
-              .notifyMinorWarning("hg.merging.with.ancestor.skipped",
+              .notifyMinorWarning(MERGE_WITH_ANCESTOR_SKIPPED,
                                   HgBundle.message("action.hg4idea.merge.skipped.title", repositoryRoot.getPresentableName()),
                                   HgBundle.message("action.hg4idea.merge.skipped"));
             return;
@@ -110,12 +111,12 @@ public class HgMergeCommand {
         }
         catch (VcsException exception) {
           if (exception.isWarning()) {
-            VcsNotifier.getInstance(project).notifyWarning("hg.merge.warning",
+            VcsNotifier.getInstance(project).notifyWarning(MERGE_WARNING,
                                                            HgBundle.message("action.hg4idea.merge.warning"),
                                                            exception.getMessage());
           }
           else {
-            VcsNotifier.getInstance(project).notifyError("hg.merge.exception",
+            VcsNotifier.getInstance(project).notifyError(MERGE_EXCEPTION,
                                                          HgBundle.message("action.hg4idea.merge.exception"),
                                                          exception.getMessage());
           }

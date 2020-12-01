@@ -28,7 +28,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.*
@@ -135,7 +134,6 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
 
   @Test
   fun `test java debugger`(): Unit = runBlocking {
-    assertThat(SystemInfo.IS_AT_LEAST_JAVA9).describedAs("The test is intended to verifying Java 9 options.").isTrue()
     val cwd = tempDir.createDir()
     val executor = DefaultDebugExecutor.getDebugExecutorInstance()
     val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {

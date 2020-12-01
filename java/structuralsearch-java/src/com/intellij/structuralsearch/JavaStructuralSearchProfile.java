@@ -41,7 +41,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +52,7 @@ import java.util.stream.Collectors;
 /**
  * @author Eugene.Kudelevsky
  */
-public class JavaStructuralSearchProfile extends StructuralSearchProfile {
-
+public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static final Key<Map<String, ParameterInfo>> PARAMETER_CONTEXT = new Key<>("PARAMETER_CONTEXT");
   private static final Key<Integer> PARAMETER_LENGTH = new Key<>("PARAMETER_LENGTH");
 
@@ -659,7 +657,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         final ParameterInfo nameInfo = builder.findParameterization(nameIdentifier);
         if (nameInfo == null) return;
         nameInfo.setArgumentContext(false);
-        final THashMap<String, ParameterInfo> infos = new THashMap<>();
+        final Map<String, ParameterInfo> infos = new HashMap<>();
         infos.put(nameInfo.getName(), nameInfo);
         nameInfo.putUserData(PARAMETER_CONTEXT, infos);
         nameInfo.setElement(element);

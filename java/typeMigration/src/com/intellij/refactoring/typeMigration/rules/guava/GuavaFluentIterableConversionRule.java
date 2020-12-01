@@ -286,18 +286,14 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
                                                                           TypeMigrationLabeler labeler) {
     List<TypeConversionDescriptorBase> methodDescriptors = new SmartList<>();
 
-    NotNullLazyValue<TypeConversionRule> optionalDescriptor = new NotNullLazyValue<>() {
-      @NotNull
-      @Override
-      protected TypeConversionRule compute() {
-        for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
-          if (rule instanceof GuavaOptionalConversionRule) {
-            return rule;
-          }
+    NotNullLazyValue<TypeConversionRule> optionalDescriptor = NotNullLazyValue.createValue(() -> {
+      for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
+        if (rule instanceof GuavaOptionalConversionRule) {
+          return rule;
         }
-        throw new RuntimeException("GuavaOptionalConversionRule extension is not found");
       }
-    };
+      throw new RuntimeException("GuavaOptionalConversionRule extension is not found");
+    });
 
     PsiMethodCallExpression current = expression;
     while (true) {

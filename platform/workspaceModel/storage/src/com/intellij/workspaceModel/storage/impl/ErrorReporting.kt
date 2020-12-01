@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
+import java.nio.file.Path
 
 internal inline fun createAttachment(path: String,
                                      displayText: String,
@@ -17,7 +18,18 @@ internal inline fun createAttachment(path: String,
   return createAttachment(path, bytes, displayText)
 }
 
-fun WorkspaceEntityStorage.asAttachment(path: String, displayText: String): Attachment {
+internal fun serializeContent(path: Path, howToSerialize: (EntityStorageSerializerImpl, OutputStream) -> Unit) {
+  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
+  path.toFile().outputStream().use { howToSerialize(serializer, it) }
+}
+
+internal fun serializeEntityStorage(path: Path, storage: WorkspaceEntityStorage) {
+  serializeContent(path) { serializer, stream ->
+    serializer.serializeCache(stream, storage.makeSureItsStore())
+  }
+}
+
+internal fun WorkspaceEntityStorage.asAttachment(path: String, displayText: String): Attachment {
   return createAttachment(path, displayText) { serializer, stream ->
     serializer.serializeCache(stream, this.makeSureItsStore())
   }

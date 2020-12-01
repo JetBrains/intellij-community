@@ -77,6 +77,9 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
         Disposer.dispose((Disposable)myPanel);
       }
 
+      PsiElement restored = JavaSliceUsage.createRootUsage(element, createParams(element, isDataflowToThis())).getElement();
+      if (restored == null || restored.getContainingFile() == null) return;
+
       JComponent panel = createPanel(element, isDataflowToThis());
       myPanel = panel;
       Disposer.register(this, (Disposable)panel);

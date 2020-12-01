@@ -1,20 +1,22 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.Interner;
-import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * User: zolotov
  * <p/>
  * Table of textmate syntax rules.
  * Table represents mapping from scopeNames to set of syntax rules {@link SyntaxNodeDescriptor}.
@@ -26,8 +28,8 @@ import java.util.Map;
  */
 public class TextMateSyntaxTable {
   private static final Logger LOG = Logger.getInstance(TextMateSyntaxTable.class);
-  private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new THashMap<>();
-  private TObjectIntHashMap<String> ruleIds;
+  private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new HashMap<>();
+  private Object2IntMap<String> ruleIds;
 
   public void compact() {
     ruleIds = null;
@@ -116,8 +118,8 @@ public class TextMateSyntaxTable {
   }
 
   @Nullable
-  private static TIntObjectHashMap<CharSequence> loadCaptures(@NotNull Plist captures, @NotNull Interner<CharSequence> interner) {
-    TIntObjectHashMap<CharSequence> result = new TIntObjectHashMap<>();
+  private static Int2ObjectMap<CharSequence> loadCaptures(@NotNull Plist captures, @NotNull Interner<CharSequence> interner) {
+    Int2ObjectMap<CharSequence> result = new Int2ObjectOpenHashMap<>();
     for (Map.Entry<String, PListValue> capture : captures.entries()) {
       try {
         int index = Integer.parseInt(capture.getKey());
@@ -131,7 +133,7 @@ public class TextMateSyntaxTable {
     if (result.isEmpty()) {
       return null;
     }
-    result.trimToSize();
+    CollectionFactory.trimMap(result);
     return result;
   }
 
@@ -172,9 +174,9 @@ public class TextMateSyntaxTable {
 
   private int getRuleId(@NotNull String ruleName) {
     if (ruleIds == null) {
-      ruleIds = new TObjectIntHashMap<>();
+      ruleIds = new Object2IntOpenHashMap<>();
     }
-    int id = ruleIds.get(ruleName);
+    int id = ruleIds.getInt(ruleName);
     if (id > 0) {
       return id;
     }

@@ -38,7 +38,8 @@ import static org.junit.Assume.assumeTrue;
 
 public final class IoTestUtil {
   @ReviseWhenPortedToJDK("13")
-  private static final @Nullable Boolean symLinkMode = SystemInfo.isUnix ? Boolean.TRUE : canCreateSymlinks();  // `TRUE` == NIO, `FALSE` == "mklink"
+  // `TRUE` == NIO, `FALSE` == "mklink", null == nothing works
+  private static final @Nullable Boolean symLinkMode = SystemInfo.isUnix ? Boolean.TRUE : canCreateSymlinks();
   public static final boolean isSymLinkCreationSupported = symLinkMode != null;
 
   private IoTestUtil() { }
@@ -372,8 +373,8 @@ public final class IoTestUtil {
           catch (IOException e) {
             GeneralCommandLine cmd = new GeneralCommandLine("cmd", "/C", "mklink", link.toString(),
                                                             target.getFileName().toString()).withRedirectErrorStream(true);
-            ExecUtil.execAndGetOutput(cmd, 30_000);
-            return Boolean.FALSE;
+            ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 30_000);
+            return output.getExitCode() == 0 ? Boolean.FALSE : null;
           }
         }
         finally {
@@ -413,6 +414,24 @@ public final class IoTestUtil {
     }
 
     return Collections.emptyList();
+  }
+
+  public static boolean reanimateWslDistribution(@NotNull String name) {
+    try {
+      GeneralCommandLine cmd = new GeneralCommandLine("wsl", "-d", name, "-e", "pwd").withRedirectErrorStream(true);
+      ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 30_000);
+      if (output.getExitCode() == 0) {
+        return true;
+      }
+      else {
+        Logger.getInstance(IoTestUtil.class).debug(output.getExitCode() + " " + output.getStdout().trim());
+      }
+    }
+    catch (Exception e) {
+      Logger.getInstance(IoTestUtil.class).debug(e);
+    }
+
+    return false;
   }
 
   public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) throws IOException {

@@ -35,12 +35,14 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
@@ -343,7 +345,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                 myConsoleViewHandler.addOutput(parentNode, buildId, event);
                 myConsoleViewHandler.addOutput(parentNode, "\n", true);
               }
-              reportMessageKind(messageEvent, parentNode);
+              reportMessageKind(messageEvent.getKind(), parentNode);
             }
             myConsoleViewHandler.addOutput(currentNode, buildId, event);
           }
@@ -411,7 +413,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       finishChildren(structureChanged, currentNode, skippedResult);
       if (result instanceof FailureResult) {
         for (Failure failure : ((FailureResult)result).getFailures()) {
-          Runnable task = addChildFailureNode(currentNode, failure, event.getMessage(), structureChanged);
+          Runnable task = addChildFailureNode(currentNode, failure, event.getMessage(), event.getEventTime(), structureChanged);
           if (selectErrorNodeTask == null) selectErrorNodeTask = task;
         }
       }
@@ -493,8 +495,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return result.createDefaultResult();
   }
 
-  private void reportMessageKind(@NotNull MessageEvent messageEvent, @NotNull ExecutionNode parentNode) {
-    final MessageEvent.Kind eventKind = messageEvent.getKind();
+  private void reportMessageKind(@NotNull MessageEvent.Kind eventKind, @NotNull ExecutionNode parentNode) {
     if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING || eventKind == MessageEvent.Kind.INFO) {
       ExecutionNode executionNode = parentNode;
       do {
@@ -562,23 +563,41 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private @Nullable Runnable addChildFailureNode(@NotNull ExecutionNode parentNode,
                                                  @NotNull Failure failure,
                                                  @NotNull String defaultFailureMessage,
-                                                 @NotNull Set<ExecutionNode> strcutreChanged) {
-    String text = chooseNotNull(failure.getDescription(), failure.getMessage());
-    if (text == null && failure.getError() != null) {
-      text = failure.getError().getMessage();
+                                                 long eventTime,
+                                                 @NotNull Set<ExecutionNode> structureChanged) {
+    String message = chooseNotNull(failure.getMessage(), failure.getDescription());
+    if (message == null && failure.getError() != null) {
+      message = failure.getError().getMessage();
     }
-    if (text == null) {
-      text = defaultFailureMessage;
+    if (message == null) {
+      message = defaultFailureMessage;
     }
-    String failureNodeName = getMessageTitle(text);
+    String failureNodeName = getMessageTitle(message);
+    Navigatable failureNavigatable = failure.getNavigatable();
+    FilePosition filePosition = null;
+    if (failureNavigatable instanceof OpenFileDescriptor) {
+      OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)failureNavigatable;
+      File file = VfsUtilCore.virtualToIoFile(fileDescriptor.getFile());
+      filePosition = new FilePosition(file, fileDescriptor.getLine(), fileDescriptor.getColumn());
+      parentNode = createMessageParentNodes(eventTime, filePosition, failureNavigatable, parentNode);
+    } else if (failureNavigatable instanceof FileNavigatable) {
+      filePosition = ((FileNavigatable)failureNavigatable).getFilePosition();
+      parentNode = createMessageParentNodes(eventTime, filePosition, failureNavigatable, parentNode);
+    }
+
     ExecutionNode failureNode = parentNode.findFirstChild(executionNode -> failureNodeName.equals(executionNode.getName()));
     if (failureNode == null) {
       failureNode = new ExecutionNode(myProject, parentNode, true, this::isCorrectThread);
       failureNode.setName(failureNodeName);
+      if (filePosition != null && filePosition.getStartLine() >= 0) {
+        String hint = ":" + (filePosition.getStartLine() + 1);
+        failureNode.setHint(hint);
+      }
       parentNode.add(failureNode);
+      reportMessageKind(MessageEvent.Kind.ERROR, parentNode);
     }
-    if (failure.getNavigatable() == null) {
-      failureNode.setNavigatable(failure.getNavigatable());
+    if (failureNavigatable != null && failureNavigatable != NonNavigatable.INSTANCE) {
+      failureNode.setNavigatable(failureNavigatable);
     }
 
     List<Failure> failures;
@@ -594,9 +613,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     if (updatedRoot == null) {
       updatedRoot = parentNode;
     }
-    strcutreChanged.add(updatedRoot);
+    structureChanged.add(updatedRoot);
     myConsoleViewHandler.addOutput(failureNode, failure);
-    return showErrorIfFirst(failureNode, failure.getNavigatable());
+    return showErrorIfFirst(failureNode, failureNavigatable);
   }
 
   private static void finishChildren(@NotNull SmartHashSet<ExecutionNode> structureChanged,
@@ -703,47 +722,54 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private ExecutionNode createMessageParentNodes(MessageEvent messageEvent, ExecutionNode parentNode) {
     Object messageEventParentId = messageEvent.getParentId();
     if (messageEventParentId == null) return null;
-
     if (messageEvent instanceof FileMessageEvent) {
-      FilePosition filePosition = ((FileMessageEvent)messageEvent).getFilePosition();
-      String filePath = FileUtil.toSystemIndependentName(filePosition.getFile().getPath());
-      String parentsPath = "";
+      return createMessageParentNodes(messageEvent.getEventTime(), ((FileMessageEvent)messageEvent).getFilePosition(), messageEvent.getNavigatable(myProject), parentNode);
+    } else {
+      return parentNode;
+    }
+  }
 
-      String relativePath = FileUtil.getRelativePath(myWorkingDir, filePath, '/');
-      if (relativePath != null) {
-        if (relativePath.equals(".")) {
-          return parentNode;
-        }
-        if (!relativePath.startsWith("../../")) {
-          parentsPath = myWorkingDir;
-        }
+  private ExecutionNode createMessageParentNodes(long eventTime,
+                                                 @NotNull FilePosition filePosition,
+                                                 @Nullable Navigatable navigatable,
+                                                 ExecutionNode parentNode) {
+    String filePath = FileUtil.toSystemIndependentName(filePosition.getFile().getPath());
+    String parentsPath = "";
+
+    String relativePath = FileUtil.getRelativePath(myWorkingDir, filePath, '/');
+    if (relativePath != null) {
+      if (relativePath.equals(".")) {
+        return parentNode;
       }
+      if (!relativePath.startsWith("../../")) {
+        parentsPath = myWorkingDir;
+      }
+    }
 
-      if (isEmpty(parentsPath)) {
-        File userHomeDir = new File(SystemProperties.getUserHome());
-        if (FileUtil.isAncestor(userHomeDir, new File(filePath), true)) {
-          relativePath = FileUtil.getLocationRelativeToUserHome(filePath, false);
-        }
-        else {
-          relativePath = filePath;
-        }
+    if (isEmpty(parentsPath)) {
+      File userHomeDir = new File(SystemProperties.getUserHome());
+      if (FileUtil.isAncestor(userHomeDir, new File(filePath), true)) {
+        relativePath = FileUtil.getLocationRelativeToUserHome(filePath, false);
       }
       else {
-        relativePath = getRelativePath(parentsPath, filePath);
+        relativePath = filePath;
       }
-      Path path = Paths.get(relativePath);
-      String nodeName = path.getFileName().toString();
-      Path pathParent = path.getParent();
-      String pathHint = pathParent == null ? null : pathParent.toString();
-      parentNode = getOrCreateMessagesNode(messageEvent, filePath, parentNode, nodeName, pathHint,
-                                           () -> {
-                                             VirtualFile file = VfsUtil.findFileByIoFile(filePosition.getFile(), false);
-                                             if (file != null) {
-                                               return file.getFileType().getIcon();
-                                             }
-                                             return null;
-                                           }, messageEvent.getNavigatable(myProject), nodesMap, myProject);
     }
+    else {
+      relativePath = getRelativePath(parentsPath, filePath);
+    }
+    Path path = Paths.get(relativePath);
+    String nodeName = path.getFileName().toString();
+    Path pathParent = path.getParent();
+    String pathHint = pathParent == null ? null : pathParent.toString();
+    parentNode = getOrCreateMessagesNode(eventTime, filePath, parentNode, nodeName, pathHint,
+                                         () -> {
+                                           VirtualFile file = VfsUtil.findFileByIoFile(filePosition.getFile(), false);
+                                           if (file != null) {
+                                             return file.getFileType().getIcon();
+                                           }
+                                           return null;
+                                         }, navigatable, nodesMap, myProject);
     return parentNode;
   }
 
@@ -825,7 +851,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return tree;
   }
 
-  private @NotNull ExecutionNode getOrCreateMessagesNode(MessageEvent messageEvent,
+  private @NotNull ExecutionNode getOrCreateMessagesNode(long eventTime,
                                                          String nodeId,
                                                          ExecutionNode parentNode,
                                                          String nodeName,
@@ -841,8 +867,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       if (hint != null) {
         node.setHint(hint);
       }
-      node.setStartTime(messageEvent.getEventTime());
-      node.setEndTime(messageEvent.getEventTime());
+      node.setStartTime(eventTime);
+      node.setEndTime(eventTime);
       if (iconProvider != null) {
         node.setIconProvider(iconProvider);
       }

@@ -163,7 +163,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   }
 
   @NotNull
-  public static List<AnAction> collectActions(@NotNull JComponent component) {
+  public static List<AnAction> collectActions(@Nullable JComponent component) {
     JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(component).traverse().filter(ActionToolbar.class);
     if (toolbars.size() == 0) {
       return Collections.emptyList();

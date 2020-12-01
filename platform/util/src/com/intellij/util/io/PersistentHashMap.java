@@ -6,9 +6,11 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-import static com.intellij.util.io.PersistentHashMapBuilder.newBuilder;
+import static com.intellij.util.io.PersistentMapBuilder.newBuilder;
 
 /**
  * A delegate for a Persistent Hash Map (PHM) implementation
@@ -16,40 +18,34 @@ import static com.intellij.util.io.PersistentHashMapBuilder.newBuilder;
  * This class plays several roles to preserve backward API compatibility:
  * <ul>
  *   <li>base interface for {@link PersistentHashMap}, so please use that one in any public or open API</li>
- *   <li>it delegates all calls to {@link PersistentHashMapBase} implementation</li>
- *   <li>factory adapter for backward compatibility - constructors delegates to {@link PersistentHashMapBuilder} to create the best implementation</li>
+ *   <li>it delegates all calls to {@link PersistentMapBase} implementation</li>
+ *   <li>factory adapter for backward compatibility - constructors delegates to {@link PersistentMapBuilder} to create the best implementation</li>
  * </ul>
  *
  * @implNote Please to not override this class, it is not final to preserve backward compatibility.
- * @see PersistentHashMapBuilder
+ * @see PersistentMapBuilder
  **/
 public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value> {
   @NonNls
   static String DATA_FILE_EXTENSION = ".values";
 
-  @NotNull private final PersistentHashMapBase<Key, Value> myImpl;
+  @NotNull private final PersistentMapBase<Key, Value> myImpl;
 
-  PersistentHashMap(@NotNull PersistentHashMapBuilder<Key, Value> builder, boolean checkInheritedMembers) throws IOException {
+  PersistentHashMap(@NotNull PersistentMapBuilder<Key, Value> builder, boolean checkInheritedMembers) throws IOException {
     if (checkInheritedMembers) {
       builder.withReadonly(isReadOnly());
       builder.inlineValues(inlineValues());
     }
-    myImpl = builder.buildImplementation();
+    myImpl = builder.build().myImpl;
   }
 
-  public PersistentHashMap(@NotNull PersistentHashMapBase<Key, Value> impl) {
+  public PersistentHashMap(@NotNull PersistentMapBase<Key, Value> impl) {
     myImpl = impl;
   }
 
   @Override
-  public boolean isCorrupted() {
-    //note: this method used in Scala plugin
-    return myImpl.isCorrupted();
-  }
-
-  @Override
-  public void deleteMap() {
-    myImpl.deleteMap();
+  public final void closeAndClean() throws IOException {
+    myImpl.closeAndDelete();
   }
 
   public PersistentHashMap(@NotNull File file,
@@ -89,34 +85,46 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   /**
-   * @deprecated Please use {@link PersistentHashMapBuilder} instead
+   * @deprecated Please use {@link PersistentMapBuilder} instead
    */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected boolean inlineValues() {
     return false;
   }
 
   /**
-   * @deprecated Please use {@link PersistentHashMapBuilder} instead
+   * @deprecated Please use {@link PersistentMapBuilder} instead
    */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected boolean isReadOnly() {
     return false;
   }
 
   public final void dropMemoryCaches() {
-    myImpl.dropMemoryCaches();
+    force();
   }
 
+  /**
+   * @deprecated Please use an utility function directly, not this method
+   */
+  @Deprecated
   public static void deleteFilesStartingWith(@NotNull File prefixFile) {
     IOUtil.deleteAllFilesStartingWith(prefixFile);
   }
 
   /**
    * Deletes {@param map} files and trying to close it before.
+   * @deprecated use {@link #closeAndClean()}
    */
+  @Deprecated
   public static void deleteMap(@NotNull PersistentHashMap<?, ?> map) {
-    map.myImpl.deleteMap();
+    try {
+      map.closeAndClean();
+    } catch (IOException e) {
+      //NOP
+    }
   }
 
   @Override
@@ -156,7 +164,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
   /**
    * Process all keys registered in the map. Note that keys which were removed after
-   * {@link PersistentHashMapImpl#compact()} call will be processed as well. Use
+   * {@link PersistentMapImpl#compact()} call will be processed as well. Use
    * {@link #processKeysWithExistingMapping(Processor)} to process only keys with existing mappings
    */
   @Override
@@ -179,13 +187,16 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl.markDirty();
   }
 
+  @Deprecated
   @NotNull
   public final Collection<Key> getAllKeysWithExistingMapping() throws IOException {
-    return myImpl.getAllKeysWithExistingMapping();
+    List<Key> result = new ArrayList<>();
+    myImpl.processExistingKeys(new CommonProcessors.CollectProcessor<>(result));
+    return result;
   }
 
   public final boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException {
-    return myImpl.processKeysWithExistingMapping(processor);
+    return myImpl.processExistingKeys(processor);
   }
 
   @Override
@@ -195,16 +206,22 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
   @Override
   public final boolean containsMapping(Key key) throws IOException {
-    return myImpl.containsMapping(key);
+    return myImpl.containsKey(key);
   }
 
+  @Override
   public final void remove(Key key) throws IOException {
     myImpl.remove(key);
   }
 
   @Override
   public final void force() {
-    myImpl.force();
+    try {
+      myImpl.force();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

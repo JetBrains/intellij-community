@@ -68,13 +68,13 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
-import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
@@ -432,11 +432,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
 
-      TIntFunction foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
-      TIntFunction contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
-      TIntFunction contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
-      TIntFunction merged1 = mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor);
-      TIntFunction merged2 = mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor);
+      IntUnaryOperator foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
+      IntUnaryOperator contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
+      IntUnaryOperator contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
+      IntUnaryOperator merged1 = mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor);
+      IntUnaryOperator merged2 = mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor);
       myEditor.getGutter().setLineNumberConverter(merged1 == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged1),
                                                   merged2 == null ? null : new LineNumberConverterAdapter(merged2));
 
@@ -493,9 +493,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return block;
   }
 
-  private static TIntFunction mergeLineConverters(@Nullable TIntFunction contentConvertor,
-                                                  @NotNull TIntFunction unifiedConvertor,
-                                                  @NotNull TIntFunction foldingConvertor) {
+  private static IntUnaryOperator mergeLineConverters(@Nullable IntUnaryOperator contentConvertor,
+                                                  @NotNull IntUnaryOperator unifiedConvertor,
+                                                  @NotNull IntUnaryOperator foldingConvertor) {
     return DiffUtil.mergeLineConverters(DiffUtil.mergeLineConverters(contentConvertor, unifiedConvertor), foldingConvertor);
   }
 
@@ -1002,12 +1002,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
     MyToggleExpandByDefaultAction() {
-      super(getTextSettings());
-    }
-
-    @Override
-    protected void expandAll(boolean expand) {
-      myFoldingModel.expandAll(expand);
+      super(getTextSettings(), myFoldingModel);
     }
   }
 
@@ -1243,7 +1238,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @NotNull
-    public TIntFunction getLineNumberConvertor() {
+    public IntUnaryOperator getLineNumberConvertor() {
       return getLineConvertor(0);
     }
 

@@ -16,9 +16,7 @@ import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
-import net.miginfocom.layout.BoundSize
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LayoutUtil
+import net.miginfocom.layout.*
 import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.border.LineBorder
@@ -76,6 +74,12 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     private set
 
   var gapAfter: String? = null
+    set(value) {
+      field = value;
+      rowConstraints?.gapAfter = if (value == null) null else ConstraintParser.parseBoundSize(value, true, false)
+    }
+
+  var rowConstraints: DimConstraint? = null;
 
   private var componentIndexWhenCellModeWasEnabled = -1
 
@@ -162,6 +166,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       subRows?.forEach {
         it.visible = value
         it.subRowsVisible = value
+        if (it != subRows!!.last()) {
+          it.gapAfter = if (value) null else "0px!"
+        }
       }
     }
 
@@ -348,7 +355,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     if (builder.hideableRowNestingLevel > 0) {
-      cc.hideMode = 0
+      cc.hideMode = 3
     }
 
     // if this row is not labeled and:

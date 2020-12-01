@@ -27,18 +27,17 @@ import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class UpdateCopyrightAction extends BaseAnalysisAction {
+public final class UpdateCopyrightAction extends BaseAnalysisAction {
   public static final String UPDATE_EXISTING_COPYRIGHTS = "update.existing.copyrights";
   private JCheckBox myUpdateExistingCopyrightsCb;
 
-  protected UpdateCopyrightAction() {
+  private UpdateCopyrightAction() {
     super(UpdateCopyrightProcessor.TITLE, UpdateCopyrightProcessor.TITLE);
   }
 
@@ -99,9 +98,8 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     return true;
   }
 
-  @Nullable
   @Override
-  protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
+  protected @NotNull JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
     final JPanel panel = new JPanel(new VerticalFlowLayout());
     panel.add(new TitledSeparator());
     myUpdateExistingCopyrightsCb = new JCheckBox(CopyrightBundle.message("checkbox.text.update.existing.copyrights"),

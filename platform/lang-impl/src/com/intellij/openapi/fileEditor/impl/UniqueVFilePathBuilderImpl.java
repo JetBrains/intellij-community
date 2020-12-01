@@ -170,18 +170,15 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
 
   @NotNull
   private static Collection<VirtualFile> getFilesByNameFromIndex(@NotNull String fileName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-    if (!DumbService.isDumb(project)) {
-      // get data as is
-      Collection<VirtualFile> rawDataFromIndex = disableIndexUpToDateCheckInEdt(() -> FilenameIndex.getVirtualFilesByName(project, fileName, scope));
-      // filter only suitable files, we can miss some files but it's ok for presentation reasons
-      return ContainerUtil.filter(rawDataFromIndex, f -> fileName.equals(getName(f)));
+    ThrowableComputable<Collection<VirtualFile>, RuntimeException> query =
+      () -> FilenameIndex.getVirtualFilesByName(project, fileName, scope);
+    if (DumbService.isDumb(project)) {
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(query);
     }
-    else {
-      Ref<Collection<VirtualFile>> filesFromIndex = Ref.create();
-      FileBasedIndex.getInstance().ignoreDumbMode(() -> filesFromIndex.set(FilenameIndex.getVirtualFilesByName(project, fileName, scope)),
-                                                  DumbModeAccessType.RELIABLE_DATA_ONLY);
-      return filesFromIndex.get();
-    }
+    // get data as is
+    Collection<VirtualFile> rawDataFromIndex = disableIndexUpToDateCheckInEdt(query);
+    // filter only suitable files, we can miss some files but it's ok for presentation reasons
+    return ContainerUtil.filter(rawDataFromIndex, f -> fileName.equals(getName(f)));
   }
 
   private static <T,E extends Throwable> T disableIndexUpToDateCheckInEdt(@NotNull ThrowableComputable<T, E> computable) throws E {

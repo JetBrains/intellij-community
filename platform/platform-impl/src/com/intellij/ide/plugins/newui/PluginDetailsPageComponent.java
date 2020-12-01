@@ -11,8 +11,6 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +39,7 @@ import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
+import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
@@ -92,12 +91,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private ChangeNotesPanel myChangeNotesPanel;
   private OneLineProgressIndicator myIndicator;
 
-  public IdeaPluginDescriptor myPlugin;
+  private @Nullable IdeaPluginDescriptor myPlugin;
   private IdeaPluginDescriptor myUpdateDescriptor;
 
   private ListPluginComponent myShowComponent;
-  private boolean myRequiresRestart = true;
-  private boolean myPluginIsRequired = false;
 
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel, @NotNull LinkListener<Object> searchListener, boolean marketplace) {
     myPluginModel = pluginModel;
@@ -106,6 +103,16 @@ public class PluginDetailsPageComponent extends MultiPanel {
     createPluginPanel();
     select(1, true);
     setEmptyState(EmptyState.NONE_SELECTED);
+  }
+
+  final @Nullable IdeaPluginDescriptor getPlugin() {
+    return myPlugin;
+  }
+
+  void setPlugin(@Nullable IdeaPluginDescriptor plugin) {
+    if (plugin != null) {
+      myPlugin = plugin;
+    }
   }
 
   public boolean isShowingPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
@@ -158,8 +165,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     header.add(myIconLabel, BorderLayout.WEST);
 
     myGearButton = SelectionBasedPluginModelAction.createGearButton(
-      EnableDisableAction::new,
-      () -> new UninstallAction()
+      this::createEnableDisableAction,
+      () -> createUninstallAction()
     );
     myGearButton.setBorder(JBUI.Borders.emptyLeft(5));
     myGearButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
@@ -370,35 +377,53 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   public static JEditorPane createDescriptionComponent(@Nullable Consumer<? super View> imageViewHandler) {
-    JEditorPane editorPane = new JEditorPane();
-
-    HTMLEditorKit kit;
-    if (imageViewHandler == null) {
-      kit = UIUtil.getHTMLEditorKit();
-    }
-    else {
-      kit = new JBHtmlEditorKit() {
-        private final ViewFactory myFactory = new JBHtmlFactory() {
-          @Override
-          public View create(Element e) {
-            View view = super.create(e);
-            if (view instanceof ImageView) {
-              imageViewHandler.accept(view);
-            }
-            return view;
-          }
-        };
-
+    HTMLEditorKit kit = new JBHtmlEditorKit() {
+      private final ViewFactory myFactory = new JBHtmlFactory() {
         @Override
-        public ViewFactory getViewFactory() {
-          return myFactory;
+        public View create(Element e) {
+          View view = super.create(e);
+          if (view instanceof ParagraphView) {
+            return new ParagraphView(e) {
+              {
+                super.setLineSpacing(0.3f);
+              }
+
+              @Override
+              protected void setLineSpacing(float ls) {
+              }
+            };
+          }
+          if (imageViewHandler != null && view instanceof ImageView) {
+            imageViewHandler.accept(view);
+          }
+          return view;
         }
       };
-    }
-    StyleSheet sheet = kit.getStyleSheet();
-    sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
-    sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
 
+      @Override
+      public ViewFactory getViewFactory() {
+        return myFactory;
+      }
+    };
+
+    StyleSheet sheet = kit.getStyleSheet();
+    sheet.addRule("ul { margin-left-ltr: 30; margin-right-rtl: 30; }");
+    sheet.addRule("a { color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "; }");
+    sheet.addRule("h4 { font-weight: bold; }");
+    sheet.addRule("strong { font-weight: bold; }");
+    sheet.addRule("p { margin-bottom: 6px; }");
+
+    Font font = UIUtil.getLabelFont();
+
+    if (font != null) {
+      int size = font.getSize();
+      sheet.addRule("h3 { font-size: " + (size + 3) + "; font-weight: bold; }");
+      sheet.addRule("h2 { font-size: " + (size + 5) + "; font-weight: bold; }");
+      sheet.addRule("h1 { font-size: " + (size + 9) + "; font-weight: bold; }");
+      sheet.addRule("h0 { font-size: " + (size + 12) + "; font-weight: bold; }");
+    }
+
+    JEditorPane editorPane = new JEditorPane();
     editorPane.setEditable(false);
     editorPane.setOpaque(false);
     editorPane.setBorder(null);
@@ -434,7 +459,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
           syncLoading = false;
           startLoading();
           ProcessIOExecutorService.INSTANCE.execute(() -> {
-            component.myPlugin = MarketplaceRequests.getInstance().loadPluginDetails(node);
+            component.setPluginDescriptor(MarketplaceRequests.getInstance().loadPluginDetails(node));
 
             ApplicationManager.getApplication().invokeLater(() -> {
               if (myShowComponent == component) {
@@ -452,24 +477,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  @Override
-  public ActionCallback select(Integer key, boolean now) {
-    if (myPlugin instanceof IdeaPluginDescriptorImpl) {
-      IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)myPlugin);
-
-      if (descriptor != null) {
-        myPluginModel.appendOrUpdateDescriptor(descriptor);
-        myRequiresRestart = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor) != null;
-      }
-
-      myPluginIsRequired = myPluginModel.isRequiredPlugin(myPlugin);
-    }
-
-    return super.select(key, now);
-  }
-
   private void showPlugin(@NotNull ListPluginComponent component) {
-    myPlugin = component.myPlugin;
+    myPlugin = component.getPluginDescriptor();
     myUpdateDescriptor = component.myUpdateDescriptor;
     showPlugin();
     select(0, true);
@@ -849,45 +858,23 @@ public class PluginDetailsPageComponent extends MultiPanel {
     return StringUtil.isEmptyOrSpaces(notes) ? null : notes;
   }
 
-  private final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> {
-
-    private EnableDisableAction(@NotNull PluginEnabledState newState) {
-      super(
-        null,
-        PluginDetailsPageComponent.this.myPluginModel,
-        newState,
-        List.of(PluginDetailsPageComponent.this)
-      );
-    }
-
-    @Override
-    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull PluginDetailsPageComponent component) {
-      return myPlugin;
-    }
-
-    @Override
-    protected boolean isInvisible(@NotNull PluginEnabledState oldState,
-                                  @Nullable Project project) {
-      return super.isInvisible(oldState, project) ||
-             myNewState.isPerProject() && myRequiresRestart ||
-             myNewState == PluginEnabledState.DISABLED_FOR_PROJECT && myPluginIsRequired;
-    }
+  private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action) {
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(
+      null,
+      myPluginModel,
+      action,
+      List.of(this),
+      PluginDetailsPageComponent::getPlugin
+    );
   }
 
-  private final class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> {
-
-    private UninstallAction() {
-      super(
-        null,
-        PluginDetailsPageComponent.this.myPluginModel,
-        PluginDetailsPageComponent.this,
-        List.of(PluginDetailsPageComponent.this)
-      );
-    }
-
-    @Override
-    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull PluginDetailsPageComponent component) {
-      return myPlugin;
-    }
+  private @NotNull SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> createUninstallAction() {
+    return new SelectionBasedPluginModelAction.UninstallAction<>(
+      null,
+      myPluginModel,
+      this,
+      List.of(this),
+      PluginDetailsPageComponent::getPlugin
+    );
   }
 }

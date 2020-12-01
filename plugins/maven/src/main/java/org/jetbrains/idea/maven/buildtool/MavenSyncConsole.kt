@@ -38,7 +38,6 @@ import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
-import javax.swing.JComponent
 
 class MavenSyncConsole(private val myProject: Project) {
   @Volatile
@@ -50,7 +49,6 @@ class MavenSyncConsole(private val myProject: Project) {
   private var hasErrors = false
   private var hasUnresolved = false
   private val JAVADOC_AND_SOURCE_CLASSIFIERS = setOf("javadoc", "sources", "test-javadoc", "test-sources")
-  private val delayedActions = ArrayList<() -> Unit>()
 
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
@@ -78,14 +76,11 @@ class MavenSyncConsole(private val myProject: Project) {
     wrapperProgressIndicator = WrapperProgressIndicator()
     mySyncView = syncView
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
-    val runDescr = BuildContentDescriptor(null, null, object : JComponent() {}, SyncBundle.message("maven.sync.title"))
-    runDescr.isActivateToolWindowWhenFailed = true
-    runDescr.isActivateToolWindowWhenAdded = false
 
-    val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!,
-                                            System.currentTimeMillis())
+    val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!, System.currentTimeMillis())
       .withRestartAction(restartAction)
-      .withContentDescriptor{runDescr}
+    descriptor.isActivateToolWindowWhenFailed = true
+    descriptor.isActivateToolWindowWhenAdded = false
 
     mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, SyncBundle.message("maven.sync.project.title", myProject.name)))
     debugLog("maven sync: started importing $myProject")

@@ -36,6 +36,8 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +66,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   private final boolean myDeclareFinal;
   private final boolean myGenerateDelegate;
   private PsiType myForcedType;
-  private final TIntArrayList myParametersToRemove;
+  private final IntList myParametersToRemove;
   private final PsiManager myManager;
   private JavaExpressionWrapper myInitializerWrapper;
   private boolean myHasConflicts;
@@ -85,7 +87,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                                      boolean declareFinal,
                                      boolean generateDelegate,
                                      PsiType forcedType,
-                                     @NotNull TIntArrayList parametersToRemove) {
+                                     @NotNull IntList parametersToRemove) {
     super(project);
 
     myMethodToReplaceIn = methodToReplaceIn;
@@ -106,6 +108,27 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myParametersToRemove = parametersToRemove;
 
     myInitializerWrapper = expressionToSearch == null ? null : new JavaExpressionWrapper(expressionToSearch);
+  }
+
+  /**
+   * if expressionToSearch is null, search for localVariable
+   */
+  public IntroduceParameterProcessor(@NotNull Project project,
+                                     PsiMethod methodToReplaceIn,
+                                     @NotNull PsiMethod methodToSearchFor,
+                                     PsiExpression parameterInitializer,
+                                     PsiExpression expressionToSearch,
+                                     PsiLocalVariable localVariable,
+                                     boolean removeLocalVariable,
+                                     String parameterName,
+                                     boolean replaceAllOccurrences,
+                                     int replaceFieldsWithGetters,
+                                     boolean declareFinal,
+                                     boolean generateDelegate,
+                                     PsiType forcedType,
+                                     @NotNull TIntArrayList parametersToRemove) {
+    this(project, methodToReplaceIn, methodToSearchFor, parameterInitializer, expressionToSearch, localVariable, removeLocalVariable, parameterName, replaceAllOccurrences,
+         replaceFieldsWithGetters, declareFinal, generateDelegate, forcedType, new IntArrayList(parametersToRemove.toNativeArray()));
   }
 
   public void setParameterInitializer(PsiExpression parameterInitializer) {
@@ -318,7 +341,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     @Override public void visitVariable(PsiVariable variable) {
       if (variable == myLocalVariable) return;
       if (variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == myMethodToReplaceIn) {
-        if (getParametersToRemove().contains(myMethodToReplaceIn.getParameterList().getParameterIndex((PsiParameter)variable))){
+        if (getParameterListToRemove().contains(myMethodToReplaceIn.getParameterList().getParameterIndex((PsiParameter)variable))){
           return;
         }
       }
@@ -577,7 +600,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   private void removeParametersFromCall(final PsiExpressionList argList) {
     final PsiExpression[] exprs = argList.getExpressions();
-    myParametersToRemove.forEachDescending(paramNum -> {
+    for (int i = myParametersToRemove.size() - 1; i >= 0; i--) {
+      int paramNum = myParametersToRemove.getInt(i);
       if (paramNum < exprs.length) {
         try {
           exprs[paramNum].delete();
@@ -586,8 +610,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
           LOG.error(e);
         }
       }
-      return true;
-    });
+    }
   }
 
   @Override
@@ -647,7 +670,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   @Override
   @NotNull
-  public TIntArrayList getParametersToRemove() {
+  public IntList getParameterListToRemove() {
     return myParametersToRemove;
   }
 

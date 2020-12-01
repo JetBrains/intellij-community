@@ -8,6 +8,7 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvi
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 import com.intellij.ide.actions.runAnything.getPath
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.util.NlsSafe
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -20,7 +21,10 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   override fun getHelpIcon(): Icon? = OpenapiIcons.RepositoryLibraryLogo
 
-  override fun getHelpGroupTitle() = "Maven"
+
+  override fun getHelpGroupTitle():  String {
+    return "Maven" //NON-NLS
+  }
 
   override fun getIcon(value: String): Icon? = OpenapiIcons.RepositoryLibraryLogo
 

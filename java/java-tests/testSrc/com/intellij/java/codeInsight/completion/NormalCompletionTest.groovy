@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
@@ -2297,5 +2298,12 @@ class Abc {
     myFixture.completeBasic()
     assert myFixture.getLookupElementStrings().stream().filter({ it.contains("sss") }).collect(Collectors.toList()) == 
            ["A.sss", "sss"]
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test private constructor"() {
+    myFixture.configureByText("A.java", "class A {{new Syst<caret>}}")
+    myFixture.completeBasic()
+    assert ContainerUtil.filter(myFixture.getLookupElementStrings(), {it.startsWith("S")}) == ['System.Logger', 'System.LoggerFinder']
   }
 }

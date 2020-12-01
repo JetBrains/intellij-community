@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.UNCOMMITTED_CHANGES_SAVING_ERROR;
 
 /**
  * VCS-independent implementation for {@link VcsPreservingExecutor}
@@ -75,7 +76,7 @@ class DefaultPreservingExecutorImpl {
                                           myOperationTitle,
                                           join(e.getMessages()));
         VcsNotifier.getInstance(myProject).notifyError(
-          "vcs.uncommitted.changes.saving.error",
+          UNCOMMITTED_CHANGES_SAVING_ERROR,
           VcsBundle.message("notification.title.couldn.t.save.uncommitted.changes"),
           format);
         return false;

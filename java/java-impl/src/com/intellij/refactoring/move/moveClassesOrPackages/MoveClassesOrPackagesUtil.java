@@ -6,6 +6,7 @@ import com.intellij.lang.java.JavaFindUsagesProvider;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -265,6 +266,11 @@ public final class MoveClassesOrPackagesUtil {
 
       if (ModelBranch.getPsiBranch(moveDestination) == null) {
         DumbService.getInstance(project).completeJustSubmittedTasks();
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+        Document document = documentManager.getCachedDocument(file);
+        if (document != null) {
+          documentManager.commitDocument(document);
+        }
       }
 
       file = moveDestination.findFile(file.getName());

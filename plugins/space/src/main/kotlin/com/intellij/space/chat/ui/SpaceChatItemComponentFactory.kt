@@ -18,6 +18,8 @@ import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.discussion.SpaceChatCodeDiscussionComponentFactory
 import com.intellij.space.chat.ui.message.MessageTitleComponent
+import com.intellij.space.chat.ui.message.SpaceChatMessagePendingHeader
+import com.intellij.space.chat.ui.thread.SpaceChatReplyActionFactory
 import com.intellij.space.chat.ui.thread.createThreadComponent
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
@@ -56,6 +58,8 @@ internal class SpaceChatItemComponentFactory(
 
   private val codeDiscussionComponentFactory = SpaceChatCodeDiscussionComponentFactory(project, lifetime, server)
 
+  private val replyActionFactory = SpaceChatReplyActionFactory()
+
   /**
    * Method should return [HoverableJPanel] because it is used to implement hovering properly
    *
@@ -73,7 +77,7 @@ internal class SpaceChatItemComponentFactory(
             messagePanel
           }
           else {
-            val threadComponent = createThreadComponent(project, lifetime, thread)
+            val threadComponent = createThreadComponent(project, lifetime, thread, replyActionFactory)
             JPanel(VerticalLayout(0)).apply {
               isOpaque = false
               add(messagePanel, VerticalLayout.FILL_HORIZONTAL)
@@ -134,6 +138,7 @@ internal class SpaceChatItemComponentFactory(
     return Item(
       item.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarProvider.iconSize.get()),
       MessageTitleComponent(lifetime, item, server),
+      SpaceChatMessagePendingHeader(item),
       createEditableContent(component, item)
     )
   }
@@ -222,10 +227,11 @@ internal class SpaceChatItemComponentFactory(
     })
   }
 
-  private fun createSimpleMessageComponent(message: SpaceChatItem): HtmlEditorPane = createSimpleMessageComponent(message.text)
+  private fun createSimpleMessageComponent(message: SpaceChatItem): HtmlEditorPane =
+    createSimpleMessageComponent(message.text, message.isEdited)
 
-  private fun createSimpleMessageComponent(@Nls text: String): HtmlEditorPane = HtmlEditorPane().apply {
-    setBody(processItemText(server, text))
+  private fun createSimpleMessageComponent(@Nls text: String, isEdited: Boolean = false): HtmlEditorPane = HtmlEditorPane().apply {
+    setBody(processItemText(server, text, isEdited))
   }
 
   private class EventMessagePanel(content: JComponent) : BorderLayoutPanel() {
@@ -258,14 +264,24 @@ internal class SpaceChatItemComponentFactory(
     }
   }
 
-  internal class Item(avatar: Icon, private val title: MessageTitleComponent, content: JComponent) : HoverableJPanel() {
+  internal class Item(
+    avatar: Icon,
+    private val title: MessageTitleComponent,
+    header: JComponent,
+    content: JComponent
+  ) : HoverableJPanel() {
     companion object {
       val AVATAR_GAP: Int
         get() = UI.scale(8)
     }
 
     init {
-      layout = BorderLayout()
+      val headerPart = BorderLayoutPanel().apply {
+        isOpaque = false
+        border = JBUI.Borders.emptyLeft(avatar.iconWidth + AVATAR_GAP)
+        addToCenter(header)
+      }
+
       val avatarPanel = BorderLayoutPanel().apply {
         isOpaque = false
         border = JBUI.Borders.empty()
@@ -277,10 +293,18 @@ internal class SpaceChatItemComponentFactory(
         add(title, VerticalLayout.FILL_HORIZONTAL)
         add(content, VerticalLayout.FILL_HORIZONTAL)
       }
+      val messagePanel = BorderLayoutPanel().apply {
+        isOpaque = false
+        addToLeft(avatarPanel)
+        addToCenter(rightPart)
+      }
+
+      layout = VerticalLayout(JBUI.scale(3))
       isOpaque = false
       border = JBUI.Borders.empty(10, 0)
-      add(avatarPanel, BorderLayout.WEST)
-      add(rightPart, BorderLayout.CENTER)
+
+      add(headerPart, VerticalLayout.FILL_HORIZONTAL)
+      add(messagePanel, VerticalLayout.FILL_HORIZONTAL)
     }
 
     private fun userAvatar(avatar: Icon) = LinkLabel<Any>("", avatar)

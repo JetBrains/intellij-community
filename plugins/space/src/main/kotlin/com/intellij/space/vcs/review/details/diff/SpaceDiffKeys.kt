@@ -3,6 +3,6 @@ package com.intellij.space.vcs.review.details.diff
 
 import com.intellij.openapi.util.Key
 
-object SpaceDiffKeys {
-  val DIFF_REQUEST_DATA = Key.create<DiffRequestData>("space.review.diff.request.data")
+internal object SpaceDiffKeys {
+  val DIFF_REQUEST_DATA = Key.create<SpaceReviewDiffRequestData>("space.review.diff.request.data")
 }

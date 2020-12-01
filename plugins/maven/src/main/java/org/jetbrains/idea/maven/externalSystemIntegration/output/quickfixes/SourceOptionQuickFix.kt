@@ -7,15 +7,17 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.BuildIssueEventImpl
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.build.progress.BuildIssueContributor
+import com.intellij.compiler.progress.BuildIssueContributor
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.text.HtmlChunk
@@ -79,7 +81,7 @@ class Source5BuildIssue(project: Project, private val failedProjectId: String) :
   private fun createDescription() = quickFixes.map {
     HtmlChunk.link(it.id, MavenProjectBundle.message("maven.source.5.not.supported.update", it.mavenProject.displayName))
       .toString()
-  }.joinToString("\n", prefix = MavenProjectBundle.message("maven.source.5.not.supported.description"))
+  }.joinToString("\n<br/>", prefix = MavenProjectBundle.message("maven.source.5.not.supported.description"))
 
 
   override fun getNavigatable(project: Project): Navigatable? {
@@ -111,20 +113,21 @@ class JpsReleaseVersion5QuickFix : BuildIssueContributor {
                                 kind: MessageEvent.Kind,
                                 virtualFile: VirtualFile?,
                                 navigatable: Navigatable?): BuildIssue? {
+    val manager = MavenProjectsManager.getInstance(project);
+    if (!manager.isMavenizedProject) return null
+
     if (moduleNames.size != 1) {
       return null
     }
     val moduleName = moduleNames.firstOrNull() ?: return null
     val predicates = CacheForCompilerErrorMessages.getPredicatesToCheck(project, moduleName);
     if (!message.contains("release version") || !message.contains("not supported")) return null
-    val manager = MavenProjectsManager.getInstance(project);
-    if (!manager.isMavenizedProject) return null
-
 
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
     val failedId = MavenProjectsManager.getInstance(project).findProject(module)?.mavenId ?: return null
 
-    return Source5BuildIssue(project, failedId.displayString)
+    if (predicates.any { it(message) }) return Source5BuildIssue(project, failedId.displayString)
+    return null
   }
 
 
@@ -174,11 +177,13 @@ class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuic
 
 object CacheForCompilerErrorMessages {
   private val key = "compiler.err.unsupported.release.version".encodeToByteArray()
-  private val delimiter=ByteArray(2)
+  private val delimiter = ByteArray(2)
+
   init {
     delimiter[0] = 1 // SOH
     delimiter[1] = 0 // NUL byte
   }
+
   private val DEFAULT_CHECK = listOf<MessagePredicate>(
     { it.contains("release version") && it.contains("not supported") }, //en
     {
@@ -189,10 +194,32 @@ object CacheForCompilerErrorMessages {
   )
   private val map = WeakHashMap<String, List<MessagePredicate>>()
 
+  @JvmStatic
+  fun connectToJdkListener(myProject: Project, disposable: Disposable) {
+    myProject.messageBus.connect(disposable).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
+      override fun jdkAdded(jdk: Sdk) {
+        synchronized(map){map.remove(jdk.name)}
+      }
+
+      override fun jdkRemoved(jdk: Sdk) {
+        synchronized(map){map.remove(jdk.name)}
+      }
+
+      override fun jdkNameChanged(jdk: Sdk, previousName: String) {
+        synchronized(map){
+          val list = map[previousName]
+          if(list!=null){
+            map[jdk.name] = list
+          }
+        }
+      }
+    })
+  }
+
   fun getPredicatesToCheck(project: Project, moduleName: String): List<MessagePredicate> {
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return DEFAULT_CHECK;
     val sdk = ModuleRootManager.getInstance(module).sdk ?: return DEFAULT_CHECK;
-    return map.getOrPut(sdk.name) { readFrom(sdk) }
+    return synchronized(map) { map.getOrPut(sdk.name) { readFrom(sdk) } }
   }
 
   private fun readFrom(sdk: Sdk): List<MessagePredicate> {
@@ -211,7 +238,8 @@ object CacheForCompilerErrorMessages {
           ?.toList()
       if (list.isNullOrEmpty()) return DEFAULT_CHECK else return list
 
-    } catch (e: Throwable){
+    }
+    catch (e: Throwable) {
       MavenLog.LOG.warn(e);
       return DEFAULT_CHECK;
     }
@@ -219,17 +247,18 @@ object CacheForCompilerErrorMessages {
 
 
   private fun readFromBinaryFile(file: VirtualFile?): MessagePredicate? {
-    if(file == null) return null
+    if (file == null) return null
     try {
       val allBytes = VfsUtil.loadBytes(file)
       val indexKey = Bytes.indexOf(allBytes, key)
-      if(indexKey == -1) return null
+      if (indexKey == -1) return null
       val startFrom = indexKey + key.size + 3;
       val endIndex = allBytes.findNextSOH(startFrom)
-      if(endIndex == -1) return null
-      val message = String(allBytes, startFrom, endIndex - startFrom, StandardCharsets.UTF_16)
+      if (endIndex == -1) return null
+      val message = String(allBytes, startFrom, endIndex - startFrom, StandardCharsets.UTF_8)
       return toMessagePredicate(message);
-    } catch (e: Throwable){
+    }
+    catch (e: Throwable) {
       MavenLog.LOG.warn(e);
       return null
     }
@@ -239,14 +268,14 @@ object CacheForCompilerErrorMessages {
   private fun toMessagePredicate(message: String): MessagePredicate? {
     val first = message.substringBefore("{0}")
     val second = message.substringAfter("{0}")
-    return {it.contains(first)  && it.contains(second)}
+    return { it.contains(first) && it.contains(second) }
   }
 
   private fun ByteArray.findNextSOH(startFrom: Int): Int {
-    if(startFrom == -1) return -1
+    if (startFrom == -1) return -1
     var i = startFrom
-    while (i<this.size-1){
-      if(this[i] == delimiter[0] && this[i+1] == delimiter[1]) {
+    while (i < this.size - 1) {
+      if (this[i] == delimiter[0] && this[i + 1] == delimiter[1]) {
         return i;
       }
       i++
@@ -254,23 +283,5 @@ object CacheForCompilerErrorMessages {
     return -1
   }
 
-
-  /*private fun reade(project: Project, moduleName: String): List<MessagePredicate> {
-    Files.walk(Paths.get(URI.create("jrt:/modules")))
-      .filter { Files.isRegularFile(it) }
-      .forEach {
-        val readAllBytes = Files.readAllBytes(it)
-        try {
-          val s = String(readAllBytes);
-          if (s.contains("compiler.err.unsupported.release.version")) {
-            println(it)
-          }
-        }
-        catch (e: Throwable) {
-        }
-
-      }
-    return emptyList()
-  }*/
 }
 

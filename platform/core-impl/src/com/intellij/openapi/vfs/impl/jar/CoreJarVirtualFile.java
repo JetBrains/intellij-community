@@ -141,7 +141,7 @@ class CoreJarVirtualFile extends VirtualFile {
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) { }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     return new BufferExposingByteArrayInputStream(contentsToByteArray());
   }
 

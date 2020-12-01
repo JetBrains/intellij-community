@@ -47,6 +47,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vfs.*;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -74,7 +75,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInspection.WritersKt.writeProjectDescription;
+import static com.intellij.codeInspection.targets.QodanaConfigKt.DEFAULT_QODANA_PROFILE;
+import static com.intellij.codeInspection.targets.QodanaConfigKt.QODANA_CONFIG_FILENAME;
 import static com.intellij.codeInspection.targets.QodanaKt.runAnalysisByQodana;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -221,7 +223,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }
     }
 
-    if ("sa".equals(myOutputFormat)) {
+    if (Boolean.getBoolean("log.project.structure.changes")) {
       InspectionsReportConverter reportConverter = ReportConverterUtil.getReportConverter(myOutputFormat);
       if (reportConverter != null) {
         addRootChangesListener(parentDisposable, reportConverter);
@@ -247,7 +249,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     reportMessage(1, InspectionsBundle.message("inspection.done"));
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
-    myQodanaConfig = loadQodanaConfig(projectPath);
+    loadQodanaConfig(projectPath);
     myInspectionProfile = loadInspectionProfile(project);
 
     if (myInspectionProfile == null) return;
@@ -264,22 +266,12 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
   }
 
-  private QodanaConfig loadQodanaConfig(Path projectPath) {
+  private void loadQodanaConfig(Path projectPath) {
     if (myQodanaRun) {
-      QodanaConfig config = QodanaConfig.Companion.load(projectPath, this);
-      config.copyToLog(projectPath);
-      QodanaProfile profile = config.getProfile();
-      String name = profile.getName();
-      if (!name.isEmpty()) {
-        myProfileName = name;
-        return config;
-      }
-
-      String path = profile.getPath();
-      if (!path.isEmpty()) myProfilePath = path;
-      return config;
+      myQodanaConfig = QodanaConfig.Companion.load(projectPath);
+      myQodanaConfig.copyToLog(projectPath);
     } else {
-      return QodanaConfig.EMPTY;
+      myQodanaConfig = QodanaConfig.EMPTY;
     }
   }
 
@@ -339,8 +331,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     });
   }
 
-  private void subscribeToRootChanges(Project project, InspectionsReportConverter reportConverter) {
-    Path rootLogDir = Paths.get(myOutPath).resolve("log/projectStructureChanges");
+  private static void subscribeToRootChanges(Project project, InspectionsReportConverter reportConverter) {
+    Path rootLogDir = Paths.get(PathManager.getLogPath()).resolve("projectStructureChanges");
     //noinspection ResultOfMethodCallIgnored
     rootLogDir.toFile().mkdirs();
     AtomicInteger counter = new AtomicInteger(0);
@@ -477,11 +469,6 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         InspectResultsConsumer.runConsumers(context.getTools(), results, project);
         if (myOutPath != null) {
           reportConverter.projectData(project, Paths.get(myOutPath).resolve("projectStructure"));
-
-          //for backward compatibility with teamcity plugin
-          if ("sa".equals(myOutputFormat)) {
-            writeProjectDescription(Paths.get(myOutPath).resolve("projectDescription.json"), project);
-          }
         }
       }
       catch (InspectionsReportConverter.ConversionException e) {
@@ -760,43 +747,61 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     });
   }
 
-  public @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
-    InspectionProfileImpl inspectionProfile = null;
-
-    //fetch profile by name from project file (project profiles can be disabled)
-    if (myProfileName != null) {
-      inspectionProfile = loadProfileByName(project, myProfileName);
-      if (inspectionProfile == null) {
-        reportError("Profile with configured name (" + myProfileName + ") was not found (neither in project nor in config directory)");
-        gracefulExit();
-        return null;
-      }
-      return inspectionProfile;
-    }
-
-    if (myProfilePath != null) {
-      inspectionProfile = loadProfileByPath(myProfilePath);
-      if (inspectionProfile == null) {
-        reportError("Failed to load profile from '" + myProfilePath + "'");
-        gracefulExit();
-        return null;
-      }
-      return inspectionProfile;
+  public @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
+    InspectionProfileImpl profile = loadInspectionProfile(project, myProfileName, myProfilePath, "command line");
+    if (profile != null) return profile;
+    if (myQodanaRun) {
+      QodanaProfile qodanaProfile = myQodanaConfig.getProfile();
+      profile = loadInspectionProfile(project, qodanaProfile.getName(), qodanaProfile.getPath(), QODANA_CONFIG_FILENAME);
+      if (profile != null) return profile;
     }
 
     if (myStubProfile != null) {
       if (!myRunWithEditorSettings) {
-        inspectionProfile = loadProfileByName(project, myStubProfile);
-        if (inspectionProfile != null) return inspectionProfile;
+        profile = loadProfileByName(project, myStubProfile);
+        if (profile != null) return profile;
 
-        inspectionProfile = loadProfileByPath(myStubProfile);
-        if (inspectionProfile != null) return inspectionProfile;
+        profile = loadProfileByPath(myStubProfile);
+        if (profile != null) return profile;
       }
-
-      inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-      reportError("Using default project profile");
     }
-    return inspectionProfile;
+
+    if (myQodanaRun) {
+      profile = loadInspectionProfile(project, DEFAULT_QODANA_PROFILE, "", "qodana default inspection profile");
+      if (profile != null) return profile;
+    }
+
+    profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    reportError("Using default project profile");
+
+    return profile;
+  }
+
+  public @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project,
+                                                               @Nullable String profileName,
+                                                               @Nullable String profilePath,
+                                                               @NotNull String configSource) throws IOException, JDOMException {
+    //fetch profile by name from project file (project profiles can be disabled)
+    if (profileName != null && !profileName.isEmpty()) {
+      InspectionProfileImpl inspectionProfile = loadProfileByName(project, profileName);
+      if (inspectionProfile == null) {
+        reportError("Profile with configured name (" + profileName + ") was not found (neither in project nor in config directory). Configured by: " + configSource);
+        gracefulExit();
+        return null;
+      }
+      return inspectionProfile;
+    }
+
+    if (profilePath != null && !profilePath.isEmpty()) {
+      InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
+      if (inspectionProfile == null) {
+        reportError("Failed to load profile from '" + profilePath + "'. Configured by: " + configSource);
+        gracefulExit();
+        return null;
+      }
+      return inspectionProfile;
+    }
+    return null;
   }
 
   public  @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
@@ -808,6 +813,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   }
 
   public @Nullable InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
+    InspectionProfileManager.getInstance().getProfiles(); //force init provided profiles
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
     if (inspectionProfile != null) {
@@ -838,7 +844,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       @Override
       public void successfullyConverted(@NotNull Path backupDir) {
         reportMessage(1, InspectionsBundle.message(
-          "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
+          "inspection.application.project.was.successfully.converted.old.project.files.were.saved.to.0",
           backupDir.toString()));
       }
 

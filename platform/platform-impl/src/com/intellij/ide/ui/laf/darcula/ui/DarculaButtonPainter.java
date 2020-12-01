@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
@@ -17,13 +18,18 @@ import java.util.Objects;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.*;
-import static com.intellij.ui.JBColor.namedColor;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaButtonPainter implements Border, UIResource {
   private static final int myOffset = 4;
+
+  private static final Color GOTIT_BORDER_COLOR_START = JBColor.namedColor("GotItTooltip.startBorderColor",
+                                                                           JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
+  private static final Color GOTIT_BORDER_COLOR_END = JBColor.namedColor("GotItTooltip.endBorderColor",
+                                                                         JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false));
+
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
@@ -37,7 +43,7 @@ public class DarculaButtonPainter implements Border, UIResource {
       boolean isSmallComboButton = isSmallVariant(c);
       int diam = HELP_BUTTON_DIAMETER.get();
       float lw = LW.getFloat();
-      float bw = isSmallComboButton || isBorderless(c) ? 0 : BW.getFloat();
+      float bw = isSmallComboButton || isGotItButton(c) ? 0 : BW.getFloat();
       float arc = isTag(c) ? height - bw * 2 - lw * 2: BUTTON_ARC.getFloat();
 
       Rectangle r = new Rectangle(x, y, width, height);
@@ -51,7 +57,7 @@ public class DarculaButtonPainter implements Border, UIResource {
         g2.fill(border);
       }
 
-      if (!isBorderless(c)) JBInsets.removeFrom(r, JBUI.insets(1));
+      if (!isGotItButton(c)) JBInsets.removeFrom(r, JBUI.insets(1));
 
       g2.translate(r.x, r.y);
 
@@ -98,25 +104,20 @@ public class DarculaButtonPainter implements Border, UIResource {
     boolean defButton = isDefaultButton(b);
 
     if (button.isEnabled()) {
-      return Objects.requireNonNullElseGet(borderColor, () -> button.hasFocus() ?
-        namedColor(defButton ? "Button.default.focusedBorderColor" : "Button.focusedBorderColor",
-                   namedColor(defButton ? "Button.darcula.defaultFocusedOutlineColor" : "Button.darcula.focusedOutlineColor", 0x87afda)) :
-        new GradientPaint(0, 0,
-                          namedColor(defButton ? "Button.default.startBorderColor" : "Button.startBorderColor",
-                              namedColor(defButton ? "Button.darcula.outlineDefaultStartColor" : "Button.darcula.outlineStartColor", 0xbfbfbf)),
-                          0, r.height,
-                          namedColor(defButton ? "Button.default.endBorderColor" : "Button.endBorderColor",
-                                        namedColor(defButton ? "Button.darcula.outlineDefaultEndColor" : "Button.darcula.outlineEndColor", 0xb8b8b8))));
+      return Objects.requireNonNullElseGet(borderColor, () ->
+        isGotItButton(button) ? new GradientPaint(0, 0, GOTIT_BORDER_COLOR_START, 0, r.height, GOTIT_BORDER_COLOR_END) :
+        button.hasFocus() ? JBUI.CurrentTheme.Button.focusBorderColor(defButton) :
+                            new GradientPaint(0, 0, JBUI.CurrentTheme.Button.buttonOutlineColorStart(defButton),
+                                              0, r.height, JBUI.CurrentTheme.Button.buttonOutlineColorEnd(defButton)));
     }
     else {
-      //noinspection UnregisteredNamedColor
-      return namedColor("Button.disabledBorderColor", namedColor("Button.darcula.disabledOutlineColor", 0xcfcfcf));
+      return JBUI.CurrentTheme.Button.disabledOutlineColor();
     }
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return isBorderless(c) ? JBUI.emptyInsets().asUIResource() :
+    return isGotItButton(c) ? JBUI.emptyInsets().asUIResource() :
             isSmallVariant(c) ? JBUI.insets(1, 2).asUIResource() : JBUI.insets(3).asUIResource();
   }
 

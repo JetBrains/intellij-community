@@ -975,28 +975,27 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public void scheduleReformatWhenSettingsComputed(@NotNull PsiFile file) {
-    Project project = file.getProject();
     if (ModelBranch.getPsiBranch(file) != null) {
-      PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
-        () -> CodeStyleManager.getInstance(project).reformat(file));
+      commitAndFormat(file);
       return;
     }
 
-    CodeStyleCachingService.getInstance(project).scheduleWhenSettingsComputed(
+    CodeStyleCachingService.getInstance(myProject).scheduleWhenSettingsComputed(
       file,
       () -> CommandProcessor.getInstance().executeCommand(
-        project,
-        () -> {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
-              () -> {
-                CodeStyleManager.getInstance(project).reformat(file);
-              }
-            );
-          });
-        },
+        myProject,
+        () -> ApplicationManager.getApplication().runWriteAction(() -> commitAndFormat(file)),
         CodeStyleBundle.message("command.name.reformat"), null
       )
     );
+  }
+
+  private void commitAndFormat(@NotNull PsiFile file) {
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+    Document document = documentManager.getDocument(file);
+    if (document != null) {
+      documentManager.commitDocument(document);
+    }
+    PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> reformat(file));
   }
 }

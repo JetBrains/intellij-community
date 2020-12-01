@@ -39,17 +39,13 @@ public final class MvcTargetDialogCompletionUtils {
     "ivy.ivyrep.default.artifact.pattern"
   };
 
-  private static final NotNullLazyValue<List<LookupElement>> SYSTEM_PROPERTIES_VARIANTS = new NotNullLazyValue<List<LookupElement>>() {
-    @NotNull
-    @Override
-    protected List<LookupElement> compute() {
-      List<LookupElement> result = new ArrayList<>();
-      for (String property : SYSTEM_PROPERTIES) {
-        result.add(TailTypeDecorator.withTail(LookupElementBuilder.create("-D" + property), MyTailTypeEQ.INSTANCE));
-      }
-      return Collections.unmodifiableList(result);
+  private static final NotNullLazyValue<List<LookupElement>> SYSTEM_PROPERTIES_VARIANTS = NotNullLazyValue.lazy(() -> {
+    List<LookupElement> result = new ArrayList<>();
+    for (String property : SYSTEM_PROPERTIES) {
+      result.add(TailTypeDecorator.withTail(LookupElementBuilder.create("-D" + property), MyTailTypeEQ.INSTANCE));
     }
-  };
+    return Collections.unmodifiableList(result);
+  });
 
   private MvcTargetDialogCompletionUtils() {
   }

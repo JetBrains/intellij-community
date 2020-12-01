@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.function.Function;
 
+import static git4idea.GitNotificationIdsHolder.STASH_FAILED;
+
 public class GitStash extends GitRepositoryAction {
 
   @Override
@@ -71,7 +73,7 @@ public class GitStash extends GitRepositoryAction {
             String rootsList = StringUtil.join(failedRoots.keySet(), VirtualFile::getPresentableName, ",");
             String errorTitle = GitBundle.message("stash.error", StringUtil.shortenTextWithEllipsis(rootsList, 100, 0));
             String errorMessage = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(failedRoots.values(), s -> HtmlChunk.raw(s))).toString();
-            VcsNotifier.getInstance(project).notifyError("git.stash.failed", errorTitle, errorMessage, true);
+            VcsNotifier.getInstance(project).notifyError(STASH_FAILED, errorTitle, errorMessage, true);
           }
         }
       }

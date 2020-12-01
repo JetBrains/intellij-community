@@ -35,7 +35,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- groupId should be same to StatisticBase.GROUP_ID and version to StatisticBase.VERSION -->
-    <statistics.counterUsagesCollector groupId="ideFeaturesTrainer" version="4"/>
+    <statistics.counterUsagesCollector groupId="ideFeaturesTrainer" version="5"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
     <statistics.validation.customValidationRule
@@ -62,6 +62,7 @@
     <applicationConfigurable groupId="tools" bundle="messages.LearnBundle" key="learn.options.panel.name" id="FeaturesTrainerSettingsPanel"
                              instance="training.ui.FeaturesTrainerSettingsPanel"/>
 
+    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false" icon="FeaturesTrainerIcons.Img.FeatureTrainer"/>
   </extensions>
 
   <actions>
@@ -85,10 +86,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="ide.features.trainer.new.ui"
-                 description="Turn on it to look at new developing UI for IFT"
-                 defaultValue="TRUE"
-                 restartRequired="false"/>
     <registryKey key="ift.help.links"
                  description="Turn on IFT Help and Resources section"
                  defaultValue="FALSE"

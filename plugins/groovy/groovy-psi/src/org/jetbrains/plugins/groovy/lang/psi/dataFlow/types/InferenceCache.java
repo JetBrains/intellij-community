@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -37,13 +36,12 @@ import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInference
 import static org.jetbrains.plugins.groovy.util.GraphKt.findNodesOutsideCycles;
 import static org.jetbrains.plugins.groovy.util.GraphKt.mapGraph;
 
-class InferenceCache {
-
+final class InferenceCache {
   private final GrControlFlowOwner myScope;
   private final Instruction[] myFlow;
   private final Map<PsiElement, List<Instruction>> myFromByElements;
 
-  private final Lazy<TObjectIntHashMap<VariableDescriptor>> myVarIndexes;
+  private final Lazy<Object2IntMap<VariableDescriptor>> myVarIndexes;
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
@@ -206,7 +204,7 @@ class InferenceCache {
                                                                       @NotNull Instruction instruction,
                                                                       @NotNull VariableDescriptor descriptor) {
     DefinitionMap definitionMap = definitionMaps.get(instruction.num());
-    int varIndex = myVarIndexes.getValue().get(descriptor);
+    int varIndex = myVarIndexes.getValue().getInt(descriptor);
     int[] definitions = definitionMap.getDefinitions(varIndex);
 
     LinkedHashSet<Pair<Instruction, VariableDescriptor>> pairs = new LinkedHashSet<>();

@@ -879,11 +879,16 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   public boolean isConsoleVisible() {
     if (!Registry.is("vcs.showConsole")) return false;
 
-    ContentManager cm = getContentManager();
+    ContentManager cm = getContentManagerIfCreated();
     if (cm == null) return false;
 
     VcsConsoleContent consoleContent = getConsoleContent(cm);
     return consoleContent != null;
+  }
+
+  private @Nullable ContentManager getContentManagerIfCreated() {
+    ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+    return changes == null ? null : changes.getContentManagerIfCreated();
   }
 
   private void showConsoleInternal() {

@@ -173,7 +173,7 @@ public final class VfsImplUtil {
    * </code>
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
-    RefreshQueue.getInstance().processSingleEvent(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
+    RefreshQueue.getInstance().processSingleEvent(false, new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
   }
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
@@ -299,12 +299,12 @@ public final class VfsImplUtil {
    * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events: see {@link VirtualFileSystem#isCaseSensitive()}).
    * Otherwise, return null.
    */
-  public static VFileEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent, @NotNull String childName) {
-    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN) {
-      FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
-      return generateCaseSensitivityChangedEvent(parent, sensitivity);
+  public static VFilePropertyChangeEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent, @NotNull String childName) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != FileAttributes.CaseSensitivity.UNKNOWN) {
+      return null;
     }
-    return null;
+    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
+    return generateCaseSensitivityChangedEvent(parent, sensitivity);
   }
 
   public static VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir, @NotNull FileAttributes.CaseSensitivity actualCaseSensitivity) {

@@ -192,12 +192,12 @@ object ProcessMediatorDaemonLauncher {
       }
     processHandler.addProcessListener(object : ProcessAdapter() {
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-        ElevationLogger.LOG.info("Daemon [$outputType]: ${event.text.substringBeforeLast("\n")}")
+        ElevationLogger.LOG.info("Daemon/launcher [$outputType]: ${event.text.removeSuffix("\n")}")
       }
 
       override fun processTerminated(event: ProcessEvent) {
         val exitCodeString = ProcessTerminatedListener.stringifyExitCode(event.exitCode)
-        ElevationLogger.LOG.info("Daemon process terminated with exit code ${exitCodeString}")
+        ElevationLogger.LOG.info("Daemon/launcher process terminated with exit code ${exitCodeString}")
       }
     })
     return processHandler

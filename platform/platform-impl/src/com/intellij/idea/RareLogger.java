@@ -153,7 +153,7 @@ public final class RareLogger extends Logger {
   }
 
   @Override
-  public void setLevel(Level level) {
+  public void setLevel(@NotNull Level level) {
     myLogger.setLevel(level);
   }
 

@@ -29,7 +29,6 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.Pair.pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -50,8 +49,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
 /**
@@ -316,9 +313,12 @@ object UpdateChecker {
     val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor> = HashSet()
     for ((_, installedPlugin) in updateable) {
       // collect plugins that were not updated and would be incompatible with the new version
+      // `updateable` could contain bundled plugins with allow-bundled-update - those always have compatible version in IDE
       if (installedPlugin != null && installedPlugin.isEnabled &&
-          !toUpdate.containsKey(installedPlugin.pluginId) &&
-          !PluginManagerCore.isCompatible(installedPlugin, newBuildNumber)) {
+          toUpdate.containsKey(installedPlugin.pluginId).not() &&
+          PluginManagerCore.isCompatible(installedPlugin, newBuildNumber).not() &&
+          installedPlugin.isBundled.not()
+      ) {
         incompatiblePlugins += installedPlugin
       }
     }
@@ -426,20 +426,18 @@ object UpdateChecker {
     val manager = ExternalComponentManager.getInstance()
     indicator?.text = IdeBundle.message("updates.external.progress")
 
-    for (source in ExternalComponentManager.getEnabledComponentSources(updateSettings)) {
+    for (source in ExternalComponentManager.getComponentSources()) {
       indicator?.checkCanceled()
-      if (source.name in updateSettings.enabledExternalUpdateSources) {
-        try {
-          val siteResult = source.getAvailableVersions(indicator, updateSettings)
-            .filter { it.isUpdateFor(manager.findExistingComponentMatching(it, source)) }
-          if (siteResult.isNotEmpty()) {
-            result += ExternalUpdate(siteResult, source)
-          }
+      try {
+        val siteResult = source.getAvailableVersions(indicator, updateSettings)
+          .filter { it.isUpdateFor(manager.findExistingComponentMatching(it, source)) }
+        if (siteResult.isNotEmpty()) {
+          result += ExternalUpdate(siteResult, source)
         }
-        catch (e: Exception) {
-          LOG.warn(e)
-          showErrorMessage(manualCheck, IdeBundle.message("updates.external.error.message", source.name, e.message ?: "internal error"))
-        }
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
+        showErrorMessage(manualCheck, IdeBundle.message("updates.external.error.message", source.name, e.message ?: "internal error"))
       }
     }
 
@@ -699,9 +697,8 @@ object UpdateChecker {
 
   @JvmStatic
   fun saveDisabledToUpdatePlugins() {
-    val plugins = Paths.get(PathManager.getConfigPath(), DISABLED_UPDATE)
     try {
-      PluginManagerCore.savePluginsList(disabledToUpdate, plugins, false)
+      DisabledPluginsState.savePluginsList(disabledToUpdate, Paths.get(PathManager.getConfigPath(), DISABLED_UPDATE))
     }
     catch (e: IOException) {
       LOG.error(e)

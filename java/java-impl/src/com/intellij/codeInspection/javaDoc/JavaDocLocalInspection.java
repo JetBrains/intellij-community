@@ -90,8 +90,8 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     return new AddUnknownTagToCustoms(this, tag);
   }
 
-  private static LocalQuickFix createRemoveTagWithoutDescriptionFix(@NotNull String tag) {
-    return new RemoveTagWithoutDescriptionFix(tag);
+  private static LocalQuickFix createRemoveTagFix(@NotNull String tag) {
+    return new RemoveTagFix(tag);
   }
 
   public void setPackageOption(String modifier, String tags) {
@@ -326,7 +326,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
         }
 
         if (!myIgnoreEmptyDescriptions) {
-          JavadocHighlightUtil.checkEmptyMethodTagsDescription(tags, holder);
+          JavadocHighlightUtil.checkEmptyMethodTagsDescription(tags, method, holder);
         }
 
         checkBasics(docComment, tags, method, false, METHOD_OPTIONS, holder);
@@ -797,10 +797,10 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     }
   }
 
-  private static class RemoveTagWithoutDescriptionFix implements LocalQuickFix {
+  private static class RemoveTagFix implements LocalQuickFix {
     private final String myTagName;
 
-    RemoveTagWithoutDescriptionFix(String tagName) {
+    RemoveTagFix(String tagName) {
       myTagName = tagName;
     }
 
@@ -878,8 +878,8 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     }
 
     @Override
-    public LocalQuickFix removeTagWithoutDescriptionFix(@NotNull String tag) {
-      return createRemoveTagWithoutDescriptionFix(tag);
+    public LocalQuickFix removeTagFix(@NotNull String tag) {
+      return createRemoveTagFix(tag);
     }
   }
 }

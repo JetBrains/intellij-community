@@ -34,9 +34,9 @@ import javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 
-class DiffRequestProcessorEditor(
+open class DiffRequestProcessorEditor(
   private val file: DiffVirtualFile,
-  private val processor: DiffRequestProcessor
+  val processor: DiffRequestProcessor
 ) : FileEditorBase() {
   companion object {
     private val LOG = logger<DiffRequestProcessorEditor>()

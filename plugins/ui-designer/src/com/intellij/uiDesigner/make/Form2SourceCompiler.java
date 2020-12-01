@@ -65,7 +65,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   @Override
-  public ProcessingItem @NotNull [] getProcessingItems(final CompileContext context) {
+  public ProcessingItem @NotNull [] getProcessingItems(final @NotNull CompileContext context) {
     final Project project = context.getProject();
     if (GuiDesignerConfiguration.getInstance(project).INSTRUMENT_CLASSES) {
       return ProcessingItem.EMPTY_ARRAY;
@@ -140,7 +140,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   @Override
-  public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
+  public ProcessingItem[] process(final @NotNull CompileContext context, final ProcessingItem @NotNull [] items) {
     final ArrayList<ProcessingItem> compiledItems = new ArrayList<>();
 
     context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));

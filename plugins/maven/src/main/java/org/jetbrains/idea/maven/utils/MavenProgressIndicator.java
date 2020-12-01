@@ -36,17 +36,17 @@ import static com.intellij.openapi.components.Service.Level.PROJECT;
 public class MavenProgressIndicator {
   private ProgressIndicator myIndicator;
   private final List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<>();
-  private final Supplier<MavenSyncConsole> mySyncSupplier;
+  private @Nullable final Supplier<MavenSyncConsole> mySyncSupplier;
   private @Nullable final Project myProject;
 
   public MavenProgressIndicator(@Nullable Project project,
-                                Supplier<MavenSyncConsole> syncSupplier) {
+                                @Nullable Supplier<MavenSyncConsole> syncSupplier) {
     this(project, new MyEmptyProgressIndicator(), syncSupplier);
   }
 
   public MavenProgressIndicator(@Nullable Project project,
                                 ProgressIndicator i,
-                                Supplier<MavenSyncConsole> syncSupplier) {
+                                @Nullable Supplier<MavenSyncConsole> syncSupplier) {
     myProject = project;
     myIndicator = i;
     mySyncSupplier = syncSupplier;

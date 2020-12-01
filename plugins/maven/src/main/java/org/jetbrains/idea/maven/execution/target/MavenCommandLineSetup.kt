@@ -203,7 +203,9 @@ class MavenCommandLineSetup(private val project: Project,
     val result = DeferredTargetValue(uploadPathString)
     dependingOnEnvironmentPromise += environmentPromise.then { (environment, progress) ->
       val volume = environment.uploadVolumes.getValue(uploadRoot)
-      result.resolve(volume.upload(uploadRelativePath, progress))
+      val resolvedTargetPath = volume.resolveTargetPath(uploadRelativePath)
+      volume.upload(uploadRelativePath, progress)
+      result.resolve(resolvedTargetPath)
     }
     return result
   }

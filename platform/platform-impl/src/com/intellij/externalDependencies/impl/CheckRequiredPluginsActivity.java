@@ -162,10 +162,9 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     Set<PluginId> pluginIds = map2SetNotNull(plugins, IdeaPluginDescriptor::getPluginId);
     LOG.info("Required plugins to enable: [" + join(pluginIds, ", ") + "]");
 
-    ProjectPluginTracker pluginTracker = ProjectPluginTrackerManager.getInstance().createPluginTracker(project);
-    pluginIds.forEach(pluginTracker::stopTrackingPerProject);
-
-    ProjectPluginTrackerManager.updatePluginsState(plugins, PluginEnabledState.ENABLED_FOR_PROJECT, project);
+    ProjectPluginTrackerManager trackerManager = ProjectPluginTrackerManager.getInstance();
+    trackerManager.createPluginTracker(project).stopTrackingPerProject(pluginIds);
+    trackerManager.updatePluginsState(plugins, PluginEnableDisableAction.ENABLE_GLOBALLY, project);
   }
 
   private static @NotNull NotificationListener createEnableNotificationListener(@NotNull Project project,

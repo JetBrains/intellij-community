@@ -16,6 +16,7 @@ import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcs.log.runInEdt
+import git4idea.GitVcs
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.StashInfo
 import java.util.*
@@ -44,7 +45,7 @@ class GitStashTracker(private val project: Project) : Disposable {
   }
 
   fun scheduleRefresh() {
-    if (!isStashToolWindowAvailable()) return
+    if (!isStashToolWindowAvailable(project)) return
 
     updateQueue.queue(DisposableUpdate.createDisposable(this, "update", Runnable {
       val newStashes = mutableMapOf<VirtualFile, List<StashInfo>>()
@@ -75,3 +76,7 @@ interface GitStashTrackerListener : EventListener {
 
 fun stashToolWindowRegistryOption() = Registry.get("git.enable.stash.toolwindow")
 fun isStashToolWindowAvailable(): Boolean = stashToolWindowRegistryOption().asBoolean()
+fun isStashToolWindowAvailable(project: Project): Boolean {
+  return stashToolWindowRegistryOption().asBoolean() &&
+         ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { it.keyInstanceMethod == GitVcs.getKey() }
+}

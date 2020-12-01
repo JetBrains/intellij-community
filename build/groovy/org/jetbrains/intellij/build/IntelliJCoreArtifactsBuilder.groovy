@@ -6,6 +6,10 @@ import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+
 /**
  * Builds artifacts which are used in Kotlin Compiler and UpSource
  *
@@ -77,21 +81,21 @@ class IntelliJCoreArtifactsBuilder {
 
   void layoutIntelliJCore() {
     buildContext.messages.block("Build intellij-core") {
-      String coreArtifactDir = "$buildContext.paths.artifacts/core"
+      Path coreArtifactDir = Paths.get(buildContext.paths.artifacts, "core")
       AntBuilder ant = buildContext.ant
-      ant.mkdir(dir: coreArtifactDir)
+      Files.createDirectories(coreArtifactDir)
 
       ant.echo(message: "These artifacts are deprecated, use artifacts from IntelliJ Artifacts Repository (http://www.jetbrains.org/intellij/sdk/docs/reference_guide/intellij_artifacts.html) instead",
                file: "$coreArtifactDir/README.txt")
       processCoreLayout(coreArtifactDir, new ProjectStructureMapping(), true)
       ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
-      buildContext.notifyArtifactBuilt(coreArtifactDir)
+      buildContext.notifyArtifactBuilt(coreArtifactDir.toString())
 
-      new ClassVersionChecker(["": "1.8", "intellij-core-analysis-deprecated.jar": "11"]).checkVersions(buildContext, new File(coreArtifactDir))
+      new ClassVersionChecker(["": "1.8", "intellij-core-analysis-deprecated.jar": "11"]).checkVersions(buildContext, coreArtifactDir)
 
       def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"
       ant.zip(destfile: intellijCoreZip) {
-        fileset(dir: coreArtifactDir)
+        fileset(dir: coreArtifactDir.toString())
       }
       buildContext.notifyArtifactBuilt(intellijCoreZip)
     }
@@ -99,16 +103,16 @@ class IntelliJCoreArtifactsBuilder {
 
   void generateProjectStructureMapping(File targetFile) {
     def mapping = new ProjectStructureMapping()
-    processCoreLayout(buildContext.paths.temp, mapping, false)
+    processCoreLayout(buildContext.paths.tempDir, mapping, false)
     mapping.addEntry(new ProjectLibraryEntry("annotations.jar", "jetbrains-annotations-java5", ""))
     mapping.generateJsonFile(targetFile)
   }
 
-  private void processCoreLayout(String coreArtifactDir, ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
+  private void processCoreLayout(Path coreArtifactDir, ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
     List<String> analysisModules = ANALYSIS_API_MODULES + ANALYSIS_IMPL_MODULES
     List<String> versionedLibs = VERSIONED_LIBRARIES
     List<String> unversionedLibs = UNVERSIONED_LIBRARIES
-    new LayoutBuilder(buildContext, false).process(coreArtifactDir, projectStructureMapping, copyFiles) {
+    new LayoutBuilder(buildContext, false).process(coreArtifactDir.toString(), projectStructureMapping, copyFiles) {
       jar("intellij-core.jar") {
         module("intellij.platform.util.rt")
         module("intellij.platform.util.classLoader")

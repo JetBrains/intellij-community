@@ -595,6 +595,19 @@ public class JavaCompletionContributor extends CompletionContributor implements 
     PsiElement position = parameters.getPosition();
     ElementFilter filter = getReferenceFilter(position);
     if (filter == null) return Collections.emptyList();
+    if (parameters.getInvocationCount() <= 1 && JavaClassNameCompletionContributor.AFTER_NEW.accepts(position)) {
+      filter = new AndFilter(filter, new ElementFilter() {
+        @Override
+        public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+          return !JavaPsiClassReferenceElement.isInaccessibleConstructorSuggestion(position, tryCast(element, PsiClass.class));
+        }
+
+        @Override
+        public boolean isClassAcceptable(Class hintClass) {
+          return true;
+        }
+      });
+    }
 
     boolean smart = parameters.getCompletionType() == CompletionType.SMART;
     if (smart) {

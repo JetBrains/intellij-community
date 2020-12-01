@@ -22,19 +22,15 @@ import java.util.*;
 public final class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
   private static final Key<Set<ResourceBundle>> VISITED_BUNDLES_KEY = Key.create("VISITED_BUNDLES_KEY");
 
-  private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders =
-    new NotNullLazyValue<>() {
-      @Override
-      protected InconsistentResourceBundleInspectionProvider @NotNull [] compute() {
-        return new InconsistentResourceBundleInspectionProvider[]{
-          new PropertiesKeysConsistencyInspectionProvider(),
-          new DuplicatedPropertiesInspectionProvider(),
-          new MissingTranslationsInspectionProvider(),
-          new PropertiesPlaceholdersInspectionProvider(),
-          new InconsistentPropertiesEndsInspectionProvider(),
-        };
-      }
+  private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders = NotNullLazyValue.lazy(() -> {
+    return new InconsistentResourceBundleInspectionProvider[]{
+      new PropertiesKeysConsistencyInspectionProvider(),
+      new DuplicatedPropertiesInspectionProvider(),
+      new MissingTranslationsInspectionProvider(),
+      new PropertiesPlaceholdersInspectionProvider(),
+      new InconsistentPropertiesEndsInspectionProvider(),
     };
+  });
   private final Map<String, Boolean> mySettings = new LinkedHashMap<>();
 
 

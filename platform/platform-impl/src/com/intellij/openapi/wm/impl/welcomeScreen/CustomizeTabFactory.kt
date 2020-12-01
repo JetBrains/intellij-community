@@ -82,7 +82,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   init {
     lafProperty.afterChange({
                               val newLaf = laf.findLaf(it)
-                              if (laf == newLaf) return@afterChange
+                              if (laf.currentLookAndFeel == newLaf) return@afterChange
                               QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, newLaf, true)
                               WelcomeScreenEventCollector.logLafChanged(newLaf, laf.autodetect)
                             }, parentDisposable)
@@ -177,6 +177,8 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         fullRow {
           val themeBuilder = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
+          colorThemeComboBox = themeBuilder.component
+          colorThemeComboBox!!.accessibleContext.accessibleName = IdeBundle.message("welcome.screen.color.theme.header")
           val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"),
                                       syncThemeProperty).withLargeLeftGap().apply {
             component.isOpaque = false
@@ -184,7 +186,6 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
           }
 
           themeBuilder.enableIf(syncCheckBox.selected.not())
-          colorThemeComboBox = themeBuilder.component
           component(laf.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
         }
       }.largeGapAfter()
@@ -206,6 +207,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         header(KeyMapBundle.message("keymap.display.name"))
         fullRow {
           keymapComboBox = comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty).component
+          keymapComboBox!!.accessibleContext.accessibleName = KeyMapBundle.message("keymap.display.name")
           component(focusableLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
             ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject, KeyMapBundle.message("keymap.display.name"))
           }).withLargeLeftGap()
@@ -226,7 +228,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   }
 
   private fun updateKeymaps() {
-    (keymapComboBox?.model as DefaultComboBoxModel).apply {
+    (keymapComboBox?.model as DefaultComboBoxModel?)?.apply {
       removeAllElements()
       addAll(getKeymaps())
       selectedItem = keymapProperty.get()

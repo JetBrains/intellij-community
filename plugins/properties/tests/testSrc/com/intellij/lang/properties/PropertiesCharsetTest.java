@@ -7,6 +7,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,6 +18,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -191,7 +193,13 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
     EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8);
     UIUtil.dispatchAllInvocationEvents();
 
-    VirtualFile file = createVirtualFileWithBom("properties", "general-notice=\\u062a\\u0648\\u062c\\u0647");
+    File ioFile = FileUtil.createTempFile("copy",".properties");
+    FileUtil.writeToFile(ioFile, CharsetToolkit.UTF8_BOM);
+    FileUtil.writeToFile(ioFile, "general-notice=\\u062a\\u0648\\u062c\\u0647", true);
+
+    disposeOnTearDown(() -> FileUtil.delete(ioFile));
+    VirtualFile file = getVirtualFile(ioFile);
+
     PropertiesFile propertiesFile = (PropertiesFile)getPsiManager().findFile(file);
     assertNotNull(propertiesFile);
 

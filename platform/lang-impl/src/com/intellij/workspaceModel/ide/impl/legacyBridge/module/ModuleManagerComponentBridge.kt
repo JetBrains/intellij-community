@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
@@ -29,7 +30,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
-import com.intellij.util.io.div
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
@@ -38,6 +38,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeIm
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
@@ -45,13 +46,12 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
-import kotlin.collections.HashSet
 
 @Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
   private val LOG = Logger.getInstance(javaClass)
 
-  internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
+  internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = LinkedHashMap()
 
   override fun dispose() {
     modules().forEach {
@@ -342,6 +342,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
 
       val results = service.invokeAll(tasks)
+
       WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
         val moduleMap = builder.mutableModuleMap
         results.mapNotNull { it.get() }.forEach { (entity, module) ->
@@ -352,6 +353,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
     finally {
       service.shutdownNow()
+    }
+
+    WriteAction.runAndWait<RuntimeException> {
+      (ProjectRootManager.getInstance(project) as ProjectRootManagerBridge).setupTrackedLibrariesAndJdks()
     }
   }
 
@@ -526,9 +531,15 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   internal fun getModuleFilePath(moduleEntity: ModuleEntity): Path? {
-    val entitySource = ((moduleEntity.entitySource as? JpsFileDependentEntitySource)?.originalSource ?: moduleEntity.entitySource)
-                       as? JpsFileEntitySource.FileInDirectory ?: return null
-    return entitySource.directory.toPath() / "${moduleEntity.name}.iml"
+    val entitySource = when (val moduleSource = moduleEntity.entitySource) {
+      is JpsFileDependentEntitySource -> moduleSource.originalSource
+      is CustomModuleEntitySource -> moduleSource.internalSource
+      else -> moduleEntity.entitySource
+    }
+    if (entitySource !is JpsFileEntitySource.FileInDirectory) {
+      return null
+    }
+    return entitySource.directory.toPath().resolve("${moduleEntity.name}.iml")
   }
 
   fun createModuleInstance(moduleEntity: ModuleEntity,

@@ -108,7 +108,7 @@ final class UnindexedFilesFinder {
             shouldIndex.set(true);
           }
           else {
-            final List<ID<?, ?>> affectedIndexCandidates = myFileBasedIndex.getAffectedIndexCandidates(file);
+            final List<ID<?, ?>> affectedIndexCandidates = myFileBasedIndex.getAffectedIndexCandidates(indexedFile);
             applicableIndexes.addAll(affectedIndexCandidates);
             //noinspection ForLoopReplaceableByForEach
             for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {

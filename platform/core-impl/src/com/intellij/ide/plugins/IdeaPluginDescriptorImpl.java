@@ -176,6 +176,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myVersion = context.getDefaultVersion();
     }
 
+    if (myVendor == null) {
+      myVendor = mainDescriptor.getVendor();
+    }
+
     if (pluginDependencies != null) {
       XmlReader.readDependencies(mainDescriptor, this, context, pathResolver, pluginDependencies);
     }

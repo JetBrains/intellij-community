@@ -177,7 +177,7 @@ public class MockVirtualFile extends VirtualFile {
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) { }
 
   @Override
-  public InputStream getInputStream() {
+  public @NotNull InputStream getInputStream() {
     throw new UnsupportedOperationException("Method getInputStream is not yet implemented in " + getClass().getName());
   }
 

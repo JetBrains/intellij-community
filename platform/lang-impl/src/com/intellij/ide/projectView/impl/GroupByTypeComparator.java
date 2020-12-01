@@ -3,6 +3,7 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.NodeSortSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -50,16 +51,20 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
       ProjectViewNode<?> node1 = (ProjectViewNode<?>)descriptor1;
       ProjectViewNode<?> node2 = (ProjectViewNode<?>)descriptor2;
 
-      if (isManualOrder()) {
+      NodeSortSettings settings = new NodeSortSettings(isManualOrder(), isFoldersAlwaysOnTop(), isSortByType());
+      int sortResult = node1.getSortOrder(settings).compareTo(node2.getSortOrder(settings));
+      if (sortResult != 0) return sortResult;
+
+      if (settings.isManualOrder()) {
         Comparable key1 = node1.getManualOrderKey();
         Comparable key2 = node2.getManualOrderKey();
         int result = compare(key1, key2);
         if (result != 0) return result;
       }
 
-      if (isFoldersAlwaysOnTop()) {
-        int typeWeight1 = node1.getTypeSortWeight(isSortByType());
-        int typeWeight2 = node2.getTypeSortWeight(isSortByType());
+      if (settings.isFoldersAlwaysOnTop()) {
+        int typeWeight1 = node1.getTypeSortWeight(settings.isSortByType());
+        int typeWeight2 = node2.getTypeSortWeight(settings.isSortByType());
         if (typeWeight1 != 0 && typeWeight2 == 0) {
           return -1;
         }
@@ -71,7 +76,7 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
         }
       }
 
-      if (isSortByType()) {
+      if (settings.isSortByType()) {
         final Comparable typeSortKey1 = node1.getTypeSortKey();
         final Comparable typeSortKey2 = node2.getTypeSortKey();
         int result = compare(typeSortKey1, typeSortKey2);

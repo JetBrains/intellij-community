@@ -10,14 +10,16 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.copy
-import com.intellij.util.io.div
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.div
 
+@ExperimentalPathApi
 class ChangeStorageTypeTest {
   @JvmField
   @Rule

@@ -1,12 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse
 
-import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.io.div
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -84,10 +81,10 @@ class EclipseImlTest {
 
   private fun doTest(setupPathVariables: Boolean = false, testDataDir: String = "iml") {
     val testDataRoot = eclipseTestDataRoot
-    val testRoot = testDataRoot / testDataDir / testName.methodName.removePrefix("test").decapitalize()
-    val commonRoot = testDataRoot / "common" / "testModuleWithClasspathStorage"
+    val testRoot = testDataRoot.resolve(testDataDir).resolve(testName.methodName.removePrefix("test").decapitalize())
+    val commonRoot = testDataRoot.resolve("common").resolve("testModuleWithClasspathStorage")
 
-    checkConvertToStandardStorage(listOf(testRoot, commonRoot), tempDirectory, testRoot / "expected" / "expected.iml",
+    checkConvertToStandardStorage(listOf(testRoot, commonRoot), tempDirectory, testRoot.resolve("expected").resolve("expected.iml"),
                                   setupPathVariables, listOf("test" to "test/test"))
   }
 

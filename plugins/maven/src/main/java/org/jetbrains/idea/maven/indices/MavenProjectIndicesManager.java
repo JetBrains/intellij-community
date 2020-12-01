@@ -85,7 +85,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
                                   NativeMavenProjectHolder nativeMavenProject) {
         scheduleUpdateIndicesList();
       }
-    });
+    }, this);
   }
 
   private void scheduleUpdateIndicesList() {

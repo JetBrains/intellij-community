@@ -6,7 +6,7 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ProductProperties
 
 @CompileStatic
-class VmOptionsGenerator {
+final class VmOptionsGenerator {
   static final List<String> COMMON_VM_OPTIONS =
     [
       '-XX:+UseG1GC',

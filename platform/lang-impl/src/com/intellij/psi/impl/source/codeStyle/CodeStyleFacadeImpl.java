@@ -27,15 +27,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.joinLines.JoinedLinesSpacingCalculator;
-import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
-import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static java.lang.Math.max;
 
 public class CodeStyleFacadeImpl extends CodeStyleFacade {
   private final @Nullable Project myProject;
@@ -65,30 +59,7 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
 
   @Override
   public String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
-    if (myProject == null) return null;
-    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
-    String indent = lineIndentProvider != null ? lineIndentProvider.getLineIndent(myProject, editor, language, offset) : null;
-    if (indent == LineIndentProvider.DO_NOT_ADJUST) {
-      return allowDocCommit ? null : indent;
-    }
-    return indent != null ? indent : (allowDocCommit ? getLineIndent(editor.getDocument(), offset) : null);
-  }
-
-  @Override
-  public int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
-    if (myProject == null) return 0;
-    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
-    int space = lineIndentProvider instanceof JoinedLinesSpacingCalculator
-                ? ((JoinedLinesSpacingCalculator)lineIndentProvider).getJoinedLinesSpacing(myProject, editor, language, offset)
-                : -1;
-    if (space < 0 && allowDocCommit) {
-      final Document document = editor.getDocument();
-      PsiDocumentManager.getInstance(myProject).commitDocument(document);
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (file == null) return 0;
-      return max(0, CodeStyleManager.getInstance(myProject).getSpacing(file, offset));
-    }
-    return max(0, space);
+    return CodeStyle.getLineIndent(editor, language, offset, allowDocCommit);
   }
 
   @Override
@@ -106,18 +77,4 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
     return CodeStyle.getProjectOrDefaultSettings(myProject).useTabCharacter(fileType);
   }
 
-  @Override
-  public boolean useSpaceBeforeComma(@NotNull PsiFile psiFile, @NotNull Language language) {
-    return CodeStyle.getLanguageSettings(psiFile, language).SPACE_BEFORE_COMMA;
-  }
-
-  @Override
-  public boolean useSpaceAfterComma(@NotNull PsiFile psiFile, @NotNull Language language) {
-    return CodeStyle.getLanguageSettings(psiFile, language).SPACE_AFTER_COMMA;
-  }
-
-  @Override
-  public boolean useSpaceAroundAssignmentOperators(@NotNull PsiFile psiFile, @NotNull Language language) {
-    return CodeStyle.getLanguageSettings(psiFile, language).SPACE_AROUND_ASSIGNMENT_OPERATORS;
-  }
 }

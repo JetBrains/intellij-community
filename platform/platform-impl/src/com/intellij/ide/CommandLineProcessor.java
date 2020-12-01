@@ -206,7 +206,7 @@ public final class CommandLineProcessor {
     int column = -1;
     boolean tempProject = false;
     boolean shouldWait = args.contains(OPTION_WAIT);
-    LightEditUtil.setForceOpenInLightEditMode(false);
+    boolean lightEditMode = false;
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
@@ -236,7 +236,7 @@ public final class CommandLineProcessor {
       }
 
       if (arg.equals("-e") || arg.equals("--edit")) {
-        LightEditUtil.setForceOpenInLightEditMode(true);
+        lightEditMode = true;
         continue;
       }
 
@@ -255,12 +255,7 @@ public final class CommandLineProcessor {
         return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.invalid.path", arg));
       }
 
-      if (line != -1 || tempProject) {
-        projectAndCallback = doOpenFile(file, line, column, tempProject, shouldWait);
-      }
-      else {
-        projectAndCallback = doOpenFileOrProject(file, shouldWait);
-      }
+      projectAndCallback = openFileOrProject(file, line, column, tempProject, shouldWait, lightEditMode);
 
       if (shouldWait) {
         break;
@@ -281,7 +276,7 @@ public final class CommandLineProcessor {
         );
       }
 
-      if (LightEditUtil.isForceOpenInLightEditMode()) {
+      if (lightEditMode) {
         LightEditService.getInstance().showEditorWindow();
         return new CommandLineProcessorResult(LightEditService.getInstance().getProject(), OK_FUTURE);
       }
@@ -304,5 +299,18 @@ public final class CommandLineProcessor {
       LOG.warn(e);
       return null;
     }
+  }
+
+  private static @NotNull CommandLineProcessorResult openFileOrProject(@NotNull Path file,
+                                                                       int line, int column,
+                                                                       boolean tempProject,
+                                                                       boolean shouldWait,
+                                                                       boolean lightEditMode) {
+    return LightEditUtil.computeWithCommandLineOptions(shouldWait, lightEditMode, () -> {
+      if (line != -1 || tempProject) {
+        return doOpenFile(file, line, column, tempProject, shouldWait);
+      }
+      return doOpenFileOrProject(file, shouldWait);
+    });
   }
 }

@@ -128,8 +128,12 @@ public abstract class CachedValuesManager {
    * @return The cached value
    */
   public static <E extends PsiElement, T> T getProjectPsiDependentCache(@NotNull E context, @NotNull Function<? super E, ? extends T> provider) {
-    return getCachedValue(context, getKeyForClass(provider.getClass(), globalKeyForProvider), () ->
-      CachedValueProvider.Result.create(provider.apply(context), PsiModificationTracker.MODIFICATION_COUNT));
+    return getCachedValue(context, getKeyForClass(provider.getClass(), globalKeyForProvider), () -> {
+      CachedValueProvider.Result<? extends T> result = CachedValueProvider.Result.create(
+        provider.apply(context), PsiModificationTracker.MODIFICATION_COUNT);
+      CachedValueProfiler.onResultCreated(result, provider);
+      return result;
+    });
   }
 
   /**
@@ -154,8 +158,10 @@ public abstract class CachedValuesManager {
         if (result != null && !context.isPhysical()) {
           PsiFile file = context.getContainingFile();
           if (file != null) {
-            return CachedValueProvider.Result
-              .create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), file, ArrayUtil.OBJECT_ARRAY_FACTORY));
+            Result<T> adjusted = Result.create(
+              result.getValue(), ArrayUtil.append(result.getDependencyItems(), file, ArrayUtil.OBJECT_ARRAY_FACTORY));
+            CachedValueProfiler.onResultCreated(adjusted, result);
+            return adjusted;
           }
         }
         return result;

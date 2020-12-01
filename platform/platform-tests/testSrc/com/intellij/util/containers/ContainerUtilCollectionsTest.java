@@ -10,7 +10,6 @@ import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -28,7 +27,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   private static final long TIMEOUT = 5 * 60 * 1000;  // 5 minutes
 
-  private static final HashingStrategy<String> IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY = new HashingStrategy<String>() {
+  private static final HashingStrategy<String> IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY = new HashingStrategy<>() {
     @Override
     public int hashCode(String object) {
       return Character.toLowerCase(object.charAt(object.length() - 1));
@@ -537,15 +536,15 @@ public class ContainerUtilCollectionsTest extends Assert {
       }
     }
 
-    ConcurrentMap<Object, Object> map = ConcurrentCollectionFactory.createMap(new TObjectHashingStrategy<Object>() {
+    ConcurrentMap<Object, Object> map = ConcurrentCollectionFactory.createMap(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(Object object) {
+      public int hashCode(Object object) {
         return 0;
       }
 
       @Override
       public boolean equals(Object o1, Object o2) {
-        return o1==o2;
+        return o1 == o2;
       }
     });
     int N = 1000;

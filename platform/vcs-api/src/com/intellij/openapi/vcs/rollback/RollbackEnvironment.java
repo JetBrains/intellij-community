@@ -16,8 +16,6 @@ import java.util.List;
 
 /**
  * Interface for performing VCS rollback / revert operations.
- *
- * @author yole
  */
 public interface RollbackEnvironment {
   /**
@@ -32,10 +30,8 @@ public interface RollbackEnvironment {
   /**
    * Rolls back the specified changes.
    *
-   * @param changes the changes to roll back.
-   * @param vcsExceptions
-   * @param listener
-   * @return list of errors occurred, or an empty list if no errors occurred.
+   * @param changes    the changes to roll back.
+   * @param exceptions list of errors occurred during rollback
    */
   void rollbackChanges(List<? extends Change> changes, final List<VcsException> vcsExceptions, @NotNull final RollbackProgressListener listener);
 
@@ -44,9 +40,9 @@ public interface RollbackEnvironment {
    * from VCS. The implementation of this method should get the current version of the listed files from VCS.
    * You do not need to implement this method if you never report such files to
    * {@link com.intellij.openapi.vcs.changes.ChangelistBuilder#processLocallyDeletedFile}.
-   * @param files the files to rollback deletion of.
-   * @param exceptions
-   * @param listener @return list of errors occurred, or an empty list if no errors occurred.
+   *
+   * @param files      the files to rollback deletion of.
+   * @param exceptions list of errors occurred during rollback
    */
   void rollbackMissingFileDeletion(List<? extends FilePath> files, final List<? super VcsException> exceptions,
                                    final RollbackProgressListener listener);
@@ -55,9 +51,9 @@ public interface RollbackEnvironment {
    * Rolls back the modifications of files which have been made writable but not properly checked out from VCS.
    * You do not need to implement this method if you never report such files to
    * {@link com.intellij.openapi.vcs.changes.ChangelistBuilder#processModifiedWithoutCheckout}.
-   * @param files the files to rollback.
-   * @param exceptions
-   * @param listener @return list of errors occurred, or an empty list if no errors occurred.
+   *
+   * @param files      the files to rollback.
+   * @param exceptions list of errors occurred during rollback
    */
   void rollbackModifiedWithoutCheckout(List<? extends VirtualFile> files, final List<? super VcsException> exceptions,
                                        final RollbackProgressListener listener);

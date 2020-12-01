@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.impl.VcsLogManager
-import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.editor.VcsLogFile
+import com.intellij.vcs.log.util.runWhenVcsAndLogIsReady
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
@@ -28,19 +25,6 @@ internal class GitCompareBranchesFile(project: Project,
       panel.add(component, BorderLayout.CENTER)
     }
     return panel
-  }
-
-  private fun runWhenVcsAndLogIsReady(project: Project, action: (VcsLogManager) -> Unit) {
-    val logManager = VcsProjectLog.getInstance(project).logManager
-    if (logManager == null) {
-      ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-        runInEdt { VcsProjectLog.runWhenLogIsReady(project) { manager -> action(manager) } }
-      }
-    }
-    else {
-      logManager.scheduleInitialization()
-      action(logManager)
-    }
   }
 
   override fun getFileSystem(): GitCompareBranchesVirtualFileSystem = fileSystemInstance

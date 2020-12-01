@@ -25,7 +25,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -138,7 +137,7 @@ public final class GroovyMarkerTypes {
       final GrField field = (GrField)parent;
 
 
-      Set<PsiMethod> result = new THashSet<>();
+      Set<PsiMethod> result = new HashSet<>();
       Processor<PsiMethod> collectProcessor = Processors.cancelableCollectProcessor(result);
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
         for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
@@ -248,7 +247,7 @@ public final class GroovyMarkerTypes {
         //collect all overrings (including fields with implicit accessors and method with default parameters)
         final GrMethod method = (GrMethod)parent;
         final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
-          new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
+          new PsiElementProcessor.CollectElementsWithLimit<>(2, new HashSet<>());
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
           for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
             OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {

@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag;
+import static git4idea.GitNotificationIdsHolder.COULD_NOT_SAVE_UNCOMMITTED_CHANGES;
 
 /**
  * Executes a Git operation on a number of repositories surrounding it by stash-unstash procedure.
@@ -159,7 +160,7 @@ public class GitPreservingProcess {
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
       VcsNotifier.getInstance(myProject).notifyError(
-        "git.could.not.save.uncommitted.changes", GitBundle.getString("save.notification.failed.title"),
+        COULD_NOT_SAVE_UNCOMMITTED_CHANGES, GitBundle.getString("save.notification.failed.title"),
         mySaver.getSaveMethod().selectBundleMessage(
           GitBundle.message("save.notification.failed.stash.text", myOperationTitle, join(e.getMessages())),
           GitBundle.message("save.notification.failed.shelf.text", myOperationTitle, join(e.getMessages()))

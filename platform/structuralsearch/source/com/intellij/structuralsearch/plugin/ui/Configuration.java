@@ -49,9 +49,8 @@ public abstract class Configuration implements JDOMExternalizable {
 
   /**
    * String used to refer to this configuration. It should be unique or null.
-   * 1. {@link com.intellij.structuralsearch.PredefinedConfigurationUtil#createConfiguration} -> refName = "Template name (language)"
-   * 2. {@link com.intellij.structuralsearch.PredefinedConfigurationUtil#createLegacyConfiguration} -> refName = "Template name"
-   * 3. User defined configuration -> refName = null / getRefName = "Template name"
+   *  - For predefined configurations, the refName is a unique String
+   *  - For user-defined configurations, the refName is null and getRefName returns the template name
    */
   private @NonNls String refName;
 

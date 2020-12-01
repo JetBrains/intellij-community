@@ -10,21 +10,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder
 import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ModuleInfo
 import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ProjectInfo
@@ -32,9 +25,9 @@ import org.jetbrains.plugins.gradle.service.project.wizard.GradleFrameworksWizar
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleStructureWizardStep
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.waitForProjectReload
 import org.junit.runners.Parameterized
 import java.io.File
-import java.util.concurrent.TimeUnit
 import com.intellij.openapi.externalSystem.util.use as utilUse
 
 
@@ -119,7 +112,7 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
   }
 
   private fun createProject(directory: String, configure: (ModuleWizardStep) -> Unit): Project {
-    return waitForProjectReload(alsoWaitForPreview = true) {
+    return waitForProjectReload {
       invokeAndWaitIfNeeded {
         val wizard = createWizard(null, directory)
         wizard.runWizard(configure)
@@ -248,53 +241,5 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
     fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
-
-
-    /**
-     * @param alsoWaitForPreview waits for double project reload (preview reload + project reload) if it is true
-     * @param action or some async calls have to produce project reload
-     *  for example invokeLater { refreshProject(project, spec) }
-     * @throws java.lang.AssertionError if import is failed or isn't started
-     */
-    @JvmStatic
-    fun <R> waitForProjectReload(alsoWaitForPreview: Boolean, action: ThrowableComputable<R, Throwable>): R {
-      return waitForProjectReload(alsoWaitForPreview) { action.compute() }
-    }
-
-
-    fun <R> waitForProjectReload(alsoWaitForPreview: Boolean = false, action: () -> R): R {
-      val projectReloadPromise = AsyncPromise<Any?>()
-      val executionListenerDisposable = Disposer.newDisposable()
-      val executionListener = object : ExternalSystemTaskNotificationListenerAdapter() {
-        override fun onEnd(id: ExternalSystemTaskId) = Disposer.dispose(executionListenerDisposable)
-        override fun onSuccess(id: ExternalSystemTaskId) {
-          val project = id.findProject()!!
-          if (alsoWaitForPreview) {
-            getProjectDataServicesPromise(project).onProcessed {
-              getProjectDataServicesPromise(project).onProcessed {
-                projectReloadPromise.setResult(null)
-              }
-            }
-          }
-          else {
-            getProjectDataServicesPromise(project).onProcessed {
-              projectReloadPromise.setResult(null)
-            }
-          }
-        }
-      }
-      ExternalSystemProgressNotificationManager.getInstance()
-        .addNotificationListener(executionListener, executionListenerDisposable)
-      val result = action()
-      ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.waitForPromise(projectReloadPromise, TimeUnit.MINUTES.toMillis(1)) }
-      return result
-    }
-
-    private fun getProjectDataServicesPromise(project: Project): AsyncPromise<Any?> {
-      val promise = AsyncPromise<Any?>()
-      val connection = project.messageBus.connect()
-      connection.subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener { promise.setResult(null) })
-      return promise
-    }
   }
 }

@@ -133,7 +133,7 @@ public class PluginUpdatesService {
   public void recalculateUpdates() {
     synchronized (ourLock) {
       for (PluginUpdatesService service : SERVICES) {
-        service.runAllCallbacks(0);
+        service.runAllCallbacks(null);
       }
 
       if (myPreparing) {
@@ -197,6 +197,11 @@ public class PluginUpdatesService {
       myCache = null;
     }
 
+    // for example, if executed as part of Traverse UI - don't wait check updates
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return;
+    }
+
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       UpdateChecker.CheckPluginsUpdateResult updates = UpdateChecker.checkPluginsUpdate(new EmptyProgressIndicator());
 
@@ -232,7 +237,7 @@ public class PluginUpdatesService {
     runCountCallbacks(countValue);
 
     if (myUpdateCallback != null) {
-      myUpdateCallback.accept(myCache);
+      myUpdateCallback.accept(countValue == null ? null : myCache);
     }
   }
 

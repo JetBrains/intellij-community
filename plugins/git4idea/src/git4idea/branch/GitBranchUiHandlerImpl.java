@@ -43,6 +43,7 @@ import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.message;
 import static com.intellij.openapi.ui.Messages.YES;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static git4idea.GitNotificationIdsHolder.UNRESOLVED_CONFLICTS;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANCEL;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELETE;
 
@@ -81,7 +82,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   public void showUnmergedFilesNotification(@NotNull final String operationName, @NotNull final Collection<? extends GitRepository> repositories) {
     String title = unmergedFilesErrorTitle(operationName);
     String description = unmergedFilesErrorNotificationDescription(operationName);
-    VcsNotifier.getInstance(myProject).notifyError("git.unresolved.conflicts", title, description,
+    VcsNotifier.getInstance(myProject).notifyError(UNRESOLVED_CONFLICTS, title, description,
                                                    new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification,

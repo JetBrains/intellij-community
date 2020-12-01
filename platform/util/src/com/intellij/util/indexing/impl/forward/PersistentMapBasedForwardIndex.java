@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -51,7 +51,7 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
 
   @Override
   public void clear() throws IOException {
-    myPersistentMap.deleteMap();
+    myPersistentMap.closeAndClean();
     myPersistentMap = createMap(myMapFile, myUseChunks, myReadOnly);
   }
 
@@ -66,7 +66,7 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
 
   @NotNull
   private static PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file, boolean useChunks, boolean isReadOnly) throws IOException {
-    return PersistentHashMapBuilder
+    return PersistentMapBuilder
       .newBuilder(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE)
       .hasChunks(useChunks)
       .withReadonly(isReadOnly)

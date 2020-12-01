@@ -4,6 +4,7 @@ package git4idea.branch;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -55,10 +56,11 @@ import static git4idea.config.GitIncomingCheckStrategy.Never;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
 import static git4idea.repo.GitRefUtil.getResolvedHashes;
 
+@Service(Service.Level.PROJECT)
 public final class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener, Disposable {
   private static final Logger LOG = Logger.getInstance(GitBranchIncomingOutgoingManager.class);
   public static final Topic<GitIncomingOutgoingListener> GIT_INCOMING_OUTGOING_CHANGED =
-    Topic.create("Git incoming outgoing info changed", GitIncomingOutgoingListener.class);
+    new Topic<>("Git incoming outgoing info changed", GitIncomingOutgoingListener.class);
 
   private static final String MAC_DEFAULT_LAUNCH = "com.apple.launchd"; //NON-NLS
 
