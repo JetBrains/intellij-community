@@ -8,7 +8,10 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -168,12 +171,6 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   @Override
   public void dispose() {
-    if (myProject.isDisposed()) return;
-    ToolWindowManager toolWindowManager = myProject.getServiceIfCreated(ToolWindowManager.class);
-    if (toolWindowManager == null) return;
-    ToolWindow toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID);
-    if (toolWindow == null) return;
-    toolWindow.remove();
   }
 
   private void listenForProjectsChanges() {
@@ -233,12 +230,16 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.notClosable(TOOL_WINDOW_ID, ToolWindowAnchor.RIGHT));
-    Disposer.register(this, toolWindow.getDisposable());
+    ContentManager contentManager = toolWindow.getContentManager();
+    Disposer.register(this, () -> {
+      // fire content removed events, so subscribers could cleanup caches
+      contentManager.removeAllContents(true);
+      Disposer.dispose(contentManager);
+      toolWindow.remove();
+    });
     toolWindow.setIcon(MavenIcons.ToolWindowMaven);
     final ContentFactory contentFactory = ApplicationManager.getApplication().getService(ContentFactory.class);
     final Content content = contentFactory.createContent(panel, "", false);
-    ContentManager contentManager = toolWindow.getContentManager();
-    Disposer.register(this, contentManager);
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, false);
 
