@@ -50,6 +50,7 @@ public final class FileSystemUtil {
 
   private static final Mediator ourMediator = computeMediator();
 
+  @NotNull
   static Mediator computeMediator() {
     if (!Boolean.getBoolean(FORCE_USE_NIO2_KEY)) {
       try {
@@ -69,7 +70,8 @@ public final class FileSystemUtil {
     return new Nio2MediatorImpl();
   }
 
-  private static Mediator check(Mediator mediator) throws Exception {
+  @NotNull
+  private static Mediator check(@NotNull Mediator mediator) throws Exception {
     String quickTestPath = SystemInfo.isWindows ? "C:\\" : "/";
     mediator.getAttributes(quickTestPath);
     return mediator;
@@ -546,6 +548,7 @@ public final class FileSystemUtil {
     return detected;
   }
 
+  @NotNull
   private static String toggleCase(@NotNull String name) {
     String altName = name.toUpperCase(Locale.getDefault());
     if (altName.equals(name)) altName = name.toLowerCase(Locale.getDefault());
@@ -576,7 +579,8 @@ public final class FileSystemUtil {
   }
 
   //<editor-fold desc="Windows case sensitivity detection (NTFS-only)">
-  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(String path) {
+  @NotNull
+  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(@NotNull String path) {
     try {
       Kernel32 kernel32 = Kernel32.INSTANCE;
       NtOsKrnl ntOsKrnl = NtOsKrnl.INSTANCE;
@@ -649,7 +653,8 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="macOS case sensitivity detection">
-  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(String path) {
+  @NotNull
+  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(@NotNull String path) {
     try {
       CoreFoundation cf = CoreFoundation.INSTANCE;
 
@@ -684,7 +689,8 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="Linux case sensitivity detection">
-  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(String path) {
+  @NotNull
+  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(@NotNull String path) {
     try {
       Memory buf = new Memory(256);
       if (LibC.INSTANCE.statfs(path, buf) != 0) {
