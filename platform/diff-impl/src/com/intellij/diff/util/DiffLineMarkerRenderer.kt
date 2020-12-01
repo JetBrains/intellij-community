@@ -36,7 +36,7 @@ internal class DiffLineMarkerRenderer(
 ) : LineMarkerRendererEx {
 
   /**
-   * Keep in sync with [DiffDividerDrawUtil.getPaintRange]
+   * Keep in sync with [com.intellij.diff.util.DiffDividerDrawUtil.getDividerMarkerPaintRange]
    */
   override fun paint(editor: Editor, g: Graphics, range: Rectangle) {
     editor as EditorEx
