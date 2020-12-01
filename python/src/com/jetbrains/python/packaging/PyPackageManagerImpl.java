@@ -187,6 +187,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
+    install(requirements, extraArgs, null);
+  }
+
+  public void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs, @Nullable String workingDir)
+    throws ExecutionException {
     if (requirements == null) return;
     if (!hasManagement()) {
       installManagement();
@@ -207,7 +212,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
 
     try {
-      getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, null);
+      getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, workingDir);
     }
     catch (PyExecutionException e) {
       final List<String> simplifiedArgs = new ArrayList<>();
