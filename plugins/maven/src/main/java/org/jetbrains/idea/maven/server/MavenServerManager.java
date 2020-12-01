@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -22,7 +23,9 @@ import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenDisposable;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
+import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -124,7 +127,16 @@ public final class MavenServerManager implements Disposable {
   @NotNull
   private static Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
     String jdkForImporterName = settings.importingSettings.getJdkForImporter();
-    return MavenUtil.getJdk(project, jdkForImporterName);
+    try {
+      return MavenUtil.getJdk(project, jdkForImporterName);
+    }
+    catch (ExternalSystemJdkException e) {
+      Sdk jdk = MavenUtil.getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK);
+      MavenProjectsManager.getInstance(project).getSyncConsole().addWarning(SyncBundle.message("importing.jdk.changed"),
+                                                                            SyncBundle.message("importing.jdk.changed.description",jdkForImporterName, jdk.getName())
+                                                                            );
+      return jdk;
+    }
   }
 
   private static boolean compatibleParameters(MavenServerConnector connector, Sdk jdk, MavenWorkspaceSettings settings) {
