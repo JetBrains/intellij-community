@@ -491,6 +491,7 @@ public final class FileSystemUtil {
       anyChild = new File(parent, probe);
     }
 
+    boolean mustDelete = false;
     String name = anyChild.getName();
     String altName = toggleCase(name);
     if (altName.equals(name)) {
@@ -498,19 +499,31 @@ public final class FileSystemUtil {
       name = findCaseToggleableChild(parent);
       if (name == null) {
         // we can't find any file with toggleable case.
-        return FileAttributes.CaseSensitivity.UNKNOWN;
+        // try to create one
+        name = "_234567r.txt";
+        anyChild = new File(parent, name);
+        boolean created = false;
+        try {
+          created = anyChild.createNewFile();
+        }
+        catch (IOException ignored) {
+        }
+        if (!created) {
+          return FileAttributes.CaseSensitivity.UNKNOWN;
+        }
+        mustDelete = true;
       }
       altName = toggleCase(name);
     }
 
     String altPath = parent.getPath() + '/' + altName;
     FileAttributes newAttributes = getAttributes(altPath);
-    if (newAttributes == null) {
-      // couldn't file this file by other-cased name, so deduce FS is sensitive
-      return FileAttributes.CaseSensitivity.SENSITIVE;
-    }
 
     try {
+      if (newAttributes == null) {
+        // couldn't file this file by other-cased name, so deduce FS is sensitive
+        return FileAttributes.CaseSensitivity.SENSITIVE;
+      }
       // if changed-case file found, there is a slim chance that the FS is still case-sensitive but there are two files with different case
       File altCanonicalFile = new File(altPath).getCanonicalFile();
       String altCanonicalName = altCanonicalFile.getName();
@@ -521,6 +534,11 @@ public final class FileSystemUtil {
     }
     catch (IOException e) {
       return FileAttributes.CaseSensitivity.UNKNOWN;
+    }
+    finally {
+      if (mustDelete) {
+        anyChild.delete();
+      }
     }
 
     // it's the different file indeed, what a bad luck
