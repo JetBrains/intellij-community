@@ -134,6 +134,10 @@ public final class IoTestUtil {
     assumeTrue("Need macOS, can't run on " + SystemInfo.OS_NAME, SystemInfo.isMac);
   }
 
+  public static void assumeLinux() throws AssumptionViolatedException {
+    assumeTrue("Need Linux, can't run on " + SystemInfo.OS_NAME, SystemInfo.isLinux);
+  }
+
   public static void assumeUnix() throws AssumptionViolatedException {
     assumeTrue("Need Unix, can't run on " + SystemInfo.OS_NAME, SystemInfo.isUnix);
   }

@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.io.SuperUserStatus;
@@ -20,7 +20,7 @@ import static org.junit.Assume.assumeTrue;
 
 /** Tests low-level functions for reading file case-sensitivity attributes in {@link FileSystemUtil} */
 public class CaseSensitivityDetectionTest {
-  @Rule public TempDirectory myTempDir = new TempDirectory();
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
   public void windowsFSRootsMustHaveDefaultSensitivity() {
@@ -29,8 +29,8 @@ public class CaseSensitivityDetectionTest {
     String systemDrive = System.getenv("SystemDrive");  // typically "C:"
     assertNotNull(systemDrive);
     File root = new File(systemDrive + '\\');
-    FileAttributes.CaseSensitivity rootCs = FileSystemUtil.readParentCaseSensitivity(root);
-    assertEquals(systemDrive, FileAttributes.CaseSensitivity.INSENSITIVE, rootCs);
+    CaseSensitivity rootCs = FileSystemUtil.readParentCaseSensitivity(root);
+    assertEquals(systemDrive, CaseSensitivity.INSENSITIVE, rootCs);
 
     String systemRoot = System.getenv("SystemRoot");  // typically "C:\Windows"
     assertNotNull(systemRoot);
@@ -50,7 +50,7 @@ public class CaseSensitivityDetectionTest {
     assumeTrue("WSL distribution " + name + " doesn't seem to be alive", reanimateWslDistribution(name));
 
     String root = "\\\\wsl$\\" + name;
-    assertEquals(root, FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(new File(root)));
+    assertEquals(root, CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(new File(root)));
   }
 
   @Test
@@ -59,12 +59,12 @@ public class CaseSensitivityDetectionTest {
     assumeWslPresence();
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
 
-    File file = myTempDir.newFile("dir/child.txt"), dir = file.getParentFile();
-    assertEquals(FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
+    File file = tempDir.newFile("dir/child.txt"), dir = file.getParentFile();
+    assertEquals(CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
     setCaseSensitivity(dir, true);
-    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
+    assertEquals(CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
     setCaseSensitivity(dir, false);
-    assertEquals(FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
+    assertEquals(CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
   }
 
   @Test
@@ -72,8 +72,8 @@ public class CaseSensitivityDetectionTest {
     assumeMacOS();
 
     File root = new File("/");
-    FileAttributes.CaseSensitivity rootCs = FileSystemUtil.readParentCaseSensitivity(root);
-    assertNotEquals(FileAttributes.CaseSensitivity.UNKNOWN, rootCs);
+    CaseSensitivity rootCs = FileSystemUtil.readParentCaseSensitivity(root);
+    assertNotEquals(CaseSensitivity.UNKNOWN, rootCs);
 
     File child = new File("/Users");
     assertEquals(root, child.getParentFile());
@@ -82,11 +82,11 @@ public class CaseSensitivityDetectionTest {
 
   @Test
   public void linuxBasics() {
-    assumeTrue("Need Linux, can't run on " + SystemInfo.OS_NAME, SystemInfo.isLinux);
+    assumeLinux();
 
     File root = new File("/");
-    FileAttributes.CaseSensitivity rootCs = FileSystemUtil.readParentCaseSensitivity(root);
-    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, rootCs);
+    CaseSensitivity rootCs = FileSystemUtil.readParentCaseSensitivity(root);
+    assertEquals(CaseSensitivity.SENSITIVE, rootCs);
 
     File child = new File("/home");
     assertEquals(rootCs, FileSystemUtil.readParentCaseSensitivity(child));
@@ -94,28 +94,32 @@ public class CaseSensitivityDetectionTest {
 
   @Test
   public void caseSensitivityIsReadSanely() throws IOException {
-    File file = myTempDir.newFile("dir/child.txt");
-    File dir = file.getParentFile();
-    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
-    assertTrue(new File(dir, "x.txt").createNewFile());
-    switch (sensitivity) {
-      case SENSITIVE:
-        assertTrue(new File(dir, "X.txt").createNewFile());
-        break;
-      case INSENSITIVE:
-        assertFalse(new File(dir, "X.txt").createNewFile());
-        break;
-      default:
-        fail("invalid sensitivity: " + sensitivity);
-        break;
+    File file = tempDir.newFile("dir/x.txt");
+    CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
+    if (sensitivity == CaseSensitivity.SENSITIVE) {
+      assertTrue(new File(file.getParentFile(), "X.txt").createNewFile());
+    }
+    else if (sensitivity == CaseSensitivity.INSENSITIVE) {
+      assertFalse(new File(file.getParentFile(), "X.txt").createNewFile());
+    }
+    else {
+      fail("invalid sensitivity: " + sensitivity);
     }
   }
 
   @Test
   public void caseSensitivityOfNonExistingDirMustBeUnknown() {
-    File file = new File(myTempDir.getRoot(), "dir/child.txt");
+    File file = new File(tempDir.getRoot(), "dir/child.txt");
     assertFalse(file.exists());
-    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
-    assertEquals(FileAttributes.CaseSensitivity.UNKNOWN, sensitivity);
+    assertEquals(CaseSensitivity.UNKNOWN, FileSystemUtil.readParentCaseSensitivity(file));
+  }
+
+  @Test
+  public void nativeApiWorksInSimpleCases() {
+    File file = tempDir.newFile("dir/0");
+    assertFalse(FileSystemUtil.isCaseToggleable(file.getName()));
+
+    CaseSensitivity expected = SystemInfo.isWindows || SystemInfo.isMac ? CaseSensitivity.INSENSITIVE : CaseSensitivity.SENSITIVE;
+    assertEquals(expected, FileSystemUtil.readParentCaseSensitivity(file));
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -901,15 +902,15 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void caseSensitivityNativeAPIMustWorkInSimpleCasesAndIsCached() {
-    String childName = "0";
-    assertFalse(FileSystemUtil.isCaseToggleable(childName));
-    File ioFile = tempDir.newFile("xxx/" + childName);
-    assertTrue(ioFile.exists());
-    VirtualDirectoryImpl dir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile.getParentFile());
-    assertEquals(FileAttributes.CaseSensitivity.UNKNOWN, dir.getChildrenCaseSensitivity());
-    VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(dir, childName);
-    FileAttributes.CaseSensitivity defaultCase = SystemInfo.isFileSystemCaseSensitive ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
-    assertEquals(defaultCase, dir.getChildrenCaseSensitivity());
-    assertEquals(defaultCase == FileAttributes.CaseSensitivity.SENSITIVE, dir.isCaseSensitive());
+    File file = tempDir.newFile("dir/0");
+    assertFalse(FileSystemUtil.isCaseToggleable(file.getName()));
+
+    VirtualDirectoryImpl dir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile());
+    assertEquals(CaseSensitivity.UNKNOWN, dir.getChildrenCaseSensitivity());
+
+    VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(dir, file.getName());
+    CaseSensitivity expected = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
+    assertEquals(expected, dir.getChildrenCaseSensitivity());
+    assertEquals(expected == CaseSensitivity.SENSITIVE, dir.isCaseSensitive());
   }
 }

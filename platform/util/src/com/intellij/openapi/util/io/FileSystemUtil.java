@@ -564,8 +564,7 @@ public final class FileSystemUtil {
   }
 
   //<editor-fold desc="Windows case sensitivity detection (NTFS-only)">
-  @NotNull
-  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(@NotNull String path) {
+  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(String path) {
     try {
       Kernel32 kernel32 = Kernel32.INSTANCE;
       NtOsKrnl ntOsKrnl = NtOsKrnl.INSTANCE;
@@ -638,8 +637,7 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="macOS case sensitivity detection">
-  @NotNull
-  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(@NotNull String path) {
+  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(String path) {
     try {
       CoreFoundation cf = CoreFoundation.INSTANCE;
 
@@ -674,8 +672,7 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="Linux case sensitivity detection">
-  @NotNull
-  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(@NotNull String path) {
+  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(String path) {
     try {
       Memory buf = new Memory(256);
       if (LibC.INSTANCE.statfs(path, buf) != 0) {
