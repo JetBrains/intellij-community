@@ -202,7 +202,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     @JvmStatic
     fun createIdWithTitle(@NonNls displayId: String, @NotificationTitle title: String): String {
       val oldTitle = registeredTitles.put(displayId, title)
-      LOG.assertTrue(oldTitle == null || oldTitle == title, "New title \"$title\" for NotificationGroup($displayId,$oldTitle)")
+      LOG.assertTrue(oldTitle == null || oldTitle == title, "NotificationGroup('$displayId', '$oldTitle') tried to be re-created with different title '$title'")
       return displayId
     }
 
