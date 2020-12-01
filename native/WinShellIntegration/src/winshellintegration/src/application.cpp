@@ -402,20 +402,15 @@ namespace intellij::ui::win
         );
 
         auto hr = rfHandle->RemoveAllDestinations();
-        switch (hr)
-        {
-            case S_OK:
-                [[fallthrough]];
-            case HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND): // it is ok if no recent docs was registered before
-                break;
-            default:
-                return (void)errors::throwCOMException(
-                    hr,
-                    "IApplicationDestinations::RemoveAllDestinations failed",
-                    __func__,
-                    applicationCtxName
-                );
-        }
+        if ( (hr != S_OK) &&
+             // it is ok if no recent docs was registered before
+             (hr != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) )
+            errors::throwCOMException(
+                hr,
+                "IApplicationDestinations::RemoveAllDestinations failed",
+                __func__,
+                applicationCtxName
+            );
 
         // clears all usage data on all Recent items
         SHAddToRecentDocs(SHARD_PIDL, nullptr);
