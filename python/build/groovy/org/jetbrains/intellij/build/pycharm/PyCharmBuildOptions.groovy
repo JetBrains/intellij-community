@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 
 import java.nio.file.Path
+import java.nio.file.Paths
 
 /**
  * @author Aleksey.Rostovskiy
@@ -44,8 +45,8 @@ final class PyCharmBuildOptions {
    * */
   static final String minicondaInstallerFolderName = "minicondaInstaller"
 
-  static File getFolderForIndicesAndStubs(BuildContext context) {
-    return new File(context.paths.buildOutputRoot, "index")
+  static Path getFolderForIndicesAndStubs(BuildContext context) {
+    return Paths.get(context.paths.buildOutputRoot, "index")
   }
 
   static Path getTemporaryFolderForUnzip(BuildContext context) {
