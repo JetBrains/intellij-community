@@ -111,7 +111,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   public void testDoNotImportSameRootProjectTwice() {
     MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
+    myTree.addListener(listener, getTestRootDisposable());
 
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
@@ -135,7 +135,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   public void testRereadingChildIfParentWasReadAfterIt() {
     MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
+    myTree.addListener(listener, getTestRootDisposable());
 
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
@@ -310,7 +310,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "</modules>");
 
     MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
+    myTree.addListener(listener, getTestRootDisposable());
     update(myProjectPom);
 
     roots = myTree.getRootProjects();
@@ -388,7 +388,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                     "<version>1</version>");
 
     MyLoggingListener l = new MyLoggingListener();
-    myTree.addListener(l);
+    myTree.addListener(l, getTestRootDisposable());
 
     updateAll(myProjectPom);
     assertEquals("updated: project m deleted: <none> ", l.log);
@@ -418,7 +418,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                     "<version>1</version>");
 
     MyLoggingListener l = new MyLoggingListener();
-    myTree.addListener(l);
+    myTree.addListener(l, getTestRootDisposable());
 
     update(myProjectPom);
     assertEquals("updated: project m deleted: <none> ", l.log);
@@ -596,7 +596,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   public void testSendingNotificationAfterProjectIsAddedInToHierarchy() {
     MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
+    myTree.addListener(listener, getTestRootDisposable());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>m1</artifactId>" +
@@ -616,7 +616,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(myProjectPom);
 
     MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
+    myTree.addListener(listener, getTestRootDisposable());
 
     MavenProject project = myTree.findProject(myProjectPom);
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
@@ -628,7 +628,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                     NativeMavenProjectHolder nativeMavenProject) {
           nativeProject.add(nativeMavenProject);
         }
-      });
+      }, getTestRootDisposable());
       myProjectResolver = new MavenProjectResolver(myTree);
       myProjectResolver.resolve(myProject, project,
                                 getMavenGeneralSettings(),
@@ -664,7 +664,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                         "</parent>");
 
     MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
+    myTree.addListener(listener, getTestRootDisposable());
 
     updateAll(myProjectPom, child);
 
@@ -679,7 +679,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                     NativeMavenProjectHolder nativeMavenProject) {
           nativeProject[0] = nativeMavenProject;
         }
-      });
+      }, getTestRootDisposable());
       myProjectResolver = new MavenProjectResolver(myTree);
       myProjectResolver.resolve(myProject, parentProject,
                                 getMavenGeneralSettings(),
@@ -1429,7 +1429,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(myProjectPom);
 
     MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
+    myTree.addListener(listener, getTestRootDisposable());
 
     deleteProject(m1);
 
@@ -1469,7 +1469,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(1, myTree.getModules(myTree.getModules(roots.get(0)).get(0)).size());
 
     MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
+    myTree.addListener(listener, getTestRootDisposable());
 
     deleteProject(m1);
 
@@ -1544,7 +1544,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                      "<version>1</version>");
 
     MyLoggingListener l = new MyLoggingListener();
-    myTree.addListener(l);
+    myTree.addListener(l, getTestRootDisposable());
 
     myTree.addManagedFilesWithProfiles(Collections.singletonList(myProjectPom), MavenExplicitProfiles.NONE);
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());

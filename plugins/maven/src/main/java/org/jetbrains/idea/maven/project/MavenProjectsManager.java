@@ -9,9 +9,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileTask;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -24,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
@@ -117,7 +115,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
-  private MavenSyncConsole mySyncConsole;
+  private volatile MavenSyncConsole mySyncConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
 
@@ -167,6 +165,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void dispose() {
+    mySyncConsole = null;
     myManagerListeners.clear();
   }
 
@@ -194,6 +193,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return getGeneralSettings().getEffectiveLocalRepository();
   }
 
+  @ApiStatus.Internal
+  public int getFilterConfigCrc(@NotNull ProjectFileIndex projectFileIndex) {
+    return myProjectsTree.getFilterConfigCrc(projectFileIndex);
+  }
+
+
   @Override
   public void initializeComponent() {
     if (!isNormalProject()) {
@@ -214,16 +219,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     } else {
       startupManager.registerStartupActivity(runnable);
     }
-
-    startupManager.runAfterOpened(() -> {
-      CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
-        @Override
-        public boolean execute(@NotNull CompileContext context) {
-          ApplicationManager.getApplication().runReadAction(() -> new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild()));
-          return true;
-        }
-      });
-    });
   }
 
   private void initMavenized() {
@@ -326,7 +321,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
     myMavenProjectResolver = new MavenProjectResolver(myProjectsTree);
     applyStateToTree();
-    myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster());
+    myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
   }
 
   private void applyTreeToState() {
@@ -382,7 +377,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading"), true, myEmbeddersManager);
     myPostProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.post.processing"), true, myEmbeddersManager);
 
-    myWatcher = new MavenProjectsManagerWatcher(myProject, this, myProjectsTree, getGeneralSettings(), myReadingProcessor);
+    myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor);
 
     myImportingQueue = new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), this);
 
@@ -514,7 +509,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       private boolean shouldScheduleProject(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
         return !projectWithChanges.first.hasReadingProblems() && projectWithChanges.second.hasChanges();
       }
-    });
+    }, this);
   }
 
   public void listenForExternalChanges() {

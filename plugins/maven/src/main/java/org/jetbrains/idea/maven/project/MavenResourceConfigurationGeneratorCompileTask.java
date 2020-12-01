@@ -4,6 +4,9 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -21,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -40,47 +44,38 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
-public class MavenResourceCompilerConfigurationGenerator {
+@ApiStatus.Internal
+public class MavenResourceConfigurationGeneratorCompileTask implements CompileTask {
 
-  private static final Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
+  private static final Logger LOG = Logger.getInstance(MavenResourceConfigurationGeneratorCompileTask.class);
 
   private static final Pattern SIMPLE_NEGATIVE_PATTERN = Pattern.compile("!\\?(\\*\\.\\w+)");
   private static final String IDEA_MAVEN_DISABLE_MANIFEST = System.getProperty("idea.maven.disable.manifest");
 
-  private final Project myProject;
-
-  private final MavenProjectsManager myMavenProjectsManager;
-
-  private final MavenProjectsTree myProjectsTree;
-
-  public MavenResourceCompilerConfigurationGenerator(Project project, MavenProjectsTree projectsTree) {
-    myProject = project;
-    myMavenProjectsManager = MavenProjectsManager.getInstance(project);
-    myProjectsTree = projectsTree;
+  @Override
+  public boolean execute(@NotNull CompileContext context) {
+    ApplicationManager.getApplication().runReadAction(() -> generateBuildConfiguration(context.isRebuild(), context.getProject()));
+    return true;
   }
 
-  public void generateBuildConfiguration(boolean force) {
-    if (!myMavenProjectsManager.isMavenizedProject()) {
+  private static void generateBuildConfiguration(boolean force, @NotNull Project project) {
+    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
+    if (!mavenProjectsManager.isMavenizedProject()) {
       return;
     }
 
     final BuildManager buildManager = BuildManager.getInstance();
-    final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
+    final File projectSystemDir = buildManager.getProjectSystemDirectory(project);
     if (projectSystemDir == null) {
       return;
     }
-
     final File mavenConfigFile = new File(projectSystemDir, MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
 
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-
+    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
 
     final int projectRootModificationCount = (int)projectRootManager.getModificationCount();
-    final int mavenConfigCrc = myProjectsTree.getFilterConfigCrc(fileIndex);
+    final int mavenConfigCrc = mavenProjectsManager.getFilterConfigCrc(fileIndex);
     final int crc = mavenConfigCrc + projectRootModificationCount;
 
     final File crcFile = new File(mavenConfigFile.getParent(), "configuration.crc");
@@ -100,26 +95,23 @@ public class MavenResourceCompilerConfigurationGenerator {
           crcInput.close();
         }
       }
-      catch (IOException ignored) {
-        LOG.debug("Unable to read or find config file: " + ignored.getMessage());
+      catch (IOException e) {
+        LOG.debug("Unable to read or find config file: " + e.getMessage());
       }
     }
 
     MavenProjectConfiguration projectConfig = new MavenProjectConfiguration();
-
-    for (MavenProject mavenProject : myMavenProjectsManager.getProjects()) {
+    for (MavenProject mavenProject : mavenProjectsManager.getProjects()) {
       // do not add resource roots for 'pom' packaging projects
       if ("pom".equals(mavenProject.getPackaging())) continue;
 
       VirtualFile pomXml = mavenProject.getFile();
-
       Module module = fileIndex.getModuleForFile(pomXml);
       if (module == null) continue;
 
       if (!Comparing.equal(mavenProject.getDirectoryFile(), fileIndex.getContentRootForFile(pomXml))) continue;
 
       MavenModuleResourceConfiguration resourceConfig = new MavenModuleResourceConfiguration();
-
       MavenId projectId = mavenProject.getMavenId();
       resourceConfig.id = new MavenIdBean(projectId.getGroupId(), projectId.getArtifactId(), projectId.getVersion());
 
@@ -140,7 +132,6 @@ public class MavenResourceCompilerConfigurationGenerator {
       addEarModelMapEntries(mavenProject, resourceConfig.modelMap);
 
       Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-
       resourceConfig.outputDirectory = getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "resources");
       resourceConfig.testOutputDirectory = getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "testResources");
 
@@ -152,7 +143,7 @@ public class MavenResourceCompilerConfigurationGenerator {
 
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
 
-      final Properties properties = getFilteringProperties(mavenProject);
+      final Properties properties = getFilteringProperties(mavenProject, mavenProjectsManager);
       for (Map.Entry<Object, Object> propEntry : properties.entrySet()) {
         resourceConfig.properties.put((String)propEntry.getKey(), (String)propEntry.getValue());
       }
@@ -169,20 +160,17 @@ public class MavenResourceCompilerConfigurationGenerator {
       }
 
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
-
       generateManifest(mavenProject, module, resourceConfig);
     }
-
-    addNonMavenResources(projectConfig);
+    addNonMavenResources(projectConfig, mavenProjectsManager, project);
 
     final Element element = new Element("maven-project-configuration");
     XmlSerializer.serializeInto(projectConfig, element);
     buildManager.runCommand(() -> {
-      buildManager.clearState(myProject);
+      buildManager.clearState(project);
       FileUtil.createIfDoesntExist(mavenConfigFile);
       try {
         JdomKt.write(element, mavenConfigFile.toPath());
-
         DataOutputStream crcOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(crcFile)));
         try {
           crcOutput.writeInt(crc);
@@ -254,7 +242,8 @@ public class MavenResourceCompilerConfigurationGenerator {
     }
   }
 
-  private Properties getFilteringProperties(MavenProject mavenProject) {
+  private static Properties getFilteringProperties(MavenProject mavenProject,
+                                                   MavenProjectsManager mavenProjectsManager) {
     final Properties properties = new Properties();
 
     for (String each : mavenProject.getFilterPropertiesFiles()) {
@@ -275,12 +264,12 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     properties.setProperty("settings.localRepository", mavenProject.getLocalRepository().getAbsolutePath());
 
-    String jreDir = MavenUtil.getModuleJreHome(myMavenProjectsManager, mavenProject);
+    String jreDir = MavenUtil.getModuleJreHome(mavenProjectsManager, mavenProject);
     if (jreDir != null) {
       properties.setProperty("java.home", jreDir);
     }
 
-    String javaVersion = MavenUtil.getModuleJavaVersion(myMavenProjectsManager, mavenProject);
+    String javaVersion = MavenUtil.getModuleJavaVersion(mavenProjectsManager, mavenProject);
     if (javaVersion != null) {
       properties.setProperty("java.version", javaVersion);
     }
@@ -437,18 +426,20 @@ public class MavenResourceCompilerConfigurationGenerator {
     }
   }
 
-  private void addNonMavenResources(MavenProjectConfiguration projectCfg) {
+  private static void addNonMavenResources(@NotNull MavenProjectConfiguration projectCfg,
+                                    @NotNull MavenProjectsManager mavenProjectsManager,
+                                    @NotNull Project project) {
     Set<VirtualFile> processedRoots = new HashSet<>();
 
-    for (MavenProject project : myMavenProjectsManager.getProjects()) {
-      for (String dir : ContainerUtil.concat(project.getSources(), project.getTestSources())) {
+    for (MavenProject mavenProject : mavenProjectsManager.getProjects()) {
+      for (String dir : ContainerUtil.concat(mavenProject.getSources(), mavenProject.getTestSources())) {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(dir);
         if (file != null) {
           processedRoots.add(file);
         }
       }
 
-      for (MavenResource resource : ContainerUtil.concat(project.getResources(), project.getTestResources())) {
+      for (MavenResource resource : ContainerUtil.concat(mavenProject.getResources(), mavenProject.getTestResources())) {
         String directory = resource.getDirectory();
         if (directory != null) {
           ContainerUtil.addIfNotNull(processedRoots, LocalFileSystem.getInstance().findFileByPath(directory));
@@ -456,10 +447,10 @@ public class MavenResourceCompilerConfigurationGenerator {
       }
     }
 
-    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
+    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
 
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      if (!myMavenProjectsManager.isMavenizedModule(module)) continue;
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      if (!mavenProjectsManager.isMavenizedModule(module)) continue;
 
       for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
         for (SourceFolder folder : contentEntry.getSourceFolders()) {
@@ -512,5 +503,4 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     return false;
   }
-
 }

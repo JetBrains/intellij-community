@@ -76,6 +76,10 @@
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenTasksManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager" preload="true"/>
 
+    <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.project.MavenResourceConfigurationGeneratorCompileTask"/>
+    <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenBeforeCompileTask"/>
+    <compiler.task execute="AFTER" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenAfterCompileTask"/>
+
     <projectConfigurable groupId="build.tools" groupWeight="120" instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings"
                          bundle="messages.MavenProjectBundle"
                          key="configurable.MavenSettings.display.name"

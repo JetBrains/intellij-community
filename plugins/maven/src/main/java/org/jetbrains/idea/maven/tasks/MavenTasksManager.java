@@ -13,7 +13,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -22,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.DisposableWrapperList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
@@ -34,14 +34,12 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenCompilerTasksManager")
 public final class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState>,
                                                                                     Disposable {
-  private final AtomicBoolean isInitialized = new AtomicBoolean();
-  private MavenTasksManagerState myState = new MavenTasksManagerState();
-
+  private volatile MavenTasksManagerState myState = new MavenTasksManagerState();
+  private final Object myStateLock = new Object();
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
   public enum Phase {
@@ -66,48 +64,53 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
   }
 
   @Override
-  public synchronized MavenTasksManagerState getState() {
-    MavenTasksManagerState result = new MavenTasksManagerState();
-    result.afterCompileTasks = new HashSet<>(myState.afterCompileTasks);
-    result.beforeCompileTasks = new HashSet<>(myState.beforeCompileTasks);
-    result.afterRebuildTask = new HashSet<>(myState.afterRebuildTask);
-    result.beforeRebuildTask = new HashSet<>(myState.beforeRebuildTask);
-    return result;
+  public MavenTasksManagerState getState() {
+    synchronized (myStateLock) {
+      MavenTasksManagerState result = new MavenTasksManagerState();
+      result.afterCompileTasks = new HashSet<>(myState.afterCompileTasks);
+      result.beforeCompileTasks = new HashSet<>(myState.beforeCompileTasks);
+      result.afterRebuildTask = new HashSet<>(myState.afterRebuildTask);
+      result.beforeRebuildTask = new HashSet<>(myState.beforeRebuildTask);
+      return result;
+    }
   }
 
   @Override
   public void loadState(@NotNull MavenTasksManagerState state) {
-    synchronized (this) {
+    synchronized (myStateLock) {
       myState = state;
     }
-    if (isInitialized.get()) {
-      fireTasksChanged();
+    fireTasksChanged();
+  }
+
+  private static class MyCompileTask implements CompileTask {
+    private final boolean myBefore;
+
+    MyCompileTask(boolean before) {
+      myBefore = before;
+    }
+
+    @Override
+    public boolean execute(@NotNull CompileContext context) {
+      MavenTasksManager mavenTasksManager = context.getProject().getService(MavenTasksManager.class);
+      return mavenTasksManager.doExecute(myBefore, context);
     }
   }
 
-  @Override
-  public void initializeComponent() {
-    if (!isNormalProject()) return;
-    if (isInitialized.getAndSet(true)) return;
-
-    class MyCompileTask implements CompileTask {
-
-      private final boolean myBefore;
-
-      MyCompileTask(boolean before) {
-        myBefore = before;
-      }
-
-      @Override
-      public boolean execute(@NotNull CompileContext context) {
-        return doExecute(myBefore, context);
-      }
+  @ApiStatus.Internal
+  static class MavenBeforeCompileTask extends MyCompileTask {
+    MavenBeforeCompileTask() {
+      super(true);
     }
-
-    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    compilerManager.addBeforeTask(new MyCompileTask(true));
-    compilerManager.addAfterTask(new MyCompileTask(false));
   }
+
+  @ApiStatus.Internal
+  static class MavenAfterCompileTask extends MyCompileTask {
+    MavenAfterCompileTask() {
+      super(false);
+    }
+  }
+
 
   @Override
   public void dispose() {
@@ -116,7 +119,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
 
   private boolean doExecute(boolean before, CompileContext context) {
     List<MavenRunnerParameters> parametersList;
-    synchronized (this) {
+    synchronized (myStateLock) {
       parametersList = new ArrayList<>();
       Set<MavenCompilerTask> tasks = before ? myState.beforeCompileTasks : myState.afterCompileTasks;
 
@@ -141,7 +144,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
     return doRunTask(context, parametersList);
   }
 
-  private boolean doRunTask(CompileContext context, List<MavenRunnerParameters> parametersList) {
+  private static boolean doRunTask(CompileContext context, List<MavenRunnerParameters> parametersList) {
     try {
       ProgramRunner runner = DefaultJavaProgramRunner.getInstance();
       Executor executor = DefaultRunExecutor.getRunExecutorInstance();
@@ -151,7 +154,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
       for (MavenRunnerParameters params : parametersList) {
         RunnerAndConfigurationSettings configuration =
           MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, context.getProject());
-        if(parametersList.size() > 1) {
+        if (parametersList.size() > 1) {
           configuration
             .setName(MavenProjectBundle.message("maven.before.build.of.count", ++count, parametersList.size(), configuration.getName()));
         }
@@ -172,19 +175,21 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
     }
   }
 
-  public synchronized boolean isCompileTaskOfPhase(@NotNull MavenCompilerTask task, @NotNull Phase phase) {
-    return myState.getTasks(phase).contains(task);
+  public boolean isCompileTaskOfPhase(@NotNull MavenCompilerTask task, @NotNull Phase phase) {
+    synchronized (myStateLock) {
+      return myState.getTasks(phase).contains(task);
+    }
   }
 
   public void addCompileTasks(List<MavenCompilerTask> tasks, @NotNull Phase phase) {
-    synchronized (this) {
+    synchronized (myStateLock) {
       myState.getTasks(phase).addAll(tasks);
     }
     fireTasksChanged();
   }
 
   public void removeCompileTasks(List<MavenCompilerTask> tasks, @NotNull Phase phase) {
-    synchronized (this) {
+    synchronized (myStateLock) {
       myState.getTasks(phase).removeAll(tasks);
     }
     fireTasksChanged();
@@ -193,7 +198,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
   public String getDescription(MavenProject project, String goal) {
     List<String> result = new ArrayList<>();
     MavenCompilerTask compilerTask = new MavenCompilerTask(project.getPath(), goal);
-    synchronized (this) {
+    synchronized (myStateLock) {
       for (Phase phase : Phase.values()) {
         if (myState.getTasks(phase).contains(compilerTask)) {
           result.add(TasksBundle.message(phase.myMessageKey));
