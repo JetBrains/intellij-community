@@ -73,9 +73,9 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
       val repoInfo = infoByRepos[repo.name]
       val commitsInRepository = revInReview.commits.size
 
-      revInReview.commits.mapIndexed { index, gitCommitWithGraph ->
-        ReviewCommitListItem(gitCommitWithGraph, repo, index, commitsInRepository, repoInfo)
-      }
+      revInReview.commits
+        .filterNot(GitCommitWithGraph::unreachable)
+        .mapIndexed { index, gitCommitWithGraph -> ReviewCommitListItem(gitCommitWithGraph, repo, index, commitsInRepository, repoInfo) }
     }
   }
 
