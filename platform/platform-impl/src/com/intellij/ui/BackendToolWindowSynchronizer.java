@@ -22,18 +22,28 @@ public abstract class BackendToolWindowSynchronizer {
 
   public BackendToolWindowSynchronizer(Project project) {
     myProject = project;
+
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    for (String id : toolWindowManager.getToolWindowIds()) {
+      passRegisteredToolWindowDescription(id, toolWindowManager, project);
+    }
+
     project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener(){
       @Override
       public void toolWindowsRegistered(@NotNull List<String> ids,
                                         @NotNull ToolWindowManager toolWindowManager) {
         for (String id : ids) {
-          passRegisteredToolWindowDescription(id, toolWindowManager);
+          passRegisteredToolWindowDescription(id, toolWindowManager, project);
         }
       }
+
+      //todo tool window unregistered
     });
   }
 
-  public void passRegisteredToolWindowDescription(String id, @NotNull ToolWindowManager toolWindowManager) {
+  public void passRegisteredToolWindowDescription(String id,
+                                                  @NotNull ToolWindowManager toolWindowManager,
+                                                  Project project) {
     final ToolWindowViewModelExtractor[] extractors = ToolWindowViewModelExtractor.EP_NAME.getExtensions();
     for (ToolWindowViewModelExtractor extractor : extractors) {
 
@@ -45,7 +55,7 @@ public abstract class BackendToolWindowSynchronizer {
       myLogger.assertTrue(window != null,  String.format("Tool window with id %s could not be found", id));
       ToolWindowViewModelDescription description = extractor.extractDescription(window);
 
-      passToolWindowDescription(description);
+      passToolWindowDescription(description, project);
     }
   }
 
@@ -60,13 +70,13 @@ public abstract class BackendToolWindowSynchronizer {
         continue;
       }
 
-      return extractor.extractViewModel(window);
+      return extractor.extractViewModel(window, myProject);
     }
 
     return null;
   }
 
-  public abstract void passToolWindowDescription(ToolWindowViewModelDescription toolWindowViewModel);
-
+  public abstract void passToolWindowDescription(ToolWindowViewModelDescription toolWindowViewModel,
+                                                 Project project);
 
 }

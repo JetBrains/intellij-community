@@ -151,11 +151,12 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     doInit();
   }
 
-  @TestOnly
-  public void initForTests() {
+  //tests and server entities
+  public void headlessInit() {
     doInit();
     initTree();
     initStructure();
+    myStructure.update();
   }
 
   private void doInit() {
@@ -219,7 +220,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     });
   }
 
-  private void initToolWindow() {
+  void initToolWindow() {
     initTree();
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 

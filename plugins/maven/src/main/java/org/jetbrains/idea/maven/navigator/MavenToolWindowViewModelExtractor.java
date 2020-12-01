@@ -7,9 +7,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.treeStructure.PatchedDefaultMutableTreeNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.viewModel.definition.*;
@@ -23,7 +25,8 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
   private static final Logger myLogger = Logger.getInstance(MavenToolWindowViewModelExtractor.class);
 
   @Override
-  public ToolWindowViewModelContent extractViewModel(ToolWindow toolWindow) {
+  public ToolWindowViewModelContent extractViewModel(ToolWindow toolWindow, Project project) {
+    MavenProjectsNavigator.getInstance(project).headlessInit();
     Content mavenContent = toolWindow.getContentManager().getContents()[0];
     MavenProjectsNavigatorPanel mavenPanel = (MavenProjectsNavigatorPanel)mavenContent.getComponent();
     SimpleTree tree = mavenPanel.getTree();
@@ -67,7 +70,8 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
 
   // TODO also seems like could be made more generic @see SimpleNode
   private TreeViewModel extractViewModel(SimpleTree tree) {
-    MavenProjectsStructure.MavenSimpleNode mavenRoot = (MavenProjectsStructure.MavenSimpleNode)tree.getModel().getRoot();
+    PatchedDefaultMutableTreeNode rawRoot = (PatchedDefaultMutableTreeNode)tree.getModel().getRoot();
+    MavenProjectsStructure.MavenSimpleNode mavenRoot = (MavenProjectsStructure.MavenSimpleNode) rawRoot.getUserObject();
 
     ViewModelNode viewModelRoot = new ViewModelNode(mavenRoot.getName(), () -> {
     // TODO
