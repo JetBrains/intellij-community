@@ -3,7 +3,6 @@ package com.intellij.ui.win;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -35,7 +34,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @author Nikita Provotorov
  */
 @Service
-public final class WinShellIntegration implements Disposable {
+final class WinShellIntegration implements Disposable {
 
   public static final class ShellContext {
     public void clearRecentTasksList() {
@@ -177,11 +176,8 @@ public final class WinShellIntegration implements Disposable {
 
   static {
     final var appInfo = ApplicationInfoEx.getInstanceEx();
-    final var app = ApplicationManagerEx.getApplicationEx();
-
-    final boolean shouldBeDisabled = app.isHeadlessEnvironment() || app.isLightEditMode();
 
     appUserModelIdProperty = appInfo.getWin32AppUserModelId();
-    isAvailable = SystemInfo.isWin8OrNewer && !shouldBeDisabled && !StringUtilRt.isEmptyOrSpaces(appUserModelIdProperty);
+    isAvailable = SystemInfo.isWin8OrNewer && !StringUtilRt.isEmptyOrSpaces(appUserModelIdProperty);
   }
 }

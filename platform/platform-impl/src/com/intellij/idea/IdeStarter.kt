@@ -34,7 +34,6 @@ import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchBarsManager
-import com.intellij.ui.win.WinShellIntegration
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -96,9 +95,7 @@ open class IdeStarter : ApplicationStarter {
       System.setProperty("jbre.popupwindow.settype", "true")
     }
 
-    if (SystemInfo.isWindows && WinShellIntegration.isAvailable) {
-      WinShellIntegration.getInstance()!!.updateAppUserModelId()
-    }
+    SystemDock.onUiInitialization()
 
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
     val isStandaloneLightEdit = PlatformUtils.getPlatformPrefix() == "LightEdit"
@@ -249,6 +246,7 @@ private fun postOpenUiTasks(app: Application) {
   }
 
   invokeLaterWithAnyModality("system dock menu") {
+    SystemDock.onUiInitialized()
     SystemDock.updateMenu()
   }
   invokeLaterWithAnyModality("ScreenReader") {
