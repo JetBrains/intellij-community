@@ -470,11 +470,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         }
         DeleteElementFix fix =
           new DeleteElementFix(args[1], InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name"));
-        PsiMethodCallExpression argCall = tryCast(PsiUtil.skipParenthesizedExprDown(args[1]), PsiMethodCallExpression.class);
-        if (argCall == null) return null;
-        PsiElement anchor = argCall.getMethodExpression().getReferenceNameElement();
-        if (anchor == null) return null;
-        return myManager.createProblemDescriptor(anchor,
+        return myManager.createProblemDescriptor(args[1],
                                                  InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
                                                  fix, ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly);
       }
