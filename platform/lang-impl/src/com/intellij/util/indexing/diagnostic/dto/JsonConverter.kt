@@ -10,8 +10,6 @@ fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
 // Can be used to skip int value from JSON if it is equal to 0 (to not pollute the JSON report).
 typealias PositiveInt = Int?
 
-fun Int.toPositiveInt() = takeIf { it > 0 }
-
 fun ScanningStatistics.toJsonStatistics() =
   JsonScanningStatistics(
     providerName = fileSetName,
@@ -32,7 +30,7 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
     totalNumberOfFiles = numberOfIndexedFiles,
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
     totalIndexingTime = JsonDuration(totalIndexingTime),
-    numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles.toPositiveInt(),
+    numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
     indexedFiles = indexedFilePaths
   )
 }
@@ -65,7 +63,7 @@ fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory =
     totalNumberOfFiles = scanningStatistics.map { it.numberOfScannedFiles }.sum(),
     totalNumberOfUpToDateFiles = scanningStatistics.map { it.numberOfUpToDateFiles }.sum(),
     times = times.toJson(),
-    totalNumberOfTooLargeForIndexingFiles = totalNumberOfTooLargeFiles.toPositiveInt(),
+    totalNumberOfTooLargeForIndexingFiles = totalNumberOfTooLargeFiles,
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.percentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.percentages },
     scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },

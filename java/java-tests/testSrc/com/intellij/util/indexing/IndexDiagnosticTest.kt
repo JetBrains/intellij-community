@@ -53,7 +53,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     assertEquals(listOf(projectDir), allDirs)
   }
 
-  fun `test index diagnostics json can be deserialized back`() {
+  fun `test index diagnostics json can be deserialized`() {
     val indexDiagnostic = JsonIndexDiagnostic(
       JsonIndexDiagnosticAppInfo.create(),
       JsonRuntimeInfo.create(),

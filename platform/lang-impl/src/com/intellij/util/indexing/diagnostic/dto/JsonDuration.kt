@@ -21,15 +21,14 @@ data class JsonDuration(val nano: TimeNano) {
       gen.writeNumber(value.nano)
     }
   }
+
   object Deserializer : JsonDeserializer<JsonDuration>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext?): JsonDuration = JsonDuration(p.longValue)
   }
 
-  fun presentableDuration(): String =
-    if (nano < TimeUnit.MILLISECONDS.toNanos(1)) {
-      "< 1 ms"
-    }
-    else {
-      StringUtil.formatDuration(nano.toMillis())
-    }
+  fun presentableDuration(): String = when {
+    nano == 0L -> "0"
+    nano < TimeUnit.MILLISECONDS.toNanos(1) -> "< 1 ms"
+    else -> StringUtil.formatDuration(nano.toMillis())
+  }
 }
