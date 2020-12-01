@@ -34,14 +34,6 @@ namespace intellij::ui::win::jni
             jobjectArray jTasks
         ) noexcept;
 
-        static jstring findAndPatchShellLink(
-            JNIEnv* jEnv,
-            jobject jThis,
-            jstring jShellLinkTargetPath,
-            jobjectArray jShellLinksPaths,
-            jstring jNewAppUserModelId
-        ) noexcept;
-
     private:
         static std::optional<WinShellIntegrationBridge>& accessStorage() noexcept(false);
         static WinShellIntegrationBridge& getInstance() noexcept(false);
@@ -66,14 +58,6 @@ namespace intellij::ui::win::jni
             JNIEnv* jEnv,
             jobject jThis,
             jobjectArray jTasks
-        ) noexcept(false);
-
-        jstring findAndPatchShellLinkImpl(
-            JNIEnv* jEnv,
-            jobject jThis,
-            jstring jShellLinkTargetPath,
-            jobjectArray jShellLinksPaths,
-            jstring jNewAppUserModelId
         ) noexcept(false);
 
     private:

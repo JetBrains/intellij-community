@@ -52,19 +52,3 @@ JNIEXPORT void JNICALL Java_com_intellij_ui_win_WinShellIntegration_00024Bridge_
 {
     return (void)intellij::ui::win::jni::WinShellIntegrationBridge::setRecentTasksList(jEnv, jThis, jTasks);
 }
-
-JNIEXPORT jstring JNICALL Java_com_intellij_ui_win_WinShellIntegration_00024Bridge_findAndPatchShellLinkNative(
-    JNIEnv* jEnv,
-    jobject jThis,
-    jstring jTargetPath,
-    jobjectArray jShellLinksPaths,
-    jstring jNewAppUserModelId)
-{
-    return intellij::ui::win::jni::WinShellIntegrationBridge::findAndPatchShellLink(
-        jEnv,
-        jThis,
-        jTargetPath,
-        jShellLinksPaths,
-        jNewAppUserModelId
-    );
-}

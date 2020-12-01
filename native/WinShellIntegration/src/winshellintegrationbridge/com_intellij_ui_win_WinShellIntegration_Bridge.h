@@ -40,14 +40,6 @@ JNIEXPORT void JNICALL Java_com_intellij_ui_win_WinShellIntegration_00024Bridge_
 JNIEXPORT void JNICALL Java_com_intellij_ui_win_WinShellIntegration_00024Bridge_setRecentTasksListNative
   (JNIEnv *, jobject, jobjectArray);
 
-/*
- * Class:     com_intellij_ui_win_WinShellIntegration_Bridge
- * Method:    findAndPatchShellLinkNative
- * Signature: (Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_com_intellij_ui_win_WinShellIntegration_00024Bridge_findAndPatchShellLinkNative
-  (JNIEnv *, jobject, jstring, jobjectArray, jstring);
-
 #ifdef __cplusplus
 }
 #endif

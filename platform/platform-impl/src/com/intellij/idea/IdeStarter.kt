@@ -251,16 +251,6 @@ private fun postOpenUiTasks(app: Application) {
   invokeLaterWithAnyModality("system dock menu") {
     SystemDock.updateMenu()
   }
-
-  if (SystemInfo.isWindows && WinShellIntegration.isAvailable) {
-    // should not be executed neither in IDE main thread nor in EDT
-    AppExecutorUtil.getAppExecutorService().execute {
-      runActivity("patch system Shell links on Windows") {
-        WinShellIntegration.getInstance()!!.launcherSystemShellLinksPatcher?.patchSystemShellLinks()
-      }
-    }
-  }
-
   invokeLaterWithAnyModality("ScreenReader") {
     val generalSettings = GeneralSettings.getInstance()
     generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app, PropertyChangeListener { e ->
