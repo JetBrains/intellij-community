@@ -221,9 +221,9 @@ final class FileTypeDetectionService implements Disposable {
         FileType type = textOrBinaryFromCachedFlags(flags);
         if (toLog()) {
           log("F: getOrDetectFromContent("+file.getName()+"):" +
-                                  " cached type = "+(type==null?null:type.getName())+
-                                  "; packedFlags.get(id):"+ readableFlags(flags)+
-                                  "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): "+file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
+              " cached type = "+(type==null?null:type.getName())+
+              "; packedFlags.get(id):"+ readableFlags(flags)+
+              "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): "+file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
         }
         if (type != null) {
           return type;

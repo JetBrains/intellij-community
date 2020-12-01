@@ -901,7 +901,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void caseSensitivityNativeAPIMustWorkInSimpleCasesAndIsCached() {
+  public void caseSensitivityNativeAPIMustWorkInSimpleCasesAndIsCachedInVirtualFileFlags() {
     File file = tempDir.newFile("dir/0");
     assertFalse(FileSystemUtil.isCaseToggleable(file.getName()));
 
