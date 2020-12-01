@@ -1,9 +1,8 @@
-# Stubs for types
-# Note, all classes "defined" here require special handling.
-
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tuple, Type, TypeVar, Union, overload
 
 _T = TypeVar("_T")
+
+# Note, all classes "defined" here require special handling.
 
 class NoneType: ...
 

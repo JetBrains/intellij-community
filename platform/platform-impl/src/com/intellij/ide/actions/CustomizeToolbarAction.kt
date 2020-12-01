@@ -5,12 +5,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
 class CustomizeToolbarAction: DumbAwareAction() {
-
-  init {
-    println()
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
-    TODO("Not yet implemented")
+    //TODO for the new toolbar
+    //RIDER-49001
   }
 }

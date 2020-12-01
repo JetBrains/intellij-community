@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -183,7 +184,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
       else {
         try {
-          PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), !UpdateSettings.getInstance().isKeepPluginsArchive(),
+          PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), !Registry.is("ide.plugins.keep.archive", true),
                                               null, pendingPluginInstall.getPluginDescriptor());
           installsRequiringRestart = true;
         }

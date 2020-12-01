@@ -2,10 +2,18 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import java.io.File
 import java.io.IOException
 import java.nio.file.Path
+import java.util.function.Predicate
 
 /**
  * Represents created target environment. It might be local machine,
@@ -84,11 +92,19 @@ abstract class TargetEnvironment(
     val targetRoot: String
 
     /**
-     * Upload `"$localRootPath/$relativePath"` to `"$targetRoot/$relativePath"`.
-     * Returns the resulting remote path (even if it's predictable, many tests rely on specific, usually relative paths).
+     * Returns the resulting remote path (even if it's predictable, many tests rely on specific, usually relative paths)
+     * of uploading `"$localRootPath/$relativePath"` to `"$targetRoot/$relativePath"`.
+     * Does not perform actual upload.
      */
     @Throws(IOException::class)
-    fun upload(relativePath: String, targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator): String
+    fun resolveTargetPath(relativePath: String): String
+
+    /**
+     * Upload `"$localRootPath/$relativePath"` to `"$targetRoot/$relativePath"`
+     */
+    @Throws(IOException::class)
+    fun upload(relativePath: String,
+               targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator)
   }
 
   interface DownloadableVolume {  // TODO Would it be better if there is no inheritance from the upload Volume?
@@ -129,4 +145,35 @@ abstract class TargetEnvironment(
   //FIXME: document
   abstract fun shutdown()
 
+  companion object {
+    private fun getExcludedFromProjectChildren(localRoot: VirtualFile, project: Project): List<File>? {
+      val result = mutableListOf<File>()
+      for (module in ModuleManager.getInstance(project).modules) {
+        for (excludeRoot in ModuleRootManager.getInstance(module).excludeRoots) {
+          if (VfsUtil.isAncestor(localRoot, excludeRoot, true)) {
+            result.add(excludeRoot.toNioPath().toFile())
+          }
+        }
+      }
+      return if (result.isEmpty()) null else result
+    }
+
+    fun getUploadFileFilter(localRoot: File, project: Project?): Predicate<File>? {
+      if (project == null) return null
+      val virtualFile = VfsUtil.findFileByIoFile(localRoot, false)
+      if (virtualFile == null) return null
+      val result = getExcludedFromProjectChildren(virtualFile, project)
+      return object : Predicate<File> {
+        val manager = FileTypeManager.getInstance()
+
+        override fun test(file: File): Boolean {
+          if (file == localRoot) return true
+          if (Project.DIRECTORY_STORE_FOLDER == file.name) return false
+          if (result != null && result.contains(file)) return false
+          if (manager.isFileIgnored(file.name)) return false
+          return true
+        }
+      }
+    }
+  }
 }

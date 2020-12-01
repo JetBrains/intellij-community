@@ -7,6 +7,7 @@ import java.io.IOException;
  */
 public class EqualsAndHashCodeTest extends AbstractLombokConfigSystemTestCase {
 
+  @Override
   protected boolean shouldCompareAnnotations() {
     return true;
   }

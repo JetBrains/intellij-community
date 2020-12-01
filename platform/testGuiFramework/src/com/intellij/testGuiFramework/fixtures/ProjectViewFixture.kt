@@ -4,14 +4,11 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
@@ -238,20 +235,6 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
       myRobot.waitForIdle()
       myRobot.click(locationOnScreen, MouseButton.RIGHT_BUTTON, 1)
     }
-
-    val isJdk: Boolean
-      get() {
-        if (myNode is NamedLibraryElementNode) {
-          val value = myNode.value
-          assertNotNull(value)
-          val orderEntry = value!!.orderEntry
-          if (orderEntry is JdkOrderEntry) {
-            val sdk = orderEntry.jdk
-            return sdk?.sdkType is JavaSdk
-          }
-        }
-        return false
-      }
 
     fun requireDirectory(name: String): NodeFixture {
       val projectViewNode = myNode.userObject

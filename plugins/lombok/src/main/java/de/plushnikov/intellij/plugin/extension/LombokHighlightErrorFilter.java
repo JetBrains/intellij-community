@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity;
 import de.plushnikov.intellij.plugin.handler.*;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +51,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     }
 
     Project project = file.getProject();
-    if (!ProjectSettings.isLombokEnabledInProject(project) ||
-        !LombokProjectValidatorActivity.hasLombokLibrary(project)) {
+    if (!LombokProjectValidatorActivity.hasLombokLibrary(project)) {
       return true;
     }
 
@@ -173,6 +171,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
         return description != null && pattern.matcher(description).matches();
       }
 
+      @Override
       public boolean accept(@NotNull PsiElement highlightedElement) {
         return !BuilderHandler.isDefaultBuilderValue(highlightedElement);
       }

@@ -37,11 +37,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_CONSTRUCTOR_ENABLED);
-  }
-
-  @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (!validateAnnotationOnRightType(psiClass, builder)) {
@@ -177,7 +172,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
         boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
         // skip initialized final fields
-        addField &= (!isFinal || null == psiField.getInitializer() ||
+        addField &= (!isFinal || !psiField.hasInitializer() ||
           PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION) != null);
       }
 
@@ -204,7 +199,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         final boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
         final boolean isNonNull = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokUtils.NON_NULL_PATTERN);
         // accept initialized final or nonnull fields
-        if ((isFinal || isNonNull) && null == psiField.getInitializer()) {
+        if ((isFinal || isNonNull) && !psiField.hasInitializer()) {
           result.add(psiField);
         }
       }

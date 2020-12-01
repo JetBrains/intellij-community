@@ -15,7 +15,7 @@
 import array
 import mmap
 import sys
-from typing import AbstractSet, Container, Iterable, Protocol, Text, Tuple, TypeVar, Union
+from typing import AbstractSet, Any, Container, Iterable, Protocol, Text, Tuple, TypeVar, Union
 from typing_extensions import Literal, final
 
 _KT = TypeVar("_KT")
@@ -25,6 +25,11 @@ _VT = TypeVar("_VT")
 _VT_co = TypeVar("_VT_co", covariant=True)
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
+
+class SupportsLessThan(Protocol):
+    def __lt__(self, __other: Any) -> bool: ...
+
+SupportsLessThanT = TypeVar("SupportsLessThanT", bound=SupportsLessThan)  # noqa: Y001
 
 # Mapping-like protocols
 

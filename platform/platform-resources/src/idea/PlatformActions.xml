@@ -385,6 +385,7 @@
     </action>
 
     <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
+    <action id="PinActiveTabToggle" class="com.intellij.ide.actions.PinActiveTabAction$Toggle"/>
 
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
@@ -460,16 +461,8 @@
         <separator/>
         <group id="CutCopyPasteGroup">
           <action id="$Cut" class="com.intellij.ide.actions.CutAction" icon="AllIcons.Actions.MenuCut"/>
-          <group id="CopyGroup" popup="true" class="com.intellij.ide.actions.SmartPopupActionGroup">
-            <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="AllIcons.Actions.Copy"/>
-            <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
-            <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" />
-            <action id="CopyFileName" class="com.intellij.ide.actions.CopyFileNameProvider"/>
-            <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider"/>
-            <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider"/>
-            <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider"/>
-            <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" icon="AllIcons.Nodes.Toolbox"/>
-          </group>
+          <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="AllIcons.Actions.Copy"/>
+          <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
           <group id="PasteGroup" popup="true" class="com.intellij.ide.actions.PopupInMainMenuActionGroup">
             <action id="$Paste" class="com.intellij.ide.actions.PasteAction" icon="AllIcons.Actions.MenuPaste"/>
             <action id="PasteMultiple" class="com.intellij.openapi.editor.actions.MultiplePasteAction"/>
@@ -939,6 +932,15 @@
       <reference ref="CheckForUpdate"/>
     </group>
 
+    <group id="WelcomeScreen.LearnIdeHelp">
+      <reference ref="HelpTopics"/>
+      <reference ref="OnlineDocAction"/>
+      <reference ref="Help.JetBrainsTV"/>
+      <reference ref="Help.KeymapReference"/>
+      <reference ref="ShowTips"/>
+    </group>
+
+
     <group id="WelcomeScreenRecentProjectActionGroup">
       <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.OpenSelectedProjectsAction"/>
       <action id="WelcomeScreen.NewGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.CreateNewProjectGroupAction"/>
@@ -1284,14 +1286,22 @@
     <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow"/>
 
     <action id="CopyReferencePopup" class="com.intellij.ide.actions.CopyReferencePopup">
-      <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
     </action>
+
+    <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" use-shortcut-of="CopyPaths" />
+    <action id="CopyFileName" class="com.intellij.ide.actions.CopyFileNameProvider"/>
+    <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider"/>
+    <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider"/>
+    <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider"/>
+    <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" icon="AllIcons.Nodes.Toolbox"/>
 
     <group id="CopyReferencePopupGroup">
       <group id="CopyFileReference">
         <reference ref="CopyAbsolutePath" />
         <reference ref="CopyFileName" />
+        <separator/>
         <reference ref="CopyPathWithLineNumber" />
         <reference ref="CopyContentRootPath" />
         <reference ref="CopySourceRootPath" />

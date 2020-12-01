@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.defUse.DefUseInspection;
-import com.intellij.openapi.util.RecursionManager;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -19,9 +18,6 @@ public class DefUseInspectionTest extends LombokInspectionTest {
   }
 
   public void testIssue633() {
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
-
     doTest();
   }
 }

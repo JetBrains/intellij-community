@@ -83,7 +83,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
     val watchService = FileSystems.getDefault().newWatchService()
     val key = dir.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY)
 
-    logger.completionStarted(lookup, true, 2, System.currentTimeMillis())
+    logger.completionStarted(lookup, 0, true, 2, System.currentTimeMillis())
 
     logger.completionCancelled(true, emptyMap(), System.currentTimeMillis())
     loggerProvider.dispose()

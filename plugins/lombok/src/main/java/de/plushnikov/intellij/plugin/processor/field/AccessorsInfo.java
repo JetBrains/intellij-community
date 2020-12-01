@@ -117,8 +117,8 @@ public class AccessorsInfo {
       doNotUseIsPrefix = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.GETTER_NO_IS_PREFIX, psiClass);
 
     } else {
-      isFluent = null == fluentDeclaredValue ? false : fluentDeclaredValue;
-      isChained = null == chainDeclaredValue ? false : chainDeclaredValue;
+      isFluent = null != fluentDeclaredValue && fluentDeclaredValue;
+      isChained = null != chainDeclaredValue && chainDeclaredValue;
       prefixes = prefixDeclared.toArray(new String[0]);
       doNotUseIsPrefix = false;
     }

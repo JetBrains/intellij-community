@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.nullize
@@ -19,12 +20,14 @@ import java.util.concurrent.CompletableFuture
 class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfiguration>(TYPE_ID) {
   override val icon = AllIcons.FileTypes.Java
 
-  @Nls
+  @NlsSafe
   override val displayName = "Java"
 
-  override val configurableDescription = "Configure Java"
+  @Nls
+  override val configurableDescription = ExecutionBundle.message("JavaLanguageRuntimeType.configurable.description.configure.java")
 
-  override val launchDescription = "Run Java application"
+  @Nls
+  override val launchDescription = ExecutionBundle.message("JavaLanguageRuntimeType.launch.description.run.java.application")
 
   override fun isApplicableTo(runConfig: RunnerAndConfigurationSettings) = true
 
@@ -35,11 +38,11 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
   override fun createConfigurable(project: Project,
                                   config: JavaLanguageRuntimeConfiguration,
                                   target: TargetEnvironmentConfiguration): Configurable {
-    return ApplicationManager.getApplication().getService(JavaLanguageRuntimeUIFactory::class.java).create(config, target)
+    return ApplicationManager.getApplication().getService(JavaLanguageRuntimeUIFactory::class.java).create(config, target, project)
   }
 
   override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): JavaLanguageRuntimeConfiguration? {
-    return target.runtimes.findByType<JavaLanguageRuntimeConfiguration>()
+    return target.runtimes.findByType()
   }
 
   override fun createIntrospector(config: JavaLanguageRuntimeConfiguration): Introspector<JavaLanguageRuntimeConfiguration>? {
@@ -86,30 +89,27 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     }
   }
 
-  override fun volumeDescriptors() = listOf(APPLICATION_FOLDER_VOLUME,
-                                            CLASS_PATH_VOLUME,
-                                            AGENTS_VOLUME)
+  override fun volumeDescriptors() = listOf(CLASS_PATH_VOLUME, AGENTS_VOLUME)
+
+  override fun duplicateConfig(config: JavaLanguageRuntimeConfiguration): JavaLanguageRuntimeConfiguration =
+    duplicatePersistentComponent(this, config)
 
   companion object {
     @JvmStatic
     val TYPE_ID = "JavaLanguageRuntime"
 
     @JvmStatic
-    val APPLICATION_FOLDER_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":appFolder",
-                                                     ExecutionBundle.message("java.language.runtime.application.folder.label"),
-                                                     ExecutionBundle.message("java.language.runtime.application.folder.description"),
-                                                     "/app")
-
-    @JvmStatic
     val CLASS_PATH_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":classPath",
                                              ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
                                              ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
+                                             ExecutionBundle.message("java.language.runtime.classpath.volume.browsing.title"),
                                              "")
 
     @JvmStatic
     val AGENTS_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":agents",
                                          ExecutionBundle.message("java.language.runtime.agents.volume.label"),
                                          ExecutionBundle.message("java.language.runtime.agents.volume.description"),
+                                         ExecutionBundle.message("java.language.runtime.agents.volume.browsing.title"),
                                          "")
   }
 }

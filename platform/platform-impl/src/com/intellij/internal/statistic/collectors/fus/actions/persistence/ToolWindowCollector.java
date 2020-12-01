@@ -43,7 +43,7 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
  *
  * <p>
  *   If toolwindow is registered dynamically is <b>should</b> be explicitly whitelisted
- *   in plugin.xml {@link ToolWindowAllowlistEP#EP_NAME} or here in {@link ToolWindowCollector#ourToolwindowWhitelist}
+ *   in plugin.xml {@link #EP_NAME} or here in {@link ToolWindowCollector#ourToolwindowWhitelist}
  * </p>
  */
 public final class ToolWindowCollector {

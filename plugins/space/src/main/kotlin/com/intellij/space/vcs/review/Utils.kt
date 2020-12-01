@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review
 
-import circlet.client.drafts
 import circlet.code.api.CodeReviewWithCount
 import circlet.m2.ChannelsVm
 import circlet.m2.channel.M2DraftsVm
+import circlet.m2.contacts2.ContactListVm
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ShortcutSet
@@ -35,10 +35,12 @@ internal fun openReviewInEditor(project: Project, reviewWithCount: CodeReviewWit
   val workspace = space.workspace.value ?: return
   val client = workspace.client
   val completionVm = workspace.completion
+  val me = workspace.me
+  val contactList = ContactListVm(workspace.lifetime, client, me, workspace.preferredLanguage, null)
   val chatFile = SpaceChatFile(
     "space-review/${review.key}",
     SpaceBundle.message("review.chat.editor.tab.name", review.key, review.title),
-    ChannelsVm(client, workspace.me, completionVm, M2DraftsVm(client, completionVm), workspace.featureFlags.featureFlags),
+    ChannelsVm(client, me, completionVm, M2DraftsVm(client, completionVm, null), workspace.featureFlags.featureFlags, contactList),
     chatRef
   )
   FileEditorManager.getInstance(project).openFile(chatFile, false)

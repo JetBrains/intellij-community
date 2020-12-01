@@ -463,7 +463,7 @@ public class BuilderHandler {
 
   private boolean isNotBuilderDefaultSetterFields(@NotNull PsiField psiField) {
     boolean isBuilderDefaultSetter = false;
-    if (psiField.getName().endsWith("$set") && PsiPrimitiveType.BOOLEAN.equals(psiField.getType())) {
+    if (psiField.getName().endsWith("$set") && PsiType.BOOLEAN.equals(psiField.getType())) {
       PsiElement navigationElement = psiField.getNavigationElement();
       if (navigationElement instanceof PsiField) {
         isBuilderDefaultSetter = PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) navigationElement, LombokClassNames.BUILDER_DEFAULT);

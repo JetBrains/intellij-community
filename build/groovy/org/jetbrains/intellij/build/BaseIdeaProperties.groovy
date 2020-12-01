@@ -39,6 +39,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.repository.search",
     "intellij.maven.model",
     "intellij.maven",
+    "intellij.externalSystem.dependencyUpdater",
     "intellij.gradle",
     "intellij.gradle.dependencyUpdater",
     "intellij.gradle.dsl.impl",
@@ -76,7 +77,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.markdown",
     "intellij.webp",
     "intellij.grazie",
-    "intellij.codeWithMe.plugin",
+    "intellij.featuresTrainer",
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     ""                                                          : "11",

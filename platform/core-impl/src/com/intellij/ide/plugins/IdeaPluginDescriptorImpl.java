@@ -151,24 +151,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     if (incomplete) {
-      myDescriptionChildText = element.getChildTextTrim("description");
-      myCategory = element.getChildTextTrim("category");
-      myVersion = element.getChildTextTrim("version");
-      if (DescriptorListLoadingContext.LOG.isDebugEnabled()) {
-        DescriptorListLoadingContext.LOG.debug("Skipping reading of " + id + " from " + basePath + " (reason: disabled)");
-      }
-      List<Element> dependsElements = element.getChildren("depends");
-      for (Element dependsElement : dependsElements) {
-        readPluginDependency(basePath, context, dependsElement);
-      }
-      Element productElement = element.getChild("product-descriptor");
-      if (productElement != null) {
-        readProduct(context, productElement);
-      }
-      List<Element> moduleElements = element.getChildren("module");
-      for (Element moduleElement : moduleElements) {
-        readModule(moduleElement);
-      }
+      readEssentialPluginInformation(element, context);
       return false;
     }
 
@@ -188,6 +171,37 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     return true;
+  }
+
+  private void readEssentialPluginInformation(@NotNull Element element, @NotNull DescriptorListLoadingContext context) {
+    if (myDescriptionChildText == null) {
+      myDescriptionChildText = element.getChildTextTrim("description");
+    }
+    if (myCategory == null) {
+      myCategory = element.getChildTextTrim("category");
+    }
+    if (myVersion == null) {
+      myVersion = element.getChildTextTrim("version");
+    }
+    if (DescriptorListLoadingContext.LOG.isDebugEnabled()) {
+      DescriptorListLoadingContext.LOG.debug("Skipping reading of " + id + " from " + basePath + " (reason: disabled)");
+    }
+    if (pluginDependencies == null) {
+      List<Element> dependsElements = element.getChildren("depends");
+      for (Element dependsElement : dependsElements) {
+        readPluginDependency(basePath, context, dependsElement);
+      }
+    }
+    Element productElement = element.getChild("product-descriptor");
+    if (productElement != null) {
+      readProduct(context, productElement);
+    }
+    if (myModules == null) {
+      List<Element> moduleElements = element.getChildren("module");
+      for (Element moduleElement : moduleElements) {
+        readModule(moduleElement);
+      }
+    }
   }
 
   @TestOnly
@@ -307,6 +321,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           mySinceBuild = Strings.nullize(child.getAttributeValue("since-build"));
           myUntilBuild = Strings.nullize(child.getAttributeValue("until-build"));
           if (!checkCompatibility(context)) {
+            readEssentialPluginInformation(element, context);
             return true;
           }
           break;

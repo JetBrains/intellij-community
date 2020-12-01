@@ -92,7 +92,6 @@
 + -com-intellij-javaee-batch-
 + -com-intellij-hibernate-
 + -com-intellij-javaee-extensions-
-+ -com-intellij-javaee-view-
 + -com-intellij-javaee-webSocket-
 + -com-intellij-jboss-core-
 + -com-intellij-drools-

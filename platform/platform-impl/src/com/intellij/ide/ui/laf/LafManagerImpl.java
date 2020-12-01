@@ -471,7 +471,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     if (SystemInfoRt.isMac) {
-      String className = IntelliJLaf.class.getName();
+      String className = DarculaLaf.class.getName();
       UIManager.LookAndFeelInfo laf = findLaf(className);
       if (laf != null) {
         return laf;
@@ -488,7 +488,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find app L&F: " + appLafName);
     }
 
-    String defaultLafName = IntelliJLaf.class.getName();
+    String defaultLafName = DarculaLaf.class.getName();
     UIManager.LookAndFeelInfo laf = findLaf(defaultLafName);
     if (laf != null) {
       return laf;
@@ -1222,9 +1222,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static final class DefaultMenuArrowIcon extends MenuArrowIcon {
     private static final BooleanSupplier dark = () -> ColorUtil.isDark(UIManager.getColor("MenuItem.selectionBackground"));
     private DefaultMenuArrowIcon() {
-      super(AllIcons.Icons.Ide.NextStep,
-            dark.getAsBoolean() ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep,
-            IconLoader.getDisabledIcon(AllIcons.Icons.Ide.NextStep));
+      super(() -> AllIcons.Icons.Ide.NextStep,
+            () -> dark.getAsBoolean() ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep,
+            () -> IconLoader.getDisabledIcon(AllIcons.Icons.Ide.NextStep));
     }
   }
 

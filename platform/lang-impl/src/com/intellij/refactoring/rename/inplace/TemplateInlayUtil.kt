@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.rename.RenameInplacePopupUsagesCollector
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenameUsagesCollector
 import com.intellij.refactoring.util.TextOccurrencesUtil
@@ -116,7 +117,7 @@ object TemplateInlayUtil {
   }
 
   @JvmStatic
-  fun createSettingsPresentation(editor: EditorImpl): SelectableInlayPresentation {
+  fun createSettingsPresentation(editor: EditorImpl, onClick: (MouseEvent) -> Unit = {}): SelectableInlayPresentation {
     val factory = PresentationFactory(editor)
     fun button(background: Color?): InlayPresentation {
       val button = factory.container(
@@ -129,13 +130,21 @@ object TemplateInlayUtil {
     }
 
     val colorsScheme = editor.colorsScheme
-    val tooltip = RefactoringBundle.message("refactoring.extract.method.inplace.options.tooltip")
-    return SelectableInlayButton(
-      editor,
-      default = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_DEFAULT)),
-      active = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_FOCUSED)),
-      hovered = factory.withTooltip(tooltip, button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_HOVERED)))
-    )
+    var hovered = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_HOVERED))
+    val shortcut = KeymapUtil.getPrimaryShortcut("SelectVirtualTemplateElement")
+    if (shortcut != null) {
+      val tooltip = RefactoringBundle.message("refactoring.extract.method.inplace.options.tooltip", KeymapUtil.getShortcutText(shortcut))
+      hovered = factory.withTooltip(tooltip, hovered)
+    }
+    return object: SelectableInlayButton(editor,
+                                        default = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_DEFAULT)),
+                                        active = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_FOCUSED)),
+                                        hovered) {
+      override fun mouseClicked(event: MouseEvent, translated: Point) {
+        super.mouseClicked(event, translated)
+        onClick(event)
+      }
+    }
   }
 
   @JvmStatic
@@ -172,7 +181,11 @@ object TemplateInlayUtil {
     else {
       toSearchForTextOccurrences = false
     }
-    tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement")
+
+    val shortcut = KeymapUtil.getPrimaryShortcut("SelectVirtualTemplateElement")
+    if (shortcut != null) {
+      tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement", KeymapUtil.getShortcutText(shortcut))
+    }
 
     fun withBackground(bgKey: ColorKey) =
       factory.container(factory.container(buttonsPresentation,
@@ -208,8 +221,8 @@ object TemplateInlayUtil {
   private fun logStatisticsOnShow(editor: Editor, mouseEvent: MouseEvent? = null) {
     val showEvent = mouseEvent
                     ?: KeyEvent(editor.component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_TAB, KeyEvent.VK_TAB.toChar())
-    RenameUsagesCollector.show.log(editor.project,
-                                   EventFields.InputEvent.with(FusInputEvent(showEvent, javaClass.simpleName)))
+    RenameInplacePopupUsagesCollector.show.log(editor.project,
+                                               EventFields.InputEvent.with(FusInputEvent(showEvent, javaClass.simpleName)))
   }
 
   private data class Settings (var inComments : Boolean, var inTextOccurrences : Boolean) 
@@ -219,9 +232,9 @@ object TemplateInlayUtil {
                                   toSearchInCommentsNew: Boolean,
                                   toSearchForTextOccurrences: Boolean,
                                   toSearchForTextOccurrencesNew: Boolean) {
-    RenameUsagesCollector.hide.log(editor.project, 
-                                   RenameUsagesCollector.changedOnHide.with(toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew))
-    RenameUsagesCollector.settingsChanged.log(editor.project,
+    RenameInplacePopupUsagesCollector.hide.log(editor.project,
+                                               RenameInplacePopupUsagesCollector.changedOnHide.with(toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew))
+    RenameInplacePopupUsagesCollector.settingsChanged.log(editor.project,
                                               RenameUsagesCollector.searchInComments.with(toSearchInCommentsNew),
                                               RenameUsagesCollector.searchInTextOccurrences.with(toSearchForTextOccurrencesNew))
   }
@@ -280,7 +293,7 @@ object TemplateInlayUtil {
   }
 
   private fun doRename(editor: Editor, renameAction: AnAction, anActionEvent: AnActionEvent?) {
-    RenameUsagesCollector.openRenameDialog.log(editor.project, RenameUsagesCollector.linkUsed.with(anActionEvent == null))
+    RenameInplacePopupUsagesCollector.openRenameDialog.log(editor.project, RenameInplacePopupUsagesCollector.linkUsed.with(anActionEvent == null))
     val event = AnActionEvent(null,
                               DataManager.getInstance().getDataContext(editor.component),
                               anActionEvent?.place ?: ActionPlaces.UNKNOWN, renameAction.templatePresentation.clone(),

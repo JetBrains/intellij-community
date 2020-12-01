@@ -27,7 +27,7 @@ public abstract class BaseRefactorHandler implements Runnable {
 
   public BaseRefactorHandler(DataContext dataContext, Project project) {
     this.project = project;
-    editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, false);

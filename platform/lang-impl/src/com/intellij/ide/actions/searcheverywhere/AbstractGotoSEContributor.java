@@ -10,6 +10,7 @@ import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
@@ -157,7 +158,15 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   @NotNull
   protected List<AnAction> doGetActions(@NotNull @NlsContexts.Checkbox String everywhereText,
-                                        @Nullable PersistentSearchEverywhereContributorFilter<?> filter,
+                                            @Nullable PersistentSearchEverywhereContributorFilter<?> filter,
+                                            @NotNull Runnable onChanged) {
+    return doGetActions(everywhereText, filter, null, onChanged);
+  }
+
+  @NotNull
+  protected <T> List<AnAction> doGetActions(@NotNull @NlsContexts.Checkbox String everywhereText,
+                                        @Nullable PersistentSearchEverywhereContributorFilter<T> filter,
+                                        @Nullable ElementsChooser.StatisticsCollector<T> statisticsCollector,
                                         @NotNull Runnable onChanged) {
     if (myProject == null || filter == null) return Collections.emptyList();
     ArrayList<AnAction> result = new ArrayList<>();
@@ -220,7 +229,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         }
       });
     }
-    result.add(new SearchEverywhereUI.FiltersAction(filter, onChanged));
+    result.add(new SearchEverywhereFiltersAction<>(filter, onChanged, statisticsCollector));
     return result;
   }
 

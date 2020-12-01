@@ -1,13 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.target.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +33,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     setModel(new MyModel());
     myProject = project;
     setRenderer(new MyRenderer());
+    addActionListener(e -> validateSelectedTarget());
   }
 
   public void initModel() {
@@ -66,8 +70,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
       hasSavedTargets = true;
       ((MyModel)getModel()).insertElementAt(new Separator(ExecutionBundle.message("run.on.targets.label.saved.targets")), 1);
     }
-    Icon icon = TargetEnvironmentConfigurationKt.getTargetType(config).getIcon();
-    ((MyModel)getModel()).insertElementAt(new Target(config.getDisplayName(), icon), index);
+    ((MyModel)getModel()).insertElementAt(new Target(config), index);
   }
 
   @Nullable
@@ -97,6 +100,17 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     //todo[remoteServers]: add invalid value
   }
 
+  private void validateSelectedTarget() {
+    Object selected = getSelectedItem();
+    boolean hasErrors = false;
+    if (selected instanceof Target) {
+      Target target = (Target)selected;
+      target.revalidateConfiguration();
+      hasErrors = target.hasErrors();
+    }
+    putClientProperty("JComponent.outline", hasErrors ? "error" : null);
+  }
+
   public static abstract class Item {
     private final @NlsContexts.Label String displayName;
     private final Icon icon;
@@ -123,8 +137,39 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
   }
 
   private static final class Target extends Item {
-    private Target(@NlsContexts.Label String name, Icon icon) {
-      super(name, icon);
+    private final TargetEnvironmentConfiguration myConfig;
+    @Nullable private ValidationInfo myValidationInfo;
+
+    private Target(TargetEnvironmentConfiguration config) {
+      super(config.getDisplayName(), TargetEnvironmentConfigurationKt.getTargetType(config).getIcon());
+      myConfig = config;
+      revalidateConfiguration();
+    }
+
+    public void revalidateConfiguration() {
+      try {
+        myConfig.validateConfiguration();
+        myValidationInfo = null;
+      }
+      catch (RuntimeConfigurationException e) {
+        myValidationInfo = new ValidationInfo(e.getLocalizedMessage());
+      }
+    }
+
+    @Nullable
+    public ValidationInfo getValidationInfo() {
+      return myValidationInfo;
+    }
+
+    public boolean hasErrors() {
+      return getValidationInfo() != null;
+    }
+
+    @Override
+    public Icon getIcon() {
+      Icon rawIcon = super.getIcon();
+      return rawIcon != null && hasErrors() ?
+             LayeredIcon.create(rawIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer) : rawIcon;
     }
   }
 
@@ -155,7 +200,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
         TargetEnvironmentWizard wizard = ((Type)anObject).createWizard(myProject, myDefaultRuntimeType);
         if (wizard != null && wizard.showAndGet()) {
           TargetEnvironmentConfiguration newTarget = wizard.getSubject();
-          TargetEnvironmentsManager.getInstance().addTarget(newTarget);
+          TargetEnvironmentsManager.getInstance(myProject).addTarget(newTarget);
           addTarget(newTarget, 2);
           setSelectedIndex(2);
         }

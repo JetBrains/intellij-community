@@ -428,6 +428,7 @@
 
     <statistics.counterUsagesCollector groupId="java.find.usages" version="1"/>
     <statistics.counterUsagesCollector groupId="java.extract.method" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
 
@@ -761,7 +762,7 @@
                  defaultValue="true"
                  description="Enable experimental extract method implementation"/>
     <registryKey key="java.refactoring.extractMethod.inplace"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enable experimental extract method inplace mode"/>
     <debugger.asyncStackTraceProvider
         implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>

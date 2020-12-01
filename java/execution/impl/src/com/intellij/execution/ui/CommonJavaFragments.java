@@ -45,7 +45,7 @@ public final class CommonJavaFragments {
                                                                                                 .message("do.not.build.before.run"),
                                                                                               ExecutionBundle.message("group.java.options"),
                                                                                               jLabel, -1,
-                                                                                              settings -> hasTask(settings)) {
+                                                                                              settings -> !hasTask(settings)) {
       @Override
       public void doReset(@NotNull RunnerAndConfigurationSettingsImpl s) {
         jLabel.setText(hasTask(s) ? buildAndRun : run);

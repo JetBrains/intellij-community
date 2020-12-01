@@ -21,6 +21,8 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
@@ -37,11 +39,11 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerCom
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.toBuilder
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
@@ -644,6 +646,34 @@ class ModuleBridgesTest {
 
     assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
     assertEmpty(entityStore.current.entities(SourceRootEntity::class.java).toList())
+  }
+
+  @Test
+  fun `test content root equality at case insensitive FS`() {
+    IoTestUtil.assumeCaseInsensitiveFS()
+    WriteCommandAction.runWriteCommandAction(project) {
+      val moduleName = "build"
+      val contentRoot = "test"
+      val tempDir = temporaryDirectoryRule.newPath().toFile()
+      val contentRootFolder = File(tempDir, StringUtil.capitalize(contentRoot))
+
+      val moduleFile = File(project.basePath, "$moduleName.iml")
+      val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+        moduleModel.commit()
+        module
+      }
+
+      ModuleRootModificationUtil.updateModel(module) { model ->
+        FileUtil.createDirectory(contentRootFolder)
+        val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(File(tempDir, contentRoot).path))
+        model.addContentEntry(url)
+      }
+
+      val rootManager = ModuleRootManager.getInstance(module)
+      assertEquals(1, rootManager.contentRootUrls.size)
+      assertEquals(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(contentRootFolder.path)), rootManager.contentRootUrls[0])
+    }
   }
 
   @Test

@@ -435,7 +435,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   // open for rider
   protected open fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
-    if (WindowManagerEx.getInstanceEx().getFrameHelper(null) != null) {
+    if (!System.getProperty("idea.open.multi.projects.correctly", "true").toBoolean() ||
+        WindowManagerEx.getInstanceEx().getFrameHelper(null) != null) {
       return false
     }
 
@@ -460,7 +461,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         info.frameTitle?.let {
           ideFrame.title = it
         }
-        ideFrame.isVisible = true
         val frameManager = if (isActive) {
           MyActiveProjectUiFrameManager(ideFrame, taskList, frameInfo.fullScreen)
         }
@@ -539,12 +539,13 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl, writLastProjectInfo: Boolean) {
     val frameHelper = windowManager.getFrameHelper(project)
     if (frameHelper == null) {
-      LOG.warn("Cannot find frameHelper for ${project.name} to update frame info")
+      LOG.warn("Cannot update frame info (project=${project.name}, reason=frame helper is not found)")
       return
     }
+
     val frame = frameHelper.frame
     if (frame == null) {
-      LOG.warn("frameHelper.frame is null, cannot  ${project.name} to update frame info")
+      LOG.warn("Cannot update frame info (project=${project.name}, reason=frame is null)")
       return
     }
 
@@ -743,9 +744,6 @@ private open class MyProjectUiFrameManager(val frame: IdeFrameImpl) : ProjectUiF
     // done by active frame manager for all frames
   }
 
-  override fun projectLoaded(frameHelper: ProjectFrameHelper, project: Project) {
-  }
-
   fun dispose() {
     frame.dispose()
   }
@@ -768,20 +766,21 @@ private class MyActiveProjectUiFrameManager(frame: IdeFrameImpl,
                                             private val isFullScreen: Boolean) : MyProjectUiFrameManager(frame) {
   companion object {
     private fun doInit(isFullScreen: Boolean, tasks: List<Pair<Path, OpenProjectTask>>) {
-      for (task in tasks) {
+      for (task in tasks.reversed()) {
         val manager = task.second.frameManager as MyProjectUiFrameManager
         val frame = manager.frame
-
         val frameHelper = ProjectFrameHelper(frame, null)
+        frame.isVisible = true
 
         if (isFullScreen && manager is MyActiveProjectUiFrameManager && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
           frameHelper.toggleFullScreen(true)
         }
 
-        frameHelper.init()
-        // otherwise not painted if frame is already visible
-        frame.validate()
         manager.frameHelper = frameHelper
+      }
+
+      for (task in tasks) {
+        (task.second.frameManager as MyProjectUiFrameManager).frameHelper!!.init()
       }
     }
   }

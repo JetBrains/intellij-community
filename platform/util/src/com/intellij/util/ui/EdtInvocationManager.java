@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
 import java.lang.reflect.InvocationTargetException;

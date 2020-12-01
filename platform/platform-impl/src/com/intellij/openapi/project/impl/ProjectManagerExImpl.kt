@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.getProjectDataPathRoot
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
@@ -172,7 +173,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   override fun newProject(projectFile: Path, options: OpenProjectTask): Project? {
-    removeProjectDirContentOrFile(projectFile)
+    removeProjectConfigurationAndCaches(projectFile)
 
     val project = instantiateProject(projectFile, options)
     try {
@@ -213,7 +214,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     val project: Project?
     val indicator = ProgressManager.getInstance().progressIndicator
     if (options.isNewProject) {
-      removeProjectDirContentOrFile(projectStoreBaseDir)
+      removeProjectConfigurationAndCaches(projectStoreBaseDir)
       project = instantiateProject(projectStoreBaseDir, options)
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
       initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, options.preloadServices, template, indicator)
@@ -394,23 +395,24 @@ private fun toCanonicalName(filePath: String): Path {
   return file
 }
 
-private fun removeProjectDirContentOrFile(projectFile: Path) {
-  if (Files.isRegularFile(projectFile)) {
-    try {
+private fun removeProjectConfigurationAndCaches(projectFile: Path) {
+  try {
+    if (Files.isRegularFile(projectFile)) {
       Files.deleteIfExists(projectFile)
     }
-    catch (ignored: IOException) {
-    }
-  }
-  else {
-    try {
+    else {
       Files.newDirectoryStream(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER)).use { directoryStream ->
         for (file in directoryStream) {
           file!!.delete()
         }
       }
     }
-    catch (ignore: IOException) {
-    }
+  }
+  catch (ignored: IOException) {
+  }
+  try {
+    getProjectDataPathRoot(projectFile).delete()
+  }
+  catch (ignored: IOException) {
   }
 }

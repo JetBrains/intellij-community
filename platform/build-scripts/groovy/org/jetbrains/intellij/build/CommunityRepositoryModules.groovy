@@ -59,6 +59,11 @@ class CommunityRepositoryModules {
     "intellij.platform.editor.ex",
     "intellij.platform.codeStyle.impl",
     "intellij.platform.indexing.impl",
+    "intellij.platform.elevation",
+    "intellij.platform.elevation.client",
+    "intellij.platform.elevation.common",
+    "intellij.platform.elevation.daemon",
+    "intellij.platform.elevation.rpc",
     "intellij.platform.execution.impl",
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
@@ -173,6 +178,7 @@ class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension.impl")
       withProjectLibrary("Gradle")
     },
+    plugin("intellij.externalSystem.dependencyUpdater"),
     plugin("intellij.gradle.dependencyUpdater"),
     plugin("intellij.gradle.dsl.impl") {
       withModule("intellij.gradle.dsl")
@@ -255,7 +261,6 @@ class CommunityRepositoryModules {
     plugin("intellij.statsCollector") {
       bundlingRestrictions.includeInEapOnly = true
     },
-    plugin("intellij.statsCollector"),
     plugin("intellij.jps.cache"),
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")

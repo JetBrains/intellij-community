@@ -51,6 +51,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     return result;
   }
 
+  @Override
   @NotNull
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     List<PsiAnnotation> result = new ArrayList<>();

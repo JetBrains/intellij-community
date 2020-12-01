@@ -149,5 +149,6 @@
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.dependencyUpdater" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.featuresTrainer" scope="RUNTIME"/>
   </component>
 </module>

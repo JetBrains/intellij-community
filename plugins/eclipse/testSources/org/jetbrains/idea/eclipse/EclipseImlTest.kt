@@ -4,6 +4,7 @@ package org.jetbrains.idea.eclipse
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.div
 import org.junit.ClassRule
@@ -19,6 +20,10 @@ class EclipseImlTest {
   @JvmField
   @Rule
   val testName = TestName()
+
+  @JvmField
+  @Rule
+  val projectModel = ProjectModelRule()
 
   @Test
   fun testWorkspaceOnly() {
@@ -42,6 +47,17 @@ class EclipseImlTest {
 
   @Test
   fun testRoot() {
+    doTest()
+  }
+
+  @Test
+  fun testResolvedGlobalLibrary() {
+    projectModel.addApplicationLevelLibrary("globalLib")
+    doTest()
+  }
+
+  @Test
+  fun testUnresolvedUserLibrary() {
     doTest()
   }
 

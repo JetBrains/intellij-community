@@ -17,10 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopeUtil;
-import com.intellij.psi.search.PsiSearchScopeUtil;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -186,12 +183,11 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                                                                 @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
     SearchScope useScope;
     CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, project);
-    if (info == null) {
-      useScope = ReadAction.compute(baseClass::getUseScope);
-    }
-    else {
-      useScope = ReadAction.compute(() -> baseClass.getUseScope().intersectWith(info.getDirtyScope()));
-    }
+    useScope = ReadAction.compute(() -> {
+      SearchScope resultScope = PsiSearchHelper.getInstance(project).getUseScope(baseClass);
+      if (info == null) return resultScope;
+      return resultScope.intersectWith(info.getDirtyScope());
+    });
 
     DumbService dumbService = DumbService.getInstance(project);
     GlobalSearchScope globalUseScope = ReadAction.compute(

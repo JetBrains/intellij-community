@@ -213,7 +213,11 @@ public abstract class FileEditorManager {
    *
    * @return opened file editors
    */
-  public abstract @NotNull List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
+  public @NotNull List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+    return openFileEditor(descriptor, focusEditor);
+  }
+
+  public abstract @NotNull List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor);
 
   /**
    * Returns the project with which the file editor manager is associated.

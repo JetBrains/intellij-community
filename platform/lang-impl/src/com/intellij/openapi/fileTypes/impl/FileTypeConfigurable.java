@@ -29,7 +29,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -50,7 +49,7 @@ import static com.intellij.openapi.util.Pair.pair;
 public final class FileTypeConfigurable implements SearchableConfigurable, Configurable.NoScroll, FileTypeSelectable {
   private static final Insets TITLE_INSETS = JBUI.insetsTop(8);
 
-  private RecognizedFileTypes myRecognizedFileType;
+  private RecognizedFileTypesPanel myRecognizedFileType;
   private PatternsPanel myPatterns;
   private HashBangPanel myHashBangs;
   private FileTypePanel myFileTypePanel;
@@ -71,12 +70,19 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   public JComponent createComponent() {
     JBTabbedPane tabbedPane = new JBTabbedPane();
     myFileTypePanel = new FileTypePanel();
-    myRecognizedFileType = new RecognizedFileTypes(myFileTypePanel.myRecognizedFileTypesPanel);
-    myFileTypePanel.myRightPanel.setPreferredSize(
-      new Dimension(JBUIScale.scale(300), myFileTypePanel.myRightPanel.getHeight())
-    );
-    myPatterns = new PatternsPanel(myFileTypePanel.myPatternsPanel);
-    myHashBangs = new HashBangPanel(myFileTypePanel.myHashBangPanel);
+    myRecognizedFileType = new RecognizedFileTypesPanel();
+    JBSplitter splitter = new JBSplitter(false, 0.3f);
+    splitter.setFirstComponent(myRecognizedFileType);
+
+    JPanel rightPanel = new JPanel(new BorderLayout());
+    myPatterns = new PatternsPanel();
+    myHashBangs = new HashBangPanel();
+    rightPanel.add(myPatterns, BorderLayout.CENTER);
+    rightPanel.add(myHashBangs, BorderLayout.SOUTH);
+    splitter.setSecondComponent(rightPanel);
+
+    myFileTypePanel.myUpperPanel.add(splitter, BorderLayout.CENTER);
+
     myRecognizedFileType.myFileTypesList.addListSelectionListener(__ -> updateExtensionList());
     myFileTypePanel.myAssociatePanel.setVisible(OSAssociateFileTypesUtil.isAvailable());
     myFileTypePanel.myAssociatePanel.setBorder(JBUI.Borders.emptyTop(16));
@@ -249,6 +255,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     if (ftToEdit == null) ftToEdit = userFileType.clone();
     @SuppressWarnings({"unchecked", "rawtypes"}) TypeEditor editor = new TypeEditor(myRecognizedFileType.myFileTypesList, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
     if (editor.showAndGet()) {
+      FileTypeConfigurableInteractions.fileTypeEdited.log();
       myOriginalToEditedMap.put(userFileType, ftToEdit);
     }
   }
@@ -256,6 +263,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removeFileType() {
     FileType fileType = myRecognizedFileType.getSelectedFileType();
     if (fileType == null) return;
+    FileTypeConfigurableInteractions.fileTypeRemoved.log();
 
     myTempFileTypes.remove(fileType);
     if (fileType instanceof UserFileType) {
@@ -276,6 +284,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     AbstractFileType type = new AbstractFileType(new SyntaxTable());
     TypeEditor<AbstractFileType> editor = new TypeEditor<>(myRecognizedFileType.myFileTypesList, type, FileTypesBundle.message("filetype.edit.new.title"));
     if (editor.showAndGet()) {
+      FileTypeConfigurableInteractions.fileTypeAdded.log();
       myTempFileTypes.add(type);
       updateFileTypeList();
       updateExtensionList();
@@ -293,6 +302,13 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void editPattern(@Nullable String item) {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
+
+    if (item == null) {
+      FileTypeConfigurableInteractions.patternAdded.log(type);
+    }
+    else {
+      FileTypeConfigurableInteractions.patternEdited.log(type);
+    }
 
     String title = item == null ? FileTypesBundle.message("filetype.edit.add.pattern.title") : FileTypesBundle.message("filetype.edit.edit.pattern.title");
 
@@ -370,6 +386,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removePattern() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
+    FileTypeConfigurableInteractions.patternRemoved.log(type);
     String extension = myPatterns.removeSelected();
     if (extension == null) return;
     FileNameMatcher matcher = FileTypeManager.parseFromString(extension);
@@ -381,6 +398,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removeHashBang() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
+    FileTypeConfigurableInteractions.hashbangRemoved.log(type);
     String extension = myHashBangs.removeSelected();
     if (extension == null) return;
 
@@ -393,11 +411,11 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     return "preferences.fileTypes";
   }
 
-  class RecognizedFileTypes {
+  class RecognizedFileTypesPanel extends JPanel {
     private final JList<FileType> myFileTypesList = new JBList<>(new DefaultListModel<>());
 
-    RecognizedFileTypes(@NotNull JPanel panel) {
-      panel.setLayout(new BorderLayout());
+    RecognizedFileTypesPanel() {
+      setLayout(new BorderLayout());
 
       myFileTypesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myFileTypesList.setCellRenderer(new FileTypeRenderer(myFileTypesList.getModel()));
@@ -411,6 +429,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       }.installOn(myFileTypesList);
 
       ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myFileTypesList)
+        .setScrollPaneBorder(JBUI.Borders.empty())
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 1))
         .setAddAction(__ -> addFileType())
         .setRemoveAction(__ -> removeFileType())
         .setEditAction(__ -> editFileType())
@@ -421,9 +441,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         .setRemoveActionUpdater(e -> canBeModified(getSelectedFileType()))
         .disableUpDownActions();
 
-      panel.add(toolbarDecorator.createPanel(), BorderLayout.NORTH);
+      add(toolbarDecorator.createPanel(), BorderLayout.NORTH);
       JScrollPane scrollPane = new JBScrollPane(myFileTypesList);
-      panel.add(scrollPane, BorderLayout.CENTER);
+      add(scrollPane, BorderLayout.CENTER);
 
       new MySpeedSearch(myFileTypesList);
     }
@@ -533,24 +553,28 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
   }
 
-  class PatternsPanel {
+  class PatternsPanel extends JPanel {
     private final JBList<String> myList = new JBList<>(new DefaultListModel<>());
 
-    PatternsPanel(@NotNull JPanel panel) {
-      panel.setLayout(new BorderLayout());
+    PatternsPanel() {
+      setLayout(new BorderLayout());
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myList.setCellRenderer(new ExtensionRenderer());
       myList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
+        .setScrollPaneBorder(JBUI.Borders.empty())
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 1))
         .setAddAction(__ -> addPattern())
         .setEditAction(__ -> editPattern())
         .setRemoveAction(__ -> removePattern())
         .disableUpDownActions();
-      panel.add(decorator.createPanel(), BorderLayout.NORTH);
+      add(decorator.createPanel(), BorderLayout.NORTH);
       JScrollPane scrollPane = new JBScrollPane(myList);
-      panel.add(scrollPane, BorderLayout.CENTER);
-      panel.setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false, TITLE_INSETS).setShowLine(false));
+      add(scrollPane, BorderLayout.CENTER);
+      //noinspection DialogTitleCapitalization IDEA-254041
+      setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false, TITLE_INSETS)
+                  .setShowLine(false));
     }
 
     void clearList() {
@@ -592,13 +616,13 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
   }
 
-  class HashBangPanel {
+  class HashBangPanel extends JPanel {
     private final JBList<String> myList = new JBList<>(new DefaultListModel<>());
 
-    HashBangPanel(@NotNull JPanel panel) {
-      panel.setLayout(new BorderLayout());
+    HashBangPanel() {
+      setLayout(new BorderLayout());
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myList.setCellRenderer(new ExtensionRenderer(){
+      myList.setCellRenderer(new ExtensionRenderer() {
         @Override
         public @NotNull Component getListCellRendererComponent(@NotNull JList list,
                                                                Object value,
@@ -606,23 +630,27 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
                                                                boolean isSelected,
                                                                boolean cellHasFocus) {
           Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          setText(" #!*"+value+"*");
+          setText(" #!*" + value + "*");
           return component;
         }
       });
       myList.setEmptyText(FileTypesBundle.message("filetype.settings.no.patterns"));
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
+        .setScrollPaneBorder(JBUI.Borders.empty())
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 1))
         .setAddAction(__ -> editHashBang(null))
         .setAddActionName(LangBundle.message("action.HashBangPanel.add.hashbang.pattern.text"))
         .setEditAction(__ -> editHashBang())
         .setRemoveAction(__ -> removeHashBang())
         .disableUpDownActions();
 
-      panel.add(decorator.createPanel(), BorderLayout.NORTH);
+      add(decorator.createPanel(), BorderLayout.NORTH);
       JScrollPane scrollPane = new JBScrollPane(myList);
-      panel.add(scrollPane, BorderLayout.CENTER);
-      panel.setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.hashbang.group"), false, TITLE_INSETS).setShowLine(false));
+      add(scrollPane, BorderLayout.CENTER);
+      //noinspection DialogTitleCapitalization IDEA-254041
+      setBorder(
+        IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.hashbang.group"), false, TITLE_INSETS).setShowLine(false));
     }
 
     void clearList() {
@@ -665,6 +693,13 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void editHashBang(@Nullable("null means new") String oldHashBang) {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
+
+    if (oldHashBang == null) {
+      FileTypeConfigurableInteractions.hashbangAdded.log(type);
+    }
+    else {
+      FileTypeConfigurableInteractions.hashbangEdited.log(type);
+    }
 
     String title = FileTypesBundle.message("filetype.edit.hashbang.title");
 

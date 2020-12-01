@@ -66,4 +66,6 @@ private class TestEventLogMetadaLoader(private val provider: () -> String, priva
   override fun loadMetadataFromServer(): String = provider.invoke()
 
   override fun getLastModifiedOnServer(): Long = lastModified
+
+  override fun getOptionValue(name: String): String? = null
 }

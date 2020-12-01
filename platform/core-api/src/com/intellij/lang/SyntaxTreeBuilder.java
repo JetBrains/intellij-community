@@ -128,7 +128,7 @@ public interface SyntaxTreeBuilder {
 
   /**
    * Enables or disables the builder debug mode. In debug mode, the builder will print stack trace
-   * to marker allocation position if one is not done when calling {@link #getTreeBuilt()}.
+   * to marker allocation position if one is not done when calling {@link PsiBuilder#getTreeBuilt()}.
    *
    * @param dbgMode the debug mode value.
    */

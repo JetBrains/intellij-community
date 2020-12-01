@@ -23,6 +23,8 @@ import java.util.function.Consumer;
 
 
 public class EmojiPicker extends JLayeredPane {
+  private static final Dimension DEFAULT_SIZE = new Dimension(358, 415);
+
   private final List<EmojiCategory> myCategories;
   private final EmojiSearchField mySearchField;
   private final EmojiCategoryPanel myCategoryPanel;
@@ -38,6 +40,7 @@ public class EmojiPicker extends JLayeredPane {
   private EmojiPicker() {
     myCategories = EmojiService.getInstance().getCategories();
 
+    setPreferredSize(DEFAULT_SIZE);
     setLayout(new JPanelFillLayout());
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.fill = GridBagConstraints.BOTH;
@@ -145,8 +148,8 @@ public class EmojiPicker extends JLayeredPane {
       .setCancelKeyEnabled(false)
       .setResizable(false)
       .setMovable(true)
-      .setLocateWithinScreenBounds(false)
-      .setMinSize(new Dimension(358, 415))
+      .setLocateWithinScreenBounds(true)
+      .setMinSize(DEFAULT_SIZE)
       .setShowBorder(false)
       .createPopup();
     picker.myInputCallback = emoji -> {

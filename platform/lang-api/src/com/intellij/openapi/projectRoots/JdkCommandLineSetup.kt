@@ -8,9 +8,9 @@ import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
+import com.intellij.execution.target.LanguageRuntimeType.VolumeType
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -61,6 +61,11 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
   private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
+  private val uploads = mutableListOf<Upload>()
+
+  private val projectHomeOnTarget = VolumeDescriptor(VolumeType(JdkCommandLineSetup::class.java.simpleName + ":projectHomeOnTarget"),
+                                                     "", "", "",
+                                                     target?.projectRootOnTarget ?: "")
 
   /**
    * @param uploadPathIsFile
@@ -68,9 +73,9 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
    *   * false: [uploadPathString] points to a directory, the volume should be created for the path.
    *   * null: Determine whether [uploadPathString] is a file or a directory. If [uploadPathString] does not exist, it is treated as file.
    */
-  private fun uploadIntoTarget(volumeDescriptor: VolumeDescriptor,
-                               uploadPathString: String,
-                               uploadPathIsFile: Boolean? = null): TargetValue<String> {
+  private fun requestUploadIntoTarget(volumeDescriptor: VolumeDescriptor,
+                                      uploadPathString: String,
+                                      uploadPathIsFile: Boolean? = null): TargetValue<String> {
 
     val uploadPath = Paths.get(FileUtil.toSystemDependentName(uploadPathString))
     val isDir = uploadPathIsFile ?: uploadPath.isDirectory()
@@ -82,20 +87,28 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     request.uploadVolumes += uploadRoot
     val result = DeferredTargetValue(uploadPathString)
     dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
+      if (targetProgressIndicator.isCanceled || targetProgressIndicator.isStopped) {
+        result.stopProceeding()
+        return@then
+      }
       val volume = environment.uploadVolumes.getValue(uploadRoot)
       try {
-        val upload = volume.upload(if (isDir) "." else uploadPath.fileName.toString(), targetProgressIndicator)
-        result.resolve(upload)
+        val relativePath = if (isDir) "." else uploadPath.fileName.toString()
+        val resolvedTargetPath = volume.resolveTargetPath(relativePath)
+        uploads.add(Upload(volume, relativePath))
+        result.resolve(resolvedTargetPath)
       }
       catch (t: Throwable) {
         LOG.warn(t)
-        targetProgressIndicator.addText(LangBundle.message("progress.message.failed.to.upload.0.1", volume.localRoot, t.localizedMessage), ProcessOutputType.STDERR)
-        targetProgressIndicator.addText("\n", ProcessOutputType.STDERR)
+        targetProgressIndicator.stopWithErrorMessage(LangBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot,
+                                                                        t.localizedMessage))
         result.resolveFailure(t)
       }
     }
     return result
   }
+
+  private class Upload(val volume: TargetEnvironment.UploadableVolume, val relativePath: String)
 
   private fun createUploadRoot(volumeDescriptor: VolumeDescriptor, localRootPath: Path): TargetEnvironment.UploadRoot {
     return languageRuntime?.createUploadRoot(volumeDescriptor, localRootPath)
@@ -114,6 +127,9 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   fun provideEnvironment(environment: TargetEnvironment,
                          targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
     environmentPromise.setResult(environment to targetProgressIndicator)
+    for (upload in uploads) {
+      upload.volume.upload(upload.relativePath, targetProgressIndicator)
+    }
     for (promise in dependingOnEnvironmentPromise) {
       promise.blockingGet(0)  // Just rethrows errors.
     }
@@ -149,14 +165,14 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   private fun setupWorkingDirectory(javaParameters: SimpleJavaParameters) {
     val workingDirectory = javaParameters.workingDirectory
     if (workingDirectory != null) {
-      val targetWorkingDirectory = uploadIntoTarget(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, workingDirectory)
+      val targetWorkingDirectory = requestUploadIntoTarget(projectHomeOnTarget, workingDirectory)
       commandLine.setWorkingDirectory(targetWorkingDirectory)
     }
   }
 
   @Throws(CantRunException::class)
   private fun setupEnvironment(javaParameters: SimpleJavaParameters) {
-    javaParameters.env.forEach { (key: String, value: String?) -> commandLine.addEnvironmentVariable(key, value) }
+    javaParameters.env.forEach { key: String, value: String? -> commandLine.addEnvironmentVariable(key, value) }
 
     if (request is LocalTargetEnvironmentRequest) {
       val type = if (javaParameters.isPassParentEnvs) ParentEnvironmentType.CONSOLE else ParentEnvironmentType.NONE
@@ -255,13 +271,13 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
       appendEncoding(javaParameters, vmParameters)
 
-      val argFileParameter = uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath)
+      val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
       argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters) {
         rememberFileContentAfterUpload(argFile.file, argFileParameter)
       }
-      
+
     }
     catch (e: IOException) {
       throwUnableToCreateTempFile(e)
@@ -302,12 +318,12 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       }
 
 
-      val targetJarFile = uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, jarFile.file.absolutePath)
+      val targetJarFile = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, jarFile.file.absolutePath)
       if (dynamicVMOptions || dynamicParameters) {
         // -classpath path1:path2 CommandLineWrapper path2
         commandLine.addParameter("-classpath")
         commandLine.addParameter(composePathsList(listOf(
-          uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)),
+          requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)),
           targetJarFile
         )))
         commandLine.addParameter(TargetValue.fixed(commandLineWrapper.name))
@@ -376,11 +392,11 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       }
 
       val classpath: MutableSet<TargetValue<String>> = LinkedHashSet()
-      classpath.add(uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)))
+      classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)))
       // If kotlin agent starts it needs kotlin-stdlib in the classpath.
       javaParameters.classPath.rootDirs.forEach {
         it.getUserData(JdkUtil.AGENT_RUNTIME_CLASSPATH)?.let {
-          classpath.add(uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, it))
+          classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, it))
         }
       }
       if (vmParameters.isUrlClassloader()) {
@@ -407,19 +423,19 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       commandLine.addParameter(composePathsList(classpath))
 
       commandLine.addParameter(commandLineWrapper.name)
-      val classPathParameter = uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, classpathFile.absolutePath)
+      val classPathParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, classpathFile.absolutePath)
       commandLine.addParameter(classPathParameter)
       rememberFileContentAfterUpload(classpathFile, classPathParameter)
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params")
-        val vmParamsParameter = uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, vmParamsFile.absolutePath)
+        val vmParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, vmParamsFile.absolutePath)
         commandLine.addParameter(vmParamsParameter)
         rememberFileContentAfterUpload(vmParamsFile, vmParamsParameter)
       }
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params")
-        val appParamsParameter = uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, appParamsFile.absolutePath)
+        val appParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, appParamsFile.absolutePath)
         commandLine.addParameter(appParamsParameter)
         rememberFileContentAfterUpload(appParamsFile, appParamsParameter)
       }
@@ -443,14 +459,13 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
     else if (jarPath != null) {
       listOf(TargetValue.fixed("-jar"),
-             uploadIntoTarget(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, jarPath, uploadPathIsFile = true))
+             requestUploadIntoTarget(projectHomeOnTarget, jarPath, uploadPathIsFile = true))
     }
     else {
       throw CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"))
     }
   }
 
-  // todo[remoteServers]: problem here (?), it modifies the command (via commandLineContent) but has to be called AFTER value is resolved
   private fun rememberFileContentAfterUpload(localFile: File, fileUpload: TargetValue<String>) {
     fileUpload.targetValue.onSuccess { resolvedTargetPath: String ->
       try {
@@ -496,7 +511,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
     val suffix = if (equalsSign > -1) value.substring(equalsSign) else ""
     commandLine.addParameter(
-      TargetValue.map(uploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path, uploadPathIsFile = true)) { v: String ->
+      TargetValue.map(requestUploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path, uploadPathIsFile = true)) { v: String ->
         prefix + v + suffix
       })
   }
@@ -554,7 +569,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
     for (path in classPath.pathList) {
       if (localJdkPath == null || remoteJdkPath == null || !path.startsWith(localJdkPath)) {
-        result.add(uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, path))
+        result.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, path))
       }
       else {
         //todo[remoteServers]: revisit with "provided" volume (?)

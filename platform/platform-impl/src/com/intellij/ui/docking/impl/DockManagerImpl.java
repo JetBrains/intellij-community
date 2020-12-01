@@ -16,11 +16,13 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -37,13 +39,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.*;
 
 @State(name = "DockManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
@@ -241,7 +243,6 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
       myWindow.getContentPane().setLayout(new BorderLayout());
       myImageContainer = new JLabel(IconUtil.createImageIcon(myDragImage));
-      myImageContainer.setBorder(new LineBorder(JBColor.LIGHT_GRAY));
       myWindow.getContentPane().add(myImageContainer, BorderLayout.CENTER);
 
       setLocationFrom(me);
@@ -339,30 +340,24 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   private @Nullable DockContainer findContainerFor(RelativePoint point, @NotNull DockableContent<?> content) {
-    DockContainer candidate = null;
-    for (DockContainer each : getContainers()) {
+    List<DockContainer> containers = new ArrayList<>(getContainers());
+    containers.remove(myCurrentDragSession.myStartDragContainer);
+    containers.add(0, myCurrentDragSession.myStartDragContainer);
+
+    for (DockContainer each : containers) {
       RelativeRectangle rec = each.getAcceptArea();
       if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
-        Window window = UIUtil.getWindow(each.getContainerComponent());
-        if (window != null && window.isActive()) return each;
-        if (candidate == null || Comparing.equal(candidate, myCurrentDragSession.myStartDragContainer)) {
-          candidate = each;
-        }
+        return each;
       }
     }
 
-    for (DockContainer each : getContainers()) {
+    for (DockContainer each : containers) {
       RelativeRectangle rec = each.getAcceptAreaFallback();
       if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
-        Window window = UIUtil.getWindow(each.getContainerComponent());
-        if (window != null && window.isActive()) return candidate;
-        if (candidate == null || Comparing.equal(candidate, myCurrentDragSession.myStartDragContainer)) {
-          candidate = each;
-        }
+        return each;
       }
     }
-
-    return candidate;
+    return null;
   }
 
   private DockContainerFactory getFactory(String type) {

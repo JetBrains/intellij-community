@@ -617,12 +617,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
     MyToggleExpandByDefaultAction() {
-      super(getTextSettings());
-    }
-
-    @Override
-    protected void expandAll(boolean expand) {
-      myFoldingModel.expandAll(expand);
+      super(getTextSettings(), myFoldingModel);
     }
   }
 

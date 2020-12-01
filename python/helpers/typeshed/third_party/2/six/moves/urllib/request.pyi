@@ -1,4 +1,3 @@
-# Stubs for six.moves.urllib.request
 from urllib import (
     FancyURLopener as FancyURLopener,
     URLopener as URLopener,

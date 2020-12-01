@@ -37,6 +37,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -255,8 +257,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   @Override
-  @NotNull
-  public String getTitle() {
+  public @NlsContexts.TabTitle @NotNull String getTitle() {
     return myHelper.title;
   }
 
@@ -460,7 +461,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   public static class Helper {
     public final Project project;
     public final VirtualFile virtualFile;
-    String title;
+    @NlsSafe String title;
     PsiFile file;
 
     public Helper(@NotNull Project project, @NotNull VirtualFile virtualFile) {

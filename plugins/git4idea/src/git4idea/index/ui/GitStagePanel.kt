@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.OnePixelSplitter
@@ -25,7 +26,9 @@ import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
+import com.intellij.vcs.commit.EditedCommitNode
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -73,6 +76,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
     }
     commitPanel.commitActionsPanel.setupShortcuts(this, this)
+    commitPanel.addEditedCommitListener(tree::editedCommitChanged, this)
     commitWorkflowHandler = GitStageCommitWorkflowHandler(GitStageCommitWorkflow(project), commitPanel)
     Disposer.register(this, commitPanel)
 
@@ -126,7 +130,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
       hasPendingUpdates = true
       return
     }
-    tree.update()
+    tree.rebuildTree()
     commitPanel.state = state
     commitWorkflowHandler.state = state
   }
@@ -183,6 +187,25 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
           OpenSourceUtil.openSourcesFrom(dataContext, true)
         }
         true
+      }
+    }
+
+    fun editedCommitChanged() {
+      rebuildTree()
+
+      commitPanel.editedCommit?.let {
+        val node = TreeUtil.findNodeWithObject(root, it)
+        node?.let { expandPath(TreeUtil.getPathFromRoot(node)) }
+      }
+    }
+
+    override fun customizeTreeModel(builder: TreeModelBuilder) {
+      super.customizeTreeModel(builder)
+
+      commitPanel.editedCommit?.let {
+        val commitNode = EditedCommitNode(it)
+        builder.insertSubtreeRoot(commitNode)
+        builder.insertChanges(it.commit.changes, commitNode)
       }
     }
 

@@ -5,16 +5,14 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.WhatsNewAction;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.*;
@@ -22,33 +20,32 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.LineSeparator;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.max;
 
@@ -58,49 +55,24 @@ final class UpdateCheckerComponent {
   }
 
   static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
-  static final String UPDATE_WHATS_NEW_MESSAGE = "ide.update.whats.new.message";
 
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
+  private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
+  private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
 
   private volatile ScheduledFuture<?> myScheduledCheck;
+  private volatile String myLastCheckedBuild;  // [r.sh] for 203; drop in master after backporting
 
   static final class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
     public void appStarted() {
       Application app = ApplicationManager.getApplication();
-      if (app.isCommandLine() || app.isHeadlessEnvironment()) {
-        return;
+      if (!(app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode())) {
+        getInstance().appStarted();
       }
-
-      UpdateSettings settings = UpdateSettings.getInstance();
-      updateDefaultChannel(settings);
-      if (settings.isCheckNeeded()) {
-        scheduleFirstCheck(settings);
-        snapPackageNotification(settings);
-      }
-    }
-  }
-
-  static final class MyActivity implements StartupActivity.DumbAware {
-    private final @NotNull NotNullLazyValue<Boolean> updateFailed = AtomicNotNullLazyValue.createValue(() -> checkIfPreviousUpdateFailed());
-
-    MyActivity() {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        throw ExtensionNotApplicableException.INSTANCE;
-      }
-    }
-
-    @Override
-    public void runActivity(@NotNull Project project) {
-      if (Experiments.getInstance().isFeatureEnabled("whats.new.notification") && !updateFailed.getValue()) {
-        showWhatsNewNotification(project);
-      }
-
-      showUpdatedPluginsNotification(project);
-      ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
     }
   }
 
@@ -113,41 +85,16 @@ final class UpdateCheckerComponent {
     if (future != null) future.cancel(false);
   }
 
-  private static void showWhatsNewNotification(@NotNull Project project) {
-    PropertiesComponent properties = PropertiesComponent.getInstance();
-    String updateHtmlMessage = properties.getValue(UPDATE_WHATS_NEW_MESSAGE);
-    if (updateHtmlMessage == null) {
-      LOG.warn("Cannot show what's new notification: no content found.");
-      return;
+  private void appStarted() {
+    UpdateSettings settings = UpdateSettings.getInstance();
+    myLastCheckedBuild = settings.getLastBuildChecked();
+    updateDefaultChannel(settings);
+    if (settings.isCheckNeeded()) {
+      scheduleFirstCheck(settings);
     }
-
-    String title = IdeBundle.message("update.whats.new.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    UpdateChecker.getNotificationGroup().createNotification(title, NotificationType.INFORMATION, "ide.update.installed")
-      .addAction(new NotificationAction(IdeBundle.message("update.whats.new.notification.action")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          String title = IdeBundle.message("update.whats.new", ApplicationInfo.getInstance().getFullVersion());
-          HTMLEditorProvider.Companion.openEditor(project, title, null, updateHtmlMessage, updateHtmlMessage);
-          IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
-          notification.expire();
-        }
-      }).notify(project);
-    properties.setValue(UPDATE_WHATS_NEW_MESSAGE, null);
   }
 
-  private static boolean checkIfPreviousUpdateFailed() {
-    PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
-        new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME).length() > 0) {
-      IdeUpdateUsageTriggerCollector.trigger("update.failed");
-      LOG.info("The previous IDE update failed");
-      return false;
-    }
-    properties.setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, null);
-    return true;
-  }
-
-  private static void updateDefaultChannel(@NotNull UpdateSettings settings) {
+  private static void updateDefaultChannel(UpdateSettings settings) {
     ChannelStatus current = settings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
     boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
@@ -168,7 +115,7 @@ final class UpdateCheckerComponent {
     }
   }
 
-  private static void scheduleFirstCheck(@NotNull UpdateSettings settings) {
+  private void scheduleFirstCheck(UpdateSettings settings) {
     BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
     BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
     long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
@@ -177,76 +124,118 @@ final class UpdateCheckerComponent {
       checkUpdates();
     }
     else {
-      getInstance().queueNextCheck(CHECK_INTERVAL - timeSinceLastCheck);
+      queueNextCheck(CHECK_INTERVAL - timeSinceLastCheck);
     }
   }
 
   private void queueNextCheck(long delay) {
-    myScheduledCheck = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      checkUpdates();
-    }, delay, TimeUnit.MILLISECONDS);
+    myScheduledCheck = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> checkUpdates(), delay, TimeUnit.MILLISECONDS);
   }
 
-  private static void checkUpdates() {
-    UpdateChecker.updateAndShowResult().doWhenProcessed(() -> getInstance().queueNextCheck(CHECK_INTERVAL));
+  private void checkUpdates() {
+    UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck());
   }
 
-  private static void snapPackageNotification(@NotNull UpdateSettings settings) {
-    if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) {
-      return;
+  static final class MyActivity implements StartupActivity.DumbAware {
+    private static final AtomicBoolean ourWaiting = new AtomicBoolean(true);
+
+    MyActivity() {
+      Application app = ApplicationManager.getApplication();
+      if (app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode()) throw ExtensionNotApplicableException.INSTANCE;
     }
 
-    BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-    BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
-    if (lastBuildChecked == null) {
-      // first IDE start, just save info about build
-      UpdateSettings.getInstance().saveLastCheckedInfo();
-      return;
-    }
+    @Override
+    public void runActivity(@NotNull Project project) {
+      if (ourWaiting.getAndSet(false)) {
+        checkIfPreviousUpdateFailed();
 
-    // show notification even in case of downgrade
-    if (currentBuild.equals(lastBuildChecked)) {
-      return;
-    }
+        PropertiesComponent properties = PropertiesComponent.getInstance();
+        BuildNumber previous = BuildNumber.fromString(properties.getValue(PREVIOUS_BUILD_NUMBER_PROPERTY));
+        if (previous == null && !ConfigImportHelper.isFirstSession()) {
+          previous = BuildNumber.fromString(getInstance().myLastCheckedBuild);
+        }
+        BuildNumber current = ApplicationInfo.getInstance().getBuild();
+        properties.setValue(PREVIOUS_BUILD_NUMBER_PROPERTY, current.asString());
+        showWhatsNew(project, previous, current);
+        showSnapUpdateNotification(project, previous, current);
 
-    UpdatesInfo updatesInfo = null;
-    try {
-      updatesInfo = UpdateChecker.getUpdatesInfo();
-    }
-    catch (IOException | JDOMException e) {
-      LOG.warn(e);
-    }
+        showUpdatedPluginsNotification(project);
 
-    String blogPost = null;
-    if (updatesInfo != null) {
-      Product product = updatesInfo.get(currentBuild.getProductCode());
-      if (product != null) {
-        outer:
-        for (UpdateChannel channel : product.getChannels()) {
-          for (BuildInfo build : channel.getBuilds()) {
-            if (currentBuild.equals(build.getNumber())) {
-              blogPost = build.getBlogPost();
-              break outer;
-            }
-          }
+        ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
+      }
+    }
+  }
+
+  private static void checkIfPreviousUpdateFailed() {
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
+        new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME).length() > 0) {
+      IdeUpdateUsageTriggerCollector.trigger("update.failed");
+      LOG.info("The previous IDE update failed");
+    }
+    properties.unsetValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY);
+  }
+
+  private static void showWhatsNew(Project project, @Nullable BuildNumber previous, BuildNumber current) {
+    if (!WhatsNewAction.isAvailable() || !UpdateSettings.getInstance().isShowWhatsNewEditor()) return;
+
+    if (previous != null && previous.getBaselineVersion() > current.getBaselineVersion()) return;  // a downgrade
+
+    int shownFor = PropertiesComponent.getInstance().getInt(WHATS_NEW_SHOWN_FOR_PROPERTY, 0);
+    if (shownFor == current.getBaselineVersion()) return;  // already shown for this release
+
+    String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
+    if (url == null) return;
+
+    Product product = UpdateChecker.getProductData().first;
+    if (product == null) return;
+
+    int lastRelease = 0;
+    String announce = null;
+    String releaseVersion = ApplicationInfo.getInstance().getMajorVersion() + '.' + ApplicationInfo.getInstance().getMinorVersionMainPart();
+    for (UpdateChannel updateChannel : product.getChannels()) {
+      if (updateChannel.getLicensing() == UpdateChannel.Licensing.RELEASE && updateChannel.getStatus() == ChannelStatus.RELEASE) {
+        for (BuildInfo buildInfo : updateChannel.getBuilds()) {
+          lastRelease = max(lastRelease, buildInfo.getNumber().getBaselineVersion());
+          announce = releaseVersion.equals(buildInfo.getVersion()) && announce == null ? buildInfo.getMessage() : announce;
         }
       }
+    }
+    if (lastRelease < current.getBaselineVersion()) return;  // not yet released
+    if (lastRelease > current.getBaselineVersion()) url = null;  // "what's new" page is no longer relevant to this release
+
+    PropertiesComponent.getInstance().setValue(WHATS_NEW_SHOWN_FOR_PROPERTY, current.getBaselineVersion(), 0);
+    if (url != null || announce != null) {
+      String _url = url, _announce = announce;
+      ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewFile(project, _url, _announce));
+      IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
+    }
+    else {
+      LOG.info("neither URL nor message available for " + current);
+    }
+  }
+
+  private static void showSnapUpdateNotification(Project project, @Nullable BuildNumber previous, BuildNumber current) {
+    if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP || previous == null || current.equals(previous)) return;
+
+    String blogPost = null;
+    Product product = UpdateChecker.getProductData().first;
+    if (product != null) {
+      blogPost = product.getChannels().stream()
+        .flatMap(channel -> channel.getBuilds().stream())
+        .filter(build -> current.equals(build.getNumber()))
+        .findFirst().map(BuildInfo::getBlogPost).orElse(null);
     }
 
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String message = blogPost == null ? IdeBundle.message("update.snap.message")
                                       : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost));
-    UpdateChecker.getNotificationGroup().createNotification(
-      title, message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER, "ide.updated.by.snap").notify(null);
-
-    UpdateSettings.getInstance().saveLastCheckedInfo();
+    UpdateChecker.getNotificationGroup()
+      .createNotification(title, message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER, "ide.updated.by.snap")
+      .notify(project);
   }
 
-  private static void showUpdatedPluginsNotification(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
+  private static void showUpdatedPluginsNotification(Project project) {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
@@ -261,7 +250,7 @@ final class UpdateCheckerComponent {
         }
 
         try {
-          FileUtil.writeToFile(getUpdatedPluginsFile(), StringUtil.join(list, LineSeparator.getSystemLineSeparator().getSeparatorString()));
+          Files.write(getUpdatedPluginsFile(), list);
         }
         catch (IOException e) {
           LOG.warn(e);
@@ -311,13 +300,12 @@ final class UpdateCheckerComponent {
     }, "plugins.updated.after.restart").notify(project);
   }
 
-  @NotNull
   private static Set<String> getUpdatedPlugins() {
     try {
-      File file = getUpdatedPluginsFile();
-      if (file.isFile()) {
-        List<String> list = FileUtil.loadLines(file);
-        FileUtil.delete(file);
+      Path file = getUpdatedPluginsFile();
+      if (Files.isRegularFile(file)) {
+        List<String> list = Files.readAllLines(file);
+        Files.delete(file);
         return new HashSet<>(list);
       }
     }
@@ -327,8 +315,7 @@ final class UpdateCheckerComponent {
     return new HashSet<>();
   }
 
-  @NotNull
-  private static File getUpdatedPluginsFile() {
-    return new File(PathManager.getConfigPath(), ".updated_plugins_list");
+  private static Path getUpdatedPluginsFile() {
+    return Paths.get(PathManager.getConfigPath(), ".updated_plugins_list");
   }
 }

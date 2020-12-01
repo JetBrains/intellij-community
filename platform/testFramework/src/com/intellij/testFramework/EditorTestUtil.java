@@ -19,8 +19,10 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DefaultEditorTextRepresentationHelper;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
@@ -142,6 +144,43 @@ public final class EditorTestUtil {
       iterator.advance();
     }
     return tokens;
+  }
+
+  public static void checkEditorHighlighter(Project project, Editor editor) {
+    if (!(editor instanceof EditorImpl)) return;
+    HighlighterIterator editorIterator = ((EditorEx)editor).getHighlighter().createIterator(0);
+
+    EditorHighlighter freshHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(
+      project, ((EditorEx)editor).getVirtualFile());
+    freshHighlighter.setEditor((EditorImpl)editor);
+    freshHighlighter.setText(editor.getDocument().getImmutableCharSequence());
+    HighlighterIterator freshIterator = freshHighlighter.createIterator(0);
+
+    while (!editorIterator.atEnd() || !freshIterator.atEnd()) {
+      if (editorIterator.atEnd() || freshIterator.atEnd()
+          || editorIterator.getTokenType() != freshIterator.getTokenType()
+          || editorIterator.getStart() != freshIterator.getStart()
+          || editorIterator.getEnd() != freshIterator.getEnd()) {
+        throw new IllegalStateException("Editor highlighter failed to update incrementally:\nFresh:  " +
+                                        dumpHighlighter(freshHighlighter) +
+                                        "\nEditor: " +
+                                        dumpHighlighter(((EditorImpl)editor).getHighlighter()));
+      }
+      editorIterator.advance();
+      freshIterator.advance();
+    }
+  }
+
+  private static String dumpHighlighter(EditorHighlighter highlighter) {
+    HighlighterIterator iterator = highlighter.createIterator(0);
+    StringBuilder result = new StringBuilder();
+    int i = 0;
+    while (!iterator.atEnd()) {
+      result.append(i).append(": ").append(iterator.getTokenType()).append(" [").append(iterator.getStart()).append("-")
+        .append(iterator.getEnd()).append("], ");
+      iterator.advance();
+    }
+    return result.toString();
   }
 
   public static int getCaretPosition(@NotNull final String content) {

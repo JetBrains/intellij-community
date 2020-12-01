@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.actions.BigPopupUI;
+import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -79,6 +80,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor>
       contributors = createContributors(initEvent, project, contextComponent);
+    SearchEverywhereContributorValidationRule.updateContributorsMap(contributors.keySet());
     mySearchEverywhereUI = createView(myProject, contributors);
     contributors.keySet().forEach(c -> Disposer.register(mySearchEverywhereUI, c));
     mySearchEverywhereUI.switchToTab(tabID);
@@ -113,6 +115,8 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       .setLocateWithinScreenBounds(false)
       .createPopup();
     Disposer.register(myBalloon, mySearchEverywhereUI);
+    OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(myBalloon.getContent());
+    
     if (project != null) {
       Disposer.register(project, myBalloon);
     }

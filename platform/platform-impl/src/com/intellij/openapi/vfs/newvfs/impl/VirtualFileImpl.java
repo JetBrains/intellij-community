@@ -152,13 +152,10 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   @Override
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     checkNotTooLarge(requestor);
-    super.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor);
-  }
-
-  @Override
-  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) throws IOException {
-    checkNotTooLarge(null);
-    super.setBinaryContent(content, newModificationStamp, newTimeStamp);
+    // NB not using VirtualFile.getOutputStream() to avoid unneeded BOM skipping/writing
+    try (OutputStream outputStream = ourPersistence.getOutputStream(this, requestor, newModificationStamp, newTimeStamp)) {
+      outputStream.write(content);
+    }
   }
 
   @Nullable

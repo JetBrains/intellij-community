@@ -98,7 +98,7 @@ internal class ModifiableContentEntryBridge(
       LOG.error("SourceFolder ${sourceFolder.url} is not present under content entry $contentEntryUrl")
       return
     }
-
+    modifiableRootModel.removeCachedJpsRootProperties(sourceRootEntity.url)
     diff.removeEntity(sourceRootEntity)
   }
 

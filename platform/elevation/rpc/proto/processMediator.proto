@@ -9,13 +9,20 @@ option java_package = "com.intellij.execution.process.mediator.rpc";
 option java_outer_classname = "ProcessMediatorProto";
 
 service Daemon {
+  rpc AdjustQuota (AdjustQuotaRequest) returns (google.protobuf.Empty);
   rpc Shutdown (google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
 // exchanged on startup before gRPC is up and running
-message DaemonHello {
+message Handshake {
   uint32 port = 1;
   bytes token = 2;
+  uint64 pid = 3;
+}
+
+message AdjustQuotaRequest {
+  int64 time_limit_ms = 1;
+  bool is_refreshable = 2;
 }
 
 service ProcessManager {
@@ -41,6 +48,7 @@ message CreateProcessReply {
 message DestroyProcessRequest {
   uint64 pid = 1;
   bool force = 2;
+  bool destroy_group = 3;
 }
 
 message AwaitTerminationRequest {

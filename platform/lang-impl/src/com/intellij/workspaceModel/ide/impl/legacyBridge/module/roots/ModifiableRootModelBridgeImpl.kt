@@ -105,6 +105,10 @@ class ModifiableRootModelBridgeImpl(
     return sourceRootPropertiesMap.computeIfAbsent(sourceRootUrl) { creator() }
   }
 
+  override fun removeCachedJpsRootProperties(sourceRootUrl: VirtualFileUrl) {
+    sourceRootPropertiesMap.remove(sourceRootUrl)
+  }
+
   private val contentEntries
     get() = entityStorageOnDiff.cachedValue(contentEntriesImplValue)
 
@@ -116,7 +120,8 @@ class ModifiableRootModelBridgeImpl(
   override fun addContentEntry(url: String): ContentEntry {
     assertModelIsLive()
 
-    val existingEntry = contentEntries.firstOrNull { it.url == url }
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val existingEntry = contentEntries.firstOrNull { it.contentEntryUrl == virtualFileUrl }
     if (existingEntry != null) {
       return existingEntry
     }
@@ -125,11 +130,11 @@ class ModifiableRootModelBridgeImpl(
         module = moduleEntity,
         excludedUrls = emptyList(),
         excludedPatterns = emptyList(),
-        url = virtualFileManager.fromUrl(url)
+        url = virtualFileUrl
     )
 
     // TODO It's N^2 operations since we need to recreate contentEntries every time
-    return contentEntries.firstOrNull { it.url == url }
+    return contentEntries.firstOrNull { it.contentEntryUrl == virtualFileUrl }
            ?: error("addContentEntry: unable to find content entry after adding: $url to module ${moduleEntity.name}")
   }
 

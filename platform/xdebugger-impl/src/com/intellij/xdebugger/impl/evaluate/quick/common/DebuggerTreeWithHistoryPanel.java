@@ -42,7 +42,7 @@ public class DebuggerTreeWithHistoryPanel<D> extends DebuggerTreeWithHistoryCont
     myTree.invokeLater(() -> myTree.rebuildAndRestore(XDebuggerTreeState.saveState(myTree)));
   }
 
-  public XDebuggerTree getTree() {
+  public @NotNull XDebuggerTree getTree() {
     return myTree;
   }
 }

@@ -9,6 +9,7 @@ import java.io.IOException;
  */
 public class IntelliJLombokPluginTest extends AbstractLombokParsingTestCase {
 
+  @Override
   protected boolean shouldCompareCodeBlocks() {
     return false;
   }

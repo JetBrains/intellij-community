@@ -8,6 +8,7 @@ import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 data class JsonFileProviderIndexStatistics(
   val providerName: String,
   val totalNumberOfFiles: Int,
+  val totalNumberOfFilesFullyIndexedByExtensions: Int,
   val totalIndexingTime: JsonDuration,
   val numberOfTooLargeForIndexingFiles: PositiveInt,
   val tooLargeForIndexingFiles: List<JsonTooLargeForIndexingFile>?,

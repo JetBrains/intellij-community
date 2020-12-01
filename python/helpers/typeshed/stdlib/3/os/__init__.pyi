@@ -8,7 +8,7 @@ from _typeshed import (
     OpenBinaryModeWriting,
     OpenTextMode,
 )
-from builtins import OSError
+from builtins import OSError, _PathLike
 from io import BufferedRandom, BufferedReader, BufferedWriter, FileIO, TextIOWrapper as _TextIOWrapper
 from posix import listdir as listdir, times_result
 from typing import (
@@ -37,6 +37,9 @@ from typing import (
 from typing_extensions import Literal
 
 from . import path as path
+
+if sys.version_info >= (3, 9):
+    from types import GenericAlias
 
 # We need to use something from path, or flake8 and pytype get unhappy
 _supports_unicode_filenames = path.supports_unicode_filenames
@@ -246,7 +249,7 @@ class stat_result:
     st_ctime_ns: int  # platform dependent (time of most recent metadata change on Unix, or the time of creation on Windows) in nanoseconds
     if sys.version_info >= (3, 8) and sys.platform == "win32":
         st_reparse_tag: int
-    if sys.version_info >= (3, 5) and sys.platform == "win32":
+    if sys.platform == "win32":
         st_file_attributes: int
     def __getitem__(self, i: int) -> int: ...
     # not documented
@@ -268,39 +271,24 @@ class stat_result:
     st_creator: int
     st_type: int
 
-if sys.version_info >= (3, 6):
-    from builtins import _PathLike
-
-    PathLike = _PathLike  # See comment in builtins
+PathLike = _PathLike  # See comment in builtins
 
 _FdOrAnyPath = Union[int, AnyPath]
 
-if sys.version_info >= (3, 6):
-    class DirEntry(Generic[AnyStr]):
-        # This is what the scandir interator yields
-        # The constructor is hidden
+class DirEntry(Generic[AnyStr]):
+    # This is what the scandir interator yields
+    # The constructor is hidden
 
-        name: AnyStr
-        path: AnyStr
-        def inode(self) -> int: ...
-        def is_dir(self, *, follow_symlinks: bool = ...) -> bool: ...
-        def is_file(self, *, follow_symlinks: bool = ...) -> bool: ...
-        def is_symlink(self) -> bool: ...
-        def stat(self, *, follow_symlinks: bool = ...) -> stat_result: ...
-        def __fspath__(self) -> AnyStr: ...
-
-else:
-    class DirEntry(Generic[AnyStr]):
-        # This is what the scandir interator yields
-        # The constructor is hidden
-
-        name: AnyStr
-        path: AnyStr
-        def inode(self) -> int: ...
-        def is_dir(self, *, follow_symlinks: bool = ...) -> bool: ...
-        def is_file(self, *, follow_symlinks: bool = ...) -> bool: ...
-        def is_symlink(self) -> bool: ...
-        def stat(self, *, follow_symlinks: bool = ...) -> stat_result: ...
+    name: AnyStr
+    path: AnyStr
+    def inode(self) -> int: ...
+    def is_dir(self, *, follow_symlinks: bool = ...) -> bool: ...
+    def is_file(self, *, follow_symlinks: bool = ...) -> bool: ...
+    def is_symlink(self) -> bool: ...
+    def stat(self, *, follow_symlinks: bool = ...) -> stat_result: ...
+    def __fspath__(self) -> AnyStr: ...
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
 if sys.platform != "win32":
     _Tuple10Int = Tuple[int, int, int, int, int, int, int, int, int, int]
@@ -342,26 +330,14 @@ if sys.platform != "win32":
             f_namemax: int
 
 # ----- os function stubs -----
-if sys.version_info >= (3, 6):
-    def fsencode(filename: Union[str, bytes, PathLike[Any]]) -> bytes: ...
-
-else:
-    def fsencode(filename: Union[str, bytes]) -> bytes: ...
-
-if sys.version_info >= (3, 6):
-    def fsdecode(filename: Union[str, bytes, PathLike[Any]]) -> str: ...
-
-else:
-    def fsdecode(filename: Union[str, bytes]) -> str: ...
-
-if sys.version_info >= (3, 6):
-    @overload
-    def fspath(path: str) -> str: ...
-    @overload
-    def fspath(path: bytes) -> bytes: ...
-    @overload
-    def fspath(path: PathLike[AnyStr]) -> AnyStr: ...
-
+def fsencode(filename: Union[str, bytes, PathLike[Any]]) -> bytes: ...
+def fsdecode(filename: Union[str, bytes, PathLike[Any]]) -> str: ...
+@overload
+def fspath(path: str) -> str: ...
+@overload
+def fspath(path: bytes) -> bytes: ...
+@overload
+def fspath(path: PathLike[AnyStr]) -> AnyStr: ...
 def get_exec_path(env: Optional[Mapping[str, str]] = ...) -> List[str]: ...
 
 # NOTE: get_exec_path(): returns List[bytes] when env not None
@@ -610,12 +586,7 @@ if sys.platform != "win32":
     def makedev(__major: int, __minor: int) -> int: ...
     def pathconf(path: _FdOrAnyPath, name: Union[str, int]) -> int: ...  # Unix only
 
-if sys.version_info >= (3, 6):
-    def readlink(path: Union[AnyStr, PathLike[AnyStr]], *, dir_fd: Optional[int] = ...) -> AnyStr: ...
-
-else:
-    def readlink(path: AnyStr, *, dir_fd: Optional[int] = ...) -> AnyStr: ...
-
+def readlink(path: Union[AnyStr, PathLike[AnyStr]], *, dir_fd: Optional[int] = ...) -> AnyStr: ...
 def remove(path: AnyPath, *, dir_fd: Optional[int] = ...) -> None: ...
 def removedirs(name: AnyPath) -> None: ...
 def rename(src: AnyPath, dst: AnyPath, *, src_dir_fd: Optional[int] = ..., dst_dir_fd: Optional[int] = ...) -> None: ...
@@ -623,10 +594,11 @@ def renames(old: AnyPath, new: AnyPath) -> None: ...
 def replace(src: AnyPath, dst: AnyPath, *, src_dir_fd: Optional[int] = ..., dst_dir_fd: Optional[int] = ...) -> None: ...
 def rmdir(path: AnyPath, *, dir_fd: Optional[int] = ...) -> None: ...
 
+class _ScandirIterator(Iterator[DirEntry[AnyStr]], ContextManager[_ScandirIterator[AnyStr]]):
+    def __next__(self) -> DirEntry[AnyStr]: ...
+    def close(self) -> None: ...
+
 if sys.version_info >= (3, 7):
-    class _ScandirIterator(Iterator[DirEntry[AnyStr]], ContextManager[_ScandirIterator[AnyStr]]):
-        def __next__(self) -> DirEntry[AnyStr]: ...
-        def close(self) -> None: ...
     @overload
     def scandir(path: None = ...) -> _ScandirIterator[str]: ...
     @overload
@@ -634,20 +606,11 @@ if sys.version_info >= (3, 7):
     @overload
     def scandir(path: Union[AnyStr, PathLike[AnyStr]]) -> _ScandirIterator[AnyStr]: ...
 
-elif sys.version_info >= (3, 6):
-    class _ScandirIterator(Iterator[DirEntry[AnyStr]], ContextManager[_ScandirIterator[AnyStr]]):
-        def __next__(self) -> DirEntry[AnyStr]: ...
-        def close(self) -> None: ...
+else:
     @overload
     def scandir(path: None = ...) -> _ScandirIterator[str]: ...
     @overload
     def scandir(path: Union[AnyStr, PathLike[AnyStr]]) -> _ScandirIterator[AnyStr]: ...
-
-else:
-    @overload
-    def scandir(path: None = ...) -> Iterator[DirEntry[str]]: ...
-    @overload
-    def scandir(path: AnyStr) -> Iterator[DirEntry[AnyStr]]: ...
 
 def stat(path: _FdOrAnyPath, *, dir_fd: Optional[int] = ..., follow_symlinks: bool = ...) -> stat_result: ...
 
@@ -678,15 +641,9 @@ def utime(
 
 _OnError = Callable[[OSError], Any]
 
-if sys.version_info >= (3, 6):
-    def walk(
-        top: Union[AnyStr, PathLike[AnyStr]], topdown: bool = ..., onerror: Optional[_OnError] = ..., followlinks: bool = ...
-    ) -> Iterator[Tuple[AnyStr, List[AnyStr], List[AnyStr]]]: ...
-
-else:
-    def walk(
-        top: AnyStr, topdown: bool = ..., onerror: Optional[_OnError] = ..., followlinks: bool = ...
-    ) -> Iterator[Tuple[AnyStr, List[AnyStr], List[AnyStr]]]: ...
+def walk(
+    top: Union[AnyStr, PathLike[AnyStr]], topdown: bool = ..., onerror: Optional[_OnError] = ..., followlinks: bool = ...
+) -> Iterator[Tuple[AnyStr, List[AnyStr], List[AnyStr]]]: ...
 
 if sys.platform != "win32":
     if sys.version_info >= (3, 7):
@@ -708,18 +665,9 @@ if sys.platform != "win32":
             follow_symlinks: bool = ...,
             dir_fd: Optional[int] = ...,
         ) -> Iterator[Tuple[bytes, List[bytes], List[bytes], int]]: ...
-    elif sys.version_info >= (3, 6):
-        def fwalk(
-            top: Union[str, PathLike[str]] = ...,
-            topdown: bool = ...,
-            onerror: Optional[_OnError] = ...,
-            *,
-            follow_symlinks: bool = ...,
-            dir_fd: Optional[int] = ...,
-        ) -> Iterator[Tuple[str, List[str], List[str], int]]: ...
     else:
         def fwalk(
-            top: str = ...,
+            top: Union[str, PathLike[str]] = ...,
             topdown: bool = ...,
             onerror: Optional[_OnError] = ...,
             *,
@@ -746,23 +694,19 @@ def execlpe(file: AnyPath, __arg0: AnyPath, *args: Any) -> NoReturn: ...
 
 # The docs say `args: tuple or list of strings`
 # The implementation enforces tuple or list so we can't use Sequence.
-if sys.version_info >= (3, 6):
-    # Not separating out PathLike[str] and PathLike[bytes] here because it doesn't make much difference
-    # in practice, and doing so would explode the number of combinations in this already long union.
-    # All these combinations are necessary due to List being invariant.
-    _ExecVArgs = Union[
-        Tuple[AnyPath, ...],
-        List[bytes],
-        List[str],
-        List[PathLike[Any]],
-        List[Union[bytes, str]],
-        List[Union[bytes, PathLike[Any]]],
-        List[Union[str, PathLike[Any]]],
-        List[Union[bytes, str, PathLike[Any]]],
-    ]
-else:
-    _ExecVArgs = Union[Tuple[AnyPath, ...], List[bytes], List[str], List[Union[bytes, str]]]
-
+# Not separating out PathLike[str] and PathLike[bytes] here because it doesn't make much difference
+# in practice, and doing so would explode the number of combinations in this already long union.
+# All these combinations are necessary due to List being invariant.
+_ExecVArgs = Union[
+    Tuple[AnyPath, ...],
+    List[bytes],
+    List[str],
+    List[PathLike[Any]],
+    List[Union[bytes, str]],
+    List[Union[bytes, PathLike[Any]]],
+    List[Union[str, PathLike[Any]]],
+    List[Union[bytes, str, PathLike[Any]]],
+]
 _ExecEnv = Union[Mapping[bytes, Union[bytes, str]], Mapping[str, Union[bytes, str]]]
 
 def execv(__path: AnyPath, __argv: _ExecVArgs) -> NoReturn: ...
@@ -844,9 +788,8 @@ if sys.platform != "win32":
     def getloadavg() -> Tuple[float, float, float]: ...
     def sysconf(__name: Union[str, int]) -> int: ...
 
-if sys.version_info >= (3, 6):
-    if sys.platform == "linux":
-        def getrandom(size: int, flags: int = ...) -> bytes: ...
+if sys.platform == "linux":
+    def getrandom(size: int, flags: int = ...) -> bytes: ...
 
 def urandom(__size: int) -> bytes: ...
 

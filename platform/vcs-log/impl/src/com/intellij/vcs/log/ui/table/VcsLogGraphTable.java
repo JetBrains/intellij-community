@@ -83,6 +83,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
+  @SuppressWarnings("UseJBColor")
+  private static final Color DEFAULT_HOVERED_BACKGROUND = new JBColor(ColorUtil.withAlpha(new Color(0xC3D2E3), 0.4),
+                                                                      new Color(0x464A4D));
+  private static final Color HOVERED_BACKGROUND = JBColor.namedColor("VersionControl.Log.Commit.hoveredBackground",
+                                                                     DEFAULT_HOVERED_BACKGROUND);
+
   @NotNull private final VcsLogData myLogData;
   @NotNull private final String myId;
   @NotNull private final VcsLogUiProperties myProperties;
@@ -618,8 +624,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 
-    if (!selected && myMouseHoveredRow == row) {
-      VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(UIUtil.getTableHoverBackground(true));
+    if (!selected && row == getHoveredRow()) {
+      Color background = Objects.requireNonNull(style.getBackground());
+      VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(getHoveredBackgroundColor(background));
       style = VcsCommitStyleFactory.combine(Arrays.asList(lightSelectionBgStyle, style));
     }
 
@@ -743,6 +750,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public boolean isResizingColumns() {
     return getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+  }
+
+  @NotNull
+  private static Color getHoveredBackgroundColor(@NotNull Color background) {
+    int alpha = HOVERED_BACKGROUND.getAlpha();
+    if (alpha == 255) return HOVERED_BACKGROUND;
+    if (alpha == 0) return background;
+    return ColorUtil.mix(new Color(HOVERED_BACKGROUND.getRGB()), background, alpha / 255.0);
   }
 
   @NotNull

@@ -463,7 +463,7 @@ public final class PyCallExpressionHelper {
     else if (qualifierType instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)qualifierType).getMembers();
 
-      if (members.stream().allMatch(PyClassType.class::isInstance)) {
+      if (ContainerUtil.all(members, type -> type == null || type instanceof PyNoneType || type instanceof PyClassType)) {
         return StreamEx
           .of(members)
           .select(PyClassType.class)

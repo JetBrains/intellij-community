@@ -1469,6 +1469,10 @@ public abstract class DialogWrapper {
    */
   @Nullable
   public Dimension getInitialSize() {
+    if (SystemInfo.isLinux) {
+      //Temporary workaround for IDEA-253643
+      return null;
+    }
     List<JTable> tables = UIUtil.findComponentsOfType(getContentPanel(), JTable.class);
     if (!tables.isEmpty()) {
       Dimension size = getContentPanel().getPreferredSize();

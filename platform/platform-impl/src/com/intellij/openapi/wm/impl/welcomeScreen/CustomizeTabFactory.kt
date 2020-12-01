@@ -64,7 +64,8 @@ class CustomizeTabFactory : WelcomeTabFactory {
 private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size
 private fun getEditorFont() = fontOptions.getSize(fontOptions.fontFamily)
 
-class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title")) {
+class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title"),
+                                                                           WelcomeScreenEventCollector.TabType.TabNavCustomize) {
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.graphProperty { laf.lookAndFeelReference }
@@ -75,28 +76,66 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val colorBlindnessProperty = propertyGraph.graphProperty { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
   private val adjustColorsProperty = propertyGraph.graphProperty { settings.colorBlindness != null }
 
+  private var keymapComboBox: ComboBox<Keymap>? = null
+  private var colorThemeComboBox: ComboBox<LafManager.LafReference>? = null
+
   init {
-    lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, laf.findLaf(it), true) }, parentDisposable)
-    syncThemeProperty.afterChange { laf.autodetect = it }
+    lafProperty.afterChange({
+                              val newLaf = laf.findLaf(it)
+                              if (laf == newLaf) return@afterChange
+                              QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, newLaf, true)
+                              WelcomeScreenEventCollector.logLafChanged(newLaf, laf.autodetect)
+                            }, parentDisposable)
+    syncThemeProperty.afterChange {
+      if (laf.autodetect == it) return@afterChange
+      laf.autodetect = it
+      WelcomeScreenEventCollector.logLafChanged(laf.currentLookAndFeel, laf.autodetect)
+    }
     ideFontProperty.afterChange({
+                                  if (settings.fontSize == it) return@afterChange
                                   settings.overrideLafFonts = true
+                                  WelcomeScreenEventCollector.logIdeFontChanged(settings.fontSize, it)
                                   settings.fontSize = it
                                   updateFontSettingsLater()
                                 }, parentDisposable)
     editorFontProperty.afterChange({
+                                     val oldSize = fontOptions.getSize(fontOptions.fontFamily)
+                                     if (oldSize == it) return@afterChange
+                                     WelcomeScreenEventCollector.logEditorFontChanged(oldSize, it)
                                      fontOptions.setSize(fontOptions.fontFamily, it)
                                      updateFontSettingsLater()
                                    }, parentDisposable)
-    keymapProperty.afterChange({ keymapManager.activeKeymap = it }, parentDisposable)
-    adjustColorsProperty.afterChange({ updateColorBlindness() }, parentDisposable)
+    keymapProperty.afterChange({
+                                 if (keymapManager.activeKeymap == it) return@afterChange
+                                 WelcomeScreenEventCollector.logKeymapChanged(it)
+                                 keymapManager.activeKeymap = it
+                               }, parentDisposable)
+    adjustColorsProperty.afterChange({
+                                       if (adjustColorsProperty.get() == (settings.colorBlindness != null)) return@afterChange
+                                       WelcomeScreenEventCollector.logColorBlindnessChanged(adjustColorsProperty.get())
+                                       updateColorBlindness()
+                                     }, parentDisposable)
     colorBlindnessProperty.afterChange({ updateColorBlindness() }, parentDisposable)
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
     busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { updateProperty(ideFontProperty) { getIdeFont() } })
     busConnection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { updateAccessibilityProperties() })
+    busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      updateProperty(lafProperty) { laf.lookAndFeelReference }
+      updateLafs()
+    })
     busConnection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
       override fun activeKeymapChanged(keymap: Keymap?) {
         updateProperty(keymapProperty) { keymapManager.activeKeymap }
+        updateKeymaps()
+      }
+
+      override fun keymapAdded(keymap: Keymap) {
+        updateKeymaps()
+      }
+
+      override fun keymapRemoved(keymap: Keymap) {
+        updateKeymaps()
       }
     })
   }
@@ -137,15 +176,15 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         fullRow {
-          val theme = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
-          val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"), syncThemeProperty).
-                              withLargeLeftGap().
-                              apply {
-                                component.isOpaque = false
-                                component.isVisible = laf.autodetectSupported
-                              }
+          val themeBuilder = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
+          val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"),
+                                      syncThemeProperty).withLargeLeftGap().apply {
+            component.isOpaque = false
+            component.isVisible = laf.autodetectSupported
+          }
 
-          theme.enableIf(syncCheckBox.selected.not())
+          themeBuilder.enableIf(syncCheckBox.selected.not())
+          colorThemeComboBox = themeBuilder.component
           component(laf.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
         }
       }.largeGapAfter()
@@ -166,9 +205,9 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(KeyMapBundle.message("keymap.display.name"))
         fullRow {
-          comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty)
+          keymapComboBox = comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty).component
           component(focusableLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(null, KeyMapBundle.message("keymap.display.name"))
+            ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject, KeyMapBundle.message("keymap.display.name"))
           }).withLargeLeftGap()
         }
       }
@@ -184,6 +223,21 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
       .withBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground())
+  }
+
+  private fun updateKeymaps() {
+    (keymapComboBox?.model as DefaultComboBoxModel).apply {
+      removeAllElements()
+      addAll(getKeymaps())
+      selectedItem = keymapProperty.get()
+    }
+  }
+
+  private fun updateLafs() {
+    colorThemeComboBox?.apply {
+      model = laf.lafComboBoxModel
+      selectedItem = lafProperty.get()
+    }
   }
 
   private fun Row.createColorBlindnessSettingBlock() {

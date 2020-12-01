@@ -11,6 +11,7 @@ if sys.version_info >= (3, 7):
     AbstractAsyncContextManager = AsyncContextManager
 
 _T = TypeVar("_T")
+_T_co = TypeVar("_T_co", covariant=True)
 _T_io = TypeVar("_T_io", bound=Optional[IO[str]])
 _F = TypeVar("_F", bound=Callable[..., Any])
 
@@ -18,12 +19,12 @@ _ExitFunc = Callable[[Optional[Type[BaseException]], Optional[BaseException], Op
 _CM_EF = TypeVar("_CM_EF", ContextManager[Any], _ExitFunc)
 
 if sys.version_info >= (3, 2):
-    class _GeneratorContextManager(ContextManager[_T], Generic[_T]):
+    class _GeneratorContextManager(ContextManager[_T_co]):
         def __call__(self, func: _F) -> _F: ...
     def contextmanager(func: Callable[..., Iterator[_T]]) -> Callable[..., _GeneratorContextManager[_T]]: ...
 
 else:
-    class GeneratorContextManager(ContextManager[_T], Generic[_T]):
+    class GeneratorContextManager(ContextManager[_T_co]):
         def __call__(self, func: _F) -> _F: ...
     def contextmanager(func: Callable[..., Iterator[_T]]) -> Callable[..., ContextManager[_T]]: ...
 
@@ -33,7 +34,7 @@ if sys.version_info >= (3, 7):
 if sys.version_info < (3,):
     def nested(*mgr: ContextManager[Any]) -> ContextManager[Iterable[Any]]: ...
 
-class closing(ContextManager[_T], Generic[_T]):
+class closing(ContextManager[_T]):
     def __init__(self, thing: _T) -> None: ...
 
 if sys.version_info >= (3, 4):

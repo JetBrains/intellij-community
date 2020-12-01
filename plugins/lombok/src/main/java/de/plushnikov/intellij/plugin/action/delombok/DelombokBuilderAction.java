@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DelombokBuilderAction extends AbstractDelombokAction {
 
+  @Override
   @NotNull
   protected DelombokHandler createHandler() {
     return new DelombokHandler(true,

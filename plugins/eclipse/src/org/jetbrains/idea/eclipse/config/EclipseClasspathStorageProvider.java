@@ -34,6 +34,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntitySource;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import org.jetbrains.annotations.Nls;
@@ -104,14 +105,13 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
   private static void updateEntitySource(Module module, Function<? super EntitySource, ? extends EntitySource> updateSource) {
     if (WorkspaceModel.isEnabled()) {
-      WriteAction.run(() -> {
-        ModuleBridge moduleBridge = (ModuleBridge)module;
-        ModuleEntity moduleEntity = ModuleManagerComponentBridge.findModuleEntity(moduleBridge.getEntityStorage().getCurrent(), moduleBridge);
-        if (moduleEntity != null) {
-          EntitySource entitySource = moduleEntity.getEntitySource();
-          ModuleManagerComponentBridge.changeModuleEntitySource(moduleBridge, updateSource.apply(entitySource));
-        }
-      });
+      ModuleBridge moduleBridge = (ModuleBridge)module;
+      WorkspaceEntityStorage moduleEntityStorage = moduleBridge.getEntityStorage().getCurrent();
+      ModuleEntity moduleEntity = ModuleManagerComponentBridge.findModuleEntity(moduleEntityStorage, moduleBridge);
+      if (moduleEntity != null) {
+        EntitySource entitySource = moduleEntity.getEntitySource();
+        ModuleManagerComponentBridge.changeModuleEntitySource(moduleBridge, moduleEntityStorage, updateSource.apply(entitySource), moduleBridge.getDiff());
+      }
     }
   }
 

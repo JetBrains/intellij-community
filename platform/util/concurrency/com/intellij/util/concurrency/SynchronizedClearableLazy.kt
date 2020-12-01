@@ -55,6 +55,10 @@ class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T> {
     @Suppress("UNCHECKED_CAST")
     return if (oldValue is Sentinel) null else oldValue as T
   }
+
+  fun compareAndDrop(expectedValue: T): Boolean {
+    return computedValue.compareAndSet(expectedValue, Sentinel())
+  }
 }
 
 private class Sentinel {

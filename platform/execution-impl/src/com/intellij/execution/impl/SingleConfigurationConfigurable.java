@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorListener;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -30,6 +29,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
@@ -44,6 +44,7 @@ import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.Objects;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends BaseRCSettingsConfigurable {
@@ -424,6 +425,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         if (!StringUtil.equals(myDefaultTargetName, chosenTarget)) {
           setModified(true);
           setTargetName(chosenTarget);
+          SingleConfigurationConfigurable.this.updateWarning();
         }
       });
     }
@@ -437,7 +439,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
 
       boolean targetAware =
-        configuration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("run.targets");
+        configuration instanceof TargetEnvironmentAwareRunProfile &&
+        ((TargetEnvironmentAwareRunProfile)configuration).getDefaultLanguageRuntimeType() != null &&
+        Experiments.getInstance().isFeatureEnabled("run.targets");
       myRunOnPanel.setVisible(targetAware);
       if (targetAware) {
         String defaultTargetName = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultTargetName();
@@ -456,7 +460,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     private void resetRunOnComboBox(@Nullable String targetNameToChoose) {
       ((RunOnTargetComboBox)myRunOnComboBox).initModel();
-      ((RunOnTargetComboBox)myRunOnComboBox).addTargets(TargetEnvironmentsManager.getInstance().getTargets().resolvedConfigs());
+      List<TargetEnvironmentConfiguration> configs = TargetEnvironmentsManager.getInstance(myProject).getTargets().resolvedConfigs();
+      ((RunOnTargetComboBox)myRunOnComboBox).addTargets(ContainerUtil.filter(configs, configuration -> {
+        return TargetEnvironmentConfigurationKt.getTargetType(configuration).isSystemCompatible();
+      }));
       ((RunOnTargetComboBox)myRunOnComboBox).selectTarget(targetNameToChoose);
     }
 
@@ -517,9 +524,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           String selectedName = ((RunOnTargetComboBox)myRunOnComboBox).getSelectedTargetName();
           LanguageRuntimeType<?> languageRuntime = ((RunOnTargetComboBox)myRunOnComboBox).getDefaultLanguageRuntimeType();
           TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(myProject, selectedName, languageRuntime);
-          if (ShowSettingsUtil.getInstance().editConfigurable(myWholePanel, configurable)) {
+          if (configurable.openForEditing()) {
             TargetEnvironmentConfiguration lastEdited = configurable.getSelectedTargetConfig();
-            resetRunOnComboBox(lastEdited != null ? lastEdited.getDisplayName() : selectedName);
+            String chosenTargetName = lastEdited != null ? lastEdited.getDisplayName() : selectedName;
+            resetRunOnComboBox(chosenTargetName);
+            setTargetName(chosenTargetName);
+            SingleConfigurationConfigurable.this.updateWarning();
           }
         });
       myJBScrollPane = wrapWithScrollPane(null);

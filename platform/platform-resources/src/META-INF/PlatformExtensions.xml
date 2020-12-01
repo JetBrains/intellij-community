@@ -322,6 +322,10 @@
                              bundle="messages.CredentialStoreBundle"
                              key="password.safe.configurable"
                              id="application.passwordSafe"/>
+
+    <applicationService serviceInterface="com.intellij.execution.process.ElevationService"
+                        serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.execution.process.OSProcessManager"
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
 
@@ -330,7 +334,7 @@
     <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
                     serviceImplementation="com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ProjectSchemeManagerFactory"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.editor.EditorActivityManager" />
+    <applicationService serviceImplementation="com.intellij.openapi.editor.EditorActivityManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.TextAttributeKeyDefaultsProviderImpl"/>
@@ -348,6 +352,7 @@
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
         serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector"/>
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents"
                         serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.FeatureUsageUiEventsImpl"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginInfoProvider"
@@ -435,6 +440,8 @@
                        order="after ProjectsWelcomeTab"/>
     <welcomeTabFactory id="PluginsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory"
                        order="after CustomizeWelcomeTab"/>
+    <welcomeTabFactory id="LearnIdeWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.LearnIdeTabFactory"
+                       order="after PluginsWelcomeTab'"/>
     <welcomeScreenCustomization id="defaultCustomization"
                                 implementation="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenDefaultCustomization"/>
 
@@ -626,6 +633,8 @@
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.openapi.updateSettings.impl.UpdateDialogURLValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.TipsOfTheDayUsagesCollector$TipInfoValidationRule"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorValidationRule"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ui.GotItIDValidator"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
@@ -640,6 +649,7 @@
     <applicationInitializedListener implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenEventCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector"/>
@@ -647,6 +657,8 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.navigation.actions.GTDUCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.accessibility.AccessibilityUsageTrackerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector"/>
     <statistics.counterUsagesCollector groupId="live.templates" version="46"/>
     <statistics.counterUsagesCollector groupId="vcs.diff.trigger" version="1"/>
     <statistics.counterUsagesCollector groupId="vcs.back.forward.trigger" version="1"/>
@@ -664,7 +676,7 @@
     <statistics.counterUsagesCollector groupId="vcs" version="4"/>
     <statistics.counterUsagesCollector groupId="build" version="2"/>
     <statistics.counterUsagesCollector groupId="project.import" version="2"/>
-    <statistics.counterUsagesCollector groupId="ui.event" version="8"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.service.fus.collectors.UIEventLogger"/>
     <statistics.counterUsagesCollector groupId="plugins.advertiser" version="1"/>
     <statistics.counterUsagesCollector groupId="plugins.dynamic" version="1"/>
     <statistics.counterUsagesCollector groupId="editor.notification.panel" version="1"/>
@@ -673,19 +685,21 @@
     <statistics.counterUsagesCollector groupId="ide.update.dialog" version="1"/>
 
     <statistics.counterUsagesCollector groupId="light.edit" version="1"/>
-    <statistics.counterUsagesCollector groupId="editor.typing" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger"/>
 
     <statistics.counterUsagesCollector groupId="ui.mnemonic" version="1"/>
 
     <statistics.counterUsagesCollector groupId="event.log" version="57"/>
-    <statistics.counterUsagesCollector groupId="performance" version="57"/>
-    <statistics.counterUsagesCollector groupId="notifications" version="57"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.LowMemoryNotifier$UILatencyLogger"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.notification.impl.NotificationsEventLogGroup"/>
     <statistics.counterUsagesCollector groupId="productivity" version="57"/>
     <statistics.counterUsagesCollector groupId="ui.dialogs" version="57"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="settings.changes" version="57"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup"/>
 
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
+    <statistics.collectorExtension implementation="com.intellij.ide.actions.DragEditorTabsFusEventFields"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader"/>
     <applicationInitializedListener implementation="com.intellij.ide.customize.CustomizeIDEWizardCollectorActivity"/>
@@ -724,6 +738,7 @@
 
     <postStartupActivity implementation="com.intellij.ide.util.TipsOrderUtil$RecommendationsStartupActivity"/>
     <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
+    <postStartupActivity id="CodeWithMe203StartupActivity" implementation="com.intellij.ide.CodeWithMe203StartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
 
@@ -851,6 +866,13 @@
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
 
+    <!--Got It Tooltips-->
+    <statistics.gotItTooltipAllowlist prefix="extract.method.gotit.navigate"/>
+    <statistics.gotItTooltipAllowlist prefix="extract.method.signature.change"/>
+    <statistics.gotItTooltipAllowlist prefix="changes.view.toolwindow"/>
+    <statistics.gotItTooltipAllowlist prefix="reader.mode.got.it"/>
+    <statistics.gotItTooltipAllowlist prefix="fragment.hidden"/>
+
     <!-- Browsers -->
     <applicationService serviceInterface="com.intellij.ide.browsers.BrowserLauncher" serviceImplementation="com.intellij.ide.browsers.BrowserLauncherImpl"/>
     <applicationConfigurable groupId="tools" groupWeight="160" instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
@@ -887,10 +909,6 @@
 
     <experimentalFeature id="show.create.new.element.in.popup" percentOfUsers="100">
       <description>Use popups (instead of dialogs) for creating new items (files, classes, etc.)</description>
-    </experimentalFeature>
-
-    <experimentalFeature id="whats.new.notification" percentOfUsers="0">
-      <description>Defines whether to show "What's new" notification after IDE update or not.</description>
     </experimentalFeature>
 
     <experimentalFeature id="search.everywhere.mixed.results" percentOfUsers="100">
@@ -941,8 +959,6 @@
         <component>FUSApplicationUsageTrigger</component>
         <component>EventLogWhitelist</component>
         <component>PhpLanguageFeatureUsagesStatistics</component>
-        <component>FeatureUsageStatistics</component>
-        <component>UsagesStatistic</component>
       </components>
     </obsoleteStorage>
     <obsoleteStorage file="lastSelectedPropertiesFile.xml">
@@ -1102,6 +1118,7 @@
     <backgroundPostStartupActivity implementation="com.intellij.accessibility.AccessibilityUsageTrackerCollector$CollectStatisticsTask"/>
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
+    <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
@@ -1122,7 +1139,7 @@
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.openapi.fileTypes.StdFileTypes$StdFileTypesUpdater" activeInHeadlessMode="true" activeInTestMode="false"
               topic="com.intellij.openapi.fileTypes.FileTypeListener" />
-    <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger" activeInHeadlessMode="true" activeInTestMode="false"
+    <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger$TypingEventsListener" activeInHeadlessMode="true" activeInTestMode="false"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
 </idea-plugin>

@@ -2,7 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,6 +13,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.intellij.util.BitUtil.isSet;
-import static java.nio.file.attribute.PosixFilePermission.*;
 
 public abstract class Decompressor {
   /**
@@ -68,15 +68,18 @@ public abstract class Decompressor {
     }
 
     @Override
-    @SuppressWarnings("OctalInteger")
     protected Entry nextEntry() throws IOException {
       TarArchiveEntry te;
       while ((te = myStream.getNextTarEntry()) != null && !(te.isFile() || te.isDirectory() || te.isSymbolicLink())) /* skipping unsupported */;
-      return te == null ? null : new Entry(te.getName(), type(te), isSet(te.getMode(), 0200), isSet(te.getMode(), 0100), te.getLinkName());
+      if (te == null) return null;
+      if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName());
+      // Unix permissions are ignored on Windows
+      if (te.isSymbolicLink()) return new Entry(te.getName(), Entry.Type.SYMLINK, 0, te.getLinkName());
+      return new Entry(te.getName(), te.isDirectory());
     }
 
-    private static Type type(TarArchiveEntry te) {
-      return te.isSymbolicLink() ? Type.SYMLINK : te.isDirectory() ? Type.DIR : Type.FILE;
+    private static Entry.Type type(TarArchiveEntry te) {
+      return te.isSymbolicLink() ? Entry.Type.SYMLINK : te.isDirectory() ? Entry.Type.DIR : Entry.Type.FILE;
     }
 
     @Override
@@ -107,14 +110,21 @@ public abstract class Decompressor {
     }
 
     /**
-     * <p>Returns an alternative implementation that is more slow but supports symlink and POSIX permission ZIP extensions.</p>
-     * <p><b>NOTE</b>: requires CommonsCompress to be on the classpath.</p>
+     * <p>Returns an alternative implementation that is slower but supports ZIP extensions (UNIX/DOS attributes, symlinks).</p>
+     * <p><b>NOTE</b>: requires Commons Compress to be on the classpath.</p>
      */
-    public @NotNull Decompressor withUnixPermissionsAndSymlinks() {
+    public @NotNull Decompressor withZipExtensions() {
       return new CommonsZip(mySource);
     }
 
     //<editor-fold desc="Implementation">
+    /** @deprecated please use {@link #withZipExtensions()} instead */
+    @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    public @NotNull Decompressor withUnixPermissionsAndSymlinks() {
+      return new CommonsZip(mySource);
+    }
+
     private final File mySource;
     private ZipFile myZip;
     private Enumeration<? extends ZipEntry> myEntries;
@@ -144,10 +154,8 @@ public abstract class Decompressor {
 
     @Override
     protected void closeStream() throws IOException {
-      if (myZip != null) {
-        myZip.close();
-        myZip = null;
-      }
+      myZip.close();
+      myZip = null;
     }
 
     private static class CommonsZip extends Decompressor {
@@ -167,16 +175,35 @@ public abstract class Decompressor {
       }
 
       @Override
-      @SuppressWarnings("OctalInteger")
       protected Entry nextEntry() throws IOException {
         myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
         if (myEntry == null) return null;
-        String target = myEntry.isUnixSymlink() ? myZip.getUnixSymlink(myEntry) : null;
-        return new Entry(myEntry.getName(), type(myEntry), isSet(myEntry.getUnixMode(), 0200), isSet(myEntry.getUnixMode(), 0100), target);
+        int platform = myEntry.getPlatform();
+        if (SystemInfo.isWindows) {
+          // Unix permissions are ignored on Windows
+          if (platform == ZipArchiveEntry.PLATFORM_UNIX) {
+            return new Entry(myEntry.getName(), type(myEntry), 0, myZip.getUnixSymlink(myEntry));
+          }
+          if (platform == ZipArchiveEntry.PLATFORM_FAT) {
+            return new Entry(myEntry.getName(), type(myEntry), (int)(myEntry.getExternalAttributes()), null);
+          }
+        }
+        else {
+          if (platform == ZipArchiveEntry.PLATFORM_UNIX) {
+            return new Entry(myEntry.getName(), type(myEntry), myEntry.getUnixMode(), myZip.getUnixSymlink(myEntry));
+          }
+          if (platform == ZipArchiveEntry.PLATFORM_FAT) {
+            // DOS attributes are converted into Unix permissions
+            long attributes = myEntry.getExternalAttributes();
+            @SuppressWarnings("OctalInteger") int unixMode = isSet(attributes, Entry.DOS_READ_ONLY) ? 0444 : 0644;
+            return new Entry(myEntry.getName(), type(myEntry), unixMode, myZip.getUnixSymlink(myEntry));
+          }
+        }
+        return new Entry(myEntry.getName(), myEntry.isDirectory());
       }
 
-      private static Type type(ZipArchiveEntry te) {
-        return te.isUnixSymlink() ? Type.SYMLINK : te.isDirectory() ? Type.DIR : Type.FILE;
+      private static Entry.Type type(ZipArchiveEntry e) {
+        return e.isUnixSymlink() ? Entry.Type.SYMLINK : e.isDirectory() ? Entry.Type.DIR : Entry.Type.FILE;
       }
 
       @Override
@@ -199,7 +226,6 @@ public abstract class Decompressor {
   }
 
   private @Nullable Predicate<? super String> myFilter = null;
-  private @Nullable Condition<? super Entry> myEntryFilter = null;
   private @Nullable List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
   private @Nullable Consumer<? super Path> myPostProcessor;
@@ -210,28 +236,8 @@ public abstract class Decompressor {
     return this;
   }
 
-  /** @deprecated Use {@link #filter(Predicate)} */
-  @Deprecated
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  public Decompressor filter(@Nullable Condition<? super String> filter) {
-    myFilter = filter == null ? null : it -> filter.value(it);
-    return this;
-  }
-
-  public Decompressor filterEntries(@Nullable Condition<? super Entry> filter) {
-    myEntryFilter = filter;
-    return this;
-  }
-
   public Decompressor overwrite(boolean overwrite) {
     myOverwrite = overwrite;
-    return this;
-  }
-
-  /** @deprecated Use {@link #postProcessor} */
-  @Deprecated
-  public Decompressor postprocessor(@Nullable com.intellij.util.Consumer<? super File> consumer) {
-    myPostProcessor = consumer == null ? null : path -> consumer.consume(path.toFile());
     return this;
   }
 
@@ -265,14 +271,10 @@ public abstract class Decompressor {
       Entry entry;
       while ((entry = nextEntry()) != null) {
         if (myFilter != null) {
-          String entryName = entry.type == Type.DIR && !Strings.endsWithChar(entry.name, '/') ? entry.name + '/' : entry.name;
+          String entryName = entry.type == Entry.Type.DIR && !Strings.endsWithChar(entry.name, '/') ? entry.name + '/' : entry.name;
           if (!myFilter.test(entryName)) {
             continue;
           }
-        }
-
-        if (myEntryFilter != null && !myEntryFilter.value(entry)) {
-          continue;
         }
 
         if (myPathsPrefix != null) {
@@ -294,7 +296,9 @@ public abstract class Decompressor {
                 try (OutputStream outputStream = Files.newOutputStream(outputFile)) {
                   StreamUtil.copy(inputStream, outputStream);
                 }
-                setAttributes(entry, outputFile);
+                if (entry.mode != 0) {
+                  setAttributes(entry.mode, outputFile);
+                }
               }
               finally {
                 closeEntryStream(inputStream);
@@ -336,7 +340,7 @@ public abstract class Decompressor {
       return null;
     }
     String newName = String.join("/", ourPathSplit.subList(prefix.size(), ourPathSplit.size()));
-    return new Entry(newName, e.type, e.isWritable, e.isExecutable, e.linkTarget);
+    return new Entry(newName, e.type, e.mode, e.linkTarget);
   }
 
   private static List<String> normalizePathAndSplit(String path) throws IOException {
@@ -345,29 +349,29 @@ public abstract class Decompressor {
     return FileUtilRt.splitPath(StringUtil.trimLeading(canonicalPath, '/'), '/');
   }
 
-  private static void setAttributes(Entry entry, Path outputFile) throws IOException {
-    if (!entry.isWritable || entry.isExecutable) {
-      if (SystemInfoRt.isWindows) {
-        if (!entry.isWritable) {
-          DosFileAttributeView attrs = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
-          if (attrs != null) {
-            attrs.setReadOnly(true);
-          }
-        }
+  @SuppressWarnings("OctalInteger")
+  private static void setAttributes(int mode, Path outputFile) throws IOException {
+    if (SystemInfo.isWindows) {
+      DosFileAttributeView attrs = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
+      if (attrs != null) {
+        if (isSet(mode, Entry.DOS_READ_ONLY)) attrs.setReadOnly(true);
+        if (isSet(mode, Entry.DOS_HIDDEN)) attrs.setHidden(true);
       }
-      else {
-        PosixFileAttributeView attrs = Files.getFileAttributeView(outputFile, PosixFileAttributeView.class);
-        if (attrs != null) {
-          Set<PosixFilePermission> permissions = EnumSet.of(OWNER_READ, GROUP_READ, OTHERS_READ);
-          if (entry.isWritable) {
-            permissions.add(OWNER_WRITE);
-            permissions.add(GROUP_WRITE);
-          }
-          if (entry.isExecutable) {
-            permissions.add(OWNER_EXECUTE);
-          }
-          attrs.setPermissions(permissions);
-        }
+    }
+    else {
+      PosixFileAttributeView attrs = Files.getFileAttributeView(outputFile, PosixFileAttributeView.class);
+      if (attrs != null) {
+        Set<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
+        if (isSet(mode, 0400)) permissions.add(PosixFilePermission.OWNER_READ);
+        if (isSet(mode, 0200)) permissions.add(PosixFilePermission.OWNER_WRITE);
+        if (isSet(mode, 0100)) permissions.add(PosixFilePermission.OWNER_EXECUTE);
+        if (isSet(mode, 040)) permissions.add(PosixFilePermission.GROUP_READ);
+        if (isSet(mode, 020)) permissions.add(PosixFilePermission.GROUP_WRITE);
+        if (isSet(mode, 010)) permissions.add(PosixFilePermission.GROUP_EXECUTE);
+        if (isSet(mode, 04)) permissions.add(PosixFilePermission.OTHERS_READ);
+        if (isSet(mode, 02)) permissions.add(PosixFilePermission.OTHERS_WRITE);
+        if (isSet(mode, 01)) permissions.add(PosixFilePermission.OTHERS_EXECUTE);
+        attrs.setPermissions(permissions);
       }
     }
   }
@@ -375,30 +379,31 @@ public abstract class Decompressor {
   //<editor-fold desc="Internal interface">
   protected Decompressor() { }
 
-  public enum Type {FILE, DIR, SYMLINK}
+  protected static final class Entry {
+    enum Type {FILE, DIR, SYMLINK}
 
-  public static final class Entry {
+    static final int DOS_READ_ONLY = 0b01;
+    static final int DOS_HIDDEN = 0b010;
+
     public final String name;
-    public final Type type;
-    public final boolean isWritable;
-    public final boolean isExecutable;
-    public final String linkTarget;
+    public final @Nullable String linkTarget;
+    final Type type;
+    final int mode;
 
     Entry(String name, boolean isDirectory) {
-      this(name, isDirectory ? Type.DIR : Type.FILE, true, false, null);
+      this(name, isDirectory ? Type.DIR : Type.FILE, 0, null);
     }
 
-    Entry(String name, Type type, boolean isWritable, boolean isExecutable, String linkTarget) {
+    Entry(String name, Type type, int mode, @Nullable String linkTarget) {
       this.name = name;
       this.type = type;
-      this.isWritable = isWritable;
-      this.isExecutable = isExecutable;
+      this.mode = mode;
       this.linkTarget = linkTarget;
     }
   }
 
   protected abstract void openStream() throws IOException;
-  protected abstract Entry nextEntry() throws IOException;
+  protected abstract @Nullable Entry nextEntry() throws IOException;
   protected abstract InputStream openEntryStream(Entry entry) throws IOException;
   protected abstract void closeEntryStream(InputStream stream) throws IOException;
   protected abstract void closeStream() throws IOException;
@@ -414,4 +419,21 @@ public abstract class Decompressor {
     ensureValidPath(entryName);
     return outputDir.resolve(StringUtil.trimLeading(entryName, '/'));
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated please use {@link #filter(Predicate)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public Decompressor filter(@Nullable Condition<? super String> filter) {
+    return filter(filter == null ? null : (Predicate<? super String>)(it -> filter.value(it)));
+  }
+
+  /** @deprecated please use {@link #postProcessor(Consumer)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public Decompressor postprocessor(@Nullable com.intellij.util.Consumer<? super File> consumer) {
+    return postProcessor(consumer == null ? null : path -> consumer.consume(path.toFile()));
+  }
+  //</editor-fold>
 }

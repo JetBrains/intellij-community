@@ -83,7 +83,8 @@ public final class IdeEventQueue extends EventQueue {
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
   private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
-  private static final boolean ourActionAwareTypeaheadEnabled = !SystemInfo.isMac && SystemProperties.getBooleanProperty("action.aware.typeAhead", true);
+  private static final boolean ourActionAwareTypeaheadEnabled = !SystemInfo.isMac && !SystemInfo.isLinux &&
+                                                                SystemProperties.getBooleanProperty("action.aware.typeAhead", true);
   private static final boolean ourTypeAheadSearchEverywhereEnabled =
     SystemProperties.getBooleanProperty("action.aware.typeAhead.searchEverywhere", false);
   private static final boolean ourSkipTypedEvent = SystemProperties.getBooleanProperty("skip.typed.event", true);
@@ -125,6 +126,7 @@ public final class IdeEventQueue extends EventQueue {
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Runnable> myReady = new HashSet<>();
+  private final HoverService myHoverService = new HoverService();
   private boolean myKeyboardBusy;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
@@ -412,6 +414,7 @@ public final class IdeEventQueue extends EventQueue {
       }
 
       checkForTimeJump(startedAt);
+      myHoverService.process(e);
 
       if (!appIsLoaded()) {
         try {

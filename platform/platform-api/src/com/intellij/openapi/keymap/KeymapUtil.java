@@ -332,6 +332,16 @@ public final class KeymapUtil {
     return "";
   }
 
+  @NotNull
+  public static @NlsSafe String getFirstMouseShortcutText(@NotNull @NonNls String actionId) {
+    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut instanceof MouseShortcut) {
+        return getShortcutText(shortcut);
+      }
+    }
+    return "";
+  }
+
   public static boolean isEventForAction(@NotNull KeyEvent keyEvent, @NotNull @NonNls String actionId) {
     for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
       if (shortcut instanceof KeyboardShortcut && AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == ((KeyboardShortcut)shortcut).getFirstKeyStroke()) {

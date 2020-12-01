@@ -5,6 +5,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
@@ -81,6 +82,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull private final ChangesTreeHandlers myHandlers;
   private boolean myKeepTreeState = false;
+  private boolean myScrollToSelection = true;
 
   @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
   @NonNls private static final String GROUPING_KEYS = "ChangesTree.GroupingKeys";
@@ -362,6 +364,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       TreeState state = null;
       if (myKeepTreeState) {
         state = TreeState.createOn(this, getRoot());
+        state.setScrollToSelection(myScrollToSelection);
       }
 
       setModel(model);
@@ -697,6 +700,14 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   public void setKeepTreeState(boolean keepTreeState) {
     myKeepTreeState = keepTreeState;
+  }
+
+  public boolean isScrollToSelection() {
+    return myScrollToSelection;
+  }
+
+  public void setScrollToSelection(boolean scrollToSelection) {
+    myScrollToSelection = scrollToSelection;
   }
 
   @Nullable

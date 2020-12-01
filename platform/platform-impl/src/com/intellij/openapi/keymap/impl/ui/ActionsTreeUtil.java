@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
@@ -555,6 +556,9 @@ public final class ActionsTreeUtil {
       ArrayList<String> options = new ArrayList<>();
       options.add(action.getTemplatePresentation().getText());
       options.add(action.getTemplatePresentation().getDescription());
+      for (Supplier<String> synonym : action.getSynonyms()) {
+        options.add(synonym.get());
+      }
       String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
       if (id != null) {
         options.add(id);

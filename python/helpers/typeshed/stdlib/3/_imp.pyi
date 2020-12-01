@@ -1,5 +1,3 @@
-# Stubs for _imp (Python 3.6)
-
 import types
 from importlib.machinery import ModuleSpec
 from typing import Any, List

@@ -128,8 +128,7 @@ abstract class UiDslTest {
 
   @Test
   fun `checkbox rows with big components`() {
-    // ComboBoxes in MacOs LaF have different border insets, that are used to build layout constraints
-    IoTestUtil.assumeMacOS()
+    Assume.assumeFalse("ComboBoxes in MacOs LaF have different border insets, that are used to build layout constraints", SystemInfo.isMac)
     doTest { checkboxRowsWithBigComponents() }
   }
 

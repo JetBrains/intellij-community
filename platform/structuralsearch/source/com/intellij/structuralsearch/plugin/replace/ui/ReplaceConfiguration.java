@@ -82,9 +82,4 @@ public class ReplaceConfiguration extends Configuration {
   public int hashCode() {
     return 31 * super.hashCode() + myReplaceOptions.hashCode();
   }
-
-  @Override
-  public LanguageFileType getFileType() {
-    return myReplaceOptions.getMatchOptions().getFileType();
-  }
 }

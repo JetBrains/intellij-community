@@ -48,6 +48,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon DiffWithClipboard = load("actions/diffWithClipboard.svg", -3860075951405125257L, 2);
     /** 16x16 */ public static final @NotNull Icon Download = load("actions/download.svg", -5995640021644586396L, 2);
     /** 16x16 */ public static final @NotNull Icon Dump = load("actions/dump.svg", -1999792581111822882L, 2);
+    /** 16x16 */ public static final @NotNull Icon DynamicUsages = load("actions/dynamicUsages.svg", -3038340384984333293L, 2);
     /** 16x16 */ public static final @NotNull Icon Edit = load("actions/edit.svg", 6256745109677636307L, 2);
     /** 16x16 */ public static final @NotNull Icon EditScheme = load("actions/editScheme.svg", 2969091749870783802L, 2);
     /** 16x16 */ public static final @NotNull Icon EditSource = load("actions/editSource.svg", 561957038266216006L, 2);
@@ -226,11 +227,11 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CwmFollowMe = load("codeWithMe/cwmFollowMe.svg", -270893421881497261L, 2);
     /** 16x16 */ public static final @NotNull Icon CwmForceFollowMe = load("codeWithMe/cwmForceFollowMe.svg", 4620331311933886528L, 2);
     /** 16x16 */ public static final @NotNull Icon CwmFullSync = load("codeWithMe/cwmFullSync.svg", -5990287561754382387L, 2);
-    /** 16x16 */ public static final @NotNull Icon CwmInvite = load("codeWithMe/cwmInvite.svg", 2374138593643960789L, 2);
-    /** 16x16 */ public static final @NotNull Icon CwmJoin = load("codeWithMe/cwmJoin.svg", -8825082033742755597L, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmInvite = load("codeWithMe/cwmInvite.svg", 2052909107704444148L, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmJoin = load("codeWithMe/cwmJoin.svg", -2286141021758642105L, 2);
     /** 16x16 */ public static final @NotNull Icon CwmJump = load("codeWithMe/cwmJump.svg", 6222033519634375585L, 2);
     /** 16x16 */ public static final @NotNull Icon CwmKick = load("codeWithMe/cwmKick.svg", -4882021339463982249L, 2);
-    /** 16x16 */ public static final @NotNull Icon CwmTerminate = load("codeWithMe/cwmTerminate.svg", 7344986962732599935L, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmTerminate = load("codeWithMe/cwmTerminate.svg", 810707231908586571L, 2);
     /** 16x16 */ public static final @NotNull Icon Users = load("codeWithMe/users.svg", -3982956695729524383L, 2);
   }
 
@@ -403,6 +404,10 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon BalloonWarning = load("general/balloonWarning.svg", -8276668115639094254L, 2);
     /** 12x12 */ public static final @NotNull Icon BalloonWarning12 = load("general/balloonWarning12.svg", 6705424357398127516L, 2);
     /** 8x4 */ public static final @NotNull Icon ButtonDropTriangle = load("general/buttonDropTriangle.svg", -8269536136438475818L, 2);
+    /** 16x16 */ public static final @NotNull Icon ChevronDown = load("general/chevron-down.svg", -6012940629945477261L, 0);
+    /** 16x16 */ public static final @NotNull Icon ChevronLeft = load("general/chevron-left.svg", -4543373687359135559L, 0);
+    /** 16x16 */ public static final @NotNull Icon ChevronRight = load("general/chevron-right.svg", 1614753329141226892L, 0);
+    /** 16x16 */ public static final @NotNull Icon ChevronUp = load("general/chevron-up.svg", 8857373647534016930L, 0);
     /** 16x16 */ public static final @NotNull Icon CollapseComponent = load("general/collapseComponent.svg", 363988761748794912L, 0);
     /** 16x16 */ public static final @NotNull Icon CollapseComponentHover = load("general/collapseComponentHover.svg", 812123968509113857L, 0);
     /** 16x16 */ public static final @NotNull Icon ContextHelp = load("general/contextHelp.svg", 1376735081551049382L, 0);

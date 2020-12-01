@@ -26,7 +26,7 @@ internal class TipOfTheDayStartupActivity : StartupActivity.DumbAware {
       val disposable = disposableRef.getAndSet(null) ?: return@schedule
       Disposer.dispose(disposable)
 
-      if (!project.isDisposed && TipDialog.canBeShownAutomaticallyNow()) {
+      if (!project.isDisposed && TipDialog.canBeShownAutomaticallyNow(project)) {
         TipsOfTheDayUsagesCollector.DIALOG_SHOWN.log(TipsOfTheDayUsagesCollector.DialogType.automatically)
         TipDialog.showForProject(project)
       }

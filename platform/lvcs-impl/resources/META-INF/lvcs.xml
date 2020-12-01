@@ -23,6 +23,13 @@
       <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
       <add-to-group group-id="ViewRecentActions" anchor="last"/>
     </action>
+
+    <group id="LocalHistory.Vcs.Operations.Popup.Group">
+      <separator key="separator.Local.History.text"/>
+      <reference id="LocalHistory.ShowHistory"/>
+      <reference id="LocalHistory.PutLabel"/>
+      <add-to-group group-id="Vcs.Operations.Popup" anchor="after" relative-to-action="ShowAnnotateOperationsPopupGroup"/>
+    </group>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>

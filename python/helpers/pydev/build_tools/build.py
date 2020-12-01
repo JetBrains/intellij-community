@@ -89,10 +89,12 @@ def get_environment_from_batch_command(env_cmd, initial=None):
 
 
 def remove_binaries(suffixes):
-    for f in os.listdir(os.path.join(root_dir, '_pydevd_bundle')):
-        for suffix in suffixes:
-            if f.endswith(suffix):
-                remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', f))
+    # noinspection SpellCheckingInspection
+    for binary_dir in '_pydevd_bundle', '_pydevd_frame_eval':
+        for f in os.listdir(os.path.join(root_dir, binary_dir)):
+            for suffix in suffixes:
+                if f.endswith(suffix):
+                    remove_if_exists(os.path.join(root_dir, binary_dir, f))
 
 
 def build():

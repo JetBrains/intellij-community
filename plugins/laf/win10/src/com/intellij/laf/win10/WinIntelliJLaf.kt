@@ -29,9 +29,9 @@ class WinIntelliJLaf : IntelliJLaf() {
   }
 
   private class Win10MenuArrowIcon :
-    MenuArrowIcon(WinIconLookup.getIcon(name = MENU_TRIANGLE_ICON_NAME),
-                  WinIconLookup.getIcon(name = MENU_TRIANGLE_ICON_NAME, selected = true),
-                  WinIconLookup.getIcon(name = MENU_TRIANGLE_ICON_NAME, enabled = false))
+    MenuArrowIcon({ WinIconLookup.getIcon(name = MENU_TRIANGLE_ICON_NAME) },
+                  { WinIconLookup.getIcon(name = MENU_TRIANGLE_ICON_NAME, selected = true) },
+                  { WinIconLookup.getIcon(name = MENU_TRIANGLE_ICON_NAME, enabled = false) })
 
   companion object {
     const val MENU_TRIANGLE_ICON_NAME = "menuTriangle"

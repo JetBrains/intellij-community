@@ -12,12 +12,12 @@ boolean isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
 boolean isMac = Os.isFamily(Os.FAMILY_MAC)
 
 envs {
-  String python27version = "2.7.16"
-  String python35version = "3.5.7"
+  String python27version = "2.7.18"
+  String python35version = isWindows ? "3.5.4" : "3.5.7"
   String python36version = "3.6.8"
-  String python37version = "3.7.6"
-  String python38version = "3.8.1"
-  String python39version = isWindows ? "3.9.0b4" : "3.9-dev"
+  String python37version = "3.7.9"
+  String python38version = "3.8.5"
+  String python39version = "3.9.0"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir
@@ -74,7 +74,7 @@ task buildBinariesOnWindows(dependsOn: 'build_envs') doLast {
                 MINICONDA32_ENVS: envs.envsDirectory,
                 MINICONDA64_ENVS: envs.envsDirectory
 
-    commandLine "${envs.envsDirectory}/py27_32/Scripts/python.exe", "build_tools/build_binaries_windows.py"
+    commandLine "${envs.envsDirectory}/py38_32/Scripts/python.exe", "build_tools/build_binaries_windows.py"
   }
 }
 
@@ -85,7 +85,7 @@ task buildBinariesOnMac(dependsOn: 'build_envs') doLast {
     environment PYTHONPATH: pydevDir,
                 MINICONDA64_ENVS: envs.envsDirectory
 
-    commandLine "${envs.envsDirectory}/py37_64/bin/python", "build_tools/build_binaries_osx.py"
+    commandLine "${envs.envsDirectory}/py38_64/bin/python", "build_tools/build_binaries_osx.py"
   }
 }
 

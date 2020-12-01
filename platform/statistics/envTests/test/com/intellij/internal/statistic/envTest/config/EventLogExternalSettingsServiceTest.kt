@@ -29,6 +29,14 @@ internal class EventLogExternalSettingsServiceTest : StatisticsServiceBaseTest()
     assertNewMetadata(settings.metadataProductUrl, metadata)
   }
 
+  fun `test load options from external settings`() {
+    val settings = configureDynamicConfig(TimeUnit.HOURS.toMillis(1))
+
+    TestCase.assertEquals(settings.getOptionValue("dataThreshold"), "16000")
+    TestCase.assertEquals(settings.getOptionValue("groupDataThreshold"), "8000")
+    TestCase.assertEquals(settings.getOptionValue("groupAlertThreshold"), "4000")
+  }
+
   private fun configureDynamicConfig(configCacheTimeoutMs: Long): EventLogUploadSettingsService {
     val applicationInfo = TestEventLogApplicationInfo(RECORDER_ID, container.getBaseUrl("config/dynamic_config.php").toString())
     return EventLogUploadSettingsService(RECORDER_ID, applicationInfo, configCacheTimeoutMs)

@@ -45,7 +45,6 @@
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
   <depends optional="true" config-file="maven-dependency-update-integration.xml">com.intellij.externalSystem.dependencyUpdater</depends>
 
-
   <extensions defaultExtensionNs="com.intellij">
     <pathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
@@ -277,7 +276,6 @@
     </intentionAction>
 
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
-    <notificationGroup id="Maven: non-managed pom.xml" displayType="BALLOON"/>
     <notificationGroup id="Maven" displayType="BALLOON"/>
     <toolWindowAllowlist id="Maven"/>
   </extensions>

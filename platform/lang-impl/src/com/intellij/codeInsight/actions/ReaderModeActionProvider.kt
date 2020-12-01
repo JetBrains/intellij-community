@@ -18,7 +18,6 @@ import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.SystemInfo
@@ -32,7 +31,6 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Insets
-import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 
@@ -48,7 +46,7 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
           else {
             if (project.isInitialized) {
               val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.virtualFile
-              e.presentation.isEnabledAndVisible = matchMode(project, file)
+              e.presentation.isEnabledAndVisible = matchMode(project, file, editor)
             }
             else {
               e.presentation.isEnabledAndVisible = false
@@ -98,6 +96,8 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
         }
 
         editor.project?.let { p ->
+          if (!ReaderModeSettings.instance(p).enabled) return@let
+
           val connection = p.messageBus.connect(p)
           val gotItTooltip = GotItTooltip("reader.mode.got.it", LangBundle.message("text.reader.mode.got.it.popup"), p)
                               .withHeader(LangBundle.message("title.reader.mode.got.it.popup"))
@@ -106,12 +106,13 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
             connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
               override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
                 fileEditors.find { fe -> if (fe is PsiAwareTextEditorImpl) editor == fe.editor else false }?.let { _ ->
-                  gotItTooltip.showAt(Balloon.Position.below, it) { component -> Point(component.width / 2, component.height) }?.
-                  also { balloon ->  balloon.addListener(object: JBPopupListener {
-                    override fun onClosed(event: LightweightWindowEvent) {
-                      connection.disconnect()
-                    }
-                  })}
+                  gotItTooltip.setOnBalloonCreated { balloon ->
+                    balloon.addListener(object: JBPopupListener {
+                      override fun onClosed(event: LightweightWindowEvent) {
+                        connection.disconnect()
+                      }
+                    })}.
+                  show(it, GotItTooltip.BOTTOM_MIDDLE)
                 }
               }
             })

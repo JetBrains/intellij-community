@@ -188,7 +188,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   }
 
   /**
-   * consider to use {@link DebugUtil.stubTreeToString()}
+   * Consider using {@link com.intellij.psi.impl.DebugUtil#stubTreeToString(Stub)}.
    */
   public String printTree() {
     StringBuilder builder = new StringBuilder();

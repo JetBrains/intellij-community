@@ -86,6 +86,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
     return PsiMethodUtil.hasMethodByName(classMethods, TO_STRING_METHOD_NAME, 0);
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     target.addAll(createToStringMethod(psiClass, psiAnnotation));
   }

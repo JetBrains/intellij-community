@@ -8,6 +8,7 @@ import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
@@ -29,8 +30,11 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jdom.Element
+import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
+import java.io.IOException
+import java.lang.Exception
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -154,7 +158,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       fileSerializersByUrl.remove(obsoleteSerializer.fileUrl.url, obsoleteSerializer)
     }
 
-    val affectedFileLoaders = (change.changedFileUrls + addedFileUrls).toCollection(HashSet()).flatMap { fileSerializersByUrl.getValues(it) }
+    val affectedFileLoaders = LinkedHashSet<JpsFileEntitiesSerializer<*>>(newFileSerializers)
+    addedFileUrls.flatMapTo(affectedFileLoaders) { fileSerializersByUrl.getValues(it) }
+    change.changedFileUrls.flatMapTo(affectedFileLoaders) { fileSerializersByUrl.getValues(it) }
+
     val changedSources = affectedFileLoaders.mapTo(HashSet()) { it.internalEntitySource }
     for (fileUrl in change.removedFileUrls) {
 
@@ -190,12 +197,24 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder, errorReporter: ErrorReporter) {
+    fun reportError(e: Exception, url: VirtualFileUrl) {
+      errorReporter.reportError(ProjectModelBundle.message("module.cannot.load.error", url.presentableUrl, e.localizedMessage), url)
+    }
+
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", 1)
     try {
       val tasks = fileSerializersByUrl.values.map { serializer ->
         Callable {
           val myBuilder = WorkspaceEntityStorageBuilder.create()
-          serializer.loadEntities(myBuilder, reader, errorReporter, virtualFileManager)
+          try {
+            serializer.loadEntities(myBuilder, reader, errorReporter, virtualFileManager)
+          }
+          catch (e: JDOMException) {
+            reportError(e, serializer.fileUrl)
+          }
+          catch (e: IOException) {
+            reportError(e, serializer.fileUrl)
+          }
           myBuilder
         }
       }
@@ -489,9 +508,8 @@ class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentRea
   }
 }
 
-// TODO Add more diagnostics: file path, line etc
 internal fun Element.getAttributeValueStrict(name: String): String =
-  getAttributeValue(name) ?: error("Expected attribute $name under ${this.name} element")
+  getAttributeValue(name) ?: throw JDOMException("Expected attribute $name under ${this.name} element")
 
 fun isExternalModuleFile(filePath: String): Boolean {
   val parentPath = PathUtil.getParentPath(filePath)

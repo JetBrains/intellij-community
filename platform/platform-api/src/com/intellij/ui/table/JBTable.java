@@ -11,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -46,6 +45,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.ui.TableUtil.stopEditing;
 import static com.intellij.ui.components.JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY;
+import static com.intellij.ui.render.RenderingUtil.isHoverPaintingDisabled;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   public static final int PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS = 7;
@@ -75,7 +75,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
 
-  protected int myMouseHoveredRow = -1;
+  private int myMouseHoveredRow = -1;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -190,8 +190,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     new MyCellEditorRemover();
   }
 
+  public final int getHoveredRow() {
+    return isHoverPaintingDisabled(this) ? -1 : myMouseHoveredRow;
+  }
+
   private void updateHoveredRow(int row) {
-    if (!Boolean.FALSE.equals(getClientProperty(RenderingUtil.PAINT_HOVERED_BACKGROUND)) && myMouseHoveredRow != row) {
+    if (myMouseHoveredRow != row && !isHoverPaintingDisabled(this)) {
       myMouseHoveredRow = row;
       repaint();
     }
@@ -688,7 +692,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           setRendererBackground(row, column, component, row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor());
         }
       }
-      else if (myMouseHoveredRow == row) {
+      else if (row == getHoveredRow()) {
         setRendererBackground(row, column, component, UIUtil.getTableHoverBackground(true));
       }
     }

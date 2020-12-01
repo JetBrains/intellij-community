@@ -5,6 +5,7 @@ import com.intellij.html.embedding.HtmlEmbedment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -39,7 +40,7 @@ public class HtmlLexer extends BaseHtmlLexer {
   }
 
   @Override
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     if (myTokenType != null) return myTokenType;
     IElementType tokenType = super.getTokenType();
 

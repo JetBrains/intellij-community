@@ -403,7 +403,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
       },
-      () -> myLegacyBridgeTestFilePointersTracker.disposePointersCreatedInTest(),
+      () -> {
+        myLegacyBridgeTestFilePointersTracker.disposePointersCreatedInTest();
+        myLegacyBridgeTestFilePointersTracker = null;
+      },
       () -> {
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();

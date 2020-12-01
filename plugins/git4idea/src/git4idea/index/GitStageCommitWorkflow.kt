@@ -4,6 +4,7 @@ package git4idea.index
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.checkin.CheckinHandler
@@ -17,7 +18,9 @@ private val LOG = logger<GitStageCommitWorkflow>()
 
 private fun GitStageTracker.RootState.getFullyStagedPaths(): Collection<FilePath> =
   statuses.values
-    .filter { it.getStagedStatus() != null && it.getUnStagedStatus() == null }
+    .filter { it.getStagedStatus() != null &&
+              it.getStagedStatus() != FileStatus.DELETED &&
+              it.getUnStagedStatus() == null }
     .map { it.path(ContentVersion.STAGED) }
 
 class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project) {

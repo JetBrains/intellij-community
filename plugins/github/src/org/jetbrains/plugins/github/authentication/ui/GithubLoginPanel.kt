@@ -129,8 +129,8 @@ internal class GithubLoginPanel(
   fun setPassword(password: String?) = passwordUi.setPassword(password.orEmpty())
   fun setToken(token: String?) = tokenUi.setToken(token.orEmpty())
 
-  fun setError(exception: Throwable) {
-    tokenAcquisitionError = currentUi.handleAcquireError(exception)
+  fun setError(exception: Throwable?) {
+    tokenAcquisitionError = exception?.let { currentUi.handleAcquireError(it) }
   }
 
   fun setOAuthUi() = applyUi(oauthUi)

@@ -16,7 +16,9 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.navigation.AnonymousElementProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -38,6 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.LangFilterCollector;
 
 /**
  * @author Konstantin Bulenkov
@@ -96,7 +100,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
-    return doGetActions(includeNonProjectItemsText(), myFilter, onChanged);
+    return doGetActions(includeNonProjectItemsText(), myFilter, new LangFilterCollector(), onChanged);
   }
 
   @NotNull

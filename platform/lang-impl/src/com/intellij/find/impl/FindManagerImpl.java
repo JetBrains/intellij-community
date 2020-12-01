@@ -446,10 +446,9 @@ public final class FindManagerImpl extends FindManager {
 
       if (findmodel.isRegularExpressions()) {
         newStringToFind = StringUtil.replace(s, "\\n", "\n"); // temporary convert back escaped symbols
-        newStringToFind = newStringToFind.replaceAll( "\n", "\\\\n\\\\s*"); // add \\s* for convenience
+        newStringToFind = newStringToFind.replaceAll( "\n", "\\\\n");
       } else {
         newStringToFind = StringUtil.escapeToRegexp(s);
-        newStringToFind = newStringToFind.replaceAll("\\\\n\\s*", "\\\\n\\\\s*");
         model.setRegularExpressions(true);
       }
       model.setStringToFind(newStringToFind);

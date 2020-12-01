@@ -20,6 +20,7 @@ class PluginLayout extends BaseLayout {
   PluginBundlingRestrictions bundlingRestrictions
   Collection<String> pathsToScramble = []
   BiFunction<BuildContext, File, Boolean> scrambleClasspathFilter = { context, file -> return true } as BiFunction<BuildContext, File, Boolean>
+  Boolean pluginCompatibilityExactVersion = false
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -164,6 +165,14 @@ class PluginLayout extends BaseLayout {
      */
     void doNotCreateSeparateJarForLocalizableResources() {
       layout.doNotCreateSeparateJarForLocalizableResources = true
+    }
+
+    /**
+     * This plugin will be compatible only with exactly the same IDE version.
+     * See {@link org.jetbrains.intellij.build.CompatibleBuildRange#EXACT}
+     */
+    void pluginCompatibilityExactVersion() {
+      layout.pluginCompatibilityExactVersion = true
     }
 
     /**

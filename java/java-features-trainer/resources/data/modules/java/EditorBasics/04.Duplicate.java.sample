@@ -1,0 +1,5 @@
+class DuplicateDemo {
+    public static void main(String[] args){
+        <caret>System.out.println("Hello world!");
+    }
+}

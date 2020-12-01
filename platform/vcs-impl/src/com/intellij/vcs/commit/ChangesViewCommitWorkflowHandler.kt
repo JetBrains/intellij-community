@@ -24,11 +24,12 @@ internal class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
 ) : NonModalCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
+    CommitAuthorTracker by ui,
     CommitAuthorListener,
     ProjectManagerListener {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
-  override val amendCommitHandler: ChangesViewAmendCommitHandler = ChangesViewAmendCommitHandler(this)
+  override val amendCommitHandler: NonModalAmendCommitHandler = NonModalAmendCommitHandler(this)
 
   private fun getCommitState(): ChangeListCommitState {
     val changes = getIncludedChanges()
@@ -59,9 +60,10 @@ internal class ChangesViewCommitWorkflowHandler(
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
-    workflow.addCommitListener(createCommitStateCleaner(), this)
+    workflow.addCommitListener(CommitStateCleaner(), this)
 
-    ui.addCommitAuthorListener(this, this)
+    addCommitAuthorListener(this, this)
+
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
     ui.addInclusionListener(this, this)
@@ -92,8 +94,6 @@ internal class ChangesViewCommitWorkflowHandler(
     super.executionEnded()
     ui.endExecution()
   }
-
-  override fun isReady() = super.isReady() && !amendCommitHandler.isLoading
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     if (!inclusionModel.isInclusionEmpty()) {
@@ -176,16 +176,14 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   private fun changeListDataChanged() {
-    ui.commitAuthor = currentChangeList?.author
+    commitAuthor = currentChangeList?.author
   }
 
   override fun commitAuthorChanged() {
     val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
-    val newAuthor = ui.commitAuthor
+    if (commitAuthor == changeList.author) return
 
-    if (newAuthor != changeList.author) {
-      changeListManager.editChangeListData(changeList.name, ChangeListData.of(newAuthor, changeList.authorDate))
-    }
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, changeList.authorDate))
   }
 
   override fun inclusionChanged() {
@@ -208,16 +206,6 @@ internal class ChangesViewCommitWorkflowHandler(
       if (isToggleCommitUi.asBoolean()) deactivate(true)
     }
   }
-
-  override fun checkCommit(executor: CommitExecutor?): Boolean =
-    ui.commitProgressUi.run {
-      val executorWithoutChangesAllowed = executor?.areChangesRequired() == false
-
-      isEmptyChanges = !amendCommitHandler.isAmendWithoutChangesAllowed() && !executorWithoutChangesAllowed && isCommitEmpty()
-      isEmptyMessage = getCommitMessage().isBlank()
-
-      !isEmptyChanges && !isEmptyMessage
-    }
 
   override fun updateWorkflow() {
     workflow.commitState = getCommitState()

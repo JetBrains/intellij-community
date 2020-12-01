@@ -37,6 +37,7 @@ import com.jetbrains.python.parsing.console.PythonConsoleData;
 import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -307,23 +308,31 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setText(createRuntimeMessage(PyBundle.message("console.getting.completion")));
     return ApplicationUtil.runWithCheckCanceled(
-      () ->
-      {
-        try {
-          if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
-            return myDebugCommunication.getCompletions(text, actTok);
-          }
-          else {
-            List<CompletionOption> fromServer = getPythonConsoleBackendClient().getCompletions(text, actTok);
-            return ContainerUtil.map(fromServer, option -> toPydevCompletionVariant(option));
-          }
-        }
-        catch (PythonUnhandledException e) {
-          LOG.warn("Completion error in Python Console: " + e.traceback);
-          return Collections.emptyList();
-        }
+      () -> {
+        return doGetCompletions(text, actTok);
       },
       indicator);
+  }
+
+  private List<PydevCompletionVariant> doGetCompletions(String text, String actTok) throws Exception {
+    try {
+      if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
+        return myDebugCommunication.getCompletions(text, actTok);
+      }
+      else {
+        List<CompletionOption> fromServer = getPythonConsoleBackendClient().getCompletions(text, actTok);
+        return ContainerUtil.map(fromServer, option -> toPydevCompletionVariant(option));
+      }
+    }
+    catch (PythonUnhandledException e) {
+      LOG.warn("Completion error in Python Console: " + e.traceback);
+      return Collections.emptyList();
+    }
+  }
+
+  @TestOnly
+  public List<PydevCompletionVariant> gerCompletionVariants(String text, String actTok) throws Exception {
+    return doGetCompletions(text, actTok);
   }
 
   @NotNull

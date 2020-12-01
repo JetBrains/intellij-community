@@ -109,15 +109,23 @@ public final class OutputFileObject extends JpsFileObject {
   @Override
   public ByteArrayOutputStream openOutputStream() {
     return new ByteArrayOutputStream() {
+      private boolean isClosed = false;
+
+      private synchronized boolean markClosed() {
+        return !isClosed && (isClosed = true);
+      }
+      
       @Override
       public void close() throws IOException {
-        try {
-          super.close();
-        }
-        finally {
-          myContent = new BinaryContent(buf, 0, size());
-          if (myContext != null) {
-            myContext.consumeOutputFile(OutputFileObject.this);
+        if (markClosed()) {
+          try {
+            super.close();
+          }
+          finally {
+            myContent = new BinaryContent(buf, 0, size());
+            if (myContext != null) {
+              myContext.consumeOutputFile(OutputFileObject.this);
+            }
           }
         }
       }

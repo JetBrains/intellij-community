@@ -4,6 +4,7 @@
   </action>
   <action id="OpenInRightSplit">
     <keyboard-shortcut first-keystroke="shift ENTER"/>
+    <mouse-shortcut keystroke="alt button1 doubleClick"/> 
   </action>
   <action id="FileChooser.TogglePathShowing">
     <keyboard-shortcut first-keystroke="control P"/>
@@ -976,7 +977,7 @@
     <keyboard-shortcut first-keystroke="alt DELETE"/>
   </action>
   <action id="SelectVirtualTemplateElement">
-    <keyboard-shortcut first-keystroke="TAB"/>
+    <keyboard-shortcut first-keystroke="Alt Shift O"/>
   </action>
   <action id="NextTemplateVariable">
     <keyboard-shortcut first-keystroke="TAB"/>

@@ -22,16 +22,13 @@ import java.util.*
 
 class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroupId(): String = "git.configuration"
-  override fun getVersion(): Int = 2
+  override fun getVersion(): Int = 3
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val set = HashSet<MetricEvent>()
 
     val repositoryManager = GitUtil.getRepositoryManager(project)
     val repositories = repositoryManager.repositories
-
-    val appSettings = GitVcsApplicationSettings.getInstance()
-    val defaultAppSettings = GitVcsApplicationSettings()
 
     val settings = GitVcsSettings.getInstance(project)
     val defaultSettings = GitVcsSettings()
@@ -42,9 +39,14 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, "push.autoupdate")
     addBoolIfDiffers(set, settings, defaultSettings, { it.shouldUpdateAllRootsIfPushRejected() }, "push.update.all.roots")
-    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isAutoCommitOnCherryPick }, "cherrypick.autocommit")
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutCrlf() }, "warn.about.crlf")
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutDetachedHead() }, "warn.about.detached")
+
+    val appSettings = GitVcsApplicationSettings.getInstance()
+    val defaultAppSettings = GitVcsApplicationSettings()
+
+    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isAutoCommitOnCherryPick }, "cherrypick.autocommit")
+    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isStagingAreaEnabled }, "staging.area.enabled")
 
     val version = GitVcs.getInstance(project).version
     set.add(newMetric("executable", FeatureUsageData().addData("version", version.presentation).addData("type", version.type.name)))

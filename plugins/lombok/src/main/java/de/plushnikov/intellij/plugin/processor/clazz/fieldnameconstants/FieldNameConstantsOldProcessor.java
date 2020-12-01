@@ -64,6 +64,7 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
     return result;
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final Collection<PsiField> psiFields = filterFields(psiClass);
     FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();

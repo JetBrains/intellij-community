@@ -122,7 +122,7 @@ public final class DisabledPluginsState {
   }
 
   /**
-   * @deprecated Bad API, sorry. Please use {@link #isDisabled(PluginId)} to check plugin's state,
+   * @deprecated Bad API, sorry. Please use {@link PluginManagerCore#isDisabled(PluginId)} to check plugin's state,
    * {@link #enablePlugin(PluginId)}/{@link #disablePlugin(PluginId)} for state management,
    * {@link #disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */

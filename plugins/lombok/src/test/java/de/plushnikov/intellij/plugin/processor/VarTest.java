@@ -1,11 +1,6 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
 public class VarTest extends AbstractLombokLightCodeInsightTestCase {
@@ -63,9 +58,6 @@ public class VarTest extends AbstractLombokLightCodeInsightTestCase {
   }
 
   public void testGenericTypeDiamond296() {
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
-
     configureClass("new java.util.concurrent.atomic.AtomicReference<>(\"abc\")");
     verifyLocalVariableType("java.util.concurrent.atomic.AtomicReference<java.lang.String>");
   }

@@ -113,14 +113,16 @@
     <applicationInitializedListener implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
   </extensions>
 
-  <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/VCS.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
-  <xi:include href="xdebugger.xml"/>
+  <xi:include href="/META-INF/xdebugger.xml">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/GraphPlugin.xml">
     <xi:fallback/>
   </xi:include>

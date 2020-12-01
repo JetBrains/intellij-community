@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ENTER
 import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
@@ -9,7 +10,9 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes.ERROR_ATTRIBUTES
 import com.intellij.ui.components.JBPanel
@@ -37,7 +40,8 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants.TOP
 
 internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
-  JBPanel<CloneDialogLoginPanel>(VerticalLayout(0)) {
+  JBPanel<CloneDialogLoginPanel>(VerticalLayout(0)),
+  Disposable {
 
   private val authenticationManager get() = GithubAuthenticationManager.getInstance()
 
@@ -49,6 +53,7 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   private val loginButton = JButton(message("button.login.mnemonic"))
   private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null).apply { verticalAlignment = TOP }
 
+  private var errors = emptyList<ValidationInfo>()
   private var loginIndicator: ProgressIndicator? = null
 
   var isCancelVisible: Boolean
@@ -97,6 +102,8 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
 
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
+  override fun dispose() = Unit
+
   private fun buildLayout() {
     add(JPanel(HorizontalLayout(0)).apply {
       add(loginPanel)
@@ -113,7 +120,7 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     if (isOAuth) inlineCancelPanel.addToCenter(backLink)
     inlineCancelPanel.isVisible = isOAuth
 
-    errorPanel.removeAll()
+    clearErrors()
   }
 
   private fun LayoutBuilder.buttonPanel() =
@@ -132,6 +139,10 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   private fun login() {
     cancelLogin()
 
+    loginPanel.setError(null)
+    clearErrors()
+    if (!doValidate()) return
+
     val modalityState = ModalityState.stateForComponent(this)
     val indicator = EmptyProgressIndicator(modalityState)
 
@@ -139,14 +150,9 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     loginPanel.acquireLoginAndToken(indicator)
       .completionOnEdt(modalityState) {
         loginIndicator = null
-        errorPanel.removeAll()
+        clearErrors()
       }
-      .errorOnEdt(modalityState) {
-        loginPanel.doValidateAll().forEach { errorPanel.add(toErrorComponent(it)) }
-
-        errorPanel.revalidate()
-        errorPanel.repaint()
-      }
+      .errorOnEdt(modalityState) { doValidate() }
       .successOnEdt(modalityState) { (login, token) ->
         if (account != null) {
           authenticationManager.updateAccountToken(account, token)
@@ -155,6 +161,42 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
           authenticationManager.registerAccount(login, loginPanel.getServer(), token)
         }
       }
+  }
+
+  private fun doValidate(): Boolean {
+    errors = loginPanel.doValidateAll()
+    setErrors(errors)
+
+    val toFocus = errors.firstOrNull()?.component
+    if (toFocus?.isVisible == true) IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true)
+
+    return errors.isEmpty()
+  }
+
+  private fun clearErrors() {
+    for (component in errors.mapNotNull { it.component }) {
+      ComponentValidator.getInstance(component).ifPresent { it.updateInfo(null) }
+    }
+    errorPanel.removeAll()
+    errors = emptyList()
+  }
+
+  private fun setErrors(errors: Collection<ValidationInfo>) {
+    for (error in errors) {
+      val component = error.component
+
+      if (component != null) {
+        ComponentValidator.getInstance(component)
+          .orElseGet { ComponentValidator(this).installOn(component) }
+          .updateInfo(error)
+      }
+      else {
+        errorPanel.add(toErrorComponent(error))
+      }
+    }
+
+    errorPanel.revalidate()
+    errorPanel.repaint()
   }
 
   private fun toErrorComponent(info: ValidationInfo): JComponent =

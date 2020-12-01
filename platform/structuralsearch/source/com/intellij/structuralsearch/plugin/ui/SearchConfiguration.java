@@ -80,9 +80,4 @@ public class SearchConfiguration extends Configuration {
   public int hashCode() {
     return 31 * super.hashCode() + matchOptions.hashCode();
   }
-
-  @Override
-  public LanguageFileType getFileType() {
-    return getMatchOptions().getFileType();
-  }
 }

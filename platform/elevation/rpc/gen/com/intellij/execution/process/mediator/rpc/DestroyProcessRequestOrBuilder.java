@@ -18,4 +18,10 @@ public interface DestroyProcessRequestOrBuilder extends
    * @return The force.
    */
   boolean getForce();
+
+  /**
+   * <code>bool destroy_group = 3;</code>
+   * @return The destroyGroup.
+   */
+  boolean getDestroyGroup();
 }

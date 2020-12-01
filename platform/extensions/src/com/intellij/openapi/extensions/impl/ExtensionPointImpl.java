@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -465,6 +466,9 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   // (EP->adapter in one thread, adapter->EP in the other thread)
   private synchronized @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter) {
     try {
+      if (!checkThatClassloaderIsActive(adapter)) {
+        return null;
+      }
       return adapter.createInstance(componentManager);
     }
     catch (ExtensionNotApplicableException ignore) {
@@ -488,6 +492,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
                                      @NotNull Class<T> extensionClassForCheck,
                                      @NotNull List<? extends ExtensionComponentAdapter> adapters) {
     try {
+      if (!checkThatClassloaderIsActive(adapter)) {
+        return null;
+      }
+
       boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated() && !isDynamic;
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
       T extension = adapter.createInstance(componentManager);
@@ -524,6 +532,16 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       LOG.error(e);
     }
     return null;
+  }
+
+  private static boolean checkThatClassloaderIsActive(@NotNull ExtensionComponentAdapter adapter) {
+    ClassLoader classLoader = adapter.getPluginDescriptor().getPluginClassLoader();
+    if (classLoader instanceof PluginAwareClassLoader &&
+        ((PluginAwareClassLoader)classLoader).getState() != PluginAwareClassLoader.ACTIVE) {
+      LOG.warn(adapter + " not loaded because classloader is being unloaded");
+      return false;
+    }
+    return true;
   }
 
   // used in upsource

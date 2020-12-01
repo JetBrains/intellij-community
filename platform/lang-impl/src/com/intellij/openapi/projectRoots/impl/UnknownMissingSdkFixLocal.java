@@ -72,12 +72,17 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
 
   }
 
+  @Override
+  protected @NotNull String getSuggestedSdkHome() {
+    return myFix.getExistingSdkHome();
+  }
+
   @NotNull
   @Override
   protected Sdk applyLocalFix() {
-    try {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
+    try {
       String actualSdkName = mySdk.getSdkName();
       if (actualSdkName == null) {
         actualSdkName = myFix.getSuggestedSdkName();
@@ -89,13 +94,7 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
       mod.setVersionString(myFix.getVersionString());
       mod.commitChanges();
 
-      try {
-        mySdk.getSdkType().setupSdkPaths(sdk);
-      }
-      catch (Exception error) {
-        LOG.warn("Failed to setupPaths for " + sdk + ". " + error.getMessage(), error);
-      }
-
+      mySdk.getSdkType().setupSdkPaths(sdk);
       myFix.configureSdk(sdk);
       UnknownMissingSdkFix.registerNewSdkInJdkTable(actualSdkName, sdk);
 

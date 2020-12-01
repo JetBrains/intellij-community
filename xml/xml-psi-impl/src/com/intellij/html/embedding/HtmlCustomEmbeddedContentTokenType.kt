@@ -23,7 +23,7 @@ abstract class HtmlCustomEmbeddedContentTokenType : IElementType, EmbeddingEleme
 
   override fun parse(text: CharSequence, table: CharTable): ASTNode = LazyParseableElement(this, text)
 
-  override fun parseContents(chameleon: ASTNode): ASTNode =
+  override fun parseContents(chameleon: ASTNode): ASTNode? =
     doParseContents(chameleon).treeBuilt.firstChildNode
 
   protected fun doParseContents(chameleon: ASTNode): PsiBuilder =

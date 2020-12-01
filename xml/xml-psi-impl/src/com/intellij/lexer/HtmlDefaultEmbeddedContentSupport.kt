@@ -26,10 +26,10 @@ class HtmlRawTextTagContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedConte
     || namesEqual(tagName, HtmlUtil.TEXTAREA_TAG_NAME)
 
   override fun isInterestedInAttribute(attributeName: CharSequence): Boolean = false
-  override fun createEmbedmentInfo(): HtmlEmbedmentInfo? = HtmlEmbeddedContentProvider.RAW_TEXT_FORMATTABLE_EMBEDMENT
+  override fun createEmbedmentInfo(): HtmlEmbedmentInfo = HtmlEmbeddedContentProvider.RAW_TEXT_FORMATTABLE_EMBEDMENT
 }
 
-class HtmlScriptStyleEmbeddedContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedContentProvider(lexer) {
+open class HtmlScriptStyleEmbeddedContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedContentProvider(lexer) {
 
   private val infoCache = HashMap<Pair<String, String?>, HtmlEmbedmentInfo?>()
 
@@ -54,7 +54,7 @@ class HtmlScriptStyleEmbeddedContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbe
     }
   }
 
-  private fun styleLanguage(styleLang: String?): Language? {
+  protected open fun styleLanguage(styleLang: String?): Language? {
     val cssLanguage = Language.findLanguageByID("CSS")
     if (styleLang != null && !styleLang.equals("text/css", ignoreCase = true)) {
       cssLanguage
@@ -67,7 +67,7 @@ class HtmlScriptStyleEmbeddedContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbe
     return cssLanguage
   }
 
-  private fun scriptEmbedmentInfo(mimeType: String?): HtmlEmbedmentInfo? =
+  protected open fun scriptEmbedmentInfo(mimeType: String?): HtmlEmbedmentInfo? =
     if (mimeType != null)
       Language.findInstancesByMimeType(if (lexer.isCaseInsensitive) StringUtil.toLowerCase(mimeType) else mimeType)
         .asSequence()

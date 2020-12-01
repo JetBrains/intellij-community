@@ -239,7 +239,7 @@ class Num(expr):
     n: Union[int, float, complex]
 
 class Str(expr):
-    s: bytes
+    s: Union[str, bytes]
     kind: str
 
 class Attribute(expr):

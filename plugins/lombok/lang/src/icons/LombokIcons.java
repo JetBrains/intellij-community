@@ -13,13 +13,12 @@ public final class LombokIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, LombokIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Config = load("icons/config.png", 0L, 1);
-  /** 16x16 */ public static final @NotNull Icon Delombok = load("icons/delombok.png", 0L, 1);
-  /** 16x16 */ public static final @NotNull Icon Lombok = load("icons/lombok.png", 0L, 1);
+  /** 16x16 */ public static final @NotNull Icon Config = load("icons/config.svg", -4125939485057738588L, 0);
+  /** 16x16 */ public static final @NotNull Icon Lombok = load("icons/lombok.svg", -2187418174251863425L, 0);
 
   public static final class Nodes {
-    /** 16x16 */ public static final @NotNull Icon LombokClass = load("icons/nodes/lombokClass.png", 0L, 1);
-    /** 16x16 */ public static final @NotNull Icon LombokField = load("icons/nodes/lombokField.png", 0L, 1);
-    /** 16x16 */ public static final @NotNull Icon LombokMethod = load("icons/nodes/lombokMethod.png", 0L, 1);
+    /** 16x16 */ public static final @NotNull Icon LombokClass = load("icons/nodes/lombokClass.svg", -6983067847942513466L, 0);
+    /** 16x16 */ public static final @NotNull Icon LombokField = load("icons/nodes/lombokField.svg", 3162444125783700060L, 0);
+    /** 16x16 */ public static final @NotNull Icon LombokMethod = load("icons/nodes/lombokMethod.svg", -735727517226001206L, 1);
   }
 }

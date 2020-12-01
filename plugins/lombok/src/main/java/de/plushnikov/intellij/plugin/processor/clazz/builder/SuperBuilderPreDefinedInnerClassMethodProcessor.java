@@ -22,6 +22,7 @@ public class SuperBuilderPreDefinedInnerClassMethodProcessor extends AbstractSup
     super(PsiMethod.class, LombokClassNames.SUPER_BUILDER);
   }
 
+  @Override
   protected SuperBuilderHandler getBuilderHandler() {
     return ApplicationManager.getApplication().getService(SuperBuilderHandler.class);
   }

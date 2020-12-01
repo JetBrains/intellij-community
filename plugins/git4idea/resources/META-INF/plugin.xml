@@ -255,10 +255,14 @@
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction" internal="true"/>
     <action id="CopyPathFromRepositoryRootProvider" class="git4idea.actions.CopyPathFromRepositoryRootProvider">
       <add-to-group group-id="CopyFileReference"/>
-      <add-to-group group-id="CopyGroup" relative-to-action="CopySourceRootPath" anchor="after"/>
+      <add-to-group group-id="CutCopyPasteGroup" relative-to-action="CopySourceRootPath" anchor="after"/>
     </action>
 
-    <action id="Git.Show.Stage" class="git4idea.index.actions.GitShowStagingAreaAction" use-shortcut-of="CheckinProject"/>
+    <action id="Git.Show.Stage" class="git4idea.index.actions.GitShowStagingAreaAction" use-shortcut-of="CheckinProject" icon="AllIcons.Actions.Commit">
+      <add-to-group group-id="Git.MainMenu" anchor="after" relative-to-action="CheckinProject"/>
+      <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
+      <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
+    </action>
     <action id="Git.Stage.Refresh" class="git4idea.index.actions.GitRefreshStageAction" icon="AllIcons.Actions.Refresh"
             use-shortcut-of="Refresh"/>
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
@@ -269,6 +273,8 @@
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
+    <action id="Git.Stage.Add.All" class="git4idea.index.actions.GitStageAllAction"/>
+    <action id="Git.Stage.Add.Tracked" class="git4idea.index.actions.GitStageTrackedAction"/>
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
 
@@ -387,6 +393,8 @@
                               This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications."/>
     <registryKey key="git.use.setsid.wait.for.wsl.ssh" defaultValue="true"
                  description="Wrap 'git' process with 'setsid -w' for remote operations with WSL executable."/>
+    <registryKey key="git.wsl.exe.executable.no.shell" defaultValue="false"
+                 description="Run git process for WSL executables without wrapping into a shell command."/>
     <registryKey key="git.use.push.force.with.lease" defaultValue="true"
                  description="Use '--force-with-lease' to push from IDE instead of '--force'"/>
     <registryKey key="git.use.no.optional.locks" defaultValue="true"

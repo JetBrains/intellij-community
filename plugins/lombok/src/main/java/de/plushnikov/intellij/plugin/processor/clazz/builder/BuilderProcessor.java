@@ -41,11 +41,6 @@ public class BuilderProcessor extends AbstractClassProcessor {
     return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
   }
 
-  @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
-  }
-
   @NotNull
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
@@ -60,8 +55,10 @@ public class BuilderProcessor extends AbstractClassProcessor {
     return true;//builderHandler.validate(psiClass, psiAnnotation, builder);
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+      LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR, LombokClassNames.NO_ARGS_CONSTRUCTOR)) {
       // Create all args constructor only if there is no declared constructors and no lombok constructor annotations
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       if (definedConstructors.isEmpty()) {
@@ -69,7 +66,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
       }
     }
 
-    BuilderHandler builderHandler = getBuilderHandler();
+    final BuilderHandler builderHandler = getBuilderHandler();
     final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, null);
     final PsiClass builderClass = psiClass.findInnerClassByName(builderClassName, false);
     if (null != builderClass) {

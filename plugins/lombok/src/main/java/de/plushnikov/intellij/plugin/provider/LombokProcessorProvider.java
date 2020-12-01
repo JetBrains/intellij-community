@@ -19,30 +19,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LombokProcessorProvider implements Disposable {
 
-  @Override
-  public void dispose() { }
-
   public static LombokProcessorProvider getInstance(@NotNull Project project) {
     final LombokProcessorProvider service = ServiceManager.getService(project, LombokProcessorProvider.class);
     service.checkInitialized();
     return service;
   }
 
-  private final Project myProject;
-
   private final Map<Class, Collection<Processor>> lombokTypeProcessors;
+
   private final Map<String, Collection<Processor>> lombokProcessors;
   private final Collection<String> registeredAnnotationNames;
-
   private boolean alreadyInitialized;
 
-  public LombokProcessorProvider(@NotNull Project project) {
-    myProject = project;
-
+  public LombokProcessorProvider() {
     lombokProcessors = new ConcurrentHashMap<>();
     lombokTypeProcessors = new ConcurrentHashMap<>();
     registeredAnnotationNames = ConcurrentHashMap.newKeySet();
   }
+
+  @Override
+  public void dispose() { }
 
   private void checkInitialized() {
     if (!alreadyInitialized) {
@@ -57,16 +53,13 @@ public class LombokProcessorProvider implements Disposable {
     registeredAnnotationNames.clear();
 
     for (Processor processor : LombokProcessorManager.getLombokProcessors()) {
-      if (processor.isEnabled(myProject)) {
-
-        @NotNull String[] annotationClasses = processor.getSupportedAnnotationClasses();
+        String[] annotationClasses = processor.getSupportedAnnotationClasses();
         for (@NotNull String annotationClass : annotationClasses) {
           putProcessor(lombokProcessors, annotationClass, processor);
           putProcessor(lombokProcessors, StringUtil.getShortName(annotationClass), processor);
         }
 
         putProcessor(lombokTypeProcessors, processor.getSupportedClass(), processor);
-      }
     }
 
     registeredAnnotationNames.addAll(lombokProcessors.keySet());

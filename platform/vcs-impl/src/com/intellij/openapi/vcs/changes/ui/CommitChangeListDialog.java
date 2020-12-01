@@ -787,13 +787,13 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
     @NotNull
     @Override
-    protected Stream<Wrapper> getSelectedChanges() {
+    public Stream<Wrapper> getSelectedChanges() {
       return wrap(getBrowser().getSelectedChanges(), getBrowser().getSelectedUnversionedFiles());
     }
 
     @NotNull
     @Override
-    protected Stream<Wrapper> getAllChanges() {
+    public Stream<Wrapper> getAllChanges() {
       return wrap(getDisplayedChanges(), getDisplayedUnversionedFiles());
     }
 

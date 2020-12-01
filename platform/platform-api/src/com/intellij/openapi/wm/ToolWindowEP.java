@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -21,6 +22,7 @@ public class ToolWindowEP implements PluginAware {
 
   private PluginDescriptor pluginDescriptor;
 
+  @RequiredElement
   @Attribute
   public String id;
 
@@ -57,6 +59,7 @@ public class ToolWindowEP implements PluginAware {
   /**
    * The name of the class implementing {@link ToolWindowFactory}, used to create the toolwindow contents.
    */
+  @RequiredElement
   @Attribute
   public String factoryClass;
 

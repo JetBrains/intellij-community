@@ -86,7 +86,7 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
   @Throws(ExecutionException::class)
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     var line = GeneralCommandLine(commandLine.collectCommandsSynchronously())
-    val options = WSLCommandLineOptions().setRemoteWorkingDirectory(commandLine.workingDirectory).setLaunchWithWslExe(false)
+    val options = WSLCommandLineOptions().setRemoteWorkingDirectory(commandLine.workingDirectory)
     line = distribution.patchCommandLine(line, null, options)
     return line.createProcess()
   }
@@ -94,10 +94,15 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
   override fun shutdown() {}
 
   private inner class Volume(override val localRoot: Path, override val targetRoot: String) : UploadableVolume {
+
     @Throws(IOException::class)
-    override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator): String {
+    override fun resolveTargetPath(relativePath: String): String {
       val localPath = FileUtil.toCanonicalPath(FileUtil.join(localRoot.toString(), relativePath))
       return toLinuxPath(localPath)!!
+    }
+
+    @Throws(IOException::class)
+    override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator) {
     }
   }
 }

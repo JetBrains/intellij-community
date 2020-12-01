@@ -52,6 +52,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   private final int instanceId;
 
+  private volatile int state = ACTIVE;
+
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull PluginDescriptor pluginDescriptor,
@@ -88,6 +90,16 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         libDirectories.add(libDir.toAbsolutePath().toString());
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public int getState() {
+    return state;
+  }
+
+  @ApiStatus.Internal
+  public void setState(int state) {
+    this.state = state;
   }
 
   @Override
@@ -245,21 +257,29 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   @SuppressWarnings("SSBasedInspection")
   private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = new HashSet<>(Arrays.asList(
-    "kotlin.Function",
-    "kotlin.sequences.Sequence",
-    "kotlin.Lazy", "kotlin.Unit",
-    "kotlin.Pair", "kotlin.Triple",
-    "kotlin.jvm.internal.DefaultConstructorMarker",
-    "kotlin.jvm.internal.ClassBasedDeclarationContainer",
-    "kotlin.properties.ReadWriteProperty",
-    "kotlin.properties.ReadOnlyProperty",
-    "kotlin.coroutines.ContinuationInterceptor",
-    "kotlinx.coroutines.CoroutineDispatcher",
-    "kotlin.coroutines.Continuation",
-    "kotlin.coroutines.CoroutineContext",
-    "kotlin.coroutines.CoroutineContext$Element",
-    "kotlin.coroutines.CoroutineContext$Key"
-  ));
+        "kotlin.Function",
+        "kotlin.sequences.Sequence",
+        "kotlin.ranges.IntRange",
+        "kotlin.ranges.IntRange$Companion",
+        "kotlin.ranges.IntProgression",
+        "kotlin.ranges.ClosedRange",
+        "kotlin.ranges.IntProgressionIterator",
+        "kotlin.ranges.IntProgression$Companion",
+        "kotlin.ranges.IntProgression",
+        "kotlin.collections.IntIterator",
+        "kotlin.Lazy", "kotlin.Unit",
+        "kotlin.Pair", "kotlin.Triple",
+        "kotlin.jvm.internal.DefaultConstructorMarker",
+        "kotlin.jvm.internal.ClassBasedDeclarationContainer",
+        "kotlin.properties.ReadWriteProperty",
+        "kotlin.properties.ReadOnlyProperty",
+        "kotlin.coroutines.ContinuationInterceptor",
+        "kotlinx.coroutines.CoroutineDispatcher",
+        "kotlin.coroutines.Continuation",
+        "kotlin.coroutines.CoroutineContext",
+        "kotlin.coroutines.CoroutineContext$Element",
+        "kotlin.coroutines.CoroutineContext$Key"
+      ));
 
   static {
     String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");

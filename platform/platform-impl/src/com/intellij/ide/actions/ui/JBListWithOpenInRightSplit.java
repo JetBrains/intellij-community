@@ -4,6 +4,7 @@ package com.intellij.ide.actions.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
@@ -18,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -70,8 +70,7 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
       int index = locationToIndex(point);
       
       //alt + click is "OpenInRightSplit", or click the icon
-      if ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0 ||
-          index != -1 && getIconRectangle(index).contains(point)) {
+      if (index != -1 && getIconRectangle(index).contains(point)) {
         invokeAction();
         e.consume();
       }
@@ -111,9 +110,14 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
     else {
       myTooltip = null;
     }
+    if (action != null) {
+      OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(this);
+    }
+
     addMouseListener(handler);
     addMouseMotionListener(handler);
   }
+
 
   @Override
   public void repaint(long tm, int x, int y, int width, int height) {

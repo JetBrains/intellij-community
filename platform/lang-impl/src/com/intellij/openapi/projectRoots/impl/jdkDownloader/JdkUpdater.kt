@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
 import com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
+import com.intellij.openapi.projectRoots.impl.UnknownSdkTrackerQueue
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
@@ -100,12 +101,18 @@ internal class JdkUpdatesCollector(
       .subscribe(
         ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
         override fun rootsChanged(event: ModuleRootEvent) {
-          AppExecutorUtil.getAppExecutorService().submit { updateNotifications() }
+          updateNotifications()
         }
       })
   }
 
   fun updateNotifications() {
+    if (!isEnabled()) return
+
+    UnknownSdkTrackerQueue.getInstance(project).queue { updateNotificationsDebounced() }
+  }
+
+  private fun updateNotificationsDebounced() {
     if (!isEnabled()) return
 
     object : UnknownSdkCollector(project) {

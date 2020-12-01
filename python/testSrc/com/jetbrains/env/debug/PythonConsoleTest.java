@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -17,9 +18,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
+import static com.jetbrains.env.debug.PyBaseDebuggerTask.findCompletionVariantByName;
 import static com.jetbrains.env.debug.PyBaseDebuggerTask.findDebugValueByName;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class PythonConsoleTest extends PyEnvTestCase {
   @Test
@@ -226,6 +227,60 @@ public class PythonConsoleTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return ImmutableSet.of("pandas");
+      }
+    });
+  }
+
+  @Test
+  public void testCompletionMethods() {
+    runPythonTest(new PyConsoleTask("/debug") {
+      @Override
+      public void testing() throws Exception {
+        exec("a = \"aaa\"");
+        exec("a");
+        waitForOutput("aaa");
+
+        List<PydevCompletionVariant> completions = getCompletions("a.");
+        assertFalse("Completion variants list is empty", completions.isEmpty());
+        PydevCompletionVariant compVariant = findCompletionVariantByName(completions, "center");
+        assertNotNull("Completion variant `center` is missing", compVariant);
+
+        assertEquals(2, compVariant.getType());
+        assertTrue("Missing completion argument `width` in `str.center()`", compVariant.getArgs().contains("width"));
+        assertFalse("Documentation is empty for `str.center()`", compVariant.getDescription().isEmpty());
+      }
+    });
+  }
+
+  @Test
+  public void testCompletionDoNotEvaluateProperty() {
+    runPythonTest(new PyConsoleTask("/debug") {
+      @Override
+      public void testing() throws Exception {
+        exec("class Bar:\n" +
+             "    @property\n" +
+             "    def prop(self):\n" +
+             "        x = 238\n" +
+             "        print(x + 1)\n" +
+             "        return \"bar\"\n" +
+             "    \n");
+        exec("bar = Bar()");
+        exec("print(\"Hey\")");
+        waitForOutput("Hey");
+
+        List<PydevCompletionVariant> completions = getCompletions("bar.");
+        assertFalse("Completion variants list is empty", completions.isEmpty());
+
+        // Just to make sure that output is updated
+        exec("print('Hello')");
+        waitForOutput("Hello");
+
+        PydevCompletionVariant compVariant = findCompletionVariantByName(completions, "prop");
+        assertNotNull("Completion variant `prop` is missing", compVariant);
+
+        assertEquals(3, compVariant.getType());
+        String currentOutput = output();
+        assertFalse("Property was called for completion", currentOutput.contains("239"));
       }
     });
   }

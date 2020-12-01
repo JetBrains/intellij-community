@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 public final class TipDialog extends DialogWrapper {
   private static TipDialog ourInstance;
 
+  public static final Key<Boolean> DISABLE_TIPS_FOR_PROJECT = Key.create("DISABLE_TIPS_FOR_PROJECT");
   @NonNls private static final String LAST_TIME_TIPS_WERE_SHOWN = "lastTimeTipsWereShown";
   private final TipPanel myTipPanel;
 
@@ -74,8 +76,10 @@ public final class TipDialog extends DialogWrapper {
     super.show();
   }
 
-  public static boolean canBeShownAutomaticallyNow() {
-    if (!GeneralSettings.getInstance().isShowTipsOnStartup() || (ourInstance != null && ourInstance.isVisible())) {
+  public static boolean canBeShownAutomaticallyNow(@NotNull Project project) {
+    if (!GeneralSettings.getInstance().isShowTipsOnStartup() ||
+        DISABLE_TIPS_FOR_PROJECT.get(project, false) ||
+        (ourInstance != null && ourInstance.isVisible())) {
       return false;
     }
     return !wereTipsShownToday();

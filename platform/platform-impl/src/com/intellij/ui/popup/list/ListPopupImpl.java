@@ -28,6 +28,7 @@ import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private int myIndexForShowingChild = -1;
   private int myMaxRowCount = 30;
   private boolean myAutoHandleBeforeShow;
+  private boolean myShowSubmenuOnHover;
 
   /**
    * @deprecated use {@link #ListPopupImpl(Project, ListPopupStep)} + {@link #setMaxRowCount(int)}
@@ -435,25 +437,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   public boolean handleNextStep(final PopupStep nextStep, Object parentValue, InputEvent e) {
     if (nextStep != PopupStep.FINAL_CHOICE) {
-      final Point point = myList.indexToLocation(myList.getSelectedIndex());
-      SwingUtilities.convertPointToScreen(point, myList);
-      myChild = createPopup(this, nextStep, parentValue);
-      if (myChild instanceof ListPopupImpl) {
-        for (ListSelectionListener listener : myList.getListSelectionListeners()) {
-          ((ListPopupImpl)myChild).addListSelectionListener(listener);
-        }
-      }
-      final JComponent container = getContent();
-
-      int y = point.y;
-      if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
-        SeparatorWithText swt = new SeparatorWithText();
-        swt.setCaption(getListModel().getCaptionAboveOf(parentValue));
-        y += swt.getPreferredSize().height - 1;
-      }
-
-      myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
-      setIndexForShowingChild(myList.getSelectedIndex());
+      showNextStepPopup(nextStep, parentValue);
       return false;
     }
     else {
@@ -465,6 +449,27 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
   }
 
+  protected void showNextStepPopup(PopupStep nextStep, Object parentValue) {
+    final Point point = myList.indexToLocation(myList.getSelectedIndex());
+    SwingUtilities.convertPointToScreen(point, myList);
+    myChild = createPopup(this, nextStep, parentValue);
+    if (myChild instanceof ListPopupImpl) {
+      for (ListSelectionListener listener : myList.getListSelectionListeners()) {
+        ((ListPopupImpl)myChild).addListSelectionListener(listener);
+      }
+    }
+    final JComponent container = getContent();
+
+    int y = point.y;
+    if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
+      SeparatorWithText swt = new SeparatorWithText();
+      swt.setCaption(getListModel().getCaptionAboveOf(parentValue));
+      y += swt.getPreferredSize().height - 1;
+    }
+
+    myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
+    setIndexForShowingChild(myList.getSelectedIndex());
+  }
 
   @Override
   public void addListSelectionListener(ListSelectionListener listSelectionListener) {
@@ -474,26 +479,35 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private class MyMouseMotionListener extends MouseMotionAdapter {
     private int myLastSelectedIndex = -2;
     private Point myLastMouseLocation;
+    private Timer myShowSubmenuTimer;
 
+    /**
+     * this method should be changed only in par with
+     * {@link TreePopupImpl.MyMouseMotionListener#isMouseMoved(Point)}
+     */
     private boolean isMouseMoved(Point location) {
       if (myLastMouseLocation == null) {
         myLastMouseLocation = location;
         return false;
       }
-      return !myLastMouseLocation.equals(location);
+      Point prev = myLastMouseLocation;
+      myLastMouseLocation = location;
+      return !prev.equals(location);
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
+      Point lastPoint = myLastMouseLocation;
       if (!isMouseMoved(e.getLocationOnScreen())) return;
 
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
 
       if (isSelectableAt(index)) {
-        if (index != myLastSelectedIndex) {
+        if (index != myLastSelectedIndex && !isMovingToSubmenu(lastPoint, e.getLocationOnScreen())) {
           if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
             myList.setSelectedIndex(index);
+            showSubMenu(index);
           }
           restartTimer();
           myLastSelectedIndex = index;
@@ -505,6 +519,47 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
 
       notifyParentOnChildSelection();
+    }
+
+    private boolean isMovingToSubmenu(Point prevPoint, Point newPoint) {
+      if (myChild == null || myChild.isDisposed()) return false;
+
+      Rectangle childBounds = myChild.getBounds();
+      childBounds.setLocation(myChild.getLocationOnScreen());
+
+      Polygon triangle = childBounds.x > prevPoint.x
+          ? new Polygon(
+                new int[]{prevPoint.x, childBounds.x, childBounds.x},
+                new int[]{prevPoint.y, childBounds.y, childBounds.y + childBounds.height}, 3)
+          : new Polygon(
+                new int[]{prevPoint.x, childBounds.x + childBounds.width, childBounds.x + childBounds.width},
+                new int[]{prevPoint.y, childBounds.y, childBounds.y + childBounds.height}, 3);
+
+      return triangle.contains(newPoint);
+    }
+
+    private void showSubMenu(int forIndex) {
+      if (!myShowSubmenuOnHover) return;
+
+      disposeChildren();
+
+      if (myShowSubmenuTimer != null && myShowSubmenuTimer.isRunning()) {
+        myShowSubmenuTimer.stop();
+        myShowSubmenuTimer = null;
+      }
+
+      ListPopupStep<Object> listStep = getListStep();
+      Object selectedValue = myListModel.getElementAt(forIndex);
+      if (!listStep.hasSubstep(selectedValue)) return;
+
+      PopupStep<?> step = listStep.onChosen(selectedValue, true);
+      if (step != PopupStep.FINAL_CHOICE) {
+        myShowSubmenuTimer = new Timer(250, e -> {
+          showNextStepPopup(step, selectedValue);
+        });
+        myShowSubmenuTimer.setRepeats(false);
+        myShowSubmenuTimer.start();
+      }
     }
   }
 
@@ -692,6 +747,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   @Override
   public boolean isModalContext() {
     return true;
+  }
+
+  @Override
+  public void setShowSubmenuOnHover(boolean showSubmenuOnHover) {
+    myShowSubmenuOnHover = showSubmenuOnHover;
   }
 
   @Override

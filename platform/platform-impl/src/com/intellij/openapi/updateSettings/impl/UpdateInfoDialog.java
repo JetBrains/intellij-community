@@ -14,7 +14,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -95,9 +94,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     myWhatsNewAction = project == null ? null : new AbstractAction("[T] What's New") {
       @Override
       public void actionPerformed(ActionEvent e) {
-        String title = "What's new in " + ApplicationInfo.getInstance().getFullVersion();
-        String url = myNewBuild.getBlogPost() + WhatsNewAction.getEmbeddedSuffix();
-        HTMLEditorProvider.Companion.openEditor(project, title, url, null, myNewBuild.getMessage());
+        WhatsNewAction.openWhatsNewFile(project, myNewBuild.getBlogPost(), myNewBuild.getMessage());
         close(OK_EXIT_CODE);
       }
     };

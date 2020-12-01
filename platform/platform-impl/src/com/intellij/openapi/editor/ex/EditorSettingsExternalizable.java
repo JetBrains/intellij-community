@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 @State(name = "EditorSettings", storages = @Storage("editor.xml"))
-public final class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
+public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   @NonNls
   public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
 

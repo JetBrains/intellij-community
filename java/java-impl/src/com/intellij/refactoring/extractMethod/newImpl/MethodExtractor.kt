@@ -82,8 +82,8 @@ class MethodExtractor {
       val showStatic = ! isStatic && optionsWithStatic != null
       val hasAnnotation = options.dataOutput.nullability != Nullability.UNKNOWN && options.dataOutput.type !is PsiPrimitiveType
       val defaultPanel = ExtractMethodPopupProvider(
-        annotateNullability = if (hasAnnotation) needsNullabilityAnnotations(options.project) else null,
-        makeStatic = if (showStatic) false else null,
+        annotateDefault = if (hasAnnotation) needsNullabilityAnnotations(options.project) else null,
+        makeStaticDefault = if (showStatic) false else null,
         staticPassFields = makeStaticAndPassFields
       )
 

@@ -208,7 +208,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
     if (myLoaded) {
       final ArtifactModelImpl model = new ArtifactModelImpl(this, artifacts);
-      doCommit(model);
+      WriteAction.run(() -> doCommit(model));
     }
     else {
       myModel.setArtifactsList(artifacts);

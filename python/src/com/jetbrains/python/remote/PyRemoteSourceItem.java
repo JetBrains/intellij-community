@@ -79,7 +79,17 @@ public class PyRemoteSourceItem {
   }
 
   public static String localPathForRemoteRoot(@NotNull String sourcesLocalPath, @NotNull String remoteRoot) {
-    return FileUtil.toCanonicalPath(new File(sourcesLocalPath, generateRootFolderNameFor(remoteRoot)).getAbsolutePath());
+    return FileUtil.toCanonicalPath(new File(sourcesLocalPath, generateRootFolderNameFor(normalize(remoteRoot))).getAbsolutePath());
+  }
+
+  private static @NotNull String normalize(@NotNull String path) {
+    String systemIndependentPathForm = FileUtil.toSystemIndependentName(path);
+    if (systemIndependentPathForm.equals("/")) {
+      return systemIndependentPathForm;
+    }
+    else {
+      return StringUtil.trimEnd(systemIndependentPathForm, "/");
+    }
   }
 
   public String generateRootFolderName() {

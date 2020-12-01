@@ -87,10 +87,10 @@ public class InstalledPluginsTableModel {
                                  PluginEnabledState.ENABLED_FOR_PROJECT :
                                  myPluginTracker != null && myPluginTracker.isDisabled(pluginId) ?
                                  PluginEnabledState.DISABLED_FOR_PROJECT :
-                                 ideaPluginDescriptor.isEnabled() ?
-                                 PluginEnabledState.ENABLED :
                                  PluginManagerCore.isDisabled(pluginId) ?
                                  PluginEnabledState.DISABLED :
+                                 ideaPluginDescriptor.isEnabled() ?
+                                 PluginEnabledState.ENABLED :
                                  null;
 
     setEnabled(pluginId, enabled);

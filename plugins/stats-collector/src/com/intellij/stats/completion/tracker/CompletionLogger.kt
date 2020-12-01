@@ -20,11 +20,12 @@ abstract class CompletionLoggerProvider {
 
 abstract class CompletionLogger {
 
-    abstract fun completionStarted(lookup: LookupImpl, isExperimentPerformed: Boolean, experimentVersion: Int, timestamp: Long)
+    abstract fun completionStarted(lookup: LookupImpl, prefixLength: Int, isExperimentPerformed: Boolean, experimentVersion: Int,
+                                   timestamp: Long)
 
-    abstract fun afterCharTyped(c: Char, lookup: LookupImpl, timestamp: Long)
+    abstract fun afterCharTyped(c: Char, lookup: LookupImpl, prefixLength: Int, timestamp: Long)
 
-    abstract fun afterBackspacePressed(lookup: LookupImpl, timestamp: Long)
+    abstract fun afterBackspacePressed(lookup: LookupImpl, prefixLength: Int, timestamp: Long)
 
     abstract fun downPressed(lookup: LookupImpl, timestamp: Long)
     abstract fun upPressed(lookup: LookupImpl, timestamp: Long)

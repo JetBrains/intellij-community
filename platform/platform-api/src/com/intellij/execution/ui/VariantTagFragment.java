@@ -127,6 +127,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().putClientProperty(Presentation.PROP_VALUE, getVariantName(mySelectedVariant));
+        e.getPresentation().setVisible(isRemovable());
       }
     };
     group.setPopup(true);

@@ -121,6 +121,48 @@ public final class TreeUtil {
   }
 
   /**
+   * @param tree a tree, which nodes should be found
+   * @param x    a number of pixels from the left edge of the given tree
+   * @param y    a number of pixels from the top of the specified tree
+   * @return found visible tree path or {@code null}
+   */
+  public static @Nullable TreePath getPathForLocation(@NotNull JTree tree, int x, int y) {
+    TreePath path = tree.getClosestPathForLocation(x, y);
+    Rectangle bounds = tree.getPathBounds(path);
+    return bounds != null && bounds.y <= y && y < bounds.y + bounds.height ? path : null;
+  }
+
+  /**
+   * @param tree a tree, which nodes should be found
+   * @param x    a number of pixels from the left edge of the given tree
+   * @param y    a number of pixels from the top of the specified tree
+   * @return found row number or {@code -1}
+   */
+  public static int getRowForLocation(@NotNull JTree tree, int x, int y) {
+    return Math.max(-1, tree.getRowForPath(getPathForLocation(tree, x, y)));
+  }
+
+  /**
+   * @param tree a tree to repaint
+   * @param path a visible tree path to repaint
+   */
+  public static void repaintPath(@NotNull JTree tree, @Nullable TreePath path) {
+    assert EventQueue.isDispatchThread();
+    Rectangle bounds = tree.getPathBounds(path);
+    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
+  }
+
+  /**
+   * @param tree a tree to repaint
+   * @param row  a row number to repaint
+   */
+  public static void repaintRow(@NotNull JTree tree, int row) {
+    assert EventQueue.isDispatchThread();
+    Rectangle bounds = tree.getRowBounds(row);
+    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
+  }
+
+  /**
    * @param tree a tree, which viewable paths are processed
    * @return a list of expanded paths
    */

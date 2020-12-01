@@ -11,10 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
@@ -270,7 +267,13 @@ public class TabLabel extends JPanel implements Accessible {
 
   @Override
   public void paint(final Graphics g) {
-    if (myTabs.isDropTarget(myInfo)) return;
+    if (myTabs.isDropTarget(myInfo)) {
+      if (myTabs.getDropSide() == -1) {
+        g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
+        g.fillRect(0, 0, getWidth(), getHeight());
+      }
+      return;
+    }
     doPaint(g);
   }
 

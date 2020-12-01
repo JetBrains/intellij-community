@@ -14,4 +14,5 @@ internal interface ModuleRootModelBridge: ModuleRootModel {
   val accessor: RootConfigurationAccessor
 
   fun getOrCreateJpsRootProperties(sourceRootUrl: VirtualFileUrl, creator: () -> JpsModuleSourceRoot): JpsModuleSourceRoot
+  fun removeCachedJpsRootProperties(sourceRootUrl: VirtualFileUrl)
 }

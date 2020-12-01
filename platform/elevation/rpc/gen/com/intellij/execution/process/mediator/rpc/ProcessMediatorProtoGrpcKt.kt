@@ -39,6 +39,10 @@ object DaemonGrpcKt {
   val serviceDescriptor: ServiceDescriptor
     get() = DaemonGrpc.getServiceDescriptor()
 
+  val adjustQuotaMethod: MethodDescriptor<AdjustQuotaRequest, Empty>
+    @JvmStatic
+    get() = DaemonGrpc.getAdjustQuotaMethod()
+
   val shutdownMethod: MethodDescriptor<Empty, Empty>
     @JvmStatic
     get() = DaemonGrpc.getShutdownMethod()
@@ -65,6 +69,23 @@ object DaemonGrpcKt {
      *
      * @return The single response from the server.
      */
+    suspend fun adjustQuota(request: AdjustQuotaRequest): Empty = unaryRpc(
+      channel,
+      DaemonGrpc.getAdjustQuotaMethod(),
+      request,
+      callOptions,
+      Metadata()
+    )
+    /**
+     * Executes this RPC and returns the response message, suspending until the RPC completes
+     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
+     * with the corresponding exception as a cause.
+     *
+     * @param request The request message to send to the server.
+     *
+     * @return The single response from the server.
+     */
     suspend fun shutdown(request: Empty): Empty = unaryRpc(
       channel,
       DaemonGrpc.getShutdownMethod(),
@@ -81,6 +102,20 @@ object DaemonGrpcKt {
     coroutineContext: CoroutineContext = EmptyCoroutineContext
   ) : AbstractCoroutineServerImpl(coroutineContext) {
     /**
+     * Returns the response to an RPC for intellij.process.mediator.rpc.Daemon.AdjustQuota.
+     *
+     * If this method fails with a [StatusException], the RPC will fail with the corresponding
+     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
+     * will fail
+     * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
+     * fail with `Status.UNKNOWN` with the exception as a cause.
+     *
+     * @param request The request from the client.
+     */
+    open suspend fun adjustQuota(request: AdjustQuotaRequest): Empty = throw
+        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.Daemon.AdjustQuota is unimplemented"))
+
+    /**
      * Returns the response to an RPC for intellij.process.mediator.rpc.Daemon.Shutdown.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
@@ -95,6 +130,11 @@ object DaemonGrpcKt {
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.Daemon.Shutdown is unimplemented"))
 
     final override fun bindService(): ServerServiceDefinition = builder(getServiceDescriptor())
+      .addMethod(unaryServerMethodDefinition(
+      context = this.context,
+      descriptor = DaemonGrpc.getAdjustQuotaMethod(),
+      implementation = ::adjustQuota
+    ))
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
       descriptor = DaemonGrpc.getShutdownMethod(),

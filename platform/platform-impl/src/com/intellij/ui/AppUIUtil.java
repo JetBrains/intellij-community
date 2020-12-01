@@ -132,10 +132,9 @@ public final class AppUIUtil {
 
     @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
     Image image = ImageLoader.loadFromResource(fallbackSmallIconUrl, AppUIUtil.class);
-    //noinspection ConstantConditions
+    assert image != null : "Can't load '" + fallbackSmallIconUrl + "'";
     icon = new JBImageIcon(image);
-    scaleIconToSize(icon, size);
-    return icon;
+    return scaleIconToSize(icon, size);
   }
 
   public static @Nullable Icon loadApplicationIcon(@NotNull ScaleContext ctx, int size) {

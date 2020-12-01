@@ -1,4 +1,3 @@
-# Stubs for six.moves.urllib.parse
 from urllib import (
     quote as quote,
     quote_plus as quote_plus,

@@ -23,6 +23,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.NlsContexts.*;
 
@@ -76,7 +77,7 @@ public class Notification {
   private final AtomicBoolean myExpired = new AtomicBoolean(false);
   private Runnable myWhenExpired;
   private Boolean myImportant;
-  private WeakReference<Balloon> myBalloonRef;
+  private final AtomicReference<WeakReference<Balloon>> myBalloonRef = new AtomicReference<>();
   private final long myTimestamp;
 
   public Notification(@NotNull String groupId, @Nullable Icon icon, @NotNull NotificationType type) {
@@ -354,31 +355,37 @@ public class Notification {
   }
 
   public void hideBalloon() {
-    if (myBalloonRef != null) {
-      final Balloon balloon = myBalloonRef.get();
-      if (balloon != null) {
-        balloon.hide();
-      }
-      myBalloonRef = null;
-    }
+    hideBalloon(myBalloonRef.getAndSet(null));
+  }
+
+  private static void hideBalloon(@Nullable WeakReference<Balloon> balloonRef) {
+    if (balloonRef == null) return;
+    var balloon = balloonRef.get();
+    if (balloon == null) return;
+    UIUtil.invokeLaterIfNeeded(balloon::hide);
   }
 
   public void setBalloon(@NotNull final Balloon balloon) {
-    hideBalloon();
-    myBalloonRef = new WeakReference<>(balloon);
+    var oldBalloon = myBalloonRef.getAndSet(new WeakReference<>(balloon));
+    hideBalloon(oldBalloon);
     balloon.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
-        if (SoftReference.dereference(myBalloonRef) == balloon) {
-          myBalloonRef = null;
-        }
+        myBalloonRef.updateAndGet(prev -> {
+          if (prev != null && SoftReference.dereference(prev) == balloon) {
+            return null;
+          }
+          else {
+            return prev;
+          }
+        });
       }
     });
   }
 
   @Nullable
   public Balloon getBalloon() {
-    return SoftReference.dereference(myBalloonRef);
+    return SoftReference.dereference(myBalloonRef.get());
   }
 
   public void notify(@Nullable Project project) {

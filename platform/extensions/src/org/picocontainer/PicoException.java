@@ -80,8 +80,6 @@ public class PicoException extends RuntimeException {
 
   /**
    * Overridden to provide 1.4 style stack traces on pre-1.4.
-   *
-   * @param s the {@link PrintStream} used to print the stack trace
    */
   @Override
   public void printStackTrace() {

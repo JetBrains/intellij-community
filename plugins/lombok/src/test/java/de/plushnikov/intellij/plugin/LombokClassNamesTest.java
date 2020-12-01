@@ -10,8 +10,10 @@ public class LombokClassNamesTest extends AbstractLombokLightCodeInsightTestCase
     GlobalSearchScope allScope = GlobalSearchScope.allScope(getProject());
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(getProject());
     for (Field field : LombokClassNames.class.getDeclaredFields()) {
-      String name = (String)field.get(null);
-      assertNotNull(name, psiFacade.findClass(name, allScope));
+      if (String.class.equals(field.getType())) {
+        String name = (String)field.get(null);
+        assertNotNull(name, psiFacade.findClass(name, allScope));
+      }
     }
   }
 }

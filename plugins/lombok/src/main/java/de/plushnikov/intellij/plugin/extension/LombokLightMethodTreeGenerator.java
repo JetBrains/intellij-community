@@ -18,6 +18,7 @@ public class LombokLightMethodTreeGenerator implements TreeGenerator {
   public LombokLightMethodTreeGenerator() {
   }
 
+  @Override
   @Nullable
   public TreeElement generateTreeFor(PsiElement original, CharTable table, PsiManager manager) {
     TreeElement result = null;

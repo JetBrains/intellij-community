@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.*;
+
 /**
  * @author Konstantin Bulenkov
  * @author Mikhail Sokolov
@@ -77,7 +79,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
-    return doGetActions(includeNonProjectItemsText(), myFilter, onChanged);
+    return doGetActions(includeNonProjectItemsText(), myFilter, new FileTypeFilterCollector(), onChanged);
   }
 
   @NotNull

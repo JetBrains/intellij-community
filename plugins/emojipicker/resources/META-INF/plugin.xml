@@ -17,7 +17,6 @@
 
   <actions>
     <action id="EmojiPicker.Open" class="org.jetbrains.plugins.emojipicker.action.OpenEmojiPickerAction">
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorToggleColumnMode"/>
       <add-to-group group-id="EditMenu" anchor="before" relative-to-action="EmojiAndSymbols"/>
       <keyboard-shortcut keymap="$default" first-keystroke="control alt SEMICOLON"/>
     </action>

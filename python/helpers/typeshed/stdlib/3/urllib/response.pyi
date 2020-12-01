@@ -1,5 +1,3 @@
-# private module, we only expose what's needed
-
 from email.message import Message
 from types import TracebackType
 from typing import IO, Any, BinaryIO, Callable, Iterable, List, Optional, Tuple, Type, TypeVar

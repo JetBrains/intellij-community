@@ -34,9 +34,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="completion-ranking-scala-exp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-scala:0.2.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-scala:0.3.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-scala/0.2.1/completion-ranking-scala-0.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-scala/0.3.1/completion-ranking-scala-0.3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -55,9 +55,9 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library">
       <library name="completion-ranking-python-exp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.1.2" />
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.2.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.1.2/completion-ranking-python-0.1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.1/completion-ranking-python-0.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -85,9 +85,49 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="completion-ranking-go-exp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-go:0.0.5" />
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-go:0.1.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-go/0.0.5/completion-ranking-go-0.0.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-go/0.1.1/completion-ranking-go-0.1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="completion-ranking-js-exp" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-js:0.1.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-js/0.1.1/completion-ranking-js-0.1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="completion-ranking-typescript-exp" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-typescript:0.2.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-typescript/0.2.1/completion-ranking-typescript-0.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="completion-ranking-dart-exp" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-dart:0.0.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-dart/0.0.1/completion-ranking-dart-0.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="completion-ranking-swift-exp" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-swift:0.0.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-swift/0.0.1/completion-ranking-swift-0.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

@@ -2,12 +2,12 @@
 
 # Runs stubtest and prints each unused whitelist entry with filename.
 
-from typing import List, Tuple
 import os.path
 import subprocess
 import sys
+from typing import List, Tuple
 
-_UNUSED_NOTE = "note: unused whitelist entry "
+_UNUSED_NOTE = "note: unused allowlist entry "
 _WHITELIST_PATH = os.path.join("tests", "stubtest_whitelists")
 
 
@@ -22,11 +22,9 @@ def main() -> int:
 
 
 def run_stubtest() -> List[str]:
-    proc = subprocess.run(
-        ["./tests/stubtest_test.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-    )
+    proc = subprocess.run(["./tests/stubtest_test.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = proc.stdout.decode("utf-8").splitlines()
-    return [line[len(_UNUSED_NOTE):].strip() for line in output if line.startswith(_UNUSED_NOTE)]
+    return [line[len(_UNUSED_NOTE) :].strip() for line in output if line.startswith(_UNUSED_NOTE)]
 
 
 def unused_files(unused: str) -> List[Tuple[str, str]]:

@@ -2,12 +2,14 @@
 package org.jetbrains.plugins.emojipicker.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.emojipicker.messages.EmojipickerBundle;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -61,6 +63,11 @@ public class EmojiSearchField extends ExtendableTextField {
       @Override
       public Runnable getActionOnClick() {
         return emojiPicker::openSkinToneSelectionPanel;
+      }
+
+      @Override
+      public @NlsContexts.Tooltip String getTooltip() {
+        return EmojipickerBundle.message("message.EmojiPicker.ChangeSkinTone");
       }
     });
     Dimension size = new Dimension(0, JBUIScale.scale(40));

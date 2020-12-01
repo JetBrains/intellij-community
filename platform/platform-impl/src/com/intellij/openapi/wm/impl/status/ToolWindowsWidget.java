@@ -7,7 +7,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -131,7 +130,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
         if (project == null) return;
 
-        UIEventLogger.logUIEvent(UIEventId.ToolWindowsWidgetPopupShown);
+        UIEventLogger.ToolWindowsWidgetPopupShown.log(project);
 
         List<ToolWindow> toolWindows = new ArrayList<>();
         final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
@@ -202,7 +201,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
   private void performAction() {
     if (isActive()) {
-      UIEventLogger.logUIEvent(UIEventId.ToolWindowsWidgetPopupClicked);
+      UIEventLogger.ToolWindowsWidgetPopupClicked.log(myStatusBar.getProject());
       UISettings.getInstance().setHideToolStripes(!UISettings.getInstance().getHideToolStripes());
       UISettings.getInstance().fireUISettingsChanged();
     }

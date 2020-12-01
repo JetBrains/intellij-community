@@ -2,19 +2,27 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.configurations.RuntimeConfigurationException
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MasterDetailsComponent
+import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.CommonActionsPanel
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.toArray
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
+import javax.swing.Icon
+import javax.swing.JTree
 
 class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   private val project: Project,
@@ -26,9 +34,12 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   internal val selectedConfig: TargetEnvironmentConfiguration?
     get() = myCurrentConfigurable?.editableObject as? TargetEnvironmentConfiguration ?: _lastSelectedConfig
 
+  private val targetManager: TargetEnvironmentsManager get() = TargetEnvironmentsManager.getInstance(project)
+
   init {
     // note that `MasterDetailsComponent` does not work without `initTree()`
     initTree()
+    myTree.cellRenderer = TargetEnvironmentRenderer()
     myTree.emptyText.text = "No targets added"
     myTree.emptyText.appendSecondaryText(ExecutionBundle.message("targets.details.status.text.add.new.target"),
                                          SimpleTextAttributes.LINK_ATTRIBUTES) {
@@ -70,12 +81,12 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
 
   override fun processRemovedItems() {
     val deletedTargets = deletedTargets()
-    deletedTargets.forEach { TargetEnvironmentsManager.instance.targets.removeConfig(it) }
+    deletedTargets.forEach { targetManager.targets.removeConfig(it) }
     super.processRemovedItems()
   }
 
   override fun wasObjectStored(editableObject: Any?): Boolean {
-    return TargetEnvironmentsManager.instance.targets.resolvedConfigs().contains(editableObject)
+    return targetManager.targets.resolvedConfigs().contains(editableObject)
   }
 
   private fun deletedTargets(): Set<TargetEnvironmentConfiguration> = allTargets().toSet() - getConfiguredTargets()
@@ -83,8 +94,10 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   override fun apply() {
     super.apply()
 
-    val addedConfigs = getConfiguredTargets() - TargetEnvironmentsManager.instance.targets.resolvedConfigs()
-    addedConfigs.forEach { TargetEnvironmentsManager.instance.addTarget(it) }
+    val addedConfigs = getConfiguredTargets() - targetManager.targets.resolvedConfigs()
+    addedConfigs.forEach { targetManager.addTarget(it) }
+
+    TREE_UPDATER.run()
   }
 
   override fun disposeUIResources() {
@@ -92,11 +105,11 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     super.disposeUIResources()
   }
 
-  private fun allTargets() = TargetEnvironmentsManager.instance.targets.resolvedConfigs()
+  private fun allTargets() = targetManager.targets.resolvedConfigs().filter { it.getTargetType().isSystemCompatible() }
 
-  private fun addTargetNode(config: TargetEnvironmentConfiguration): MyNode {
-    val configurable = TargetEnvironmentDetailsConfigurable(project, config, defaultLanguageRuntime)
-    val node = MyNode(configurable)
+  private fun addTargetNode(target: TargetEnvironmentConfiguration): MyNode {
+    val configurable = TargetEnvironmentDetailsConfigurable(project, target, defaultLanguageRuntime, TREE_UPDATER)
+    val node = TargetEnvironmentNode(target, configurable)
     addNode(node, myRoot)
     selectNodeInTree(node)
     return myRoot
@@ -132,7 +145,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
         }
       }
       // there may be not yet stored names
-      TargetEnvironmentsManager.instance.ensureUniqueName(newConfig)
+      targetManager.ensureUniqueName(newConfig)
       val newNode = addTargetNode(newConfig)
       selectNodeInTree(newNode, true, true)
     }
@@ -147,6 +160,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       return TargetEnvironmentType.EXTENSION_NAME.extensionList
+        .filter { it.isSystemCompatible() }
         .map { CreateNewTargetAction(project, it) }
         .toArray(AnAction.EMPTY_ARRAY)
     }
@@ -169,7 +183,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
 
     override fun actionPerformed(e: AnActionEvent) {
       duplicateSelected()?.let { copy ->
-        TargetEnvironmentsManager.instance.addTarget(copy)
+        targetManager.addTarget(copy)
         val newNode = addTargetNode(copy)
         selectNodeInTree(newNode, true, true)
       }
@@ -179,5 +193,52 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
       getSelectedTarget()?.let { it.getTargetType().duplicateConfig(it) }
 
     private fun getSelectedTarget() = selectedNode?.configurable?.editableObject as? TargetEnvironmentConfiguration
+  }
+
+  private class TargetEnvironmentNode(private val target: TargetEnvironmentConfiguration,
+                                      configurable: TargetEnvironmentDetailsConfigurable) : MyNode(configurable) {
+
+    override fun getDisplayName() = target.displayName
+
+    val configuredLanguages: String
+      get() = target.runtimes.resolvedConfigs()
+        .map { it.getRuntimeType().displayName }
+        .toSortedSet()
+        .joinToString()
+
+    fun computeIcon(expanded: Boolean): Icon? {
+      val rawIcon = this.configurable?.getIcon(expanded) ?: return null
+      val valid = try {
+        target.validateConfiguration()
+        true
+      }
+      catch (e: RuntimeConfigurationException) {
+        false
+      }
+      return if (valid) rawIcon else LayeredIcon.create(rawIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer)
+    }
+  }
+
+  private class TargetEnvironmentRenderer : ColoredTreeCellRenderer() {
+
+    override fun customizeCellRenderer(tree: JTree,
+                                       value: Any?,
+                                       selected: Boolean,
+                                       expanded: Boolean,
+                                       leaf: Boolean,
+                                       row: Int,
+                                       hasFocus: Boolean) {
+
+      val node = value as? TargetEnvironmentNode ?: return
+      font = UIUtil.getTreeFont()
+      icon = node.computeIcon(expanded)
+
+      append(node.displayName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+
+      node.configuredLanguages.nullize()?.let { languages ->
+        append("  ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        append(languages, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
+    }
   }
 }

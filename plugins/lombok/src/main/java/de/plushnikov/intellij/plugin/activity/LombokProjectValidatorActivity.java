@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.activity;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -16,6 +15,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.JavaPsiFacade;
@@ -44,22 +44,11 @@ import java.util.List;
 public class LombokProjectValidatorActivity implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
-    // If plugin is not enabled - no point to continue
-    if (!ProjectSettings.isLombokEnabledInProject(project)) {
-      return;
-    }
-
+    LombokProcessorProvider lombokProcessorProvider = LombokProcessorProvider.getInstance(project);
     ReadAction.nonBlocking(() -> {
       if (project.isDisposed()) return null;
 
       final boolean hasLombokLibrary = hasLombokLibrary(project);
-
-      // If dependency is missing and missing dependency notification setting is enabled (defaults to disabled)
-      if (!hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false)) {
-        return getNotificationGroup().createNotification(LombokBundle.message("config.warn.dependency.missing.title"),
-                                                         LombokBundle.message("config.warn.dependency.missing.message", project.getName()),
-                                                         NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
-      }
 
       // If dependency is present and out of date notification setting is enabled (defaults to disabled)
       if (hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false)) {
@@ -85,20 +74,20 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
           .createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
                               LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
                               NotificationType.ERROR,
-                              ApplicationManager.getApplication().isUnitTestMode() ? null
-                                                                                   : (not, e) -> {
-                                                                                     if (e.getEventType() ==
-                                                                                         HyperlinkEvent.EventType.ACTIVATED) {
-                                                                                       enableAnnotations(project);
-                                                                                       not.expire();
-                                                                                     }
-                                                                                   });
+                              (not, e) -> {
+                                if (e.getEventType() ==
+                                    HyperlinkEvent.EventType.ACTIVATED) {
+                                  enableAnnotations(project);
+                                  not.expire();
+                                }
+                              });
       }
       return null;
-    }).expireWith(LombokProcessorProvider.getInstance(project))
+    }).expireWith(lombokProcessorProvider)
       .finishOnUiThread(ModalityState.NON_MODAL, notification -> {
         if (notification != null) {
           Notifications.Bus.notify(notification, project);
+          Disposer.register(lombokProcessorProvider, () -> notification.expire());
         }
       }).submit(AppExecutorUtil.getAppExecutorService());
   }
@@ -147,7 +136,7 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
   }
 
   public static boolean isVersionLessThan1_18_16(Project project) {
-    if (ProjectSettings.isLombokEnabledInProject(project) && hasLombokLibrary(project)) {
+    if (hasLombokLibrary(project)) {
       return CachedValuesManager.getManager(project)
         .getCachedValue(project, () -> {
           Boolean isVersionLessThan = ReadAction.compute(() -> isVersionLessThan1_18_16_Internal(project));

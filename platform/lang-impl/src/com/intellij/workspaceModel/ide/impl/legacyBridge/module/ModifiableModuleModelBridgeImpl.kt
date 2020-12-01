@@ -160,19 +160,23 @@ internal class ModifiableModuleModelBridgeImpl(
     removeUnloadedModule(moduleName)
 
     val builder = WorkspaceEntityStorageBuilder.create()
+    var errorMessage: String? = null
     JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), project.configLocation!!, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
-        //todo report
+        errorMessage = message
       }
     }, virtualFileManager)
+    if (errorMessage != null) {
+      throw IOException("Failed to load module from $filePath: $errorMessage")
+    }
     diff.addDiff(builder)
     val moduleEntity = diff.entities(ModuleEntity::class.java).find { it.name == moduleName }
     if (moduleEntity == null) {
       throw IOException("Failed to load module from $filePath")
     }
 
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
-      ModuleManagerComponentBridge.getInstance(project).getModuleFilePath(moduleEntity))
+    val moduleFilePath = ModuleManagerComponentBridge.getInstance(project).getModuleFilePath(moduleEntity)!!
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleFilePath)
     return createModuleInstance(moduleEntity, false)
   }
 

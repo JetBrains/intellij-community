@@ -39,7 +39,7 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, Fi
       return VcsLogBundle.message("vcs.log.date.filter.since", DateFormatUtil.formatDate(after));
     }
     else if (before != null) {
-      return VcsLogBundle.message("vcs.log.date.filter.since", DateFormatUtil.formatDate(before));
+      return VcsLogBundle.message("vcs.log.date.filter.until", DateFormatUtil.formatDate(before));
     }
     else {
       return ALL.get();

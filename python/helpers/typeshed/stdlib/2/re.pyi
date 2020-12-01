@@ -1,9 +1,3 @@
-# Stubs for re
-# Ron Murawski <ron@horizonchess.com>
-# 'bytes' support added by Jukka Lehtosalo
-
-# based on: http: //docs.python.org/2.7/library/re.html
-
 from typing import (
     Any,
     AnyStr,

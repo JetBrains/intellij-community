@@ -544,9 +544,25 @@ public abstract class DiffRequestProcessor implements Disposable {
     return myProject;
   }
 
+  @Nullable
+  public DiffRequest getActiveRequest() {
+    return myActiveRequest;
+  }
+
   @NotNull
   public DiffContext getContext() {
     return myContext;
+  }
+
+  @Nullable
+  public DiffViewer getActiveViewer() {
+    if (myState instanceof DefaultState) {
+      return ((DefaultState)myState).myViewer;
+    }
+    if (myState instanceof WrapperState) {
+      return ((WrapperState)myState).myViewer;
+    }
+    return null;
   }
 
   @NotNull

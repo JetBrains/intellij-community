@@ -15,6 +15,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
@@ -149,6 +150,13 @@ object DynamicPlugins {
                                    optionalDependencyPluginId: PluginId? = null,
                                    context: List<IdeaPluginDescriptorImpl> = emptyList(),
                                    checkImplementationDetailDependencies: Boolean = true): String? {
+    if (descriptor.isRequireRestart) {
+      return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart"
+    }
+    if (descriptor.productCode != null && !descriptor.isBundled && !PluginManager.getInstance().isDevelopedByJetBrains(descriptor)) {
+      return "Plugin ${descriptor.pluginId} is a paid plugin"
+    }
+
     if (InstalledPluginsState.getInstance().isRestartRequired) {
       return "Not allowing load/unload without restart because of pending restart operation"
     }
@@ -165,10 +173,6 @@ object DynamicPlugins {
         return "ide.plugins.allow.unload is disabled and synchronous load/unload is not possible for ${descriptor.pluginId}"
       }
       return null
-    }
-
-    if (descriptor.isRequireRestart) {
-      return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart"
     }
 
     val app = ApplicationManager.getApplication()
@@ -470,10 +474,14 @@ object DynamicPlugins {
 
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
       IdeEventQueue.getInstance().flushQueue()
-      // must be after flushQueue (e.g. https://youtrack.jetbrains.com/issue/IDEA-252010)
       app.runWriteAction {
+        // must be after flushQueue (e.g. https://youtrack.jetbrains.com/issue/IDEA-252010)
         val forbidGettingServicesToken = app.forbidGettingServices("Plugin $pluginId being unloaded.")
         try {
+          // https://youtrack.jetbrains.com/issue/IDEA-245031
+          // mark plugin classloaders as being unloaded to ensure that new extension instances will be not created during unload
+          setClassLoaderState(pluginDescriptor, PluginClassLoader.UNLOAD_IN_PROGRESS)
+
           processLoadedOptionalDependenciesOnPlugin(pluginId) { mainDescriptor, subDescriptor ->
             // must be before unloadPluginDescriptorNotRecursively as this method nullize classloader
             val classLoader = (subDescriptor ?: mainDescriptor).pluginClassLoader as? PluginClassLoader
@@ -584,6 +592,11 @@ object DynamicPlugins {
         FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", eventId, fuData)
       }
     }
+
+    if (!classLoaderUnloaded) {
+      setClassLoaderState(pluginDescriptor, PluginAwareClassLoader.ACTIVE)
+    }
+
     return classLoaderUnloaded
   }
 
@@ -1104,4 +1117,11 @@ private fun unloadClassLoader(pluginDescriptor: IdeaPluginDescriptorImpl, timeou
   val watcher = GCWatcher.tracking(pluginDescriptor.classLoader)
   ClassLoaderConfigurator.setPluginClassLoaderForMainAndSubPlugins(pluginDescriptor, null)
   return watcher.tryCollect(timeoutMs)
+}
+
+private fun setClassLoaderState(pluginDescriptor: IdeaPluginDescriptorImpl, state: Int) {
+  (pluginDescriptor.classLoader as? PluginClassLoader)?.state = state
+  for (dependency in (pluginDescriptor.pluginDependencies ?: return)) {
+    dependency.subDescriptor?.let { setClassLoaderState(it, state) }
+  }
 }

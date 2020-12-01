@@ -461,7 +461,7 @@ class GitStageLineStatusTracker(
 
       val additionalPanel = createStageLinksPanel(editor, range, mousePosition, disposable)
 
-      LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorsPanel, additionalPanel, mousePosition, disposable)
+      LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorsPanel, additionalPanel, mousePosition, disposable, null)
     }
 
     fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {

@@ -602,5 +602,8 @@
                                  anyReferenceClass="true"
                                  targetClass="com.intellij.model.Symbol"
                                  implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
+
+    <spellchecker.support language="HTML" implementationClass="com.intellij.spellchecker.xml.HtmlSpellcheckingStrategy"/>
+    <spellchecker.support language="XML" implementationClass="com.intellij.spellchecker.xml.XmlSpellcheckingStrategy" id="xml"/>
   </extensions>
 </idea-plugin>

@@ -11,10 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionWithDelegate;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -63,6 +60,9 @@ public class ActionsCollectorImpl extends ActionsCollector {
     data.add(EventFields.PluginInfoFromInstance.with(action));
 
     if (event != null) {
+      if (action instanceof ToggleAction) {
+        data.add(ActionsEventLogGroup.TOGGLE_ACTION.with(!((ToggleAction)action).isSelected(event)));
+      }
       data.addAll(actionEventData(event));
     }
     if (project != null) {

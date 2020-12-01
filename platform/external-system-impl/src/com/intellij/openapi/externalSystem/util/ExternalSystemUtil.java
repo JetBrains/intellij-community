@@ -37,6 +37,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
+import com.intellij.openapi.externalSystem.importing.ImportSpecImpl;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -446,7 +447,12 @@ public final class ExternalSystemUtil {
                 public void actionPerformed(@NotNull AnActionEvent e) {
                   Presentation p = e.getPresentation();
                   p.setEnabled(false);
-                  refreshProject(externalProjectPath, importSpec);
+                  Runnable rerunRunnable = importSpec instanceof ImportSpecImpl ? ((ImportSpecImpl)importSpec).getRerunAction() : null;
+                  if (rerunRunnable == null) {
+                    refreshProject(externalProjectPath, importSpec);
+                  } else {
+                    rerunRunnable.run();
+                  }
                 }
               };
               String systemId = id.getProjectSystemId().getReadableName();

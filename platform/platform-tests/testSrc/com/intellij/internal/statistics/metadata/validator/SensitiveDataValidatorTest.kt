@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory.parseSimpleExpression
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesPersistedStorage
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
 import junit.framework.TestCase
@@ -17,6 +18,7 @@ import org.junit.Assert
 import org.junit.Test
 import java.util.*
 import java.util.regex.Pattern
+import kotlin.collections.HashMap
 
 @Suppress("SameParameterValue")
 class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
@@ -530,6 +532,35 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       TestCase.assertEquals(TestCustomActionId.FIRST.name, objData["id_1"])
       TestCase.assertEquals(ValidationResultType.REJECTED.description, objData["id_2"])
     }
+  }
+
+  @Test
+  fun test_validate_if_metadata_unreachable() {
+    val validator = createUnreachableValidator()
+    val eventLogGroup = EventLogGroup("object.group", 1)
+    val data: HashMap<String, Any> = hashMapOf( "count" to 1)
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+
+    TestCase.assertEquals(ValidationResultType.UNREACHABLE_METADATA.description, validatedEventData["count"])
+  }
+
+  @Test
+  fun test_validate_rule_undefined() {
+    val validator = newValidatorByFile("test_empty_rule.json")
+    val eventLogGroup = EventLogGroup("build.gradle.actions", 1)
+    val data: HashMap<String, Any> = hashMapOf("count" to 1)
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+
+    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE.description, validatedEventData["count"])
+  }
+
+  internal fun createUnreachableValidator(): TestSensitiveDataValidator {
+    val storage = object : ValidationRulesPersistedStorage("TEST", TestEventLogMetadataPersistence(""), TestEventLogMetadataLoader("")) {
+      override fun isUnreachable(): Boolean {
+        return true
+      }
+    }
+    return TestSensitiveDataValidator(storage)
   }
 
   private fun doTestWithRuleList(fileName: String, func: (TestSensitiveDataValidator) -> Unit) {

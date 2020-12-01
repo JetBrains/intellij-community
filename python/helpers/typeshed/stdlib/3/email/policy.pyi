@@ -1,5 +1,3 @@
-# Stubs for email.policy (Python 3.4)
-
 from abc import abstractmethod
 from email.contentmanager import ContentManager
 from email.errors import MessageDefect

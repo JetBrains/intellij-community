@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyParserUtils")
 @file:Suppress("UNUSED_PARAMETER", "LiftReturnOrAssignment")
 
@@ -207,8 +207,13 @@ fun disableNlBeforeClosure(builder: PsiBuilder, level: Int): Boolean {
   return true
 }
 
-fun isParseNlBeforeClosure(builder: PsiBuilder, level: Int): Boolean {
-  return builder.latestDoneMarker?.tokenType == NEW_EXPRESSION || builder[parseNlBeforeClosureArgument]
+fun callTail(builder: PsiBuilder, level: Int, withNl: Parser, withoutNl: Parser): Boolean {
+  if (builder.latestDoneMarker?.tokenType == NEW_EXPRESSION || builder[parseNlBeforeClosureArgument]) {
+    return withNl.parse(builder, level)
+  }
+  else {
+    return withoutNl.parse(builder, level)
+  }
 }
 
 fun parseArgument(builder: PsiBuilder, level: Int, argumentParser: Parser): Boolean {

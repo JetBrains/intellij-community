@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
@@ -78,7 +79,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
-  private var partialChangeListsEnabled : Boolean = false
+  private var partialChangeListsEnabled: Boolean = false
   private val documentsInDefaultChangeList = HashSet<Document>()
   private var clmFreezeCounter: Int = 0
 
@@ -247,7 +248,11 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         val isLoading = loader.hasRequestFor(document)
         if (isLoading) {
           log("checkIfTrackerCanBeReleased - isLoading", data.tracker.virtualFile)
-          return
+          if (data.tracker.hasPendingPartialState() ||
+              fileStatesAwaitingRefresh.containsKey(data.tracker.virtualFile)) {
+            log("checkIfTrackerCanBeReleased - has pending state", data.tracker.virtualFile)
+            return
+          }
         }
       }
 
@@ -591,17 +596,24 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   @RequiresEdt
   @ApiStatus.Internal
   fun offerTrackerContent(document: Document, text: CharSequence) {
-    val tracker: LocalLineStatusTracker<*>
-    synchronized(LOCK) {
-      val data = trackers[document]
-      if (data == null || data.contentInfo != null) return
+    try {
+      val tracker: LocalLineStatusTracker<*>
+      synchronized(LOCK) {
+        val data = trackers[document]
+        if (data == null || data.contentInfo != null) return
 
-      tracker = data.tracker
+        tracker = data.tracker
+      }
+
+      if (tracker is LocalLineStatusTrackerImpl<*>) {
+        ClientId.withClientId(ClientId.localId) {
+          tracker.setBaseRevision(text)
+          log("Offered content", tracker.virtualFile)
+        }
+      }
     }
-
-    if (tracker is LocalLineStatusTrackerImpl<*>) {
-      tracker.setBaseRevision(text)
-      log("Offered content", tracker.virtualFile)
+    catch (e: Throwable) {
+      LOG.error(e)
     }
   }
 
@@ -721,7 +733,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       if (provider != ChangelistsLocalStatusTrackerProvider) return
 
       val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
-      if (changeList != null && !changeList.isDefault) {
+      val inAnotherChangelist = changeList != null && !ActiveChangeListTracker.getInstance(project).isActiveChangeList(changeList)
+      if (inAnotherChangelist) {
         log("Tracker install from DocumentListener: ", virtualFile)
 
         val tracker = synchronized(LOCK) {
@@ -765,10 +778,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         expireInactiveRangesDamagedNotifications()
 
         EditorFactory.getInstance().allEditors
-          .filterIsInstance(EditorEx::class.java)
-          .forEach {
-            it.gutterComponentEx.repaint()
-          }
+          .forEach { if (it is EditorEx) it.gutterComponentEx.repaint() }
       }
     }
 
@@ -1163,9 +1173,11 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
 
       isScheduled = true
       lastFuture = ApplicationManager.getApplication().executeOnPooledThread {
-        BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
-          handleRequests()
-        })
+        ClientId.withClientId(ClientId.localId) {
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
+            handleRequests()
+          })
+        }
       }
     }
   }
@@ -1276,7 +1288,8 @@ private object ChangelistsLocalStatusTrackerProvider : BaseRevisionStatusTracker
         status != FileStatus.NOT_CHANGED) return false
 
     val change = ChangeListManager.getInstance(project).getChange(file)
-    return change != null && change.javaClass == Change::class.java &&
+    return change == null ||
+           change.javaClass == Change::class.java &&
            (change.type == Change.Type.MODIFICATION || change.type == Change.Type.MOVED) &&
            change.afterRevision is CurrentContentRevision
   }

@@ -962,7 +962,7 @@ private optional_expression ::= non_empty_annotation_list? '[' expression? ']' {
 
 private priority1_2 ::= method_call_expression | lazy_closure | lambda_expression | single_parameter_lambda_expression | list_or_map
 constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
-method_call_expression ::= expression (<<isParseNlBeforeClosure>> call_tail_with_nl_before_closure | call_tail)
+method_call_expression ::= expression <<callTail call_tail_with_nl_before_closure call_tail>>
 private call_tail ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+
 private call_tail_with_nl_before_closure ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list (mb_nl lazy_closure)+
 

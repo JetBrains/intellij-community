@@ -358,7 +358,7 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  private void hidePopup() {
+  protected void hidePopup() {
     if (myPopup != null) {
       myPopup.cancel();
       myPopup = null;

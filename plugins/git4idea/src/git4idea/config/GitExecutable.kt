@@ -4,13 +4,13 @@ package git4idea.config
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
+import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import git4idea.commands.GitHandler
-import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.File
@@ -114,7 +114,13 @@ sealed class GitExecutable {
       //}
       //commandLine.exePath = executable
 
-      distribution.patchCommandLine(commandLine, handler.project(), null, false)
+      val options = WSLCommandLineOptions()
+      if (Registry.`is`("git.wsl.exe.executable.no.shell")) {
+        options.isLaunchWithWslExe = true
+        options.isExecuteCommandInShell = false
+        options.isPassEnvVarsUsingInterop = true
+      }
+      distribution.patchCommandLine(commandLine, handler.project(), options)
     }
   }
 

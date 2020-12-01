@@ -14,6 +14,7 @@ public class LombokDataHandler extends BaseLombokHandler {
       new LombokToStringHandler(), new LombokEqualsAndHashcodeHandler()};
   }
 
+  @Override
   protected void processClass(@NotNull PsiClass psiClass) {
     for (BaseLombokHandler handler : handlers) {
       handler.processClass(psiClass);

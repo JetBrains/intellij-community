@@ -1,5 +1,3 @@
-# Stubs for mimetypes
-
 import sys
 from typing import IO, Dict, List, Optional, Sequence, Text, Tuple, Union
 

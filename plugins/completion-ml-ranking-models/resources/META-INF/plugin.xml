@@ -22,5 +22,9 @@
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentPhpMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentRubyMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentGoMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentJSMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentTypeScriptMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentDartMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentSwiftMLRankingProvider"/>
   </extensions>
 </idea-plugin>

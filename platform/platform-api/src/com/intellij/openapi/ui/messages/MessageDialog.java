@@ -6,12 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Alarm;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,7 +219,7 @@ public class MessageDialog extends DialogWrapper {
     JPanel panel = createIconPanel();
     if (myMessage != null) {
       JTextPane messageComponent = createMessageComponent(myMessage);
-      panel.add(wrapToScrollPaneIfNeeded(messageComponent, 100, 10), BorderLayout.CENTER);
+      panel.add(wrapToScrollPaneIfNeeded(messageComponent, 100, 15), BorderLayout.CENTER);
     }
     return panel;
   }

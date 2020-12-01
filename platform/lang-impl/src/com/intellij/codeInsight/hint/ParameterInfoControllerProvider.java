@@ -45,7 +45,7 @@ public abstract class ParameterInfoControllerProvider {
 
   public static void rememberEditor(@NotNull Editor editor) {
     if (editorsWithControllers == null) {
-      LOG.info("create map of weak references to remember all editors with custom parameter info controllers and attach EP-listener");
+      LOG.debug("create map of weak references to remember all editors with custom parameter info controllers and attach EP-listener");
       editorsWithControllers = ContainerUtil.createWeakSet();  // Weak... to avoid memory leaks caused by keeping disposed editors in memory
       EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
@@ -56,13 +56,13 @@ public abstract class ParameterInfoControllerProvider {
     }
 
     if (!editorsWithControllers.contains(editor)) {
-      LOG.info("remember editor " + editor);
+      LOG.debug("remember editor " + editor);
       editorsWithControllers.add(editor);
     }
   }
 
   public static void removeControllersFromAllEditors() {
-    LOG.info("remove all parameter info controllers from all editors because an extension was removed");
+    LOG.debug("remove all parameter info controllers from all editors because an extension was removed");
     for (Editor editor : editorsWithControllers) {
       if (editor != null) {
         for (ParameterInfoControllerBase controller : ParameterInfoControllerBase.getAllControllers(editor)) {
