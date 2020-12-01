@@ -2,30 +2,27 @@
 package com.intellij.lang.properties;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.properties.PropertiesHighlighter.PropertiesComponent;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Map;
-import java.util.function.Supplier;
 
 final class PropertiesColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS;
 
   static {
-    ATTRS = new AttributesDescriptor[PropertiesHighlighter.DISPLAY_NAMES.size()];
-    TextAttributesKey[] keys = PropertiesHighlighter.DISPLAY_NAMES.keySet().toArray(TextAttributesKey.EMPTY_ARRAY);
-    for (int i = 0; i < keys.length; i++) {
-      TextAttributesKey key = keys[i];
-      Supplier<@Nls String> name = PropertiesHighlighter.DISPLAY_NAMES.get(key).getFirst();
-      ATTRS[i] = new AttributesDescriptor(name, key);
-    }
+    ATTRS = Arrays.stream(PropertiesComponent.values())
+      .map(component -> new AttributesDescriptor(component.getMessagePointer(), component.getTextAttributesKey()))
+      .toArray(AttributesDescriptor[]::new)
+    ;
   }
 
   @Override

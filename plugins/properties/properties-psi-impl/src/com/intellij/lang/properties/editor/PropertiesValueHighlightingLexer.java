@@ -2,7 +2,7 @@
 
 package com.intellij.lang.properties.editor;
 
-import com.intellij.lang.properties.PropertiesHighlightingLexer.PropertyValueStringLiteralLexer;
+import com.intellij.lang.properties.PropertiesHighlightingLexer.PropertiesStringLiteralLexer;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lexer.DummyLexer;
 import com.intellij.lexer.LayeredLexer;
@@ -12,6 +12,8 @@ public class PropertiesValueHighlightingLexer extends LayeredLexer {
   public PropertiesValueHighlightingLexer() {
       super(new DummyLexer(PropertiesTokenTypes.VALUE_CHARACTERS));
 
-      registerSelfStoppingLayer(new PropertyValueStringLiteralLexer(), new IElementType[]{PropertiesTokenTypes.VALUE_CHARACTERS}, IElementType.EMPTY_ARRAY);
+    registerSelfStoppingLayer(new PropertiesStringLiteralLexer(PropertiesTokenTypes.VALUE_CHARACTERS),
+                              new IElementType[]{PropertiesTokenTypes.VALUE_CHARACTERS},
+                              IElementType.EMPTY_ARRAY);
   }
 }

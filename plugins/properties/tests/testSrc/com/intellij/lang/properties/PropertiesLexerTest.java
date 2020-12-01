@@ -155,7 +155,7 @@ public class PropertiesLexerTest extends LightPlatformTestCase {
     doTestHL("x\\n\\kz y", new String[]{
       "Properties:KEY_CHARACTERS", "x",
       "VALID_STRING_ESCAPE_TOKEN", "\\n",
-      "INVALID_CHARACTER_ESCAPE_TOKEN", "\\k",
+      "VALID_STRING_ESCAPE_TOKEN", "\\k",
       "Properties:KEY_CHARACTERS", "z",
       "WHITE_SPACE", " ",
       "Properties:VALUE_CHARACTERS", "y"

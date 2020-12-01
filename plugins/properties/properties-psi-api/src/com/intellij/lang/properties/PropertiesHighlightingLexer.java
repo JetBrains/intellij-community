@@ -27,18 +27,22 @@ import static com.intellij.psi.StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN
 public class PropertiesHighlightingLexer extends LayeredLexer{
   public PropertiesHighlightingLexer() {
     super(new PropertiesLexer());
-    registerSelfStoppingLayer(new PropertyValueStringLiteralLexer(),
+    registerSelfStoppingLayer(new PropertiesStringLiteralLexer(PropertiesTokenTypes.VALUE_CHARACTERS),
                               new IElementType[]{PropertiesTokenTypes.VALUE_CHARACTERS},
                               IElementType.EMPTY_ARRAY);
-    registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, PropertiesTokenTypes.KEY_CHARACTERS, true, "#!=: "),
+    registerSelfStoppingLayer(new PropertiesStringLiteralLexer(PropertiesTokenTypes.KEY_CHARACTERS),
                               new IElementType[]{PropertiesTokenTypes.KEY_CHARACTERS},
                               IElementType.EMPTY_ARRAY);
   }
 
-  public static final class PropertyValueStringLiteralLexer extends StringLiteralLexer {
+  /**
+   * This lexer ignores the problems with escaping strings that are reported by {@link StringLiteralLexer},
+   * because a backslash before a non-valid escape character is not a error.
+   */
+  public static final class PropertiesStringLiteralLexer extends StringLiteralLexer {
 
-    public PropertyValueStringLiteralLexer() {
-      super(StringLiteralLexer.NO_QUOTE_CHAR, PropertiesTokenTypes.VALUE_CHARACTERS, true, null);
+    public PropertiesStringLiteralLexer(IElementType originalLiteralToken) {
+      super(StringLiteralLexer.NO_QUOTE_CHAR, originalLiteralToken, true, null);
     }
 
     /**
