@@ -6,23 +6,26 @@ import circlet.code.api.CodeReviewRecord
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
-import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.utils.Urls
 import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nullable
 import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -34,13 +37,13 @@ internal class SpaceReviewInfoTabPanel(detailsVm: SpaceReviewDetailsVm<out CodeR
       font = font.deriveFont((font.size * 1.2).toFloat())
     }
 
-    val infoLabel = JBLabel().apply {
+    val createdByComponent = JBLabel().apply {
       font = JBUI.Fonts.smallFont()
       foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
     }
 
     detailsVm.createdBy.forEach(detailsVm.lifetime) {
-      infoLabel.text = SpaceBundle.message(
+      createdByComponent.text = SpaceBundle.message(
         "review.label.created.by.user.at.time",
         it.englishFullName(),
         detailsVm.createdAt.value.formatPrettyDateTime()
@@ -57,22 +60,13 @@ internal class SpaceReviewInfoTabPanel(detailsVm: SpaceReviewDetailsVm<out CodeR
                  JBUI.scale(gap),
                  JBUI.scale(gap))).apply {
 
-      val projectKeyComponent = SimpleColoredComponent().apply {
-        ipad = JBUI.insetsLeft(0)
-        append(detailsVm.projectKey.key) // NON-NLS
-        append(" / ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      }
+      @NlsSafe val projectName = detailsVm.spaceProjectInfo.project.name
+      val projectLink = link(projectName, Urls.spaceProject(detailsVm.projectKey))
+      val reviewLinkLabel = link(detailsVm.reviewKey ?: "", detailsVm.reviewUrl)
 
-      val reviewLinkLabel = LinkLabel.create(detailsVm.reviewKey ?: "") {
-        BrowserUtil.open(detailsVm.reviewUrl)
-      }
-
-      add(projectKeyComponent)
+      add(projectLink)
+      add(JLabel("${FontUtil.spaceAndThinSpace()}/${FontUtil.spaceAndThinSpace()}"))
       add(reviewLinkLabel)
-    }
-
-    val detailsPanel: JPanel = JPanel(VerticalLayout(JBUI.scale(6))).apply {
-      border = JBUI.Borders.empty(8)
     }
 
     val usersPanel = NonOpaquePanel().apply {
@@ -101,28 +95,24 @@ internal class SpaceReviewInfoTabPanel(detailsVm: SpaceReviewDetailsVm<out CodeR
       }
     }
 
-    detailsPanel.add(projectDetails)
 
-    if (detailsVm is MergeRequestDetailsVm) {
-      detailsPanel.add(createDirectionPanel(detailsVm))
+    val contentPanel: JPanel = ScrollablePanel(VerticalLayout(JBUI.scale(6))).apply {
+      border = JBUI.Borders.empty(8)
+      add(projectDetails)
+
+      if (detailsVm is MergeRequestDetailsVm) {
+        add(createDirectionPanel(detailsVm))
+      }
+
+      add(titleComponent)
+      add(createdByComponent)
+      add(usersPanel, VerticalLayout.FILL_HORIZONTAL)
     }
 
-    detailsPanel.add(titleComponent)
-    detailsPanel.add(infoLabel)
-    detailsPanel.add(usersPanel, VerticalLayout.FILL_HORIZONTAL)
-
-
-    val scrollablePanel = ScrollablePanel(VerticalFlowLayout(0, 0)).apply {
-      isOpaque = false
-      add(detailsPanel)
-    }
-
-    val scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
-      viewport.isOpaque = false
-      isOpaque = false
-    }
+    val scrollPane = ScrollPaneFactory.createScrollPane(contentPanel, true)
 
     addToCenter(scrollPane)
+    UIUtil.setOpaqueRecursively(scrollPane, false)
     UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
   }
 
@@ -154,4 +144,8 @@ private fun addListPanel(panel: JPanel, label: JLabel, jComponent: JComponent) {
   panel.add(jComponent, CC().minWidth("0").growX().pushX().wrap())
 }
 
+
+fun link(@Nullable @NlsContexts.LinkLabel text: String, url: String): LinkLabel<*> {
+  return LinkLabel.create(text) { BrowserUtil.browse(url) }
+}
 
