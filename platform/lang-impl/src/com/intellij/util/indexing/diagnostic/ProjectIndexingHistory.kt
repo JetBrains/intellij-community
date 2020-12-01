@@ -15,7 +15,7 @@ typealias BytesNumber = Long
 data class ProjectIndexingHistory(val project: Project) {
   private val biggestContributorsPerFileTypeLimit = 10
 
-  val times = IndexingTimes()
+  val times = IndexingTimes(Instant.now())
 
   val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
@@ -88,22 +88,13 @@ data class ProjectIndexingHistory(val project: Project) {
   )
 
   data class IndexingTimes(
-    var totalStart: Instant? = null,
-    var totalEnd: Instant? = null,
-    var indexingStart: Instant? = null,
-    var indexingEnd: Instant? = null,
-    var pushPropertiesStart: Instant? = null,
-    var pushPropertiesEnd: Instant? = null,
-    var indexExtensionsStart: Instant? = null,
-    var indexExtensionsEnd: Instant? = null,
-    var scanFilesStart: Instant? = null,
-    var scanFilesEnd: Instant? = null,
-    var suspendedDuration: Duration? = null,
+    var updatingStart: Instant,
+    var updatingEnd: Instant = updatingStart,
+    var indexingDuration: Duration = Duration.ZERO,
+    var pushPropertiesDuration: Duration = Duration.ZERO,
+    var indexExtensionsDuration: Duration = Duration.ZERO,
+    var scanFilesDuration: Duration = Duration.ZERO,
+    var suspendedDuration: Duration = Duration.ZERO,
     var wasInterrupted: Boolean = false
-  ) {
-    val indexingDuration: Duration?
-      get() = if (indexingStart != null && indexingEnd != null) {
-        Duration.between(indexingStart, indexingEnd)
-      } else null
-  }
+  )
 }

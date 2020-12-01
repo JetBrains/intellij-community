@@ -3,7 +3,6 @@ package com.intellij.util.indexing.diagnostic.dto
 
 import com.intellij.util.indexing.diagnostic.*
 import java.time.Duration
-import java.time.Instant
 
 fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
 
@@ -40,23 +39,16 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
 
 fun ProjectIndexingHistory.IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
-    totalUpdatingTime = nullableJsonDuration(totalStart, totalEnd),
-    indexingTime = nullableJsonDuration(indexingStart, indexingEnd),
-    scanFilesTime = nullableJsonDuration(scanFilesStart, scanFilesEnd),
-    pushPropertiesTime = nullableJsonDuration(pushPropertiesStart, pushPropertiesEnd),
-    indexExtensionsTime = nullableJsonDuration(indexExtensionsStart, indexExtensionsEnd),
-    updatingStart = JsonDateTime(totalStart!!),
-    updatingEnd = JsonDateTime(totalEnd!!),
-    totalSuspendedTime = suspendedDuration?.let { JsonDuration(it.toNanos()) },
+    totalUpdatingTime = JsonDuration(Duration.between(updatingStart, updatingEnd).toNanos()),
+    indexingTime = JsonDuration(indexingDuration.toNanos()),
+    scanFilesTime = JsonDuration(scanFilesDuration.toNanos()),
+    pushPropertiesTime = JsonDuration(pushPropertiesDuration.toNanos()),
+    indexExtensionsTime = JsonDuration(indexExtensionsDuration.toNanos()),
+    updatingStart = JsonDateTime(updatingStart),
+    updatingEnd = JsonDateTime(updatingEnd),
+    totalSuspendedTime = JsonDuration(suspendedDuration.toNanos()),
     wasInterrupted = wasInterrupted
   )
-
-private fun nullableJsonDuration(from: Instant?, to: Instant?): JsonDuration? {
-  if (from != null && to != null) {
-    return JsonDuration(Duration.between(from, to).toNanos())
-  }
-  return null
-}
 
 private fun calculatePercentages(part: Long, total: Long): JsonPercentages =
   if (total == 0L) {

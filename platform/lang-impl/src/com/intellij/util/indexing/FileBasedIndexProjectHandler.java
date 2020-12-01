@@ -20,6 +20,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 
@@ -99,8 +100,7 @@ public final class FileBasedIndexProjectHandler {
       IndexingJobStatistics statistics;
       IndexUpdateRunner.IndexingInterruptedException interruptedException = null;
       ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project);
-      projectIndexingHistory.getTimes().setTotalStart(Instant.now());
-      projectIndexingHistory.getTimes().setIndexingStart(Instant.now());
+      Instant indexingStart = Instant.now();
       String fileSetName = "Refreshed files";
       try {
         statistics = indexUpdateRunner.indexFiles(project, fileSetName, files, indicator);
@@ -109,8 +109,9 @@ public final class FileBasedIndexProjectHandler {
         statistics = e.myStatistics;
         interruptedException = e;
       } finally {
-        projectIndexingHistory.getTimes().setIndexingEnd(Instant.now());
-        projectIndexingHistory.getTimes().setTotalEnd(Instant.now());
+        Instant now = Instant.now();
+        projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(indexingStart, now));
+        projectIndexingHistory.getTimes().setUpdatingEnd(now);
       }
       ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
       scanningStatistics.setNumberOfScannedFiles(files.size());
