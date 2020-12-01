@@ -122,13 +122,18 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
   }
 
   @Override
-  public void onValueUsed(long frameId, Supplier<StackTraceElement> place, long start, long time) {
-    myQueue.offer(() -> myWriter.onValueUsed(frameId, place, start, time));
+  public void onValueUsed(long frameId, Supplier<StackTraceElement> place, long computed, long time) {
+    myQueue.offer(() -> myWriter.onValueUsed(frameId, place, computed, time));
   }
 
   @Override
-  public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long start, long time) {
-    myQueue.offer(() -> myWriter.onValueInvalidated(frameId, place, start, time));
+  public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long computed, long time) {
+    myQueue.offer(() -> myWriter.onValueInvalidated(frameId, place, computed, time));
+  }
+
+  @Override
+  public void onValueRejected(long frameId, Supplier<StackTraceElement> place, long start, long computed, long time) {
+    myQueue.offer(() -> myWriter.onValueRejected(frameId, place, start, computed, time));
   }
 
   private static String placeToString(StackTraceElement place) {
@@ -298,13 +303,13 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onValueUsed(long frameId, Supplier<StackTraceElement> place, long start, long time) {
+    public void onValueUsed(long frameId, Supplier<StackTraceElement> place, long computed, long time) {
       try {
         myWriter.beginObject();
         myWriter.name("type").value("value-used");
         myWriter.name("frame").value(frameId);
         myWriter.name("place").value(placeToString(place.get()));
-        myWriter.name("start").value(start);
+        myWriter.name("computed").value(computed);
         myWriter.name("time").value(time);
         myWriter.endObject();
       }
@@ -314,13 +319,30 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long start, long time) {
+    public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long computed, long time) {
       try {
         myWriter.beginObject();
         myWriter.name("type").value("value-invalidated");
         myWriter.name("frame").value(frameId);
         myWriter.name("place").value(placeToString(place.get()));
+        myWriter.name("computed").value(computed);
+        myWriter.name("time").value(time);
+        myWriter.endObject();
+      }
+      catch (IOException e) {
+        if (myError != null) myError = e;
+      }
+    }
+
+    @Override
+    public void onValueRejected(long frameId, Supplier<StackTraceElement> place, long start, long computed, long time) {
+      try {
+        myWriter.beginObject();
+        myWriter.name("type").value("value-rejected");
+        myWriter.name("frame").value(frameId);
+        myWriter.name("place").value(placeToString(place.get()));
         myWriter.name("start").value(start);
+        myWriter.name("computed").value(computed);
         myWriter.name("time").value(time);
         myWriter.endObject();
       }
@@ -367,8 +389,9 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
         if ("frame-enter".equals(type)) consumer.onFrameEnter(frame, () -> place, parent, time);
         else if ("frame-exit".equals(type)) consumer.onFrameExit(frame, start, computed, time);
         else if ("value-computed".equals(type)) consumer.onValueComputed(frame, () -> place, start, time);
-        else if ("value-used".equals(type)) consumer.onValueUsed(frame, () -> place, start, time);
-        else if ("value-invalidated".equals(type)) consumer.onValueInvalidated(frame, () -> place, start, time);
+        else if ("value-used".equals(type)) consumer.onValueUsed(frame, () -> place, computed, time);
+        else if ("value-invalidated".equals(type)) consumer.onValueInvalidated(frame, () -> place, computed, time);
+        else if ("value-rejected".equals(type)) consumer.onValueRejected(frame, () -> place, start, computed, time);
       }
       reader.endArray();
       reader.endObject();

@@ -98,7 +98,7 @@ public abstract class CachedValueBase<T> {
       return true;
     }
     if (data.trackingInfo != null) {
-      data.trackingInfo.invalidate();
+      data.trackingInfo.onValueInvalidated();
     }
     return false;
   }
@@ -206,7 +206,7 @@ public abstract class CachedValueBase<T> {
 
     public T getValue() {
       if (trackingInfo != null) {
-        trackingInfo.valueUsed();
+        trackingInfo.onValueUsed();
       }
       return myValue;
     }
@@ -238,6 +238,9 @@ public abstract class CachedValueBase<T> {
         }
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {
+          if (data != toReturn && data.trackingInfo != null) {
+            data.trackingInfo.onValueRejected();
+          }
           return toReturn.getValue();
         }
       }

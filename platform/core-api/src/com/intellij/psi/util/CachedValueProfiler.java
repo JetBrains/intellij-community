@@ -27,9 +27,11 @@ public final class CachedValueProfiler {
 
     void onValueComputed(long frameId, Supplier<StackTraceElement> place, long start, long time);
 
-    void onValueUsed(long frameId, Supplier<StackTraceElement> place, long start, long time);
+    void onValueUsed(long frameId, Supplier<StackTraceElement> place, long computed, long time);
 
-    void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long start, long time);
+    void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long computed, long time);
+
+    void onValueRejected(long frameId, Supplier<StackTraceElement> place, long start, long computed, long time);
   }
 
   private static final ThreadLocal<ThreadContext> ourContext = ThreadLocal.withInitial(() -> new ThreadContext());
@@ -136,7 +138,7 @@ public final class CachedValueProfiler {
     if (place == null) place = place(CachedValueProfiler::findCallerPlace);
 
     context.consumer.onValueComputed(frame.id, place, frame.timeConfigured, time);
-    return new ValueTracker(place, time);
+    return new ValueTracker(place, frame.timeConfigured, time);
   }
 
   static Supplier<StackTraceElement> place(Function<Throwable, StackTraceElement> function) {
@@ -197,26 +199,36 @@ public final class CachedValueProfiler {
   public static final class ValueTracker {
     final Supplier<StackTraceElement> place;
     final long start;
+    final long computed;
 
-    ValueTracker(@NotNull Supplier<StackTraceElement> place, long time) {
+    ValueTracker(@NotNull Supplier<StackTraceElement> place, long start, long computed) {
       this.place = place;
-      this.start = time;
+      this.start = start;
+      this.computed = computed;
     }
 
-    public void invalidate() {
+    public void onValueInvalidated() {
       long time = currentTime();
       ThreadContext context = ourContext.get();
       if (context.consumer == null || context.consumer != ourEventConsumer) return;
-      context.consumer.onValueInvalidated(context.topFrame == null ? 0 : context.topFrame.id, place, start, time);
+      context.consumer.onValueInvalidated(context.topFrame == null ? 0 : context.topFrame.id, place, computed, time);
       ourTrackerOverhead.overhead.addAndGet(currentTime() - time);
     }
 
-    public void valueUsed() {
+    public void onValueUsed() {
       long time = currentTime();
       ThreadContext context = ourContext.get();
       if (context.consumer == null || context.consumer != ourEventConsumer) return;
-      context.consumer.onValueUsed(context.topFrame == null ? 0 : context.topFrame.id, place, start, time);
+      context.consumer.onValueUsed(context.topFrame == null ? 0 : context.topFrame.id, place, computed, time);
       ourTrackerOverhead.count.incrementAndGet();
+      ourTrackerOverhead.overhead.addAndGet(currentTime() - time);
+    }
+
+    public void onValueRejected() {
+      long time = currentTime();
+      ThreadContext context = ourContext.get();
+      if (context.consumer == null || context.consumer != ourEventConsumer) return;
+      context.consumer.onValueRejected(context.topFrame == null ? 0 : context.topFrame.id, place, start, computed, time);
       ourTrackerOverhead.overhead.addAndGet(currentTime() - time);
     }
   }
