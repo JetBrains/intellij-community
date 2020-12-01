@@ -24,9 +24,9 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-internal class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
-  override fun resolve(storage: WorkspaceEntityStorage): E {
-    return (storage as AbstractEntityStorage).entityDataByIdOrDie(id).createEntity(storage) as E
+internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
+  override fun resolve(storage: WorkspaceEntityStorage): E? {
+    return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
   }
 }
 
@@ -216,8 +216,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val removedEntities = removeEntity(e.id)
     removedEntities.forEach { this.changeLog.addRemoveEvent(it) }
   }
-
-  override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
 
   private fun ArrayListMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
                                                                                                     storage: AbstractEntityStorage): Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>? {
@@ -833,6 +831,8 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     indexes.virtualFileIndex.setTypedEntityStorage(this)
     return indexes.virtualFileIndex
   }
+
+  override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
 
   internal fun assertConsistency() {
     entitiesByType.assertConsistency(this)
