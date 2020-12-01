@@ -3,7 +3,6 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.io.SuperUserStatus;
 import org.jetbrains.annotations.NotNull;
@@ -126,16 +125,16 @@ public class CaseSensitivityDetectionTest {
   @Test
   public void caseSensitivityNativeWrappersMustWorkAtLeastInSimpleCases() {
     FileAttributes.CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(myTempDir.newFile("dir0/child.txt")));
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(myTempDir.newFile("dir0/0"))); // there's toggleable "child.txt" in this dir already
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(myTempDir.newFile("dir1/0")));
+    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir0/child.txt")));
+    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir0/0"))); // there's toggleable "child.txt" in this dir already
+    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir1/0")));
   }
 
   @Test
   public void caseSensitivityMustBeDeducibleByPureJavaIOAtLeastInSimpleCases() {
     FileAttributes.CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
-    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(myTempDir.newFile("dir0/child.txt")));
-    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(myTempDir.newFile("dir0/0"))); // there's toggleable "child.txt" in this dir already
-    //assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(myTempDir.newFile("dir1/0")));
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir0/child.txt")));
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir0/0"))); // there's toggleable "child.txt" in this dir already
+    //assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir1/0")));
   }
 }
