@@ -168,7 +168,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   @Override
   public void dispose() {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID);
+    ToolWindowManager toolWindowManager = myProject.getServiceIfCreated(ToolWindowManager.class);
+    if (toolWindowManager == null) return;
+    ToolWindow toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID);
     if (toolWindow == null) return;
     toolWindow.remove();
   }
