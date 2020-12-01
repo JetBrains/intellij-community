@@ -713,7 +713,6 @@
 
     <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
     <stateWidgetProcess implementation="com.intellij.execution.stateExecutionWidget.StateWidgetRunProcess"/>
-    <stateWidgetProcess implementation="com.intellij.execution.stateExecutionWidget.StateWidgetDebugProcess"/>
     <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>
     <projectService serviceImplementation="com.intellij.execution.RunConfigurationProducerService"/>
     <configurationType implementation="com.intellij.execution.compound.CompoundRunConfigurationType"/>

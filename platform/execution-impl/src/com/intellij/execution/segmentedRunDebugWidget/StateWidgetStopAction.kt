@@ -20,6 +20,7 @@ class StateWidgetStopAction : StopAction() {
     }
 
     super.update(e)
+    e.presentation.isEnabledAndVisible = e.presentation.isEnabled && e.presentation.isVisible
   }
 
   override fun getDisplayName(project: Project?, descriptor: RunContentDescriptor?): @BuildEventsNls.Title String? {

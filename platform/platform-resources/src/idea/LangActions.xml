@@ -527,6 +527,7 @@
 
     <group id="StateWidgetBarGroup" popup="false">
       <action id="StateWidgetRunConfigurationsAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetRunConfigurationsAction"/>
+      <group id="StateWidgetAdditionalActions"/>
       <group id="StateWidgetProcessesActionGroup"/>
       <action id="StateWidgetStop" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetStopAction" icon="AllIcons.Actions.Suspend"/>
       <group id="StateWidgetMoreActionGroup" icon="AllIcons.Actions.More" popup="true"/>
