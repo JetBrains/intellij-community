@@ -356,7 +356,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     }
 
     /**
-     * Fixes the problem when [PyAddDockerSdkProvider.createView] for Docker
+     * Fixes the problem when `PyAddDockerSdkProvider.createView` for Docker
      * and Docker Compose types throws [NoClassDefFoundError] exception when
      * `org.jetbrains.plugins.remote-run` plugin is disabled.
      */
