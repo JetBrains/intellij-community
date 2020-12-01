@@ -28,8 +28,10 @@ import javax.swing.SwingUtilities
 
 class StateWidgetActiveProcessesPillAction : AnAction(), CustomComponentAction, DumbAware {
   companion object {
-    private val defaultFont = JBUI.Fonts.toolbarFont()
-    private val hoveredFont = createUnderlinedFont()
+    private val defaultFont
+      get() = JBUI.Fonts.toolbarFont()
+    private val hoveredFont
+      get() = createUnderlinedFont()
 
     private fun createUnderlinedFont(): Font {
       val font = JBUI.Fonts.toolbarFont()
