@@ -190,6 +190,20 @@ public class TestMacMessagesAction extends AnAction {
         });
         panel.add(secondDialog);
 
+        JButton secondAlert = new JButton("Dialog -> Alert || Alert (~5sec)");
+        secondAlert.addActionListener(event -> {
+          new Thread(() -> {
+            try {
+              Thread.sleep(5000);
+            }
+            catch (InterruptedException ignore) {
+            }
+            SwingUtilities.invokeLater(() -> Messages.showInfoMessage("Message", "Title"));
+          }, "").start();
+          Messages.showYesNoDialog(secondAlert, "Message", "Title", Messages.getQuestionIcon());
+        });
+        panel.add(secondAlert);
+
         JButton html = new JButton("Show Alert with HTML content");
         html.addActionListener(event -> {
           Messages.showInfoMessage(

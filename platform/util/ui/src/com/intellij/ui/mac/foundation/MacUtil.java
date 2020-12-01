@@ -4,6 +4,7 @@ package com.intellij.ui.mac.foundation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.sun.jna.Pointer;
@@ -15,6 +16,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
@@ -141,28 +143,25 @@ public final class MacUtil {
   }
 
   public static ID findWindowFromJavaWindow(final Window w) {
-    ID windowId = null;
-    if (Registry.is("skip.untitled.windows.for.mac.messages")) {
+    if (SystemInfo.isJetBrainsJvm && Registry.is("skip.untitled.windows.for.mac.messages")) {
       try {
         Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
         Object componentAccessor = awtAccessor.getMethod("getComponentAccessor").invoke(null);
-        Object peer = componentAccessor.getClass().getMethod("getPeer", Component.class).invoke(componentAccessor, w);
+        Method getPeer = componentAccessor.getClass().getMethod("getPeer", Component.class);
+        getPeer.setAccessible(true);
+        Object peer = getPeer.invoke(componentAccessor, w);
         Class<?> cWindowPeerClass  = peer.getClass();
         Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
         Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
-        Class<?> cPlatformWindowClass = cPlatformWindow.getClass();
-        Method getNSWindowPtrMethod = cPlatformWindowClass.getDeclaredMethod("getNSWindowPtr");
-        windowId = new ID((Long)getNSWindowPtrMethod.invoke(cPlatformWindow));
+        Field ptr = cPlatformWindow.getClass().getSuperclass().getDeclaredField("ptr");
+        ptr.setAccessible(true);
+        return new ID(ptr.getLong(cPlatformWindow));
       }
-      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException | NoSuchFieldException e) {
         LOG.debug(e);
       }
     }
-    else {
-      String foremostWindowTitle = getWindowTitle(w);
-      windowId = findWindowForTitle(foremostWindowTitle);
-    }
-    return windowId;
+    return findWindowForTitle(getWindowTitle(w));
   }
 
   @Nullable
