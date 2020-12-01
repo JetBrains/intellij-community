@@ -337,6 +337,8 @@
                         serviceImplementation="com.intellij.psi.impl.CommonReferenceProviderTypesImpl"/>
     <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
                         serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeFactory"
+                        serviceImplementation="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeImpl$Factory"/>
 
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
