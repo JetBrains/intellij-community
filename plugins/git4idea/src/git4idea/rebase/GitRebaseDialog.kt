@@ -307,19 +307,13 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateBaseFields() {
-    val upstream = upstreamField.item
-    val onto = ontoField.item
-
-    upstreamField.removeAllItems()
-    ontoField.removeAllItems()
-
     addRefsToOntoAndFrom(localBranches + remoteBranches + getTags(), replace = true)
-
-    upstreamField.item = upstream
-    ontoField.item = onto
   }
 
   private fun addRefsToOntoAndFrom(refs: Collection<GitReference>, replace: Boolean = true) {
+    val upstream = upstreamField.item
+    val onto = ontoField.item
+
     val existingRefs = upstreamField.model.castSafelyTo<MutableCollectionComboBoxModel<PresentableRef>>()?.items?.toSet() ?: emptySet()
     val newRefs = refs.map { PresentableRef(it) }.toSet()
 
@@ -327,6 +321,9 @@ internal class GitRebaseDialog(private val project: Project,
 
     upstreamField.model.castSafelyTo<MutableCollectionComboBoxModel<PresentableRef>>()?.update(result)
     ontoField.model.castSafelyTo<MutableCollectionComboBoxModel<PresentableRef>>()?.update(result)
+
+    upstreamField.item = upstream
+    ontoField.item = onto
   }
 
   private fun showRootField() = roots.size > 1
