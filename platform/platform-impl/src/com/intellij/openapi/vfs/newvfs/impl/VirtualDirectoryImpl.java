@@ -756,7 +756,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     throw new IOException("getInputStream() must not be called against a directory: " + getUrl());
   }
 

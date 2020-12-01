@@ -469,7 +469,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     if (UISettings.getInstance().getHideKnownExtensionInTabs() && !isDirectory()) {
       final String nameWithoutExtension = getNameWithoutExtension();
       return nameWithoutExtension.isEmpty() ? getName() : nameWithoutExtension;
@@ -637,7 +637,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       }
 
       @Override
-      public InputStream getInputStream() {
+      public @NotNull InputStream getInputStream() {
         throw new UnsupportedOperationException();
       }
     };

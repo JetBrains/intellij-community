@@ -49,7 +49,7 @@ class DummyDirectoryImpl extends DummyFileBase {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     throw new IOException(IdeBundle.message("file.read.error", getUrl()));
   }
 

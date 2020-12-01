@@ -133,7 +133,7 @@ public class TestVirtualFile extends VirtualFile {
   }
 
   @Override
-  public InputStream getInputStream() {
+  public @NotNull InputStream getInputStream() {
     throw new UnsupportedOperationException();
   }
 }
