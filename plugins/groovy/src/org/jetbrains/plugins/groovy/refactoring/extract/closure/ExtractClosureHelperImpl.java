@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -111,7 +112,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
       if (type instanceof PsiClassType) {
         final PsiType[] parameters = ((PsiClassType)type).getParameters();
         if (parameters.length == 1 && parameters[0] != null) {
-          if (parameters[0].equalsToText(PsiType.VOID.getBoxedTypeName())) {
+          if (parameters[0].equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
             type = ((PsiClassType)type).rawType();
           }
         }
