@@ -16,7 +16,9 @@
 
 package org.jetbrains.kotlin.idea.versions
 
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.util.indexing.DataIndexer
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileContent
 import org.jetbrains.kotlin.js.JavaScript
@@ -32,7 +34,12 @@ object KotlinJsMetadataVersionIndex : KotlinMetadataVersionIndexBase<KotlinJsMet
 
     override fun getIndexer() = INDEXER
 
-    override fun getInputFilter() = FileBasedIndex.InputFilter { file -> JavaScript.EXTENSION == file.extension }
+    override fun getInputFilter(): FileBasedIndex.InputFilter {
+        return when (val fileType = FileTypeManager.getInstance().findFileTypeByName(JavaScript.NAME)) {
+          null -> FileBasedIndex.InputFilter { file -> JavaScript.EXTENSION == file.extension }
+          else -> DefaultFileTypeSpecificInputFilter(fileType)
+        }
+    }
 
     override fun getVersion() = VERSION
 

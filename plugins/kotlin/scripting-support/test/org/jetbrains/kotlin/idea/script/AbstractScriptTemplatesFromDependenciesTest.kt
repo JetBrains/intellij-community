@@ -15,10 +15,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.io.ZipUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
@@ -79,11 +79,7 @@ abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCa
                 }
         }
 
-        val roots: Collection<VirtualFile> = FileBasedIndex.getInstance().getContainingFiles(
-            ScriptTemplatesClassRootsIndex.NAME,
-            Unit,
-            GlobalSearchScope.allScope(project)
-        )
+        val roots: Collection<VirtualFile> = FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, GlobalSearchScope.allScope(project))
 
         val testFile = File(path, testFileName)
         val fileText = testFile.readText()

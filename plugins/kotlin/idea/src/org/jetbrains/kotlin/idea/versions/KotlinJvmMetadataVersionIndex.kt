@@ -16,9 +16,9 @@
 
 package org.jetbrains.kotlin.idea.versions
 
-import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.util.indexing.DataIndexer
-import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.FileContent
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames.*
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
@@ -36,7 +36,7 @@ object KotlinJvmMetadataVersionIndex : KotlinMetadataVersionIndexBase<KotlinJvmM
 
     override fun getIndexer() = INDEXER
 
-    override fun getInputFilter() = FileBasedIndex.InputFilter { file -> file.fileType == StdFileTypes.CLASS }
+    override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
 
     override fun getVersion() = VERSION
 

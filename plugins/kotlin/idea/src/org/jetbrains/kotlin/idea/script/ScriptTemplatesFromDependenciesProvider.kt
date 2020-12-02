@@ -12,9 +12,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
@@ -101,12 +101,8 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
         }
 
         ReadAction
-            .nonBlocking<List<VirtualFile>> {
-                FileBasedIndex.getInstance().getContainingFiles(
-                    ScriptTemplatesClassRootsIndex.NAME,
-                    Unit,
-                    GlobalSearchScope.allScope(project)
-                ).filterNotNull()
+            .nonBlocking<Collection<VirtualFile>> {
+                FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, GlobalSearchScope.allScope(project))
             }
             .inSmartMode(project)
             .expireWith(KotlinPluginDisposable.getInstance(project))
@@ -170,7 +166,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     }
 
     // public for tests
-    fun getTemplateClassPath(files: List<VirtualFile>): Pair<Collection<String>, Collection<File>> {
+    fun getTemplateClassPath(files: Collection<VirtualFile>): Pair<Collection<String>, Collection<File>> {
         val rootDirToTemplates: MutableMap<VirtualFile, MutableList<VirtualFile>> = hashMapOf()
         for (file in files) {
             val dir = file.parent?.parent?.parent?.parent?.parent ?: continue

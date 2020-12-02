@@ -74,7 +74,7 @@ object KotlinClassFileIndex : KotlinFileIndexBase<KotlinClassFileIndex>(KotlinCl
 
     override fun getIndexer() = INDEXER
 
-    override fun getInputFilter() = FileBasedIndex.InputFilter { file -> file.fileType == JavaClassFileType.INSTANCE }
+    override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
 
     override fun getVersion() = VERSION
 
@@ -90,7 +90,7 @@ object KotlinJavaScriptMetaFileIndex : KotlinFileIndexBase<KotlinJavaScriptMetaF
 
     override fun getIndexer() = INDEXER
 
-    override fun getInputFilter() = FileBasedIndex.InputFilter { file -> file.fileType == KotlinJavaScriptMetaFileType }
+    override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(KotlinJavaScriptMetaFileType)
 
     override fun getVersion() = VERSION
 
@@ -108,7 +108,7 @@ open class KotlinMetadataFileIndexBase<T>(classOfIndex: Class<T>, indexFunction:
     KotlinFileIndexBase<T>(classOfIndex) {
     override fun getIndexer() = INDEXER
 
-    override fun getInputFilter() = FileBasedIndex.InputFilter { file -> file.fileType == KotlinBuiltInFileType }
+    override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(KotlinBuiltInFileType)
 
     override fun getVersion() = VERSION
 
@@ -146,8 +146,7 @@ object KlibMetaFileIndex : KotlinFileIndexBase<KlibMetaFileIndex>(KlibMetaFileIn
 
     override fun getIndexer() = INDEXER
 
-    override fun getInputFilter() = FileBasedIndex.InputFilter { it.fileType === KlibMetaFileType
-    }
+    override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(KlibMetaFileType)
 
     override fun getVersion() = VERSION
 
