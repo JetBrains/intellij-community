@@ -51,7 +51,7 @@ class ReorderJarsTest {
     }
 
     java.util.zip.ZipFile(file).use { zipFile3 ->
-      val loader = JarMemoryLoader.load(zipFile3, file.toURI().toURL(), null)
+      val loader = JarMemoryLoader.load(zipFile3, file.toPath(), null)
       assertThat(loader).isNotNull()
       val resource = loader!!.getResource("org/jetbrains/annotations/Nullable.class")
       assertThat(resource).isNotNull()

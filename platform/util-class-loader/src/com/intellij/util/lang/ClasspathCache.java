@@ -17,26 +17,23 @@ import java.util.Arrays;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public final class ClasspathCache {
+final class ClasspathCache {
   static final int NUMBER_OF_ACCESSES_FOR_LAZY_CACHING = 1000;
-  private final IntObjectHashMap myResourcePackagesCache = new IntObjectHashMap();
-  private final IntObjectHashMap myClassPackagesCache = new IntObjectHashMap();
-
   private static final double PROBABILITY = 0.005d;
 
+  private final IntObjectHashMap resourcePackagesCache = new IntObjectHashMap();
+  private final IntObjectHashMap classPackagesCache = new IntObjectHashMap();
+
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
   static final class LoaderData {
-    private final int[] myResourcePackageHashes;
-    private final int[] myClassPackageHashes;
+    private final int[] resourcePackageHashes;
+    private final int[] classPackageHashes;
     private final NameFilter myNameFilter;
 
-    @Deprecated
-    LoaderData() {
-      this(new int[0], new int[0], new NameFilter(10000, PROBABILITY));
-    }
-
-    LoaderData(@NotNull int[] resourcePackageHashes, @NotNull int[] classPackageHashes, @NotNull NameFilter nameFilter) {
-      myResourcePackageHashes = resourcePackageHashes;
-      myClassPackageHashes = classPackageHashes;
+    LoaderData(int @NotNull [] resourcePackageHashes, int @NotNull [] classPackageHashes, @NotNull NameFilter nameFilter) {
+      this.resourcePackageHashes = resourcePackageHashes;
+      this.classPackageHashes = classPackageHashes;
       myNameFilter = nameFilter;
     }
 
@@ -44,8 +41,7 @@ public final class ClasspathCache {
       this(readIntList(dataInput), readIntList(dataInput), new ClasspathCache.NameFilter(dataInput));
     }
 
-    @NotNull
-    private static int[] readIntList(@NotNull DataInput reader) throws IOException {
+    private static int @NotNull [] readIntList(@NotNull DataInput reader) throws IOException {
       int numberOfElements = DataInputOutputUtilRt.readINT(reader);
       int[] ints = new int[numberOfElements];
       for (int i = 0; i < numberOfElements; ++i) {
@@ -55,18 +51,17 @@ public final class ClasspathCache {
     }
 
     void save(@NotNull DataOutput dataOutput) throws IOException {
-      writeIntArray(dataOutput, myResourcePackageHashes);
-      writeIntArray(dataOutput, myClassPackageHashes);
+      writeIntArray(dataOutput, resourcePackageHashes);
+      writeIntArray(dataOutput, classPackageHashes);
       myNameFilter.save(dataOutput);
     }
 
-    private static void writeIntArray(@NotNull DataOutput writer, @NotNull int[] hashes) throws IOException {
+    private static void writeIntArray(@NotNull DataOutput writer, int @NotNull [] hashes) throws IOException {
       DataInputOutputUtilRt.writeINT(writer, hashes.length);
       for(int hash: hashes) DataInputOutputUtilRt.writeINT(writer, hash);
     }
 
-    @NotNull
-    NameFilter getNameFilter() {
+    @NotNull NameFilter getNameFilter() {
       return myNameFilter;
     }
   }
@@ -82,11 +77,19 @@ public final class ClasspathCache {
     }
 
     void addResourcePackageFromName(@NotNull String path) {
-      myResourcePackageHashes.add(getPackageNameHash(path));
+      myResourcePackageHashes.add(getPackageNameHash(path, path.lastIndexOf('/')));
+    }
+
+    void addResourcePackage(@NotNull String path) {
+      myResourcePackageHashes.add(getPackageNameHash(path, path.length()));
     }
 
     void addClassPackageFromName(@NotNull String path) {
-      myClassPackageHashes.add(getPackageNameHash(path));
+      myClassPackageHashes.add(getPackageNameHash(path, path.lastIndexOf('/')));
+    }
+
+    void addClassPackage(@NotNull String path) {
+      myClassPackageHashes.add(getPackageNameHash(path, path.length()));
     }
 
     @NotNull LoaderData build() {
@@ -104,45 +107,46 @@ public final class ClasspathCache {
     }
   }
 
-  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
+  void clearCache() {
+    classPackagesCache.clear();
+    resourcePackagesCache.clear();
+  }
 
   void applyLoaderData(@NotNull LoaderData loaderData, @NotNull Loader loader) {
-    myLock.writeLock().lock();
+    lock.writeLock().lock();
     try {
-      for(int resourcePackageHash:loaderData.myResourcePackageHashes) {
-        addResourceEntry(resourcePackageHash, myResourcePackagesCache, loader);
+      for (int resourcePackageHash : loaderData.resourcePackageHashes) {
+        addResourceEntry(resourcePackageHash, resourcePackagesCache, loader);
       }
 
-      for(int classPackageHash:loaderData.myClassPackageHashes) {
-        addResourceEntry(classPackageHash, myClassPackagesCache, loader);
+      for (int classPackageHash : loaderData.classPackageHashes) {
+        addResourceEntry(classPackageHash, classPackagesCache, loader);
       }
 
       loader.applyData(loaderData);
     }
     finally {
-      myLock.writeLock().unlock();
+      lock.writeLock().unlock();
     }
   }
 
-  abstract static class LoaderIterator <R, T1, T2> {
-    @Nullable
-    abstract R process(@NotNull Loader loader, @NotNull T1 parameter, @NotNull T2 parameter2, @NotNull String shortName);
+  interface LoaderIterator <R, T1, T2> {
+    @Nullable R process(@NotNull Loader loader, @NotNull T1 parameter, @NotNull T2 parameter2, @NotNull String shortName);
   }
 
-  @Nullable
-  <R, T1, T2> R iterateLoaders(@NotNull String resourcePath,
-                               @NotNull LoaderIterator<R, T1, T2> iterator,
-                               @NotNull T1 parameter,
-                               @NotNull T2 parameter2,
-                               @NotNull String shortName) {
-    myLock.readLock().lock();
+  @Nullable <R, T1, T2> R iterateLoaders(@NotNull String resourcePath,
+                                         @NotNull LoaderIterator<R, T1, T2> iterator,
+                                         @NotNull T1 parameter,
+                                         @NotNull T2 parameter2,
+                                         @NotNull String shortName) {
+    lock.readLock().lock();
     Object o;
     try {
-      IntObjectHashMap map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ? myClassPackagesCache : myResourcePackagesCache;
-      o = map.get(getPackageNameHash(resourcePath));
+      IntObjectHashMap map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ? classPackagesCache : resourcePackagesCache;
+      o = map.get(getPackageNameHash(resourcePath, resourcePath.lastIndexOf('/')));
     }
     finally {
-      myLock.readLock().unlock();
+      lock.readLock().unlock();
     }
 
     if (o == null) {
@@ -151,8 +155,8 @@ public final class ClasspathCache {
     if (o instanceof Loader) {
       return iterator.process((Loader)o, parameter, parameter2, shortName);
     }
-    Loader[] loaders = (Loader[])o;
-    for (Loader l : loaders) {
+
+    for (Loader l : (Loader[])o) {
       R result = iterator.process(l, parameter, parameter2, shortName);
       if (result != null) {
         return result;
@@ -161,10 +165,9 @@ public final class ClasspathCache {
     return null;
   }
 
-  static int getPackageNameHash(@NotNull String resourcePath) {
-    int index = resourcePath.lastIndexOf('/');
+  static int getPackageNameHash(@NotNull String resourcePath, int endIndex) {
     int h = 0;
-    for (int off = 0; off < index; off++) {
+    for (int off = 0; off < endIndex; off++) {
       h = 31 * h + resourcePath.charAt(off);
     }
     return h;
@@ -192,8 +195,7 @@ public final class ClasspathCache {
     }
   }
 
-  @NotNull
-  static String transformName(@NotNull String name) {
+  static @NotNull String transformName(@NotNull String name) {
     int nameEnd = !name.isEmpty() && name.charAt(name.length() - 1) == '/' ? name.length() - 1 : name.length();
     name = name.substring(name.lastIndexOf('/', nameEnd-1) + 1, nameEnd);
 
@@ -212,7 +214,7 @@ public final class ClasspathCache {
     return name;
   }
 
-  final static class NameFilter extends BloomFilterBase {
+  static final class NameFilter extends BloomFilterBase {
     private static final int SEED = 31;
 
     NameFilter(int _maxElementCount, double probability) {

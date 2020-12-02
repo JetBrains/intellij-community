@@ -11,7 +11,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Attributes;
@@ -21,38 +23,42 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
-  private static final List<Map.Entry<Resource.Attribute, Attributes.Name>> PACKAGE_FIELDS = Arrays.<Map.Entry<Resource.Attribute, Attributes.Name>>asList(
-    new AbstractMap.SimpleImmutableEntry<Resource.Attribute, Attributes.Name>(Resource.Attribute.SPEC_TITLE, Attributes.Name.SPECIFICATION_TITLE),
-    new AbstractMap.SimpleImmutableEntry<Resource.Attribute, Attributes.Name>(Resource.Attribute.SPEC_VERSION, Attributes.Name.SPECIFICATION_VERSION),
-    new AbstractMap.SimpleImmutableEntry<Resource.Attribute, Attributes.Name>(Resource.Attribute.SPEC_VENDOR, Attributes.Name.SPECIFICATION_VENDOR),
-    new AbstractMap.SimpleImmutableEntry<Resource.Attribute, Attributes.Name>(Resource.Attribute.IMPL_TITLE, Attributes.Name.IMPLEMENTATION_TITLE),
-    new AbstractMap.SimpleImmutableEntry<Resource.Attribute, Attributes.Name>(Resource.Attribute.IMPL_VERSION, Attributes.Name.IMPLEMENTATION_VERSION),
-    new AbstractMap.SimpleImmutableEntry<Resource.Attribute, Attributes.Name>(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
+  private static final List<Map.Entry<Resource.Attribute, Attributes.Name>> PACKAGE_FIELDS = Arrays.asList(
+    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.SPEC_TITLE, Attributes.Name.SPECIFICATION_TITLE),
+    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.SPEC_VERSION, Attributes.Name.SPECIFICATION_VERSION),
+    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.SPEC_VENDOR, Attributes.Name.SPECIFICATION_VENDOR),
+    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.IMPL_TITLE, Attributes.Name.IMPLEMENTATION_TITLE),
+    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.IMPL_VERSION, Attributes.Name.IMPLEMENTATION_VERSION),
+    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
 
   private static final String NULL_STRING = "<null>";
+  private static final Object ourLock = new Object();
 
-  private final String myFilePath;
-  private final ClassPath myConfiguration;
-  private final URL myUrl;
-  private SoftReference<JarMemoryLoader> myMemoryLoader;
-  private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
-  private volatile Map<Resource.Attribute, String> myAttributes;
-  private volatile String myClassPathManifestAttribute;
+  private final ClassPath configuration;
+  protected final URL url;
+  private SoftReference<JarMemoryLoader> memoryLoader;
+  // Used only when configuration.canLockJars==true
+  private volatile SoftReference<ZipFile> zipFileSoftReference;
+  private volatile Map<Resource.Attribute, String> attributes;
+  private volatile String classPathManifestAttribute;
 
-  JarLoader(@NotNull URL url, @NotNull String filePath, int index, @NotNull ClassPath configuration) throws IOException {
-    super(new URL("jar", "", -1, url + "!/"));
+  private final AtomicInteger myNumberOfRequests = new AtomicInteger();
+  private volatile StrippedIntOpenHashSet myPackageHashesInside;
 
-    myFilePath = filePath;
-    myConfiguration = configuration;
-    myUrl = url;
+  JarLoader(@NotNull URL url, @NotNull Path file, @NotNull ClassPath configuration) throws IOException {
+    super(file);
 
-    if (!configuration.myLazyClassloadingCaches) {
-      ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
+    this.configuration = configuration;
+    this.url = new URL("jar", "", -1, url + "!/");
+
+    if (!configuration.lazyClassloadingCaches) {
+      // IOException from opening is propagated to caller if zip file isn't valid,
+      ZipFile zipFile = getZipFile();
       try {
-        if (configuration.myPreloadJarContents) {
-          JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), this);
+        if (configuration.preloadJarContents) {
+          JarMemoryLoader loader = JarMemoryLoader.load(zipFile, path, this);
           if (loader != null) {
-            myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
+            memoryLoader = new SoftReference<>(loader);
           }
         }
       }
@@ -62,28 +68,28 @@ class JarLoader extends Loader {
     }
   }
 
-  Map<Resource.Attribute, String> getAttributes() {
+  final Map<Resource.Attribute, String> getAttributes() {
     loadManifestAttributes();
-    return myAttributes;
+    return attributes;
   }
 
-  @Nullable
-  String getClassPathManifestAttribute() {
+  final @Nullable String getClassPathManifestAttribute() {
     loadManifestAttributes();
-    String manifestAttribute = myClassPathManifestAttribute;
+    String manifestAttribute = classPathManifestAttribute;
     return manifestAttribute != NULL_STRING ? manifestAttribute : null;
   }
 
-  @Nullable
-  private static Map<Resource.Attribute, String> getAttributes(@Nullable Attributes attributes) {
-    if (attributes == null) return null;
+  private static @Nullable Map<Resource.Attribute, String> getAttributes(@Nullable Attributes attributes) {
+    if (attributes == null) {
+      return null;
+    }
     Map<Resource.Attribute, String> map = null;
 
     for (Map.Entry<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
       String value = attributes.getValue(p.getValue());
       if (value != null) {
         if (map == null) {
-          map = new EnumMap<Resource.Attribute, String>(Resource.Attribute.class);
+          map = new EnumMap<>(Resource.Attribute.class);
         }
         map.put(p.getKey(), value);
       }
@@ -93,23 +99,29 @@ class JarLoader extends Loader {
   }
 
   private void loadManifestAttributes() {
-    if (myClassPathManifestAttribute != null) return;
+    if (classPathManifestAttribute != null) {
+      return;
+    }
+
     synchronized (this) {
       try {
-        if (myClassPathManifestAttribute != null) return;
+        if (classPathManifestAttribute != null) {
+          return;
+        }
+
         ZipFile zipFile = getZipFile();
         try {
-          Attributes manifestAttributes = myConfiguration.getManifestData(myUrl);
+          Attributes manifestAttributes = configuration.getManifestData(url);
           if (manifestAttributes == null) {
             ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
             if (entry != null) manifestAttributes = loadManifestAttributes(zipFile.getInputStream(entry));
             if (manifestAttributes == null) manifestAttributes = new Attributes(0);
-            myConfiguration.cacheManifestData(myUrl, manifestAttributes);
+            configuration.cacheManifestData(url, manifestAttributes);
           }
 
-          myAttributes = getAttributes(manifestAttributes);
+          attributes = getAttributes(manifestAttributes);
           Object attribute = manifestAttributes.get(Attributes.Name.CLASS_PATH);
-          myClassPathManifestAttribute = attribute instanceof String ? (String)attribute : NULL_STRING;
+          classPathManifestAttribute = attribute instanceof String ? (String)attribute : NULL_STRING;
         }
         finally {
           releaseZipFile(zipFile);
@@ -121,8 +133,7 @@ class JarLoader extends Loader {
     }
   }
 
-  @Nullable
-  private static Attributes loadManifestAttributes(InputStream stream) {
+  private static @Nullable Attributes loadManifestAttributes(InputStream stream) {
     try {
       try {
         return new Manifest(stream).getMainAttributes();
@@ -135,9 +146,8 @@ class JarLoader extends Loader {
     return null;
   }
 
-  @NotNull
   @Override
-  public ClasspathCache.LoaderData buildData() throws IOException {
+  public final @NotNull ClasspathCache.LoaderData buildData() throws IOException {
     ZipFile zipFile = getZipFile();
     try {
       ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder();
@@ -149,7 +159,8 @@ class JarLoader extends Loader {
 
         if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
           loaderDataBuilder.addClassPackageFromName(name);
-        } else {
+        }
+        else {
           loaderDataBuilder.addResourcePackageFromName(name);
         }
 
@@ -163,11 +174,7 @@ class JarLoader extends Loader {
     }
   }
 
-  private final AtomicInteger myNumberOfRequests = new AtomicInteger();
-  private volatile StrippedIntOpenHashSet myPackageHashesInside;
-
-  private @NotNull
-  StrippedIntOpenHashSet buildPackageHashes() {
+  private @NotNull StrippedIntOpenHashSet buildPackageHashes() {
     try {
       ZipFile zipFile = getZipFile();
       try {
@@ -176,7 +183,8 @@ class JarLoader extends Loader {
 
         while (entries.hasMoreElements()) {
           ZipEntry entry = entries.nextElement();
-          result.add(ClasspathCache.getPackageNameHash(entry.getName()));
+          String name = entry.getName();
+          result.add(ClasspathCache.getPackageNameHash(name, name.lastIndexOf('/')));
         }
         result.add(0); // empty package is in every jar
         return result;
@@ -186,15 +194,14 @@ class JarLoader extends Loader {
       }
     }
     catch (Exception e) {
-      error("url: " + myFilePath, e);
+      error("url: " + path, e);
       return new StrippedIntOpenHashSet(0);
     }
   }
 
   @Override
-  @Nullable
-  Resource getResource(@NotNull String name) {
-    if (myConfiguration.myLazyClassloadingCaches) {
+  @Nullable Resource getResource(@NotNull String name) {
+    if (configuration.lazyClassloadingCaches) {
       int numberOfHits = myNumberOfRequests.incrementAndGet();
       StrippedIntOpenHashSet packagesInside = myPackageHashesInside;
 
@@ -202,15 +209,17 @@ class JarLoader extends Loader {
         myPackageHashesInside = packagesInside = buildPackageHashes();
       }
 
-      if (packagesInside != null && !packagesInside.contains(ClasspathCache.getPackageNameHash(name))) {
+      if (packagesInside != null && !packagesInside.contains(ClasspathCache.getPackageNameHash(name, name.lastIndexOf('/')))) {
         return null;
       }
     }
 
-    JarMemoryLoader loader = myMemoryLoader != null ? myMemoryLoader.get() : null;
+    JarMemoryLoader loader = memoryLoader != null ? memoryLoader.get() : null;
     if (loader != null) {
       Resource resource = loader.getResource(name);
-      if (resource != null) return resource;
+      if (resource != null) {
+        return resource;
+      }
     }
 
     try {
@@ -218,7 +227,7 @@ class JarLoader extends Loader {
       try {
         ZipEntry entry = zipFile.getEntry(name);
         if (entry != null) {
-          return instantiateResource(getBaseURL(), entry);
+          return instantiateResource(entry);
         }
       }
       finally {
@@ -226,49 +235,53 @@ class JarLoader extends Loader {
       }
     }
     catch (Exception e) {
-      error("url: " + myFilePath, e);
+      error("url: " + path, e);
     }
 
     return null;
   }
 
-  @NotNull
-  protected Resource instantiateResource(@NotNull URL url, @NotNull ZipEntry entry) throws IOException {
-    return new MyResource(url,entry);
+  protected @NotNull Resource instantiateResource(@NotNull ZipEntry entry) throws IOException {
+    return new ZipFileResource(url, entry);
   }
 
-  protected class MyResource extends Resource {
-    protected final URL myUrl;
-    protected final ZipEntry myEntry;
+  protected class ZipFileResource extends Resource {
+    protected final URL baseUrl;
+    private URL url;
+    protected final ZipEntry entry;
 
-    MyResource(@NotNull URL url, @NotNull ZipEntry entry) throws IOException {
-      myUrl = new URL(url, entry.getName());
-      myEntry = entry;
+    ZipFileResource(@NotNull URL baseUrl, @NotNull ZipEntry entry) {
+      this.baseUrl = baseUrl;
+      this.entry = entry;
     }
 
-    @NotNull
     @Override
-    public URL getURL() {
-      return myUrl;
+    public @NotNull URL getURL() {
+      URL result = url;
+      if (result == null) {
+        try {
+          result = new URL(baseUrl, entry.getName());
+        }
+        catch (MalformedURLException e) {
+          throw new RuntimeException(e);
+        }
+        url = result;
+      }
+      return result;
     }
 
-    @NotNull
     @Override
-    public InputStream getInputStream() throws IOException {
+    public @NotNull InputStream getInputStream() throws IOException {
       return new ByteArrayInputStream(getBytes());
     }
 
-    @NotNull
     @Override
-    public byte[] getBytes() throws IOException {
+    public byte @NotNull [] getBytes() throws IOException {
       ZipFile file = getZipFile();
-      InputStream stream = null;
-      try {
-        stream = file.getInputStream(myEntry);
-        return FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
+      try (InputStream stream = file.getInputStream(entry)) {
+        return FileUtilRt.loadBytes(stream, (int)entry.getSize());
       }
       finally {
-        if (stream != null) stream.close();
         releaseZipFile(file);
       }
     }
@@ -276,12 +289,12 @@ class JarLoader extends Loader {
     @Override
     public String getValue(@NotNull Attribute key) {
       loadManifestAttributes();
-      return myAttributes != null ? myAttributes.get(key) : null;
+      return attributes == null ? null : attributes.get(key);
     }
   }
 
-  protected void error(@NotNull String message, @NotNull Throwable t) {
-    if (myConfiguration.myLogErrorOnMissingJar) {
+  protected final void error(@NotNull String message, @NotNull Throwable t) {
+    if (configuration.errorOnMissingJar) {
       LoggerRt.getInstance(JarLoader.class).error(message, t);
     }
     else {
@@ -289,48 +302,45 @@ class JarLoader extends Loader {
     }
   }
 
-  private static final Object ourLock = new Object();
-
-  protected @NotNull ZipFile getZipFile() throws IOException {
+  protected final @NotNull ZipFile getZipFile() throws IOException {
     // This code is executed at least 100K times (O(number of classes needed to load)) and it takes considerable time to open ZipFile's
     // such number of times so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
-    if (myConfiguration.myCanLockJars) {
-      SoftReference<ZipFile> ref = myZipFileSoftReference;
+    if (configuration.lockJars) {
+      SoftReference<ZipFile> ref = zipFileSoftReference;
       ZipFile zipFile = ref == null ? null : ref.get();
       if (zipFile != null) {
         return zipFile;
       }
 
       synchronized (ourLock) {
-        ref = myZipFileSoftReference;
+        ref = zipFileSoftReference;
         zipFile = ref == null ? null : ref.get();
         if (zipFile != null) {
           return zipFile;
         }
 
-        // ZipFile's native implementation (ZipFile.c, zip_util.c) has path -> file descriptor cache
-        zipFile = createZipFile(myFilePath);
-        myZipFileSoftReference = new SoftReference<ZipFile>(zipFile);
+        zipFile = createZipFile(path);
+        zipFileSoftReference = new SoftReference<>(zipFile);
         return zipFile;
       }
     }
-    return createZipFile(myFilePath);
+    return createZipFile(path);
   }
 
-  @NotNull
-  protected ZipFile createZipFile(@NotNull String path) throws IOException {
-    return new ZipFile(path);
+  protected @NotNull ZipFile createZipFile(@NotNull Path path) throws IOException {
+    // ZipFile's native implementation (ZipFile.c, zip_util.c) has path -> file descriptor cache
+    return new ZipFile(path.toFile());
   }
 
-  protected void releaseZipFile(@NotNull ZipFile zipFile) throws IOException {
-    // Closing of zip file when myConfiguration.myCanLockJars=true happens in ZipFile.finalize
-    if (!myConfiguration.myCanLockJars) {
+  protected final void releaseZipFile(@NotNull ZipFile zipFile) throws IOException {
+    // Closing of zip file when configuration.canLockJars=true happens in ZipFile.finalize
+    if (!configuration.lockJars) {
       zipFile.close();
     }
   }
 
   @Override
-  public String toString() {
-    return "JarLoader [" + myFilePath + "]";
+  public final String toString() {
+    return "JarLoader [" + path + "]";
   }
 }

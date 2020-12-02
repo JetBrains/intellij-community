@@ -15,31 +15,28 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 final class MemoryResource extends Resource {
-  private final URL myUrl;
+  private final URL url;
   private final byte[] myContent;
   private final Map<Resource.Attribute, String> myAttributes;
 
-  private MemoryResource(@NotNull URL url, @NotNull byte[] content, @Nullable Map<Resource.Attribute, String> attributes) {
-    myUrl = url;
+  private MemoryResource(@NotNull URL url, byte @NotNull [] content, @Nullable Map<Resource.Attribute, String> attributes) {
+    this.url = url;
     myContent = content;
     myAttributes = attributes;
   }
 
-  @NotNull
   @Override
-  public URL getURL() {
-    return myUrl;
+  public @NotNull URL getURL() {
+    return url;
   }
 
-  @NotNull
   @Override
-  public InputStream getInputStream() {
+  public @NotNull InputStream getInputStream() {
     return new UnsyncByteArrayInputStream(myContent);
   }
 
-  @NotNull
   @Override
-  public byte[] getBytes() {
+  public byte @NotNull [] getBytes() {
     return myContent;
   }
 
@@ -48,14 +45,10 @@ final class MemoryResource extends Resource {
     return myAttributes != null ? myAttributes.get(key) : null;
   }
 
-  @NotNull
-  static MemoryResource load(@NotNull URL baseUrl,
-                             @NotNull ZipFile zipFile,
-                             @NotNull ZipEntry entry,
-                             @Nullable Map<Attribute, String> attributes) throws IOException {
-    String name = entry.getName();
-    URL url = new URL(baseUrl, name);
-
+  static @NotNull MemoryResource load(@NotNull URL baseUrl,
+                                      @NotNull ZipFile zipFile,
+                                      @NotNull ZipEntry entry,
+                                      @Nullable Map<Attribute, String> attributes) throws IOException {
     byte[] content = ArrayUtilRt.EMPTY_BYTE_ARRAY;
     InputStream stream = zipFile.getInputStream(entry);
     if (stream != null) {
@@ -67,6 +60,6 @@ final class MemoryResource extends Resource {
       }
     }
 
-    return new MemoryResource(url, content, attributes);
+    return new MemoryResource(new URL(baseUrl, entry.getName()), content, attributes);
   }
 }

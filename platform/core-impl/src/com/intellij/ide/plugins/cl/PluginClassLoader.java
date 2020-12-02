@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.lang.PathClassLoaderBuilder;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
@@ -42,6 +43,9 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private static final AtomicInteger parentListCacheIdCounter = new AtomicInteger();
 
   private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES;
+
+  // avoid capturing reference to classloader in AccessControlContext
+  private static final ProtectionDomain PROTECTION_DOMAIN = new ProtectionDomain(new CodeSource(null, (Certificate[]) null), null);
 
   static {
     @SuppressWarnings("SSBasedInspection")
@@ -128,7 +132,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private final int instanceId;
   private volatile int state = ACTIVE;
 
-  public PluginClassLoader(@NotNull Builder builder,
+  public PluginClassLoader(@NotNull PathClassLoaderBuilder builder,
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot,
@@ -221,8 +225,8 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     Class<?> c = loadClassInsideSelf(name, forceLoadFromSubPluginClassloader);
     if (c == null) {
       for (ClassLoader classloader : getAllParents()) {
-        if (classloader instanceof PluginClassLoader) {
-          c = ((PluginClassLoader)classloader).loadClassInsideSelf(name, false);
+        if (classloader instanceof UrlClassLoader) {
+          c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, false);
           if (c != null) {
             break;
           }
@@ -301,7 +305,8 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
-  protected @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) {
+  @Override
+  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) {
     if (packagePrefix != null && isDefinitelyAlienClass(name, packagePrefix)) {
       return null;
     }
@@ -527,9 +532,8 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   @Override
-  protected final ProtectionDomain getProtectionDomain(URL url) {
-    // avoid capturing reference to classloader in AccessControlContext
-    return new ProtectionDomain(new CodeSource(url, (Certificate[])null), null);
+  protected final ProtectionDomain getProtectionDomain() {
+    return PROTECTION_DOMAIN;
   }
 
   private static void flushDebugLog() {

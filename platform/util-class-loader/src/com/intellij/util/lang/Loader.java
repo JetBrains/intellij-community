@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
+import java.nio.file.Path;
 
 /**
  * An object responsible for loading classes and resources from a particular classpath element: a jar or a directory.
@@ -14,34 +14,26 @@ import java.net.URL;
  * @see FileLoader
  */
 abstract class Loader {
-  @NotNull
-  private final URL myURL;
-  private ClasspathCache.NameFilter myLoadingFilter;
+  final @NotNull Path path;
+  private ClasspathCache.NameFilter loadingFilter;
 
-  Loader(@NotNull URL url) {
-    myURL = url;
+  Loader(@NotNull Path path) {
+    this.path = path;
   }
 
-  @NotNull
-  URL getBaseURL() {
-    return myURL;
-  }
+  abstract @Nullable Resource getResource(@NotNull String name);
 
-  @Nullable
-  abstract Resource getResource(@NotNull String name);
+  abstract @NotNull ClasspathCache.LoaderData buildData() throws IOException;
 
-  @NotNull
-  abstract ClasspathCache.LoaderData buildData() throws IOException;
-
-  boolean containsName(@NotNull String name, @NotNull String shortName) {
+  final boolean containsName(@NotNull String name, @NotNull String shortName) {
     if (name.isEmpty()) {
       return true;
     }
-    ClasspathCache.NameFilter filter = myLoadingFilter;
+    ClasspathCache.NameFilter filter = loadingFilter;
     return filter == null || filter.maybeContains(shortName);
   }
 
-  void applyData(@NotNull ClasspathCache.LoaderData loaderData) {
-    myLoadingFilter = loaderData.getNameFilter();
+  final void applyData(@NotNull ClasspathCache.LoaderData loaderData) {
+    loadingFilter = loaderData.getNameFilter();
   }
 }

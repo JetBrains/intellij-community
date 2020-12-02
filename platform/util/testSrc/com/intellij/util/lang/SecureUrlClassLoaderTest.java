@@ -11,7 +11,10 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import javax.crypto.KeyAgreement;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -35,7 +38,7 @@ import static org.junit.Assert.*;
 public class SecureUrlClassLoaderTest {
   /**
    * IDEA's UrlClassLoader should verify JAR signatures and checksum if they are exists
-   * but only if JAR url specified in {@link UrlClassLoader.Builder#urlsWithProtectionDomain}.
+   * but only if JAR url specified in {@link PathClassLoaderBuilder#urlsWithProtectionDomain}.
    */
   @Test
   public void testSignedJars() throws Exception {

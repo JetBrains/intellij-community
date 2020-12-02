@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.lang.PathClassLoaderBuilder;
 import com.intellij.util.lang.UrlClassLoader;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.Element;
@@ -58,7 +59,7 @@ final class ClassLoaderConfigurator {
 
   private final boolean hasAllModules;
 
-  private final UrlClassLoader.Builder urlClassLoaderBuilder;
+  private final PathClassLoaderBuilder urlClassLoaderBuilder;
 
   // todo for dynamic reload this guard doesn't contain all used plugin prefixes
   private final Set<String> pluginPackagePrefixUniqueGuard = new HashSet<>();
@@ -192,12 +193,7 @@ final class ClassLoaderConfigurator {
       mainDependent.jarFiles = null;
     }
 
-    List<URL> urls = new ArrayList<>(classPath.size());
-    for (Path pathElement : classPath) {
-      urls.add(localFileToUrl(pathElement, mainDependent));
-    }
-
-    urlClassLoaderBuilder.urls(urls);
+    urlClassLoaderBuilder.paths(classPath);
 
     List<PluginDependency> pluginDependencies = mainDependent.pluginDependencies;
     if (pluginDependencies == null) {
@@ -246,7 +242,7 @@ final class ClassLoaderConfigurator {
   // static to ensure that anonymous classes will not hold ClassLoaderConfigurator
   private static @NotNull PluginClassLoader createPluginClassLoader(@NotNull ClassLoader @NotNull [] parentLoaders,
                                                                     @NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                    @NotNull UrlClassLoader.Builder urlClassLoaderBuilder,
+                                                                    @NotNull PathClassLoaderBuilder urlClassLoaderBuilder,
                                                                     @NotNull ClassLoader coreLoader) {
     if (descriptor.id.getIdString().equals("com.intellij.properties")) {
       // todo ability to customize (cannot move due to backward compatibility)
@@ -285,7 +281,7 @@ final class ClassLoaderConfigurator {
   private static final class ContentPredicateBasedPluginClassLoader extends PluginClassLoader {
     private final Predicate<String> contentBasedPredicate;
 
-    private ContentPredicateBasedPluginClassLoader(@NotNull Builder builder,
+    private ContentPredicateBasedPluginClassLoader(@NotNull PathClassLoaderBuilder builder,
                                                    @NotNull ClassLoader @NotNull [] parentLoaders,
                                                    @NotNull IdeaPluginDescriptorImpl descriptor,
                                                    @NotNull Predicate<String> contentBasedPredicate,
@@ -311,7 +307,7 @@ final class ClassLoaderConfigurator {
   private static final class FilteringPluginClassLoader extends PluginClassLoader {
     private @NotNull final Predicate<String> dependencyBasedPredicate;
 
-    private FilteringPluginClassLoader(@NotNull Builder builder,
+    private FilteringPluginClassLoader(@NotNull PathClassLoaderBuilder builder,
                                        @NotNull ClassLoader @NotNull [] parentLoaders,
                                        @NotNull IdeaPluginDescriptorImpl descriptor,
                                        @NotNull Predicate<String> dependencyBasedPredicate,

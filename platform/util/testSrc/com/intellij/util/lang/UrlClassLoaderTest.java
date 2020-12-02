@@ -2,9 +2,11 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ThrowableConsumer;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -26,7 +28,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -132,18 +136,18 @@ public class UrlClassLoaderTest {
   @Test
   public void testInvalidJarsInClassPath() throws IOException {
     String entryName = "test_res_dir/test_res.txt";
-    File theGood = createTestJar(tempDir.newFile("1_normal.jar"), entryName, "-");
-    File theBad = tempDir.newFile("2_broken.jar", new byte[1024]);
+    Path theGood = createTestJar(tempDir.newFile("1_normal.jar"), entryName, "-").toPath();
+    Path theBad = tempDir.newFile("2_broken.jar", new byte[1024]).toPath();
 
-    UrlClassLoader flat = UrlClassLoader.build().urls(theBad.toURI().toURL(), theGood.toURI().toURL()).get();
-    assertNotNull(findResource(flat, entryName, false));
+    UrlClassLoader flat = UrlClassLoader.build().paths(List.of(theBad, theGood)).get();
+    assertThat(findResource(flat, entryName, false)).isNotNull();
 
     String content = Attributes.Name.MANIFEST_VERSION + ": 1.0\n" +
-                     Attributes.Name.CLASS_PATH + ": " + theBad.toURI().toURL() + " " + theGood.toURI().toURL() + "\n\n";
-    File theUgly = createTestJar(tempDir.newFile(ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content);
+                     Attributes.Name.CLASS_PATH + ": " + theBad.toUri().toURL() + " " + theGood.toUri().toURL() + "\n\n";
+    Path theUgly = createTestJar(tempDir.newFile(ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content).toPath();
 
-    UrlClassLoader recursive = UrlClassLoader.build().urls(theUgly.toURI().toURL()).get();
-    assertNotNull(findResource(recursive, entryName, false));
+    UrlClassLoader recursive = UrlClassLoader.build().paths(List.of(theUgly)).get();
+    assertThat(recursive.findResource(entryName)).isNotNull();
   }
 
   @Test
@@ -158,10 +162,11 @@ public class UrlClassLoaderTest {
     String resourceDirNameWithSlash2 = resourceDirName2 + "/";
     String resourceDirNameWithSlash2_ = "/" + resourceDirNameWithSlash2;
 
-    assertNull(findResource(flat, resourceDirNameWithSlash, false));
-    assertNull(findResource(flat, resourceDirNameWithSlash_, false));
-    assertNotNull(findResource(flat, resourceDirNameWithSlash2, false));
-    assertNotNull(findResource(flat, resourceDirNameWithSlash2_, false)); // non-standard CL behavior
+    assertThat(findResource(flat, resourceDirNameWithSlash, false)).isNull();
+    assertThat(findResource(flat, resourceDirNameWithSlash_, false)).isNull();
+    assertThat(findResource(flat, resourceDirNameWithSlash2, false)).isNotNull();
+    // non-standard CL behavior
+    assertThat(findResource(flat, resourceDirNameWithSlash2_, false)).isNotNull();
 
     try (URLClassLoader recursive2 = new URLClassLoader(new URL[]{theGood.toURI().toURL()})) {
       assertNotNull(recursive2.findResource(resourceDirNameWithSlash2));
@@ -175,7 +180,7 @@ public class UrlClassLoaderTest {
     if (findAll) {
       try {
         Enumeration<URL> resources = loader.getResources(name);
-        assertTrue(resources.hasMoreElements());
+        Assert.assertTrue(resources.hasMoreElements());
         return resources.nextElement();
       }
       catch (IOException e) {
@@ -192,22 +197,20 @@ public class UrlClassLoaderTest {
     int counter = 1;
     for (String dirName : new String[]{"dir", "dir/", "dir.class", "dir.class/"}) {
       for (String resourceName : new String[]{"a.class", "a.txt"}) {
-        File root = tempDir.newDirectory("testFindDirWhenUsingCache" + (counter++));
-        File subDir = createTestDir(root, dirName);
-        createTestFile(subDir, resourceName);
+        Path root = tempDir.newDirectory("testFindDirWhenUsingCache" + (counter++)).toPath();
+        Path subDir = createTestDir(root.toFile(), dirName).toPath();
+        createTestFile(subDir.toFile(), resourceName);
 
-        URL url = root.toURI().toURL();
-
-        try (URLClassLoader standardCl = new URLClassLoader(new URL[]{url})) {
+        try (URLClassLoader standardCl = new URLClassLoader(new URL[]{root.toUri().toURL()})) {
           Enumeration<URL> resources = standardCl.findResources(dirName);
-          assertTrue(resources.hasMoreElements());
+          assertThat(resources.hasMoreElements()).isTrue();
           URL expectedResourceUrl = resources.nextElement();
 
-          withCustomCachedClassloader(url, (customCl) -> {
-            assertNull(customCl.findResource("SomeNonExistentResource.resource"));
+          withCustomCachedClassloader(root, (customCl) -> {
+            assertThat(customCl.findResource("SomeNonExistentResource.resource")).isNull();
             checkResourceUrlIsTheSame(customCl, dirName, expectedResourceUrl);
           });
-          withCustomCachedClassloader(url, (customCl) -> checkResourceUrlIsTheSame(customCl, dirName, expectedResourceUrl));
+          withCustomCachedClassloader(root, (customCl) -> checkResourceUrlIsTheSame(customCl, dirName, expectedResourceUrl));
         }
       }
     }
@@ -215,12 +218,12 @@ public class UrlClassLoaderTest {
 
   private static void checkResourceUrlIsTheSame(UrlClassLoader customCl, String resourceName, URL expectedResourceUrl) throws IOException {
     Enumeration<URL> customClResources = customCl.findResources(resourceName);
-    assertTrue(customClResources.hasMoreElements());
-    assertEquals(expectedResourceUrl, customClResources.nextElement());
+    assertThat(customClResources.hasMoreElements()).isTrue();
+    assertThat(StringUtil.trimEnd(customClResources.nextElement().toExternalForm(), "/")).isEqualTo(StringUtil.trimEnd(expectedResourceUrl.toExternalForm(), "/"));
   }
 
-  private static void withCustomCachedClassloader(URL url, ThrowableConsumer<UrlClassLoader, IOException> testAction) throws IOException {
-    testAction.consume(UrlClassLoader.build().useCache().urls(url).get());
+  private static void withCustomCachedClassloader(Path url, ThrowableConsumer<UrlClassLoader, IOException> testAction) throws IOException {
+    testAction.consume(UrlClassLoader.build().useCache().paths(List.of(url)).get());
   }
 
   @Test

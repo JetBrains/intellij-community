@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +31,7 @@ public final class JarMemoryLoader {
     return resources.remove(entryName);
   }
 
-  public @Nullable static JarMemoryLoader load(@NotNull ZipFile zipFile, @NotNull URL baseUrl, @Nullable JarLoader attributesProvider) throws IOException {
+  public @Nullable static JarMemoryLoader load(@NotNull ZipFile zipFile, @NotNull Path basePath, @Nullable JarLoader attributesProvider) throws IOException {
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
     if (!entries.hasMoreElements()) {
       return null;
@@ -44,7 +45,8 @@ public final class JarMemoryLoader {
     byte[] bytes = FileUtilRt.loadBytes(zipFile.getInputStream(sizeEntry), 2);
     int size = ((bytes[1] & 0xFF) << 8) + (bytes[0] & 0xFF);
 
-    Map<String, Resource> map = new HashMap<String, Resource>();
+    Map<String, Resource> map = new HashMap<>();
+    URL baseUrl = basePath.toUri().toURL();
     for (int i = 0; i < size && entries.hasMoreElements(); i++) {
       ZipEntry entry = entries.nextElement();
       MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry, attributesProvider != null ? attributesProvider.getAttributes() : null);

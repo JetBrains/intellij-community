@@ -14,21 +14,17 @@ public abstract class Resource {
     SPEC_TITLE, SPEC_VERSION, SPEC_VENDOR, IMPL_TITLE, IMPL_VERSION, IMPL_VENDOR
   }
 
-  @NotNull
-  public abstract URL getURL();
+  public abstract @NotNull URL getURL();
 
-  @NotNull
-  public abstract InputStream getInputStream() throws IOException;
+  public abstract @NotNull InputStream getInputStream() throws IOException;
 
-  @NotNull
-  public abstract byte[] getBytes() throws IOException;
+  public abstract byte @NotNull [] getBytes() throws IOException;
 
   public String getValue(@NotNull Attribute key) {
     return null;
   }
 
-  @Nullable
-  public ProtectionDomain getProtectionDomain() {
+  public @Nullable ProtectionDomain getProtectionDomain() {
     return null;
   }
 

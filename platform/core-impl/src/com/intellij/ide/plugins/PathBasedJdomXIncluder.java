@@ -155,7 +155,7 @@ final class PathBasedJdomXIncluder<T> {
     catch (IOException e) {
       Element fallbackElement = referrerElement.getChild("fallback", referrerElement.getNamespace());
       if (fallbackElement != null) {
-        // todo return contents of fallback element (we don't have fallback elements with content ATM)
+        // we don't have fallback elements with content ATM
         return null;
       }
       else if (context.ignoreMissingInclude) {

@@ -21,6 +21,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.lang.PathClassLoaderBuilder;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +140,7 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
           PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);
           if (aClass != null) {
             if (jdk9) {
-              PsiClass builder = aClass.findInnerClassByName(UrlClassLoader.Builder.class.getSimpleName(), false);
+              PsiClass builder = aClass.findInnerClassByName(PathClassLoaderBuilder.class.getSimpleName(), false);
               return builder != null && !ArrayUtil.isEmpty(builder.findMethodsByName("urlsFromAppClassLoader"));
             }
             else {

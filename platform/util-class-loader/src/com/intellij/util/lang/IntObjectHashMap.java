@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +22,14 @@ final class IntObjectHashMap {
     return size + (hasZeroValue ? 1 : 0);
   }
 
+  void clear() {
+    size = 0;
+    keys = new int[4];
+    values = new Object[keys.length];
+    specialZeroValue = null;
+    hasZeroValue = false;
+  }
+
   void put(int key, @NotNull Object value) {
     if (key == 0) {
       specialZeroValue = value;
@@ -38,7 +46,7 @@ final class IntObjectHashMap {
     }
   }
 
-  private static Object doPut(@NotNull int[] keys, @NotNull Object[] values, int key, @NotNull Object value) {
+  private static Object doPut(int @NotNull [] keys, Object @NotNull [] values, int key, @NotNull Object value) {
     int index = hashIndex(keys, key);
     Object obj = values[index];
     values[index] = value;
@@ -46,7 +54,7 @@ final class IntObjectHashMap {
     return obj;
   }
 
-  private static int hashIndex(@NotNull int[] keys, int key) {
+  private static int hashIndex(int @NotNull [] keys, int key) {
     int hash = (int)((key * 0x9E3779B9L) & 0x7fffffff);
     int index = hash & (keys.length - 1);
 
