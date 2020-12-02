@@ -134,7 +134,6 @@ public final class JavaModuleGraphUtil {
     return getRequiresGraph(module).findOrigin(module, packageName);
   }
 
-  @SuppressWarnings("deprecation")
   private static Object cacheDependency() {
     return PsiModificationTracker.MODIFICATION_COUNT;
   }
@@ -266,7 +265,7 @@ public final class JavaModuleGraphUtil {
       return false;
     }
 
-    public Trinity<String, PsiJavaModule, PsiJavaModule> findConflict(PsiJavaModule source) {
+    public @Nullable Trinity<String, PsiJavaModule, PsiJavaModule> findConflict(PsiJavaModule source) {
       Map<String, PsiJavaModule> exports = new HashMap<>();
       return processExports(source, (pkg, m) -> {
         PsiJavaModule existing = exports.put(pkg, m);
@@ -274,17 +273,21 @@ public final class JavaModuleGraphUtil {
       });
     }
 
-    public PsiJavaModule findOrigin(PsiJavaModule module, String packageName) {
+    public @Nullable PsiJavaModule findOrigin(PsiJavaModule module, String packageName) {
       return processExports(module, (pkg, m) -> packageName.equals(pkg) ? m : null);
     }
 
-    private <T> T processExports(PsiJavaModule start, BiFunction<String, PsiJavaModule, T> processor) {
-      return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, 0, new HashSet<>(), processor) : null;
+    private <T> @Nullable T processExports(PsiJavaModule start, BiFunction<String, PsiJavaModule, T> processor) {
+      return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, true, new HashSet<>(), processor) : null;
     }
 
-    private <T> T processExports(String name, PsiJavaModule module, int layer, Set<PsiJavaModule> visited, BiFunction<String, PsiJavaModule, T> processor) {
+    private <T> @Nullable T processExports(String name,
+                                           PsiJavaModule module,
+                                           boolean direct,
+                                           Set<PsiJavaModule> visited,
+                                           BiFunction<String, PsiJavaModule, T> processor) {
       if (visited.add(module)) {
-        if (layer == 1) {
+        if (!direct) {
           for (PsiPackageAccessibilityStatement statement : module.getExports()) {
             List<String> exportTargets = statement.getModuleNames();
             if (exportTargets.isEmpty() || exportTargets.contains(name)) {
@@ -293,13 +296,11 @@ public final class JavaModuleGraphUtil {
             }
           }
         }
-        if (layer < 2) {
-          for (Iterator<PsiJavaModule> iterator = myGraph.getIn(module); iterator.hasNext();) {
-            PsiJavaModule dependency = iterator.next();
-            if (layer == 0 || myTransitiveEdges.contains(key(dependency, module))) {
-              T result = processExports(name, dependency, 1, visited, processor);
-              if (result != null) return result;
-            }
+        for (Iterator<PsiJavaModule> iterator = myGraph.getIn(module); iterator.hasNext();) {
+          PsiJavaModule dependency = iterator.next();
+          if (direct || myTransitiveEdges.contains(key(dependency, module))) {
+            T result = processExports(name, dependency, false, visited, processor);
+            if (result != null) return result;
           }
         }
       }
@@ -311,7 +312,7 @@ public final class JavaModuleGraphUtil {
       return module.getName() + '/' + exporter.getName();
     }
 
-    public @NotNull Set<PsiJavaModule> getAllDependencies(PsiJavaModule module) {
+    public Set<PsiJavaModule> getAllDependencies(PsiJavaModule module) {
       Set<PsiJavaModule> requires = new HashSet<>();
       collectDependencies(module, requires);
       return requires;

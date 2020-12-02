@@ -257,10 +257,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
     addFile("module-info.java", "module M6 { requires transitive M7; exports pkg.m6.inner; }", M6)
     addFile("pkg/sub/C6X.java", "package pkg.sub;\npublic class C6X { }", M6)
-
     addFile("pkg/m6/C6_1.java", "package pkg.m6.inner;\npublic class C6_1 {}", M6)
-    //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\nclass C6_2", M6) TODO: uncomment to fail the test
-
+    //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\n class C6_2", M6) TODO: uncomment to fail the test
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
 
