@@ -353,7 +353,9 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.layoutlib-api.iml" filepath="$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.layoutlib-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.lint-api.iml" filepath="$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.lint-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.lint-checks.iml" filepath="$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.lint-checks.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.lint-model.iml" filepath="$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.lint-model.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.manifest-merger.iml" filepath="$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.manifest-merger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.mlkit-common.iml" filepath="$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.mlkit-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.ninepatch.iml" filepath="$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.ninepatch.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.perf-logger.iml" filepath="$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.perf-logger.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.perflib.iml" filepath="$PROJECT_DIR$/intellij/android/android/prebuilts/sdktools/android.sdktools.perflib.iml" />
@@ -378,17 +380,25 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/android/apkanalyzer/intellij.android.apkanalyzer.iml" filepath="$PROJECT_DIR$/intellij/android/apkanalyzer/intellij.android.apkanalyzer.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/app-inspection/api/intellij.android.app-inspection.iml" filepath="$PROJECT_DIR$/intellij/android/app-inspection/api/intellij.android.app-inspection.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/app-inspection/ide/intellij.android.app-inspection.ide.iml" filepath="$PROJECT_DIR$/intellij/android/app-inspection/ide/intellij.android.app-inspection.ide.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/app-inspection/inspector/api/intellij.android.app-inspection.inspector.iml" filepath="$PROJECT_DIR$/intellij/android/app-inspection/inspector/api/intellij.android.app-inspection.inspector.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/app-inspection/inspector/ide/intellij.android.app-inspection.inspector.ide.iml" filepath="$PROJECT_DIR$/intellij/android/app-inspection/inspector/ide/intellij.android.app-inspection.inspector.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/artwork/intellij.android.artwork.iml" filepath="$PROJECT_DIR$/intellij/android/artwork/intellij.android.artwork.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/assistant/intellij.android.assistant.iml" filepath="$PROJECT_DIR$/intellij/android/assistant/intellij.android.assistant.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/assistant/intellij.android.assistant-test.iml" filepath="$PROJECT_DIR$/intellij/android/assistant/intellij.android.assistant-test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/bleak/intellij.android.bleak.iml" filepath="$PROJECT_DIR$/intellij/android/bleak/intellij.android.bleak.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/build-attribution/intellij.android.build-attribution.iml" filepath="$PROJECT_DIR$/intellij/android/build-attribution/intellij.android.build-attribution.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/build-attribution/intellij.android.build-attribution.tests.iml" filepath="$PROJECT_DIR$/intellij/android/build-attribution/intellij.android.build-attribution.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/build-common/intellij.android.buildCommon.iml" filepath="$PROJECT_DIR$/intellij/android/build-common/intellij.android.buildCommon.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-common/intellij.android.common.iml" filepath="$PROJECT_DIR$/intellij/android/android-common/intellij.android.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/compose-designer/intellij.android.compose-designer.iml" filepath="$PROJECT_DIR$/intellij/android/compose-designer/intellij.android.compose-designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/compose-designer/intellij.android.compose-designer.tests.iml" filepath="$PROJECT_DIR$/intellij/android/compose-designer/intellij.android.compose-designer.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/compose-ide-plugin/intellij.android.compose-ide-plugin.iml" filepath="$PROJECT_DIR$/intellij/android/compose-ide-plugin/intellij.android.compose-ide-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/connection-assistant/intellij.android.connection-assistant.iml" filepath="$PROJECT_DIR$/intellij/android/connection-assistant/intellij.android.connection-assistant.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/connection-assistant/intellij.android.connection-assistant-test.iml" filepath="$PROJECT_DIR$/intellij/android/connection-assistant/intellij.android.connection-assistant-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android/intellij.android.core.iml" filepath="$PROJECT_DIR$/intellij/android/android/intellij.android.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android/intellij.android.core.tests.iml" filepath="$PROJECT_DIR$/intellij/android/android/intellij.android.core.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/dagger/intellij.android.dagger.iml" filepath="$PROJECT_DIR$/intellij/android/dagger/intellij.android.dagger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/dagger/intellij.android.dagger.tests.iml" filepath="$PROJECT_DIR$/intellij/android/dagger/intellij.android.dagger.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/databinding/intellij.android.databinding.iml" filepath="$PROJECT_DIR$/intellij/android/databinding/intellij.android.databinding.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/databinding/intellij.android.databinding.tests.iml" filepath="$PROJECT_DIR$/intellij/android/databinding/intellij.android.databinding.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-debuggers/intellij.android.debuggers.iml" filepath="$PROJECT_DIR$/intellij/android/android-debuggers/intellij.android.debuggers.iml" />
@@ -398,7 +408,8 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/android/designer/customview/intellij.android.designer.customview.iml" filepath="$PROJECT_DIR$/intellij/android/designer/customview/intellij.android.designer.customview.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/designer/customview/intellij.android.designer.customview.tests.iml" filepath="$PROJECT_DIR$/intellij/android/designer/customview/intellij.android.designer.customview.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/designer/intellij.android.designer.tests.iml" filepath="$PROJECT_DIR$/intellij/android/designer/intellij.android.designer.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij/android/game-tools-starter/intellij.android.gameToolsStarter.iml" filepath="$PROJECT_DIR$/intellij/android/game-tools-starter/intellij.android.gameToolsStarter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/emulator/intellij.android.emulator.iml" filepath="$PROJECT_DIR$/intellij/android/emulator/intellij.android.emulator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/emulator/intellij.android.emulator.tests.iml" filepath="$PROJECT_DIR$/intellij/android/emulator/intellij.android.emulator.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/gradle-tooling/studio-gradle-tooling-api/intellij.android.gradle-tooling.iml" filepath="$PROJECT_DIR$/intellij/android/gradle-tooling/studio-gradle-tooling-api/intellij.android.gradle-tooling.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/gradle-tooling/studio-gradle-tooling-impl/intellij.android.gradle-tooling.impl.iml" filepath="$PROJECT_DIR$/intellij/android/gradle-tooling/studio-gradle-tooling-impl/intellij.android.gradle-tooling.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/jps-plugin/intellij.android.jps.iml" filepath="$PROJECT_DIR$/intellij/android/jps-plugin/intellij.android.jps.iml" />
@@ -415,7 +426,6 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/android/layout-inspector/intellij.android.layout-inspector.iml" filepath="$PROJECT_DIR$/intellij/android/layout-inspector/intellij.android.layout-inspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/layout-inspector/intellij.android.layout-inspector.tests.iml" filepath="$PROJECT_DIR$/intellij/android/layout-inspector/intellij.android.layout-inspector.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/layout-ui/intellij.android.layout-ui.iml" filepath="$PROJECT_DIR$/intellij/android/layout-ui/intellij.android.layout-ui.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij/android/layoutlib/intellij.android.layoutlib.iml" filepath="$PROJECT_DIR$/intellij/android/layoutlib/intellij.android.layoutlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/layoutlib-loader/intellij.android.layoutlib-loader.iml" filepath="$PROJECT_DIR$/intellij/android/layoutlib-loader/intellij.android.layoutlib-loader.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/layoutlib-loader/intellij.android.layoutlib-loader.tests.iml" filepath="$PROJECT_DIR$/intellij/android/layoutlib-loader/intellij.android.layoutlib-loader.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/lint/intellij.android.lint.iml" filepath="$PROJECT_DIR$/intellij/android/lint/intellij.android.lint.iml" />
@@ -423,8 +433,10 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/android/mlkit/intellij.android.mlkit.iml" filepath="$PROJECT_DIR$/intellij/android/mlkit/intellij.android.mlkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/mlkit/intellij.android.mlkit.tests.iml" filepath="$PROJECT_DIR$/intellij/android/mlkit/intellij.android.mlkit.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/native-symbolizer/intellij.android.native-symbolizer.iml" filepath="$PROJECT_DIR$/intellij/android/native-symbolizer/intellij.android.native-symbolizer.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij/android/naveditor/intellij.android.naveditor.iml" filepath="$PROJECT_DIR$/intellij/android/naveditor/intellij.android.naveditor.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij/android/naveditor/intellij.android.naveditor.tests.iml" filepath="$PROJECT_DIR$/intellij/android/naveditor/intellij.android.naveditor.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/nav/editor/intellij.android.nav.editor.iml" filepath="$PROJECT_DIR$/intellij/android/nav/editor/intellij.android.nav.editor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/nav/editor/intellij.android.nav.editor.tests.iml" filepath="$PROJECT_DIR$/intellij/android/nav/editor/intellij.android.nav.editor.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/nav/safeargs/intellij.android.nav.safeargs.iml" filepath="$PROJECT_DIR$/intellij/android/nav/safeargs/intellij.android.nav.safeargs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/nav/safeargs/intellij.android.nav.safeargs.tests.iml" filepath="$PROJECT_DIR$/intellij/android/nav/safeargs/intellij.android.nav.safeargs.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/observable/intellij.android.observable.iml" filepath="$PROJECT_DIR$/intellij/android/observable/intellij.android.observable.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/observable-ui/intellij.android.observable.ui.iml" filepath="$PROJECT_DIR$/intellij/android/observable-ui/intellij.android.observable.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-plugin/intellij.android.plugin.iml" filepath="$PROJECT_DIR$/intellij/android/android-plugin/intellij.android.plugin.iml" />
@@ -434,8 +446,10 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/android/profilers-android/intellij.android.profilersAndroid.iml" filepath="$PROJECT_DIR$/intellij/android/profilers-android/intellij.android.profilersAndroid.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/project-system/intellij.android.projectSystem.iml" filepath="$PROJECT_DIR$/intellij/android/project-system/intellij.android.projectSystem.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/project-system-gradle/intellij.android.projectSystem.gradle.iml" filepath="$PROJECT_DIR$/intellij/android/project-system-gradle/intellij.android.projectSystem.gradle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/project-system-gradle-psd/intellij.android.projectSystem.gradle.psd.iml" filepath="$PROJECT_DIR$/intellij/android/project-system-gradle-psd/intellij.android.projectSystem.gradle.psd.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/project-system-gradle-sync/intellij.android.projectSystem.gradle.sync.iml" filepath="$PROJECT_DIR$/intellij/android/project-system-gradle-sync/intellij.android.projectSystem.gradle.sync.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/project-system-gradle-sync/intellij.android.projectSystem.gradle.sync.tests.iml" filepath="$PROJECT_DIR$/intellij/android/project-system-gradle-sync/intellij.android.projectSystem.gradle.sync.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/project-system-gradle/intellij.android.projectSystem.gradle.tests.iml" filepath="$PROJECT_DIR$/intellij/android/project-system-gradle/intellij.android.projectSystem.gradle.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij/android/project-system/intellij.android.projectSystem.tests.iml" filepath="$PROJECT_DIR$/intellij/android/project-system/intellij.android.projectSystem.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/resources-base/intellij.android.resources-base.iml" filepath="$PROJECT_DIR$/intellij/android/resources-base/intellij.android.resources-base.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/resources-base/intellij.android.resources-base.tests.iml" filepath="$PROJECT_DIR$/intellij/android/resources-base/intellij.android.resources-base.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/room/intellij.android.room.iml" filepath="$PROJECT_DIR$/intellij/android/room/intellij.android.room.iml" />
@@ -446,8 +460,12 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/android/smali/intellij.android.smali.iml" filepath="$PROJECT_DIR$/intellij/android/smali/intellij.android.smali.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android/intellij.android.studio.main.iml" filepath="$PROJECT_DIR$/intellij/android/android/intellij.android.studio.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-test-framework/intellij.android.testFramework.iml" filepath="$PROJECT_DIR$/intellij/android/android-test-framework/intellij.android.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/android-test-retention/intellij.android.testRetention.iml" filepath="$PROJECT_DIR$/intellij/android/android-test-retention/intellij.android.testRetention.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/android-test-retention/intellij.android.testRetention.tests.iml" filepath="$PROJECT_DIR$/intellij/android/android-test-retention/intellij.android.testRetention.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-transport/intellij.android.transport.iml" filepath="$PROJECT_DIR$/intellij/android/android-transport/intellij.android.transport.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/transport-database/intellij.android.transportDatabase.iml" filepath="$PROJECT_DIR$/intellij/android/transport-database/intellij.android.transportDatabase.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/whats-new-assistant/intellij.android.whats-new-assistant.iml" filepath="$PROJECT_DIR$/intellij/android/whats-new-assistant/intellij.android.whats-new-assistant.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/whats-new-assistant/intellij.android.whats-new-assistant-test.iml" filepath="$PROJECT_DIR$/intellij/android/whats-new-assistant/intellij.android.whats-new-assistant-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/wizard/intellij.android.wizard.iml" filepath="$PROJECT_DIR$/intellij/android/wizard/intellij.android.wizard.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/wizard-model/intellij.android.wizard.model.iml" filepath="$PROJECT_DIR$/intellij/android/wizard-model/intellij.android.wizard.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/ant/intellij.ant.iml" filepath="$PROJECT_DIR$/intellij/plugins/ant/intellij.ant.iml" />
