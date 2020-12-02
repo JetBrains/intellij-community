@@ -15,7 +15,7 @@ public final class WinDockDelegateInitializer implements SystemDock.Delegate.Ini
   @Override
   public synchronized void onUiInitialization() {
     final var app = ApplicationManagerEx.getApplicationEx();
-    shouldBeDisabled = app.isHeadlessEnvironment() || app.isLightEditMode();
+    shouldBeDisabled = app.isHeadlessEnvironment();
     if (shouldBeDisabled)
       return;
 
