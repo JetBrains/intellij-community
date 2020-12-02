@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.emojipicker.ui;
 
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -37,13 +38,15 @@ class EmojiCategoryPanel extends JPanel {
           super.paintComponent(g);
           if (emojiPicker.getCurrentFocusTarget() == category) {
             buttonSize.update();
-            int x = getWidth() / 2, y = getHeight() / 2;
+            double x = getWidth() / 2.0, y = getHeight() / 2.0;
             g.setColor(myStyle.myFocusBorderColor);
-            g.drawRoundRect(x - buttonSize.width / 2, y - buttonSize.height / 2, buttonSize.width, buttonSize.height, 4, 4);
+            RectanglePainter2D.DRAW.paint((Graphics2D)g, x - buttonSize.getWidth() / 2.0, y - buttonSize.getHeight() / 2.0,
+                                          buttonSize.getWidth(), buttonSize.getHeight(), 4.0);
           }
           if (myActiveCategory == category) {
+            double height = JBUIScale.scale(2F);
             g.setColor(myStyle.mySelectedCategoryColor);
-            g.fillRect(0, getHeight() - 2, getWidth(), 2);
+            RectanglePainter2D.FILL.paint((Graphics2D)g, 0, getHeight() - height, getWidth(), height);
           }
         }
       };
@@ -55,10 +58,10 @@ class EmojiCategoryPanel extends JPanel {
   @Override
   public void paintComponent(Graphics g) {
     g.setColor(myStyle.myToolbarColor);
-    g.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
-    g.fillRect(0, 6, getWidth(), getHeight() - 6);
+    RectanglePainter2D.FILL.paint((Graphics2D)g, 0, 0, getWidth(), getHeight(), 6.0);
+    RectanglePainter2D.FILL.paint((Graphics2D)g, 0, 6, getWidth(), getHeight() - 6);
     g.setColor(myStyle.myBorderColor);
-    g.fillRect(0, getHeight() - 1, getWidth(), 1);
+    RectanglePainter2D.FILL.paint((Graphics2D)g, 0, getHeight() - myStyle.myBorder.getFloat(), getWidth(), myStyle.myBorder.getFloat());
   }
 
   void selectCategory(EmojiCategory category) {

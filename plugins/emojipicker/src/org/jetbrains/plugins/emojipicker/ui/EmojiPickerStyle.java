@@ -4,6 +4,7 @@ package org.jetbrains.plugins.emojipicker.ui;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
 
 import java.awt.*;
 import java.util.Locale;
@@ -32,4 +33,6 @@ class EmojiPickerStyle {
   final Color myFocusBorderColor = new JBColor(0x97C3F3, 0x97C3F3);
   final Color myTextColor = JBUI.CurrentTheme.Label.foreground();
   final Color myNoEmojiFoundTextColor = new JBColor(0x808080, 0xBBBBBB);
+
+  final JBValue myBorder = new JBValue.Float(1);
 }
