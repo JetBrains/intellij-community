@@ -35,9 +35,6 @@ internal class DiffLineMarkerRenderer(
   private val myLastLine: Boolean
 ) : LineMarkerRendererEx {
 
-  /**
-   * Keep in sync with [com.intellij.diff.util.DiffDividerDrawUtil.getDividerMarkerPaintRange]
-   */
   override fun paint(editor: Editor, g: Graphics, range: Rectangle) {
     editor as EditorEx
     g as Graphics2D
