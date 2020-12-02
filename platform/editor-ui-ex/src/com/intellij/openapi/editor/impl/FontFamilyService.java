@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FontInfo;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Standard Java font API doesn't allow accessing fonts by their typographic family/subfamily names
@@ -32,11 +30,11 @@ public abstract class FontFamilyService {
   }
 
   /**
-   * Returns typographic family names for fonts available to the runtime environment.
+   * Returns typographic family names (in alphabetical order) for fonts available to the runtime environment.
    */
-  public static @NotNull Set<String> getAvailableFamilies() {
+  public static @NotNull List<String> getAvailableFamilies() {
     FontFamilyService instance = getInstance();
-    return instance == null ? ContainerUtil.set(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames())
+    return instance == null ? Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames())
                             : instance.getAvailableFamiliesImpl();
   }
 
@@ -51,7 +49,8 @@ public abstract class FontFamilyService {
   }
 
   /**
-   * Returns subfamilies available in the given typographic family.
+   * Returns subfamilies available in the given typographic family. This doesn't include italic faces (unless there are no 'normal' faces in
+   * the family). The results are sorted by font weight (ascending, light to bold).
    */
   public static @NotNull List<@NotNull String> getSubFamilies(@NotNull String family) {
     FontFamilyService instance = getInstance();
@@ -119,7 +118,7 @@ public abstract class FontFamilyService {
 
   protected abstract boolean isSupportedImpl();
 
-  protected abstract @NotNull Set<String> getAvailableFamiliesImpl();
+  protected abstract @NotNull List<String> getAvailableFamiliesImpl();
 
   protected abstract boolean isMonospacedImpl(@NotNull String family);
 
