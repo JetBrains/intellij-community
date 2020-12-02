@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.problems.ProblemListener
 import com.intellij.problems.WolfTheProblemSolver
+import com.intellij.ui.tree.project.ProjectFileNode
 
 internal class HighlightingErrorsProvider(override val project: Project) : ProblemsProvider, ProblemListener {
   companion object {
@@ -28,6 +29,7 @@ internal class HighlightingErrorsProvider(override val project: Project) : Probl
   }
 
   override fun problemsAppeared(file: VirtualFile) {
+    ProjectFileNode.findArea(file, project) ?: return
     synchronized(watchers) {
       watchers.computeIfAbsent(file) { file ->
         HighlightingWatcher(this, ProblemsCollector.getInstance(project), file, ERROR.myVal).also { watcher ->
