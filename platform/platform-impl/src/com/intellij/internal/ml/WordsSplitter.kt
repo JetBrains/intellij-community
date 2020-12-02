@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ml
 
+import com.intellij.ide.ui.search.PorterStemmerUtil
 import com.intellij.util.text.NameUtilCore
 import org.jetbrains.annotations.ApiStatus
 
@@ -9,6 +10,7 @@ class WordsSplitter private constructor(private val skipLess: Int,
                                         private val ignoreStopWords: Boolean,
                                         private val stopWords: Set<String>,
                                         private val maxWords: Int,
+                                        private val withStemming: Boolean,
                                         private val toLowerCase: Boolean) {
 
   fun split(name: String): List<String> = wordsFromName(name)
@@ -26,7 +28,11 @@ class WordsSplitter private constructor(private val skipLess: Int,
     }
   }
 
-  private fun normalize(word: String): String = if (toLowerCase) word.toLowerCase() else word
+  private fun normalize(word: String): String {
+    return word
+      .let { if (toLowerCase) it.toLowerCase() else it }
+      .let { if (withStemming) PorterStemmerUtil.stem(it) ?: it else it }
+  }
 
   private fun shouldInclude(word: String): Boolean =
     word.isNotBlank() &&
@@ -48,12 +54,13 @@ class WordsSplitter private constructor(private val skipLess: Int,
     }
 
     private var toLowerCase: Boolean = false
+    private var withStemming: Boolean = false
     private var ignoreStopWords: Boolean = false
     private var stopWords: Set<String> = DEFAULT_STOP_WORDS
     private var skipLess: Int = 0
     private var maxWords: Int = Int.MAX_VALUE
 
-    fun build(): WordsSplitter = WordsSplitter(skipLess, ignoreStopWords, stopWords, maxWords, toLowerCase)
+    fun build(): WordsSplitter = WordsSplitter(skipLess, ignoreStopWords, stopWords, maxWords, withStemming, toLowerCase)
 
     fun ignoreStopWords(stopWords: Iterable<String>? = null): Builder = apply {
       ignoreStopWords = true
@@ -68,6 +75,10 @@ class WordsSplitter private constructor(private val skipLess: Int,
 
     fun maxWords(count: Int = DEFAULT_MAX_WORDS_COUNT): Builder = apply {
       maxWords = count
+    }
+
+    fun withStemming(): Builder = apply {
+      withStemming = true
     }
 
     fun toLowerCase(): Builder = apply {

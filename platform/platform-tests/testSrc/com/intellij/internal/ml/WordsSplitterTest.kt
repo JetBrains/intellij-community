@@ -16,6 +16,8 @@ class WordsSplitterTest {
       "Some_differentCases_Identifier" to listOf("some", "different", "cases", "identifier"),
       "CAPS_IDENTIFIER" to listOf("caps", "identifier"),
       "identifier123withNumbers__And#@special?symbols" to listOf("identifier", "with", "numbers", "and", "special", "symbols"),
+      "MLCompletion" to listOf("ml", "completion"),
+      "GetHTMLReport" to listOf("get", "html", "report"),
       "test" to listOf("test"),
       "test5" to listOf("test"),
       "5test!" to listOf("test"),
@@ -54,6 +56,16 @@ class WordsSplitterTest {
     val names2words = mapOf(
       "myIdentifier" to listOf("identifier"),
       "it_is_identifier" to listOf("identifier")
+    )
+    checkResults(wordsSplitter, names2words)
+  }
+
+  @Test
+  fun `use stemming`() {
+    val wordsSplitter = WordsSplitter.Builder().withStemming().toLowerCase().build()
+    val names2words = mapOf(
+      "readingNames" to listOf("read", "name"),
+      "lists_of_words" to listOf("list", "of", "word")
     )
     checkResults(wordsSplitter, names2words)
   }
