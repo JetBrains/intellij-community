@@ -105,9 +105,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
     resetSelectedSourceFrom(configuration);
 
     D deploymentConfiguration = configuration.getDeploymentConfiguration();
-    if (myDeploymentConfiguration == null) {
-      myDeploymentConfiguration = deploymentConfiguration;
-    }
+    myDeploymentConfiguration = deploymentConfiguration;
     updateDeploymentSettingsEditor();
     if (deploymentConfiguration != null && myDeploymentSettingsEditor != null) {
       myDeploymentSettingsEditor.resetFrom(deploymentConfiguration);
@@ -130,9 +128,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
         deployment = myDeploymentConfigurator.createDefaultConfiguration(deploymentSource);
         configuration.setDeploymentConfiguration(deployment);
       }
-      if (myDeploymentConfiguration == null) {
-        myDeploymentConfiguration = deployment;
-      }
+      myDeploymentConfiguration = deployment;
       if (myDeploymentSettingsEditor != null) {
         myDeploymentSettingsEditor.applyTo(deployment);
       }
