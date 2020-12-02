@@ -430,6 +430,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testClashingReads4() {
+    addFile("module-info.java", "module M2 { requires transitive lib.auto; }", M2)
+    addFile("module-info.java", "module M4 { requires transitive lib.auto; }", M4)
+    highlight("module M { requires M2; requires M4; }")
+  }
+
   fun testInaccessibleMemberType() {
     addFile("module-info.java", "module C { exports pkg.c; }", M8)
     addFile("module-info.java", "module B { requires C; exports pkg.b; }", M6)
