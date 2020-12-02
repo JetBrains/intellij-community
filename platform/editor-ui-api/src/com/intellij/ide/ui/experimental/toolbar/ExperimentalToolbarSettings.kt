@@ -21,7 +21,9 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   private var toolbarState = ExperimentalToolbarStateWrapper()
 
   init {
-    updateSettingsState()
+    if(newToolbarEnabled) {
+      updateSettingsState()
+    }
   }
 
   override fun getState(): ExperimentalToolbarStateWrapper {
@@ -29,8 +31,16 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   }
 
   override fun loadState(state: ExperimentalToolbarStateWrapper) {
-    toolbarState = state
-    updateSettingsState()
+    if (!newToolbarEnabled) {
+      val oldState = UISettings.instance.state
+      toolbarState.state =
+        getToolbarStateByVisibilityFlags(false, oldState.showMainToolbar, false,
+                                         oldState.showNavigationBar)
+    }
+    else {
+      toolbarState = state
+      updateSettingsState()
+    }
   }
 
   fun getToolbarStateByVisibilityFlags(newToolbarEnabled: Boolean, oldToolbarVisible: Boolean,
