@@ -3,12 +3,12 @@ package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
+import com.intellij.icons.AllIcons
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.search.OptionDescription
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
@@ -20,20 +20,20 @@ import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.ui.ContextHelpLabel
-import com.intellij.ui.FontComboBox
+import com.intellij.ui.*
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.*
+import com.intellij.ui.layout.Cell
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -56,7 +56,6 @@ private val cdShowToolWindowNumbers                   get() = CheckboxDescriptor
 private val cdEnableMenuMnemonics                     get() = CheckboxDescriptor(KeyMapBundle.message("enable.mnemonic.in.menu.check.box"), PropertyBinding({ !settings.disableMnemonics }, { settings.disableMnemonics = !it }), groupName = windowOptionGroupName)
 private val cdEnableControlsMnemonics                 get() = CheckboxDescriptor(KeyMapBundle.message("enable.mnemonic.in.controls.check.box"), PropertyBinding({ !settings.disableMnemonicsInControls }, { settings.disableMnemonicsInControls = !it }), groupName = windowOptionGroupName)
 private val cdSmoothScrolling                         get() = CheckboxDescriptor(message("checkbox.smooth.scrolling"), settings::smoothScrolling, groupName = uiOptionGroupName)
-private val cdWidescreenToolWindowLayout              get() = CheckboxDescriptor(message("checkbox.widescreen.tool.window.layout"), settings::wideScreenSupport, groupName = windowOptionGroupName)
 private val cdLeftToolWindowLayout                    get() = CheckboxDescriptor(message("checkbox.left.toolwindow.layout"), settings::leftHorizontalSplit, groupName = windowOptionGroupName)
 private val cdRightToolWindowLayout                   get() = CheckboxDescriptor(message("checkbox.right.toolwindow.layout"), settings::rightHorizontalSplit, groupName = windowOptionGroupName)
 private val cdUseCompactTreeIndents                   get() = CheckboxDescriptor(message("checkbox.compact.tree.indents"), settings::compactTreeIndents, groupName = uiOptionGroupName)
@@ -79,7 +78,6 @@ internal val appearanceOptionDescriptors: List<OptionDescription>
     cdEnableMenuMnemonics,
     cdEnableControlsMnemonics,
     cdSmoothScrolling,
-    cdWidescreenToolWindowLayout,
     cdLeftToolWindowLayout,
     cdRightToolWindowLayout,
     cdUseCompactTreeIndents,
@@ -306,9 +304,21 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           { checkBox(cdLeftToolWindowLayout) },
           { checkBox(cdRightToolWindowLayout) }
         )
-        row {
-          checkBox(cdWidescreenToolWindowLayout)
-          ContextHelpLabel.create(message("checkbox.widescreen.tool.window.layout.description"))()
+        fullRow {
+          label(message("tool.window.layout"))
+
+          val group = DefaultActionGroup(
+            ToolWindowsLayoutAction(ToolWindowsLayoutAction.Anchor.TOP_LEFT),
+            ToolWindowsLayoutAction(ToolWindowsLayoutAction.Anchor.TOP_RIGHT),
+            ToolWindowsLayoutAction(ToolWindowsLayoutAction.Anchor.BOTTOM_LEFT),
+            ToolWindowsLayoutAction(ToolWindowsLayoutAction.Anchor.BOTTOM_RIGHT)
+          )
+          val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true)
+          toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+          toolbar.component.isOpaque = false
+          component(toolbar.component).withLeftGap()
+
+          ContextHelpLabel.create(message("tool.window.layout.description"))().withLeftGap()
         }
       }
       titledRow(message("group.presentation.mode")) {
@@ -396,5 +406,82 @@ private class AAListCellRenderer(private val myUseEditorFont: Boolean) : SimpleL
     }
 
     text = value.presentableName
+  }
+}
+
+/**
+ * @author Matt Coster
+ */
+private class ToolWindowsLayoutAction(var anchor: Anchor): DumbAwareAction() {
+  var isVerticalByHorizontal = false
+
+  override fun update(e: AnActionEvent) {
+    val uiSettings = UISettings.instance
+    isVerticalByHorizontal = when (anchor) {
+      Anchor.TOP_LEFT -> uiSettings.toolWindowsLeftByTop
+      Anchor.TOP_RIGHT -> uiSettings.toolWindowsRightByTop
+      Anchor.BOTTOM_LEFT -> uiSettings.toolWindowsLeftByBottom
+      Anchor.BOTTOM_RIGHT -> uiSettings.toolWindowsRightByBottom
+    }
+    updateAppearance(e.presentation)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    isVerticalByHorizontal = !isVerticalByHorizontal
+    val uiSettings = UISettings.instance
+    when (anchor) {
+      Anchor.TOP_LEFT -> uiSettings.toolWindowsLeftByTop = isVerticalByHorizontal
+      Anchor.TOP_RIGHT -> uiSettings.toolWindowsRightByTop = isVerticalByHorizontal
+      Anchor.BOTTOM_LEFT -> uiSettings.toolWindowsLeftByBottom = isVerticalByHorizontal
+      Anchor.BOTTOM_RIGHT -> uiSettings.toolWindowsRightByBottom = isVerticalByHorizontal
+    }
+    uiSettings.fireUISettingsChanged()
+    updateAppearance(e.presentation)
+  }
+
+  private fun updateAppearance(presentation: Presentation) {
+    if (isVerticalByHorizontal) {
+      when (anchor) {
+        Anchor.TOP_LEFT -> {
+          presentation.icon = AllIcons.General.TwLeftByTop
+          presentation.text = message("tool.window.layout.left.by.top")
+        }
+        Anchor.TOP_RIGHT -> {
+          presentation.icon = AllIcons.General.TwRightByTop
+          presentation.text = message("tool.window.layout.right.by.top")
+        }
+        Anchor.BOTTOM_LEFT -> {
+          presentation.icon = AllIcons.General.TwLeftByBottom
+          presentation.text = message("tool.window.layout.left.by.bottom")
+        }
+        Anchor.BOTTOM_RIGHT -> {
+          presentation.icon = AllIcons.General.TwRightByBottom
+          presentation.text = message("tool.window.layout.right.by.bottom")
+        }
+      }
+    } else {
+      when (anchor) {
+        Anchor.TOP_LEFT -> {
+          presentation.icon = AllIcons.General.TwLeftUnderTop
+          presentation.text = message("tool.window.layout.left.under.top")
+        }
+        Anchor.TOP_RIGHT -> {
+          presentation.icon = AllIcons.General.TwRightUnderTop
+          presentation.text = message("tool.window.layout.right.under.top")
+        }
+        Anchor.BOTTOM_LEFT -> {
+          presentation.icon = AllIcons.General.TwLeftOnBottom
+          presentation.text = message("tool.window.layout.left.on.bottom")
+        }
+        Anchor.BOTTOM_RIGHT -> {
+          presentation.icon = AllIcons.General.TwRightOnBottom
+          presentation.text = message("tool.window.layout.right.on.bottom")
+        }
+      }
+    }
+  }
+
+  enum class Anchor {
+    TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
   }
 }

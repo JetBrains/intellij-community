@@ -271,10 +271,35 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.rightHorizontalSplit = value
     }
 
+  @Deprecated("Use toolWindows{LeftByTop,RightByTop,LeftByBottom,RightByBottom} instead")
   var wideScreenSupport: Boolean
     get() = state.wideScreenSupport
     set(value) {
       state.wideScreenSupport = value
+    }
+
+  var toolWindowsLeftByTop: Boolean
+    get() = state.toolWindowsLeftByTop
+    set(value) {
+      state.toolWindowsLeftByTop = value
+    }
+
+  var toolWindowsRightByTop: Boolean
+    get() = state.toolWindowsRightByTop
+    set(value) {
+      state.toolWindowsRightByTop = value
+    }
+
+  var toolWindowsLeftByBottom: Boolean
+    get() = state.toolWindowsLeftByBottom
+    set(value) {
+      state.toolWindowsLeftByBottom = value
+    }
+
+  var toolWindowsRightByBottom: Boolean
+    get() = state.toolWindowsRightByBottom
+    set(value) {
+      state.toolWindowsRightByBottom = value
     }
 
   var sortBookmarks: Boolean

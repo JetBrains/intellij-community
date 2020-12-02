@@ -1,16 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.paint.LinePainter2D;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -66,7 +69,7 @@ class Stripe extends JPanel implements UISettingsListener {
     updatePresentation();
   }
 
-  private static final class AdaptiveBorder implements Border {
+  private static class AdaptiveBorder implements Border {
     @Override
     public void paintBorder(@NotNull Component c, Graphics g, int x, int y, int width, int height) {
       Insets insets = ((JComponent)c).getInsets();
@@ -167,19 +170,14 @@ class Stripe extends JPanel implements UISettingsListener {
 
   private LayoutData recomputeBounds(boolean setBounds, Dimension toFitWith, boolean noDrop) {
     LayoutData data = new LayoutData();
-    int horizontalOffset = getHeight();
-
+    data.eachX = 0;
     data.eachY = 0;
     data.size = new Dimension();
     data.gap = 0;
     data.horizontal = isHorizontal();
     data.dragInsertPosition = -1;
     if (data.horizontal) {
-      data.eachX = horizontalOffset - 1;
       data.eachY = 1;
-    }
-    else {
-      data.eachX = 0;
     }
 
     data.fitSize = toFitWith != null ? toFitWith : new Dimension();
@@ -204,7 +202,7 @@ class Stripe extends JPanel implements UISettingsListener {
     if (toFitWith != null) {
       LayoutData layoutData = recomputeBounds(false, null, true);
       if (data.horizontal) {
-        gap = toFitWith.width - horizontalOffset - layoutData.size.width - data.eachX;
+        gap = toFitWith.width - layoutData.size.width - data.eachX;
       }
       else {
         gap = toFitWith.height - layoutData.size.height - data.eachY;
@@ -546,6 +544,116 @@ class Stripe extends JPanel implements UISettingsListener {
     else {
       LinePainter2D.paint((Graphics2D)g, 0, 1, r.width, 1);
       LinePainter2D.paint((Graphics2D)g, 0, r.height - 1, r.width, r.height - 1);
+    }
+  }
+
+  /**
+   * @author Matt Coster
+   */
+  public static class Corner extends JLabel {
+    private final @NotNull Anchor anchor;
+
+    private boolean verticalByHorizontal;
+
+    public Corner(final @NotNull Anchor anchor) {
+      super((Icon) null, CENTER);
+
+      setOpaque(true);
+      this.anchor = anchor;
+      setBorder(new CornerBorder());
+
+      new BaseButtonBehavior(this, TimedDeadzone.NULL) {
+        @Override
+        protected void execute(MouseEvent e) {
+          performAction();
+        }
+      }.setActionTrigger(MouseEvent.MOUSE_PRESSED);
+    }
+
+    public void updateFromStripes(final @NotNull Stripe verticalStripe, final @NotNull Stripe horizontalStripe) {
+      final int width = verticalStripe.getWidth();
+      final int height = horizontalStripe.getHeight();
+
+      setBounds(verticalStripe.getX(), horizontalStripe.getY(), width, height);
+      setVisible(width > 0 && height > 0);
+    }
+
+    void updateIcon() {
+      if (!isVisible()) return;
+
+      final Icon newIcon;
+      switch (anchor) {
+        case TOP_LEFT: newIcon = verticalByHorizontal ? AllIcons.General.TwLeftByTop : AllIcons.General.TwLeftUnderTop; break;
+        case TOP_RIGHT: newIcon = verticalByHorizontal ? AllIcons.General.TwRightByTop : AllIcons.General.TwRightUnderTop; break;
+        case BOTTOM_LEFT: newIcon = verticalByHorizontal ? AllIcons.General.TwLeftByBottom : AllIcons.General.TwLeftOnBottom; break;
+        case BOTTOM_RIGHT: newIcon = verticalByHorizontal ? AllIcons.General.TwRightByBottom : AllIcons.General.TwRightOnBottom; break;
+        default: throw new IllegalStateException("Unexpected value: " + anchor);
+      }
+
+      if (getIcon() != newIcon) {
+        setIcon(newIcon);
+        revalidate();
+        repaint();
+      }
+    }
+
+    protected void performAction() {
+      if (!isVisible()) return;
+
+      final UISettings uiSettings = UISettings.getInstance();
+      switch (anchor) {
+        case TOP_LEFT: uiSettings.setToolWindowsLeftByTop(!uiSettings.getToolWindowsLeftByTop()); break;
+        case TOP_RIGHT: uiSettings.setToolWindowsRightByTop(!uiSettings.getToolWindowsRightByTop()); break;
+        case BOTTOM_LEFT: uiSettings.setToolWindowsLeftByBottom(!uiSettings.getToolWindowsLeftByBottom()); break;
+        case BOTTOM_RIGHT: uiSettings.setToolWindowsRightByBottom(!uiSettings.getToolWindowsRightByBottom()); break;
+      }
+      uiSettings.fireUISettingsChanged();
+    }
+
+    void setOverlayed(boolean overlayed) {
+      if (Registry.is("disable.toolwindow.overlay")) return;
+
+      final Color bg = UIUtil.getPanelBackground();
+      if (overlayed) {
+        setBackground(ColorUtil.toAlpha(bg, 190));
+      } else {
+        setBackground(bg);
+      }
+    }
+
+    protected boolean isVerticalByHorizontal() {
+      return verticalByHorizontal;
+    }
+
+    protected void setVerticalByHorizontal(boolean verticalByHorizontal) {
+      //if (this.verticalByHorizontal == verticalByHorizontal) return;
+      this.verticalByHorizontal = verticalByHorizontal;
+      updateIcon();
+    }
+
+    private static class CornerBorder extends AdaptiveBorder {
+      @Override
+      public Insets getBorderInsets(@NotNull Component c) {
+        final Corner corner = (Corner) c;
+
+        if (corner.anchor.isLeft()) {
+          return new Insets(1, 0, 0, 1);
+        } else {
+          return new Insets(1, 1, 0, 0);
+        }
+      }
+    }
+
+    public enum Anchor {
+      TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT;
+
+      public boolean isLeft() {
+        return this == TOP_LEFT || this == BOTTOM_LEFT;
+      }
+
+      public boolean isTop() {
+        return this == TOP_LEFT || this == TOP_RIGHT;
+      }
     }
   }
 }

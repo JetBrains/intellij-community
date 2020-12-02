@@ -490,6 +490,14 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TodoDefault = load("general/todoDefault.svg", -6679998985908400939L, 0);
     /** 16x16 */ public static final @NotNull Icon TodoImportant = load("general/todoImportant.svg", 4071827613157420132L, 0);
     /** 16x16 */ public static final @NotNull Icon TodoQuestion = load("general/todoQuestion.svg", -998896081257651016L, 0);
+    /** 16x16 */ public static final @NotNull Icon TwLeftByBottom = load("general/twLeftByBottom.svg", 2798781573109096756L, 2);
+    /** 16x16 */ public static final @NotNull Icon TwLeftByTop = load("general/twLeftByTop.svg", -422603898016309164L, 2);
+    /** 16x16 */ public static final @NotNull Icon TwLeftOnBottom = load("general/twLeftOnBottom.svg", -8438336982128388088L, 2);
+    /** 16x16 */ public static final @NotNull Icon TwLeftUnderTop = load("general/twLeftUnderTop.svg", 7200819797507899400L, 2);
+    /** 16x16 */ public static final @NotNull Icon TwRightByBottom = load("general/twRightByBottom.svg", -6961161437162927424L, 2);
+    /** 16x16 */ public static final @NotNull Icon TwRightByTop = load("general/twRightByTop.svg", 4936508340709491030L, 2);
+    /** 16x16 */ public static final @NotNull Icon TwRightOnBottom = load("general/twRightOnBottom.svg", -6456621138984299456L, 2);
+    /** 16x16 */ public static final @NotNull Icon TwRightUnderTop = load("general/twRightUnderTop.svg", 2475265499182340637L, 2);
     /** 16x16 */ public static final @NotNull Icon User = load("general/user.svg", -4532685924149411001L, 0);
     /** 16x16 */ public static final @NotNull Icon Warning = load("general/warning.svg", 3745461258866722132L, 2);
     /** 16x16 */ public static final @NotNull Icon WarningDecorator = load("general/warningDecorator.svg", -203970029791479627L, 2);
