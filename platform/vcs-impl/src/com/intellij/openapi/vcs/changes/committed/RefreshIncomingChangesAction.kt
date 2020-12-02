@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.committed
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.committed.CacheSettingsDialog.showSettingsDialog
 
 class RefreshIncomingChangesAction : DumbAwareAction() {
@@ -12,7 +11,7 @@ class RefreshIncomingChangesAction : DumbAwareAction() {
     val project = e.project
     e.presentation.isEnabled =
       project != null &&
-      ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { it.cachingCommittedChangesProvider != null } &&
+      IncomingChangesViewProvider.VisibilityPredicate().`fun`(project) &&
       CommittedChangesCache.getInstanceIfCreated(project)?.isRefreshingIncomingChanges != true
   }
 
