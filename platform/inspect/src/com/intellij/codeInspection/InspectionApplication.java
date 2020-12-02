@@ -92,7 +92,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   public String myProfilePath;
   public boolean myRunWithEditorSettings;
   public boolean myRunGlobalToolsOnly;
-  boolean myAnalyzeChanges;
+  public boolean myAnalyzeChanges;
   boolean myPathProfiling;
   boolean myQodanaRun;
   public QodanaConfig myQodanaConfig;
@@ -448,7 +448,14 @@ public final class InspectionApplication implements CommandLineInspectionProgres
                            Path resultsDataPath) throws IOException {
     GlobalInspectionContextEx context = createGlobalInspectionContext(project);
     if (myAnalyzeChanges) {
-      scope = runAnalysisOnCodeWithoutChanges(project, projectPath, createGlobalInspectionContext(project), scope, resultsDataPath);
+      AnalysisScope baseScope = scope;
+      GlobalInspectionContextEx baseContext = createGlobalInspectionContext(project);
+
+      scope = runAnalysisOnCodeWithoutChanges(
+        project,
+        baseContext,
+        () -> runUnderProgress(project, projectPath, baseContext, baseScope, resultsDataPath, new ArrayList<>())
+      );
       setupSecondAnalysisHandler(project, context);
     }
 
@@ -491,14 +498,11 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     myCompleteProfile = completeProfile;
   }
 
-  private @NotNull AnalysisScope runAnalysisOnCodeWithoutChanges(Project project,
-                                                                 Path projectPath,
+  public @NotNull AnalysisScope runAnalysisOnCodeWithoutChanges(Project project,
                                                                  GlobalInspectionContextEx context,
-                                                                 AnalysisScope scope,
-                                                                 Path resultsDataPath) {
+                                                                 Runnable analysisRunner) {
     VirtualFile[] changes = ChangesUtil.getFilesFromChanges(ChangeListManager.getInstance(project).getAllChanges());
     setupFirstAnalysisHandler(context);
-    final List<Path> inspectionsResults = new ArrayList<>();
     DumbService dumbService = DumbService.getInstance(project);
     while (dumbService.isDumb()) {
       LockSupport.parkNanos(50_000_000);
@@ -518,7 +522,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       createProcessIndicator(),
       () -> {
         syncProject(project, changes);
-        runUnderProgress(project, projectPath, context, scope, resultsDataPath, inspectionsResults);
+
+        analysisRunner.run();
       }
     );
     syncProject(project, changes);
@@ -567,7 +572,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     );
   }
 
-  private void setupSecondAnalysisHandler(Project project, GlobalInspectionContextEx context) {
+  public void setupSecondAnalysisHandler(Project project, GlobalInspectionContextEx context) {
     if (myVerboseLevel > 0) {
       reportMessage(1, "Running second analysis stage...");
     }
