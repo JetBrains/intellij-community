@@ -45,34 +45,26 @@ fun JsonIndexDiagnostic.generateHtml(): String {
         }
       }
 
-      h1("Times")
+      h1("Indexing info")
       table {
         thead {
           tr { th("Name"); th("Time") }
         }
         tbody {
-          val times = projectIndexingHistory.times
-          tr { td("Total updating time"); td(times.totalUpdatingTime?.presentableDuration() ?: "unknown") }
-          tr { td("Interrupted"); td(times.wasInterrupted.toString()) }
-          tr { td("Started at"); td(times.updatingStart.presentableDateTime()) }
-          tr { td("Finished at"); td(times.updatingStart.presentableDateTime()) }
-          tr { td("Suspended time"); td(times.totalSuspendedTime?.presentableDuration() ?: "unknown") }
-          tr { td("Indexing time"); td(times.indexingTime?.presentableDuration() ?: "unknown") }
-          tr { td("Scanning time"); td(times.scanFilesTime?.presentableDuration() ?: "unknown") }
-          tr { td("Pushing properties time"); td(times.pushPropertiesTime?.presentableDuration() ?: "unknown") }
-          tr { td("Running extensions time"); td(times.indexExtensionsTime?.presentableDuration() ?: "unknown") }
-        }
-      }
-
-      h1("Values")
-      table {
-        thead {
-          tr { th("Name"); th("Value") }
-        }
-        tbody {
           tr { td("Number of file providers"); td(projectIndexingHistory.numberOfFileProviders.toString()) }
           tr { td("Number of files"); td(projectIndexingHistory.totalNumberOfFiles.toString()) }
           tr { td("Number of up-to-date files"); td(projectIndexingHistory.totalNumberOfUpToDateFiles.toString()) }
+
+          val times = projectIndexingHistory.times
+          tr { td("Total updating time"); td(times.totalUpdatingTime.presentableDuration()) }
+          tr { td("Interrupted"); td(times.wasInterrupted.toString()) }
+          tr { td("Started at"); td(times.updatingStart.presentableDateTime()) }
+          tr { td("Finished at"); td(times.updatingStart.presentableDateTime()) }
+          tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
+          tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
+          tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
+          tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
+          tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
         }
       }
 
@@ -202,7 +194,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
   }.toString()
 }
 
-private fun createTag(body: HtmlBuilder.() -> Unit, tag: HtmlChunk.Element): HtmlChunk.Element {
+private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
   val tagBuilder = HtmlBuilder()
   tagBuilder.body()
   return tagBuilder.toFragment().wrapWith(tag)
