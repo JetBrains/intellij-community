@@ -3,6 +3,7 @@ package com.intellij.java.ift
 
 import com.intellij.java.ift.lesson.assistance.JavaEditorCodingAssistanceLesson
 import com.intellij.java.ift.lesson.basic.JavaContextActionsLesson
+import com.intellij.java.ift.lesson.basic.JavaSelectLesson
 import com.intellij.java.ift.lesson.basic.JavaSurroundAndUnwrapLesson
 import com.intellij.java.ift.lesson.completion.*
 import com.intellij.java.ift.lesson.navigation.*
@@ -43,7 +44,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    moduleType = LessonType.SCRATCH) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
       listOf(
-        SelectLesson(it, lang, ls("01.Select.java.sample")),
+        JavaSelectLesson(it),
         SingleLineCommentLesson(it, lang, ls("02.Comment.java.sample")),
         DuplicateLesson(it, lang, ls("04.Duplicate.java.sample")),
         MoveLesson(it, lang, "run()", ls("05.Move.java.sample")),
