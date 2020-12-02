@@ -3,8 +3,12 @@ package com.intellij.ide.ui.experimental.toolbar
 
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 
 @State(name = "ToolbarSettingsService", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
 class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
@@ -20,10 +24,22 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
 
   private var toolbarState = ExperimentalToolbarStateWrapper()
 
+  private val disposable = Disposer.newDisposable()
+
+  inner class ToolbarRegistryListener: RegistryValueListener {
+    override fun afterValueChanged(value: RegistryValue) {
+      toolbarState.state =
+        getToolbarStateByVisibilityFlags(newToolbarEnabled, isToolbarVisible(), showNewToolbar,
+                                         isNavBarVisible())
+      updateSettingsState()
+    }
+  }
+
   init {
     if(newToolbarEnabled) {
       updateSettingsState()
     }
+    Registry.get("ide.new.navbar").addListener(ToolbarRegistryListener(), disposable)
   }
 
   override fun getState(): ExperimentalToolbarStateWrapper {
