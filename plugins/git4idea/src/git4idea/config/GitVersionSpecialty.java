@@ -283,8 +283,7 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return Registry.is("git.can.use.restore.command") &&
-             version.isLaterOrEqual(new GitVersion(2, 25, 1, 0)) &&
-             version.isOlderOrEqual(new GitVersion(2, 29, 999, 999)); // THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
+             version.isLaterOrEqual(new GitVersion(2, 25, 1, 0));
     }
   },
 
