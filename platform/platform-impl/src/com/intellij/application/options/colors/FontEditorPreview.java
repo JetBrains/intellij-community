@@ -39,7 +39,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import javax.swing.*;
 import java.util.function.Supplier;
 
 public class FontEditorPreview implements PreviewPanel{
@@ -118,7 +118,7 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   @Override
-  public Component getPanel() {
+  public JComponent getPanel() {
     return myEditor.getComponent();
   }
 

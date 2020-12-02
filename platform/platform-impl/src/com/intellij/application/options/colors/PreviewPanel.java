@@ -18,7 +18,7 @@ package com.intellij.application.options.colors;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import javax.swing.*;
 
 public interface PreviewPanel {
   void blinkSelectedHighlightType(Object selected);
@@ -27,7 +27,7 @@ public interface PreviewPanel {
 
   class Empty implements PreviewPanel{
     @Override
-    public Component getPanel() {
+    public JComponent getPanel() {
       return null;
     }
 
@@ -51,7 +51,7 @@ public interface PreviewPanel {
     }
   }
 
-  Component getPanel();
+  JComponent getPanel();
 
   void updateView();
 

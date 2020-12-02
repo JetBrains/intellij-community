@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.ui.JBSplitter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,12 +36,14 @@ public class AppEditorFontPanel implements Disposable {
   @NotNull private final JPanel myTopPanel;
 
   public AppEditorFontPanel() {
-    myTopPanel = new JPanel(new BorderLayout(0,10));
+    myTopPanel = new JPanel(new BorderLayout());
+    JBSplitter splitter = new JBSplitter(false, 0.3f);
     myPreviewScheme = createPreviewScheme();
     myOptionsPanel = new AppEditorFontOptionsPanel(myPreviewScheme);
-    myTopPanel.add(myOptionsPanel, BorderLayout.NORTH);
     myPreview = new FontEditorPreview(()-> myPreviewScheme, true);
-    myTopPanel.add(myPreview.getPanel(), BorderLayout.CENTER);
+    splitter.setFirstComponent(myOptionsPanel);
+    splitter.setSecondComponent(myPreview.getPanel());
+    myTopPanel.add(splitter, BorderLayout.CENTER);
     myOptionsPanel.addListener(
       new ColorAndFontSettingsListener.Abstract() {
         @Override

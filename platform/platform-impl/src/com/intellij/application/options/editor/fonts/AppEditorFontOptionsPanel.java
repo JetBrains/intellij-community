@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.HoverHyperlinkLabel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -65,13 +66,16 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     c.anchor = GridBagConstraints.WEST;
     myWarningPanel = createMessagePanel();
     topPanel.add(myWarningPanel, c);
-    c.gridy = 1;
+    c.gridy ++;
     topPanel.add(createFontSettingsPanel(), c);
     c.insets = JBUI.insets(5, 0, 0, 0);
     c.fill = GridBagConstraints.HORIZONTAL;
-    c.gridy = 2;
+    c.gridy ++;
+    c.insets = JBUI.insets(ADDITIONAL_VERTICAL_GAP, 0);
+    topPanel.add(createTypographySettingsPanel(), c);
+    c.gridy ++;
     topPanel.add(new JSeparator(), c);
-    c.gridy = 3;
+    c.gridy ++;
     c.fill = GridBagConstraints.NONE;
     myRestoreButton = new JButton(ApplicationBundle.message("settings.editor.font.restored.defaults"));
     myRestoreButton.addActionListener(new ActionListener() {
@@ -89,6 +93,17 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     });
     topPanel.add(myRestoreButton, c);
     return topPanel;
+  }
+
+  private JPanel createTypographySettingsPanel() {
+    JPanel typographyPanel = new JPanel(new GridBagLayout());
+    typographyPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.editor.font.typography.settings")));
+    GridBagConstraints c = new GridBagConstraints();
+    c.insets = JBUI.insets(BASE_INSET, 0);
+    c.gridx = 0;
+    c.gridy = 0;
+    createSecondaryFontComboAndLabel(typographyPanel, c);
+    return typographyPanel;
   }
 
   private void restoreDefaults() {
