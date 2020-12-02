@@ -40,10 +40,9 @@ class QodanaRunner(val application: InspectionApplication,
       return
     }
 
-    application.configureProject(projectPath, project, scope)
 
     val outPath = Paths.get(application.myOutPath)
-    converter.projectData(project, outPath.resolve("projectStructure"))
+
 
     application.writeDescriptions(baseProfile, converter)
     writeProfile(baseProfile, outPath, project)
@@ -95,9 +94,24 @@ class QodanaRunner(val application: InspectionApplication,
       }
     }
     context.problemConsumer = consumer
+    var afterScope: AnalysisScope?  = null
+    if (application.myAnalyzeChanges) {
+
+      val beforeContext = application.createGlobalInspectionContext(project)
+      afterScope = application.runAnalysisOnCodeWithoutChanges(
+        project,
+        beforeContext,
+        Runnable {
+          val outPathBefore = outputPath.resolve("before")
+          outPathBefore.toFile().mkdir()
+          launchInspections(scope, outPathBefore, beforeContext, progressIndicator)
+        })
+
+      application.setupSecondAnalysisHandler(project, context)
+    }
 
     try {
-      val syncResults = launchInspections(outputPath, context, progressIndicator)
+      val syncResults = launchInspections(afterScope ?: scope, outputPath, context, progressIndicator)
       converter.convert(outputPath.toString(), outputPath.toString(), emptyMap(), syncResults.map { it.toFile() })
     }
     finally {
@@ -108,16 +122,21 @@ class QodanaRunner(val application: InspectionApplication,
   }
 
 
-  private fun launchInspections(resultsPath: Path, context: GlobalInspectionContextEx, progressIndicator: ProgressIndicator): List<Path> {
+  private fun launchInspections(launchScope: AnalysisScope, resultsPath: Path, context: GlobalInspectionContextEx, progressIndicator: ProgressIndicator): List<Path> {
     if (!GlobalInspectionContextUtil.canRunInspections(project, false) {}) {
       application.gracefulExit()
       return emptyList()
     }
+    application.configureProject(projectPath, project, launchScope)
+    val converter = ReportConverterUtil.getReportConverter(application.myOutputFormat)
+
+    converter?.projectData(project, resultsPath.resolve("projectStructure"))
+
     val inspectionsResults = mutableListOf<Path>()
 
     val inspectionProcess = {
       try {
-        context.launchInspectionsOffline(scope, resultsPath, application.myRunGlobalToolsOnly, inspectionsResults)
+        context.launchInspectionsOffline(launchScope, resultsPath, application.myRunGlobalToolsOnly, inspectionsResults)
       }
       catch (e: ProcessCanceledException) {
         LOG.warn("Inspection run was cancelled")
