@@ -21,19 +21,27 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
+import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider;
 
-import java.util.Arrays;
+import java.util.List;
 
 public class AddManagedFilesAction extends MavenAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
-    if(manager == null) return;
-    FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, false, false, false, false, true) {
+    Project project = MavenActionUtil.getProject(e.getDataContext());
+    if (project == null) {
+      return;
+    }
+    MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
+    if (manager == null) {
+      return;
+    }
+    FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, true, false, false, false, true) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
         return super.isFileSelectable(file) && !manager.isManagedFile(file);
@@ -46,12 +54,18 @@ public class AddManagedFilesAction extends MavenAction {
       }
     };
 
-    Project project = MavenActionUtil.getProject(e.getDataContext());
     VirtualFile fileToSelect = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
     VirtualFile[] files = FileChooser.chooseFiles(singlePomSelection, project, fileToSelect);
-    if (files.length == 0) return;
-
-    manager.addManagedFilesOrUnignore(Arrays.asList(files));
+    if (files.length == 1) {
+      MavenOpenProjectProvider openProjectProvider = new MavenOpenProjectProvider();
+      openProjectProvider.linkToExistingProject(files[0], project);
+    }
+    else if (files.length > 1) {
+      List<VirtualFile> mavenFiles = ContainerUtil.filter(files, it -> !it.isDirectory());
+      if (!mavenFiles.isEmpty()) {
+        manager.addManagedFilesOrUnignore(mavenFiles);
+      }
+    }
   }
 }
