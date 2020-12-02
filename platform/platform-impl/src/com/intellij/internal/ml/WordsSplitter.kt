@@ -2,7 +2,9 @@
 package com.intellij.internal.ml
 
 import com.intellij.util.text.NameUtilCore
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class WordsSplitter private constructor(private val skipLess: Int,
                                         private val ignoreStopWords: Boolean,
                                         private val stopWords: Set<String>,
@@ -10,9 +12,9 @@ class WordsSplitter private constructor(private val skipLess: Int,
                                         private val toLowerCase: Boolean) {
 
   fun split(name: String): List<String> = wordsFromName(name)
-    .filter(::filterWord)
+    .filter(::shouldInclude)
     .take(maxWords)
-    .map(::processWord)
+    .map(::normalize)
     .toList()
 
   private fun wordsFromName(name: String) = sequence {
@@ -24,9 +26,9 @@ class WordsSplitter private constructor(private val skipLess: Int,
     }
   }
 
-  private fun processWord(word: String): String = if (toLowerCase) word.toLowerCase() else word
+  private fun normalize(word: String): String = if (toLowerCase) word.toLowerCase() else word
 
-  private fun filterWord(word: String): Boolean =
+  private fun shouldInclude(word: String): Boolean =
     word.isNotBlank() &&
     word.all { it.isLetter() } &&
     word.length >= skipLess &&
@@ -38,7 +40,11 @@ class WordsSplitter private constructor(private val skipLess: Int,
       private const val DEFAULT_MAX_WORDS_COUNT = 7
       private const val DEFAULT_MIN_WORD_LENGTH = 3
 
-      fun default(): WordsSplitter = WordsSplitter(DEFAULT_MIN_WORD_LENGTH, true, DEFAULT_STOP_WORDS, DEFAULT_MAX_WORDS_COUNT, true)
+      fun identifiers(): Builder = Builder()
+        .skipShort(DEFAULT_MIN_WORD_LENGTH)
+        .ignoreStopWords(DEFAULT_STOP_WORDS)
+        .maxWords(DEFAULT_MAX_WORDS_COUNT)
+        .toLowerCase()
     }
 
     private var toLowerCase: Boolean = false
@@ -60,7 +66,7 @@ class WordsSplitter private constructor(private val skipLess: Int,
       this.skipLess = skipLess
     }
 
-    fun maxWords(count: Int): Builder = apply {
+    fun maxWords(count: Int = DEFAULT_MAX_WORDS_COUNT): Builder = apply {
       maxWords = count
     }
 
