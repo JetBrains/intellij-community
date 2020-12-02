@@ -244,11 +244,13 @@ open class MarketplaceRequests {
   }
 
   @Throws(IOException::class)
-  fun <T> readOrUpdateFile(file: Path?,
-                           url: String,
-                           indicator: ProgressIndicator?,
-                           @Nls indicatorMessage: String,
-                           parser: (Reader) -> T): T {
+  fun <T> readOrUpdateFile(
+    file: Path?,
+    url: String,
+    indicator: ProgressIndicator?,
+    @Nls indicatorMessage: String,
+    parser: (Reader) -> T
+  ): T {
     val eTag = if (file == null) null else loadEtagForFile(file)
     return HttpRequests
       .request(url)
@@ -257,7 +259,7 @@ open class MarketplaceRequests {
           connection.setRequestProperty("If-None-Match", eTag)
         }
       }
-      .tuner { connection ->  addAuthHeadersIfTheyExist(connection, url) }
+      .tuner { connection -> addAuthHeadersIfTheyExist(connection, url) }
       .productNameAsUserAgent()
       .connect { request ->
         try {
