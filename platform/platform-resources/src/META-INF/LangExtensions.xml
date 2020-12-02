@@ -1342,9 +1342,6 @@
 
     <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
-    <experimentalFeature id="problems.view.project.errors.enabled" percentOfUsers="100">
-      <description>Allows to use the Project Errors tab in the Problems View toolwindow.</description>
-    </experimentalFeature>
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
     <notificationGroup id="Automatic Module Unloading" displayType="BALLOON"/>
     <notificationGroup id="Execution" displayType="NONE"/>
