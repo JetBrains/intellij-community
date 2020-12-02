@@ -27,6 +27,7 @@ public interface BuildModelNotification {
     INCOMPLETE_PARSE, // Some elements in a build file related to this GradleFileModel couldn't be parsed.
     PROPERTY_PLACEMENT, // There was an issue with the placement of properties.
     INVALID_EXPRESSION, // When an attempt to create an expression failed.
+    CIRCULAR_APPLICATION, // A cycle in `apply from:` directives
   }
 
   boolean isCorrectionAvailable();

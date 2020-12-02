@@ -17,6 +17,7 @@ package com.android.tools.idea.gradle.dsl.parser.dependencies;
 
 import com.android.tools.idea.gradle.dsl.api.dependencies.ArtifactDependencySpec;
 import com.android.tools.idea.gradle.dsl.api.ext.ReferenceTo;
+import com.android.tools.idea.gradle.dsl.model.dependencies.ArtifactDependencySpecImpl;
 import com.android.tools.idea.gradle.dsl.model.ext.PropertyUtil;
 import com.android.tools.idea.gradle.dsl.parser.GradleReferenceInjection;
 import com.android.tools.idea.gradle.dsl.parser.elements.*;
@@ -43,7 +44,7 @@ import static com.intellij.openapi.util.text.StringUtil.unquoteString;
  */
 public class FakeArtifactElement extends FakeElement {
   @NotNull private final Function<ArtifactDependencySpec, String> myGetter;
-  @NotNull private final BiConsumer<ArtifactDependencySpec, String> mySetter;
+  @NotNull private final BiConsumer<ArtifactDependencySpecImpl, String> mySetter;
 
   @NotNull private static final Pattern WRAPPED_VARIABLE_FORM = Pattern.compile("\\$\\{(.*)}");
   @NotNull private static final Pattern UNWRAPPED_VARIABLE_FORM = Pattern.compile("\\$(([a-zA-Z]\\w*)(\\.([a-zA-Z]\\w+))*)");
@@ -56,7 +57,7 @@ public class FakeArtifactElement extends FakeElement {
                              @NotNull GradleNameElement name,
                              @NotNull GradleDslSimpleExpression originExpression,
                              @NotNull Function<ArtifactDependencySpec, String> getFunc,
-                             @NotNull BiConsumer<ArtifactDependencySpec, String> setFunc,
+                             @NotNull BiConsumer<ArtifactDependencySpecImpl, String> setFunc,
                              boolean canDelete) {
     super(parent, name, originExpression, canDelete);
     myGetter = getFunc;
@@ -85,7 +86,7 @@ public class FakeArtifactElement extends FakeElement {
   protected void consumeValue(@Nullable Object value) {
     assert myCanDelete || value != null;
     GradleDslSimpleExpression resolved = PropertyUtil.resolveElement(myRealExpression);
-    ArtifactDependencySpec spec = getSpec(resolved);
+    ArtifactDependencySpecImpl spec = getSpec(resolved);
     if (spec == null) {
       throw new IllegalArgumentException("Could not create ArtifactDependencySpec from: " + value);
     }
@@ -150,7 +151,7 @@ public class FakeArtifactElement extends FakeElement {
     }
 
     GradleDslSimpleExpression resolved = PropertyUtil.resolveElement(myRealExpression);
-    GradleDslElement element = resolved.resolveReference(referenceText, true);
+    GradleDslElement element = resolved.resolveExternalSyntaxReference(referenceText, true);
     return ImmutableList.of(new GradleReferenceInjection(this, element, realExpression /* Used as a placeholders */, referenceText));
   }
 
@@ -204,15 +205,15 @@ public class FakeArtifactElement extends FakeElement {
   }
 
   @Nullable
-  private static ArtifactDependencySpec getSpec(@NotNull GradleDslSimpleExpression element) {
+  private static ArtifactDependencySpecImpl getSpec(@NotNull GradleDslSimpleExpression element) {
     return getSpec(element, true);
   }
 
   @Nullable
-  private static ArtifactDependencySpec getSpec(@NotNull GradleDslSimpleExpression element, boolean useResolvedValue) {
+  private static ArtifactDependencySpecImpl getSpec(@NotNull GradleDslSimpleExpression element, boolean useResolvedValue) {
     Object val = (useResolvedValue) ? element.getValue() : element.getUnresolvedValue();
     assert val instanceof String;
     String stringValue = (String)val;
-    return ArtifactDependencySpec.create(stringValue);
+    return ArtifactDependencySpecImpl.create(stringValue);
   }
 }

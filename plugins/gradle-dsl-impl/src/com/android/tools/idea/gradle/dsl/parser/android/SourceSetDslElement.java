@@ -20,7 +20,6 @@ import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exa
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VWO;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
@@ -31,8 +30,8 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslNamedDomainElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
 import kotlin.Pair;
@@ -50,18 +49,20 @@ public class SourceSetDslElement extends GradleDslBlockElement implements Gradle
     {"jni", SourceDirectoryDslElement.JNI},
     {"jniLibs", SourceDirectoryDslElement.JNI_LIBS},
     {"manifest", SourceFileDslElement.MANIFEST},
+    {"mlModels", SourceDirectoryDslElement.ML_MODELS},
     {"renderscript", SourceDirectoryDslElement.RENDERSCRIPT},
     {"res", SourceDirectoryDslElement.RES},
-    {"resources", SourceDirectoryDslElement.RESOURCES}
+    {"resources", SourceDirectoryDslElement.RESOURCES},
+    {"shaders", SourceDirectoryDslElement.SHADERS}
   }).collect(toImmutableMap(data -> (String) data[0], data -> (PropertiesElementDescription) data[1]));
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.of(new Object[][]{
     {"setRoot", exactly(1), ROOT, SET}
   }).collect(toModelMap());
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> groovyToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> groovyToModelNameMap = Stream.of(new Object[][]{
     {"root", property, ROOT, VWO},
     {"setRoot", exactly(1), ROOT, SET},
     {"root", exactly(1), ROOT, SET}
@@ -75,7 +76,7 @@ public class SourceSetDslElement extends GradleDslBlockElement implements Gradle
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }

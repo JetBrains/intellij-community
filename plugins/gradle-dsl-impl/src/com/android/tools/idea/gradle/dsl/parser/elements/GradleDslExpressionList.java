@@ -17,6 +17,7 @@ package com.android.tools.idea.gradle.dsl.parser.elements;
 
 import com.android.tools.idea.gradle.dsl.parser.GradleReferenceInjection;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
@@ -39,18 +40,10 @@ public final class GradleDslExpressionList extends GradlePropertiesDslElement im
   // like "prop = ['value1', 'value2']" but can also be used for thing such as lint options "check 'check-id-1', 'check-id-2'"
   private boolean myIsLiteralList;
 
-  // Does this GradleDslExpressionList represent a model property of type Set?
-  private boolean isSet;
-
   public GradleDslExpressionList(@Nullable GradleDslElement parent, @NotNull GradleNameElement name, boolean isLiteralList) {
     super(parent, null, name);
     myAppendToArgumentListWithOneElement = false;
     myIsLiteralList = isLiteralList;
-  }
-
-  public GradleDslExpressionList(@Nullable GradleDslElement parent, @NotNull GradleNameElement name, boolean isLiteralList, boolean isSet) {
-    this(parent, name, isLiteralList);
-    this.isSet = isSet;
   }
 
   public GradleDslExpressionList(@NotNull GradleDslElement parent,
@@ -60,15 +53,6 @@ public final class GradleDslExpressionList extends GradlePropertiesDslElement im
     super(parent, psiElement, name);
     myAppendToArgumentListWithOneElement = false;
     myIsLiteralList = isLiteralList;
-  }
-
-  public GradleDslExpressionList(@NotNull GradleDslElement parent,
-                                 @NotNull PsiElement psiElement,
-                                 boolean isLiteralList,
-                                 boolean isSet,
-                                 @NotNull GradleNameElement name) {
-    this(parent, psiElement, isLiteralList, name);
-    this.isSet = isSet;
   }
 
   public GradleDslExpressionList(@NotNull GradleDslElement parent,
@@ -116,34 +100,6 @@ public final class GradleDslExpressionList extends GradlePropertiesDslElement im
     return -1;
   }
 
-  void addNewLiteral(@NotNull Object value) {
-    GradleDslLiteral literal = new GradleDslLiteral(this, myName);
-    literal.setValue(value);
-    addNewExpression(literal);
-  }
-
-  /**
-   * This method does not support removing maps or lists by value. Use removeElement for that.
-   */
-  void removeExpression(@NotNull Object value) {
-    for (GradleDslSimpleExpression expression : getSimpleExpressions()) {
-      if (value.equals(expression.getValue())) {
-        super.removeProperty(expression);
-        updateDependenciesOnRemoveElement(expression);
-        return;
-      }
-    }
-  }
-
-  void replaceExpression(@NotNull Object oldValue, @NotNull Object newValue) {
-    for (GradleDslSimpleExpression expression : getSimpleExpressions()) {
-      if (oldValue.equals(expression.getValue())) {
-        expression.setValue(newValue);
-        return;
-      }
-    }
-  }
-
   public void replaceExpression(@NotNull GradleDslExpression oldExpression, @NotNull GradleDslExpression newExpression) {
     super.replaceElement(oldExpression, newExpression);
   }
@@ -166,10 +122,6 @@ public final class GradleDslExpressionList extends GradlePropertiesDslElement im
 
   public boolean isLiteralList() {
     return myIsLiteralList;
-  }
-
-  public boolean isSet() {
-    return isSet;
   }
 
   public boolean isAppendToArgumentListWithOneElement() {
@@ -208,7 +160,7 @@ public final class GradleDslExpressionList extends GradlePropertiesDslElement im
   @Override
   @NotNull
   public List<GradleReferenceInjection> getResolvedVariables() {
-    return getDependencies().stream().filter(e -> e.isResolved()).collect(Collectors.toList());
+    return ContainerUtil.filter(getDependencies(), e -> e.isResolved());
   }
 
   // The following methods ensure that only GradleDslExpressions can be added to this GradlePropertiesDslElement.

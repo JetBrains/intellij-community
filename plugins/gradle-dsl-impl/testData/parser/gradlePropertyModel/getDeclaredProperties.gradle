@@ -2,12 +2,12 @@ android {
   def outerVar = "Spooky"
   buildTypes {
     debug {
-      def var = sneaky
+      def innerVar = sneaky
       minifyEnabled true
     }
   }
 }
 ext {
   prop1 = "property"
-  def var = "value"
 }
+def topVar = "value"

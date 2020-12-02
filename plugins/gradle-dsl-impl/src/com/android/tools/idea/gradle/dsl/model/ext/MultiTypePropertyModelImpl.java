@@ -46,8 +46,8 @@ public abstract class MultiTypePropertyModelImpl<T extends Enum<T>> extends Grad
    * @param defaultType the type to default to if no transforms in trasformMap are active.
    * @param element the element that the model should represent.
    * @param transformMap a map of types to the {@link PropertyTransform}s that should be used for them.
-   *                     The order of this map is the order in which {@link PropertyTransform#test(GradleDslElement)} will be called
-   *                     to work out the initial type {@link T}.
+   *                     The order of this map is the order in which {@link PropertyTransform#test(GradleDslElement, GradleDslElement)}
+   *                     will be called to work out the initial type {@link T}.
    */
   public MultiTypePropertyModelImpl(@NotNull T defaultType,
                                     @NotNull GradleDslElement element,
@@ -65,8 +65,8 @@ public abstract class MultiTypePropertyModelImpl<T extends Enum<T>> extends Grad
    * @param propertyType the {@link PropertyType} that any new elements should have.
    * @param name         the name of the property represented by this model.
    * @param transformMap a map of types to the {@link PropertyTransform}s that should be used for them.
-   *                     The order of this map is the order in which {@link PropertyTransform#test(GradleDslElement)} will be called
-   *                     to work out the initial type {@link T
+   *                     The order of this map is the order in which {@link PropertyTransform#test(GradleDslElement, GradleDslElement)}
+   *                     will be called to work out the initial type {@link T}.
    */
   public MultiTypePropertyModelImpl(@NotNull T defaultType,
                                     @NotNull GradleDslElement holder,
@@ -87,11 +87,21 @@ public abstract class MultiTypePropertyModelImpl<T extends Enum<T>> extends Grad
     }
 
     for (Map.Entry<T, PropertyTransform> e : myTransforms.entrySet()) {
-      if (e.getValue().test(myElement)) {
+      if (e.getValue().test(myElement, myPropertyHolder)) {
         myType = e.getKey();
         break;
       }
     }
+  }
+
+  @Override
+  @Nullable
+  public GradleDslElement getElement() {
+    PropertyTransform transform = getTransform();
+    if (transform.test(myElement, myPropertyHolder)) {
+      return transform.transform(myElement);
+    }
+    return null;
   }
 
   @Override

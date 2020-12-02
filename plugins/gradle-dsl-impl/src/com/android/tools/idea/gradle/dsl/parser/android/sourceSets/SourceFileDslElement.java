@@ -21,15 +21,13 @@ import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.pro
 import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAL;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VWO;
 
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
 import kotlin.Pair;
@@ -40,20 +38,20 @@ public class SourceFileDslElement extends GradleDslBlockElement {
     new PropertiesElementDescription<>("manifest", SourceFileDslElement.class, SourceFileDslElement::new);
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.of(new Object[][]{
     {"srcFile", property, SRC_FILE, VAL},
     {"srcFile", exactly(1), SRC_FILE, SET}
   }).collect(toModelMap());
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> groovyToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> groovyToModelNameMap = Stream.of(new Object[][]{
     {"srcFile", property, SRC_FILE, VAL},
     {"srcFile", exactly(1), SRC_FILE, SET},
   }).collect(toModelMap());
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }

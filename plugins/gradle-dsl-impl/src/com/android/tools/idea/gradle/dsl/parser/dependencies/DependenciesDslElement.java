@@ -17,28 +17,27 @@ package com.android.tools.idea.gradle.dsl.parser.dependencies;
 
 import com.android.tools.idea.gradle.dsl.parser.elements.*;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Ordering;
 import org.jetbrains.annotations.NotNull;
 
-import static com.android.tools.idea.gradle.dsl.parser.dependencies.GradleDependenciesComparatorKt.CONFIGURATION_ORDERING;
+import java.util.*;
 
 public class DependenciesDslElement extends GradleDslBlockElement {
   public static final PropertiesElementDescription<DependenciesDslElement> DEPENDENCIES =
     new PropertiesElementDescription<>("dependencies", DependenciesDslElement.class, DependenciesDslElement::new);
 
-  // TODO(xof): I wonder if there's a way of introspecting this list for any given Gradle and AGP version?
-  //  (I made this list by looking in ~/.gradle/caches/6.1-milestone-2/kotlin-dsl-accessors/<>/cache/org/gradle/kotlin/dsl and running
-  //    for file in *ConfigurationAccessors.kt; do
-  //      printf \"%s%s\", $(echo ${file:0:1} | tr A-Z a-z) $(echo ${file:1} | sed s'/ConfigurationAccessors.kt//');
-  //      echo;
-  //    done
-  //  which is not my finest hour)
   public static final Set<String> KTS_KNOWN_CONFIGURATIONS = new HashSet<>(
     Arrays.asList(
+      "classpath", // extension function installed by ScriptHandlerScope
+
+      // TODO(xof): I wonder if there's a way of introspecting this list for any given Gradle and AGP version?
+      //  (I made this list by looking in ~/.gradle/caches/6.1-milestone-2/kotlin-dsl-accessors/<>/cache/org/gradle/kotlin/dsl and running
+      //    for file in *ConfigurationAccessors.kt; do
+      //      printf \"%s%s\", $(echo ${file:0:1} | tr A-Z a-z) $(echo ${file:1} | sed s'/ConfigurationAccessors.kt//');
+      //      echo;
+      //    done
+      //  which is not my finest hour)
       "androidApis",
       "androidTestAnnotationProcessor",
       "androidTestApi",
@@ -122,6 +121,26 @@ public class DependenciesDslElement extends GradleDslBlockElement {
     )
   );
 
+
+
+private static final List<String> KNOWN_CONFIGURATIONS_IN_ORDER = ImmutableList.of(
+    "feature", "api", "implementation", "compile",
+    "testApi", "testImplementation", "testCompile",
+    "androidTestApi", "androidTestImplementation", "androidTestCompile", "androidTestUtil"
+  );
+
+
+  /**
+   * Defined an ordering on gradle configuration names.
+   */
+  static final Ordering<String> CONFIGURATION_ORDERING =
+    Ordering
+      .natural()
+      .onResultOf((String input) -> {
+        int result = KNOWN_CONFIGURATIONS_IN_ORDER.indexOf(input);
+        return result != -1 ? result : KNOWN_CONFIGURATIONS_IN_ORDER.size();
+      })
+      .compound(Ordering.natural());
 
 
   public static final Comparator comparator = Comparator.comparing(GradleDslElement::getName, CONFIGURATION_ORDERING);

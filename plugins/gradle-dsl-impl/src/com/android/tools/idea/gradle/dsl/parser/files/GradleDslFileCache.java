@@ -15,11 +15,9 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.files;
 
-import static com.android.tools.idea.gradle.dsl.GradleUtil.getBaseDirPath;
-import static com.android.tools.idea.gradle.dsl.GradleUtil.getGradleSettingsFile;
+import static com.android.tools.idea.gradle.dsl.model.notifications.NotificationTypeReference.CIRCULAR_APPLICATION;
 
-import com.android.tools.idea.gradle.dsl.model.GradleBuildModelImpl;
-import com.android.tools.idea.gradle.dsl.parser.BuildModelContext;
+import com.android.tools.idea.gradle.dsl.model.BuildModelContext;
 import com.google.common.base.Charsets;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -60,12 +58,22 @@ public class GradleDslFileCache {
                                               @NotNull String name,
                                               @NotNull BuildModelContext context,
                                               boolean isApplied) {
+    // TODO(xof): investigate whether (as I suspect) this cache will be wrong for an applied file included from various places in the build
     GradleDslFile dslFile = myParsedBuildFiles.get(file.getUrl());
     if (dslFile == null) {
-      myParsingStack.push(file);
-      dslFile = GradleBuildModelImpl.parseBuildFile(file, myProject, name, context, isApplied);
-      myParsingStack.pop();
-      myParsedBuildFiles.put(file.getUrl(), dslFile);
+      if (!myParsingStack.contains(file)) {
+        myParsingStack.push(file);
+        dslFile = context.parseBuildFile(myProject, file, name, isApplied);
+        myParsingStack.pop();
+        myParsedBuildFiles.put(file.getUrl(), dslFile);
+      }
+      else {
+        // create a dummy GradleBuildFile.  (It'll get overwritten in the cache anyway when popping from the stack)
+        dslFile = new GradleBuildFile(file, myProject, name, context);
+        // produce a notification.  Arguably notifying on a dslFile which won't end up in the cache is dubious, but we don't actually have
+        // anywhere else at this point.
+        dslFile.notification(CIRCULAR_APPLICATION);
+      }
     }
     else if (!(dslFile instanceof GradleBuildFile)) {
       throw new IllegalStateException("Found wrong type for build file in cache!");
@@ -84,20 +92,6 @@ public class GradleDslFileCache {
   @Nullable
   public VirtualFile getCurrentParsingRoot() {
     return myParsingStack.isEmpty() ? null : myParsingStack.getLast();
-  }
-
-  @Nullable
-  public GradleSettingsFile getSettingsFile(@NotNull Project project) {
-    VirtualFile file = getGradleSettingsFile(getBaseDirPath(project));
-    if (file == null) {
-      return null;
-    }
-
-    GradleDslFile dslFile = myParsedBuildFiles.get(file.getUrl());
-    if (dslFile != null && !(dslFile instanceof GradleSettingsFile)) {
-      throw new IllegalStateException("Found wrong type for settings file in cache!");
-    }
-    return (GradleSettingsFile)dslFile;
   }
 
   @NotNull
@@ -126,7 +120,7 @@ public class GradleDslFileCache {
         myParsedBuildFiles.put(file.getUrl(), dslFile);
       }
       catch (IOException e) {
-        LOG.warn("Failed to process properties file " + file.getPath(), e);
+        Logger.getInstance(GradleDslFileCache.class).warn("Failed to process properties file " + file.getPath(), e);
         return null;
       }
     }

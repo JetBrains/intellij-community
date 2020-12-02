@@ -20,12 +20,12 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpression;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslMethodCall;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
-import java.util.HashSet;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel.ValueType;
@@ -62,7 +62,7 @@ public class SingleArgumentMethodTransform extends PropertyTransform {
   }
 
   @Override
-  public boolean test(@Nullable GradleDslElement e) {
+  public boolean test(@Nullable GradleDslElement e, @NotNull GradleDslElement holder) {
     // We can deal with a null element, we will just create one.
     if (e == null) {
       return true;

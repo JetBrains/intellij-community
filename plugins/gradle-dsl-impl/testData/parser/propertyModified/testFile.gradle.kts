@@ -1,7 +1,7 @@
 android {
   defaultConfig {
     proguardFiles("proguard-android-1.txt", "proguard-rules-1.txt")
-    testInstrumentationRunnerArguments = mapOf("key1" to "value1", "key2" to "value2")
+    testInstrumentationRunnerArguments = mutableMapOf("key1" to "value1", "key2" to "value2")
   }
   signingConfigs {
     create("myConfig") {

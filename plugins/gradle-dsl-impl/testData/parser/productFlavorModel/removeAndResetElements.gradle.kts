@@ -3,7 +3,7 @@ android {
     setApplicationId("com.example.myapplication")
     consumerProguardFiles("proguard-android.txt", "proguard-rules.pro")
     setDimension("abcd")
-    manifestPlaceholders = mapOf("activityLabel1" to "defaultName1", "activityLabel2" to "defaultName2")
+    manifestPlaceholders = mutableMapOf("activityLabel1" to "defaultName1", "activityLabel2" to "defaultName2")
     maxSdkVersion(23)
     minSdkVersion(15)
     setMultiDexEnabled(true)

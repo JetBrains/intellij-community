@@ -18,6 +18,7 @@ package com.android.tools.idea.gradle.dsl.model.repositories;
 import static com.android.tools.idea.gradle.dsl.parser.repositories.MavenCredentialsDslElement.CREDENTIALS;
 
 import com.android.tools.idea.gradle.dsl.api.ext.ResolvedPropertyModel;
+import com.android.tools.idea.gradle.dsl.api.repositories.MavenCredentialsModel;
 import com.android.tools.idea.gradle.dsl.api.repositories.MavenRepositoryModel;
 import com.android.tools.idea.gradle.dsl.model.ext.GradlePropertyModelBuilder;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
@@ -25,7 +26,6 @@ import com.android.tools.idea.gradle.dsl.parser.repositories.MavenCredentialsDsl
 import com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a repository defined with maven {}.
@@ -33,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 public class MavenRepositoryModelImpl extends UrlBasedRepositoryModelImpl implements MavenRepositoryModel {
   @NotNull
   private GradlePropertiesDslElement myPropertiesDslElement;
-
-  @NonNls private static final String ARTIFACT_URLS = "artifactUrls";
 
   public MavenRepositoryModelImpl(@NotNull GradlePropertiesDslElement holder, @NotNull MavenRepositoryDslElement dslElement) {
     this(holder, dslElement, "maven", "https://repo1.maven.org/maven2/");
@@ -51,18 +49,13 @@ public class MavenRepositoryModelImpl extends UrlBasedRepositoryModelImpl implem
 
   @NotNull
   public ResolvedPropertyModel artifactUrls() {
-    return GradlePropertyModelBuilder.create(myPropertiesDslElement, ARTIFACT_URLS).asMethod(true).buildResolved();
-  }
-
-  @Nullable
-  public MavenCredentialsModel credentials() {
-    MavenCredentialsDslElement credentials = myPropertiesDslElement.getPropertyElement(CREDENTIALS);
-    return credentials != null ? new MavenCredentialsModel(credentials) : null;
+    return GradlePropertyModelBuilder.create(myPropertiesDslElement, ARTIFACT_URLS).buildResolved();
   }
 
   @NotNull
   @Override
-  public RepositoryType getType() {
-    return RepositoryType.MAVEN;
+  public MavenCredentialsModel credentials() {
+    MavenCredentialsDslElement credentials = myPropertiesDslElement.ensurePropertyElement(CREDENTIALS);
+    return new MavenCredentialsModelImpl(credentials);
   }
 }

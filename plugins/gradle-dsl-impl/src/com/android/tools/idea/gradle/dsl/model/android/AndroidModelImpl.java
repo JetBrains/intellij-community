@@ -38,6 +38,7 @@ import static com.android.tools.idea.gradle.dsl.parser.android.SourceSetsDslElem
 import static com.android.tools.idea.gradle.dsl.parser.android.SplitsDslElement.SPLITS;
 import static com.android.tools.idea.gradle.dsl.parser.android.TestOptionsDslElement.TEST_OPTIONS;
 import static com.android.tools.idea.gradle.dsl.parser.android.ViewBindingDslElement.VIEW_BINDING;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyType.MUTABLE_SET;
 
 import com.android.tools.idea.gradle.dsl.api.ExternalNativeBuildModel;
 import com.android.tools.idea.gradle.dsl.api.android.AaptOptionsModel;
@@ -86,6 +87,7 @@ import com.android.tools.idea.gradle.dsl.parser.android.SplitsDslElement;
 import com.android.tools.idea.gradle.dsl.parser.android.TestOptionsDslElement;
 import com.android.tools.idea.gradle.dsl.parser.android.ViewBindingDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import org.jetbrains.annotations.NonNls;
@@ -95,7 +97,7 @@ public final class AndroidModelImpl extends GradleDslBlockModel implements Andro
   @NonNls public static final String BUILD_TOOLS_VERSION = "mBuildToolsVersion";
   @NonNls public static final String COMPILE_SDK_VERSION = "mCompileSdkVersion";
   @NonNls public static final String DEFAULT_PUBLISH_CONFIG = "mDefaultPublishConfig";
-  @NonNls public static final String DYNAMIC_FEATURES = "mDynamicFeatures";
+  @NonNls public static final ModelPropertyDescription DYNAMIC_FEATURES = new ModelPropertyDescription("mDynamicFeatures", MUTABLE_SET);
   @NonNls public static final String FLAVOR_DIMENSIONS = "mFlavorDimensions";
   @NonNls public static final String GENERATE_PURE_SPLITS = "mGeneratePureSplits";
   @NonNls public static final String NDK_VERSION = "mNdkVersion";
@@ -206,9 +208,7 @@ public final class AndroidModelImpl extends GradleDslBlockModel implements Andro
   @Override
   @NotNull
   public ResolvedPropertyModel dynamicFeatures() {
-    // TODO(xof): if we tabulated the information, we could look up the set-like nature or otherwise of properties from myDslElement.
-    //  - or keep it in the property itself, by not having a bare string identifier.
-    return GradlePropertyModelBuilder.create(myDslElement, DYNAMIC_FEATURES).asSet(true).buildResolved();
+    return getModelForProperty(DYNAMIC_FEATURES);
   }
 
   @NotNull

@@ -19,6 +19,7 @@ import static com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel.LIST
 import static com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel.STRING_TYPE;
 import static com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel.ValueType.NONE;
 import static com.android.tools.idea.gradle.dsl.model.ext.PropertyUtil.FILE_TRANSFORM;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyType.MUTABLE_LIST;
 
 import com.android.tools.idea.gradle.dsl.api.android.FlavorTypeModel;
 import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel;
@@ -33,6 +34,7 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpressionList
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpressionMap;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslMethodCall;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.google.common.base.Function;
 import java.util.ArrayList;
 import java.util.List;
@@ -307,7 +309,7 @@ public abstract class FlavorTypeModelImpl extends GradleDslBlockModel implements
                                                                           @NotNull String name,
                                                                           @NotNull String value) {
     GradleNameElement nameElement = GradleNameElement.create(elementName);
-    // TODO(b/141842964): Groovy expects buildConfigField and resValue to be expressed with GradleDslExpressionList, while Kotlin expresses
+    // TODO(b/155853837): Groovy expects buildConfigField and resValue to be expressed with GradleDslExpressionList, while Kotlin expresses
     //  them with a GradleDslMethodCall.  This method of detecting which to produce is unsound given the possibility of multi-language build
     //  files, and should in any case be replaced by the two language backends producing a common representation.
     boolean forKotlin = myDslElement.getDslFile().isKotlin();

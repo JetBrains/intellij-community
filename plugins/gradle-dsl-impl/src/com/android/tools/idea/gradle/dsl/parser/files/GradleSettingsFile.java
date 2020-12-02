@@ -15,7 +15,7 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.files;
 
-import com.android.tools.idea.gradle.dsl.parser.BuildModelContext;
+import com.android.tools.idea.gradle.dsl.model.BuildModelContext;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
 import com.android.tools.idea.gradle.dsl.parser.include.IncludeDslElement;

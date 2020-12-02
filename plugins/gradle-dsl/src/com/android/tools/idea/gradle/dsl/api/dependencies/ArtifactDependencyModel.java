@@ -25,6 +25,9 @@ public interface ArtifactDependencyModel extends DependencyModel {
   String compactNotation();
 
   @NotNull
+  ArtifactDependencySpec getSpec();
+
+  @NotNull
   ResolvedPropertyModel name();
 
   @NotNull

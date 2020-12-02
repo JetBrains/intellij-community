@@ -17,6 +17,7 @@ package com.android.tools.idea.gradle.dsl.model.ext;
 
 import static com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel.ValueType.REFERENCE;
 import static com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement.convertNameToKey;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelSemanticsDescription.CREATE_WITH_VALUE;
 
 import com.android.tools.idea.gradle.dsl.model.ext.transforms.DefaultTransform;
 import com.android.tools.idea.gradle.dsl.model.ext.transforms.FileTransform;
@@ -32,6 +33,8 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSettableExpres
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSimpleExpression;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.intellij.psi.PsiElement;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +45,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class PropertyUtil {
+public class PropertyUtil {
   @NonNls public static final String FILE_METHOD_NAME = "file";
   @NonNls public static final String FILE_CONSTRUCTOR_NAME = "File";
 
@@ -50,8 +53,10 @@ public final class PropertyUtil {
   public static GradleDslSimpleExpression createOrReplaceBasicExpression(@NotNull GradleDslElement parent,
                                                                          @Nullable GradleDslElement oldElement,
                                                                          @NotNull Object value,
-                                                                         @NotNull GradleNameElement name) {
+                                                                         @NotNull GradleNameElement name,
+                                                                         @Nullable ModelPropertyDescription propertyDescription) {
     // Check if we can reuse the element.
+    ModelEffectDescription effect = null;
     if (oldElement instanceof GradleDslLiteral) {
       GradleDslSimpleExpression expression = (GradleDslSimpleExpression)oldElement;
       expression.setValue(value);
@@ -60,9 +65,14 @@ public final class PropertyUtil {
     else {
       if (oldElement != null) {
         name = oldElement.getNameElement();
+        effect = oldElement.getModelEffect();
+      } else if (propertyDescription != null) {
+        effect = new ModelEffectDescription(propertyDescription, CREATE_WITH_VALUE);
       }
 
-      return createBasicExpression(parent, value, name);
+      GradleDslSimpleExpression expression = createBasicExpression(parent, value, name);
+      expression.setModelEffect(effect);
+      return expression;
     }
   }
 
@@ -319,6 +329,11 @@ public final class PropertyUtil {
    * Requires READ_ACCESS.
    */
   private static boolean checkForModifiedName(@NotNull GradleDslElement originalElement, @NotNull GradleDslElement newElement) {
+    ModelEffectDescription oEffect = originalElement.getModelEffect();
+    ModelEffectDescription nEffect = newElement.getModelEffect();
+    if (oEffect != null && nEffect != null && Objects.equals(oEffect.property, nEffect.property)) {
+      return false;
+    }
     GradleNameElement oNameElement = originalElement.getNameElement();
     String oldName = oNameElement.getOriginalName();
     if (oldName == null) {

@@ -9,7 +9,7 @@ android {
 }
 android.buildTypes.getByName("xyz") {
   buildConfigField("cdef", "ghij", "klmn")
-  manifestPlaceholders = mapOf("activityLabel1" to "defaultName1", "activityLabel2" to "defaultName2")
+  manifestPlaceholders = mutableMapOf("activityLabel1" to "defaultName1", "activityLabel2" to "defaultName2")
   proguardFile("pro-3.txt")
   resValue("opqr", "stuv", "wxyz")
 }

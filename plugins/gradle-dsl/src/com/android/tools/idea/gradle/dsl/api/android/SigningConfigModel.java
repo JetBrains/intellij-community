@@ -30,7 +30,11 @@ public interface SigningConfigModel extends GradleDslModel {
    *
    * @param newName the new name
    */
-  void rename(@NotNull String newName);
+  default void rename(@NotNull String newName) {
+    rename(newName, false);
+  }
+
+  void rename(@NotNull String newName, boolean renameReferences);
 
   @NotNull
   ResolvedPropertyModel storeFile();

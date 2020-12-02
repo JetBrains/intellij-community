@@ -1,5 +1,5 @@
-def var = true
+def var1 = true
 
 ext {
-  prop = "Hello i am ${var}!"
+  prop = "Hello i am ${var1}!"
 }

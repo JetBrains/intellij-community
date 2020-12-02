@@ -22,19 +22,14 @@ import org.jetbrains.annotations.Nullable;
 public interface ArtifactDependencySpec {
   @Nullable
   static ArtifactDependencySpec create(@NotNull String notation) {
-    return GradleModelProvider.get().getArtifactDependencySpec(notation);
-  }
-
-  @NotNull
-  static ArtifactDependencySpec create(@NotNull ArtifactDependencyModel dependency) {
-    return GradleModelProvider.get().getArtifactDependencySpec(dependency);
+    return GradleModelProvider.getInstance().getArtifactDependencySpec(notation);
   }
 
   @NotNull
   static ArtifactDependencySpec create(@NotNull String name,
                                        @Nullable String group,
                                        @Nullable String version) {
-    return GradleModelProvider.get().getArtifactDependencySpec(name, group, version);
+    return GradleModelProvider.getInstance().getArtifactDependencySpec(name, group, version);
   }
 
   @NotNull
@@ -43,9 +38,8 @@ public interface ArtifactDependencySpec {
                                        @Nullable String version,
                                        @Nullable String classifier,
                                        @Nullable String extension) {
-    return GradleModelProvider.get().getArtifactDependencySpec(name, group, version, classifier, extension);
+    return GradleModelProvider.getInstance().getArtifactDependencySpec(name, group, version, classifier, extension);
   }
-
   boolean equalsIgnoreVersion(Object o);
 
   @NotNull
@@ -62,16 +56,6 @@ public interface ArtifactDependencySpec {
 
   @Nullable
   String getExtension();
-
-  void setName(@NotNull String name);
-
-  void setGroup(@Nullable String group);
-
-  void setVersion(@Nullable String version);
-
-  void setClassifier(@Nullable String classifer);
-
-  void setExtension(@Nullable String extension);
 
   @Override
   boolean equals(Object o);

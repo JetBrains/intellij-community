@@ -15,15 +15,35 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android;
 
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.APPLICATION_ID_SUFFIX;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.BUILD_CONFIG_FIELD;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.CONSUMER_PROGUARD_FILES;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.MANIFEST_PLACEHOLDERS;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.MATCHING_FALLBACKS;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.MULTI_DEX_ENABLED;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.MULTI_DEX_KEEP_FILE;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.MULTI_DEX_KEEP_PROGUARD;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.PROGUARD_FILES;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.RES_VALUE;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.SIGNING_CONFIG;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.USE_JACK;
+import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.VERSION_NAME_SUFFIX;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.atLeast;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.OTHER;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.model.android.FlavorTypeModelImpl.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAL;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR_BUT_DO_NOT_USE_FOR_WRITING_IN_KTS;
 
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.elements.*;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpressionMap;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
 import kotlin.Pair;
@@ -34,14 +54,33 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class AbstractFlavorTypeDslElement extends GradleDslBlockElement {
   @NotNull
-  public static final ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String, Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.of(new Object[][]{
     {"applicationIdSuffix", property, APPLICATION_ID_SUFFIX, VAR},
     {"setApplicationIdSuffix", exactly(1), APPLICATION_ID_SUFFIX, SET},
     {"buildConfigField", exactly(3), BUILD_CONFIG_FIELD, OTHER}, // ADD: add argument list as property to Dsl
     {"consumerProguardFiles", atLeast(0), CONSUMER_PROGUARD_FILES, OTHER}, // APPENDN: append each argument
     {"setConsumerProguardFiles", exactly(1), CONSUMER_PROGUARD_FILES, SET},
-    {"manifestPlaceholders", property, MANIFEST_PLACEHOLDERS, VAR},
-    {"matchingFallbacks", property, MATCHING_FALLBACKS, VAR},
+    // in AGP 4.0, the manifestPlaceholders property is defined as a Java Map<String, Object>.  It is legal to use
+    // assignment to set this property to e.g. mapOf("a" to "b"), but not to mutableMapOf("a" to "b") because the inferred type of the
+    // mutableMapOf expression is MutableMap<String,String>, which is not compatible with (Mutable)Map<String!, Any!> (imagine something
+    // later on adding an entry to the property with String key and Integer value).
+    //
+    // in AGP 4.1, the manifestPlaceholders property is defined as a Kotlin MutableMap<String,Any>.  It would no longer be legal to assign
+    // a plain map; the assignment must be of a mutableMap.
+    //
+    // The DSL writer does not (as of January 2020) make use of information about which version of AGP is in use for this particular
+    // project.  It is therefore difficult to support writing out an assignment to manifestPlaceholders which will work in both cases:
+    // it would have to emit mutableMapOf<String,Any>(...).  This is perhaps desirable, but we don't have the general support
+    // for this: properties would need to be decorated with their types  TODO(b/148657110) so that we could get both manifestPlaceholders
+    //  and testInstrumentationRunnerArguments correct, and it is further complicated by setting the property through variables or extra
+    // properties.
+    //
+    // Instead, then, we will continue parsing assignments to manifestPlaceholders permissively, but when writing we will use the setter
+    // method rather than assignment.
+    {"manifestPlaceholders", property, MANIFEST_PLACEHOLDERS, VAR_BUT_DO_NOT_USE_FOR_WRITING_IN_KTS},
+    {"setManifestPlaceholders", exactly(1), MANIFEST_PLACEHOLDERS, OTHER}, // CLEAR + PUTALL, which is not quite the same as SET
+    {"matchingFallbacks", property, MATCHING_FALLBACKS, VAL},
+    {"setMatchingFallbacks", atLeast(1), MATCHING_FALLBACKS, OTHER}, // CLEAR + PUTALL, which is not quite the same as SET
     {"multiDexEnabled", property, MULTI_DEX_ENABLED, VAR},
     {"setMultiDexEnabled", exactly(1), MULTI_DEX_ENABLED, SET},
     {"multiDexKeepFile", property, MULTI_DEX_KEEP_FILE, VAR},
@@ -58,7 +97,7 @@ public abstract class AbstractFlavorTypeDslElement extends GradleDslBlockElement
     .collect(toModelMap());
 
   @NotNull
-  public static final ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>> groovyToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String, Integer>, ModelEffectDescription> groovyToModelNameMap = Stream.of(new Object[][]{
     {"applicationIdSuffix", property, APPLICATION_ID_SUFFIX, VAR},
     {"applicationIdSuffix", exactly(1), APPLICATION_ID_SUFFIX, SET},
     {"buildConfigField", exactly(3), BUILD_CONFIG_FIELD, OTHER},
@@ -85,7 +124,7 @@ public abstract class AbstractFlavorTypeDslElement extends GradleDslBlockElement
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
@@ -132,6 +171,14 @@ public abstract class AbstractFlavorTypeDslElement extends GradleDslBlockElement
       addToParsedExpressionList(CONSUMER_PROGUARD_FILES, element);
       return;
     }
+
+    if (property.equals("setMatchingFallbacks")) {
+      // Clear the property since setMatchingFallbacks overwrites these.
+      removeProperty(MATCHING_FALLBACKS);
+      addToParsedExpressionList(MATCHING_FALLBACKS, element);
+      return;
+    }
+
 
     super.addParsedElement(element);
   }

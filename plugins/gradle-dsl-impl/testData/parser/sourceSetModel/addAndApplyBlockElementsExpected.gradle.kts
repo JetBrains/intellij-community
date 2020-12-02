@@ -19,6 +19,9 @@ android {
       manifest {
         srcFile("manifestSource.xml")
       }
+      mlModels {
+        srcDirs("mlModelsSource")
+      }
       renderscript {
         srcDirs("renderscriptSource")
       }
@@ -27,6 +30,9 @@ android {
       }
       resources {
         srcDirs("resourcesSource")
+      }
+      shaders {
+        srcDirs("shadersSource")
       }
     }
   }

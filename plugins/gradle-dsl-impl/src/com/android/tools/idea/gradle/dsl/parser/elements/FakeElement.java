@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +72,11 @@ public abstract class FakeElement extends GradleDslSettableExpression {
 
   @Override
   public void rename(@NotNull String newName) {
+    throw new UnsupportedOperationException("Renaming of this fake element is not possible.");
+  }
+
+  @Override
+  public void rename(@NotNull List<String> hierarchicalName) {
     throw new UnsupportedOperationException("Renaming of this fake element is not possible.");
   }
 

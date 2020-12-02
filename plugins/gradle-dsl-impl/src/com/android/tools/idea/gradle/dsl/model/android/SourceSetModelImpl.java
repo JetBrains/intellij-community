@@ -20,9 +20,11 @@ import static com.android.tools.idea.gradle.dsl.parser.android.sourceSets.Source
 import static com.android.tools.idea.gradle.dsl.parser.android.sourceSets.SourceDirectoryDslElement.JAVA;
 import static com.android.tools.idea.gradle.dsl.parser.android.sourceSets.SourceDirectoryDslElement.JNI;
 import static com.android.tools.idea.gradle.dsl.parser.android.sourceSets.SourceDirectoryDslElement.JNI_LIBS;
+import static com.android.tools.idea.gradle.dsl.parser.android.sourceSets.SourceDirectoryDslElement.ML_MODELS;
 import static com.android.tools.idea.gradle.dsl.parser.android.sourceSets.SourceDirectoryDslElement.RENDERSCRIPT;
 import static com.android.tools.idea.gradle.dsl.parser.android.sourceSets.SourceDirectoryDslElement.RES;
 import static com.android.tools.idea.gradle.dsl.parser.android.sourceSets.SourceDirectoryDslElement.RESOURCES;
+import static com.android.tools.idea.gradle.dsl.parser.android.sourceSets.SourceDirectoryDslElement.SHADERS;
 import static com.android.tools.idea.gradle.dsl.parser.android.sourceSets.SourceFileDslElement.MANIFEST;
 
 import com.android.tools.idea.gradle.dsl.api.android.SourceSetModel;
@@ -138,6 +140,18 @@ public class SourceSetModelImpl extends GradleDslBlockModel implements SourceSet
     myDslElement.removeProperty(MANIFEST.name);
   }
 
+  @NotNull
+  @Override
+  public SourceDirectoryModel mlModels() {
+    SourceDirectoryDslElement mlModels = myDslElement.ensurePropertyElement(ML_MODELS);
+    return new SourceDirectoryModelImpl(mlModels);
+  }
+
+  @Override
+  public void removeMlModels() {
+    myDslElement.removeProperty(ML_MODELS.name);
+  }
+
   @Override
   @NotNull
   public SourceDirectoryModel renderscript() {
@@ -172,5 +186,17 @@ public class SourceSetModelImpl extends GradleDslBlockModel implements SourceSet
   @Override
   public void removeResources() {
     myDslElement.removeProperty(RESOURCES.name);
+  }
+
+  @NotNull
+  @Override
+  public SourceDirectoryModel shaders() {
+    SourceDirectoryDslElement shaders = myDslElement.ensurePropertyElement(SHADERS);
+    return new SourceDirectoryModelImpl(shaders);
+  }
+
+  @Override
+  public void removeShaders() {
+    myDslElement.removeProperty(SHADERS.name);
   }
 }

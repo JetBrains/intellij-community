@@ -15,13 +15,14 @@
  */
 package com.android.tools.idea.gradle.dsl.api.dependencies;
 
+import com.android.tools.idea.gradle.dsl.api.util.GradleDslModel;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface DependenciesModel {
+public interface DependenciesModel extends GradleDslModel {
   @NotNull
   List<DependencyModel> all();
 

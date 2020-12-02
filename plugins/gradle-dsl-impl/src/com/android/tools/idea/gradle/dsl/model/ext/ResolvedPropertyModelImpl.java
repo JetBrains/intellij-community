@@ -19,8 +19,10 @@ import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel;
 import com.android.tools.idea.gradle.dsl.api.ext.PropertyType;
 import com.android.tools.idea.gradle.dsl.api.ext.ResolvedPropertyModel;
 import com.android.tools.idea.gradle.dsl.api.util.TypeReference;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -205,7 +207,7 @@ public class ResolvedPropertyModelImpl implements ResolvedPropertyModel {
     if (list == null) {
       return null;
     }
-    return list.stream().map(GradlePropertyModel::resolve).collect(Collectors.toList());
+    return ContainerUtil.map(list, GradlePropertyModel::resolve);
   }
 
   @Nullable
@@ -224,6 +226,11 @@ public class ResolvedPropertyModelImpl implements ResolvedPropertyModel {
   }
 
   @Override
+  public void rename(@NotNull List<String> hierarchicalName) {
+    myRealModel.rename(hierarchicalName);
+  }
+
+  @Override
   public boolean isModified() {
     return myRealModel.isModified();
   }
@@ -232,6 +239,12 @@ public class ResolvedPropertyModelImpl implements ResolvedPropertyModel {
   @NotNull
   public GradlePropertyModel getUnresolvedModel() {
     return myRealModel;
+  }
+
+  @Override
+  @Nullable
+  public GradleDslElement getRawElement() {
+    return myRealModel.getRawElement();
   }
 
   @NotNull

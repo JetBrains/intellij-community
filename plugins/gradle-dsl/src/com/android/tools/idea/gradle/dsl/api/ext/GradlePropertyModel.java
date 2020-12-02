@@ -43,6 +43,12 @@ public interface GradlePropertyModel {
   String DOUBLE_QUOTES = "\"";
 
   /**
+   * @return instance of GradleDslElement, which is not accessible from this module
+   */
+  @Nullable
+  Object getRawElement(); // FIXME-ank4: real type is GradleDslElement
+
+  /**
    * Converts a string to one that can be used to set interpolated strings using {@link #setValue(Object)}
    * This type of string will perform string injections, e.g For Gradle file:
    *
@@ -313,6 +319,8 @@ public interface GradlePropertyModel {
    * explicit name, i.e list values. This method will rename keys if called on properties inside maps.
    */
   void rename(@NotNull String name);
+
+  void rename(@NotNull List<String> hierarchicalName);
 
   /**
    * @return whether or not this property has been modified since it was obtained from the file.

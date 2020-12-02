@@ -1,0 +1,6 @@
+repositories {
+  maven {
+    url 'https://jcenter.bintray.com/'
+    name 'BintrayJCenter2'
+  }
+}

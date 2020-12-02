@@ -1,0 +1,1 @@
+rootProject.extra["property"] = "boo"

@@ -15,20 +15,31 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android;
 
-import static com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl.BUILD_TOOLS_VERSION;
+import static com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl.COMPILE_SDK_VERSION;
+import static com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl.DEFAULT_PUBLISH_CONFIG;
+import static com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl.DYNAMIC_FEATURES;
+import static com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl.FLAVOR_DIMENSIONS;
+import static com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl.GENERATE_PURE_SPLITS;
+import static com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl.NDK_VERSION;
+import static com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl.PUBLISH_NON_DEFAULT;
+import static com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl.RESOURCE_PREFIX;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.atLeast;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.ADD_AS_LIST;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAL;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSimpleExpression;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
 import kotlin.Pair;
@@ -67,10 +78,10 @@ public final class AndroidDslElement extends GradleDslBlockElement {
   }
 
   @NotNull
-  private static final ImmutableMap<Pair<String,Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.of(new Object[][]{
+  private static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.of(new Object[][]{
     {"buildToolsVersion", property, BUILD_TOOLS_VERSION, VAR},
     {"buildToolsVersion", exactly(1), BUILD_TOOLS_VERSION, SET},
-    {"compileSdkVersion", property, COMPILE_SDK_VERSION, VAR}, // TODO(xof): type handling of this is tricky
+    {"compileSdkVersion", property, COMPILE_SDK_VERSION, VAR}, // TODO(b/148657110): type handling of this is tricky
     {"compileSdkVersion", exactly(1), COMPILE_SDK_VERSION, SET},
     {"defaultPublishConfig", property, DEFAULT_PUBLISH_CONFIG, VAR},
     {"defaultPublishConfig", exactly(1), DEFAULT_PUBLISH_CONFIG, SET},
@@ -85,7 +96,7 @@ public final class AndroidDslElement extends GradleDslBlockElement {
   }).collect(toModelMap());
 
   @NotNull
-  private static final ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> groovyToModelNameMap = Stream.of(new Object[][]{
+  private static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> groovyToModelNameMap = Stream.of(new Object[][]{
     {"buildToolsVersion", property, BUILD_TOOLS_VERSION, VAR},
     {"buildToolsVersion", exactly(1), BUILD_TOOLS_VERSION, SET},
     {"compileSdkVersion", property, COMPILE_SDK_VERSION, VAR},
@@ -106,7 +117,7 @@ public final class AndroidDslElement extends GradleDslBlockElement {
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }

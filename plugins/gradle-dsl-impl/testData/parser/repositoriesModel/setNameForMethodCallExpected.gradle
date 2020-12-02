@@ -1,5 +1,5 @@
 repositories {
-  jcenter() {
+  jcenter {
     name 'hello'
   }
 }

@@ -20,6 +20,8 @@ import static com.android.tools.idea.gradle.dsl.api.ext.PropertyType.REGULAR;
 import static com.android.tools.idea.gradle.dsl.api.ext.PropertyType.VARIABLE;
 import static com.android.tools.idea.gradle.dsl.model.notifications.NotificationTypeReference.INCOMPLETE_PARSING;
 import static com.android.tools.idea.gradle.dsl.model.notifications.NotificationTypeReference.INVALID_EXPRESSION;
+import static com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement.APPLY_BLOCK_NAME;
+import static com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement.EXT;
 import static com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslUtil.ensureUnquotedText;
 import static com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslUtil.findInjections;
 import static com.intellij.psi.util.PsiTreeUtil.findChildOfType;
@@ -27,7 +29,6 @@ import static com.intellij.psi.util.PsiTreeUtil.getChildOfType;
 import static com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType;
 
 import com.android.tools.idea.gradle.dsl.api.dependencies.ArtifactDependencySpec;
-import com.android.tools.idea.gradle.dsl.api.ext.ReferenceTo;
 import com.android.tools.idea.gradle.dsl.model.GradleBuildModelImpl;
 import com.android.tools.idea.gradle.dsl.model.android.AndroidModelImpl;
 import com.android.tools.idea.gradle.dsl.parser.GradleDslParser;
@@ -36,6 +37,7 @@ import com.android.tools.idea.gradle.dsl.parser.SharedParserUtilsKt;
 import com.android.tools.idea.gradle.dsl.parser.configurations.ConfigurationDslElement;
 import com.android.tools.idea.gradle.dsl.parser.configurations.ConfigurationsDslElement;
 import com.android.tools.idea.gradle.dsl.parser.dependencies.FakeArtifactElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslClosure;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpression;
@@ -49,6 +51,7 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslUnknownElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
 import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFile;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
@@ -143,7 +146,7 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
   public PsiElement convertToPsiElement(@NotNull GradleDslSimpleExpression context, @NotNull Object literal) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     try {
-      return GroovyDslUtil.createLiteral(myDslFile, literal);
+      return GroovyDslUtil.createLiteral(context, myDslFile, literal);
     }
     catch (IncorrectOperationException e) {
       myDslFile.getContext().getNotificationForType(myDslFile, INVALID_EXPRESSION).addError(e);
@@ -168,7 +171,7 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
 
     if (literal instanceof GrReferenceExpression || literal instanceof GrIndexProperty) {
       if (resolve) {
-        GradleDslElement e = context.resolveReference(literal.getText(), true);
+        GradleDslElement e = context.resolveExternalSyntaxReference(literal.getText(), true);
         // Only attempt to get the value if it is a simple expression.
         if (e instanceof GradleDslSimpleExpression) {
           return ((GradleDslSimpleExpression)e).getValue();
@@ -178,7 +181,7 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
     }
 
     if (!(literal instanceof GrLiteral)) {
-      return new ReferenceTo(literal.getText());
+      return new GroovyDslRawText(literal.getText());
     }
 
     // If this literal has a value then return it: this will be the case for non-string values.
@@ -254,10 +257,10 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
 
   @Nullable
   @Override
-  public GradlePropertiesDslElement getBlockElement(@NotNull List<String> nameParts,
-                                                    @NotNull GradlePropertiesDslElement parentElement,
-                                                    @Nullable GradleNameElement nameElement) {
-    return SharedParserUtilsKt.getBlockElement(myDslFile, nameParts, this, parentElement, nameElement);
+  public GradlePropertiesDslElement getPropertiesElement(@NotNull List<String> nameParts,
+                                                         @NotNull GradlePropertiesDslElement parentElement,
+                                                         @Nullable GradleNameElement nameElement) {
+    return SharedParserUtilsKt.getPropertiesElement(myDslFile, nameParts, this, parentElement, nameElement);
   }
 
   private void parsePsi(@NotNull PsiElement psiElement, @NotNull GradleDslFile gradleDslFile) {
@@ -286,7 +289,7 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
     GradleNameElement name = GradleNameElement.from(element, this);
 
     if (name.isQualified()) {
-      GradlePropertiesDslElement nestedElement = getBlockElement(name.qualifyingParts(), dslElement, null);
+      GradlePropertiesDslElement nestedElement = getPropertiesElement(name.qualifyingParts(), dslElement, null);
       if (nestedElement != null) {
         dslElement = nestedElement;
       }
@@ -321,7 +324,7 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
     }
 
     if (name.isQualified()) {
-      dslElement = getBlockElement(name.qualifyingParts(), dslElement, null);
+      dslElement = getPropertiesElement(name.qualifyingParts(), dslElement, null);
     }
 
     if (dslElement == null) {
@@ -330,9 +333,21 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
 
     GrClosableBlock[] closureArguments = expression.getClosureArguments();
     GrArgumentList argumentList = expression.getArgumentList();
-    if (argumentList.getAllArguments().length > 0 || closureArguments.length == 0) {
-      // This element is a method call with arguments and an optional closure associated with it.
-      // ex: compile("dependency") {}
+    int nArgs = argumentList.getAllArguments().length;
+
+    // we distinguish between "regular" method calls and those which introduce Dsl blocks.  Calls which introduce Dsl blocks have
+    // zero regular arguments; usually they have one closure argument, but that closure argument is not essential.  In most cases
+    // a call with no closure argument will not do anything, but some (e.g. bare method calls to google() under repositories { ... })
+    // will have an effect and must be parsed as their respective block.
+
+    // We will check for whether a call should be interpreted as a block by interrogating the parent Dsl for whether a child with that
+    // name would be recognized.  There remain a few special cases which are not handled using the Dsl tables, which must always be
+    // considered as blocks.
+    List<String> specialCases = Arrays.asList("allprojects", APPLY_BLOCK_NAME, EXT.name);
+
+    if (nArgs > 0 || (!specialCases.contains(name.name()) && dslElement.getChildPropertiesElementDescription(name.name()) == null)) {
+      // This element is a method call with arguments and an optional closure associated with it.  Handle as a regular method call.
+      // ex: compile("dependency") {}, reset()
       GradleDslSimpleExpression methodCall = getMethodCall(dslElement, expression, name, argumentList, name.fullName(), false);
       if (closureArguments.length > 0) {
         methodCall.setParsedClosureElement(getClosureElement(methodCall, closureArguments[0], name));
@@ -342,31 +357,48 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
       return true;
     }
 
-    // Now this element is pure block element, i.e a method call with no argument but just a closure argument. So, here just process the
-    // closure and treat it as a block element.
-    // ex: android {}
-    GrClosableBlock closableBlock = closureArguments[0];
+    // Now this element is a block element, i.e a method call with no normal arguments and zero or one closure arguments.  Create the block
+    // element, and process the closure if present within that block's context.
+    // ex: android {}, jcenter()
+    GrClosableBlock closableBlock = null;
+    if (closureArguments.length > 0) {
+      closableBlock = closureArguments[0];
+    }
     List<GradlePropertiesDslElement> blockElements = new ArrayList<>(); // The block elements this closure needs to be applied.
 
     if (dslElement instanceof GradleDslFile && name.name().equals("allprojects")) {
-      // The "allprojects" closure needs to be applied to this project and all it's sub projects.
+      // The "allprojects" closure needs to be applied to this project and all its sub projects.
       blockElements.add(dslElement);
       // After applying the allprojects closure to this project, process it as subprojects section to also pass the same properties to
       // subprojects.
       name = GradleNameElement.create("subprojects");
     }
 
-    GradlePropertiesDslElement blockElement = getBlockElement(ImmutableList.of(name.name()), dslElement, name);
-    if (blockElement != null) {
-      blockElement.setPsiElement(closableBlock);
-      blockElements.add(blockElement);
+    GradlePropertiesDslElement propertiesElement = getPropertiesElement(ImmutableList.of(name.name()), dslElement, name);
+    if (propertiesElement != null) {
+      // If we have a closableBlock, use it as the block's PsiElement; if we don't, use the whole expression as the PsiElement (so that
+      // new elements can be added to the parent block after this element) and mark the new PropertiesDslElement as not having braces,
+      // and so needing recreation if it is subsequently changed (e.g. by users of the Dsl model APIs).
+      if (closableBlock != null) {
+        propertiesElement.setPsiElement(closableBlock);
+      }
+      else {
+        propertiesElement.setPsiElement(expression);
+        if (propertiesElement instanceof GradleDslBlockElement) {
+          ((GradleDslBlockElement) propertiesElement).setHasBraces(false);
+        }
+      }
+      blockElements.add(propertiesElement);
     }
 
     if (blockElements.isEmpty()) {
       return false;
     }
-    for (GradlePropertiesDslElement element : blockElements) {
-      parseGrClosableBlock(closableBlock, element);
+
+    if (closableBlock != null) {
+      for (GradlePropertiesDslElement element : blockElements) {
+        parseGrClosableBlock(closableBlock, element);
+      }
     }
     return true;
   }
@@ -422,7 +454,7 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
     }
 
     if (name.isQualified()) {
-      GradlePropertiesDslElement nestedElement = getBlockElement(name.qualifyingParts(), blockElement, null);
+      GradlePropertiesDslElement nestedElement = getPropertiesElement(name.qualifyingParts(), blockElement, null);
       if (nestedElement != null) {
         blockElement = nestedElement;
       }
@@ -537,7 +569,7 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
     }
 
     if (name.isQualified()) {
-      GradlePropertiesDslElement nestedElement = getBlockElement(name.qualifyingParts(), blockElement, null);
+      GradlePropertiesDslElement nestedElement = getPropertiesElement(name.qualifyingParts(), blockElement, null);
       if (nestedElement != null) {
         blockElement = nestedElement;
       }
@@ -553,7 +585,8 @@ public class GroovyDslParser extends GroovyDslNameConverter implements GradleDsl
 
     Matcher matcher = GradleNameElement.INDEX_PATTERN.matcher(name.name());
     if (matcher.find()) {
-      String property = modelNameForParent(matcher.group(0), blockElement);
+      ModelPropertyDescription propertyDescription = modelDescriptionForParent(matcher.group(0), blockElement);
+      String property = propertyDescription == null ? matcher.group(0) : propertyDescription.name;
       GradleDslElement element = blockElement.getElement(property);
       if (element instanceof GradlePropertiesDslElement) {
         blockElement = (GradlePropertiesDslElement) element;

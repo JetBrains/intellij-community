@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ModelMapCollector {
   @NotNull
-  public static Collector<Object[], ?, ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>>> toModelMap() {
+  public static Collector<Object[], ?, ImmutableMap<Pair<String, Integer>, ModelEffectDescription>> toModelMap() {
     Function<Object[], Pair<String,Integer>> k = data -> {
       Integer arity = (Integer) data[1];
       SemanticsDescription description = (SemanticsDescription) data[3];
@@ -42,7 +42,17 @@ public final class ModelMapCollector {
       }
       return new Pair<>((String)data[0], (Integer)data[1]);
     };
-    Function<Object[], Pair<String,SemanticsDescription>> v = data -> new Pair<>((String) data[2], (SemanticsDescription) data[3]);
+    Function<Object[], ModelEffectDescription> v = data -> {
+      if (data[2] instanceof String) {
+        return new ModelEffectDescription(new ModelPropertyDescription((String)data[2]), (SemanticsDescription)data[3]);
+      }
+      else if (data[2] instanceof ModelPropertyDescription) {
+        return new ModelEffectDescription((ModelPropertyDescription) data[2], (SemanticsDescription) data[3]);
+      }
+      else {
+        throw new RuntimeException(data[2].toString());
+      }
+    };
     return toImmutableMap(k, v);
   }
 }

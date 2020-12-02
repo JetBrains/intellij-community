@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,31 @@ import com.android.tools.idea.gradle.dsl.api.GradleBuildModel;
 import com.android.tools.idea.gradle.dsl.api.GradleModelProvider;
 import com.android.tools.idea.gradle.dsl.api.GradleSettingsModel;
 import com.android.tools.idea.gradle.dsl.api.ProjectBuildModel;
-import com.android.tools.idea.gradle.dsl.api.dependencies.ArtifactDependencyModel;
 import com.android.tools.idea.gradle.dsl.api.dependencies.ArtifactDependencySpec;
+import com.android.tools.idea.gradle.dsl.model.BuildModelContext;
 import com.android.tools.idea.gradle.dsl.model.GradleBuildModelImpl;
 import com.android.tools.idea.gradle.dsl.model.GradleSettingsModelImpl;
 import com.android.tools.idea.gradle.dsl.model.ProjectBuildModelImpl;
 import com.android.tools.idea.gradle.dsl.model.dependencies.ArtifactDependencySpecImpl;
+import com.android.tools.idea.gradle.dsl.parser.files.GradleSettingsFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GradleModelSource extends GradleModelProvider {
+import java.io.File;
+
+import static com.android.tools.idea.gradle.dsl.GradleUtil.getBaseDirPath;
+
+public final class GradleModelSource extends GradleModelProvider {
+
+  private static final BuildModelContext.ResolvedConfigurationFileLocationProvider myResolvedConfigurationFileLocationProvider;
+
+  static {
+    myResolvedConfigurationFileLocationProvider = new ResolvedConfigurationFileLocationProviderImpl();
+  }
 
   public static class GradleModelProviderFactoryImpl implements GradleModelProviderFactory {
     @Override
@@ -43,49 +55,62 @@ public class GradleModelSource extends GradleModelProvider {
   @NotNull
   @Override
   public ProjectBuildModel getProjectModel(@NotNull Project project) {
-    return ProjectBuildModelImpl.get(project);
+    BuildModelContext context = createContext(project);
+    VirtualFile file = context.getGradleBuildFile(getBaseDirPath(project));
+    return new ProjectBuildModelImpl(project, file, context);
   }
 
   @Override
   @Nullable
   public ProjectBuildModel getProjectModel(@NotNull Project hostProject, @NotNull String compositeRoot) {
-    return ProjectBuildModelImpl.get(hostProject, compositeRoot);
+    BuildModelContext context = createContext(hostProject);
+    VirtualFile file = context.getGradleBuildFile(new File(compositeRoot));
+    if (file == null) {
+      return null;
+    }
+    return new ProjectBuildModelImpl(hostProject, file, context);
   }
 
   @Nullable
   @Override
   public GradleBuildModel getBuildModel(@NotNull Project project) {
-    return GradleBuildModelImpl.get(project);
+    BuildModelContext context = createContext(project);
+    VirtualFile file = context.getGradleBuildFile(getBaseDirPath(project));
+    return file != null ? internalCreateBuildModel(context, file, project.getName()) : null;
   }
 
   @Nullable
   @Override
   public GradleBuildModel getBuildModel(@NotNull Module module) {
-    return GradleBuildModelImpl.get(module);
+    BuildModelContext context = createContext(module.getProject());
+    VirtualFile file = context.getGradleBuildFile(module);
+    return file != null ? internalCreateBuildModel(context, file, module.getName()) : null;
   }
 
   @NotNull
   @Override
   public GradleBuildModel parseBuildFile(@NotNull VirtualFile file, @NotNull Project project) {
-    return GradleBuildModelImpl.parseBuildFile(file, project);
+    return internalCreateBuildModel(createContext(project), file, "<Unknown>");
   }
 
   @NotNull
   @Override
   public GradleBuildModel parseBuildFile(@NotNull VirtualFile file, @NotNull Project project, @NotNull String moduleName) {
-    return GradleBuildModelImpl.parseBuildFile(file, project, moduleName);
+    return internalCreateBuildModel(createContext(project), file, moduleName);
   }
 
   @Nullable
   @Override
   public GradleSettingsModel getSettingsModel(@NotNull Project project) {
-    return GradleSettingsModelImpl.get(project);
+    BuildModelContext context = createContext(project);
+    VirtualFile file = context.getGradleSettingsFile(getBaseDirPath(project));
+    return file != null ? parseSettingsFile(context, file, project, "settings") : null;
   }
 
   @NotNull
   @Override
   public GradleSettingsModel getSettingsModel(@NotNull VirtualFile settingsFile, @NotNull Project hostProject) {
-    return GradleSettingsModelImpl.get(settingsFile, hostProject);
+    return parseSettingsFile(createContext(hostProject), settingsFile, hostProject, "settings");
   }
 
   @NotNull
@@ -104,15 +129,35 @@ public class GradleModelSource extends GradleModelProvider {
     return new ArtifactDependencySpecImpl(name, group, version, classifier, extension);
   }
 
-  @NotNull
-  @Override
-  public ArtifactDependencySpec getArtifactDependencySpec(@NotNull ArtifactDependencyModel dependency) {
-    return ArtifactDependencySpecImpl.create(dependency);
-  }
-
   @Nullable
   @Override
   public ArtifactDependencySpec getArtifactDependencySpec(@NotNull String notation) {
     return ArtifactDependencySpecImpl.create(notation);
+  }
+
+  @NotNull
+  private static GradleBuildModel internalCreateBuildModel(@NotNull BuildModelContext context,
+                                                           @NotNull VirtualFile file,
+                                                           @NotNull String moduleName) {
+    return new GradleBuildModelImpl(context.getOrCreateBuildFile(file, moduleName, false));
+  }
+
+  /**
+   * This method is left here to ensure that when needed we can construct a settings model with only the virtual file.
+   * In most cases {@link GradleSettingsModel}s should be obtained from the {@link ProjectBuildModel}.
+   */
+  @NotNull
+  private static GradleSettingsModel parseSettingsFile(@NotNull BuildModelContext context,
+                                                       @NotNull VirtualFile file,
+                                                       @NotNull Project project,
+                                                       @NotNull String moduleName) {
+    GradleSettingsFile settingsFile = new GradleSettingsFile(file, project, moduleName, context);
+    settingsFile.parse();
+    return new GradleSettingsModelImpl(settingsFile);
+  }
+
+  @NotNull
+  private static BuildModelContext createContext(@NotNull Project project) {
+    return BuildModelContext.create(project, myResolvedConfigurationFileLocationProvider);
   }
 }

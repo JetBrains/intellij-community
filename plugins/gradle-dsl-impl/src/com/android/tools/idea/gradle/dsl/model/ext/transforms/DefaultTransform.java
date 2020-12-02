@@ -19,6 +19,7 @@ import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpression;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public class DefaultTransform extends PropertyTransform {
   public DefaultTransform() { }
 
   @Override
-  public boolean test(@Nullable GradleDslElement e) {
+  public boolean test(@Nullable GradleDslElement e, @NotNull GradleDslElement holder) {
     return true;
   }
 
@@ -48,7 +49,16 @@ public class DefaultTransform extends PropertyTransform {
                                   @Nullable GradleDslElement oldElement,
                                   @NotNull Object value,
                                   @NotNull String name) {
-    return createOrReplaceBasicExpression(holder, oldElement, value, GradleNameElement.create(name));
+    return createOrReplaceBasicExpression(holder, oldElement, value, GradleNameElement.fake(name), null);
+  }
+
+  @NotNull
+  @Override
+  public GradleDslExpression bind(@NotNull GradleDslElement holder,
+                                  @Nullable GradleDslElement oldElement,
+                                  @NotNull Object value,
+                                  @NotNull ModelPropertyDescription propertyDescription) {
+    return createOrReplaceBasicExpression(holder, oldElement, value, GradleNameElement.fake(propertyDescription.name), propertyDescription);
   }
 
   @Override

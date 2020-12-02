@@ -16,9 +16,10 @@
 package com.android.tools.idea.gradle.dsl.parser;
 
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.intellij.psi.PsiElement;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface GradleDslNameConverter {
 
@@ -60,7 +61,7 @@ public interface GradleDslNameConverter {
   default String convertReferenceToExternalText(
     @NotNull GradleDslElement context,
     @NotNull String referenceText,
-    @NotNull boolean forInjection
+    boolean forInjection
   ) { return "";}
 
   /**
@@ -69,22 +70,23 @@ public interface GradleDslNameConverter {
    *
    * @param modelName the canonical model namestring for this name
    * @param context the parent element of the element whose name this is
-   * @return a pair whose first is the string containing a dotted-hierarchy of external names, and whose second indicates whether that
-   *         name is to be used as a setter method (true) or in a property assignment (false), or we don't know (null).
+   * @return an instance of {@link ExternalNameInfo} whose {@link ExternalNameInfo#externalNameParts} field is the string containing a
+   * dotted-hierarchy of external names, and whose {@link ExternalNameInfo#asMethod} field indicates whether that name is to be used as a
+   * setter method (true) or in a property assignment (false), or we don't know (null).
    */
   @NotNull
-  default Pair<String, Boolean> externalNameForParent(@NotNull String modelName, @NotNull GradleDslElement context) {
-    return new Pair<>("", null);
+  default ExternalNameInfo externalNameForParent(@NotNull String modelName, @NotNull GradleDslElement context) {
+    return new ExternalNameInfo("", null);
   }
 
   /**
-   * Converts a dotted-hierarchy name with hierarchy denoting external names to a dotted-hierarchy name of canonical model names for
-   * properties.  Does not perform any syntactic transformations.
+   * Converts a single external name part to a description of the Model property it is associated with.
+   * Does not perform any syntactic transformations.
    *
-   * @param externalName the external dotted-namestring for this name
+   * @param externalName the external operator or property name
    * @param context the parent element of the element whose name this is (or will be after parsing)
-   * @return a string containing a dotted-hierarchy of model names
+   * @return a description of the model property
    */
-  @NotNull
-  default String modelNameForParent(@NotNull String externalName, @NotNull GradleDslElement context) { return ""; }
+  @Nullable
+  default ModelPropertyDescription modelDescriptionForParent(@NotNull String externalName, @NotNull GradleDslElement context) { return null; }
 }

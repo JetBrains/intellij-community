@@ -29,7 +29,7 @@ public class FlatDirRepositoryModel extends RepositoryModelImpl {
 
   @NonNls public static final String FLAT_DIR_ATTRIBUTE_NAME = "flatDir";
 
-  @NonNls private static final String DIRS = "dirs";
+  @NonNls public static final String DIRS = "dirs";
 
   public FlatDirRepositoryModel(@NotNull GradlePropertiesDslElement holder, @NotNull GradlePropertiesDslElement dslElement) {
     super(holder, dslElement, "flatDir");
@@ -38,7 +38,7 @@ public class FlatDirRepositoryModel extends RepositoryModelImpl {
 
   @NotNull
   public ResolvedPropertyModel dirs() {
-    return GradlePropertyModelBuilder.create(myPropertiesDslElement, DIRS).asMethod(true).buildResolved();
+    return GradlePropertyModelBuilder.create(myPropertiesDslElement, DIRS).buildResolved();
   }
 
   @NotNull

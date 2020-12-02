@@ -21,31 +21,16 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.android.tools.idea.gradle.dsl.GradleUtil.GRADLE_PATH_SEPARATOR;
 import static com.google.common.base.Strings.emptyToNull;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 
 public class ArtifactDependencySpecImpl implements ArtifactDependencySpec {
-  // Map to allow iteration over each element in the ArtifactDependencySpec
-  static final Map<String, Function<ArtifactDependencySpec, String>> COMPONENT_MAP;
-
-  static {
-    COMPONENT_MAP = new LinkedHashMap<>();
-    COMPONENT_MAP.put("name", ArtifactDependencySpec::getName);
-    COMPONENT_MAP.put("group", ArtifactDependencySpec::getGroup);
-    COMPONENT_MAP.put("version", ArtifactDependencySpec::getVersion);
-    COMPONENT_MAP.put("ext", ArtifactDependencySpec::getExtension);
-    COMPONENT_MAP.put("classifier", ArtifactDependencySpec::getClassifier);
-  }
-
   @NotNull private String name;
 
   @Nullable private String group;
@@ -54,7 +39,7 @@ public class ArtifactDependencySpecImpl implements ArtifactDependencySpec {
   @Nullable private String extension;
 
   @Nullable
-  public static ArtifactDependencySpec create(@NotNull String notation) {
+  public static ArtifactDependencySpecImpl create(@NotNull String notation) {
     // Example: org.gradle.test.classifiers:service:1.0:jdk15@jar where
     //   group: org.gradle.test.classifiers
     //   name: service
@@ -135,27 +120,22 @@ public class ArtifactDependencySpecImpl implements ArtifactDependencySpec {
     return extension;
   }
 
-  @Override
   public void setName(@NotNull String newName) {
     name = newName;
   }
 
-  @Override
   public void setGroup(@Nullable String newGroup) {
     group = newGroup;
   }
 
-  @Override
   public void setVersion(@Nullable String newVersion) {
     version = newVersion;
   }
 
-  @Override
   public void setClassifier(@Nullable String newClassifier) {
     classifier = newClassifier;
   }
 
-  @Override
   public void setExtension(@Nullable String newExtension) {
     extension = newExtension;
   }

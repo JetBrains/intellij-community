@@ -16,15 +16,15 @@
 package com.android.tools.idea.gradle.dsl.api;
 
 import com.android.tools.idea.gradle.dsl.api.ext.ResolvedPropertyModel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public interface PluginModel {
   @NotNull
   static List<String> extractNames(@NotNull List<PluginModel> plugins) {
-    return plugins.stream().map(plugin -> plugin.name().forceString()).collect(Collectors.toList());
+    return ContainerUtil.map(plugins, plugin -> plugin.name().forceString());
   }
 
   @NotNull

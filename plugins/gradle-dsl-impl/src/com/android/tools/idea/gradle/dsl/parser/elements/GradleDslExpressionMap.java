@@ -45,13 +45,15 @@ public final class GradleDslExpressionMap extends GradlePropertiesDslElement imp
   // parser is ambiguous for historical reasons, so we disambiguate at construction sites.)
   private boolean asNamedArgs;
 
+  private boolean myIsLiteralMap;
+
   public GradleDslExpressionMap(@Nullable GradleDslElement parent, @NotNull GradleNameElement name) {
     super(parent, null, name);
   }
 
   public GradleDslExpressionMap(@Nullable GradleDslElement parent, @NotNull GradleNameElement name, boolean isLiteralMap) {
     super(parent, null, name);
-    myUseAssignment = isLiteralMap;
+    myIsLiteralMap = isLiteralMap;
   }
 
   public GradleDslExpressionMap(@Nullable GradleDslElement parent,
@@ -59,7 +61,7 @@ public final class GradleDslExpressionMap extends GradlePropertiesDslElement imp
                                 @NotNull GradleNameElement name,
                                 boolean isLiteralMap) {
     super(parent, psiElement, name);
-    myUseAssignment = isLiteralMap;
+    myIsLiteralMap = isLiteralMap;
   }
 
   public void addNewLiteral(String key, Object value) {
@@ -93,7 +95,7 @@ public final class GradleDslExpressionMap extends GradlePropertiesDslElement imp
   }
 
   public boolean isLiteralMap() {
-    return myUseAssignment;
+    return myIsLiteralMap;
   }
 
   public boolean getAsNamedArgs() {

@@ -96,20 +96,20 @@ public final class FileTreeDependencyModelImpl extends DependencyModelImpl imple
   @NotNull
   public ResolvedPropertyModel dir() {
     return GradlePropertyModelBuilder.create(myDslElement).addTransform(new MapMethodTransform(FILE_TREE, DIR))
-      .addTransform(new SingleArgumentMethodTransform(FILE_TREE)).asMethod(true).buildResolved();
+      .addTransform(new SingleArgumentMethodTransform(FILE_TREE)).buildResolved();
   }
 
   @Override
   @NotNull
   public ResolvedPropertyModel includes() {
     return GradlePropertyModelBuilder.create(myDslElement).addTransform(new SingleArgToMapTransform(DIR, INCLUDE))
-      .addTransform(new MapMethodTransform(FILE_TREE, INCLUDE)).asMethod(true).buildResolved();
+      .addTransform(new MapMethodTransform(FILE_TREE, INCLUDE)).buildResolved();
   }
 
   @Override
   @NotNull
   public ResolvedPropertyModel excludes() {
     return GradlePropertyModelBuilder.create(myDslElement).addTransform(new SingleArgToMapTransform(DIR, EXCLUDE))
-      .addTransform(new MapMethodTransform(FILE_TREE, EXCLUDE)).asMethod(true).buildResolved();
+      .addTransform(new MapMethodTransform(FILE_TREE, EXCLUDE)).buildResolved();
   }
 }

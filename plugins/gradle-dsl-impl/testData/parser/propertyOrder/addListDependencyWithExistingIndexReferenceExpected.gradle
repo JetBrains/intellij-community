@@ -1,0 +1,4 @@
+ext {
+  prop = ['hello']
+  prop1 = prop[0]
+}

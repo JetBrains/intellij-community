@@ -36,6 +36,7 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslLiteral;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslMethodCall;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSimpleExpression;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -662,13 +663,23 @@ public class DependenciesModelImpl extends GradleDslBlockModel implements Depend
     }
   }
 
+  // Map to allow iteration over each element in the ArtifactDependencySpec
+  private static final Map<String, Function<ArtifactDependencySpec, String>> COMPONENT_MAP =
+    ImmutableMap.<String, Function<ArtifactDependencySpec, String>>builder()
+      .put("name", ArtifactDependencySpec::getName)
+      .put("group", ArtifactDependencySpec::getGroup)
+      .put("version", ArtifactDependencySpec::getVersion)
+      .put("ext", ArtifactDependencySpec::getExtension)
+      .put("classifier", ArtifactDependencySpec::getClassifier)
+      .build();
+
   /**
    * Updates a {@link GradleDslExpressionMap} so that it represents the given {@link ArtifactDependencySpec}.
    */
   private static void updateGradleExpressionMapWithDependency(@NotNull GradleDslExpressionMap map,
                                                               @NotNull ArtifactDependencySpec dependency) {
     // We need to create a copy of the new map so that we can track the r
-    Map<String, Function<ArtifactDependencySpec, String>> properties = new LinkedHashMap<>(ArtifactDependencySpecImpl.COMPONENT_MAP);
+    Map<String, Function<ArtifactDependencySpec, String>> properties = new LinkedHashMap<>(COMPONENT_MAP);
     // Update any existing properties.
     for (Map.Entry<String, GradleDslElement> entry : map.getPropertyElements().entrySet()) {
       if (properties.containsKey(entry.getKey())) {

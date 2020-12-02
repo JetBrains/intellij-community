@@ -109,14 +109,14 @@ public interface GradleDslParser extends GradleDslNameConverter {
   List<GradleReferenceInjection> getInjections(@NotNull GradleDslSimpleExpression context, @NotNull PsiElement psiElement);
 
   /**
-   * This method creates an empty block element (possibly nested) from {@code nameParts} with {@code parentElement} as a parent.
+   * This method creates an empty properties element (possibly nested) from {@code nameParts} with {@code parentElement} as a parent.
    * This method returns null if any of the block names are unrecognized and will return the parent element if {@code nameParts} is
    * empty.
    */
   @Nullable
-  GradlePropertiesDslElement getBlockElement(@NotNull List<String> nameParts,
-                                             @NotNull GradlePropertiesDslElement parentElement,
-                                             @Nullable GradleNameElement nameElement);
+  GradlePropertiesDslElement getPropertiesElement(@NotNull List<String> nameParts,
+                                                  @NotNull GradlePropertiesDslElement parentElement,
+                                                  @Nullable GradleNameElement nameElement);
 
   class Adapter implements GradleDslParser {
     @Override
@@ -168,9 +168,9 @@ public interface GradleDslParser extends GradleDslNameConverter {
 
     @Override
     @Nullable
-    public GradlePropertiesDslElement getBlockElement(@NotNull List<String> nameParts,
-                                                      @NotNull GradlePropertiesDslElement parentElement,
-                                                      @Nullable GradleNameElement nameElement) {
+    public GradlePropertiesDslElement getPropertiesElement(@NotNull List<String> nameParts,
+                                                           @NotNull GradlePropertiesDslElement parentElement,
+                                                           @Nullable GradleNameElement nameElement) {
       return null;
     }
   }
