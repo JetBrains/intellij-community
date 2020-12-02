@@ -40,7 +40,6 @@ public final class JnaLoader {
    *
    * @see Native#register
    * @see Native#load
-   * @see com.intellij.ide.SystemHealthMonitor.LibC#INSTANCE
    */
   public static final boolean supportsDirectMapping = !SystemInfo.isMac || !SystemInfo.isArm64;
 }
