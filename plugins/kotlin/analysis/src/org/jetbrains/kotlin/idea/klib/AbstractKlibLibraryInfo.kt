@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.ToolingSingleFileKlibResolveStrategy
 import org.jetbrains.kotlin.library.resolveSingleFileKlib
+import org.jetbrains.kotlin.library.uniqueName
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 abstract class AbstractKlibLibraryInfo(project: Project, library: Library, val libraryRoot: String) : LibraryInfo(project, library) {
@@ -28,6 +29,8 @@ abstract class AbstractKlibLibraryInfo(project: Project, library: Library, val l
     final override fun getLibraryRoots() = listOf(libraryRoot)
 
     abstract override val platform: TargetPlatform // must override
+
+    val uniqueName: String by lazy { resolvedKotlinLibrary.uniqueName }
 
     companion object {
         private val LOG = IJLoggerAdapter.getInstance(AbstractKlibLibraryInfo::class.java)

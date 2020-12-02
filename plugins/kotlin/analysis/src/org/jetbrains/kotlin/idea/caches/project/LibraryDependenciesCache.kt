@@ -19,9 +19,11 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.core.util.CachedValue
 import org.jetbrains.kotlin.idea.core.util.getValue
+import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
+import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.isCommon
-import java.util.*
+import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
+import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 
 internal typealias LibrariesAndSdks = Pair<List<LibraryInfo>, List<SdkInfo>>
 
@@ -47,6 +49,13 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
     //NOTE: used LibraryRuntimeClasspathScope as reference
     private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibrariesAndSdks {
+        val (dependencyCandidates, sdks) = computeDependencyCandidatesAndSdks(libraryInfo)
+        val chosenCompatibleCandidates = chooseCompatibleDependencies(libraryInfo.platform, dependencyCandidates)
+        val libraries = chosenCompatibleCandidates.map { it.libraries }.flatten()
+        return Pair(libraries, sdks.toList())
+    }
+
+    private fun computeDependencyCandidatesAndSdks(libraryInfo: LibraryInfo): Pair<Set<DependencyCandidate>, Set<SdkInfo>> {
         val processedModules = HashSet<Module>()
         val condition = Condition<OrderEntry> { orderEntry ->
             if (orderEntry is ModuleOrderEntry) {
@@ -57,10 +66,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
         }
 
-        val libraries = LinkedHashSet<LibraryInfo>()
+        val libraries = LinkedHashSet<DependencyCandidate>()
         val sdks = LinkedHashSet<SdkInfo>()
-
-        val platform = libraryInfo.platform
 
         for (module in getLibraryUsageIndex().modulesLibraryIsUsedIn[libraryInfo.library]) {
             if (!processedModules.add(module)) continue
@@ -73,12 +80,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
                     val otherLibrary = libraryOrderEntry.library
                     if (otherLibrary is LibraryEx && !otherLibrary.isDisposed) {
-                        val otherLibraryInfos = createLibraryInfo(project, otherLibrary)
-                        otherLibraryInfos.firstOrNull()?.platform?.let { otherLibraryPlatform ->
-                            if (compatiblePlatforms(platform, otherLibraryPlatform)) {
-                                libraries.addAll(otherLibraryInfos)
-                            }
-                        }
+                        libraries.add(DependencyCandidate.fromLibraryOrNull(project, otherLibrary) ?: return)
                     }
                 }
 
@@ -89,14 +91,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }, Unit)
         }
 
-        return Pair(libraries.toList(), sdks.toList())
-    }
-
-    /**
-     * @return true if it's OK to add a dependency from a library with platform [from] to a library with platform [to]
-     */
-    private fun compatiblePlatforms(from: TargetPlatform, to: TargetPlatform): Boolean {
-        return from === to || to.containsAll(from) || to.isCommon()
+        return libraries to sdks
     }
 
     private fun getLibraryUsageIndex(): LibraryUsageIndex {
@@ -121,4 +116,142 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
         }
     }
+}
+
+internal data class DependencyCandidate(
+    /**
+     * Identifier for the library this candidate belongs to.
+     * E.g. a library may consist out of multiple fragments (supporting different sets of platforms).
+     * All those fragments will share the same [containingLibraryId].
+     *
+     * `null` if the dependency itself is a library, not a fragment (e.g. Java libraries do not have fragments)
+     */
+    val containingLibraryId: String?,
+    val platform: TargetPlatform,
+    val libraries: List<LibraryInfo>
+) {
+    companion object {
+        fun fromLibraryOrNull(project: Project, library: Library): DependencyCandidate? {
+            val libraryInfos = createLibraryInfo(project, library)
+            val libraryInfo = libraryInfos.firstOrNull() ?: return null
+            return DependencyCandidate(
+                containingLibraryIdOrNull(libraryInfo),
+                platform = libraryInfo.platform,
+                libraries = libraryInfos
+            )
+        }
+
+        private fun containingLibraryIdOrNull(libraryInfo: LibraryInfo): String? {
+            return (libraryInfo as? AbstractKlibLibraryInfo)?.uniqueName
+        }
+    }
+}
+
+internal fun chooseCompatibleDependencies(
+    platform: TargetPlatform,
+    candidates: Set<DependencyCandidate>
+): Set<DependencyCandidate> {
+    val candidatesByContainingLibraryId = candidates.groupBy { it.containingLibraryId }
+    return candidatesByContainingLibraryId.map { (containingLibraryId, candidates) ->
+        /* Library Candidate is not part of a group of fragments */
+        if (containingLibraryId == null) {
+            return@map candidates.filter { candidate -> platform isSubsetCompatibleTo candidate.platform }
+        }
+
+        val chosenPlatforms = chooseTargetPlatformsForDependencyCompatibility(platform, candidates.map { it.platform }.toSet())
+        candidates.filter { candidate -> candidate.platform in chosenPlatforms }
+    }.flatten().toSet()
+}
+
+/**
+ * @param platforms All available platforms to choose from
+ * @return Set of [TargetPlatform] that can be used as dependency for a library with [from] platform.
+ *
+ * e.g.
+ * abc && abcd, abc, ab, a -> abcd, abc
+ * abc && abcd, ab, ad, a -> abcd, ab
+ * abc && abcd, ab, ac, ad, a -> abcd, (ab or ac, but stable)
+ * abc && abcd -> abcd
+ */
+private fun chooseTargetPlatformsForDependencyCompatibility(
+    from: TargetPlatform, platforms: Set<TargetPlatform>
+): Set<TargetPlatform> {
+    val compatiblePlatforms = platforms.filter { platform -> from isSubsetCompatibleTo platform }.toSet()
+    val isComplete = compatiblePlatforms.any { platform -> from isSupersetCompatibleTo platform }
+
+    /*
+    Contains a TargetPlatform that represents the same set of SimplePlatform's
+    The set of "TargetPlatforms" is considered complete
+    */
+    if (isComplete) {
+        return compatiblePlatforms
+    }
+
+    /*
+    Current platforms in [compatiblePlatforms] all support more platforms than
+    the request [from] TargetPlatform(a, b) to TargetPlatform(a, b, c)
+
+    We try to find the greatest lower bound to ensure that we find at least one superset compatible platform.
+    Usually, it's not fine to have dependency from TargetPlatform(a, b, c) to TargetPlatform(a, b) because the latter might
+    provide additional platform-specific APIs.
+
+    The reason why it's OK to have here is because we're working with binary-to-binary dependencies.
+    All references in from are already resolved, so we just should provide a library against which from would
+    successfully link (so having extra APIs is fine, they won't be used anyways)"
+    */
+    val greatestLowerBound = platforms
+        .filter { platform -> from isSupersetCompatibleTo platform }
+        /* Sort remaining candidates to ensure as stable as possible choice for "maxByOrNull" */
+        .sortedWith(TargetPlatformComparator)
+        .maxByOrNull { candidate -> candidate.componentPlatforms.size }
+        ?: return compatiblePlatforms.toSet()
+
+    return mutableSetOf<TargetPlatform>().apply {
+        addAll(compatiblePlatforms)
+        add(greatestLowerBound)
+    }
+}
+
+private object TargetPlatformComparator :
+    Comparator<TargetPlatform> by compareBy<TargetPlatform>({ platform -> platform.componentPlatforms.size })
+        .thenComparing({ platform -> platform.componentPlatforms.sortedWith(SimplePlatformComparator).joinToString() })
+
+private object SimplePlatformComparator :
+    Comparator<SimplePlatform> by compareBy<SimplePlatform>({ it.targetName })
+        .thenComparing<String>({ it.platformName })
+
+/**
+ * @return true if all platforms in [from] have a compatible match in [to]
+ *
+ * e.g.
+ * a, b, c -> a, b, c, d #true (all platforms available in "to")
+ * a, b, c -> a, b #false (*not* all platforms available in "to")
+ */
+private fun isCompatible(from: TargetPlatform, to: TargetPlatform): Boolean {
+    return from.componentPlatforms.all { fromSimplePlatform ->
+        to.componentPlatforms.any { toSimplePlatform -> isCompatible(fromSimplePlatform, toSimplePlatform) }
+    }
+}
+
+
+private fun isCompatible(from: SimplePlatform, to: SimplePlatform): Boolean {
+    return when {
+        from == to -> true
+        from is NativePlatformWithTarget && to is NativePlatformUnspecifiedTarget -> true
+        else -> false
+    }
+}
+
+/**
+ * @return true: if this represents a subset of platforms to [other]
+ */
+private infix fun TargetPlatform.isSubsetCompatibleTo(other: TargetPlatform): Boolean {
+    return isCompatible(this, other)
+}
+
+/**
+ * @return true: if this represents a superset of platforms to [other]
+ */
+private infix fun TargetPlatform.isSupersetCompatibleTo(other: TargetPlatform): Boolean {
+    return isCompatible(other, this)
 }

@@ -19,6 +19,7 @@
     <content url="file://$MODULE_DIR$/../analysis">
       <sourceFolder url="file://$MODULE_DIR$/../analysis/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../analysis/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../analysis/test" isTestSource="true" />
     </content>
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
@@ -56,5 +57,8 @@
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
   </component>
 </module>

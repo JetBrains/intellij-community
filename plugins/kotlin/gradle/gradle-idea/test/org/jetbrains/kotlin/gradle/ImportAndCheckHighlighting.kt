@@ -23,6 +23,12 @@ class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase(
         importAndCheckHighlighting(false, false)
     }
 
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.4.0+")
+    fun testConsumingKotlinXDatetimeInNativeMain() {
+        importAndCheckHighlighting()
+    }
+
     private fun importAndCheckHighlighting(testLineMarkers: Boolean = true, checkWarnings: Boolean = true) {
         val files = configureByFiles()
         importProject()
