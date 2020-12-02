@@ -41,7 +41,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
 
     CommonParameterFragments<T> commonParameterFragments = new CommonParameterFragments<>(getProject(), hasModule);
     fragments.addAll(commonParameterFragments.getFragments());
-    fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent));
+    fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent, this));
 
     String group = ExecutionBundle.message("group.java.options");
     RawCommandLineEditor vmOptions = new RawCommandLineEditor();
