@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
 
 abstract class AbstractCodeMetaInfoRenderConfiguration(var renderParams: Boolean = true) {
     private val clickOrPressRegex = "(Click or press|Press).*(to navigate)".toRegex() // We have different hotkeys on different platforms
-    open fun asString(codeMetaInfo: CodeMetaInfo) = codeMetaInfo.getTag() + getPlatformsString(codeMetaInfo)
+    open fun asString(codeMetaInfo: CodeMetaInfo) = codeMetaInfo.tag + getPlatformsString(codeMetaInfo)
 
     open fun getAdditionalParams(codeMetaInfo: CodeMetaInfo) = ""
 
