@@ -130,7 +130,8 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void register(@NotNull @NonNls String fontFamily, int size) {
-    String fallbackFontFamily = Registry.is("new.editor.font.selector") ? null : FontPreferences.getFallbackName(fontFamily, size, null);
+    String fallbackFontFamily = Registry.is("new.editor.font.selector")
+                                ? null : FontPreferences.getFallbackName(fontFamily, size, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
     }
@@ -154,7 +155,8 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void addFontFamily(@NotNull String fontFamily) {
-    String fallbackFontFamily = FontPreferences.getFallbackName(fontFamily, DEFAULT_FONT_SIZE, null);
+    String fallbackFontFamily = Registry.is("new.editor.font.selector")
+                                ? null : FontPreferences.getFallbackName(fontFamily, DEFAULT_FONT_SIZE, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
     }
