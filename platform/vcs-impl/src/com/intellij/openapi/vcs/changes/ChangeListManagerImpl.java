@@ -1575,17 +1575,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     private final ArrayDeque<Future<?>> myFutures = new ArrayDeque<>();
 
     public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
-      if (myExecutor.isShutdown()) return;
-
-      ScheduledFuture<?> future = myExecutor.schedule(new MyLoggingRunnable(command), delay, unit);
-      if (myUnitTestMode) addFuture(future);
+      try {
+        ScheduledFuture<?> future = myExecutor.schedule(new MyLoggingRunnable(command), delay, unit);
+        if (myUnitTestMode) addFuture(future);
+      }
+      catch (RejectedExecutionException e) {
+        LOG.warn(e);
+      }
     }
 
     public void submit(@NotNull Runnable command) {
-      if (myExecutor.isShutdown()) return;
-
-      Future<?> future = myExecutor.submit(new MyLoggingRunnable(command));
-      if (myUnitTestMode) addFuture(future);
+      try {
+        Future<?> future = myExecutor.submit(new MyLoggingRunnable(command));
+        if (myUnitTestMode) addFuture(future);
+      }
+      catch (RejectedExecutionException e) {
+        LOG.warn(e);
+      }
     }
 
     private void addFuture(Future<?> future) {
