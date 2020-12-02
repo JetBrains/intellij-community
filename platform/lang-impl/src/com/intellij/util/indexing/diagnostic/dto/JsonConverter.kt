@@ -48,13 +48,7 @@ fun ProjectIndexingHistory.IndexingTimes.toJson() =
     wasInterrupted = wasInterrupted
   )
 
-private fun calculatePercentages(part: Long, total: Long): JsonPercentages =
-  if (total == 0L) {
-    JsonPercentages(1.0)
-  }
-  else {
-    JsonPercentages(part.toDouble() / total)
-  }
+private fun calculatePercentages(part: Long, total: Long): JsonPercentages = JsonPercentages(part, total)
 
 fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory =
   JsonProjectIndexingHistory(
@@ -64,8 +58,8 @@ fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory =
     totalNumberOfUpToDateFiles = scanningStatistics.map { it.numberOfUpToDateFiles }.sum(),
     times = times.toJson(),
     totalNumberOfTooLargeForIndexingFiles = totalNumberOfTooLargeFiles,
-    totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.percentages },
-    totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.percentages },
+    totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
+    totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
     scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },
     fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingTime.nano }
   )
@@ -102,7 +96,7 @@ private fun ProjectIndexingHistory.aggregateStatsPerFileType(): List<JsonProject
       stats.totalNumberOfFiles,
       JsonFileSize(stats.totalBytes),
       fileTypeToProcessingSpeed.getValue(fileType),
-      jsonBiggestFileTypeContributors.sortedByDescending { it.partOfTotalIndexingTimeOfThisFileType.percentages }
+      jsonBiggestFileTypeContributors.sortedByDescending { it.partOfTotalIndexingTimeOfThisFileType.doublePercentages }
     )
   }
 }

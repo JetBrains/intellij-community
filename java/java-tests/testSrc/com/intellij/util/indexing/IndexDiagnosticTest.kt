@@ -77,8 +77,8 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
         listOf(
           JsonProjectIndexingHistory.JsonStatsPerFileType(
             "java",
-            JsonPercentages(0.3),
-            JsonPercentages(0.4),
+            JsonPercentages(30, 100),
+            JsonPercentages(40, 100),
             22,
             JsonFileSize(333),
             JsonProcessingSpeed(444, 555),
@@ -87,7 +87,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
                 "providerName",
                 444,
                 JsonFileSize(555),
-                JsonPercentages(0.8)
+                JsonPercentages(8, 10)
               )
             )
           )
@@ -95,7 +95,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
         listOf(
           JsonProjectIndexingHistory.JsonStatsPerIndexer(
             "IdIndex",
-            JsonPercentages(0.5),
+            JsonPercentages(5, 10),
             444,
             555,
             JsonFileSize(123),
