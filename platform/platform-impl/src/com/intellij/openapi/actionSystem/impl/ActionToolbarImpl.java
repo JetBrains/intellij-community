@@ -80,6 +80,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           ((ActionButton)c).updateToolTipText();
           ((ActionButton)c).updateIcon();
         }
+        toolbar.updateUI();
       }
     }
   }
