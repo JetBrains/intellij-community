@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.gradle
 
+import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.checkers.utils.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.util.parseKotlinVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
@@ -13,13 +16,13 @@ class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase(
     @Test
     @PluginTargetVersions(pluginVersion = "1.3.40+")
     fun testMultiplatformLibrary() {
-        importAndCheckHighlighting()
+        importAndCheckHighlighting(checkLineMarkers = true)
     }
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.3.40+")
     fun testUnresolvedInMultiplatformLibrary() {
-        importAndCheckHighlighting(false, false)
+        importAndCheckHighlighting(checkWarnings = true)
     }
 
     @Test
@@ -66,10 +69,6 @@ class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase(
                 }
             }
         )
-    }
-
-    override fun testDataDirName(): String {
-        return "importAndCheckHighlighting"
     }
 
     override fun printOutput(stream: PrintStream, text: String) = stream.println(text)
