@@ -5,6 +5,7 @@ import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -28,10 +29,12 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
 
   inner class ToolbarRegistryListener: RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {
+      val v = value.asBoolean()
       toolbarState.state =
-        getToolbarStateByVisibilityFlags(newToolbarEnabled, isToolbarVisible(), showNewToolbar,
+        getToolbarStateByVisibilityFlags(v, isToolbarVisible(), v,
                                          isNavBarVisible())
       updateSettingsState()
+      UISettings.instance.fireUISettingsChanged()
     }
   }
 
@@ -39,6 +42,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
     if(newToolbarEnabled) {
       updateSettingsState()
     }
+    Disposer.register(ProjectManager.getInstance().defaultProject, disposable)
     Registry.get("ide.new.navbar").addListener(ToolbarRegistryListener(), disposable)
   }
 
