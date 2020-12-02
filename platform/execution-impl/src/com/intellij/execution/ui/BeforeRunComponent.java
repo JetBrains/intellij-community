@@ -79,13 +79,11 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   }
 
   private TaskButton createTag(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
-    TaskButton button = new TaskButton(provider, (e) -> {
+    return new TaskButton(provider, (e) -> {
       myChangeListener.run();
       updateAddLabel();
       myTagListener.accept(provider.getId(), false);
     });
-    myTags.add(button);
-    return button;
   }
 
   private void updateAddLabel() {
@@ -156,7 +154,9 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
       if (taskProvider == null) {
         taskProvider = new UnknownBeforeRunTaskProvider(task.getProviderId().toString());
       }
-      createTag(taskProvider).setTask(task);
+      TaskButton tag = createTag(taskProvider);
+      tag.setTask(task);
+      myTags.add(tag);
     }
     buildPanel();
   }
