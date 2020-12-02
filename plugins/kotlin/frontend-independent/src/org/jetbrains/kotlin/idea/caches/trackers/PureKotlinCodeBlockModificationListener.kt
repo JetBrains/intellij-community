@@ -1,3 +1,8 @@
+/*
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 package org.jetbrains.kotlin.idea.caches.trackers
 
 import com.intellij.lang.ASTNode
@@ -28,7 +33,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getTopmostParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
 interface PureKotlinOutOfCodeBlockModificationListener {
-    fun didChangeKotlinFileOutOfCodeBlock(file: KtFile, isPhysical: Boolean)
+    fun kotlinFileOutOfCodeBlockChanged(file: KtFile, isSourceFile: Boolean)
 }
 
 class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
@@ -210,7 +215,7 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
         )
     }
 
-    private val myListeners: MutableList<PureKotlinOutOfCodeBlockModificationListener> = ContainerUtil.createLockFreeCopyOnWriteList()
+    private val listeners: MutableList<PureKotlinOutOfCodeBlockModificationListener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
     private val outOfCodeBlockModificationTrackerImpl = SimpleModificationTracker()
     val outOfCodeBlockModificationTracker = ModificationTracker { outOfCodeBlockModificationTrackerImpl.modificationCount }
@@ -242,15 +247,15 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                     val physical = ktFile.isPhysical
 
                     if (inBlockElements.isEmpty()) {
-                        val isPhysicalFile = physical && !isReplLine(ktFile.virtualFile) && ktFile !is KtTypeCodeFragment
+                        val isSourceFile = physical && !isReplLine(ktFile.virtualFile) && ktFile !is KtTypeCodeFragment
 
-                        if (isPhysicalFile) {
+                        if (isSourceFile) {
                             outOfCodeBlockModificationTrackerImpl.incModificationCount()
                         }
 
                         ktFile.incOutOfBlockModificationCount()
 
-                        didChangeKotlinCode(ktFile, isPhysicalFile)
+                        didChangeKotlinCode(ktFile, isSourceFile)
                     } else if (physical) {
                         inBlockElements.forEach { it.containingKtFile.addInBlockModifiedItem(it) }
                     }
@@ -261,17 +266,17 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
     }
 
     fun addListener(listener: PureKotlinOutOfCodeBlockModificationListener, parentDisposable: Disposable) {
-        myListeners.add(listener)
+        listeners.add(listener)
         Disposer.register(parentDisposable, { removeModelListener(listener) })
     }
 
     fun removeModelListener(listener: PureKotlinOutOfCodeBlockModificationListener) {
-        myListeners.remove(listener)
+        listeners.remove(listener)
     }
 
-    private fun didChangeKotlinCode(ktFile: KtFile, isPhysicalFile: Boolean) {
-        myListeners.forEach {
-            it.didChangeKotlinFileOutOfCodeBlock(ktFile, isPhysicalFile)
+    private fun didChangeKotlinCode(ktFile: KtFile, isSourceFile: Boolean) {
+        listeners.forEach {
+            it.kotlinFileOutOfCodeBlockChanged(ktFile, isSourceFile)
         }
     }
 
