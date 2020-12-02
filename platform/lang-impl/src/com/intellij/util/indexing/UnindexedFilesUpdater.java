@@ -49,8 +49,11 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
 
+  public enum TestMode {
+    PUSHING, PUSHING_AND_SCANNING
+  }
   @VisibleForTesting
-  public static volatile boolean ONLY_SCANNING = false;
+  public static volatile TestMode ourTestMode;
 
   public static final ExecutorService GLOBAL_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "Indexing", getMaxNumberOfIndexingThreads()
@@ -309,13 +312,13 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
         UnindexedFileStatus status;
         long statusTime = System.nanoTime();
         try {
-          status = ONLY_SCANNING ? null : unindexedFileFilter.getFileStatus(fileOrDir);
+          status = ourTestMode == TestMode.PUSHING ? null : unindexedFileFilter.getFileStatus(fileOrDir);
         }
         finally {
           statusTime = System.nanoTime() - statusTime;
         }
         if (status != null) {
-          if (status.getShouldIndex()) {
+          if (status.getShouldIndex() && ourTestMode == null) {
             files.add(fileOrDir);
           }
           scanningStatistics.addStatus(status, statusTime);
@@ -377,7 +380,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
     ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject);
-    projectIndexingHistory.getTimes().setTotalStart(Instant.now());
     myIndex.filesUpdateStarted(myProject);
     try {
       updateUnindexedFiles(projectIndexingHistory, indicator);
