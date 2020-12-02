@@ -594,7 +594,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     IndexingStamp.flushCaches();
     IndexConfiguration state = getState();
-    for (ID<?, ?> indexId : new ArrayList<>(state.getIndexIDs())) {
+    for (ID<?, ?> indexId : state.getIndexIDs()) {
       if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount.get()) {
         return; // do not interfere with 'main' jobs
       }

@@ -4,6 +4,8 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.CollectionFactory;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -12,15 +14,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 final class IndexConfiguration {
-  private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter>> myIndices = CollectionFactory.createSmallMemoryFootprintMap();
-  private final Object2IntMap<ID<?, ?>> myIndexIdToVersionMap = new Object2IntOpenHashMap<>();
+  private final Int2ObjectMap<Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter>> myIndices = new Int2ObjectOpenHashMap<>();
+  private final List<ID<?, ?>> myIndexIds = new ArrayList<>();
+  private final Object2IntMap<ID <?, ?>> myIndexIdToVersionMap = new Object2IntOpenHashMap<>();
   private final List<ID<?, ?>> myIndicesWithoutFileTypeInfo = new ArrayList<>();
   private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = CollectionFactory.createSmallMemoryFootprintMap();
   private volatile boolean myFreezed;
 
   <K, V> UpdatableIndex<K, V, FileContent> getIndex(@NotNull ID<K, V> indexId) {
     assert myFreezed;
-    final Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> pair = myIndices.get(indexId);
+    final Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> pair = myIndices.get(indexId.getUniqueId());
 
     //noinspection unchecked
     return (UpdatableIndex<K, V, FileContent>)Pair.getFirst(pair);
@@ -29,7 +32,7 @@ final class IndexConfiguration {
   @NotNull
   FileBasedIndex.InputFilter getInputFilter(@NotNull ID<?, ?> indexId) {
     assert myFreezed;
-    final Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> pair = myIndices.get(indexId);
+    final Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> pair = myIndices.get(indexId.getUniqueId());
 
     assert pair != null : "Index data is absent for index " + indexId;
 
@@ -48,6 +51,7 @@ final class IndexConfiguration {
     assert !myFreezed;
 
     synchronized (myIndices) {
+      myIndexIds.add(name);
       myIndexIdToVersionMap.put(name, version);
 
       if (associatedFileTypes != null) {
@@ -60,7 +64,7 @@ final class IndexConfiguration {
         myIndicesWithoutFileTypeInfo.add(name);
       }
 
-      Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> old = myIndices.put(name, new Pair<>(index, inputFilter));
+      Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> old = myIndices.put(name.getUniqueId(), new Pair<>(index, inputFilter));
       if (old != null) {
         throw new IllegalStateException("Index " + old.first + " already registered for the name '" + name + "'");
       }
@@ -87,7 +91,7 @@ final class IndexConfiguration {
   @NotNull
   Collection<ID<?, ?>> getIndexIDs() {
     assert myFreezed;
-    return myIndices.keySet();
+    return myIndexIds;
   }
 
   int getIndexVersion(@NotNull ID<?, ?> id) {
