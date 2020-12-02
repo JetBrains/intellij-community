@@ -58,6 +58,15 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
   override fun writeExtraData(writer: JsonGenerator) {
     writeServiceStats(writer)
     writeIcons(writer)
+
+    val classLoader = IdeIdeaFormatWriter::class.java.classLoader
+    val getClassPath = classLoader::class.java.getDeclaredMethod("getLoadingStats")
+    getClassPath.isAccessible = true
+    val stats = getClassPath.invoke(classLoader) as LongArray
+    writer.obj("classLoading") {
+      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats[0]))
+      writer.writeNumberField("count", stats[1])
+    }
   }
 
   override fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {

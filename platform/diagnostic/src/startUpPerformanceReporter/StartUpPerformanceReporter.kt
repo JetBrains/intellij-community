@@ -28,7 +28,6 @@ import java.nio.ByteBuffer
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
-import kotlin.Comparator
 
 class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   private var startUpFinishedCounter = AtomicInteger()
@@ -41,7 +40,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "24"
+    internal const val VERSION = "25"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -63,8 +62,8 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     private fun doLogStats(projectName: String): StartUpPerformanceReporterValues? {
       val items = mutableListOf<ActivityImpl>()
       val instantEvents = mutableListOf<ActivityImpl>()
-      val activities = CollectionFactory.createSmallMemoryFootprintMap<String, MutableList<ActivityImpl>>()
-      val serviceActivities = CollectionFactory.createSmallMemoryFootprintMap<String, MutableList<ActivityImpl>>()
+      val activities = HashMap<String, MutableList<ActivityImpl>>()
+      val serviceActivities = HashMap<String, MutableList<ActivityImpl>>()
       val services = mutableListOf<ActivityImpl>()
 
       val threadNameManager = IdeThreadNameManager()

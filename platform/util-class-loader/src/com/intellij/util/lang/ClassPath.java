@@ -14,6 +14,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
@@ -23,9 +24,15 @@ public final class ClassPath {
   private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
 
-  static final boolean ourClassLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
+  static final boolean recordLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
+  static final boolean recordLoadingStats = recordLoadingInfo || Boolean.getBoolean("idea.record.classloading.stats");
 
   private static final ResourceLoadingLogger ourResourceLoadingLogger;
+
+  private static final Set<String> loadedClassNames;
+  private static final AtomicLong ourTotalTime = new AtomicLong();
+  private static final AtomicInteger ourTotalRequests = new AtomicInteger();
+  private static final ThreadLocal<Boolean> doingTiming = new ThreadLocal<Boolean>();
 
   private final List<URL> myUrls = new ArrayList<URL>();
   private final List<Loader> myLoaders = new ArrayList<Loader>();
@@ -46,7 +53,35 @@ public final class ClassPath {
   private final @Nullable CachePoolImpl myCachePool;
   private final @Nullable UrlClassLoader.CachingCondition myCachingCondition;
   final boolean myLogErrorOnMissingJar;
-  private final @Nullable LinkedHashSet<String> myJarAccessLog;
+
+  private final @Nullable AtomicLong jarAccessCount;
+  private final @Nullable ConcurrentMap<String, Long> jarAccessLog;
+
+  static {
+    loadedClassNames = recordLoadingInfo ? Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>()) : null;
+    String className = System.getProperty("intellij.class.resources.loading.logger");
+    ResourceLoadingLogger resourceLoadingLogger = null;
+    if (className != null) {
+      try {
+        resourceLoadingLogger = (ResourceLoadingLogger)Class.forName(className).getDeclaredConstructor().newInstance();
+      }
+      catch (Throwable e) {
+        LoggerRt.getInstance(ClassPath.class).error("Failed to instantiate resource loading logger " + className, e);
+      }
+    }
+    ourResourceLoadingLogger = resourceLoadingLogger;
+
+    if (recordLoadingInfo) {
+      Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook for tracing classloading information") {
+        @Override
+        public void run() {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.out.println("Classloading requests: " + ClassPath.class.getClassLoader() + "," +
+                             ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
+        }
+      });
+    }
+  }
 
   public ClassPath(List<URL> urls,
                    boolean canLockJars,
@@ -70,8 +105,26 @@ public final class ClassPath {
     myCanHavePersistentIndex = canHavePersistentIndex;
     myLogErrorOnMissingJar = logErrorOnMissingJar;
     myURLsWithProtectionDomain = urlsWithProtectionDomain;
-    myJarAccessLog = logJarAccess ? new LinkedHashSet<String>() : null;
+
+    if (logJarAccess) {
+      jarAccessCount = new AtomicLong();
+      jarAccessLog = new ConcurrentHashMap<String, Long>();
+
+    }
+    else {
+      jarAccessCount = null;
+      jarAccessLog = null;
+    }
     push(urls);
+  }
+
+  // in nanoseconds
+  public static long getTotalTime() {
+    return ourTotalTime.get();
+  }
+
+  public static long getTotalRequests() {
+    return ourTotalRequests.get();
   }
 
   /** @deprecated adding URLs to classpath at runtime could lead to hard-to-debug errors */
@@ -115,15 +168,14 @@ public final class ClassPath {
 
       Loader loader;
       while ((loader = getLoader(i++)) != null) {
-        if (myCanUseCache) {
-          if (!loader.containsName(s, shortName)) continue;
+        if (myCanUseCache && !loader.containsName(s, shortName)) {
+          continue;
         }
         resource = loader.getResource(s);
         if (resource != null) {
-          if (myJarAccessLog != null) {
-            synchronized (myJarAccessLog) {
-              myJarAccessLog.add(loader.getBaseURL().toString());
-            }
+          if (jarAccessLog != null) {
+            //noinspection ConstantConditions
+            jarAccessLog.putIfAbsent(loader.getBaseURL().toString(), jarAccessCount.getAndIncrement());
           }
           return resource;
         }
@@ -187,12 +239,8 @@ public final class ClassPath {
   }
 
   @NotNull
-  public Collection<String> getJarAccessLog() {
-    if (myJarAccessLog == null) return Collections.emptySet();
-
-    synchronized (myJarAccessLog) {
-      return new LinkedHashSet<String>(myJarAccessLog);
-    }
+  public Map<String, Long> getJarAccessLog() {
+    return jarAccessLog == null ? Collections.<String, Long>emptyMap() : jarAccessLog;
   }
 
   @ReviseWhenPortedToJDK("7")  // use URL -> URI -> Path conversion
@@ -234,9 +282,9 @@ public final class ClassPath {
     if (processRecursively) {
       String[] referencedJars = loadManifestClasspath(loader);
       if (referencedJars != null) {
-        long s2 = ourClassLoadingInfo ? System.nanoTime() : 0;
+        long s2 = recordLoadingInfo ? System.nanoTime() : 0;
         List<URL> urls = new ArrayList<URL>(referencedJars.length);
-        for (String referencedJar:referencedJars) {
+        for (String referencedJar : referencedJars) {
           try {
             urls.add(UrlUtilRt.internProtocol(new URI(referencedJar).toURL()));
           }
@@ -245,7 +293,7 @@ public final class ClassPath {
           }
         }
         push(urls);
-        if (ourClassLoadingInfo) {
+        if (recordLoadingInfo) {
           //noinspection UseOfSystemOutOrSystemErr
           System.out.println("Loaded all " + referencedJars.length + " urls " + (System.nanoTime() - s2) / 1000000 + "ms");
         }
@@ -388,10 +436,9 @@ public final class ClassPath {
                                          @NotNull String s,
                                          @NotNull ClassPath classPath,
                                          @NotNull Resource resource) {
-      if (classPath.myJarAccessLog != null) {
-        synchronized (classPath.myJarAccessLog) {
-          classPath.myJarAccessLog.add(loader.getBaseURL().toString());
-        }
+      if (classPath.jarAccessLog != null) {
+        //noinspection ConstantConditions
+        classPath.jarAccessLog.putIfAbsent(loader.getBaseURL().toString(), classPath.jarAccessCount.getAndIncrement());
       }
       if (ourResourceLoadingLogger != null) {
         long resourceSize;
@@ -418,76 +465,37 @@ public final class ClassPath {
     void logResource(String url, URL baseLoaderURL, long resourceSize);
   }
 
-  static {
-    String className = System.getProperty("intellij.class.resources.loading.logger");
-    ResourceLoadingLogger resourceLoadingLogger = null;
-    if (className != null) {
-      try {
-        resourceLoadingLogger = (ResourceLoadingLogger)Class.forName(className).getDeclaredConstructor().newInstance();
-      }
-      catch (Throwable e) {
-        LoggerRt.getInstance(ClassPath.class).error("Failed to instantiate resource loading logger " + className, e);
-      }
-    }
-    ourResourceLoadingLogger = resourceLoadingLogger;
-
-    if (ourClassLoadingInfo) {
-      Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook for tracing classloading information") {
-        @Override
-        public void run() {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.out.println("Classloading requests:" + ClassPath.class.getClassLoader() + "," + ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
-        }
-      });
-    }
-  }
-
-  private static final Set<String> ourLoadedClasses = ourClassLoadingInfo ? Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>()) : null;
-  private static final AtomicLong ourTotalTime = new AtomicLong();
-  private static final AtomicInteger ourTotalRequests = new AtomicInteger();
-  private static final ThreadLocal<Boolean> ourDoingTiming = new ThreadLocal<Boolean>();
-
   private static long startTiming() {
-    if (!ourClassLoadingInfo || ourDoingTiming.get() != null) {
+    if (!recordLoadingStats || doingTiming.get() != null) {
       return 0;
     }
-    ourDoingTiming.set(Boolean.TRUE);
+
+    doingTiming.set(Boolean.TRUE);
     return System.nanoTime();
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logInfo(ClassPath path, long started, String resourceName, Resource resource) {
-    if (!ourClassLoadingInfo) {
+    if (resource != null && recordLoadingInfo) {
+      loadedClassNames.add(resource.getURL().getPath());
+    }
+
+    if (started == 0 || !recordLoadingStats) {
       return;
     }
 
-    if (resource != null) {
-      String urlPath = resource.getURL().getPath();
-
-      if (urlPath.endsWith(resourceName)) {
-        String modulePath = urlPath.substring(0, urlPath.length() - resourceName.length());
-        if (modulePath.startsWith("file:")) modulePath = modulePath.substring("file:".length());
-        if (modulePath.endsWith("/")) modulePath = modulePath.substring(0, modulePath.length() -1);
-        if (modulePath.endsWith("!")) modulePath = modulePath.substring(0, modulePath.length() -1);
-
-        urlPath = resourceName + ":" + modulePath;
-      }
-      ourLoadedClasses.add(urlPath);
-    }
-
-    if (started == 0) {
-      return;
-    }
-    ourDoingTiming.set(null);
+    doingTiming.set(null);
 
     long time = System.nanoTime() - started;
     long totalTime = ourTotalTime.addAndGet(time);
     int totalRequests = ourTotalRequests.incrementAndGet();
-    if (time > 3000000L) {
-      System.out.println(time / 1000000 + " ms for " + resourceName);
-    }
-    if (totalRequests % 10000 == 0) {
-      System.out.println(path.getClass().getClassLoader() + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
+    if (recordLoadingInfo) {
+      if (time > 3000000L) {
+        System.out.println(time / 1000000 + " ms for " + resourceName);
+      }
+      if (totalRequests % 10000 == 0) {
+        System.out.println(path.getClass().getClassLoader() + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
+      }
     }
   }
 

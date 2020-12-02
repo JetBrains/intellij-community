@@ -176,14 +176,16 @@ public final class ClasspathCache {
       map.put(hash, loader);
     }
     else if (o instanceof Loader) {
-      if (ClassPath.ourClassLoadingInfo) {
+      if (ClassPath.recordLoadingInfo) {
         assert loader != o;
       }
       map.put(hash, new Loader[]{(Loader)o, loader});
     }
     else {
       Loader[] loadersArray = (Loader[])o;
-      if (ClassPath.ourClassLoadingInfo) assert ArrayUtilRt.find(loadersArray, loader) == -1;
+      if (ClassPath.recordLoadingInfo) {
+        assert ArrayUtilRt.indexOf(loadersArray, loader, 0, loadersArray.length) == -1;
+      }
       Loader[] newArray = Arrays.copyOf(loadersArray, loadersArray.length + 1);
       newArray[loadersArray.length] = loader;
       map.put(hash, newArray);

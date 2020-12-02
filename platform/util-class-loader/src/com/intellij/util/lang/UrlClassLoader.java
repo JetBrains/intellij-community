@@ -95,8 +95,15 @@ public class UrlClassLoader extends ClassLoader {
 
   @SuppressWarnings("unused")  // called via reflection
   @NotNull
-  public Collection<String> getJarAccessLog() {
+  public final Map<String, Long> getJarAccessLog() {
     return myClassPath.getJarAccessLog();
+  }
+
+  // called via reflection
+  @SuppressWarnings({"unused", "MethodMayBeStatic"})
+  @NotNull
+  public final long[] getLoadingStats() {
+    return new long[]{ClassPath.getTotalTime(), ClassPath.getTotalRequests()};
   }
 
   public static final class Builder {
