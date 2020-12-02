@@ -70,7 +70,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
     myIgnoreAction = new LinkLabel<>(IdeBundle.message("updates.ignore.updates.button", updatedPlugins.size()), null, (__, ___) -> {
       close(CANCEL_EXIT_CODE);
-      ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, component -> component.myUpdateDescriptor));
+      ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, component -> component.getPluginDescriptor()));
     });
 
     myPluginModel = new MyPluginModel(project) {
@@ -309,8 +309,8 @@ public class PluginUpdateDialog extends DialogWrapper {
     }
 
     try {
-      FileUtil
-        .writeToFile(getDisabledUpdateFile(), StringUtil.join(ignoredPlugins, LineSeparator.getSystemLineSeparator().getSeparatorString()));
+      File file = getDisabledUpdateFile();
+      FileUtil.writeToFile(file, StringUtil.join(ignoredPlugins, LineSeparator.getSystemLineSeparator().getSeparatorString()));
     }
     catch (IOException e) {
       Logger.getInstance(UpdateChecker.class).error(e);
