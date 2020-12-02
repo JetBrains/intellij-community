@@ -360,7 +360,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         }
         final ArrayList<UsageInfo> selected = dialog.getSelected();
         final Set<UsageInfo> unselected = new HashSet<>(overridingMethods);
-        unselected.removeAll(selected);
+        for (UsageInfo usageInfo : selected) {
+          unselected.remove(usageInfo);
+        }
 
         if (!unselected.isEmpty()) {
           final List<PsiMethod> unselectedMethods = ContainerUtil.map(unselected, info -> ((SafeDeleteOverridingMethodUsageInfo)info).getOverridingMethod());

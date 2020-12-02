@@ -66,7 +66,9 @@ public final class DetailExceptionsIntention extends Intention {
             exceptionsToExpand.add(aExceptionsThrown);
           }
         }
-        exceptionsThrown.removeAll(exceptionsToExpand);
+        for (PsiClassType type : exceptionsToExpand) {
+          exceptionsThrown.remove(type);
+        }
 
         PsiClassType commonSuperType = null;
         PsiClass commonSuper = ObscureThrownExceptionsIntention.findCommonSuperClass(exceptionsToExpand.toArray(PsiClassType.EMPTY_ARRAY));

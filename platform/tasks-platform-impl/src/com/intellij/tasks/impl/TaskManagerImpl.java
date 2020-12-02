@@ -170,7 +170,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   public <T extends TaskRepository> void setRepositories(@NotNull List<T> repositories) {
     Set<TaskRepository> set = new HashSet<>(myRepositories);
-    set.removeAll(repositories);
+    repositories.forEach(set::remove);
     myBadRepositories.removeAll(set); // remove all changed reps
     myIssueCache.clear();
 
