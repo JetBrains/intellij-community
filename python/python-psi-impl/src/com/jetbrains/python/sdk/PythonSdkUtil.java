@@ -323,9 +323,6 @@ public class PythonSdkUtil {
     return null;
   }
 
-  /**
-   * If you are interested in virtual-env specific folders only, consider using PySdkHome class
-   * */
   @Nullable
   public static String getExecutablePath(@NotNull final String homeDirectory, @NotNull String name) {
     File binPath = new File(homeDirectory);

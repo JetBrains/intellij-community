@@ -26,7 +26,6 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
-import static com.jetbrains.env.PyEnvTestToolsKt.replaceServicesWithMocks;
 
 /**
  * <p>
@@ -122,7 +121,7 @@ public abstract class PyEnvTestCase {
 
   @BeforeClass
   public static void collectTagsForEnvs() {
-    for (final String pythonRoot : getPythonRoots()) {
+    for (final String pythonRoot : getDefaultPythonRoots()) {
       envTags.put(pythonRoot, loadEnvTags(pythonRoot));
     }
   }
@@ -240,8 +239,16 @@ public abstract class PyEnvTestCase {
     }
   }
 
-  public static List<String> getPythonRoots() {
+  public static List<String> getDefaultPythonRoots() {
     return ContainerUtil.map(SETTINGS.getPythons(), File::getAbsolutePath);
+  }
+
+  /**
+   * @return list of pythons to run tests against
+   */
+  @NotNull
+  protected List<String> getPythonRoots() {
+    return getDefaultPythonRoots();
   }
 
 

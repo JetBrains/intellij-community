@@ -492,7 +492,7 @@ public final class PyToxTest extends PyEnvTestCase {
     //On linux we also need shared libs from Anaconda, so we add it to LD_LIBRARY_PATH
     final List<String> roots = new ArrayList<>();
     final List<String> libs = new ArrayList<>();
-    for (final String root : getPythonRoots()) {
+    for (final String root : getDefaultPythonRoots()) {
       File bin = new File(root, "/bin/");
       roots.add(bin.exists() ? bin.getAbsolutePath() : root);
       File lib = new File(root, "/lib/");
