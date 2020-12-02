@@ -5,6 +5,7 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
 import org.jetbrains.plugins.emojipicker.service.EmojiService;
@@ -37,9 +38,9 @@ public class EmojiSkinTonesPanel extends JPanel {
   @Override
   protected void paintComponent(Graphics g) {
     g.setColor(myStyle.myBorderColor);
-    g.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
+    RectanglePainter2D.FILL.paint((Graphics2D)g, 0, 0, getWidth(), getHeight(), 6.0);
     g.setColor(myStyle.myBackgroundColor);
-    g.fillRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 6, 6);
+    RectanglePainter2D.FILL.paint((Graphics2D)g, 1, 1, getWidth() - 2, getHeight() - 2, 6.0);
   }
 
   @Override
@@ -47,7 +48,7 @@ public class EmojiSkinTonesPanel extends JPanel {
     super.paint(g);
     if (myFocusedItem != -1) {
       g.setColor(myStyle.myFocusBorderColor);
-      g.drawRoundRect(3, myFocusedItem * myItemSize + 3, myItemSize - 4, myItemSize - 4, 6, 6);
+      RectanglePainter2D.DRAW.paint((Graphics2D)g, 3, myFocusedItem * myItemSize + 3, myItemSize - 4, myItemSize - 4, 6.0);
     }
   }
 
@@ -65,6 +66,7 @@ public class EmojiSkinTonesPanel extends JPanel {
   }
 
   void setCurrentItemFromFocus() {
+    if (myFocusedItem < 0) return;
     Component c = getComponent(myFocusedItem);
     for (Item item : myItemMap.values()) {
       if (item.myButton == c) {
@@ -122,7 +124,7 @@ public class EmojiSkinTonesPanel extends JPanel {
         ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
         if (myHover) {
           g.setColor(myStyle.myHoverBackgroundColor);
-          g.fillRoundRect(x, y, getIconWidth(), getIconHeight(), 6, 6);
+          RectanglePainter2D.FILL.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), 6.0);
         }
 
         @NlsSafe String emoji = ITEM_EMOJI + myTone.getStringValue();

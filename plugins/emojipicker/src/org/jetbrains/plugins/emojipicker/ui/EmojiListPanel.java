@@ -3,6 +3,7 @@ package org.jetbrains.plugins.emojipicker.ui;
 
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
@@ -326,7 +327,7 @@ class EmojiListPanel extends JBScrollPane {
         int x = xGridToVisible(myCurrentItemIndex % myItemsPerRow);
         int y = yGridToVisible(myCurrentItemIndex / myItemsPerRow);
         g.setColor(myStyle.myHoverBackgroundColor);
-        g.fillRoundRect(x, y, myCellSize.width, myCellSize.height, 6, 6);
+        RectanglePainter2D.FILL.paint((Graphics2D)g, x, y, myCellSize.width, myCellSize.height, 6.0);
       }
     }
 
@@ -351,7 +352,7 @@ class EmojiListPanel extends JBScrollPane {
     private void paintCategoryLabel(Graphics g) {
       int offset = Math.min(g.getClipBounds().y, getHeight() - JBUIScale.scale(LABEL_HEIGHT));
       g.setColor(myStyle.myBackgroundColor);
-      g.fillRect(0, offset, getWidth(), JBUIScale.scale(LABEL_HEIGHT));
+      RectanglePainter2D.FILL.paint((Graphics2D)g, 0, offset, getWidth(), JBUIScale.scale(LABEL_HEIGHT));
       g.setFont(myStyle.myFont);
       g.setColor(myStyle.myTextColor);
       g.drawString(myName, JBUIScale.scale(16), offset + JBUIScale.scale(20));
