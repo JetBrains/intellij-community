@@ -33,6 +33,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -109,12 +110,12 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
       .filterMap(Language::getAssociatedFileType)
       .filterMap(FileType::getDefaultExtension)
       .first(), "txt");
-    FileTemplate selected = getSelectedTemplate();
-    if (!(selected instanceof FileTemplateBase)) return;
-    String name = child ? ((FileTemplateBase)selected).getChildName(selected.getChildren().length) : IdeBundle.message("template.unnamed");
+    FileTemplateBase selected = ObjectUtils.tryCast(getSelectedTemplate(), FileTemplateBase.class);
+    if (selected == null && child) return;
+    String name = child ? selected.getChildName(selected.getChildren().length) : IdeBundle.message("template.unnamed");
     FileTemplate template = createTemplate(name, ext, "", child);
     if (child) {
-      ((FileTemplateBase)selected).addChild(template);
+      selected.addChild(template);
     }
   }
 
