@@ -207,7 +207,10 @@ class CompilationContextImpl implements CompilationContext {
     def kotlincLibPath = "$kotlinHomePath/kotlinc/lib"
     if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
       ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar", "kotlin-common.jar"].each {
-        BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", ant)
+        def completePath = "$kotlinPluginLibPath/$it"
+        if (new File(completePath).exists()) {
+          BuildUtils.addToJpsClassPath(completePath, ant)
+        }
       }
       ["kotlin-stdlib.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlincLibPath/$it", ant)
