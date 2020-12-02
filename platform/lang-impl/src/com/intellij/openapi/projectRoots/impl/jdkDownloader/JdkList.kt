@@ -405,6 +405,11 @@ abstract class JdkListDownloaderBase {
     return list.filter { it.isVisibleOnUI && it.os == JdkPredicate.currentOS }
   }
 
+  fun findWslJdk(item: JdkItem): JdkItem {
+    val jdkList = downloadJdksListWithCache(feedUrl, null)
+    return jdkList.firstOrNull { it.product.vendor == item.product.vendor && it.versionString == item.versionString } ?: item
+  }
+
   private val jdksListCache = CachedValueWithTTL<List<JdkItem>>(15 to TimeUnit.MINUTES)
 
   private fun downloadJdksListWithCache(feedUrl: String?, progress: ProgressIndicator?): List<JdkItem> {
