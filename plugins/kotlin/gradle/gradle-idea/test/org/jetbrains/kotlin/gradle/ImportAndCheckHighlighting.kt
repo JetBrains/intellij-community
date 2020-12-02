@@ -32,6 +32,12 @@ class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase(
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.3.40+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    fun testMacosTargets() {
+        importAndCheckHighlighting(checkLineMarkers = true)
+    }
+
+    @Test
     @PluginTargetVersions(pluginVersion = "1.4.0+")
     fun testHmppStdlibUsageInAllBackends() {
         importAndCheckHighlighting()
