@@ -71,7 +71,7 @@ public final class GradleUtil {
    */
   @NotNull
   public static FileChooserDescriptor getGradleProjectFileChooserDescriptor() {
-    return new FileChooserDescriptor(true, false, false, false, false, false)
+    return new FileChooserDescriptor(true, true, false, false, false, false)
       .withFileFilter(file -> file.isCaseSensitive()
                               ? endsWith(file.getName(), "." + EXTENSION) || endsWith(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION)
                               : endsWithIgnoreCase(file.getName(), "." + EXTENSION) || endsWithIgnoreCase(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION));
