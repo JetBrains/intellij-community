@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.CommitTabTitleUpdater
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.index.GitStageContentProvider.Companion.STAGING_AREA_TAB_NAME
@@ -28,13 +27,13 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
   override fun initContent(): JComponent {
     val tracker = GitStageTracker.getInstance(project)
     disposable = Disposer.newDisposable("Git Stage Content Provider")
-    val gitStagePanel = GitStagePanel(tracker, ChangesViewContentManager.isCommitToolWindow(project), disposable!!) {
+    val gitStagePanel = GitStagePanel(tracker, ChangesViewContentManager.isCommitToolWindowShown(project), disposable!!) {
       ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.activate(null)
     }
     setupTabTitleUpdater(tracker, gitStagePanel)
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
-        gitStagePanel.setDiffPreviewInEditor(ChangesViewContentManager.isCommitToolWindow(project))
+        gitStagePanel.setDiffPreviewInEditor(ChangesViewContentManager.isCommitToolWindowShown(project))
       }
     })
     return gitStagePanel

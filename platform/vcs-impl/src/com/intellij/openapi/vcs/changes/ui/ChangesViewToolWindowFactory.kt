@@ -47,7 +47,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   }
 
   override fun shouldBeAvailable(project: Project): Boolean {
-    return super.shouldBeAvailable(project) && project.isCommitToolWindow
+    return super.shouldBeAvailable(project) && project.isCommitToolWindowShown
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {

@@ -29,10 +29,10 @@ class GitStashContentProvider(private val project: Project) : ChangesViewContent
     project.service<GitStashTracker>().scheduleRefresh()
 
     disposable = Disposer.newDisposable("Git Stash Content Provider")
-    val gitStashUi = GitStashUi(project, ChangesViewContentManager.isCommitToolWindow(project), disposable!!)
+    val gitStashUi = GitStashUi(project, ChangesViewContentManager.isCommitToolWindowShown(project), disposable!!)
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
-        gitStashUi.setDiffPreviewInEditor(ChangesViewContentManager.isCommitToolWindow(project))
+        gitStashUi.setDiffPreviewInEditor(ChangesViewContentManager.isCommitToolWindowShown(project))
       }
     })
     return gitStashUi.mainComponent

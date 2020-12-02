@@ -28,8 +28,8 @@ import kotlin.properties.Delegates.observable
 private val isCommitToolWindowRegistryValue
   get() = Registry.get("vcs.commit.tool.window")
 
-internal val Project.isCommitToolWindow: Boolean
-  get() = ChangesViewContentManager.isCommitToolWindow(this)
+internal val Project.isCommitToolWindowShown: Boolean
+  get() = ChangesViewContentManager.isCommitToolWindowShown(this)
 
 internal fun ContentManager.selectFirstContent() {
   val firstContent = getContent(0)
@@ -47,12 +47,12 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   private fun Content.isInCommitToolWindow() = IS_IN_COMMIT_TOOLWINDOW_KEY.get(this) == true
 
   private fun Content.resolveContentManager(): ContentManager? {
-    val toolWindowId = if (isInCommitToolWindow() && isCommitToolWindow) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
+    val toolWindowId = if (isInCommitToolWindow() && isCommitToolWindowShown) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
     val toolWindow = toolWindows.find { it.id == toolWindowId }
     return toolWindow?.contentManager
   }
 
-  private var isCommitToolWindow: Boolean
+  private var isCommitToolWindowShown: Boolean
     by observable(isCommitToolWindowRegistryValue.asBoolean() && isNonModalInSettings()) { _, oldValue, newValue ->
       if (oldValue == newValue) return@observable
 
@@ -67,7 +67,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   fun updateToolWindowMapping() {
-    isCommitToolWindow = CommitWorkflowManager.getInstance(project).isNonModal() && isCommitToolWindowRegistryValue.asBoolean()
+    isCommitToolWindowShown = CommitWorkflowManager.getInstance(project).isNonModal() && isCommitToolWindowRegistryValue.asBoolean()
   }
 
   private fun remapContents() {
@@ -211,7 +211,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       getInstance(project) as? ChangesViewContentManager
 
     @JvmStatic
-    fun isCommitToolWindow(project: Project): Boolean = getInstanceImpl(project)?.isCommitToolWindow == true
+    fun isCommitToolWindowShown(project: Project): Boolean = getInstanceImpl(project)?.isCommitToolWindowShown == true
 
     @JvmStatic
     fun getToolWindowIdFor(project: Project, tabName: String): String {
@@ -227,7 +227,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
     @JvmStatic
     internal fun getToolWindowId(project: Project, contentEp: ChangesViewContentEP): String {
-      if (contentEp.isInCommitToolWindow && isCommitToolWindow(project)) return COMMIT_TOOLWINDOW_ID
+      if (contentEp.isInCommitToolWindow && isCommitToolWindowShown(project)) return COMMIT_TOOLWINDOW_ID
       return TOOLWINDOW_ID
     }
 

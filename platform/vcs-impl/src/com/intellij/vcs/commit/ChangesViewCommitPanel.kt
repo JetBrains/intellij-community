@@ -255,7 +255,7 @@ private class ChangesViewCommitTabTitleUpdater(private val commitPanel: ChangesV
   override fun toolWindowMappingChanged() = updateTab()
 
   override fun updateTab() {
-    if (!project.isCommitToolWindow) return
+    if (!project.isCommitToolWindowShown) return
     super.updateTab()
   }
 }
