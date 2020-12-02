@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class ImportUsagesAction extends AnAction {
   public ImportUsagesAction() {
     super(ActionsBundle.message("import.Usages.text"), null, AllIcons.Toolwindows.ToolWindowFavorites);
