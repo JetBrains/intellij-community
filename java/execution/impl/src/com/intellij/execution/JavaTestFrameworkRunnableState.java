@@ -60,6 +60,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -92,6 +93,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   private RemoteConnectionCreator remoteConnectionCreator;
   private final List<ArgumentFileFilter> myArgumentFileFilters = new ArrayList<>();
+
+  @Nullable private volatile TargetProgressIndicator myTargetProgressIndicator = null;
 
   public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
     this.remoteConnectionCreator = remoteConnectionCreator;
@@ -162,6 +165,35 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected boolean isIdBasedTestTree() {
     return false;
+  }
+
+  @Override
+  public void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
+                                              @Nullable TargetEnvironmentConfiguration configuration,
+                                              @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
+    myTargetProgressIndicator = targetProgressIndicator;
+    try {
+      T myConfiguration = getConfiguration();
+      if (myConfiguration.getProjectPathOnTarget() != null) {
+        request.setProjectPathOnTarget(myConfiguration.getProjectPathOnTarget());
+      }
+      super.prepareTargetEnvironmentRequest(request, configuration, targetProgressIndicator);
+    }
+    finally {
+      myTargetProgressIndicator = null;
+    }
+  }
+
+  /**
+   * Returns the current {@link TargetProgressIndicator} if the call happens
+   * within the execution of {@code prepareTargetEnvironmentRequest(...)}.
+   *
+   * @return the current {@link TargetProgressIndicator} if it is present and
+   * {@code null} otherwise
+   */
+  @ApiStatus.Internal
+  protected final @Nullable TargetProgressIndicator getTargetProgressIndicator() {
+    return myTargetProgressIndicator;
   }
 
   @NotNull
@@ -254,7 +286,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     return module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
   }
-  
+
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
