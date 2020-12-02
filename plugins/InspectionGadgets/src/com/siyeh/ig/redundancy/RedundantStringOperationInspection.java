@@ -471,7 +471,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         DeleteElementFix fix =
           new DeleteElementFix(args[1], InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name"));
         return myManager.createProblemDescriptor(args[1],
-                                                 InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                                 InspectionGadgetsBundle.message("inspection.redundant.string.argument.message"),
                                                  fix, ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly);
       }
 
