@@ -94,9 +94,17 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   }
 
   private static @NotNull Map<EngineInfo, ScriptEngineFactory> calcFactories() {
-    return JBIterable.<ScriptEngineFactory>empty()
-      .append(new ScriptEngineManager().getEngineFactories()) // bundled factories from java modules (Nashorn)
-      .append(new ScriptEngineManager(AllPluginsLoader.INSTANCE).getEngineFactories()) // from plugins (Kotlin)
+    // bundled factories from java modules (Groovy) and from plugins
+    return JBIterable.of(PluginManagerCore.getPlugins())
+      .flatten(o1 -> {
+        try {
+          return new ScriptEngineManager(o1.getPluginClassLoader()).getEngineFactories();
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+          return null;
+        }
+      })
       .unique(o -> o.getClass().getName())
       .toMap(factory -> {
         Class<? extends ScriptEngineFactory> aClass = factory.getClass();
