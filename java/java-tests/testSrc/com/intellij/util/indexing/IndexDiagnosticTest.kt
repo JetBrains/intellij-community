@@ -16,6 +16,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.ZonedDateTime
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 import kotlin.streams.toList
 
 /**
@@ -51,6 +53,14 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     val allDirs = Files.list(indexingDiagnosticDir).use { it.toList() }
     val projectDir = myFixture.project.getProjectCachePath(IndexDiagnosticDumper.indexingDiagnosticDir)
     assertEquals(listOf(projectDir), allDirs)
+    for (dir in allDirs) {
+      val files = Files.list(dir).use { it.toList() }
+      val jsonFiles = files.filter { it.extension == "json" }
+      val htmlFiles = files.filter { it.extension == "html" }
+      assertTrue(files.isNotEmpty())
+      assertEquals(files.joinToString { it.toString() }, files.size, jsonFiles.size + htmlFiles.size)
+      assertEquals(files.joinToString { it.toString() }, jsonFiles.map { it.nameWithoutExtension }.toSet(), htmlFiles.map { it.nameWithoutExtension }.toSet())
+    }
   }
 
   fun `test index diagnostics json can be deserialized`() {
