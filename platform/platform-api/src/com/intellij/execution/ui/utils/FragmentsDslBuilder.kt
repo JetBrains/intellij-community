@@ -54,12 +54,16 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(val id: St
   @Nls
   var hint: String? = null
 
+  @Nls
+  var actionHint: String? = null
+
   var commandLinePosition: Int = 0
 
   fun build(): SettingsEditorFragment<Settings, Component> {
     return SettingsEditorFragment(id, name, group, component, commandLinePosition, reset, apply, visible).also {
       it.isRemovable = isRemovable
       it.setHint(hint)
+      it.actionHint = actionHint
     }
   }
 }
@@ -87,9 +91,12 @@ class FragmentsBuilder<Settings : FragmentedSettings> {
     @Nls name: String,
     getter: (Settings) -> Boolean,
     setter: (Settings, Boolean) -> Unit,
-    @Nls group: String? = null
+    @Nls group: String? = null,
+    @Nls actionHint: String? = null,
   ): SettingsEditorFragment<Settings, *> {
-    return SettingsEditorFragment.createTag(id, name, group, getter, setter).apply { fragments += this }
+    return SettingsEditorFragment.createTag(id, name, group, getter, setter).also {
+      it.actionHint = actionHint
+    }.apply { fragments += this }
   }
 
   fun group(id: String, setup: Group<Settings>.() -> Unit): NestedGroupFragment<Settings> {
