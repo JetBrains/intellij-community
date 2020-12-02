@@ -14,24 +14,23 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class CachedValueProfiler {
   private static final Logger LOG = Logger.getInstance(CachedValueProfiler.class);
 
   public interface EventConsumer {
-    void onFrameEnter(long frameId, Supplier<StackTraceElement> place, long parentId, long time);
+    void onFrameEnter(long frameId, EventPlace place, long parentId, long time);
 
     void onFrameExit(long frameId, long start, long computed, long time);
 
-    void onValueComputed(long frameId, Supplier<StackTraceElement> place, long start, long time);
+    void onValueComputed(long frameId, EventPlace place, long start, long time);
 
-    void onValueUsed(long frameId, Supplier<StackTraceElement> place, long computed, long time);
+    void onValueUsed(long frameId, EventPlace place, long computed, long time);
 
-    void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long used, long time);
+    void onValueInvalidated(long frameId, EventPlace place, long used, long time);
 
-    void onValueRejected(long frameId, Supplier<StackTraceElement> place, long start, long computed, long time);
+    void onValueRejected(long frameId, EventPlace place, long start, long computed, long time);
   }
 
   private static final ThreadLocal<ThreadContext> ourContext = ThreadLocal.withInitial(() -> new ThreadContext());
@@ -61,7 +60,7 @@ public final class CachedValueProfiler {
     final long id = ourFrameId.incrementAndGet();
     final Frame parent;
 
-    private final Map<CachedValueProvider.Result<?>, Supplier<StackTraceElement>> places = new HashMap<>();
+    private final Map<CachedValueProvider.Result<?>, EventPlace> places = new HashMap<>();
     private long timeConfigured, timeComputed;
 
     Frame() {
@@ -70,7 +69,7 @@ public final class CachedValueProfiler {
       context.topFrame = this;
       if (context.consumer == null || context.consumer != ourEventConsumer) return;
 
-      Supplier<StackTraceElement> place = place(CachedValueProfiler::findCallerPlace);
+      EventPlace place = place(CachedValueProfiler::findCallerPlace);
       context.consumer.onFrameEnter(id, place, parent == null ? 0 : parent.id, start);
       timeConfigured = currentTime();
       ourFrameOverhead.count.incrementAndGet();
@@ -118,7 +117,7 @@ public final class CachedValueProfiler {
     Frame frame = context.topFrame;
     if (frame == null) return;
 
-    Supplier<StackTraceElement> place =
+    EventPlace place =
       original == null ? place(CachedValueProfiler::findComputationPlace) :
       original instanceof CachedValueProvider.Result ? frame.places.get(original) :
       original instanceof Function ? place(CachedValueProfiler::findCallerPlace) : null;
@@ -134,18 +133,28 @@ public final class CachedValueProfiler {
     ThreadContext context = ourContext.get();
     if (context.consumer == null) return null;
 
-    Supplier<StackTraceElement> place = frame.places.get(result);
+    EventPlace place = frame.places.get(result);
     if (place == null) place = place(CachedValueProfiler::findCallerPlace);
 
     context.consumer.onValueComputed(frame.id, place, frame.timeConfigured, time);
     return new ValueTracker(place, frame.timeConfigured, time);
   }
 
-  static Supplier<StackTraceElement> place(Function<Throwable, StackTraceElement> function) {
+  static EventPlace place(Function<Throwable, StackTraceElement> function) {
     // Use async stack trace processing to reduce overhead.
     // Both plain Throwable#getStackTrace and StackWalker API are slower.
     Throwable throwable = new Throwable();
-    return () -> function.apply(throwable);
+    return new EventPlace() {
+      @Override
+      public StackTraceElement getStackFrame() {
+        return function.apply(throwable);
+      }
+
+      @Override
+      public StackTraceElement @Nullable [] getStackTrace() {
+        return throwable.getStackTrace();
+      }
+    };
   }
 
   @Nullable
@@ -197,12 +206,12 @@ public final class CachedValueProfiler {
   }
 
   public static final class ValueTracker {
-    final Supplier<StackTraceElement> place;
+    final EventPlace place;
     final long start;
     final long computed;
     volatile long used;
 
-    ValueTracker(@NotNull Supplier<StackTraceElement> place, long start, long computed) {
+    ValueTracker(@NotNull EventPlace place, long start, long computed) {
       this.place = place;
       this.start = start;
       this.computed = computed;
@@ -233,6 +242,12 @@ public final class CachedValueProfiler {
       context.consumer.onValueRejected(context.topFrame == null ? 0 : context.topFrame.id, place, start, computed, time);
       ourTrackerOverhead.overhead.addAndGet(currentTime() - time);
     }
+  }
+
+  public interface EventPlace {
+    @Nullable StackTraceElement getStackFrame();
+
+    StackTraceElement @Nullable [] getStackTrace();
   }
 
   private static class ThreadContext {

@@ -22,6 +22,7 @@ import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.*;
@@ -33,7 +34,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
-import java.util.function.Supplier;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -106,7 +106,7 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
   }
 
   @Override
-  public void onFrameEnter(long frameId, Supplier<StackTraceElement> place, long parentId, long time) {
+  public void onFrameEnter(long frameId, CachedValueProfiler.EventPlace place, long parentId, long time) {
     myQueue.offer(() -> myWriter.onFrameEnter(frameId, place, parentId, time));
   }
 
@@ -116,22 +116,22 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
   }
 
   @Override
-  public void onValueComputed(long frameId, Supplier<StackTraceElement> place, long start, long time) {
+  public void onValueComputed(long frameId, CachedValueProfiler.EventPlace place, long start, long time) {
     myQueue.offer(() -> myWriter.onValueComputed(frameId, place, start, time));
   }
 
   @Override
-  public void onValueUsed(long frameId, Supplier<StackTraceElement> place, long computed, long time) {
+  public void onValueUsed(long frameId, CachedValueProfiler.EventPlace place, long computed, long time) {
     myQueue.offer(() -> myWriter.onValueUsed(frameId, place, computed, time));
   }
 
   @Override
-  public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long used, long time) {
+  public void onValueInvalidated(long frameId, CachedValueProfiler.EventPlace place, long used, long time) {
     myQueue.offer(() -> myWriter.onValueInvalidated(frameId, place, used, time));
   }
 
   @Override
-  public void onValueRejected(long frameId, Supplier<StackTraceElement> place, long start, long computed, long time) {
+  public void onValueRejected(long frameId, CachedValueProfiler.EventPlace place, long start, long computed, long time) {
     myQueue.offer(() -> myWriter.onValueRejected(frameId, place, start, computed, time));
   }
 
@@ -255,7 +255,7 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onFrameEnter(long frameId, Supplier<StackTraceElement> place, long parentId, long time) {
+    public void onFrameEnter(long frameId, CachedValueProfiler.EventPlace place, long parentId, long time) {
       writeImpl(_FRAME_ENTER, frameId, place, 1, time, parentId, -1);
     }
 
@@ -265,26 +265,26 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
     }
 
     @Override
-    public void onValueComputed(long frameId, Supplier<StackTraceElement> place, long start, long time) {
+    public void onValueComputed(long frameId, CachedValueProfiler.EventPlace place, long start, long time) {
       writeImpl(_VALUE_COMPUTED, frameId, place, 2, start, time, -1);
     }
 
     @Override
-    public void onValueUsed(long frameId, Supplier<StackTraceElement> place, long computed, long time) {
+    public void onValueUsed(long frameId, CachedValueProfiler.EventPlace place, long computed, long time) {
       writeImpl(_VALUE_USED, frameId, place, 2, computed, time, -1);
     }
 
     @Override
-    public void onValueInvalidated(long frameId, Supplier<StackTraceElement> place, long used, long time) {
+    public void onValueInvalidated(long frameId, CachedValueProfiler.EventPlace place, long used, long time) {
       writeImpl(_VALUE_INVALIDATED, frameId, place, 2, used, time, -1);
     }
 
     @Override
-    public void onValueRejected(long frameId, Supplier<StackTraceElement> place, long start, long computed, long time) {
+    public void onValueRejected(long frameId, CachedValueProfiler.EventPlace place, long start, long computed, long time) {
       writeImpl(_VALUE_REJECTED, frameId, place, 3, start, computed, time);
     }
 
-    private void writeImpl(String type, long frameId, Supplier<StackTraceElement> place, int t_num, long t1, long t2, long t3) {
+    private void writeImpl(String type, long frameId, CachedValueProfiler.EventPlace place, int t_num, long t1, long t2, long t3) {
       try {
         myWriter.beginObject();
         myWriter.name(_TYPE).value(type);
@@ -293,7 +293,8 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
           myWriter.name(_FRAME_PID).value(t2); // t2 holds parent id
         }
         if (place != null) {
-          myWriter.name(_PLACE).value(placeToString(place.get()));
+          StackTraceElement frame = place.getStackFrame();
+          myWriter.name(_PLACE).value(frame == null ? null : placeToString(frame));
         }
         if (t_num > 0) myWriter.name(_T1).value(t1);
         if (t_num > 1) myWriter.name(_T2).value(t2);
@@ -304,6 +305,15 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
         if (myError != null) myError = e;
       }
     }
+  }
+
+  @NotNull
+  static CachedValueProfiler.EventPlace eventPlace(@Nullable StackTraceElement place) {
+    return new CachedValueProfiler.EventPlace() {
+      @Override public StackTraceElement getStackFrame() { return place; }
+
+      @Override public StackTraceElement @Nullable [] getStackTrace() { return null; }
+    };
   }
 
   public static void loadDump(@NotNull File file, @NotNull CachedValueProfiler.EventConsumer consumer) throws IOException {
@@ -324,13 +334,13 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
       String type = "";
       Map<String, StackTraceElement> places = FactoryMap.create(o -> placeFromString(o));
       while (reader.hasNext()) {
-        StackTraceElement place0 = null;
+        StackTraceElement place = null;
         long frame = 0, parent = 0, t1 = 0, t2 = 0, t3 = 0;
         reader.beginObject();
         while (reader.hasNext()) {
           String name = reader.nextName();
           if (_TYPE.equals(name)) type = reader.nextString();
-          else if (_PLACE.equals(name)) place0 = places.get(reader.nextString());
+          else if (_PLACE.equals(name)) place = places.get(reader.nextString());
           else if (_FRAME_ID.equals(name)) frame = reader.nextLong();
           else if (_FRAME_PID.equals(name)) parent = reader.nextLong();
           else if (_T1.equals(name)) t1 = reader.nextLong();
@@ -339,13 +349,12 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
           else throw new IOException("unexpected: " + name);
         }
         reader.endObject();
-        StackTraceElement place = place0;
-        if (_FRAME_ENTER.equals(type)) consumer.onFrameEnter(frame, () -> place, parent, t1);
+        if (_FRAME_ENTER.equals(type)) consumer.onFrameEnter(frame, eventPlace(place), parent, t1);
         else if (_FRAME_EXIT.equals(type)) consumer.onFrameExit(frame, t1, t2, t3);
-        else if (_VALUE_COMPUTED.equals(type)) consumer.onValueComputed(frame, () -> place, t1, t2);
-        else if (_VALUE_USED.equals(type)) consumer.onValueUsed(frame, () -> place, t1, t2);
-        else if (_VALUE_INVALIDATED.equals(type)) consumer.onValueInvalidated(frame, () -> place, t1, t2);
-        else if (_VALUE_REJECTED.equals(type)) consumer.onValueRejected(frame, () -> place, t1, t2, t3);
+        else if (_VALUE_COMPUTED.equals(type)) consumer.onValueComputed(frame, eventPlace(place), t1, t2);
+        else if (_VALUE_USED.equals(type)) consumer.onValueUsed(frame, eventPlace(place), t1, t2);
+        else if (_VALUE_INVALIDATED.equals(type)) consumer.onValueInvalidated(frame, eventPlace(place), t1, t2);
+        else if (_VALUE_REJECTED.equals(type)) consumer.onValueRejected(frame, eventPlace(place), t1, t2, t3);
       }
       reader.endArray();
 
