@@ -29,7 +29,6 @@ import static java.lang.Math.max;
 /**
  * Utility class for miscellaneous code style-related methods.
  */
-@SuppressWarnings("unused") // Contains API methods which may be used externally
 public final class CodeStyle {
 
   private CodeStyle() {
@@ -300,6 +299,7 @@ public final class CodeStyle {
    * @param tempSettings  The temporary code style settings.
    * @param runnable      The runnable to execute with the temporary settings.
    */
+  @TestOnly
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
@@ -328,6 +328,7 @@ public final class CodeStyle {
    * @param baseSettings         The base settings to be cloned and used in consumer.
    * @param tempSettingsConsumer The consumer to execute with the base settings copy.
    */
+  @TestOnly
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings baseSettings,
                                              @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
@@ -448,7 +449,7 @@ public final class CodeStyle {
     if (indent == LineIndentProvider.DO_NOT_ADJUST) {
       return allowDocCommit ? null : indent;
     }
-    return indent != null ? indent : (allowDocCommit ? getLineIndent(project, editor.getDocument(), offset) : null);
+    return indent != null ? indent : allowDocCommit ? getLineIndent(project, editor.getDocument(), offset) : null;
   }
 
   @Nullable

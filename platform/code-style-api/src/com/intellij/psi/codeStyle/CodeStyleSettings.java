@@ -50,7 +50,6 @@ import java.util.regex.PatternSyntaxException;
  * <b>Note:</b> A direct use of any non-final public fields from {@code CodeStyleSettings} class is strongly discouraged. These fields,
  * as well as the inheritance from {@code CommonCodeStyleSettings}, are left only for backwards compatibility and may be removed in the future.
  */
-@SuppressWarnings("deprecation")
 public class CodeStyleSettings extends LegacyCodeStyleSettings implements Cloneable, JDOMExternalizable, ImportsLayoutSettings {
   public static final int CURR_VERSION = 173;
 
@@ -86,11 +85,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    */
   @Deprecated
   public CodeStyleSettings() {
-    this(true);
+    this(true, true);
   }
 
   /**
-   * @param loadExtensions
    * @deprecated See {@link #CodeStyleSettings()}
    */
   @Deprecated
