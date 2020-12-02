@@ -73,7 +73,7 @@ class IdeaResolverForProject(
         val moduleContent = ModuleContent(moduleInfo, syntheticFilesByModule[moduleInfo] ?: listOf(), getModuleContentScope(moduleInfo))
 
         val languageVersionSettings =
-            IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project, isReleaseCoroutines)
+            IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project)
 
         val resolverForModuleFactory = getResolverForModuleFactory(moduleInfo)
 
