@@ -30,7 +30,7 @@ public final class JavacMain {
     "-d", "-classpath", "-cp", "--class-path", "-bootclasspath", "--boot-class-path"
   )));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
+    /*javac options*/  "-verbose", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   )));
   private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     "-encoding", "-extdirs", "-endorseddirs", "-processorpath", "--processor-path", "--processor-module-path", "-s", "-d", "-h"
@@ -41,13 +41,13 @@ public final class JavacMain {
   public static final String TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY = "jps.track.ap.dependencies";
   public static final boolean TRACK_AP_GENERATED_DEPENDENCIES = Boolean.parseBoolean(System.getProperty(TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY, "true"));
 
-  public static boolean compile(Collection<String> options,
-                                final Collection<? extends File> sources,
-                                Collection<? extends File> classpath,
-                                Collection<? extends File> platformClasspath,
+  public static boolean compile(Iterable<? extends String> options,
+                                Iterable<? extends File> sources,
+                                Iterable<? extends File> classpath,
+                                Iterable<? extends File> platformClasspath,
                                 ModulePath modulePath,
-                                Collection<? extends File> upgradeModulePath,
-                                Collection<? extends File> sourcePath,
+                                Iterable<? extends File> upgradeModulePath,
+                                Iterable<? extends File> sourcePath,
                                 final Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer diagnosticConsumer,
                                 final OutputFileConsumer outputSink,
@@ -70,7 +70,7 @@ public final class JavacMain {
     final JpsJavacFileManager fileManager = new JpsJavacFileManager(
       new ContextImpl(compiler, diagnosticConsumer, outputSink, modulePath, canceledStatus), javacBefore9, JavaSourceTransformer.getTransformers()
     );
-    if (javacBefore9 && !platformClasspath.isEmpty()) {
+    if (javacBefore9 && !Iterators.isEmpty(platformClasspath)) {
       // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar
       // and thus usage of symbol file for resolution, when this file is not expected to be used
       fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator());
@@ -78,7 +78,7 @@ public final class JavacMain {
       fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
     }
 
-    final Collection<String> _options = prepareOptions(options, compilingTool);
+    final Iterable<String> _options = prepareOptions(options, compilingTool);
 
     try {
       // to be on the safe side, we'll have to apply all options _before_ calling any of manager's methods
@@ -102,7 +102,7 @@ public final class JavacMain {
         return false;
       }
 
-      if (!platformClasspath.isEmpty()) {
+      if (!Iterators.isEmpty(platformClasspath)) {
         try {
           fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
           fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, buildPlatformClasspath(platformClasspath, _options));
@@ -113,7 +113,7 @@ public final class JavacMain {
         }
       }
 
-      if (!upgradeModulePath.isEmpty()) {
+      if (!Iterators.isEmpty(upgradeModulePath)) {
         try {
           setLocation(fileManager, "UPGRADE_MODULE_PATH", upgradeModulePath);
         }
@@ -146,14 +146,13 @@ public final class JavacMain {
         }
       }
 
-      if (!classpath.isEmpty()) {
+      if (!Iterators.isEmpty(classpath)) {
         // because module path has priority if present, initialize classpath after the module path
         try {
           fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
           if (!usingJavac &&
-            isAnnotationProcessingEnabled &&
-              !_options.contains("-processorpath") &&
-              (javacBefore9 || (!_options.contains("--processor-module-path") && getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null))) {
+            isAnnotationProcessingEnabled && !Iterators.contains(_options, "-processorpath") &&
+              (javacBefore9 || (!Iterators.contains(_options, "--processor-module-path") && getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null))) {
             // for non-javac file manager ensure annotation processor path defaults to classpath
             fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
           }
@@ -164,7 +163,7 @@ public final class JavacMain {
         }
       }
 
-      if (javacBefore9 || !sourcePath.isEmpty() || modulePath.isEmpty()) {
+      if (javacBefore9 || !Iterators.isEmpty(sourcePath) || modulePath.isEmpty()) {
         try {
           // ensure the source path is set;
           // otherwise, if not set, javac attempts to search both classes and sources in classpath;
@@ -506,11 +505,11 @@ public final class JavacMain {
     return compilingTool instanceof JavacCompilerTool && (JAVA_RUNTIME_VERSION.startsWith("1.8.") || JAVA_RUNTIME_VERSION.startsWith("1.7.") || JAVA_RUNTIME_VERSION.startsWith("1.6."));
   }
 
-  private static boolean isAnnotationProcessingEnabled(final Collection<String> options) {
-    return !options.contains("-proc:none");
+  private static boolean isAnnotationProcessingEnabled(final Iterable<String> options) {
+    return !Iterators.contains(options, "-proc:none");
   }
 
-  private static Collection<String> prepareOptions(final Collection<String> options, @NotNull JavaCompilingTool compilingTool) {
+  private static Iterable<String> prepareOptions(final Iterable<? extends String> options, @NotNull JavaCompilingTool compilingTool) {
     final List<String> result = new ArrayList<String>(compilingTool.getDefaultCompilerOptions());
     boolean skip = false;
     for (String option : options) {
@@ -529,7 +528,7 @@ public final class JavacMain {
     return result;
   }
 
-  private static Collection<? extends File> buildPlatformClasspath(Collection<? extends File> platformClasspath, Collection<String> options) {
+  private static Iterable<? extends File> buildPlatformClasspath(Iterable<? extends File> platformClasspath, Iterable<String> options) {
     final Map<PathOption, String> argsMap = new HashMap<PathOption, String>();
     for (Iterator<String> iterator = options.iterator(); iterator.hasNext(); ) {
       final String arg = iterator.next();
@@ -547,7 +546,7 @@ public final class JavacMain {
     appendFiles(argsMap, PathOption.PREPEND_CP, result, false);
     appendFiles(argsMap, PathOption.ENDORSED, result, true);
     appendFiles(argsMap, PathOption.D_ENDORSED, result, true);
-    result.addAll(platformClasspath);
+    Iterators.collect(platformClasspath, result);
     appendFiles(argsMap, PathOption.APPEND_CP, result, false);
     appendFiles(argsMap, PathOption.EXTDIRS, result, true);
     appendFiles(argsMap, PathOption.D_EXTDIRS, result, true);

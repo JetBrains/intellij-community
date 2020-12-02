@@ -18,8 +18,32 @@ public class Iterators {
     }
   };
 
-  public static <T> boolean isEmpty(Iterable<T> iterable) {
-    return iterable == null || (iterable instanceof Collection && ((Collection<?>)iterable).isEmpty());
+  public static boolean isEmpty(Iterable<?> iterable) {
+    if (iterable instanceof Collection) {
+      return ((Collection<?>)iterable).isEmpty();
+    }
+    return iterable == null || !iterable.iterator().hasNext();
+  }
+
+  public static <T> boolean contains(Iterable<? extends T> iterable, T obj) {
+    if (iterable instanceof Collection) {
+      return ((Collection<?>)iterable).contains(obj);
+    }
+    if (iterable != null) {
+      for (T o : iterable) {
+        if (obj.equals(o)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static <C extends Collection<? super T>, T> C collect(Iterable<? extends T> iterable, C acc) {
+    for (T t : iterable) {
+      acc.add(t);
+    }
+    return acc;
   }
 
   @SuppressWarnings("unchecked")
