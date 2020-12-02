@@ -616,6 +616,22 @@ public final class PsiTypesUtil {
     });
   }
 
+  /**
+   * @param type type to test
+   * @param qualifiedClassName desired fully-qualified class name
+   * @return true if given type is a class type that resolves to the specified class
+   */
+  @Contract("null, _ -> false")
+  public static boolean classNameEquals(@Nullable PsiType type, @NotNull String qualifiedClassName) {
+    if (!(type instanceof PsiClassType)) return false;
+    PsiClassType classType = (PsiClassType)type;
+    String className = classType.getClassName();
+    if (className == null || !qualifiedClassName.endsWith(className)) return false;
+    PsiClass psiClass = classType.resolve();
+    if (psiClass == null) return false;
+    return qualifiedClassName.equals(psiClass.getQualifiedName());
+  }
+
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
     private final Set<PsiTypeParameter> myTypeParams = new HashSet<>();
 

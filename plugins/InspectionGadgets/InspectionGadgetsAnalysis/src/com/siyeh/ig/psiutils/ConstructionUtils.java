@@ -3,6 +3,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -110,12 +111,9 @@ public final class ConstructionUtils {
       if (name == null || !name.startsWith("java.util.")) return false;
       for (PsiParameter parameter : ctor.getParameterList().getParameters()) {
         PsiType type = parameter.getType();
-        if (type instanceof PsiClassType) {
-          PsiClassType rawType = ((PsiClassType)type).rawType();
-          if(rawType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION) ||
-             rawType.equalsToText(CommonClassNames.JAVA_UTIL_MAP)) {
-            return true;
-          }
+        if (PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+            PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_UTIL_MAP)) {
+          return true;
         }
       }
     }
@@ -135,12 +133,9 @@ public final class ConstructionUtils {
           if (type instanceof PsiEllipsisType) {
             return true;
           }
-          if (type instanceof PsiClassType) {
-            PsiClassType rawType = ((PsiClassType)type).rawType();
-            if(rawType.equalsToText(CommonClassNames.JAVA_LANG_ITERABLE) ||
-               rawType.equalsToText(CommonClassNames.JAVA_UTIL_ITERATOR)) {
-              return true;
-            }
+          if (PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_LANG_ITERABLE) ||
+              PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_UTIL_ITERATOR)) {
+            return true;
           }
         }
       }
@@ -184,7 +179,7 @@ public final class ConstructionUtils {
           if (aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
             if (GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
-              return Stream.of(method.getParameterList().getParameters()).allMatch(p -> p.getType() instanceof PsiPrimitiveType);
+              return ContainerUtil.and(method.getParameterList().getParameters(), p -> p.getType() instanceof PsiPrimitiveType);
             }
           }
         }
@@ -245,7 +240,7 @@ public final class ConstructionUtils {
     if (aClass == null) return false;
     String name = aClass.getQualifiedName();
     return name != null && name.startsWith("java.util.") &&
-           Stream.of(aClass.getConstructors()).anyMatch(ConstructionUtils::isCollectionConstructor);
+           ContainerUtil.or(aClass.getConstructors(), ConstructionUtils::isCollectionConstructor);
   }
 
   @Contract("null -> false")

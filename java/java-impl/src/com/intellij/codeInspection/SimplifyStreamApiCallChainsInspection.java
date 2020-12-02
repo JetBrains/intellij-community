@@ -1409,7 +1409,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       String adapted = ParenthesesUtils.getText(expression, ParenthesesUtils.POSTFIX_PRECEDENCE) + "::apply";
       PsiClassType type = tryCast(expression.getType(), PsiClassType.class);
       if (type == null) return null;
-      if (type.rawType().equalsToText(JAVA_UTIL_FUNCTION_FUNCTION)) return adapted;
+      if (PsiTypesUtil.classNameEquals(type, JAVA_UTIL_FUNCTION_FUNCTION)) return adapted;
       PsiClass typeClass = type.resolve();
       // Disable inspection if type of expression is some subtype which defines its own 'apply' methods
       // to avoid possible resolution clashes

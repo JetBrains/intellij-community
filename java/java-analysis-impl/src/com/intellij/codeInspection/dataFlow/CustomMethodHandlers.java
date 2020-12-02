@@ -12,10 +12,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -269,7 +266,7 @@ public final class CustomMethodHandlers {
                                                    PsiMethod method) {
     PsiType type = method.getReturnType();
     if (!(type instanceof PsiClassType)) return TOP;
-    int factor = ((PsiClassType)type).rawType().equalsToText(JAVA_UTIL_MAP) ? 2 : 1;
+    int factor = PsiTypesUtil.classNameEquals(type, JAVA_UTIL_MAP) ? 2 : 1;
     DfType size;
     if (method.isVarArgs()) {
       size = memState.getDfType(ARRAY_LENGTH.createValue(factory, args.myArguments[0]));

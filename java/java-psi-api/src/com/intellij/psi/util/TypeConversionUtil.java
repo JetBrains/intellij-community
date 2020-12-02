@@ -1217,7 +1217,7 @@ public final class TypeConversionUtil {
       if (component.equalsToText(JAVA_IO_SERIALIZABLE)) continue;
       if (component.equalsToText("java.lang.constant.Constable")) continue;
       if (component.equalsToText("java.lang.constant.ConstantDesc")) continue;
-      if (((PsiClassType)component).rawType().equalsToText(JAVA_LANG_COMPARABLE)) continue;
+      if (PsiTypesUtil.classNameEquals(component, JAVA_LANG_COMPARABLE)) continue;
       return false;
     }
     return true;

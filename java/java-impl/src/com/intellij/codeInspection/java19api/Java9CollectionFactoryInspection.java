@@ -26,6 +26,7 @@ import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -239,8 +240,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
       if (defs.length == 1 && defs[0] == variable) {
         PsiExpression initializer = variable.getInitializer();
         if (!ConstructionUtils.isEmptyCollectionInitializer(initializer)) return null;
-        PsiClassType type = tryCast(initializer.getType(), PsiClassType.class);
-        if (type == null || !type.rawType().equalsToText(collectionClass)) return null;
+        if (!PsiTypesUtil.classNameEquals(initializer.getType(), collectionClass)) return null;
         Set<PsiElement> refs = ContainerUtil.set(DefUseUtil.getRefs(block, variable, initializer));
         refs.remove(expression);
         PsiStatement cur = declaration;

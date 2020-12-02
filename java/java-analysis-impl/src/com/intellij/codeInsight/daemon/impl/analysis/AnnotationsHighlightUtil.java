@@ -23,10 +23,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -777,8 +774,7 @@ public final class AnnotationsHighlightUtil {
     @Override
     public Boolean visitClassType(@NotNull PsiClassType classType) {
       if (classType.getParameters().length > 0) {
-        PsiClassType rawType = classType.rawType();
-        return rawType.equalsToText(CommonClassNames.JAVA_LANG_CLASS);
+        return PsiTypesUtil.classNameEquals(classType, CommonClassNames.JAVA_LANG_CLASS);
       }
 
       PsiClass aClass = classType.resolve();
