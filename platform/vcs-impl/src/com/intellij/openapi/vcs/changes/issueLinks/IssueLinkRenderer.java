@@ -16,7 +16,7 @@
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -52,28 +52,19 @@ public class IssueLinkRenderer {
   public List<String> appendTextWithLinks(@Nls String text,
                                           @NotNull SimpleTextAttributes baseStyle,
                                           @NotNull Consumer<? super @Nls String> consumer) {
-    final List<String> pieces = new ArrayList<>();
-    final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(text);
-    int pos = 0;
-    final SimpleTextAttributes linkAttributes = getLinkAttributes(baseStyle);
-    for (IssueNavigationConfiguration.LinkMatch match : list) {
-      final TextRange textRange = match.getRange();
-      if (pos > textRange.getStartOffset()) continue;
-      if (textRange.getStartOffset() > pos) {
-        final String piece = text.substring(pos, textRange.getStartOffset());
-        pieces.add(piece);
-        consumer.consume(piece);
-      }
-      final String piece = textRange.substring(text);
-      pieces.add(piece);
-      append(piece, linkAttributes, match);
-      pos = textRange.getEndOffset();
-    }
-    if (pos < text.length()) {
-      final String piece = text.substring(pos);
-      pieces.add(piece);
-      consumer.consume(piece);
-    }
+    List<String> pieces = new ArrayList<>();
+
+    SimpleTextAttributes linkAttributes = getLinkAttributes(baseStyle);
+    IssueNavigationConfiguration.processTextWithLinks(text, myIssueNavigationConfiguration.findIssueLinks(text),
+                                                      s -> {
+                                                        pieces.add(s);
+                                                        consumer.consume(s);
+                                                      },
+                                                      (link, target) -> {
+                                                        pieces.add(link);
+                                                        append(link, linkAttributes, target);
+                                                      });
+
     return pieces;
   }
 
@@ -81,8 +72,8 @@ public class IssueLinkRenderer {
     myColoredComponent.append(piece, baseStyle);
   }
 
-  private void append(@Nls String piece, final SimpleTextAttributes baseStyle, final IssueNavigationConfiguration.LinkMatch match) {
-    myColoredComponent.append(piece, baseStyle, new SimpleColoredComponent.BrowserLauncherTag(match.getTargetUrl()));
+  private void append(@Nls String piece, final SimpleTextAttributes baseStyle, @NlsSafe String targetUrl) {
+    myColoredComponent.append(piece, baseStyle, new SimpleColoredComponent.BrowserLauncherTag(targetUrl));
   }
 
   private static SimpleTextAttributes getLinkAttributes(@NotNull SimpleTextAttributes baseStyle) {

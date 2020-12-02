@@ -9,16 +9,20 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -122,5 +126,23 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
       }
     }
     result.add(new LinkMatch(range, replacement));
+  }
+
+  public static void processTextWithLinks(@Nls String text, @NotNull List<IssueNavigationConfiguration.LinkMatch> matches,
+                                          @NotNull Consumer<? super @Nls String> textConsumer,
+                                          @NotNull BiConsumer<? super @Nls String, ? super @NlsSafe String> linkWithTargetConsumer) {
+    int pos = 0;
+    for (IssueNavigationConfiguration.LinkMatch match : matches) {
+      TextRange textRange = match.getRange();
+      if (pos > textRange.getStartOffset()) continue;
+      if (textRange.getStartOffset() > pos) {
+        textConsumer.accept(text.substring(pos, textRange.getStartOffset()));
+      }
+      linkWithTargetConsumer.accept(textRange.substring(text), match.getTargetUrl());
+      pos = textRange.getEndOffset();
+    }
+    if (pos < text.length()) {
+      textConsumer.accept(text.substring(pos));
+    }
   }
 }
