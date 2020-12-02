@@ -37,7 +37,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -49,7 +48,6 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   private final JLabel myDropFirst = new JLabel(AllIcons.General.DropPlace);
 
   Runnable myChangeListener;
-  private BiConsumer<Key<? extends BeforeRunTask<?>>, Boolean> myTagListener;
   private RunConfiguration myConfiguration;
 
   public BeforeRunComponent(@NotNull Disposable parentDisposable) {
@@ -82,7 +80,6 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     return new TaskButton(provider, (e) -> {
       myChangeListener.run();
       updateAddLabel();
-      myTagListener.accept(provider.getId(), false);
     });
   }
 
@@ -138,7 +135,6 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     myTags.add(tag);
     buildPanel();
     myChangeListener.run();
-    myTagListener.accept(tag.myProvider.getId(), true);
   }
 
   public void reset(@NotNull RunnerAndConfigurationSettingsImpl s) {
@@ -182,6 +178,10 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
       .filter(button -> button.myTask != null && button.isVisible())
       .map(button -> button.myTask)
       .collect(Collectors.toList());
+  }
+
+  public <T extends BeforeRunTask<?>> boolean hasEnabledTask(Key<T> providerId) {
+    return ContainerUtil.or(getEnabledTasks(), task -> task.getProviderId() == providerId);
   }
 
   @Override
@@ -247,10 +247,6 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     myTags.forEach(button -> button.showDropPlace(false));
     event.setDropPossible(false);
     return true;
-  }
-
-  public void setTagListener(BiConsumer<Key<? extends BeforeRunTask<?>>, Boolean> tagListener) {
-    myTagListener = tagListener;
   }
 
   @Override
