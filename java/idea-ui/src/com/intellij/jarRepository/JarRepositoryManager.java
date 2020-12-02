@@ -38,6 +38,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.RepositoryOfflineException;
 import org.eclipse.aether.transfer.TransferCancelledException;
 import org.eclipse.aether.version.Version;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -254,6 +255,28 @@ public final class JarRepositoryManager {
                                                                @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
     return submitSyncJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
+  }
+
+  /**
+   * Load dependencies within the caller thread with the progress being tracked by the directly provided {@code progressIndicator}.
+   */
+  @ApiStatus.Internal
+  @NotNull
+  public static Collection<OrderRoot> loadDependenciesSync(@NotNull Project project,
+                                                           @NotNull RepositoryLibraryProperties libraryProps,
+                                                           boolean loadSources,
+                                                           boolean loadJavadoc,
+                                                           @Nullable String copyTo,
+                                                           @Nullable Collection<RemoteRepositoryDescription> repositories,
+                                                           @NotNull ProgressIndicator progressIndicator) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    final JpsMavenRepositoryLibraryDescriptor libDescriptor = libraryProps.getRepositoryLibraryDescriptor();
+    if (libDescriptor.getMavenId() != null) {
+      EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc, libraryProps.getPackaging());
+      Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repositories);
+      return newOrderRootResolveJob(libDescriptor, kinds, effectiveRepos, copyTo).apply(progressIndicator);
+    }
+    return Collections.emptyList();
   }
 
   @NotNull
