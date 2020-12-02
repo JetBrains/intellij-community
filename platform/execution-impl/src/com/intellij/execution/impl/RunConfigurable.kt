@@ -376,7 +376,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     rightPanel.add(BorderLayout.CENTER, configurableComponent)
     if (configurable is SingleConfigurationConfigurable<*>) {
       rightPanel.add(configurable.validationComponent, BorderLayout.SOUTH)
-      ApplicationManager.getApplication().invokeLater { configurable.updateWarning() }
+      ApplicationManager.getApplication().invokeLater({ configurable.requestToUpdateWarning() }) { isDisposed }
       if (configurableComponent != null) {
         val dataProvider = DataManager.getDataProvider(configurableComponent)
         if (dataProvider != null) {
