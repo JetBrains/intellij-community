@@ -105,10 +105,14 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   @NotNull
   private List<PsiAnnotation> filterAnnotations(@NotNull List<AnnotationData> result, @NotNull String annotationFQN) {
-    return StreamEx.of(result)
-      .filter(data -> data.annotationClassFqName.equals(annotationFQN))
-      .map(data -> data.getAnnotation(this))
-      .toCollection(SmartList::new);
+    SmartList<PsiAnnotation> annotations = new SmartList<>();
+    for (AnnotationData data : result) {
+      if (data.annotationClassFqName.equals(annotationFQN)) {
+        PsiAnnotation annotation = data.getAnnotation(this);
+        annotations.add(annotation);
+      }
+    }
+    return annotations;
   }
 
   @Nullable
