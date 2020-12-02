@@ -1438,11 +1438,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (PsiType.VOID.equals(expectedType)) return;
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && 
-        TypeConversionUtil.isAssignableFromPrimitiveWrapper(GenericsUtil.getVariableTypeByExpressionType(actualType))) {
+        TypeConversionUtil.isAssignableFromPrimitiveWrapper(toBound(actualType))) {
       addInstruction(new UnwrapSpecialFieldInstruction(SpecialField.UNBOX));
       actualType = PsiPrimitiveType.getUnboxedType(actualType);
     }
-    expectedType = GenericsUtil.getVariableTypeByExpressionType(expectedType);
+    expectedType = toBound(expectedType);
     if (TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
         TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType)) {
       addConditionalErrorThrow();
@@ -1461,6 +1461,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
              TypeConversionUtil.isNumericType(expectedType)) {
       addInstruction(new PrimitiveConversionInstruction((PsiPrimitiveType)expectedType, explicit ? context : null));
     }
+  }
+
+  private static PsiType toBound(PsiType type) {
+    if (type instanceof PsiWildcardType && ((PsiWildcardType)type).isExtends()) {
+      return ((PsiWildcardType)type).getBound();
+    }
+    if (type instanceof PsiCapturedWildcardType) {
+      return ((PsiCapturedWildcardType)type).getUpperBound();
+    }
+    return type;
   }
 
   private void generateShortCircuitAndOr(PsiExpression expression, PsiExpression[] operands, PsiType exprType, boolean and) {
