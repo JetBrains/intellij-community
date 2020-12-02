@@ -942,10 +942,10 @@ public final class GroovyDslUtil {
   static String quotePartIfNecessary(String part) {
     if(!GROOVY_NORMAL_IDENTIFIER.matcher(part).matches()) {
       // TODO(b/126937269): need to escape single quotes (and backslashes).  Also needs support from the parser
-      return "\'" + part + "\'";
+      return "'" + part + "'";
     }
     else if (GROOVY_KEYWORDS.contains(part)) {
-      return "\'" + part + "\'";
+      return "'" + part + "'";
     }
     else {
       return part;
