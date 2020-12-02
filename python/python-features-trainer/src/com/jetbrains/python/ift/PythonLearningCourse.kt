@@ -4,6 +4,7 @@ package com.jetbrains.python.ift
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.ift.lesson.assistance.PythonEditorCodingAssistanceLesson
 import com.jetbrains.python.ift.lesson.basic.PythonContextActionsLesson
+import com.jetbrains.python.ift.lesson.basic.PythonSelectLesson
 import com.jetbrains.python.ift.lesson.basic.PythonSurroundAndUnwrapLesson
 import com.jetbrains.python.ift.lesson.completion.*
 import com.jetbrains.python.ift.lesson.essensial.PythonOnboardingTour
@@ -54,7 +55,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
       listOf(
         PythonContextActionsLesson(it),
         GotoActionLesson(it, lang, ls("Actions.py.sample")),
-        SelectLesson(it, lang, ls("Selection.py.sample")),
+        PythonSelectLesson(it),
         SingleLineCommentLesson(it, lang, ls("Comment.py.sample")),
         DuplicateLesson(it, lang, ls("Duplicate.py.sample")),
         MoveLesson(it, lang, "accelerate", ls("Move.py.sample")),
