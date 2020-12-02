@@ -77,6 +77,13 @@ public abstract class ProjectView {
 
   public abstract void setHideEmptyPackages(@NotNull String paneId, boolean hideEmptyPackages);
 
+  public boolean isUseFileNestingRules(String paneId) {
+    return false;
+  }
+
+  public void setUseFileNestingRules(boolean useFileNestingRules) {
+  }
+
   public boolean isCompactDirectories(String paneId) {
     return false;
   }

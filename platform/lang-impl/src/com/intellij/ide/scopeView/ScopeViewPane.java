@@ -157,6 +157,11 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return AllIcons.Ide.LocalScope;
   }
 
+  @Override
+  public boolean isFileNestingEnabled() {
+    return true;
+  }
+
   @NotNull
   @Override
   public JComponent createComponent() {

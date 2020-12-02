@@ -744,6 +744,8 @@
       <action id="ScopeView.EditScopes"
               class="com.intellij.ide.scopeView.EditScopesAction"
               icon="AllIcons.Ide.LocalScope"/>
+      <action id="ProjectView.FileNesting"
+              class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
     </group>
 
     <group id="StructureViewPopupMenu">

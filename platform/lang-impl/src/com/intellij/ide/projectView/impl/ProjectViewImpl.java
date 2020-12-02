@@ -1795,6 +1795,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  public boolean isUseFileNestingRules(String paneId) {
+    if (!myCurrentState.getUseFileNestingRules()) return false;
+    AbstractProjectViewPane pane = myId2Pane.get(paneId);
+    return pane != null && pane.isFileNestingEnabled();
+  }
+
+  @Override
+  public void setUseFileNestingRules(boolean useFileNestingRules) {
+    if (myProject.isDisposed()) return;
+    boolean updated = useFileNestingRules != myCurrentState.getUseFileNestingRules();
+    myCurrentState.setUseFileNestingRules(useFileNestingRules);
+    getDefaultState().setUseFileNestingRules(useFileNestingRules);
+    if (updated) updatePanes(false);
+  }
+
+  @Override
   public boolean isCompactDirectories(String paneId) {
     return myCompactDirectories.isSelected() && myCompactDirectories.isEnabled(paneId);
   }

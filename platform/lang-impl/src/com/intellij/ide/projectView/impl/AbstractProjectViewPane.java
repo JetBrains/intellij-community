@@ -356,6 +356,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
+  public boolean isFileNestingEnabled() {
+    return false;
+  }
+
   @Override
   public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
