@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.codeInspection.magicConstant.MagicCompletionContributor;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,11 +15,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -26,7 +27,7 @@ import java.util.Set;
  * @author peter
  */
 public class JavaMembersGetter extends MembersGetter {
-  private final PsiType myExpectedType;
+  private final @NotNull PsiType myExpectedType;
   private final CompletionParameters myParameters;
 
   public JavaMembersGetter(@NotNull PsiType expectedType, CompletionParameters parameters) {
@@ -40,7 +41,7 @@ public class JavaMembersGetter extends MembersGetter {
       return;
     }
 
-    addStandardCharsets(results);
+    addKnownConstants(results);
 
     addConstantsFromTargetClass(results, searchInheritors);
     if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
@@ -58,19 +59,39 @@ public class JavaMembersGetter extends MembersGetter {
       new BuilderCompletion((PsiClassType)myExpectedType, psiClass, myPlace).suggestBuilderVariants().forEach(results::consume);
     }
   }
+  
+  private static class ConstantClass {
+    final @NotNull String myConstantContainingClass; 
+    final @NotNull LanguageLevel myLanguageLevel;
+    final @Nullable String myPriorityConstant;
 
-  private void addStandardCharsets(Consumer<? super LookupElement> results) {
+    private ConstantClass(@NotNull String aClass,
+                          @NotNull LanguageLevel level,
+                          @Nullable String constant) {
+      myConstantContainingClass = aClass;
+      myLanguageLevel = level;
+      myPriorityConstant = constant;
+    }
+  }
+  
+  private static final Map<String, ConstantClass> CONSTANT_SUGGESTIONS = Map.of(
+    "java.nio.charset.Charset", new ConstantClass("java.nio.charset.StandardCharsets", LanguageLevel.JDK_1_7, "UTF_8"),
+    "java.time.temporal.TemporalUnit", new ConstantClass("java.time.temporal.ChronoUnit", LanguageLevel.JDK_1_8, null),
+    "java.time.temporal.TemporalField", new ConstantClass("java.time.temporal.ChronoField", LanguageLevel.JDK_1_8, null)
+  );
+
+  private void addKnownConstants(Consumer<? super LookupElement> results) {
     PsiFile file = myParameters.getOriginalFile();
-    if (TypeUtils.typeEquals("java.nio.charset.Charset", myExpectedType) &&
-        PsiUtil.isLanguageLevel7OrHigher(file)) {
+    ConstantClass constantClass = CONSTANT_SUGGESTIONS.get(myExpectedType.getCanonicalText());
+    if (constantClass != null && PsiUtil.getLanguageLevel(file).isAtLeast(constantClass.myLanguageLevel)) {
       PsiClass charsetsClass =
-        JavaPsiFacade.getInstance(file.getProject()).findClass("java.nio.charset.StandardCharsets", file.getResolveScope());
+        JavaPsiFacade.getInstance(file.getProject()).findClass(constantClass.myConstantContainingClass, file.getResolveScope());
       if (charsetsClass != null) {
         for (PsiField field : charsetsClass.getFields()) {
           if (field.hasModifierProperty(PsiModifier.STATIC) &&
-              field.hasModifierProperty(PsiModifier.PUBLIC) && field.getType().equals(myExpectedType)) {
+              field.hasModifierProperty(PsiModifier.PUBLIC) && myExpectedType.isAssignableFrom(field.getType())) {
             LookupElement element = createFieldElement(field);
-            if (element != null && field.getName().equals("UTF_8")) {
+            if (element != null && field.getName().equals(constantClass.myPriorityConstant)) {
               element = PrioritizedLookupElement.withPriority(element, 1.0);
             }
             results.consume(element);
