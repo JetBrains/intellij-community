@@ -27,6 +27,8 @@ public final class SystemDock {
 
 
   synchronized public static void onUiInitialization() {
+    assert ourDelegate == null;
+
     try {
       ourDelegateInitializer.onUiInitialization();
     } catch (Throwable err) {
@@ -35,6 +37,8 @@ public final class SystemDock {
   }
 
   synchronized public static void onUiInitialized() {
+    assert ourDelegate == null;
+
     try {
       final var delegateInitializer = ourDelegateInitializer;
       ourDelegateInitializer = null;
