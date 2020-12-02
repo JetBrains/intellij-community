@@ -281,21 +281,22 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, float weight) {
+    Dimension size = getSize();
     if (ToolWindowAnchor.TOP == anchor) {
       verticalSplitter.setFirstComponent(component);
-      verticalSplitter.setFirstSize((int)(layeredPane.getHeight() * weight));
+      verticalSplitter.setFirstSize((int)(size.getHeight() * weight));
     }
     else if (ToolWindowAnchor.LEFT == anchor) {
       horizontalSplitter.setFirstComponent(component);
-      horizontalSplitter.setFirstSize((int)(layeredPane.getWidth() * weight));
+      horizontalSplitter.setFirstSize((int)(size.getWidth() * weight));
     }
     else if (ToolWindowAnchor.BOTTOM == anchor) {
       verticalSplitter.setLastComponent(component);
-      verticalSplitter.setLastSize((int)(layeredPane.getHeight() * weight));
+      verticalSplitter.setLastSize((int)(size.getHeight() * weight));
     }
     else if (ToolWindowAnchor.RIGHT == anchor) {
       horizontalSplitter.setLastComponent(component);
-      horizontalSplitter.setLastSize((int)(layeredPane.getWidth() * weight));
+      horizontalSplitter.setLastSize((int)(size.getWidth() * weight));
     }
     else {
       LOG.error("unknown anchor: " + anchor);

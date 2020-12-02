@@ -1892,11 +1892,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
 
-      val layeredPane = toolWindowPane!!.layeredPane
-      var paneWeight = if (anchor.isHorizontal) source.height.toFloat() / layeredPane.height else source.width.toFloat() / layeredPane.width
+      val size = toolWindowPane!!.size
+      var paneWeight = if (anchor.isHorizontal) source.height.toFloat() / size.height else source.width.toFloat() / size.width
       info.weight = paneWeight
       if (another != null && anchor.isSplitVertically) {
-        paneWeight = if (anchor.isHorizontal) another.height.toFloat() / layeredPane.height else another.width.toFloat() / layeredPane.width
+        paneWeight = if (anchor.isHorizontal) another.height.toFloat() / size.height else another.width.toFloat() / size.width
         getRegisteredMutableInfoOrLogError(another.toolWindow.id).weight = paneWeight
       }
     }
