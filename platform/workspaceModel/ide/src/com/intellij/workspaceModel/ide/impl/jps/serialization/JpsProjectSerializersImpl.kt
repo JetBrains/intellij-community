@@ -193,30 +193,18 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
     val builder = WorkspaceEntityStorageBuilder.create()
     affectedFileLoaders.forEach {
-      it.loadEntities(builder, reader, errorReporter, virtualFileManager)
+      loadEntitiesAndReportExceptions(it, builder, reader, errorReporter)
     }
     return Pair(changedSources, builder)
   }
 
   override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder, errorReporter: ErrorReporter) {
-    fun reportError(e: Exception, url: VirtualFileUrl) {
-      errorReporter.reportError(ProjectModelBundle.message("module.cannot.load.error", url.presentableUrl, e.localizedMessage), url)
-    }
-
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", 1)
     try {
       val tasks = fileSerializersByUrl.values.map { serializer ->
         Callable {
           val myBuilder = WorkspaceEntityStorageBuilder.create()
-          try {
-            serializer.loadEntities(myBuilder, reader, errorReporter, virtualFileManager)
-          }
-          catch (e: JDOMException) {
-            reportError(e, serializer.fileUrl)
-          }
-          catch (e: IOException) {
-            reportError(e, serializer.fileUrl)
-          }
+          loadEntitiesAndReportExceptions(serializer, myBuilder, reader, errorReporter)
           myBuilder
         }
       }
@@ -227,6 +215,25 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
     finally {
       service.shutdown()
+    }
+  }
+
+  private fun loadEntitiesAndReportExceptions(serializer: JpsFileEntitiesSerializer<*>,
+                                              builder: WorkspaceEntityStorageBuilder,
+                                              reader: JpsFileContentReader,
+                                              errorReporter: ErrorReporter) {
+    fun reportError(e: Exception, url: VirtualFileUrl) {
+      errorReporter.reportError(ProjectModelBundle.message("module.cannot.load.error", url.presentableUrl, e.localizedMessage), url)
+    }
+
+    try {
+      serializer.loadEntities(builder, reader, errorReporter, virtualFileManager)
+    }
+    catch (e: JDOMException) {
+      reportError(e, serializer.fileUrl)
+    }
+    catch (e: IOException) {
+      reportError(e, serializer.fileUrl)
     }
   }
 
