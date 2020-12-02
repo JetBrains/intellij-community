@@ -491,7 +491,6 @@ public final class FileSystemUtil {
       anyChild = new File(parent, probe);
     }
 
-    boolean mustDelete = false;
     String name = anyChild.getName();
     String altName = toggleCase(name);
     if (altName.equals(name)) {
@@ -499,19 +498,7 @@ public final class FileSystemUtil {
       name = findCaseToggleableChild(parent);
       if (name == null) {
         // we can't find any file with toggleable case.
-        // try to create one
-        name = "_234567r.txt";
-        anyChild = new File(parent, name);
-        boolean created = false;
-        try {
-          created = anyChild.createNewFile();
-        }
-        catch (IOException ignored) {
-        }
-        if (!created) {
-          return FileAttributes.CaseSensitivity.UNKNOWN;
-        }
-        mustDelete = true;
+        return FileAttributes.CaseSensitivity.UNKNOWN;
       }
       altName = toggleCase(name);
     }
@@ -534,11 +521,6 @@ public final class FileSystemUtil {
     }
     catch (IOException e) {
       return FileAttributes.CaseSensitivity.UNKNOWN;
-    }
-    finally {
-      if (mustDelete) {
-        anyChild.delete();
-      }
     }
 
     // it's the different file indeed, what a bad luck
