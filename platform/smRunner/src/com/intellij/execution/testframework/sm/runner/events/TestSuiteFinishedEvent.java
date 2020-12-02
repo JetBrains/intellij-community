@@ -17,15 +17,20 @@ package com.intellij.execution.testframework.sm.runner.events;
 
 import jetbrains.buildServer.messages.serviceMessages.TestSuiteFinished;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TestSuiteFinishedEvent extends TreeNodeEvent {
 
   public TestSuiteFinishedEvent(@NotNull TestSuiteFinished suiteFinished) {
-    super(suiteFinished.getSuiteName(), TreeNodeEvent.getNodeId(suiteFinished));
+    this(suiteFinished.getSuiteName(), TreeNodeEvent.getNodeId(suiteFinished));
   }
 
   public TestSuiteFinishedEvent(@NotNull String name) {
-    super(name, null);
+    this(name, null);
+  }
+
+  public TestSuiteFinishedEvent(@Nullable String name, @Nullable String id) {
+    super(name, id);
   }
 
   @Override
