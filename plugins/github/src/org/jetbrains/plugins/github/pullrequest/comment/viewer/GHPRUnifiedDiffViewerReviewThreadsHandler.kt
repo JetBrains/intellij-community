@@ -19,7 +19,8 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
                                                 commentableRangesModel: SingleValueModel<List<Range>?>,
                                                 reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: UnifiedDiffViewer,
-                                                componentsFactory: GHPRDiffEditorReviewComponentsFactory)
+                                                componentsFactory: GHPRDiffEditorReviewComponentsFactory,
+                                                cumulative: Boolean)
   : GHPRDiffViewerBaseReviewThreadsHandler<UnifiedDiffViewer>(commentableRangesModel, reviewThreadsModel, viewer) {
 
   private val commentableRanges = SingleValueModel<List<LineRange>>(emptyList())
@@ -31,12 +32,19 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
   init {
     val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
 
-    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManager,
-                                                                                componentsFactory) { fileLine ->
-      val (indices, side) = viewer.transferLineFromOneside(fileLine)
-      val line = side.select(indices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
+    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel,
+                                                                                inlaysManager,
+                                                                                componentsFactory,
+                                                                                cumulative) { fileLine ->
+      val (end, start) = getSelectedLines(viewer.editor, fileLine)
 
-      side to line
+      val (endIndices, side) = viewer.transferLineFromOneside(end)
+      val endLine = side.select(endIndices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
+
+      val (startIndices, _) = viewer.transferLineFromOneside(start)
+      val startLine = side.select(startIndices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
+
+      GHPRCommentLocation(side, endLine, startLine, endLine + 1)
     }
 
     GHPREditorCommentableRangesController(commentableRanges, gutterIconRendererFactory, viewer.editor)

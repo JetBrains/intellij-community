@@ -32,41 +32,62 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
       }
     }
 
-  override fun createSingleCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
+  override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHSubmittableTextFieldModel {
-      val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
-      val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
-      reviewDataProvider.createReview(EmptyProgressIndicator(), GHPullRequestReviewEvent.COMMENT, null, commitSha,
-                                      listOf(GHPullRequestDraftReviewComment(it, filePath, diffLine))).successOnEdt {
-        hideCallback()
+      if (line == startLine) {
+        val commitSha = createCommentParametersHelper.commitSha
+        val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
+        reviewDataProvider.createReview(EmptyProgressIndicator(), GHPullRequestReviewEvent.COMMENT, null, commitSha,
+                                        listOf(GHPullRequestDraftReviewComment(it, filePath, diffLine))).successOnEdt {
+          hideCallback()
+        }
+      }
+      else {
+        reviewDataProvider.createThread(EmptyProgressIndicator(), null, it, line + 1, side, startLine + 1, filePath).successOnEdt {
+          hideCallback()
+        }
       }
     }
 
     return createCommentComponent(textFieldModel, GithubBundle.message("pull.request.diff.editor.review.comment"), hideCallback)
   }
 
-  override fun createNewReviewCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
+  override fun createNewReviewCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHSubmittableTextFieldModel {
-      val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
-      val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
-      reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha,
-                                      listOf(GHPullRequestDraftReviewComment(it, filePath, diffLine))).successOnEdt {
-        hideCallback()
+      if (line == startLine) {
+        val commitSha = createCommentParametersHelper.commitSha
+        val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
+        reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha,
+                                        listOf(GHPullRequestDraftReviewComment(it, filePath, diffLine))).successOnEdt {
+          hideCallback()
+        }
+      }
+      else {
+        reviewDataProvider.createReview(EmptyProgressIndicator(), it, line + 1, side, startLine + 1, filePath).successOnEdt {
+          hideCallback()
+        }
       }
     }
 
     return createCommentComponent(textFieldModel, GithubBundle.message("pull.request.diff.editor.review.start"), hideCallback)
   }
 
-  override fun createReviewCommentComponent(reviewId: String, side: Side, line: Int, hideCallback: () -> Unit): JComponent {
+  override fun createReviewCommentComponent(reviewId: String, side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHSubmittableTextFieldModel {
-      val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
-      val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
-      reviewDataProvider.addComment(EmptyProgressIndicator(), reviewId, it, commitSha, filePath, diffLine).successOnEdt {
-        hideCallback()
+      if (line == startLine) {
+        val commitSha = createCommentParametersHelper.commitSha
+        val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
+        reviewDataProvider.addComment(EmptyProgressIndicator(), reviewId, it, commitSha, filePath, diffLine).successOnEdt {
+          hideCallback()
+        }
+      }
+      else {
+        reviewDataProvider.createThread(EmptyProgressIndicator(), reviewId, it, line + 1, side, startLine + 1, filePath).successOnEdt {
+          hideCallback()
+        }
       }
     }
 

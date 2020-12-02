@@ -71,7 +71,7 @@ object GHPRReviewThreadComponent {
       override fun createThreadsPanel(): JComponent = JPanel(VerticalLayout(UI.scale(12))).apply {
         isOpaque = false
 
-        add(diffComponentFactory.createComponent(thread.diffHunk), VerticalLayout.FILL_HORIZONTAL)
+        add(diffComponentFactory.createComponent(thread.diffHunk, thread.startLine), VerticalLayout.FILL_HORIZONTAL)
 
         add(GHPRReviewThreadCommentsPanel.create(thread,
                                                  GHPRReviewCommentComponent.factory(reviewDataProvider, avatarIconsProvider, false)),

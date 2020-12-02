@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
 import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPageInfo
@@ -274,6 +275,19 @@ object GHGQLRequests {
                                        "body" to newText),
                                  GHPullRequestReviewComment::class.java,
                                  "updatePullRequestReviewComment", "pullRequestReviewComment")
+
+      fun addThread(server: GithubServerPath, pullRequestId: String, reviewId: String?,
+                    body: String, line: Int, side: Side, startLine: Int, fileName: String): GQLQuery<GHPullRequestReviewThread> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addPullRequestReviewThread,
+                                 mapOf("body" to body,
+                                       "line" to line,
+                                       "path" to fileName,
+                                       "pullRequestId" to pullRequestId,
+                                       "pullRequestReviewId" to reviewId,
+                                       "side" to side.name,
+                                       "startLine" to startLine),
+                                 GHPullRequestReviewThread::class.java,
+                                 "addPullRequestReviewThread", "thread")
 
       fun resolveThread(server: GithubServerPath, threadId: String): GQLQuery<GHPullRequestReviewThread> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.resolveReviewThread,

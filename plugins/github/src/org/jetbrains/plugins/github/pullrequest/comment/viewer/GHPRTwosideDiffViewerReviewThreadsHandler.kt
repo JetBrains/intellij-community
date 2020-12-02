@@ -16,7 +16,8 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
                                                 commentableRangesModel: SingleValueModel<List<Range>?>,
                                                 reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: TwosideTextDiffViewer,
-                                                componentsFactory: GHPRDiffEditorReviewComponentsFactory)
+                                                componentsFactory: GHPRDiffEditorReviewComponentsFactory,
+                                                cumulative: Boolean)
   : GHPRDiffViewerBaseReviewThreadsHandler<TwosideTextDiffViewer>(commentableRangesModel, reviewThreadsModel, viewer) {
 
   private val commentableRangesLeft = SingleValueModel<List<LineRange>>(emptyList())
@@ -30,9 +31,12 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
   init {
     val inlaysManagerLeft = EditorComponentInlaysManager(viewer.editor1 as EditorImpl)
 
-    val gutterIconRendererFactoryLeft = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManagerLeft,
-                                                                                    componentsFactory) {
-      Side.LEFT to it
+    val gutterIconRendererFactoryLeft = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel,
+                                                                                    inlaysManagerLeft,
+                                                                                    componentsFactory,
+                                                                                    cumulative) { line ->
+      val (endLine, startLine) = getSelectedLines(viewer.editor1, line)
+      GHPRCommentLocation(Side.LEFT, endLine, startLine)
     }
 
     GHPREditorCommentableRangesController(commentableRangesLeft, gutterIconRendererFactoryLeft, viewer.editor1)
@@ -40,9 +44,12 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
 
     val inlaysManagerRight = EditorComponentInlaysManager(viewer.editor2 as EditorImpl)
 
-    val gutterIconRendererFactoryRight = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManagerRight,
-                                                                                     componentsFactory) {
-      Side.RIGHT to it
+    val gutterIconRendererFactoryRight = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel,
+                                                                                     inlaysManagerRight,
+                                                                                     componentsFactory,
+                                                                                     cumulative) { line ->
+      val (endLine, startLine) = getSelectedLines(viewer.editor2, line)
+      GHPRCommentLocation(Side.RIGHT, endLine, startLine)
     }
 
     GHPREditorCommentableRangesController(commentableRangesRight, gutterIconRendererFactoryRight, viewer.editor2)
