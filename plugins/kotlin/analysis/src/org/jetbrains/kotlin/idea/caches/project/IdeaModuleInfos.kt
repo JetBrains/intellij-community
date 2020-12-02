@@ -396,7 +396,7 @@ abstract class LibraryInfo(override val project: Project, val library: Library) 
         library.asLibraryEx().rootBasedHashCode()
     }
 
-    override fun hashCode(): Int = library.name?.hashCode() ?: lazyHashCode
+    override fun hashCode(): Int = lazyHashCode
 }
 
 data class LibrarySourceInfo(override val project: Project, val library: Library, override val binariesModuleInfo: BinaryModuleInfo) :
