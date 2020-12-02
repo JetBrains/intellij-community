@@ -9,7 +9,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
@@ -51,7 +50,6 @@ final class ForkedGroovyc implements GroovycFlavor {
     if (myOptimizeClassLoading) {
       classpath.addAll(GroovyBuilder.getGroovyRtRoots());
       classpath.add(ClasspathBootstrap.getResourcePath(Function.class));
-      classpath.add(ClasspathBootstrap.getResourcePath(UrlClassLoader.class));
     }
     else {
       classpath.addAll(compilationClassPath);

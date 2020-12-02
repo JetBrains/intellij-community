@@ -2,7 +2,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,9 +53,5 @@ public final class ClassLoaderUtil {
       }
     }
     return null;
-  }
-
-  public static void addPlatformLoaderParentIfOnJdk9(@NotNull UrlClassLoader.Builder builder) {
-    builder.parent(getPlatformLoaderParentIfOnJdk9());
   }
 }
