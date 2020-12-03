@@ -191,7 +191,7 @@ public final class PluginManager {
       return false;
     }
 
-    if (vendorString.equals(PluginManagerCore.VENDOR_JETBRAINS)) {
+    if (vendorString.equals(PluginManagerCore.VENDOR_JETBRAINS) || vendorString.equals(PluginManagerCore.VENDOR_JETBRAINS_SRO)) {
       return true;
     }
 
