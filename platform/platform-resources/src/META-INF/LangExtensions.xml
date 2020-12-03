@@ -127,8 +127,6 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManagerUtil"/>
 
-    <applicationService serviceInterface="com.intellij.ide.PsiActionSupportFactory"
-                        serviceImplementation="com.intellij.ide.PsiActionSupportFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.template.impl.ExportableTemplateSettings"/>
     <applicationService serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
