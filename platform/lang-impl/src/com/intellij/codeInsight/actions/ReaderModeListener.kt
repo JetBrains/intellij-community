@@ -2,13 +2,18 @@
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.applyReaderMode
+import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.applyToAllEditors
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.messages.Topic
+import java.beans.PropertyChangeListener
 import java.util.*
 
 interface ReaderModeListener : EventListener {
@@ -20,16 +25,31 @@ class ReaderModeSettingsListener : ReaderModeListener {
     @Topic.ProjectLevel
     @JvmStatic
     val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
+
+    fun applyToAllEditors(project: Project, preferGlobalSettings: Boolean = false) {
+      FileEditorManager.getInstance(project).allEditors.forEach {
+        if (it !is PsiAwareTextEditorImpl) return
+        applyReaderMode(project, it.editor, it.file, fileIsOpenAlready = true, preferGlobalSettings = preferGlobalSettings)
+      }
+
+      EditorFactory.getInstance().allEditors.forEach {
+        if (it !is EditorImpl) return
+        applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document),
+                        fileIsOpenAlready = true, preferGlobalSettings = preferGlobalSettings)
+      }
+    }
   }
 
-  override fun modeChanged(project: Project) {
-    FileEditorManager.getInstance(project).allEditors.forEach {
-      if (it !is PsiAwareTextEditorImpl) return
-      applyReaderMode(project, it.editor, it.file, true) }
+  override fun modeChanged(project: Project) = applyToAllEditors(project)
+}
 
-    EditorFactory.getInstance().allEditors.forEach {
-      if (it !is EditorImpl) return
-      applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document), true)
-    }
+class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
+  override fun runActivity(project: Project) {
+    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(PropertyChangeListener { event ->
+      when (event.propertyName) {
+        EditorSettingsExternalizable.PROP_BREADCRUMBS_PER_LANGUAGE -> applyToAllEditors(project, true)
+        EditorSettingsExternalizable.PROP_DOC_COMMENT_RENDERING -> applyToAllEditors(project, true)
+      }
+    })
   }
 }

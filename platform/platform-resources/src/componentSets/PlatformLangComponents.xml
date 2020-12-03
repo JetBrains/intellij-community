@@ -103,6 +103,7 @@
     <projectService serviceImplementation="com.intellij.codeInsight.navigation.CtrlMouseHandler" preload="await"/>
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.UpdatingScopeOnProjectStructureChangeListener"
                     preload="await"/>
+    <startupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
