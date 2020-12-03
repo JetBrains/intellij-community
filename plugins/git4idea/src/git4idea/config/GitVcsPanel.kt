@@ -284,18 +284,8 @@ internal class GitVcsPanel(private val project: Project) :
   override fun createPanel(): DialogPanel = panel {
     gitExecutableRow()
     row {
-      checkBox(cdEnableStagingArea).enableIf(object : ComponentPredicate() {
-        override fun addListener(listener: (Boolean) -> Unit) {
-          val connection = project.messageBus.connect(this@GitVcsPanel.disposable!!)
-          connection.subscribe(CommitWorkflowManager.SETTINGS, object : CommitWorkflowManager.SettingsListener {
-            override fun settingsChanged() {
-              listener(invoke())
-            }
-          })
-        }
-
-        override fun invoke(): Boolean = canEnableStagingArea()
-      })
+      checkBox(cdEnableStagingArea)
+        .enableIf(StagingAreaAvailablePredicate(project, disposable!!))
     }
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
@@ -305,13 +295,8 @@ internal class GitVcsPanel(private val project: Project) :
       }
     }
     row {
-      checkBox(cdCommitOnCherryPick).enableIf(object : ComponentPredicate() {
-        override fun addListener(listener: (Boolean) -> Unit) {
-          onChangeListAvailabilityChanged(project, this@GitVcsPanel.disposable!!, false, { listener(invoke()) })
-        }
-
-        override fun invoke(): Boolean = ChangeListManager.getInstance(project).areChangeListsEnabled()
-      })
+      checkBox(cdCommitOnCherryPick)
+        .enableIf(ChangeListsEnabledPredicate(project, disposable!!))
     }
     row {
       checkBox(cdAddCherryPickSuffix(project))
@@ -470,4 +455,24 @@ internal class ExpandableTextFieldWithReadOnlyText(lineParser: ParserFunction,
   }
 
   fun JoinerFunction.join(vararg items: String): String = `fun`(items.toList())
+}
+
+private class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
+  override fun addListener(listener: (Boolean) -> Unit) {
+    project.messageBus.connect(disposable).subscribe(CommitWorkflowManager.SETTINGS, object : CommitWorkflowManager.SettingsListener {
+      override fun settingsChanged() {
+        listener(invoke())
+      }
+    })
+  }
+
+  override fun invoke(): Boolean = canEnableStagingArea()
+}
+
+private class ChangeListsEnabledPredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
+  override fun addListener(listener: (Boolean) -> Unit) {
+    onChangeListAvailabilityChanged(project, disposable, false) { listener(invoke()) }
+  }
+
+  override fun invoke(): Boolean = ChangeListManager.getInstance(project).areChangeListsEnabled()
 }
