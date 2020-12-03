@@ -308,6 +308,30 @@ class DiffBuilderTest {
   }
 
   @Test
+  fun `change source and data in diff`() {
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    val sampleEntity = target.addSampleEntity("Prop", MySource)
+
+    val source = WorkspaceEntityStorageBuilder.from(target)
+    source.changeSource(sampleEntity, AnotherSource)
+    source.modifyEntity(ModifiableSampleEntity::class.java, sampleEntity) {
+      stringProperty = "Prop2"
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val entitySourceIndex = target.indexes.entitySourceIndex
+    assertEquals(1, entitySourceIndex.index.size)
+    assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
+
+    val updatedEntity = target.entities(SampleEntity::class.java).single()
+    assertEquals("Prop2", updatedEntity.stringProperty)
+    assertEquals(AnotherSource, updatedEntity.entitySource)
+  }
+
+  @Test
   fun `change source in target`() {
     val target = WorkspaceEntityStorageBuilderImpl.create()
     val sampleEntity = target.addSampleEntity("Prop", MySource)
