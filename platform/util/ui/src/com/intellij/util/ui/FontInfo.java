@@ -171,13 +171,8 @@ public final class FontInfo {
         font = font.deriveFont((float)DEFAULT_SIZE);
         name = font.getFontName(ENGLISH);
       }
-      int width = getFontWidth(font, Font.PLAIN);
-      if (!plainOnly) {
-        if (width != 0 && width != getFontWidth(font, Font.BOLD)) width = 0;
-        if (width != 0 && width != getFontWidth(font, Font.ITALIC)) width = 0;
-        if (width != 0 && width != getFontWidth(font, Font.BOLD | Font.ITALIC)) width = 0;
-      }
-      return new FontInfo(name, font, width > 0);
+      boolean monospaced = plainOnly ? isMonospaced(font) : isMonospacedWithStyles(font);
+      return new FontInfo(name, font, monospaced);
     }
     catch (Throwable ignored) {
       return null; // skip font that cannot be processed
@@ -205,6 +200,14 @@ public final class FontInfo {
 
   public static boolean isMonospaced(Font font) {
     return getFontWidth(font, Font.PLAIN) > 0;
+  }
+
+   public static boolean isMonospacedWithStyles(Font font) {
+     int width = getFontWidth(font, Font.PLAIN);
+     if (width != 0 && width != getFontWidth(font, Font.BOLD)) width = 0;
+     if (width != 0 && width != getFontWidth(font, Font.ITALIC)) width = 0;
+     if (width != 0 && width != getFontWidth(font, Font.BOLD | Font.ITALIC)) width = 0;
+     return width > 0;
   }
 
   private static int getCharWidth(Font font, char ch) {

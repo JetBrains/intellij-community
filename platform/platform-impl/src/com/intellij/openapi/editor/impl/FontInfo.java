@@ -16,7 +16,8 @@ import java.awt.font.TextAttribute;
 import java.util.Collections;
 
 public final class FontInfo {
-  private static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
+  public static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
+
   private static final Font DUMMY_FONT = new Font(null);
 
   private final Font myFont;
