@@ -20,7 +20,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -46,19 +45,13 @@ public class IssueLinkRenderer {
   }
 
   public List<String> appendTextWithLinks(@Nls String text, @NotNull SimpleTextAttributes baseStyle) {
-    return appendTextWithLinks(text, baseStyle, s -> append(s, baseStyle));
-  }
-
-  public List<String> appendTextWithLinks(@Nls String text,
-                                          @NotNull SimpleTextAttributes baseStyle,
-                                          @NotNull Consumer<? super @Nls String> consumer) {
     List<String> pieces = new ArrayList<>();
 
     SimpleTextAttributes linkAttributes = getLinkAttributes(baseStyle);
     IssueNavigationConfiguration.processTextWithLinks(text, myIssueNavigationConfiguration.findIssueLinks(text),
                                                       s -> {
                                                         pieces.add(s);
-                                                        consumer.consume(s);
+                                                        append(s, baseStyle);
                                                       },
                                                       (link, target) -> {
                                                         pieces.add(link);
