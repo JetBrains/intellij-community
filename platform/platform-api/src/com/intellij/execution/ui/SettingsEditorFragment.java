@@ -93,7 +93,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return fragment;
   }
 
-  public static <Settings> SettingsEditorFragment<Settings, ?> createTag(String id, @Nls String name, @Nls String group,
+  public static <Settings> SettingsEditorFragment<Settings, TagButton> createTag(String id, @Nls String name, @Nls String group,
                                                                          Predicate<? super Settings> getter,
                                                                          BiConsumer<? super Settings, ? super Boolean> setter) {
     Ref<SettingsEditorFragment<Settings, ?>> ref = new Ref<>();
@@ -101,7 +101,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
       ref.get().setSelected(false);
       ref.get().logChange(false, e);
     });
-    SettingsEditorFragment<Settings, ?> fragment = new SettingsEditorFragment<Settings, JComponent>(id, name, group, tagButton,
+    SettingsEditorFragment<Settings, TagButton> fragment = new SettingsEditorFragment<>(id, name, group, tagButton,
                                                                                                     (settings, button) -> button.setVisible(getter.test(settings)),
                                                                                                     (settings, button) -> setter.accept(settings, button.isVisible()),
                                                                                                     getter) {

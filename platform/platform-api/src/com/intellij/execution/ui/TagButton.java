@@ -50,6 +50,10 @@ public class TagButton extends JBLayeredPane implements Disposable {
     layoutButtons();
   }
 
+  public void setToolTip(@Nls String toolTip) {
+    myButton.setToolTipText(toolTip);
+  }
+
   protected void layoutButtons() {
     myButton.setMargin(JBUI.emptyInsets());
     Dimension size = myButton.getPreferredSize();
