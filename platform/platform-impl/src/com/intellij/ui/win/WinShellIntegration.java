@@ -179,7 +179,7 @@ final class WinShellIntegration implements Disposable {
 
     appUserModelIdProperty = appInfo.getWin32AppUserModelId();
     isAvailable = SystemInfo.isWin8OrNewer
-                  && !"false".equals(System.getProperty("idea.winshellintegration.enabled"))
+                  && !"false".equals(System.getProperty("ide.win.shell.integration"))
                   && !StringUtilRt.isEmptyOrSpaces(appUserModelIdProperty);
   }
 }
