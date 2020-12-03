@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
