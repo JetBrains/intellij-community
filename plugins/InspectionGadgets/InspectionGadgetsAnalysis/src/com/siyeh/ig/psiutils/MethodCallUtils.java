@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -438,11 +438,8 @@ public final class MethodCallUtils {
       PsiMethodCallExpression callForQualifier = tryCast(argumentParent.getParent(), PsiMethodCallExpression.class);
       if (callForQualifier != null) {
         PsiMethod method = callForQualifier.resolveMethod();
-        if (method != null) {
-          PsiMethod extensionMethod = PsiAugmentProvider.resolveExtensionMethod(method);
-          if (extensionMethod != null) {
-            return extensionMethod.getParameterList().getParameter(0);
-          }
+        if (method instanceof PsiExtensionMethod) {
+          return ((PsiExtensionMethod)method).getTargetReceiverParameter();
         }
       }
     }
@@ -459,15 +456,11 @@ public final class MethodCallUtils {
     if (index == -1) return null;
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
-    PsiMethod extensionMethod = PsiAugmentProvider.resolveExtensionMethod(method);
-    if (extensionMethod != null) {
-      method = extensionMethod;
-      index++;
-    }
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (index >= parameters.length) return null;
-    if (isVarArgCall(call) && index >= parameters.length - 1) return null;
-    return parameters[index];
+    PsiParameterList list = method.getParameterList();
+    int count = list.getParametersCount();
+    if (index >= count) return null;
+    if (isVarArgCall(call) && index >= count - 1) return null;
+    return method instanceof PsiExtensionMethod ? ((PsiExtensionMethod)method).getTargetParameter(index) : list.getParameter(index);
   }
 
   private static int getParameterReferenceIndex(PsiMethodCallExpression call, PsiParameter parameter) {

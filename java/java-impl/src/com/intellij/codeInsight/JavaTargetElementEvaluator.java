@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordMember;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -152,11 +152,8 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         }
       }
 
-      if (refElement instanceof PsiMethod) {
-        PsiMethod extensionMethod = PsiAugmentProvider.resolveExtensionMethod((PsiMethod)refElement);
-        if (extensionMethod != null) {
-          return extensionMethod;
-        }
+      if (refElement instanceof PsiExtensionMethod) {
+        refElement = ((PsiExtensionMethod)refElement).getTargetMethod();
       }
 
       if (refElement instanceof LightRecordMember) {

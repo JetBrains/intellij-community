@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -359,7 +360,7 @@ public final class PsiClassImplUtil {
         }
       }
       if (type == MemberType.METHOD && psiClass != null && context != null) {
-        List<PsiMethod> methods = PsiAugmentProvider.collectExtensionMethods(psiClass, name, context);
+        List<PsiExtensionMethod> methods = PsiAugmentProvider.collectExtensionMethods(psiClass, name, context);
         if (!methods.isEmpty()) {
           if (result == null) result = new ArrayList<>();
           result.addAll(methods);

@@ -74,19 +74,10 @@ public abstract class PsiAugmentProvider {
    * @param context   context where extension methods should be applicable
    */
   @ApiStatus.Experimental
-  protected List<PsiMethod> getExtensionMethods(@NotNull PsiClass aClass, @NotNull String nameHint, @NotNull PsiElement context) {
+  protected List<PsiExtensionMethod> getExtensionMethods(@NotNull PsiClass aClass, @NotNull String nameHint, @NotNull PsiElement context) {
     return Collections.emptyList();
   }
 
-  /**
-   * @param method a method to resolve
-   * @return target static method, or null if the supplied method is not an extension method
-   */
-  @ApiStatus.Experimental
-  protected @Nullable PsiMethod getTargetMethod(@NotNull PsiMethod method) {
-    return null;
-  }
-  
   /**
    * @deprecated invoke and override {@link #getAugments(PsiElement, Class, String)}.
    */
@@ -164,11 +155,11 @@ public abstract class PsiAugmentProvider {
 
   @ApiStatus.Experimental
   @NotNull
-  public static List<PsiMethod> collectExtensionMethods(PsiClass aClass, @NotNull String nameHint, PsiElement context) {
-    List<PsiMethod> extensionMethods = new SmartList<>();
+  public static List<PsiExtensionMethod> collectExtensionMethods(PsiClass aClass, @NotNull String nameHint, PsiElement context) {
+    List<PsiExtensionMethod> extensionMethods = new SmartList<>();
     forEach(aClass.getProject(), provider -> {
-      List<PsiMethod> methods = provider.getExtensionMethods(aClass, nameHint, context);
-      for (PsiMethod method : methods) {
+      List<PsiExtensionMethod> methods = provider.getExtensionMethods(aClass, nameHint, context);
+      for (PsiExtensionMethod method : methods) {
         try {
           PsiUtilCore.ensureValid(method);
           extensionMethods.add(method);
@@ -183,25 +174,6 @@ public abstract class PsiAugmentProvider {
       return true;
     });
     return extensionMethods;
-  }
-
-  /**
-   * @param method a method to resolve
-   * @return target static method, or null if the supplied method is not an extension method
-   */
-  @ApiStatus.Experimental
-  @Nullable
-  public static PsiMethod resolveExtensionMethod(PsiMethod method) {
-    Ref<PsiMethod> result = Ref.create();
-    forEach(method.getProject(), provider -> {
-      PsiMethod target = provider.getTargetMethod(method);
-      if (target != null) {
-        result.set(target);
-        return false;
-      }
-      return true;
-    });
-    return result.get();
   }
 
   @Nullable

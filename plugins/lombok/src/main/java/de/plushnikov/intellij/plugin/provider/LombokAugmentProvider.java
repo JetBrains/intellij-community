@@ -6,6 +6,7 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -162,17 +163,12 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   }
 
   @Override
-  protected List<PsiMethod> getExtensionMethods(@NotNull PsiClass aClass,
-                                                @NotNull String nameHint,
-                                                @NotNull PsiElement context) {
+  protected List<PsiExtensionMethod> getExtensionMethods(@NotNull PsiClass aClass,
+                                                         @NotNull String nameHint,
+                                                         @NotNull PsiElement context) {
     if (!LombokProjectValidatorActivity.hasLombokLibrary(context.getProject())) {
       return Collections.emptyList();
     }
     return ExtensionMethodsHelper.getExtensionMethods(aClass, nameHint, context);
-  }
-
-  @Override
-  protected @Nullable PsiMethod getTargetMethod(@NotNull PsiMethod method) {
-    return ExtensionMethodsHelper.resolve(method);
   }
 }
