@@ -44,10 +44,10 @@ And using the following commands **ran at Visual Studio Developer Command Prompt
 cd build
 
 cmake -E rm -rf "x32"
-cmake -G"Visual Studio 15 2017" -A Win32 -DJDK_PATH="%env.JDK_11%" -S ".." -B "x32"
+cmake -G"Visual Studio 15 2017" -A Win32 -DCMAKE_SYSTEM_VERSION=8.0 -DJDK_PATH="%JDK_11%" -S ".." -B "x32"
 cmake --build "x32" --config RelWithDebInfo
 
 cmake -E rm -rf "x64"
-cmake -G"Visual Studio 15 2017" -A x64 -DJDK_PATH="%env.JDK_11_x64%" -S ".." -B "x64"
+cmake -G"Visual Studio 15 2017" -A x64 -DCMAKE_SYSTEM_VERSION=8.0 -DJDK_PATH="%JDK_11_x64%" -S ".." -B "x64"
 cmake --build "x64" --config RelWithDebInfo
 ```
