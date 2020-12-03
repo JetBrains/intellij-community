@@ -28,6 +28,11 @@ import java.util.Set;
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   @NonNls
   public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
+  @NonNls
+  public static final String PROP_BREADCRUMBS_PER_LANGUAGE = "BreadcrumbsPerLanguage";
+
+  @NonNls
+  public static final String PROP_DOC_COMMENT_RENDERING = "DocCommentRendering";
 
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange TOOLTIPS_DELAY_RANGE = new UINumericRange(500, 1, 5000);
@@ -338,7 +343,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    */
   public boolean setBreadcrumbsShownFor(String languageID, boolean value) {
     Boolean visible = myOptions.mapLanguageBreadcrumbs.put(languageID, value);
-    return (visible == null || visible) != value;
+    boolean newValue = (visible == null || visible) != value;
+    if (newValue) {
+      myPropertyChangeSupport.firePropertyChange(PROP_BREADCRUMBS_PER_LANGUAGE, visible, (Boolean)value);
+    }
+    return newValue;
   }
 
   public boolean isDocCommentRenderingEnabled() {
@@ -346,7 +355,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setDocCommentRenderingEnabled(boolean value) {
+    boolean oldValue = myOptions.ENABLE_RENDERED_DOC;
     myOptions.ENABLE_RENDERED_DOC = value;
+    if (oldValue != value) {
+      myPropertyChangeSupport.firePropertyChange(PROP_DOC_COMMENT_RENDERING, oldValue, value);
+    }
   }
 
   public boolean isBlockCursor() {
