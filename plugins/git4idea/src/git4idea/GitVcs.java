@@ -369,8 +369,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public boolean isWithCustomLocalChanges() {
-    return GitStageManagerKt.isStagingAreaAvailable() &&
-           GitStageManagerKt.stageLocalChangesRegistryOption().asBoolean();
+    return GitStageManagerKt.isStagingAreaAvailable();
   }
 
   @Override

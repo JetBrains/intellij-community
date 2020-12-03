@@ -60,7 +60,6 @@ interface GitStagingAreaSettingsListener {
 }
 
 fun stageLineStatusTrackerRegistryOption() = Registry.get("git.enable.stage.line.status.tracker")
-fun stageLocalChangesRegistryOption() = Registry.get("git.enable.stage.disable.local.changes")
 
 fun isStagingAreaEnabled() = GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
 fun enableStagingArea(enabled: Boolean) {
