@@ -43,6 +43,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
   private static final Logger LOG = Logger.getInstance(PushedFilePropertiesUpdater.class);
@@ -313,15 +315,18 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   public static void scanProject(@NotNull Project project, @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
     Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
-    List<Runnable> tasks = ContainerUtil.mapNotNull(modules, module -> {
-      return ReadAction.compute(() -> {
-        if (module.isDisposed()) return null;
-        ProgressManager.checkCanceled();
-        ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-        ContentIteratorEx iterator = iteratorProducer.apply(module);
-        return () -> fileIndex.iterateContent(iterator);
-      });
-    });
+    List<Runnable> tasks = Arrays.stream(modules)
+      .flatMap(module -> {
+        return ReadAction.compute(() -> {
+          if (module.isDisposed()) return Stream.empty();
+          ProgressManager.checkCanceled();
+          ModuleFileIndexImpl fileIndex = (ModuleFileIndexImpl)ModuleRootManager.getInstance(module).getFileIndex();
+          ContentIteratorEx iterator = iteratorProducer.apply(module);
+          Set<VirtualFile> roots = fileIndex.getModuleRootsToIterate();
+          return roots.stream().map(r -> (Runnable)() -> fileIndex.iterateContentUnderDirectory(r, iterator));
+        });
+      })
+      .collect(Collectors.toList());
     invokeConcurrentlyIfPossible(tasks);
   }
 

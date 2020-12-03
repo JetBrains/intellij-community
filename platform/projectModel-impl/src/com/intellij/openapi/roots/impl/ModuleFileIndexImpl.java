@@ -39,7 +39,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return true;
   }
 
-  @NotNull Set<VirtualFile> getModuleRootsToIterate() {
+  public @NotNull Set<VirtualFile> getModuleRootsToIterate() {
     return ReadAction.compute(() -> {
       if (myModule.isDisposed()) {
         return Collections.emptySet();
