@@ -18,34 +18,31 @@ internal val isToggleCommitUi = Registry.get("vcs.non.modal.commit.toggle.ui")
 
 private val LOCAL_CHANGES_ACTION_PLACES = setOf(CHANGES_VIEW_TOOLBAR, CHANGES_VIEW_POPUP)
 private fun AnActionEvent.isFromLocalChangesPlace() = place in LOCAL_CHANGES_ACTION_PLACES
+private fun AnActionEvent.isFromLocalChanges() = getData(CONTENT_MANAGER)?.selectedContent?.tabName == LOCAL_CHANGES
 
-internal fun AnActionEvent.isFromLocalChanges() = getData(CONTENT_MANAGER)?.selectedContent?.tabName == LOCAL_CHANGES
-
-open class CommonCheckinProjectAction : AbstractCommonCheckinAction() {
-  protected open fun isCommitProjectAction() = this::class.java == CommonCheckinProjectAction::class.java
-
-  override fun update(e: AnActionEvent) {
-    if (isCommitProjectAction() && e.isProjectUsesNonModalCommit() &&
-        (isToggleCommitUi.asBoolean() && e.isFromLocalChanges() || !isToggleCommitUi.asBoolean() && e.isFromLocalChangesPlace())) {
-      e.presentation.isEnabledAndVisible = false
-    }
-    else {
-      super.update(e)
-    }
-  }
-
-  override fun getRoots(dataContext: VcsContext): Array<FilePath> =
-    ProjectLevelVcsManager.getInstance(dataContext.project!!).allVcsRoots
-      .filter { it.vcs!!.checkinEnvironment != null }
-      .map { getFilePath(it.path) }
-      .toTypedArray()
-
-  override fun approximatelyHasRoots(dataContext: VcsContext): Boolean = true
+private fun AnActionEvent.isToggleCommitEnabled(): Boolean {
+  return isToggleCommitUi.asBoolean() &&
+         isProjectUsesNonModalCommit()
 }
 
-private class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
-  // need to use `CommonCheckinProjectAction` inheritor - otherwise action is invisible in Local Changes
-  private val commitProjectAction = object : CommonCheckinProjectAction() {}
+open class CommonCheckinProjectAction : CommonCheckinProjectActionImpl() {
+  override fun update(e: AnActionEvent) {
+    if (e.isToggleCommitEnabled() && e.isFromLocalChanges()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    if (e.isProjectUsesNonModalCommit() && !e.isToggleCommitEnabled() && e.isFromLocalChangesPlace()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    super.update(e)
+  }
+}
+
+class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
+  private val commitProjectAction = CommonCheckinProjectActionImpl()
 
   init {
     ActionUtil.copyFrom(this, IdeActions.ACTION_CHECKIN_PROJECT)
@@ -54,13 +51,17 @@ private class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    when {
-      !e.isProjectUsesNonModalCommit() || !isToggleCommitUi.asBoolean() || !e.isFromLocalChanges() ->
-        e.presentation.isEnabledAndVisible = false
-
-      isSelected(e) -> e.presentation.isEnabledAndVisible = true
-      else -> commitProjectAction.update(e)
+    if (!(e.isToggleCommitEnabled() && e.isFromLocalChanges())) {
+      e.presentation.isEnabledAndVisible = false
+      return
     }
+
+    if (isSelected(e)) {
+      e.presentation.isEnabledAndVisible = true
+      return
+    }
+
+    commitProjectAction.update(e)
   }
 
   override fun isSelected(e: AnActionEvent): Boolean = e.getProjectCommitWorkflowHandler()?.isActive == true
@@ -72,4 +73,15 @@ private class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
     else {
       e.getProjectCommitWorkflowHandler()!!.deactivate(false)
     }
+}
+
+@Suppress("ComponentNotRegistered")
+open class CommonCheckinProjectActionImpl : AbstractCommonCheckinAction() {
+  override fun getRoots(dataContext: VcsContext): Array<FilePath> =
+    ProjectLevelVcsManager.getInstance(dataContext.project!!).allVcsRoots
+      .filter { it.vcs!!.checkinEnvironment != null }
+      .map { getFilePath(it.path) }
+      .toTypedArray()
+
+  override fun approximatelyHasRoots(dataContext: VcsContext): Boolean = true
 }
