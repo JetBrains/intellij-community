@@ -418,7 +418,6 @@ final class ProjectData {
 
       contents.remove(content);
       cd.setOptionalContextActions(null);
-      cd.barContainer.release();
     }
 
     private final class ContentData {
