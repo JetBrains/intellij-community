@@ -15,7 +15,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +43,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     return myDefaultSettings;
   }
 
+  @NotNull
   protected Project getProject() {
     return mySettings.getProject();
   }

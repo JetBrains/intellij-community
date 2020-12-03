@@ -17,12 +17,13 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
 public interface GeneralCodeStyleOptionsProvider extends UnnamedConfigurable {
-  void apply(CodeStyleSettings settings);
-  boolean isModified(CodeStyleSettings settings);
-  void reset(CodeStyleSettings settings);
+  void apply(@NotNull CodeStyleSettings settings);
+  boolean isModified(@NotNull CodeStyleSettings settings);
+  void reset(@NotNull CodeStyleSettings settings);
 }

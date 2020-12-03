@@ -294,7 +294,8 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   protected ObjectProducer createProducer() {
     try {
       if (providerClass != null) {
-        return new ProviderProducer(instantiateConfigurableProvider());
+        ConfigurableProvider provider = instantiateConfigurableProvider();
+        return provider == null ? new ObjectProducer() : new ProviderProducer(provider);
       }
       else if (instanceClass != null) {
         return new ClassProducer(componentManager, instanceClass, pluginDescriptor);
@@ -402,20 +403,21 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   }
 
   private static final class ProviderProducer extends ObjectProducer {
+    @NotNull
     private final ConfigurableProvider myProvider;
 
-    private ProviderProducer(ConfigurableProvider provider) {
+    private ProviderProducer(@NotNull ConfigurableProvider provider) {
       myProvider = provider;
     }
 
     @Override
     protected Object createElement() {
-      return myProvider == null ? null : myProvider.createConfigurable();
+      return myProvider.createConfigurable();
     }
 
     @Override
     protected boolean canCreateElement() {
-      return myProvider != null && myProvider.canCreateConfigurable();
+      return myProvider.canCreateConfigurable();
     }
   }
 
