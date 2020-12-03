@@ -47,6 +47,7 @@ final class CommunityRepositoryModules {
     "intellij.xml",
     "intellij.xml.psi",
     "intellij.xml.structureView",
+    "intellij.platform.concurrency",
   ]
 
   /**
@@ -85,7 +86,10 @@ final class CommunityRepositoryModules {
     "intellij.platform.structureView.impl",
     "intellij.platform.tasks.impl",
     "intellij.platform.testRunner",
-    "intellij.platform.debugger.impl"
+    "intellij.platform.debugger.impl",
+    "intellij.platform.configurationStore.impl",
+    "intellij.platform.serviceContainer",
+    "intellij.platform.objectSerializer"
   ]
 
   /**

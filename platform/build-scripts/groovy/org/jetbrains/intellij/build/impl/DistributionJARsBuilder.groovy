@@ -158,31 +158,30 @@ final class DistributionJARsBuilder {
       productLayout.moduleExcludes.entrySet().each {
         layout.moduleExcludes.putValues(it.key, it.value)
       }
-      addModule("intellij.platform.util")
+
+      addModule("intellij.platform.util", "util.jar")
       addModule("intellij.platform.util.rt", "util.jar")
       addModule("intellij.platform.util.classLoader", "util.jar")
       addModule("intellij.platform.util.text.matching", "util.jar")
       addModule("intellij.platform.util.collections", "util.jar")
       addModule("intellij.platform.util.strings", "util.jar")
       addModule("intellij.platform.util.diagnostic", "util.jar")
-      addModule("intellij.platform.util.ui")
-      addModule("intellij.platform.util.ex")
+      addModule("intellij.platform.util.ui", "util.jar")
+      addModule("intellij.platform.util.ex", "util.jar")
       addModule("intellij.platform.rd.community")
 
       addModule("intellij.platform.diagnostic")
-      addModule("intellij.platform.ide.util.io")
+      addModule("intellij.platform.ide.util.io", "util.jar")
 
-      addModule("intellij.platform.concurrency")
       addModule("intellij.platform.core.ui")
 
-      addModule("intellij.platform.builtInServer.impl")
       addModule("intellij.platform.credentialStore")
       withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
       addModule("intellij.json")
       addModule("intellij.spellchecker")
-      addModule("intellij.platform.statistics")
-      addModule("intellij.platform.statistics.uploader")
-      addModule("intellij.platform.statistics.config")
+      addModule("intellij.platform.statistics", "stats.jar")
+      addModule("intellij.platform.statistics.uploader", "stats.jar")
+      addModule("intellij.platform.statistics.config", "stats.jar")
       addModule("intellij.platform.statistics.devkit")
 
       addModule("intellij.relaxng", "intellij-xml.jar")
@@ -198,11 +197,8 @@ final class DistributionJARsBuilder {
       addModule("intellij.platform.vcs.codeReview", "intellij-dvcs.jar")
 
       addModule("intellij.platform.objectSerializer.annotations")
-      addModule("intellij.platform.objectSerializer")
-      addModule("intellij.platform.configurationStore.impl")
 
       addModule("intellij.platform.extensions")
-      addModule("intellij.platform.serviceContainer")
       addModule("intellij.platform.bootstrap")
       addModule("intellij.java.guiForms.rt")
       addModule("intellij.platform.icons")
