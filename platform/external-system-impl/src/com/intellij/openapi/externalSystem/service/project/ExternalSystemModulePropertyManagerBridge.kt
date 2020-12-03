@@ -9,14 +9,18 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.externalSystemOptions
+import com.intellij.workspaceModel.storage.bridgeEntities.getOrCreateExternalSystemModuleOptions
 
 class ExternalSystemModulePropertyManagerBridge(private val module: Module) : ExternalSystemModulePropertyManager() {
   private fun findEntity(): ExternalSystemModuleOptionsEntity? {
@@ -29,7 +33,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
                          action: ModifiableExternalSystemModuleOptionsEntity.() -> Unit) {
     module as ModuleBridge
     if (moduleDiff != null) {
-      val moduleEntity = module.entityStorage.current.findModuleEntity(module) ?: return
+      val moduleEntity = (moduleDiff as WorkspaceEntityStorage).findModuleEntity(module) ?: return
       val options = moduleDiff.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
       moduleDiff.modifyEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, options, action)
     }
