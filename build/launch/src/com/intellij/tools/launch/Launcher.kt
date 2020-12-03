@@ -1,6 +1,7 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
+import org.apache.log4j.Logger
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -9,12 +10,15 @@ import java.nio.file.Files
 object Launcher {
 
   private const val defaultDebugPort = 5050
+  private val logger = Logger.getLogger(Launcher::class.java)
 
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
              options: LauncherOptions): Process {
     val classPathBuilder = ClassPathBuilder(paths, modules)
+    logger.info("Building classpath")
     val classPathArgFile = classPathBuilder.build()
+    logger.info("Done building classpath")
 
     return launch(paths, classPathArgFile, options)
   }
@@ -68,7 +72,10 @@ object Launcher {
     if (!TeamCityHelper.isUnderTeamCity) {
       val suspendOnStart = if (options.debugSuspendOnStart) "y" else "n"
       val port = if (options.debugPort > 0) options.debugPort else findFreeDebugPort()
-      cmd.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$port")
+
+      // changed in Java 9, now we have to use *: to listen on all interfaces
+      val host = if (options.runInDocker) "*:" else ""
+      cmd.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$host$port")
     }
 
     for (arg in options.javaArguments) {
@@ -82,7 +89,7 @@ object Launcher {
       cmd.add(arg.trim('"'))
     }
 
-/*
+    /*
     println("Starting cmd:")
     for (arg in cmd) {
       println("  $arg")
@@ -90,20 +97,33 @@ object Launcher {
     println("-- END")
 */
 
-    val processBuilder = ProcessBuilder(cmd)
-    if (options.redirectOutputIntoParentProcess) {
-      processBuilder.inheritIO()
+    return if (options.runInDocker) {
+      val docker = DockerLauncher(paths, options as DockerLauncherOptions)
+      docker.assertCanRun()
+
+      docker.runInContainer(cmd)
     }
     else {
-      paths.logFolder.mkdirs()
-      processBuilder.redirectOutput(paths.logFolder.resolve("out.log"))
-      processBuilder.redirectError(paths.logFolder.resolve("err.log"))
+      val processBuilder = ProcessBuilder(cmd)
+
+      processBuilder.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
+      processBuilder.environment().putAll(options.environment)
+      options.beforeProcessStart.invoke(processBuilder)
+
+      processBuilder.start()
     }
+  }
 
-    processBuilder.environment().putAll(options.environment)
-    options.beforeProcessStart.invoke(processBuilder)
-
-    return processBuilder.start()
+  fun ProcessBuilder.affixIO(redirectOutputIntoParentProcess: Boolean, logFolder: File) {
+    if (redirectOutputIntoParentProcess) {
+      this.inheritIO()
+    }
+    else {
+      logFolder.mkdirs()
+      // TODO: test logs overwrite launcher logs
+      this.redirectOutput(logFolder.resolve("out.log"))
+      this.redirectError(logFolder.resolve("err.log"))
+    }
   }
 
   fun findFreeDebugPort(): Int {
