@@ -6,6 +6,7 @@ import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl
 import com.intellij.lang.annotation.HighlightSeverity.ERROR
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.problems.ProblemListener
@@ -30,6 +31,7 @@ internal class HighlightingErrorsProvider(override val project: Project) : Probl
 
   override fun problemsAppeared(file: VirtualFile) {
     ProjectFileNode.findArea(file, project) ?: return
+    if (ProjectFileIndex.getInstance(project).isExcluded(file)) return
     synchronized(watchers) {
       watchers.computeIfAbsent(file) { file ->
         HighlightingWatcher(this, ProblemsCollector.getInstance(project), file, ERROR.myVal).also { watcher ->
