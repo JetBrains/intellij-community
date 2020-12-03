@@ -2,14 +2,14 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
@@ -72,18 +72,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         }
       }
     });
-    FilePropertyPusher.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull FilePropertyPusher<?> pusher, @NotNull PluginDescriptor pluginDescriptor) {
-        queueFullUpdate();
-      }
-    }, project);
-  }
 
-  private void queueFullUpdate() {
-    myTasks.clear();
-    queueTasks(Arrays.asList(this::initializeProperties, () -> doPushAll(FilePropertyPusher.EP_NAME.getExtensionList(),
-                                                                         ProjectFileScanner.EP_NAME.getExtensionList())));
+    project.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        myTasks.clear();
+      }
+    });
   }
 
   @ApiStatus.Internal
@@ -225,10 +220,6 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         DumbService.getInstance(myProject).cancelTask(task);
       }
     });
-    FilePropertyPusher.EP_NAME.addChangeListener(() -> {
-      DumbService.getInstance(myProject).cancelTask(task);
-      queueFullUpdate();
-    }, task);
     DumbService.getInstance(myProject).queueTask(task);
   }
 
