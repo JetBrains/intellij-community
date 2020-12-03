@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OkCancelDialogBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,6 +173,7 @@ public class InstalledPluginsTableModel {
     );
 
     if (!dependencies.isEmpty() &&
+        !SystemProperties.getBooleanProperty("startup.performance.framework", false) &&
         !createUpdateDependenciesDialog(
           enabled,
           ideaPluginDescriptors.size(),
