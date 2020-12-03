@@ -190,7 +190,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     fireOnTestStarted(testProxy, null, null);
   }
   protected void fireOnTestStarted(SMTestProxy testProxy, @Nullable String nodeId, @Nullable String parentNodeId) {
-    myEventPublisher.onTestStarted(testProxy);
+    myEventPublisher.onTestStarted(testProxy, nodeId, parentNodeId);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
       adapter.onTestStarted(testProxy, nodeId, parentNodeId);
     }
@@ -201,7 +201,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     fireOnTestFinished(testProxy, null);
   }
   protected void fireOnTestFinished(SMTestProxy testProxy, @Nullable String nodeId) {
-    myEventPublisher.onTestFinished(testProxy);
+    myEventPublisher.onTestFinished(testProxy, nodeId);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
       adapter.onTestFinished(testProxy, nodeId);
     }
@@ -212,7 +212,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     fireOnTestFailed(testProxy, null);
   }
   protected void fireOnTestFailed(SMTestProxy testProxy, @Nullable String nodeId) {
-    myEventPublisher.onTestFailed(testProxy);
+    myEventPublisher.onTestFailed(testProxy, nodeId);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
       adapter.onTestFailed(testProxy, nodeId);
     }
@@ -223,7 +223,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     fireOnTestIgnored(testProxy, null);
   }
   protected void fireOnTestIgnored(SMTestProxy testProxy, @Nullable String nodeId) {
-    myEventPublisher.onTestIgnored(testProxy);
+    myEventPublisher.onTestIgnored(testProxy, nodeId);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
       adapter.onTestIgnored(testProxy, nodeId);
     }
@@ -236,7 +236,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     fireOnSuiteStarted(newSuite, null, null);
   }
   protected void fireOnSuiteStarted(SMTestProxy newSuite, @Nullable String nodeId, @Nullable String parentNodeId) {
-    myEventPublisher.onSuiteStarted(newSuite);
+    myEventPublisher.onSuiteStarted(newSuite, nodeId, parentNodeId);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
       adapter.onSuiteStarted(newSuite, nodeId, parentNodeId);
     }
@@ -247,7 +247,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     fireOnSuiteFinished(mySuite, null);
   }
   protected void fireOnSuiteFinished(SMTestProxy mySuite, @Nullable String nodeId) {
-    myEventPublisher.onSuiteFinished(mySuite);
+    myEventPublisher.onSuiteFinished(mySuite, nodeId);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
       adapter.onSuiteFinished(mySuite, nodeId);
     }
