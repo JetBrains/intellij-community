@@ -52,6 +52,7 @@ apply from: 'setupCodeWithMe.gradle'
 apply from: 'setupDelve.gradle'
 apply from: 'setupRpluginDeps.gradle'
 apply from: 'setupZkm.gradle'
+apply from: 'setupAndroidStudio.gradle'
 
 task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupThirdPartyPlugins',
                                    'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
