@@ -87,7 +87,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
 
   protected abstract void onProfileRemoved(@NotNull SingleInspectionProfilePanel profilePanel);
 
-  void addProfile(@NotNull InspectionProfileModifiableModel profile) {
+  synchronized void addProfile(@NotNull InspectionProfileModifiableModel profile) {
     myProfilePanels.add(createPanel(profile));
   }
 
