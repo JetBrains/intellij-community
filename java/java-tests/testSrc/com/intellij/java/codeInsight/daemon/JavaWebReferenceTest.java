@@ -27,7 +27,7 @@ public class JavaWebReferenceTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testHighlighting() {
     getReferences("class Hi { String url=\"<info descr=\"Open in browser (" +
-                  (SystemInfoRt.isMac ? "⌘click, ⌘B" : "Ctrl+Click, Ctrl+B") + ")\">http://foo</info>\"; }");
+                  (SystemInfoRt.isMac ? "⌘click, ⌘B" : "Ctrl+click, Ctrl+B") + ")\">http://foo</info>\"; }");
     myFixture.testHighlighting(true, true, true);
   }
 
