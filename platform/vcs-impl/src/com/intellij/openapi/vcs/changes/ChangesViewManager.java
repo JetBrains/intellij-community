@@ -310,7 +310,7 @@ public class ChangesViewManager implements ChangesViewEx,
     myToolWindowPanel.closeEditorPreview(onlyIfEmpty);
   }
 
-  public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
+  public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
     @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
@@ -346,6 +346,7 @@ public class ChangesViewManager implements ChangesViewEx,
       myChangesViewManager = changesViewManager;
       CommitWorkflowManager commitWorkflowManager = CommitWorkflowManager.getInstance(myProject);
 
+      MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
       myTreeUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
@@ -401,11 +402,11 @@ public class ChangesViewManager implements ChangesViewEx,
           if (!isSplitterPreview()) setDiffPreview(true);
         }
       }, this);
-      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
+      busConnection.subscribe(ChangesViewContentManagerListener.TOPIC, () -> setDiffPreview());
 
       setContent(myMainPanel.addToBottom(myProgressLabel));
 
-      project.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+      busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
         @Override
         public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
           setCommitSplitOrientation();
@@ -426,7 +427,6 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       }, this);
 
-      MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
       busConnection.subscribe(ProblemListener.TOPIC, new ProblemListener() {
         @Override
@@ -456,11 +456,6 @@ public class ChangesViewManager implements ChangesViewEx,
       synchronized (myTreeUpdateIndicatorLock) {
         myTreeUpdateIndicator.cancel();
       }
-    }
-
-    @Override
-    public void toolWindowMappingChanged() {
-      setDiffPreview();
     }
 
     private void setDiffPreview() {
