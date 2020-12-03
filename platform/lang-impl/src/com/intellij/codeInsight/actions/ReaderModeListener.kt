@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.Topic
 import java.beans.PropertyChangeListener
 import java.util.*
@@ -45,11 +46,13 @@ class ReaderModeSettingsListener : ReaderModeListener {
 
 class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
   override fun runActivity(project: Project) {
-    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(PropertyChangeListener { event ->
+    val propertyChangeListener = PropertyChangeListener { event ->
       when (event.propertyName) {
         EditorSettingsExternalizable.PROP_BREADCRUMBS_PER_LANGUAGE -> applyToAllEditors(project, true)
         EditorSettingsExternalizable.PROP_DOC_COMMENT_RENDERING -> applyToAllEditors(project, true)
       }
-    })
+    }
+    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(propertyChangeListener)
+    Disposer.register(project) { EditorSettingsExternalizable.getInstance().removePropertyChangeListener(propertyChangeListener) }
   }
 }
