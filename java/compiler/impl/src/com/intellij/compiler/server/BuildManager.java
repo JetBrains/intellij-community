@@ -1390,7 +1390,7 @@ public final class BuildManager implements Disposable {
         busConnection.disconnect();
         File snapshotDir = new File(SystemProperties.getUserHome(), "snapshots");
         Notification notification =
-          new Notification("build.profiler", JavaCompilerBundle.message("notification.title.cpu.snapshot.build.has.been.captured"), "", NotificationType.INFORMATION);
+          new Notification("Build Profiler", JavaCompilerBundle.message("notification.title.cpu.snapshot.build.has.been.captured"), "", NotificationType.INFORMATION);
         notification.addAction(new AnAction(JavaCompilerBundle.message("action.show.snapshot.location.text")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {

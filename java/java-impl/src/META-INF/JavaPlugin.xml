@@ -2103,6 +2103,7 @@
     <statistics.counterUsagesCollector groupId="java.lens" version="2"/>
     <notificationGroup id="Clean artifact" displayType="BALLOON"/>
     <notificationGroup id="Compiler" displayType="NONE"/>
+    <notificationGroup id="Build Profiler" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Analyze thread dump" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false"/>
     <notificationGroup id="JSHELL_NOTIFICATIONS" displayType="BALLOON"/>
     <notificationGroup id="Repository" displayType="BALLOON"/>
