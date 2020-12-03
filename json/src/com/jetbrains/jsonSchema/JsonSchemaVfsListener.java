@@ -94,7 +94,8 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
         final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
         final PsiManager psiManager = PsiManager.getInstance(project);
         final Editor[] editors = EditorFactory.getInstance().getAllEditors();
-        Arrays.stream(editors).filter(editor -> editor instanceof EditorEx)
+        Arrays.stream(editors)
+              .filter(editor -> editor instanceof EditorEx && editor.getProject() == myProject)
               .map(editor -> ((EditorEx)editor).getVirtualFile())
               .filter(file -> file != null && file.isValid())
               .forEach(file -> {
