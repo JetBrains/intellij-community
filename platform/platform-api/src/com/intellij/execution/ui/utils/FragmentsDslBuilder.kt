@@ -4,6 +4,7 @@ package com.intellij.execution.ui.utils
 import com.intellij.execution.ui.FragmentedSettings
 import com.intellij.execution.ui.NestedGroupFragment
 import com.intellij.execution.ui.SettingsEditorFragment
+import com.intellij.execution.ui.TagButton
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -93,9 +94,11 @@ class FragmentsBuilder<Settings : FragmentedSettings> {
     setter: (Settings, Boolean) -> Unit,
     @Nls group: String? = null,
     @Nls actionHint: String? = null,
-  ): SettingsEditorFragment<Settings, *> {
+    @Nls toolTip: String? = null
+  ): SettingsEditorFragment<Settings, TagButton> {
     return SettingsEditorFragment.createTag(id, name, group, getter, setter).also {
       it.actionHint = actionHint
+      it.component().setToolTip(toolTip)
     }.apply { fragments += this }
   }
 
