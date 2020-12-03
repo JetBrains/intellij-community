@@ -1,9 +1,12 @@
 # WinShellIntegration
+Library provides the features allow integrate your application into Windows Shell:
+* Managing AppUserModelID property of the current process
+* Jump lists support
 
 This project based on the [origin jumplistbridge project](https://github.com/JetBrains/intellij-community/tree/4635352640ed54ef9379082171f33837d099ebb8/native/jumplistbridge)
 by Denis Fokin.
 
-TODO: description
+Windows 8 and higher are supported.
 
 ## Build dependencies
 * C++17-compatible compiler;
@@ -20,7 +23,11 @@ For example if your `javac.exe` is located at `C:\Soft\jdk\bin\javac.exe` you sh
 `-DJDK_PATH="C:\Soft\jdk"`.
 
 ## Integration with CLion
-TODO: description
+1. Configure the toolchain(s) (if you need help, please check [this guide](https://www.jetbrains.com/help/clion/quick-tutorial-on-configuring-clion-on-windows.html));
+2. Configure CMake profiles (if you need help, please check [this guide](https://www.jetbrains.com/help/clion/cmake-profile.html)).
+   Don't forget to pass `JDK_PATH` variable (via `CMake options` field) if you want to build `winshellintegrationbridge` target.
+   Also you can set the root of each profile to [build](build) dir: it already has `.gitignore` file
+    that will exclude everything under it.
 
 ## Current binaries in repository
 Current version of IntelliJ Platform uses binaries located in:
@@ -28,14 +35,19 @@ Current version of IntelliJ Platform uses binaries located in:
 * x64: [bin/win/winshellintegrationbridge64.dll](../../bin/win/winshellintegrationbridge64.dll)
 
 These binaries are built in the following environment:
-* Windows 8.1, release 6.3.9600, with latest system updates;
-* Visual Studio 2017 Community v15.9.29, Windows 8.1 SDK;
-* [CMake 3.15](https://cmake.org/files/v3.15/cmake-3.15.0-win64-x64.msi);
+* Windows 10 build 19041;
+* Visual Studio 2017 Community MSVC 19.16.27043.0, Windows SDK 10.0.18362.0;
 * [Amazon Corretto JDK 11.0.8.10.1](https://corretto.aws/downloads/resources/11.0.8.10.1/amazon-corretto-11.0.8.10.1-windows-x64.msi).
 
 And using the following commands **ran at Visual Studio Developer Command Prompt**:
 ```bat
 cd build
-cmd /C "rmdir /S /Q x32 & mkdir x32 && cd x32 && cmake -G"Visual Studio 15 2017" -DJDK_PATH="C:\Program Files\Amazon Corretto\jdk11.0.8_10" "..\.." && cmake --build . --config RelWithDebInfo"
-cmd /C "rmdir /S /Q x64 & mkdir x64 && cd x64 && cmake -G"Visual Studio 15 2017 Win64" -DJDK_PATH="C:\Program Files\Amazon Corretto\jdk11.0.8_10" "..\.." && cmake --build . --config RelWithDebInfo"
+
+cmake -E rm -rf "x32"
+cmake -G"Visual Studio 15 2017" -A Win32 -DJDK_PATH="%env.JDK_11%" -S ".." -B "x32"
+cmake --build "x32" --config RelWithDebInfo
+
+cmake -E rm -rf "x64"
+cmake -G"Visual Studio 15 2017" -A x64 -DJDK_PATH="%env.JDK_11_x64%" -S ".." -B "x64"
+cmake --build "x64" --config RelWithDebInfo
 ```
