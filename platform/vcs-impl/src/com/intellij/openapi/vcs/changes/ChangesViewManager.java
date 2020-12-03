@@ -478,7 +478,7 @@ public class ChangesViewManager implements ChangesViewEx,
       Disposer.register(this, myChangeProcessor);
 
       myDiffPreview = isEditorPreview ? installEditorPreview(myChangeProcessor) : installSplitterPreview(myChangeProcessor);
-      configurePreview();
+      configureDiffPreview();
     }
 
     @NotNull
@@ -599,8 +599,8 @@ public class ChangesViewManager implements ChangesViewEx,
           Disposer.register(this, myCommitPanel);
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
 
-          configurePreview();
-          myCommitWorkflowHandler.addActivityListener(() -> configurePreview(), myCommitWorkflowHandler);
+          configureDiffPreview();
+          myCommitWorkflowHandler.addActivityListener(() -> configureDiffPreview(), myCommitWorkflowHandler);
         }
       }
       else {
@@ -612,7 +612,7 @@ public class ChangesViewManager implements ChangesViewEx,
           myCommitPanel = null;
           myCommitWorkflowHandler = null;
 
-          configurePreview();
+          configureDiffPreview();
         }
       }
     }
@@ -621,7 +621,7 @@ public class ChangesViewManager implements ChangesViewEx,
       return myCommitWorkflowHandler != null && myCommitWorkflowHandler.isActive();
     }
 
-    private void configurePreview() {
+    private void configureDiffPreview() {
       myChangeProcessor.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
     }
 
