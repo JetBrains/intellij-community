@@ -13,20 +13,23 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiTypeParameter
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.psi.*
+import com.intellij.psi.augment.PsiAugmentProvider
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.psi.impl.light.LightMethodBuilder
+import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import java.util.stream.Collectors
 
@@ -2305,5 +2308,29 @@ class Abc {
     myFixture.configureByText("A.java", "class A {{new Syst<caret>}}")
     myFixture.completeBasic()
     assert ContainerUtil.filter(myFixture.getLookupElementStrings(), {it.startsWith("S")}) == ['System.Logger', 'System.LoggerFinder']
+  }
+  
+  @NeedsIndex.SmartMode // looks like augments don't work in dumb mode
+  void "test member as Java keyword"() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), PsiAugmentProvider.EP_NAME, new PsiAugmentProvider() {
+      @Override
+      protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                               @NotNull Class<Psi> type,
+                                                               @Nullable String nameHint) {
+        if (element instanceof PsiExtensibleClass && element.getName() == "A" && type == PsiMethod.class) {
+          PsiMethod method1 = new LightMethodBuilder(getPsiManager(), "default").setMethodReturnType(PsiType.VOID)
+          PsiMethod method2 = new LightMethodBuilder(getPsiManager(), "define").setMethodReturnType(PsiType.VOID)
+          return List.of(type.cast(method1), type.cast(method2))
+        }
+        return Collections.emptyList()
+      }
+    }, getTestRootDisposable());
+    myFixture.configureByText("A.java", "class A {\n  void test() {\n    Runnable r = A::def<caret>\n  }\n}")
+    myFixture.completeBasic()
+    myFixture.checkResult("class A {\n" +
+                          "  void test() {\n" +
+                          "    Runnable r = A::define;\n" +
+                          "  }\n" +
+                          "}")
   }
 }
