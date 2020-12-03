@@ -131,7 +131,7 @@ public class JBCefClient implements JBCefDisposable {
     return myJSQueryPool;
   }
 
-  synchronized void notifyBrowserCreated(@NotNull JBCefBrowser browser) {
+  synchronized void notifyBrowserCreated(@NotNull JBCefBrowserBase browser) {
     if (myJSQueryPool == null) {
       myJSQueryPool = JSQueryPool.create(this);
     }
