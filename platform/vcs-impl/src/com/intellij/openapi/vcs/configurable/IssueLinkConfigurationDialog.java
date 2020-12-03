@@ -56,12 +56,12 @@ public class IssueLinkConfigurationDialog extends DialogWrapper {
           myExampleIssueLinkTextField.setText(firstMatch.getTargetUrl());
         }
         else {
-          myExampleIssueLinkTextField.setText(VcsBundle.getString("add.issue.dialog.issue.no.match"));
+          myExampleIssueLinkTextField.setText(VcsBundle.message("add.issue.dialog.issue.no.match"));
         }
       }
     }
     catch (Exception ex) {
-      myErrorLabel.setText(MessageFormat.format(VcsBundle.getString("add.issue.dialog.invalid.regular.expression"), ex.getMessage()));
+      myErrorLabel.setText(VcsBundle.message("add.issue.dialog.invalid.regular.expression", ex.getMessage()));
       myExampleIssueLinkTextField.setText("");
     }
     setOKActionEnabled(myErrorLabel.getText().equals(" "));
