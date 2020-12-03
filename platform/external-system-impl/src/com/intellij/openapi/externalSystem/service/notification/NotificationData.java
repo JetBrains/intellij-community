@@ -169,6 +169,8 @@ public class NotificationData implements Disposable {
             public void navigate(boolean requestFocus) {
               NotificationListener listener = myListenerMap.get(id);
               if (listener != null) {
+                // Notification here used only to be able to call 'NotificationListener.hyperlinkUpdate'
+                //noinspection UnresolvedPluginConfigReference
                 listener.hyperlinkUpdate(new Notification("", null, NotificationType.INFORMATION),
                                          IJSwingUtilities.createHyperlinkEvent(id, listener));
               }
