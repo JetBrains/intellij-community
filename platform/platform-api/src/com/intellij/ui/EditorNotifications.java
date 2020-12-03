@@ -34,9 +34,10 @@ public abstract class EditorNotifications {
 
   /**
    * An extension allowing to add custom notifications to the top of file editors.
-   *
+   * <p>
    * During indexing, only {@link com.intellij.openapi.project.DumbAware} instances are executed.
-   * @param <T> the type of the notification UI component
+   *
+   * @param <T> the type of the notification UI component, see also {@link EditorNotificationPanel}
    */
   public abstract static class Provider<T extends JComponent> {
     @NotNull
@@ -45,7 +46,7 @@ public abstract class EditorNotifications {
     /**
      * @deprecated Override {@link #createNotificationPanel(VirtualFile, FileEditor, Project)}
      */
-    @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+    @SuppressWarnings({"unused"})
     @Nullable
     @Deprecated
     public T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
