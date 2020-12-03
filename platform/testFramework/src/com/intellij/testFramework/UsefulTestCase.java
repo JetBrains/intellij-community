@@ -309,7 +309,7 @@ public abstract class UsefulTestCase extends TestCase {
       },
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
       () -> clearFields(this)
-    ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
+    ).run(mySuppressedExceptions);
   }
 
   protected final void disposeRootDisposable() {
@@ -382,8 +382,8 @@ public abstract class UsefulTestCase extends TestCase {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll()
-      .append(() -> {
+    new RunAll(
+      () -> {
         try {
           checkCodeInsightSettingsEqual(defaultSettings, settings);
         }
@@ -398,8 +398,8 @@ public abstract class UsefulTestCase extends TestCase {
           }
           throw error;
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         currentCodeStyleSettings.getIndentOptions(FileTypeManager.getInstance().getStdFileType("JAVA"));
         try {
           checkCodeStyleSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings);
@@ -407,8 +407,8 @@ public abstract class UsefulTestCase extends TestCase {
         finally {
           currentCodeStyleSettings.clearCodeStyleSettings();
         }
-      })
-      .run();
+      }
+    ).run();
   }
 
   /**

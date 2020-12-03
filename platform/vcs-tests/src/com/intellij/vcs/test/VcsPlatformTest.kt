@@ -75,22 +75,22 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { selfTearDownRunnable() })
-      .append(ThrowableRunnable { clearFields(this) })
-      .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } })
-      .run()
+    RunAll(
+      ThrowableRunnable { selfTearDownRunnable() },
+      ThrowableRunnable { clearFields(this) },
+      ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } }
+    ).run()
   }
 
   private fun selfTearDownRunnable() {
     var tearDownErrorDetected = false
     try {
-      RunAll()
-        .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
-        .append(ThrowableRunnable { changeListManager.waitEverythingDoneAndStopInTestMode() })
-        .append(ThrowableRunnable { if (::vcsNotifier.isInitialized) vcsNotifier.cleanup() })
-        .append(ThrowableRunnable { waitForPendingTasks() })
-        .run()
+      RunAll(
+        ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() },
+        ThrowableRunnable { changeListManager.waitEverythingDoneAndStopInTestMode() },
+        ThrowableRunnable { if (::vcsNotifier.isInitialized) vcsNotifier.cleanup() },
+        ThrowableRunnable { waitForPendingTasks() }
+      ).run()
     }
     catch (e: Throwable) {
       tearDownErrorDetected = true

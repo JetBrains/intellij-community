@@ -36,11 +36,11 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
   }
 
   public override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() })
-      .append(ThrowableRunnable { Disposer.dispose(testDisposable) })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
+      ThrowableRunnable { Disposer.dispose(testDisposable) },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   fun `test empty build`() {

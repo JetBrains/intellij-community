@@ -53,11 +53,11 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
 
   @Override
   protected void tearDown() {
-    new RunAll()
-      .append(() -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor))
-      .append(() -> FontLayoutService.setInstance(null))
-      .append(() -> super.tearDown())
-      .run();
+    new RunAll(
+      () -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor),
+      () -> FontLayoutService.setInstance(null),
+      () -> super.tearDown()
+    ).run();
   }
 
   protected void checkResult() throws IOException {

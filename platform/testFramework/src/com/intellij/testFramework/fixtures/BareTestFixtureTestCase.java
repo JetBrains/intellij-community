@@ -19,7 +19,8 @@ import static org.junit.Assume.assumeFalse;
 
 @TestOnly
 public abstract class BareTestFixtureTestCase {
-  @Rule public final TestName myNameRule = new TestName();
+  @Rule public final TestName testName = new TestName();
+  @Rule public final TestRule testLoggerWatcher = TestLoggerFactory.createTestWatcher();
 
   private BareTestFixture myFixture;
 
@@ -46,13 +47,10 @@ public abstract class BareTestFixtureTestCase {
   }
 
   protected final @NotNull String getTestName(boolean lowercaseFirstLetter) {
-    return PlatformTestUtil.getTestName(myNameRule.getMethodName(), lowercaseFirstLetter);
+    return PlatformTestUtil.getTestName(testName.getMethodName(), lowercaseFirstLetter);
   }
 
-  public final @NotNull Disposable getTestRootDisposable() {
+  protected final @NotNull Disposable getTestRootDisposable() {
     return myFixture.getTestRootDisposable();
   }
-
-  @Rule
-  public TestRule testLoggerWatcher = TestLoggerFactory.createTestWatcher();
 }

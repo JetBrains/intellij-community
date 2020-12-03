@@ -103,13 +103,13 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
   @After
   public void after() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
-      new RunAll()
-        .append(() -> HgGlobalSettings.getInstance().setHgExecutable(null))
-        .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
-        .append(() -> myChangeListManager.peer.waitEverythingDoneInTestMode())
-        .append(() -> tearDownFixture())
-        .append(() -> tearDownRepositories())
-        .run();
+      new RunAll(
+        () -> HgGlobalSettings.getInstance().setHgExecutable(null),
+        () -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed(),
+        () -> myChangeListManager.peer.waitEverythingDoneInTestMode(),
+        () -> tearDownFixture(),
+        () -> tearDownRepositories()
+      ).run();
     });
   }
 

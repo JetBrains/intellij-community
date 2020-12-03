@@ -41,10 +41,10 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   @TargetVersions("5.0+")
