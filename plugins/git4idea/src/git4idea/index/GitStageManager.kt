@@ -2,15 +2,13 @@
 package git4idea.index
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.ChangesViewManager
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.messages.Topic
+import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
@@ -22,10 +20,11 @@ private fun onAvailabilityChanged(project: Project) {
   if (isStagingAreaAvailable(project)) {
     GitStageTracker.getInstance(project).updateTrackerState()
   }
-  project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-  ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
-  // Notify LSTM after CLM to let it save current partial changelists state
-  ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+
+  invokeLater {
+    // Notify LSTM after CLM to let it save current partial changelists state
+    ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+  }
 }
 
 internal class GitStageStartupActivity : StartupActivity.Background {
@@ -36,44 +35,26 @@ internal class GitStageStartupActivity : StartupActivity.Background {
   }
 }
 
-internal class StagingSettingsListener(val project: Project) : GitStagingAreaSettingsListener {
-  override fun settingsChanged() {
-    onAvailabilityChanged(project)
-  }
-}
-
 internal class CommitSettingsListener(val project: Project) : CommitModeManager.SettingsListener {
   override fun settingsChanged() {
     onAvailabilityChanged(project)
   }
 }
 
-interface GitStagingAreaSettingsListener {
-  fun settingsChanged()
-
-  companion object {
-    @JvmField
-    val TOPIC: Topic<GitStagingAreaSettingsListener> = Topic(GitStagingAreaSettingsListener::class.java,
-                                                             Topic.BroadcastDirection.TO_DIRECT_CHILDREN,
-                                                             true)
-  }
-}
-
 fun stageLineStatusTrackerRegistryOption() = Registry.get("git.enable.stage.line.status.tracker")
 
-fun isStagingAreaEnabled() = GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
 fun enableStagingArea(enabled: Boolean) {
   val applicationSettings = GitVcsApplicationSettings.getInstance()
   if (enabled == applicationSettings.isStagingAreaEnabled) return
 
   applicationSettings.isStagingAreaEnabled = enabled
-  ApplicationManager.getApplication().messageBus.syncPublisher(GitStagingAreaSettingsListener.TOPIC).settingsChanged()
+  ApplicationManager.getApplication().messageBus.syncPublisher(CommitModeManager.SETTINGS).settingsChanged()
 }
 
 fun canEnableStagingArea() = CommitModeManager.isNonModalInSettings()
 
-fun isStagingAreaAvailable() = isStagingAreaEnabled() && canEnableStagingArea()
 fun isStagingAreaAvailable(project: Project): Boolean {
-  return isStagingAreaAvailable() &&
-         ProjectLevelVcsManager.getInstance(project).singleVCS?.keyInstanceMethod == GitVcs.getKey()
+  val commitMode = CommitModeManager.getInstance(project).getCurrentCommitMode()
+  return commitMode is CommitMode.ExternalCommitMode &&
+         commitMode.vcs.keyInstanceMethod == GitVcs.getKey()
 }

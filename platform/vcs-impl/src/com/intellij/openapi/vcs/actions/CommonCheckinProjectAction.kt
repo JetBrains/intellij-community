@@ -8,23 +8,23 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTENT_MANAGER
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import com.intellij.vcs.commit.CommitMode
+import com.intellij.vcs.commit.getProjectCommitMode
 import com.intellij.vcsUtil.VcsUtil.getFilePath
-
-internal val isToggleCommitUi = Registry.get("vcs.non.modal.commit.toggle.ui")
 
 private val LOCAL_CHANGES_ACTION_PLACES = setOf(CHANGES_VIEW_TOOLBAR, CHANGES_VIEW_POPUP)
 private fun AnActionEvent.isFromLocalChangesPlace() = place in LOCAL_CHANGES_ACTION_PLACES
 private fun AnActionEvent.isFromLocalChanges() = getData(CONTENT_MANAGER)?.selectedContent?.tabName == LOCAL_CHANGES
 
 private fun AnActionEvent.isToggleCommitEnabled(): Boolean {
-  return isToggleCommitUi.asBoolean() &&
-         isProjectUsesNonModalCommit()
+  val commitMode = getProjectCommitMode()
+  return commitMode is CommitMode.NonModalCommitMode &&
+         commitMode.isToggleMode
 }
 
 open class CommonCheckinProjectAction : CommonCheckinProjectActionImpl() {
@@ -34,7 +34,8 @@ open class CommonCheckinProjectAction : CommonCheckinProjectActionImpl() {
       return
     }
 
-    if (e.isProjectUsesNonModalCommit() && !e.isToggleCommitEnabled() && e.isFromLocalChangesPlace()) {
+    val commitMode = e.getProjectCommitMode()
+    if (commitMode is CommitMode.NonModalCommitMode && !commitMode.isToggleMode && e.isFromLocalChangesPlace()) {
       e.presentation.isEnabledAndVisible = false
       return
     }

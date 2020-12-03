@@ -113,6 +113,10 @@ public class ChangesViewManager implements ChangesViewEx,
   public ChangesViewManager(@NotNull Project project) {
     myProject = project;
     ChangesViewModifier.KEY.addChangeListener(project, this::refreshImmediately, this);
+
+    project.getMessageBus().connect(this).subscribe(CommitModeManager.COMMIT_MODE_TOPIC, () -> updateCommitWorkflow());
+    // invokeLater to avoid potential cyclic dependency with ChangesViewCommitPanel constructor
+    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflow());
   }
 
   public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
@@ -132,10 +136,8 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull
     @Override
     public Boolean fun(Project project) {
-      ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-      if (!vcsManager.hasActiveVcss()) return false;
-      AbstractVcs singleVcs = vcsManager.getSingleVCS();
-      if (singleVcs != null && singleVcs.isWithCustomLocalChanges()) return false;
+      if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return false;
+      if (CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab()) return false;
       return true;
     }
   }
@@ -260,9 +262,9 @@ public class ChangesViewManager implements ChangesViewEx,
     myToolWindowPanel.setGrouping(groupingKey);
   }
 
-  @Override
-  public void updateCommitWorkflow() {
-    boolean isNonModal = CommitModeManager.getInstance(myProject).isNonModal();
+  @RequiresEdt
+  private void updateCommitWorkflow() {
+    boolean isNonModal = CommitModeManager.getInstance(myProject).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode;
     if (myToolWindowPanel != null) {
       myToolWindowPanel.updateCommitWorkflow(isNonModal);
     }
@@ -603,7 +605,8 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void configureToolbars() {
-      boolean isToolbarHorizontal = CommitModeManager.getInstance(myProject).isNonModal() && isToolbarHorizontalSetting.asBoolean();
+      boolean isToolbarHorizontal = CommitModeManager.getInstance(myProject).getCurrentCommitMode().useCommitToolWindow() &&
+                                    isToolbarHorizontalSetting.asBoolean();
       myChangesPanel.setToolbarHorizontal(isToolbarHorizontal);
       if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(isToolbarHorizontal);
     }

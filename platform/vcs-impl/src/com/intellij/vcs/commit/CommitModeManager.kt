@@ -4,30 +4,33 @@ package com.intellij.vcs.commit
 import com.intellij.application.subscribe
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager.getApplication
-import com.intellij.openapi.application.ConfigImportHelper.*
+import com.intellij.openapi.application.ConfigImportHelper.isNewUser
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
-import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.VcsListener
-import com.intellij.openapi.vcs.VcsType
-import com.intellij.openapi.vcs.changes.ChangesViewManager
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
 import java.util.*
 
+private val isToggleCommitUi get() = Registry.get("vcs.non.modal.commit.toggle.ui")
 private val isForceNonModalCommit get() = Registry.get("vcs.force.non.modal.commit")
 private val appSettings get() = VcsApplicationSettings.getInstance()
+
+internal fun AnActionEvent.getProjectCommitMode(): CommitMode? =
+  project?.let { CommitModeManager.getInstance(it).getCurrentCommitMode() }
 
 internal class NonModalCommitCustomization : ApplicationInitializedListener {
   override fun componentsInitialized() {
@@ -50,30 +53,52 @@ class CommitModeManager(private val project: Project) {
     override fun runActivity(project: Project) {
       runInEdt {
         if (project.isDisposed) return@runInEdt
-        val manager = getInstance(project)
-        manager.subscribeToChanges()
-        manager.updateWorkflow()
+        val commitModeManager = getInstance(project)
+        commitModeManager.subscribeToChanges()
+        commitModeManager.updateCommitMode()
       }
     }
 
-    override fun getOrder(): Int = VcsInitObject.OTHER_INITIALIZATION.order
+    override fun getOrder(): Int = VcsInitObject.MAPPINGS.order + 50
   }
 
-  private fun updateWorkflow() {
+  private var commitMode: CommitMode = CommitMode.PendingCommitMode
+
+  @RequiresEdt
+  fun updateCommitMode() {
     if (project.isDisposed) return
 
-    ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
-    ChangesViewContentManager.getInstanceImpl(project)?.updateToolWindowMapping()
+    val newCommitMode = getNewCommitMode()
+    if (commitMode == newCommitMode) return
+    commitMode = newCommitMode
+
+    project.messageBus.syncPublisher(COMMIT_MODE_TOPIC).commitModeChanged()
   }
 
-  fun isNonModal(): Boolean {
-    if (isForceNonModalCommit.asBoolean()) return true
-    if (!appSettings.COMMIT_FROM_LOCAL_CHANGES) return false
+  private fun getNewCommitMode(): CommitMode {
+    val activeVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+    val singleVcs = activeVcses.singleOrNull()
 
-    return canSetNonModal()
+    if (activeVcses.isEmpty()) return CommitMode.PendingCommitMode
+
+    if (singleVcs != null && singleVcs.isWithCustomLocalChanges) {
+      return CommitMode.ExternalCommitMode(singleVcs)
+    }
+
+    if (isNonModalInSettings() && canSetNonModal()) {
+      val isToggleMode = isToggleCommitUi.asBoolean()
+      return CommitMode.NonModalCommitMode(isToggleMode)
+    }
+
+    return CommitMode.ModalCommitMode
+  }
+
+  fun getCurrentCommitMode(): CommitMode {
+    return commitMode
   }
 
   internal fun canSetNonModal(): Boolean {
+    if (isForceNonModalCommit.asBoolean()) return true
     val activeVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss
     return activeVcses.isNotEmpty() && activeVcses.all { it.type == VcsType.distributed }
   }
@@ -82,20 +107,25 @@ class CommitModeManager(private val project: Project) {
     if (project.isDisposed) return
 
     isForceNonModalCommit.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) = updateWorkflow()
+      override fun afterValueChanged(value: RegistryValue) = updateCommitMode()
     }, project)
-
+    isToggleCommitUi.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) = updateCommitMode()
+    }, project)
     SETTINGS.subscribe(project, object : SettingsListener {
-      override fun settingsChanged() = updateWorkflow()
+      override fun settingsChanged() = updateCommitMode()
     })
-    VcsEP.EP_NAME.addChangeListener(Runnable { updateWorkflow() }, project)
 
-    project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdt { updateWorkflow() } })
+    VcsEP.EP_NAME.addChangeListener(Runnable { updateCommitMode() }, project)
+    project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdt { updateCommitMode() } })
   }
 
   companion object {
     @JvmField
     val SETTINGS: Topic<SettingsListener> = Topic(SettingsListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
+
+    @JvmField
+    val COMMIT_MODE_TOPIC: Topic<CommitModeListener> = Topic(CommitModeListener::class.java, Topic.BroadcastDirection.NONE, true)
 
     @JvmStatic
     fun getInstance(project: Project): CommitModeManager = project.service()
@@ -115,5 +145,35 @@ class CommitModeManager(private val project: Project) {
 
   interface SettingsListener : EventListener {
     fun settingsChanged()
+  }
+
+  interface CommitModeListener : EventListener {
+    @RequiresEdt
+    fun commitModeChanged()
+  }
+}
+
+sealed class CommitMode {
+  abstract fun useCommitToolWindow(): Boolean
+  open fun hideLocalChangesTab(): Boolean = false
+
+  object PendingCommitMode : CommitMode() {
+    override fun useCommitToolWindow(): Boolean {
+      // Enable 'Commit' toolwindow before vcses are activated
+      return CommitModeManager.isNonModalInSettings()
+    }
+  }
+
+  object ModalCommitMode : CommitMode() {
+    override fun useCommitToolWindow(): Boolean = false
+  }
+
+  data class NonModalCommitMode(val isToggleMode: Boolean) : CommitMode() {
+    override fun useCommitToolWindow(): Boolean = true
+  }
+
+  data class ExternalCommitMode(val vcs: AbstractVcs) : CommitMode() {
+    override fun useCommitToolWindow(): Boolean = true
+    override fun hideLocalChangesTab(): Boolean = true
   }
 }

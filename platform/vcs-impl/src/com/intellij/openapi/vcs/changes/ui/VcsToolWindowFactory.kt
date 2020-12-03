@@ -22,6 +22,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.ui.UIUtil.getClientProperty
 import com.intellij.util.ui.UIUtil.putClientProperty
+import com.intellij.vcs.commit.CommitModeManager
 import javax.swing.JPanel
 
 private val Project.changesViewContentManager: ChangesViewContentI
@@ -46,6 +47,12 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     })
     connection.subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
+        updateState(project, window)
+        window.contentManagerIfCreated?.selectFirstContent()
+      }
+    })
+    connection.subscribe(CommitModeManager.COMMIT_MODE_TOPIC, object : CommitModeManager.CommitModeListener {
+      override fun commitModeChanged() {
         updateState(project, window)
         window.contentManagerIfCreated?.selectFirstContent()
       }

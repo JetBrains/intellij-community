@@ -8,18 +8,19 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.actions.isProjectUsesNonModalCommit
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import com.intellij.vcs.commit.CommitMode
+import com.intellij.vcs.commit.getProjectCommitMode
 import com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName
 
 class RollbackFilesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
 
-    if (!e.isProjectUsesNonModalCommit()) return
+    if (e.getProjectCommitMode() !is CommitMode.NonModalCommitMode) return
     val project = e.project ?: return
     val changesView = e.getData(ChangesListView.DATA_KEY) ?: return
     val changes = changesView.selectedChanges.take(2).toList()

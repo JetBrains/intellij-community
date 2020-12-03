@@ -36,7 +36,6 @@ import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener;
 import com.intellij.openapi.vcs.impl.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -54,6 +53,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.ChangeListCommitState;
+import com.intellij.vcs.commit.CommitModeManager;
 import com.intellij.vcs.commit.ShowNotificationCommitResultHandler;
 import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
@@ -130,7 +130,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     myUpdater = new UpdateRequestsQueue(myProject, myScheduler, this::updateImmediately);
     myModifier = new Modifier(myWorker, myDelayedNotificator);
 
-    myProject.getMessageBus().connect(this).subscribe(ChangeListListener.TOPIC, myListeners.getMulticaster());
+    MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
+    busConnection.subscribe(ChangeListListener.TOPIC, myListeners.getMulticaster());
     myListeners.addListener(new ChangeListAdapter() {
       @Override
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
@@ -151,8 +152,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }, this);
 
+    busConnection.subscribe(CommitModeManager.COMMIT_MODE_TOPIC, () -> updateChangeListAvailability());
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
           if (project == myProject) {
@@ -309,12 +312,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
     myUpdater.initialized();
     BackgroundTaskUtil.syncPublisher(myProject, LISTS_LOADED).processLoadedLists(getChangeListsCopy());
+
     MessageBusConnection connection = myProject.getMessageBus().connect(this);
-    connection.subscribe(VCS_CONFIGURATION_CHANGED, () -> {
-      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-      updateChangeListAvailability();
-    });
-    connection.subscribe(ChangesViewContentManagerListener.TOPIC, () -> updateChangeListAvailability());
+    connection.subscribe(VCS_CONFIGURATION_CHANGED, () -> VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty());
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myConflictTracker.startTracking();
     }
@@ -1452,9 +1452,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   private boolean shouldEnableChangeLists() {
-    AbstractVcs singleVCS = ProjectLevelVcsManager.getInstance(myProject).getSingleVCS();
-    if (singleVCS != null && singleVCS.isWithCustomLocalChanges()) return false;
-    return true;
+    return !CommitModeManager.getInstance(myProject).getCurrentCommitMode().hideLocalChangesTab();
   }
 
   @Override

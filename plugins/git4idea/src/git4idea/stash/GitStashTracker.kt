@@ -82,7 +82,6 @@ interface GitStashTrackerListener : EventListener {
 fun GitStashTracker.isNotEmpty() = stashes.values.any { it.isNotEmpty() }
 
 fun stashToolWindowRegistryOption() = Registry.get("git.enable.stash.toolwindow")
-fun isStashToolWindowEnabled(): Boolean = stashToolWindowRegistryOption().asBoolean()
 fun isStashToolWindowEnabled(project: Project): Boolean {
   return stashToolWindowRegistryOption().asBoolean() &&
          ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { it.keyInstanceMethod == GitVcs.getKey() }

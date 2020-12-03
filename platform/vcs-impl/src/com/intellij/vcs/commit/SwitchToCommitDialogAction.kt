@@ -6,12 +6,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_CHECKIN_PROJECT
 import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vcs.actions.isProjectUsesNonModalCommit
 import com.intellij.vcs.commit.CommitModeManager.Companion.setCommitFromLocalChanges
 
 private class SwitchToCommitDialogAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.isProjectUsesNonModalCommit()
+    val project = e.project
+    e.presentation.isEnabledAndVisible = project != null &&
+                                         CommitModeManager.isNonModalInSettings() &&
+                                         CommitModeManager.getInstance(project).getCurrentCommitMode() != CommitMode.ModalCommitMode
   }
 
   override fun actionPerformed(e: AnActionEvent) {

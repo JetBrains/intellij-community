@@ -27,6 +27,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.vcs.commit.CommitMode;
+import com.intellij.vcs.commit.CommitModeManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +38,6 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_POPUP;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
-import static com.intellij.openapi.vcs.actions.AbstractCommonCheckinActionKt.isProjectUsesNonModalCommit;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.UIUtil.removeMnemonic;
 import static com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName;
@@ -50,7 +51,10 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
 
     Project project = e.getProject();
     if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return;
-    if (isProjectUsesNonModalCommit(e) && CHANGES_VIEW_POPUP.equals(e.getPlace())) return;
+    if (CommitModeManager.getInstance(project).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode &&
+        CHANGES_VIEW_POPUP.equals(e.getPlace())) {
+      return;
+    }
 
     Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
     boolean hasDataToRollback =

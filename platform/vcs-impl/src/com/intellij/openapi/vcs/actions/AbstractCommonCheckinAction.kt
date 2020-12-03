@@ -27,9 +27,6 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
   return roots.flatMap { manager.getChangesIn(it) }.toSet()
 }
 
-internal fun AnActionEvent.isProjectUsesNonModalCommit() =
-  project?.let { CommitModeManager.getInstance(it).isNonModal() } ?: CommitModeManager.isNonModalInSettings()
-
 internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(COMMIT_WORKFLOW_HANDLER)
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {

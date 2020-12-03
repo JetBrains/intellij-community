@@ -56,7 +56,7 @@ internal class NonModalCommitPromoter(private val project: Project) {
   fun getPromotionPanel(commitDialog: DefaultCommitChangeListDialog): JComponent? {
     if (!commitDialog.isDefaultCommitEnabled) return null
     if (isDontShowAgain()) return null
-    if (commitModeManager.run { !canSetNonModal() || isNonModal() }) return null
+    if (commitModeManager.run { !canSetNonModal() || getCurrentCommitMode() != CommitMode.ModalCommitMode }) return null
 
     setPromotionState(SHOWN)
     return NonModalCommitPromotionPanel(commitDialog)

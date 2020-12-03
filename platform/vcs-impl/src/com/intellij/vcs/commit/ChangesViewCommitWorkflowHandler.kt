@@ -81,8 +81,8 @@ internal class ChangesViewCommitWorkflowHandler(
     currentChangeList = workflow.getAffectedChangeList(emptySet())
 
     if (isToggleMode()) deactivate(false)
-    isToggleCommitUi.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
+    project.messageBus.connect(this).subscribe(CommitModeManager.COMMIT_MODE_TOPIC, object : CommitModeManager.CommitModeListener {
+      override fun commitModeChanged() {
         if (isToggleMode()) {
           deactivate(false)
         }
@@ -90,7 +90,7 @@ internal class ChangesViewCommitWorkflowHandler(
           activate()
         }
       }
-    }, this)
+    })
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
@@ -221,7 +221,8 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   private fun isToggleMode(): Boolean {
-    return isToggleCommitUi.asBoolean()
+    val commitMode = CommitModeManager.getInstance(project).getCurrentCommitMode()
+    return commitMode is CommitMode.NonModalCommitMode && commitMode.isToggleMode
   }
 
   override fun updateWorkflow() {
