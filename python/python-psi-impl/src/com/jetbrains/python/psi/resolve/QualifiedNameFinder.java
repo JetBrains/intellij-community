@@ -129,7 +129,7 @@ public class QualifiedNameFinder {
       }
       PsiDirectory dir = ((PsiFile)srcfile).getContainingDirectory();
       while (dir != null) {
-        PyFile initPy = as(dir.findFile(PyNames.INIT_DOT_PY), PyFile.class);
+        PyFile initPy = as(PyUtil.turnDirIntoInit(dir), PyFile.class);
         if (initPy == null) {
           break;
         }
@@ -163,7 +163,7 @@ public class QualifiedNameFinder {
         PsiElement nonSkeletonResult = ContainerUtil.find(namesakeResults, e -> !PythonSdkUtil.isElementInSkeletons(e));
         PsiDirectory libPackage = as(nonSkeletonResult, PsiDirectory.class);
         if (libPackage != null) {
-          PyFile libInitPy = as(libPackage.findFile(PyNames.INIT_DOT_PY), PyFile.class);
+          PyFile libInitPy = as(PyUtil.turnDirIntoInit(libPackage), PyFile.class);
           if (libInitPy != null && libInitPy != initPy) {
             return libInitPy;
           }
