@@ -1136,10 +1136,6 @@
         <constraint name="LOG" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Logger expression can be simplified" uuid="0befec03-d2b3-3838-ada0-363adc05fac7" text="Logger.getInstance(&quot;#$c$&quot;)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="Logger.getInstance($c$::class.java)">
-        <constraint name="__context__" target="true" within="" contains="" />
-        <constraint name="c" within="" contains="" />
-      </replaceConfiguration>
       <replaceConfiguration name="Logger expression can be simplified" uuid="0befec03-d2b3-3838-ada0-363adc05fac7" text="com.intellij.openapi.diagnostic.Logger.getInstance(&quot;#${$c$::class.java.name}&quot;)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.Logger.getInstance($c$::class.java)">
         <constraint name="c" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
@@ -1148,6 +1144,10 @@
         <constraint name="e" within="" contains="" />
         <constraint name="LOG" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Logger expression can be simplified" uuid="0befec03-d2b3-3838-ada0-363adc05fac7" text="Logger.getInstance(&quot;#$c$&quot;)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="Logger.getInstance($c$::class.java)">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def project = __context__.getProject();&#10;def cClass = JavaPsiFacade.getInstance(project).findClass(c.getText().substring(1), GlobalSearchScope.allScope(project));&#10;def cVirtualFile = c==null?null:PsiUtil.getVirtualFile(cClass);&#10;&#10;cVirtualFile != null &amp;&amp;&#10;__context__.getContainingFile().getResolveScope().contains(cVirtualFile)&quot;" target="true" within="" contains="" />
+        <constraint name="c" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="Logger should be a top-level declaration" uuid="03c8b094-627d-3aaa-8d8b-4a66542826cd" description="Creating a logger for each instance of a class isn't optimized.&#10;The idiomatic way to create a logger is using a top-level declaration." problemDescriptor="Logger should be a top-level declaration." text="class $Class$ { val $logger$ }" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
