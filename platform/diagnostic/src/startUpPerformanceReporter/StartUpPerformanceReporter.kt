@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.write
@@ -228,16 +227,13 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   }
 }
 
-private class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
+private class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
                                                val lastReport: ByteBuffer,
                                                val lastMetrics: Object2IntMap<String>)
 
-private fun computePluginCostMap(): MutableMap<String, Object2LongMap<String>> {
-  var result: MutableMap<String, Object2LongMap<String>>
-  synchronized(StartUpMeasurer.pluginCostMap) {
-    result = CollectionFactory.createSmallMemoryFootprintMap(StartUpMeasurer.pluginCostMap)
-    StartUpMeasurer.pluginCostMap.clear()
-  }
+private fun computePluginCostMap(): MutableMap<String, Object2LongOpenHashMap<String>> {
+  val result = HashMap(StartUpMeasurer.pluginCostMap)
+  StartUpMeasurer.pluginCostMap.clear()
 
   for (plugin in PluginManagerCore.getLoadedPlugins()) {
     val id = plugin.pluginId.idString
