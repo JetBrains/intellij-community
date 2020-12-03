@@ -32,8 +32,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.ModuleIndexableFilesIterator;
+import com.intellij.util.indexing.roots.ProjectIndexableFilesIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +72,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         }
       }
     });
-    FilePropertyPusher.EP_NAME.addExtensionPointListener(new ExtensionPointListener<FilePropertyPusher<?>>() {
+    FilePropertyPusher.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull FilePropertyPusher<?> pusher, @NotNull PluginDescriptor pluginDescriptor) {
         queueFullUpdate();
@@ -173,7 +177,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       VirtualFile dir = getFile(event);
       ProjectFileIndex fileIndex = ReadAction.compute(() -> ProjectFileIndex.getInstance(myProject));
       if (dir != null && ReadAction.compute(() -> fileIndex.isInContent(dir)) && !ProjectUtil.isProjectOrWorkspaceFile(dir)) {
-        doPushRecursively(dir, pushers, scanners, fileIndex);
+        doPushRecursively(dir, pushers, scanners, new ProjectIndexableFilesIterator(dir));
       }
     };
   }
@@ -181,14 +185,14 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private void doPushRecursively(@NotNull VirtualFile dir,
                                  @NotNull List<? extends FilePropertyPusher<?>> pushers,
                                  @NotNull List<ProjectFileScanner> scanners,
-                                 @NotNull ProjectFileIndex fileIndex) {
+                                 @NotNull IndexableFilesIterator indexableFilesIterator) {
     List<ProjectFileScanner.ScanSession> sessions = ContainerUtil.map(scanners,
                                                                       visitor -> visitor.startSession(myProject, dir));
-    fileIndex.iterateContentUnderDirectory(dir, fileOrDir -> {
+    indexableFilesIterator.iterateFiles(myProject, fileOrDir -> {
       applyPushersToFile(fileOrDir, pushers, null);
       applyScannersToFile(fileOrDir, sessions);
       return true;
-    });
+    }, new ConcurrentBitSet());
   }
 
   private static void applyScannersToFile(@NotNull VirtualFile fileOrDir, @NotNull List<ProjectFileScanner.ScanSession> sessions) {
@@ -315,15 +319,16 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   public static void scanProject(@NotNull Project project, @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
     Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
+    ConcurrentBitSet visitedFileSet = new ConcurrentBitSet();
     List<Runnable> tasks = Arrays.stream(modules)
       .flatMap(module -> {
         return ReadAction.compute(() -> {
           if (module.isDisposed()) return Stream.empty();
           ProgressManager.checkCanceled();
-          ModuleFileIndexImpl fileIndex = (ModuleFileIndexImpl)ModuleRootManager.getInstance(module).getFileIndex();
           ContentIteratorEx iterator = iteratorProducer.apply(module);
-          Set<VirtualFile> roots = fileIndex.getModuleRootsToIterate();
-          return roots.stream().map(r -> (Runnable)() -> fileIndex.iterateContentUnderDirectory(r, iterator));
+          return ModuleIndexableFilesIterator.getModuleIterators(module).stream().map(fileIterator -> (Runnable)() -> {
+            fileIterator.iterateFiles(project, iterator, visitedFileSet);
+          });
         });
       })
       .collect(Collectors.toList());

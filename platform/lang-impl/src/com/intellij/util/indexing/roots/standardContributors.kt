@@ -22,7 +22,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
 
     val providers: MutableList<IndexableFilesIterator> = mutableListOf()
     for (module in modules) {
-      providers.add(ModuleIndexableFilesIterator(module))
+      providers.addAll(ModuleIndexableFilesIterator.getModuleIterators(module))
 
       val orderEntries = ModuleRootManager.getInstance(module).orderEntries
       for (orderEntry in orderEntries) {
