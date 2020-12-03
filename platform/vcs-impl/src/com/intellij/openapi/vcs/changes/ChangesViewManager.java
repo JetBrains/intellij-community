@@ -80,7 +80,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getT
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static com.intellij.vcs.commit.ToggleChangesViewCommitUiActionKt.isToggleCommitUi;
+import static com.intellij.openapi.vcs.actions.CommonCheckinProjectActionKt.isToggleCommitUi;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 
