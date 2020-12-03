@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -23,7 +24,8 @@ class BreadcrumbsReaderModeProvider : ReaderModeProvider {
                                 readerMode: Boolean,
                                 fileIsOpenAlready: Boolean,
                                 preferGlobalSettings: Boolean) {
-    val globalBreadcrumbsShown = EditorSettingsExternalizable.getInstance().isBreadcrumbsShown
+    val language = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.language ?: return
+    val globalBreadcrumbsShown = EditorSettingsExternalizable.getInstance().isBreadcrumbsShownFor(language.id)
     BreadcrumbsForceShownSettings.setForcedShown(
       when {
         preferGlobalSettings -> globalBreadcrumbsShown
