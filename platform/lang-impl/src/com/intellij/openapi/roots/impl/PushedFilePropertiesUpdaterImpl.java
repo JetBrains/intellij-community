@@ -350,7 +350,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     };
 
     List<Future<?>> results = new ArrayList<>();
-    int numThreads = Math.max(Math.min(UnindexedFilesUpdater.getNumberOfIndexingThreads() - 1, tasks.size() - 1), 1);
+    int numThreads = Math.min(UnindexedFilesUpdater.getNumberOfScanningThreads(), tasks.size());
 
     for (int i = 0; i < numThreads; ++i) {
       results.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {

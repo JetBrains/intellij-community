@@ -181,7 +181,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(poweredIndicator, totalFiles);
 
     int numberOfIndexingThreads = getNumberOfIndexingThreads();
-    LOG.info("Using " + numberOfIndexingThreads + " " + StringUtil.pluralize("thread", numberOfIndexingThreads) + " for indexing");
+    LOG.info("Using " + numberOfIndexingThreads + " indexing " + StringUtil.pluralize("thread", numberOfIndexingThreads) +
+             ", " + getNumberOfScanningThreads() + " scanning " + StringUtil.pluralize("thread", numberOfIndexingThreads));
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
 
     Instant startIndexing = Instant.now();
@@ -403,13 +404,13 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
    * It may change during execution of the IDE depending on other activities' load.
    */
   public static int getNumberOfIndexingThreads() {
-    int threadsCount = Registry.intValue("caches.indexerThreadsCount");
-    if (threadsCount <= 0) {
+    int threadCount = Registry.intValue("caches.indexerThreadsCount");
+    if (threadCount <= 0) {
       int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
-      threadsCount =
+      threadCount =
         Math.max(1, Math.min(Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity, DEFAULT_MAX_INDEXER_THREADS));
     }
-    return threadsCount;
+    return threadCount;
   }
 
   /**
@@ -417,10 +418,17 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
    */
   public static int getMaxNumberOfIndexingThreads() {
     // Change of the registry option requires IDE restart.
-    int threadsCount = Registry.intValue("caches.indexerThreadsCount");
-    if (threadsCount <= 0) {
-      return DEFAULT_MAX_INDEXER_THREADS;
-    }
-    return threadsCount;
+    int threadCount = Registry.intValue("caches.indexerThreadsCount");
+    return threadCount <= 0 ? DEFAULT_MAX_INDEXER_THREADS : threadCount;
+  }
+
+  /**
+   * Scanning activity can be scaled well across number of threads, so we're trying to use all available resources to do it faster.
+   */
+  public static int getNumberOfScanningThreads() {
+    int scanningThreadCount = Registry.intValue("caches.scanningThreadsCount");
+    if (scanningThreadCount > 0) return scanningThreadCount;
+    int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
+    return Math.max(Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity, getNumberOfIndexingThreads());
   }
 }
