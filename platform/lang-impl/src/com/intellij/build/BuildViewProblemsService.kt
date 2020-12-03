@@ -5,7 +5,6 @@ import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.HighlightingDuplicate
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsProvider
-import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartBuildEvent
@@ -24,10 +23,10 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
   val workingDirToBuildId: MutableMap<String, Any> = mutableMapOf()
   val buildIdToFileProblems: MutableMap<Any, MutableSet<FileBuildProblem>> = mutableMapOf()
 
-  fun listenToBuildView(buildViewManager: BuildViewManager) {
+  fun listenToBuildView(buildProgressObservable: BuildProgressObservable) {
     val collector = project.service<ProblemsCollector>()
 
-    buildViewManager.addListener(BuildProgressListener { buildId, event ->
+    buildProgressObservable.addListener(BuildProgressListener { buildId, event ->
       if (event is FileMessageEvent &&
           event.kind == MessageEvent.Kind.ERROR) {
         val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(event.filePosition.file.toPath()) ?: return@BuildProgressListener

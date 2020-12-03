@@ -3,20 +3,26 @@ package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildProgressObservable
+import com.intellij.build.BuildViewProblemsService
 import com.intellij.build.ViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.containers.DisposableWrapperList
-import java.lang.Exception
 
 @Service(Service.Level.PROJECT)
-class ExternalSystemRunConfigurationViewManager : ViewManager, BuildProgressListener, BuildProgressObservable {
+class ExternalSystemRunConfigurationViewManager(project: Project) : ViewManager, BuildProgressListener, BuildProgressObservable {
   private val listeners = DisposableWrapperList<BuildProgressListener>()
   override fun isConsoleEnabledByDefault() = true
 
   override fun isBuildContentView() = false
+
+  init {
+    project.service<BuildViewProblemsService>().listenToBuildView(this)
+  }
 
   override fun addListener(listener: BuildProgressListener, disposable: Disposable) {
     listeners.add(listener, disposable)

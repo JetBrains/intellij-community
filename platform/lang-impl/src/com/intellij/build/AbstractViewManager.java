@@ -69,6 +69,10 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
       }
     };
     myPinnedViews = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    @Nullable BuildViewProblemsService buildViewProblemsService = project.getService(BuildViewProblemsService.class);
+    if (buildViewProblemsService != null) {
+      buildViewProblemsService.listenToBuildView(this);
+    }
   }
 
   @Override
