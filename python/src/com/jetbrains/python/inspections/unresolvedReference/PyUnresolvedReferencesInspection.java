@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.unresolvedReference;
 
-import com.google.common.collect.Sets;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.module.Module;
@@ -11,24 +13,18 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
-import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
-import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
-import com.jetbrains.python.inspections.PyInspection;
-import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider;
 import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix;
@@ -40,20 +36,20 @@ import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
  * User: dcheryasov
  */
-public class PyUnresolvedReferencesInspection extends PyInspection {
-  private static final Key<Visitor> KEY = Key.create("PyUnresolvedReferencesInspection.Visitor");
+public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInspectionBase {
   public static final Key<PyUnresolvedReferencesInspection> SHORT_NAME_KEY =
     Key.create(PyUnresolvedReferencesInspection.class.getSimpleName());
 
@@ -64,30 +60,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     return (PyUnresolvedReferencesInspection)inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY.toString(), element);
   }
 
+  @Override
   @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull final LocalInspectionToolSession session) {
-    final Visitor visitor = new Visitor(holder, session, ignoredIdentifiers);
-    // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
-    final Visitor existingVisitor = session.getUserData(KEY);
-    if (existingVisitor == null) {
-      session.putUserData(KEY, visitor);
-    }
-    session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, this);
-    return visitor;
-  }
-
-  @Override
-  public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder holder) {
-    final Visitor visitor = session.getUserData(KEY);
-    assert visitor != null;
-    if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
-      visitor.highlightUnusedImports();
-    }
-    visitor.highlightImportsInsideGuards();
-    session.putUserData(KEY, null);
+  protected PyUnresolvedReferencesVisitor createVisitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, session, ignoredIdentifiers);
   }
 
   @Override
@@ -98,72 +74,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
   }
 
   public static class Visitor extends PyUnresolvedReferencesVisitor {
-    private volatile Boolean myIsEnabled = null;
-
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
       super(holder, session, ignoredIdentifiers);
-    }
-
-    @Override
-    public boolean isEnabled(@NotNull PsiElement anchor) {
-      if (myIsEnabled == null) {
-        final boolean isPyCharm = PlatformUtils.isPyCharm();
-        Boolean overridden = overriddenUnresolvedReferenceInspection(anchor.getContainingFile());
-        if (overridden != null) {
-          myIsEnabled = overridden;
-        }
-        else if (PySkeletonRefresher.isGeneratingSkeletons()) {
-          myIsEnabled = false;
-        }
-        else if (isPyCharm) {
-          myIsEnabled = PythonSdkUtil.findPythonSdk(anchor) != null || PythonRuntimeService.getInstance().isInScratchFile(anchor);
-        }
-        else {
-          myIsEnabled = true;
-        }
-      }
-      return myIsEnabled;
-    }
-
-    private static @Nullable Boolean overriddenUnresolvedReferenceInspection(@NotNull PsiFile file) {
-      return PyInspectionExtension.EP_NAME.getExtensionList().stream()
-        .map(e -> e.overrideUnresolvedReferenceInspection(file))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
-    }
-
-    public void highlightUnusedImports() {
-      final List<PyInspectionExtension> extensions = PyInspectionExtension.EP_NAME.getExtensionList();
-      final List<PsiElement> unused = collectUnusedImportElements();
-      for (PsiElement element : unused) {
-        if (extensions.stream().anyMatch(extension -> extension.ignoreUnused(element, myTypeEvalContext))) {
-          continue;
-        }
-        if (element.getTextLength() > 0) {
-          OptimizeImportsQuickFix fix = new OptimizeImportsQuickFix();
-          registerProblem(element, PyPsiBundle.message("INSP.unused.import.statement"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, fix);
-        }
-      }
-    }
-
-    public void highlightImportsInsideGuards() {
-      HashSet<PyImportedNameDefiner> usedImportsInsideImportGuards = Sets.newHashSet(getImportsInsideGuard());
-      usedImportsInsideImportGuards.retainAll(getUsedImports());
-
-      for (PyImportedNameDefiner definer : usedImportsInsideImportGuards) {
-
-        PyImportElement importElement = PyUtil.as(definer, PyImportElement.class);
-        if (importElement == null) {
-          continue;
-        }
-        final PyTargetExpression asElement = importElement.getAsNameElement();
-        final PyElement toHighlight = asElement != null ? asElement : importElement.getImportReferenceExpression();
-        registerProblem(toHighlight,
-                        PyPsiBundle.message("INSP.try.except.import.error",
-                                            importElement.getVisibleName()),
-                        ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-      }
     }
 
     @Override

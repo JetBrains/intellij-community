@@ -21,8 +21,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
-import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesVisitor;
+import com.jetbrains.python.inspections.unresolvedReference.SimplePyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import one.util.streamex.StreamEx;
@@ -56,10 +56,8 @@ public class PyImportOptimizer implements ImportOptimizer {
   @NotNull
   public Runnable processFile(@NotNull final PsiFile file) {
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
-    final PyUnresolvedReferencesInspection.Visitor visitor = new PyUnresolvedReferencesInspection.Visitor(null,
-                                                                                                          session,
-                                                                                                          Collections.emptyList());
-    session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, new PyUnresolvedReferencesInspection());
+    final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(null, session);
+    session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, new SimplePyUnresolvedReferencesInspection());
     file.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement node) {

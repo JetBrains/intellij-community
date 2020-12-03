@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public class OptimizeImportsQuickFix implements LocalQuickFix, IntentionAction, 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("QFIX.optimize.imports");
+    return PyPsiBundle.message("QFIX.optimize.imports");
   }
 
   @Override
