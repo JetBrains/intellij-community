@@ -11,12 +11,12 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 @Service(Service.Level.APP)
 public final class WslDistributionManager implements Disposable {
@@ -35,25 +36,40 @@ public final class WslDistributionManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(WslDistributionManager.class);
   // Distributions created by tools, e.g. Docker. Not suitable for running users apps.
   private static final Set<String> INTERNAL_DISTRIBUTIONS = Set.of("docker-desktop-data");
-  private long myLastExternalChangesCount = -1L;
+  private static final Object LOCK = new Object();
 
   public static @NotNull WslDistributionManager getInstance() {
     return ApplicationManager.getApplication().getService(WslDistributionManager.class);
   }
 
-  private final ClearableLazyValue<List<WSLDistribution>> myInstalledDistributions = ClearableLazyValue.createAtomic(() -> loadInstalledDistributions());
+  private volatile CachedDistributions myCachedDistributions;
 
   @Override
   public void dispose() {
   }
 
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
-    long externalChangesCount = SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
-    if (externalChangesCount != myLastExternalChangesCount) {
-      myLastExternalChangesCount = externalChangesCount;
-      myInstalledDistributions.drop();
+    CachedDistributions cachedDistributions = myCachedDistributions;
+    if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
+      return cachedDistributions.myInstalledDistributions;
     }
-    return myInstalledDistributions.getValue();
+    myCachedDistributions = null;
+    synchronized (LOCK) {
+      cachedDistributions = myCachedDistributions;
+      if (cachedDistributions == null) {
+        cachedDistributions = new CachedDistributions(loadInstalledDistributions());
+        myCachedDistributions = cachedDistributions;
+      }
+    }
+    return cachedDistributions.myInstalledDistributions;
+  }
+
+  public @NotNull CompletableFuture<List<WSLDistribution>> getInstalledDistributionsFuture() {
+    CachedDistributions cachedDistributions = myCachedDistributions;
+    if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
+      return CompletableFuture.completedFuture(cachedDistributions.myInstalledDistributions);
+    }
+    return CompletableFuture.supplyAsync(this::getInstalledDistributions, AppExecutorUtil.getAppExecutorService());
   }
 
   public WSLDistribution getDistributionByMsId(@Nullable String name) {
@@ -174,6 +190,24 @@ public final class WslDistributionManager implements Disposable {
     if (application.isReadAccessAllowed()) {
       LOG.error("Please call WslDistributionManager.getInstalledDistributions on a background thread and " +
                 "not under read action as it runs a potentially long operation.");
+    }
+  }
+
+  private static class CachedDistributions {
+    private final @NotNull List<WSLDistribution> myInstalledDistributions;
+    private final long myExternalChangesCount;
+
+    private CachedDistributions(@NotNull List<WSLDistribution> installedDistributions) {
+      myInstalledDistributions = installedDistributions;
+      myExternalChangesCount = getCurrentExternalChangesCount();
+    }
+
+    public boolean isUpToDate() {
+      return getCurrentExternalChangesCount() == myExternalChangesCount;
+    }
+
+    private static long getCurrentExternalChangesCount() {
+      return SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
     }
   }
 }
