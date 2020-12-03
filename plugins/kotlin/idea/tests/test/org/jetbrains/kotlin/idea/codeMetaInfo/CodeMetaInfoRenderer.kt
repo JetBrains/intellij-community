@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.codeMetaInfo
 
 import com.intellij.util.containers.Stack
-import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
+import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoParser
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.CodeMetaInfo
 import java.io.File
 import java.lang.StringBuilder
@@ -96,4 +96,4 @@ fun clearFileFromDiagnosticMarkup(file: File) {
     file.writeText(cleanText)
 }
 
-fun clearTextFromDiagnosticMarkup(text: String): String = CheckerTestUtil.rangeStartOrEndPattern.matcher(text).replaceAll("")
+fun clearTextFromDiagnosticMarkup(text: String): String = text.replace(CodeMetaInfoParser.openingOrClosingRegex, "")
