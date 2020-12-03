@@ -11,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
@@ -22,6 +21,12 @@ import kotlin.system.measureTimeMillis
 class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
   private val cacheEnabled = (!ApplicationManager.getApplication().isUnitTestMode && WorkspaceModelImpl.cacheEnabled) || forceEnableCaching
   private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
+
+  /** specifies ID of a entity which changes should be printed to the log */
+  private val entityToTrace = System.getProperty("idea.workspace.model.track.facet.id")?.let {
+    val (moduleName, facetTypeId, facetName) = it.split('/')
+    FacetId(facetName, facetTypeId, ModuleId(moduleName))
+  }
 
   @Volatile
   var loadedFromCache = false
@@ -34,11 +39,6 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     //  Like in ProjectLifecycleListener or something
 
     log.debug { "Loading workspace model" }
-    /** specifies ID of a entity which changes should be printed to the log */
-    val entityToTrace = System.getProperty("idea.workspace.model.track.facet.id")?.let {
-      val (moduleName, facetTypeId, facetName) = it.split('/')
-      FacetId(facetName, facetTypeId, ModuleId(moduleName))
-    }
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val projectEntities = when {
@@ -52,9 +52,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
         val storage = if (previousStorage != null) {
           log.info("Load workspace model from cache in $loadingCacheTime ms")
           loadedFromCache = true
-          if (entityToTrace != null) {
-            log.info("Traced entity from cache: ${previousStorage.resolve(entityToTrace)?.configurationXmlTag}")
-          }
+          printInfoAboutTracedEntity(previousStorage, "cache")
           previousStorage
         }
         else WorkspaceEntityStorageBuilder.create()
@@ -67,6 +65,12 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     entityStorage = VersionedEntityStorageImpl((projectEntities as? WorkspaceEntityStorageBuilder)?.toStorage() ?: projectEntities)
     if (entityToTrace != null) {
       WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), EntityTracingListener(entityToTrace))
+    }
+  }
+
+  internal fun printInfoAboutTracedEntity(storage: WorkspaceEntityStorage, storageDescription: String) {
+    if (entityToTrace != null) {
+      log.info("Traced entity from $storageDescription: ${storage.resolve(entityToTrace)?.configurationXmlTag}")
     }
   }
 

@@ -185,6 +185,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       childActivity = childActivity.endAndStart("(wm) Read serializers")
       loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it) }
       childActivity = childActivity.endAndStart("(wm) Add changes to store")
+      (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.printInfoAboutTracedEntity(builder, "JPS files")
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
           updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
