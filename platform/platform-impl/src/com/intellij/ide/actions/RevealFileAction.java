@@ -21,7 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +33,6 @@ import com.intellij.util.SystemProperties;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinDef;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,8 +91,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  @Nullable
-  private static VirtualFile getFile(@NotNull AnActionEvent e) {
+  private static @Nullable VirtualFile getFile(@NotNull AnActionEvent e) {
     return findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 
@@ -101,15 +100,11 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
-  @ActionText
-  @NotNull
-  public static String getActionName() {
+  public static @ActionText @NotNull String getActionName() {
     return getActionName(null);
   }
 
-  @ActionText
-  @NotNull
-  public static String getActionName(@Nullable String place) {
+  public static @ActionText @NotNull String getActionName(@Nullable String place) {
     if (ActionPlaces.EDITOR_TAB_POPUP.equals(place) ||
         ActionPlaces.EDITOR_POPUP.equals(place) ||
         ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) {
@@ -118,14 +113,11 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
   }
 
-  @NotNull
-  @NlsSafe
-  public static String getFileManagerName() {
+  public static @NlsSafe @NotNull String getFileManagerName() {
     return Holder.fileManagerName;
   }
 
-  @Nullable
-  public static VirtualFile findLocalFile(@Nullable VirtualFile file) {
+  public static @Nullable VirtualFile findLocalFile(@Nullable VirtualFile file) {
     if (file == null || file.isInLocalFileSystem()) {
       return file;
     }
@@ -138,9 +130,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return null;
   }
 
-  public static void showDialog(Project project, @NlsContexts.DialogMessage String message, @NlsContexts.DialogTitle String title, @NotNull File file, @Nullable DialogWrapper.DoNotAskOption option) {
-    String ok = getActionName(null);
-    String cancel = IdeBundle.message("action.close");
+  public static void showDialog(Project project,
+                                @DialogMessage String message,
+                                @DialogTitle String title,
+                                @NotNull File file,
+                                @Nullable DialogWrapper.DoNotAskOption option) {
+    String ok = getActionName(null), cancel = IdeBundle.message("action.close");
     if (Messages.showOkCancelDialog(project, message, title, ok, cancel, Messages.getInformationIcon(), option) == Messages.OK) {
       openFile(file);
     }
@@ -210,7 +205,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       spawn("xdg-open", dir);
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-      LOG.debug("opening " + dir + " via Desktop API");
+      if (LOG.isDebugEnabled()) LOG.debug("opening " + dir + " via Desktop API");
       ProcessIOExecutorService.INSTANCE.execute(() -> {
         try {
           Desktop.getDesktop().open(new File(dir));
@@ -240,8 +235,8 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return path;
   }
 
-  private static void spawn(@NonNls String... command) {
-    LOG.debug(Arrays.toString(command));
+  private static void spawn(String... command) {
+    if (LOG.isDebugEnabled()) LOG.debug(Arrays.toString(command));
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       try {
@@ -263,7 +258,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static class Holder {
-    @NonNls private static final String fileManagerApp =
+    private static final String fileManagerApp =
       readDesktopEntryKey("Exec")
         .map(line -> line.split(" ")[0])
         .filter(exec -> exec.endsWith("nautilus") || exec.endsWith("pantheon-files") || exec.endsWith("dolphin"))
@@ -274,7 +269,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       SystemInfo.isWindows ? "Explorer" :
       readDesktopEntryKey("Name").orElse("File Manager");
 
-    private static Optional<String> readDesktopEntryKey(@NonNls String key) {
+    private static Optional<String> readDesktopEntryKey(String key) {
       if (SystemInfo.hasXdgMime()) {
         String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
         if (appName != null && appName.endsWith(".desktop")) {
@@ -289,14 +284,13 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       return Optional.empty();
     }
 
-    @NonNls
     private static String getXdgDataDirectories() {
       return StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
              StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
     }
 
     private static String readDesktopEntryKey(File file, String key) {
-      LOG.debug("looking for '" + key + "' in " + file);
+      if (LOG.isDebugEnabled()) LOG.debug("looking for '" + key + "' in " + file);
       String prefix = key + '=';
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
         return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
