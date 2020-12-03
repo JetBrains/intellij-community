@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getTopmostParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
 interface PureKotlinOutOfCodeBlockModificationListener {
-    fun kotlinFileOutOfCodeBlockChanged(file: KtFile, isSourceFile: Boolean)
+    fun kotlinFileOutOfCodeBlockChanged(file: KtFile, physical: Boolean)
 }
 
 class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
@@ -243,20 +243,19 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                     }
 
                     val inBlockElements = inBlockModifications(changedElements)
-
-                    val physical = ktFile.isPhysical
+                    val physicalFile = ktFile.isPhysical
 
                     if (inBlockElements.isEmpty()) {
-                        val isSourceFile = physical && !isReplLine(ktFile.virtualFile) && ktFile !is KtTypeCodeFragment
+                        val physical = physicalFile && !isReplLine(ktFile.virtualFile) && ktFile !is KtTypeCodeFragment
 
-                        if (isSourceFile) {
+                        if (physical) {
                             outOfCodeBlockModificationTrackerImpl.incModificationCount()
                         }
 
                         ktFile.incOutOfBlockModificationCount()
 
-                        didChangeKotlinCode(ktFile, isSourceFile)
-                    } else if (physical) {
+                        didChangeKotlinCode(ktFile, physical)
+                    } else if (physicalFile) {
                         inBlockElements.forEach { it.containingKtFile.addInBlockModifiedItem(it) }
                     }
                 }
@@ -274,9 +273,9 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
         listeners.remove(listener)
     }
 
-    private fun didChangeKotlinCode(ktFile: KtFile, isSourceFile: Boolean) {
+    private fun didChangeKotlinCode(ktFile: KtFile, physical: Boolean) {
         listeners.forEach {
-            it.kotlinFileOutOfCodeBlockChanged(ktFile, isSourceFile)
+            it.kotlinFileOutOfCodeBlockChanged(ktFile, physical)
         }
     }
 

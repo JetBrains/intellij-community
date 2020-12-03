@@ -74,10 +74,10 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
 
         pureKotlinCodeBlockModificationListener.addListener(
             object : PureKotlinOutOfCodeBlockModificationListener {
-                override fun kotlinFileOutOfCodeBlockChanged(file: KtFile, isSourceFile: Boolean) {
+                override fun kotlinFileOutOfCodeBlockChanged(file: KtFile, physical: Boolean) {
                     messageBusConnection.deliverImmediately()
 
-                    if (isSourceFile) {
+                    if (physical) {
                         kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
                         perModuleOutOfCodeBlockTrackerUpdater.onKotlinPhysicalFileOutOfBlockChange(file, true)
                     }
