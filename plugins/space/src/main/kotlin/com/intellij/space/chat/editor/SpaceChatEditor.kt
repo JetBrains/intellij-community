@@ -24,7 +24,8 @@ private class SpaceChatEditor(private val project: Project, private val spaceCha
   }
 
   val component by lazy {
-    SpaceChatPanel(project, editorLifetime, this, spaceChatFile.channelsVm, spaceChatFile.chatRecord, spaceChatFile.headerDetails)
+    val headerDetails = spaceChatFile.headerDetailsBuilder(editorLifetime)
+    SpaceChatPanel(project, editorLifetime, this, spaceChatFile.channelsVm, spaceChatFile.chatRecord, headerDetails)
   }
 
   override fun getComponent(): JComponent = component

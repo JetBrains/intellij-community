@@ -38,16 +38,17 @@ internal fun openReviewInEditor(
   codeReviewListItem: CodeReviewListItem
 ) {
   val review = codeReviewListItem.review.resolve()
-  val reviewProperty = review.property(workspace.client)
-  val titleProperty = workspace.lifetime.map(reviewProperty) { it.title }
-  val reviewStateProperty = workspace.lifetime.map(reviewProperty) { it.state }
   val chatRef = review.feedChannel ?: return
   val chatFile = SpaceChatFile(
     "space-review/${review.key}",
     SpaceBundle.message("review.chat.editor.tab.name", review.key, review.title),
     workspace.chatVm.channels,
     chatRef,
+  ) { editorLifetime ->
+    val reviewProperty = review.property(workspace.client)
+    val titleProperty = editorLifetime.map(reviewProperty) { it.title }
+    val reviewStateProperty = editorLifetime.map(reviewProperty) { it.state }
     SpaceChatReviewHeaderDetails(projectInfo, reviewStateProperty, titleProperty, review.key) // NON-NLS
-  )
+  }
   FileEditorManager.getInstance(project).openFile(chatFile, false)
 }

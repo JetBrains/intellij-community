@@ -16,6 +16,7 @@ import com.intellij.space.chat.model.api.SpaceChatHeaderDetails
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.testFramework.LightVirtualFile
 import icons.SpaceIcons
+import libraries.coroutines.extra.Lifetime
 import javax.swing.Icon
 
 internal class SpaceChatFile(
@@ -23,7 +24,7 @@ internal class SpaceChatFile(
   @NlsContexts.TabTitle val displayName: String,
   val channelsVm: ChannelsVm,
   val chatRecord: Ref<M2ChannelRecord>,
-  val headerDetails: SpaceChatHeaderDetails
+  val headerDetailsBuilder: (Lifetime) -> SpaceChatHeaderDetails
 ) : LightVirtualFile(path, SpaceChatFileType.instance, "") {
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
