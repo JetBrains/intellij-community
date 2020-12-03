@@ -42,7 +42,6 @@ open class PillActionComponent : AnAction(), CustomComponentAction, DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
     e.presentation.isVisible = actionGroup != null
   }
 
@@ -54,7 +53,7 @@ open class PillActionComponent : AnAction(), CustomComponentAction, DumbAware {
         val propertyName = evt.propertyName
         if (PILL_SHOWN == propertyName) {
           component.border = if (evt.newValue == true)
-            PillBorder(JBColor(0xFFCB44, 0xFFCB44), 1)
+            PillBorder(JBColor.namedColor("StateWidget.activeBackground", JBColor(0xFFCB44, 0xFFCB44)), 1)
           else
             JBUI.Borders.empty()
 
