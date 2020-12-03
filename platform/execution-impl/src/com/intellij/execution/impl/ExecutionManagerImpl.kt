@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
@@ -47,8 +48,11 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.util.Alarm
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -56,6 +60,7 @@ import org.jetbrains.concurrency.resolvedPromise
 import java.awt.BorderLayout
 import java.io.OutputStream
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
@@ -630,28 +635,71 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         return
       }
 
-      if (((showSettings && runnerAndConfigurationSettings.isEditBeforeRun) || !RunManagerImpl.canRunConfiguration(environment)) && !DumbService.isDumb(project)) {
-        if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
-          return
-        }
-
-        while (!RunManagerImpl.canRunConfiguration(environment)) {
-          val message = ExecutionBundle.message("dialog.message.configuration.still.incorrect.do.you.want.to.edit.it.again")
-          val title = ExecutionBundle.message("dialog.title.change.configuration.settings")
-          if (Messages.showYesNoDialog(project, message, title, CommonBundle.message("button.edit"), ExecutionBundle.message("run.continue.anyway"), Messages.getErrorIcon()) != Messages.YES) {
-            break
-          }
+      if (!DumbService.isDumb(project)) {
+        if (showSettings && runnerAndConfigurationSettings.isEditBeforeRun) {
           if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
             return
           }
+          editConfigurationUntilSuccess(environment, assignNewId)
         }
+        else {
+          ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
+            .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+              if (canRun) {
+                executeConfiguration(environment, environment.runner, assignNewId, this.project, environment.runnerAndConfigurationSettings)
+                return@finishOnUiThread
+              }
 
-        // corresponding runner can be changed after configuration edit
-        runner = ProgramRunner.getRunner(environment.executor.id, runnerAndConfigurationSettings.configuration)
-                 ?: throw ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner.for", environment.runProfile.name))
+              if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+                return@finishOnUiThread
+              }
+              editConfigurationUntilSuccess(environment, assignNewId)
+            }
+            .expireWith(this)
+            .submit(AppExecutorUtil.getAppExecutorService())
+        }
+        return
       }
     }
 
+    executeConfiguration(environment, runner, assignNewId, project, runnerAndConfigurationSettings)
+  }
+
+  private fun editConfigurationUntilSuccess(environment: ExecutionEnvironment, assignNewId: Boolean) {
+    ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
+      .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+        val runAnyway = if (!canRun) {
+          val message = ExecutionBundle.message("dialog.message.configuration.still.incorrect.do.you.want.to.edit.it.again")
+          val title = ExecutionBundle.message("dialog.title.change.configuration.settings")
+          Messages.showYesNoDialog(project, message, title, CommonBundle.message("button.edit"), ExecutionBundle.message("run.continue.anyway"), Messages.getErrorIcon()) != Messages.YES
+        } else true
+        if (canRun || runAnyway) {
+          val runner = ProgramRunner.getRunner(environment.executor.id, environment.runnerAndConfigurationSettings!!.configuration)
+          if (runner == null) {
+            ExecutionUtil.handleExecutionError(environment,
+                                               ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner.for",
+                                                                                          environment.runProfile.name)))
+          }
+          else {
+            executeConfiguration(environment, runner, assignNewId, project, environment.runnerAndConfigurationSettings)
+          }
+          return@finishOnUiThread
+        }
+        if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+          return@finishOnUiThread
+        }
+
+        editConfigurationUntilSuccess(environment, assignNewId)
+      }
+      .expireWith(this)
+      .submit(AppExecutorUtil.getAppExecutorService())
+  }
+
+  private fun executeConfiguration(environment: ExecutionEnvironment,
+                                   runner: @NotNull ProgramRunner<*>,
+                                   assignNewId: Boolean,
+                                   project: @NotNull Project,
+                                   runnerAndConfigurationSettings: @Nullable RunnerAndConfigurationSettings?) {
     try {
       var effectiveEnvironment = environment
       if (runner != effectiveEnvironment.runner) {
