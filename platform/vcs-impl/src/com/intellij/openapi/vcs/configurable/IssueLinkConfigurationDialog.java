@@ -3,17 +3,18 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.text.MessageFormat;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -47,18 +48,19 @@ public class IssueLinkConfigurationDialog extends DialogWrapper {
   private void updateFeedback() {
     myErrorLabel.setText(" ");
     try {
-      Pattern p = Pattern.compile(myIssueIDTextField.getText());
       if (myIssueIDTextField.getText().length() > 0) {
-        final Matcher matcher = p.matcher(myExampleIssueIDTextField.getText());
-        if (matcher.matches()) {
-          myExampleIssueLinkTextField.setText(matcher.replaceAll(myIssueLinkTextField.getText()));
+        ArrayList<IssueNavigationConfiguration.LinkMatch> matches = new ArrayList<>();
+        IssueNavigationConfiguration.findIssueLinkMatches(myExampleIssueIDTextField.getText(), getLink(), matches);
+        IssueNavigationConfiguration.LinkMatch firstMatch = ContainerUtil.getFirstItem(matches);
+        if (firstMatch != null) {
+          myExampleIssueLinkTextField.setText(firstMatch.getTargetUrl());
         }
         else {
           myExampleIssueLinkTextField.setText(VcsBundle.getString("add.issue.dialog.issue.no.match"));
         }
       }
     }
-    catch(Exception ex) {
+    catch (Exception ex) {
       myErrorLabel.setText(MessageFormat.format(VcsBundle.getString("add.issue.dialog.invalid.regular.expression"), ex.getMessage()));
       myExampleIssueLinkTextField.setText("");
     }

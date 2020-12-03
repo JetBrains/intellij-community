@@ -89,17 +89,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     final List<LinkMatch> result = new ArrayList<>();
     try {
       for (IssueNavigationLink link : myLinks) {
-        Pattern issuePattern = link.getIssuePattern();
-        Matcher m = issuePattern.matcher(text);
-        while (m.find()) {
-          try {
-            String replacement = issuePattern.matcher(m.group(0)).replaceFirst(link.getLinkRegexp());
-            addMatch(result, new TextRange(m.start(), m.end()), replacement);
-          }
-          catch (Exception e) {
-            LOG.debug("Malformed regex replacement. IssueLink: " + link + "; text: " + text, e);
-          }
-        }
+        findIssueLinkMatches(text, link, result);
       }
       TextRange match;
       int lastOffset = 0;
@@ -113,6 +103,22 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     }
     Collections.sort(result);
     return result;
+  }
+
+  public static void findIssueLinkMatches(@NotNull CharSequence text,
+                                          @NotNull IssueNavigationLink link,
+                                          @NotNull List<LinkMatch> result) {
+    Pattern issuePattern = link.getIssuePattern();
+    Matcher m = issuePattern.matcher(text);
+    while (m.find()) {
+      try {
+        String replacement = issuePattern.matcher(m.group(0)).replaceFirst(link.getLinkRegexp());
+        addMatch(result, new TextRange(m.start(), m.end()), replacement);
+      }
+      catch (Exception e) {
+        LOG.debug("Malformed regex replacement. IssueLink: " + link + "; text: " + text, e);
+      }
+    }
   }
 
   private static void addMatch(final List<LinkMatch> result, final TextRange range, final String replacement) {
