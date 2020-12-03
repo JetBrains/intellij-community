@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,6 +49,7 @@ public final class MavenIndicesManager implements Disposable {
   private static final String ELEMENT_DESCRIPTION = "description";
 
   private static final String LOCAL_REPOSITORY_ID = "local";
+  private final @NotNull Project myProject;
   private MavenServerDownloadListener myDownloadListener;
 
   public enum IndexUpdatingState {
@@ -62,13 +64,26 @@ public final class MavenIndicesManager implements Disposable {
   private final Object myUpdatingIndicesLock = new Object();
   private final List<MavenSearchIndex> myWaitingIndices = new ArrayList<>();
   private volatile MavenSearchIndex myUpdatingIndex;
-  private IndexFixer myIndexFixer = new IndexFixer();
+  private final IndexFixer myIndexFixer = new IndexFixer();
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
 
   private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<>();
 
+  /**
+   * @deprecated use {@link MavenIndicesManager#getInstance(Project)}
+   */
+  @Deprecated
   public static MavenIndicesManager getInstance() {
-    return ApplicationManager.getApplication().getService(MavenIndicesManager.class);
+    // should not be used as it lead to plugin classloader leak on the plugin unload
+    return ProjectManager.getInstance().getDefaultProject().getService(MavenIndicesManager.class);
+  }
+
+  public static MavenIndicesManager getInstance(@NotNull Project project) {
+    return project.getService(MavenIndicesManager.class);
+  }
+
+  public MavenIndicesManager(@NotNull Project project) {
+    myProject = project;
   }
 
   @TestOnly
@@ -87,9 +102,7 @@ public final class MavenIndicesManager implements Disposable {
 
   private synchronized void ensureInitialized() {
     if (myIndices != null) return;
-
-    myIndexer = MavenServerManager.getInstance().createIndexer();
-
+    myIndexer = MavenServerManager.getInstance().createIndexer(myProject);
     myDownloadListener = new MavenServerDownloadListener() {
       @Override
       public void artifactDownloaded(File file, String relativePath) {

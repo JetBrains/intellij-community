@@ -153,10 +153,6 @@ public final class MavenServerManager implements Disposable {
     return connector.isSettingsStillValid(settings);
   }
 
-  public MavenServerConnector getDefaultConnector() {
-    return getConnector(ProjectManager.getInstance().getDefaultProject());
-  }
-
   @Override
   public void dispose() {
   }
@@ -353,14 +349,22 @@ public final class MavenServerManager implements Disposable {
     };
   }
 
-  public MavenIndexerWrapper createIndexer() {
+  public MavenIndexerWrapper createIndexer(@NotNull Project project) {
     return new MavenIndexerWrapper(null) {
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {
-        return MavenServerManager.this.getDefaultConnector().createIndexer();
+        return MavenServerManager.this.getConnector(project).createIndexer();
       }
     };
+  }
+
+  /**
+   * @deprecated use {@link MavenServerManager#createIndexer(Project)}
+   */
+  @Deprecated
+  public MavenIndexerWrapper createIndexer() {
+    return createIndexer(ProjectManager.getInstance().getDefaultProject());
   }
 
   public void addDownloadListener(MavenServerDownloadListener listener) {

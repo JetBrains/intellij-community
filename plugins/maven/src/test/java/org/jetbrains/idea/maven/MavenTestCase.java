@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -114,7 +115,13 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
       () -> myProject = null,
       () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
-      () -> MavenIndicesManager.getInstance().clear(),
+      () -> {
+        Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+        MavenIndicesManager mavenIndicesManager = defaultProject.getServiceIfCreated(MavenIndicesManager.class);
+        if (mavenIndicesManager != null) {
+          mavenIndicesManager.clear();
+        }
+      },
       () -> {
         FileUtil.delete(myDir);
         // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method

@@ -62,16 +62,17 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     if (s == null) return null;
 
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
-    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
+    Project contextProject = context.getProject();
+    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(contextProject);
 
     ConverterStrategy strategy = selectStrategy(context);
     boolean isValid = strategy.isValid(id, manager, context);
     if (!isValid) {
-      File localRepository = MavenProjectsManager.getInstance(context.getProject()).getLocalRepository();
-      VirtualFile file = MavenUtil.getRepositoryFile(context.getProject(), id, "pom", null);
+      File localRepository = MavenProjectsManager.getInstance(contextProject).getLocalRepository();
+      VirtualFile file = MavenUtil.getRepositoryFile(contextProject, id, "pom", null);
       if (file != null) {
         File artifactFile = new File(file.getPath());
-        MavenIndicesManager.getInstance().fixArtifactIndex(artifactFile, localRepository);
+        MavenIndicesManager.getInstance(contextProject).fixArtifactIndex(artifactFile, localRepository);
         return s;
       }
       return null;

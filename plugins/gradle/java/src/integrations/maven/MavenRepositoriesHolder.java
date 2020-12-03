@@ -70,7 +70,7 @@ public class MavenRepositoriesHolder {
 
     if (notificationManager.isNotificationActive(NOTIFICATION_KEY)) return;
 
-    final MavenIndicesManager indicesManager = MavenIndicesManager.getInstance();
+    final MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(myProject);
     for (MavenSearchIndex index : indicesManager.getIndices()) {
       if (indicesManager.getUpdatingState(index) != IDLE) return;
     }
