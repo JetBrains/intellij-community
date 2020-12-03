@@ -550,8 +550,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     tree.setRowHeight(renderer.getTreeCellRendererComponent(tree, "xxx", true, true, false, 0, true).getPreferredSize().height);
     tree.setLargeModel(true);
 
-    TreeUtil.installActions(tree);
-
     tree.addTreeSelectionListener(__ -> {
       if (myTreeTable.getTree().getSelectionPaths() != null) {
         updateOptionsAndDescriptionPanel();
