@@ -102,6 +102,22 @@ object ProjectUtils {
     }
   }
 
+  fun simpleInstallAndOpenLearningProject(projectPath: Path,
+                                          projectToClose: Project?,
+                                          langSupport: LangSupport,
+                                          postInitCallback: (learnProject: Project) -> Unit) {
+    val copied = copyLearningProjectFiles(projectPath, langSupport)
+    if (!copied) return
+    createVersionFile(projectPath)
+    val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectPath)
+                                      ?: error("Copied Learn project folder is null")
+    invokeLater {
+      val project = ProjectUtil.openOrImport(projectDirectoryVirtualFile.toNioPath(), OpenProjectTask(projectToClose = projectToClose))
+                    ?: error("Could not create project for ${langSupport.primaryLanguage}")
+      postInitCallback(project)
+    }
+  }
+
   fun copyLearningProjectFiles(newProjectDirectory: Path, langSupport: LangSupport): Boolean {
     var targetDirectory = newProjectDirectory
     val inputUrl: URL = langSupport.javaClass.classLoader.getResource(langSupport.projectResourcePath)
