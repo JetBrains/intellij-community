@@ -18,16 +18,28 @@ import com.intellij.xml.breadcrumbs.BreadcrumbsForceShownSettings
 import com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity
 
 class BreadcrumbsReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
-    val showBreadcrumbs = (readerMode && ReaderModeSettings.instance(project).showBreadcrumbs)
-                          || EditorSettingsExternalizable.getInstance().isBreadcrumbsShown
-    BreadcrumbsForceShownSettings.setForcedShown(showBreadcrumbs, editor)
+  override fun applyModeChanged(project: Project,
+                                editor: Editor,
+                                readerMode: Boolean,
+                                fileIsOpenAlready: Boolean,
+                                preferGlobalSettings: Boolean) {
+    val globalBreadcrumbsShown = EditorSettingsExternalizable.getInstance().isBreadcrumbsShown
+    BreadcrumbsForceShownSettings.setForcedShown(
+      when {
+        preferGlobalSettings -> globalBreadcrumbsShown
+        readerMode -> ReaderModeSettings.instance(project).showBreadcrumbs
+        else -> globalBreadcrumbsShown
+      }, editor)
     ApplicationManager.getApplication().invokeLater { BreadcrumbsInitializingActivity.reinitBreadcrumbsInAllEditors(project) }
   }
 }
 
 class HighlightingReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
+  override fun applyModeChanged(project: Project,
+                                editor: Editor,
+                                readerMode: Boolean,
+                                fileIsOpenAlready: Boolean,
+                                preferGlobalSettings: Boolean) {
     if (!fileIsOpenAlready) return
 
     val highlighting =
@@ -51,29 +63,40 @@ class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvide
 }
 
 class LigaturesReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
+  override fun applyModeChanged(project: Project,
+                                editor: Editor,
+                                readerMode: Boolean,
+                                fileIsOpenAlready: Boolean,
+                                preferGlobalSettings: Boolean) {
     val scheme = editor.colorsScheme
     val preferences = scheme.fontPreferences
+    val ligaturesGlobal = (AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl).useLigatures()
+    val useLigatures = when {
+      preferGlobalSettings -> ligaturesGlobal
+      readerMode -> ReaderModeSettings.instance(project).showLigatures
+      else -> ligaturesGlobal
+    }
     scheme.fontPreferences =
       FontPreferencesImpl().also {
         preferences.copyTo(it)
-        it.setUseLigatures(readerMode && ReaderModeSettings.instance(project).showLigatures
-                           || (AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl).useLigatures())
+        it.setUseLigatures(useLigatures)
       }
   }
 }
 
-
 class FontReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
-    if (readerMode) {
-      if (ReaderModeSettings.instance(project).increaseLineSpacing) {
-        setLineSpacing(editor, 1.4f)
-      }
-    }
-    else {
-      setLineSpacing(editor, AppEditorFontOptions.getInstance().fontPreferences.lineSpacing)
-    }
+  override fun applyModeChanged(project: Project,
+                                editor: Editor,
+                                readerMode: Boolean,
+                                fileIsOpenAlready: Boolean,
+                                preferGlobalSettings: Boolean) {
+    val globalLineSpacing = AppEditorFontOptions.getInstance().fontPreferences.lineSpacing
+    setLineSpacing(editor, when {
+      preferGlobalSettings -> globalLineSpacing
+      readerMode && ReaderModeSettings.instance(project).increaseLineSpacing -> 1.4f
+      else -> globalLineSpacing
+    })
+
   }
 
   private fun setLineSpacing(editor: Editor, lineSpacing: Float) {
@@ -84,7 +107,16 @@ class FontReaderModeProvider : ReaderModeProvider {
 }
 
 class DocsRenderingReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
-    DocRenderManager.setDocRenderingEnabled(editor, if (readerMode) ReaderModeSettings.instance(project).showRenderedDocs else null)
+  override fun applyModeChanged(project: Project,
+                                editor: Editor,
+                                readerMode: Boolean,
+                                fileIsOpenAlready: Boolean,
+                                preferGlobalSettings: Boolean) {
+    val globalDocCommentRenderingEnabled = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
+    DocRenderManager.setDocRenderingEnabled(editor, when {
+      preferGlobalSettings -> globalDocCommentRenderingEnabled
+      readerMode -> ReaderModeSettings.instance(project).showRenderedDocs
+      else -> globalDocCommentRenderingEnabled
+    })
   }
 }

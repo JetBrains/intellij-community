@@ -3,6 +3,9 @@ package com.intellij.codeInsight.editorActions
 
 import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.applyReaderMode
 import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.instance
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -22,12 +25,18 @@ class ReaderModeFileEditorListener : FileEditorManagerListener {
     file.fileSystem.addVirtualFileListener(object : VirtualFileListener {
       override fun propertyChanged(event: VirtualFilePropertyEvent) {
         if (event.propertyName == PROP_WRITABLE) {
-          applyReaderMode(project, fileEditor.editor, file, true, true)
+          applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true, forceUpdate = true)
         }
       }
     }, fileEditor)
 
     if (!instance(project).enabled) return
     applyReaderMode(project, fileEditor.editor, file)
+
+    ApplicationManager.getApplication().messageBus.connect(fileEditor)
+      .subscribe(EditorColorsManager.TOPIC,
+                 EditorColorsListener {
+                   applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true, preferGlobalSettings = true)
+                 })
   }
 }

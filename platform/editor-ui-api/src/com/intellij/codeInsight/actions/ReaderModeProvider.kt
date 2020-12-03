@@ -14,7 +14,12 @@ interface ReaderModeProvider {
    * If {@param fileIsOpenAlready} is true then provider should apply changes only for already opened files,
    * otherwise, if it's false, it should apply changes for every opening file
    */
-  fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {}
+  fun applyModeChanged(project: Project,
+                       editor: Editor,
+                       readerMode: Boolean,
+                       fileIsOpenAlready: Boolean,
+                       preferGlobalSettings: Boolean = false) {
+  }
 
   enum class ReaderMode {
     LIBRARIES, READ_ONLY, LIBRARIES_AND_READ_ONLY
