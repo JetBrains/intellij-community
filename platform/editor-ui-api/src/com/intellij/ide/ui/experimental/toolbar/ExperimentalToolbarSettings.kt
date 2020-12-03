@@ -27,7 +27,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
 
   private val disposable = Disposer.newDisposable()
 
-  inner class ToolbarRegistryListener: RegistryValueListener {
+  inner class ToolbarRegistryListener : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {
       val v = value.asBoolean()
       toolbarState.state =
@@ -39,8 +39,9 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   }
 
   init {
-    if(newToolbarEnabled) {
-      updateSettingsState()
+    if (!newToolbarEnabled) {
+      toolbarState.state = getToolbarStateByVisibilityFlags(false, UISettings.instance.state.showMainToolbar, false,
+                                                            UISettings.instance.state.showNavigationBar)
     }
     Disposer.register(ProjectManager.getInstance().defaultProject, disposable)
     Registry.get("ide.new.navbar").addListener(ToolbarRegistryListener(), disposable)
