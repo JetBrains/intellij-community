@@ -182,39 +182,46 @@ final class BuildTasksImpl extends BuildTasks {
   }
 
   private Path patchIdeaPropertiesFile() {
-    String text = Files.readString(buildContext.paths.communityHomeDir.resolve("bin/idea.properties"))
+    StringBuilder builder = new StringBuilder(Files.readString(buildContext.paths.communityHomeDir.resolve("bin/idea.properties")))
     if (!buildContext.shouldIDECopyJarsByDefault()) {
-      text += """
+      builder.append("""
 #---------------------------------------------------------------------
 # IDE can copy library .jar files to prevent their locking. Set this property to 'false' to enable copying.
 #---------------------------------------------------------------------
 idea.jars.nocopy=true
-"""
+""")
     }
     buildContext.productProperties.additionalIDEPropertiesFilePaths.each {
-      text += "\n" + Files.readString(Paths.get(it))
+      builder.append('\n').append(Files.readString(Paths.get(it)))
     }
 
     //todo[nik] introduce special systemSelectorWithoutVersion instead?
     String settingsDir = buildContext.systemSelector.replaceFirst("\\d+(\\.\\d+)?", "")
-    text = BuildUtils.replaceAll(text, ["settings_dir": settingsDir], "@@")
+    String temp = builder.toString()
+    builder.setLength(0)
+    builder.append(BuildUtils.replaceAll(temp, ["settings_dir": settingsDir], "@@"))
 
-    text += (buildContext.applicationInfo.isEAP ? """
+    if (buildContext.applicationInfo.isEAP) {
+      builder.append("""
 #-----------------------------------------------------------------------
 # Change to 'disabled' if you don't want to receive instant visual notifications
 # about fatal errors that happen to an IDE or plugins installed.
 #-----------------------------------------------------------------------
 idea.fatal.error.notification=enabled
-"""
-                                                : """
+""")
+    }
+    else {
+      builder.append("""
 #-----------------------------------------------------------------------
 # Change to 'enabled' if you want to receive instant visual notifications
 # about fatal errors that happen to an IDE or plugins installed.
 #-----------------------------------------------------------------------
 idea.fatal.error.notification=disabled
 """)
-    Path propertiesFile = Paths.get(buildContext.paths.temp, "idea.properties")
-    Files.writeString(propertiesFile, text)
+    }
+
+    Path propertiesFile = buildContext.paths.tempDir.resolve("idea.properties")
+    Files.writeString(propertiesFile, builder)
     return propertiesFile
   }
 
