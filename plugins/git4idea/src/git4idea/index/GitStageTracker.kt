@@ -167,7 +167,7 @@ class GitStageTracker(val project: Project) : Disposable {
       }
     }
 
-    val newRootState = RootState(repository.root, status)
+    val newRootState = RootState(repository.root, true, status)
 
     runInEdt(this) {
       update { it.updatedWith(repository.root, newRootState) }
@@ -197,7 +197,7 @@ class GitStageTracker(val project: Project) : Disposable {
     fun getInstance(project: Project) = project.getService(GitStageTracker::class.java)
   }
 
-  data class RootState(val root: VirtualFile,
+  data class RootState(val root: VirtualFile, val initialized: Boolean,
                        val statuses: Map<FilePath, GitFileStatus>) {
     fun hasStagedFiles(): Boolean {
       return statuses.values.any { line -> line.getStagedStatus() != null }
@@ -217,7 +217,7 @@ class GitStageTracker(val project: Project) : Disposable {
     }
 
     companion object {
-      fun empty(root: VirtualFile) = RootState(root, emptyMap())
+      fun empty(root: VirtualFile) = RootState(root, false, emptyMap())
     }
   }
 
@@ -273,5 +273,6 @@ fun GitStageTracker.status(file: VirtualFile): GitFileStatus? {
     return ignoredStatus(filePath)
   }
   val rootState = state.rootStates[root] ?: return null
+  if (!rootState.initialized) return null
   return rootState.statuses[filePath] ?: return notChangedStatus(filePath)
 }
