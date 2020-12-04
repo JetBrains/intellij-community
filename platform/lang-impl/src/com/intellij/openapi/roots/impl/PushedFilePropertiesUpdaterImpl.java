@@ -187,7 +187,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       applyPushersToFile(fileOrDir, pushers, null);
       applyScannersToFile(fileOrDir, sessions);
       return true;
-    }, new ConcurrentBitSet());
+    }, ConcurrentBitSet.create());
   }
 
   private static void applyScannersToFile(@NotNull VirtualFile fileOrDir, @NotNull List<ProjectFileScanner.ScanSession> sessions) {
@@ -310,7 +310,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   public static void scanProject(@NotNull Project project, @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
     Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
-    ConcurrentBitSet visitedFileSet = new ConcurrentBitSet();
+    ConcurrentBitSet visitedFileSet = ConcurrentBitSet.create();
     List<Runnable> tasks = Arrays.stream(modules)
       .flatMap(module -> {
         return ReadAction.compute(() -> {

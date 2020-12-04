@@ -46,7 +46,7 @@ class RootIndex {
   private final Map<VirtualFile, String> myPackagePrefixByRoot;
   private final Map<VirtualFile, DirectoryInfo> myRootInfos;
   private final boolean myHasNonDirectoryRoots;
-  private final ConcurrentBitSet myNonInterestingIds = new ConcurrentBitSet();
+  private final ConcurrentBitSet myNonInterestingIds = ConcurrentBitSet.create();
   @NotNull private final Project myProject;
   private final RootFileSupplier myRootSupplier;
   final PackageDirectoryCache myPackageDirectoryCache;

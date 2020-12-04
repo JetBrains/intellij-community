@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
 public class ConcurrentBitSetTest extends TestCase {
   private static final Logger LOG = Logger.getInstance(ConcurrentBitSetTest.class);
   public void test() {
-    ConcurrentBitSet bitSet = new ConcurrentBitSet();
+    ConcurrentBitSet bitSet = ConcurrentBitSet.create();
     assertEquals(0, bitSet.nextClearBit(0));
     assertEquals(-1, bitSet.nextSetBit(0));
     int N = 3000;
@@ -41,7 +41,7 @@ public class ConcurrentBitSetTest extends TestCase {
       assertFalse(bitSet.get(i));
       assertEquals(-1, bitSet.nextSetBit(0));
     }
-    bitSet = new ConcurrentBitSet();
+    bitSet = ConcurrentBitSet.create();
     for (int b=0;b<N;b++) {
       assertEquals(-1, bitSet.nextSetBit(0));
       boolean set = bitSet.flip(b);
@@ -78,7 +78,7 @@ public class ConcurrentBitSetTest extends TestCase {
   }
 
   public void testStressFineGrainedSmallSet() {
-    final ConcurrentBitSet bitSet = new ConcurrentBitSet();
+    final ConcurrentBitSet bitSet = ConcurrentBitSet.create();
     // must be even
     int N = Timings.adjustAccordingToMySpeed(100_000, true) / 2 * 2;
     final int L = 100;
@@ -92,7 +92,7 @@ public class ConcurrentBitSetTest extends TestCase {
   }
 
   public void testStressCoarseGrainedBigSet() {
-    final ConcurrentBitSet bitSet = new ConcurrentBitSet();
+    final ConcurrentBitSet bitSet = ConcurrentBitSet.create();
     // must be even
     int N = Timings.adjustAccordingToMySpeed(1_000, true) / 2 * 2;
     final int L = 100_000;
@@ -108,7 +108,7 @@ public class ConcurrentBitSetTest extends TestCase {
 
   public void testReadPerformance() {
     int len = 100_000;
-    ConcurrentBitSet set = new ConcurrentBitSet();
+    ConcurrentBitSet set = ConcurrentBitSet.create();
     Random random = new Random();
     int s = 0;
     for (int i = 0; i < len; i++) {
@@ -132,7 +132,7 @@ public class ConcurrentBitSetTest extends TestCase {
 
   public void testParallelReadPerformance() {
     int len = 100000;
-    ConcurrentBitSet set = new ConcurrentBitSet();
+    ConcurrentBitSet set = ConcurrentBitSet.create();
     Random random = new Random();
     int s = 0;
     for (int i = 0; i < len; i++) {
@@ -160,7 +160,7 @@ public class ConcurrentBitSetTest extends TestCase {
 
   public void testFlipPerformance() {
     int len = 100000;
-    ConcurrentBitSet set = new ConcurrentBitSet();
+    ConcurrentBitSet set = ConcurrentBitSet.create();
     Random random = new Random();
     for (int i = 0; i < len; i++) {
       set.set(i, random.nextBoolean());

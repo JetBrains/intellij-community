@@ -81,7 +81,7 @@ final class FileTypeDetectionService implements Disposable {
 
   private volatile FileAttribute autoDetectedAttribute;
   private final AtomicInteger fileTypeChangedCount;
-  private final ConcurrentPackedBitsArray packedFlags = new ConcurrentPackedBitsArray(4);
+  private final ConcurrentPackedBitsArray packedFlags = ConcurrentPackedBitsArray.create(4);
 
   private int cachedDetectFileBufferSize = -1;
   private volatile boolean myRestrictCachedDetectedFileTypeAccess;

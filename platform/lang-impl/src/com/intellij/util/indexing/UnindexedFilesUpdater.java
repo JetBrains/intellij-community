@@ -293,7 +293,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
     UnindexedFilesFinder unindexedFileFilter = new UnindexedFilesFinder(project, myIndex, myRunExtensionsForFilesMarkedAsIndexed);
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles = new IdentityHashMap<>();
-    ConcurrentBitSet visitedFileSet = new ConcurrentBitSet();
+    ConcurrentBitSet visitedFileSet = ConcurrentBitSet.create();
 
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
     indicator.setIndeterminate(false);

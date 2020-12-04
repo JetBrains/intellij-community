@@ -408,7 +408,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
     List<IndexableFilesIterator> providers = getOrderedIndexableFilesProviders(project);
-    ConcurrentBitSet visitedFileSet = new ConcurrentBitSet();
+    ConcurrentBitSet visitedFileSet = ConcurrentBitSet.create();
     boolean wasIndeterminate = false;
     if (indicator != null) {
       wasIndeterminate = indicator.isIndeterminate();
