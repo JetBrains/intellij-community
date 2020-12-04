@@ -932,6 +932,16 @@
       <reference ref="CheckForUpdate"/>
     </group>
 
+    <group id="WelcomeScreen.Options">
+      <reference ref="About"/>
+      <separator/>
+      <reference ref="EditCustomProperties"/>
+      <reference ref="EditCustomVmOptions"/>
+      <reference ref="CollectZippedLogs"/>
+      <separator/>
+      <reference ref="CheckForUpdate"/>
+    </group>
+
     <group id="WelcomeScreen.LearnIdeHelp">
       <reference ref="HelpTopics"/>
       <reference ref="OnlineDocAction"/>
