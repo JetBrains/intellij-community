@@ -48,10 +48,8 @@ abstract class AbstractPerformanceJavaToKotlinCopyPasteConversionTest(private va
 
     override fun tearDown() {
         RunAll(
-            ThrowableRunnable { super.tearDown() },
-            ThrowableRunnable { stats.forEach(Stats::flush) }
+            ThrowableRunnable { super.tearDown() }
         ).run()
-
     }
 
     private fun doWarmUpPerfTest() {

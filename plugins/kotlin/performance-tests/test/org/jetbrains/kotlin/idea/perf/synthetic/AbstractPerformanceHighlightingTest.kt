@@ -45,8 +45,7 @@ abstract class AbstractPerformanceHighlightingTest : KotlinLightCodeInsightFixtu
     override fun tearDown() {
         runAll(
             ThrowableRunnable { commitAllDocuments() },
-            ThrowableRunnable { super.tearDown() },
-            ThrowableRunnable { stats.flush() }
+            ThrowableRunnable { super.tearDown() }
         )
     }
 

@@ -63,7 +63,7 @@ internal val kotlinJsonMapper = jacksonObjectMapper()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     .configure(SerializationFeature.INDENT_OUTPUT, true)
 
-internal fun Benchmark.statsFile() = statsFile(fileName(), "json")
+internal fun Benchmark.statsFile() = statsFile(id(), "json")
 
 internal fun Benchmark.writeJson() {
     val json = kotlinJsonMapper.writeValueAsString(this)
@@ -75,6 +75,8 @@ internal fun Benchmark.writeJson() {
     }
 }
 
+internal fun File.loadBenchmark(): Benchmark = kotlinJsonMapper.readValue(this, object : TypeReference<Benchmark>() {})
+
 internal fun Benchmark.loadJson() {
     val statsFile = statsFile()
     if (statsFile.exists()) {
@@ -84,7 +86,7 @@ internal fun Benchmark.loadJson() {
 }
 
 private fun statsFile(name: String, extension: String) =
-    File(File(TestMetadataUtil.getTestDataPath(Stats::class.java)).parent, pathToResource("stats${statFilePrefix(name)}.$extension")).absoluteFile
+    File(pathToResource("stats${statFilePrefix(name)}.$extension")).absoluteFile
 
 internal fun pathToResource(resource: String) = "out/$resource"
 

@@ -45,5 +45,6 @@
     <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" scope="TEST" name="khttp:khttp:1.0.0" level="project" />
   </component>
 </module>

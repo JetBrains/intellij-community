@@ -57,7 +57,6 @@ abstract class AbstractPerformanceCompletionHandlerTests(
         runAll(
             ThrowableRunnable { commitAllDocuments() },
             ThrowableRunnable { super.tearDown() },
-            ThrowableRunnable { statsMap.values.forEach(Stats::flush) }
         )
     }
 

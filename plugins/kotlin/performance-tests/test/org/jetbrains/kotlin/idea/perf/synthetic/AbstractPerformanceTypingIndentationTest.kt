@@ -31,8 +31,7 @@ abstract class AbstractPerformanceTypingIndentationTest : KotlinLightCodeInsight
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { super.tearDown() },
-            ThrowableRunnable { stats.flush() }
+            ThrowableRunnable { super.tearDown() }
         )
     }
 
