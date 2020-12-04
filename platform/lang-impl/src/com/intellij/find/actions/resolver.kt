@@ -10,7 +10,7 @@ import com.intellij.codeInsight.navigation.PsiElementTargetPopupPresentation
 import com.intellij.find.FindBundle
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.find.usages.api.SearchTarget
-import com.intellij.find.usages.impl.symbolSearchTargets
+import com.intellij.find.usages.impl.searchTargets
 import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -90,7 +90,7 @@ internal fun allTargets(dataContext: DataContext): List<TargetVariant> {
 private fun searchTargets(dataContext: DataContext): List<SearchTarget> {
   val file = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return emptyList()
   val offset: Int = dataContext.getData(CommonDataKeys.CARET)?.offset ?: return emptyList()
-  return symbolSearchTargets(file, offset)
+  return searchTargets(file, offset)
 }
 
 internal sealed class TargetVariant {

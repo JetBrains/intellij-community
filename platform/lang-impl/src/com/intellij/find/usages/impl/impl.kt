@@ -19,7 +19,7 @@ import com.intellij.util.Query
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun symbolSearchTargets(file: PsiFile, offset: Int): List<SearchTarget> {
+fun searchTargets(file: PsiFile, offset: Int): List<SearchTarget> {
   val targetSymbols = targetSymbols(file, offset)
   if (targetSymbols.isEmpty()) {
     return emptyList()
