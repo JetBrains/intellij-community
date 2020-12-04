@@ -19,14 +19,17 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersion;
+import git4idea.index.GitIndexUtil;
 import git4idea.index.vfs.GitIndexFileSystemRefresher;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.util.*;
 
+import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_FILTERS;
 import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_TEXTCONV;
 
@@ -151,13 +154,29 @@ public final class GitFileUtils {
     addPaths(project, root, files, force, !force);
   }
 
+  public static void addPathsToIndex(@NotNull Project project, @NotNull VirtualFile root,
+                                     @NotNull Collection<? extends FilePath> files) throws VcsException {
+    for (FilePath file : files) {
+      GitIndexUtil.write(project, root, file, new ByteArrayInputStream(EMPTY_BYTE_ARRAY), false, true);
+    }
+
+    updateAndRefresh(project, root, files, false);
+  }
+
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
                               @NotNull Collection<? extends FilePath> files, boolean force, boolean filterOutIgnored) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       addPathsImpl(project, root, paths, force, filterOutIgnored);
     }
+    updateAndRefresh(project, root, files, force);
+  }
+
+  private static void updateAndRefresh(@NotNull Project project,
+                                       @NotNull VirtualFile root,
+                                       @NotNull Collection<? extends FilePath> files,
+                                       boolean updateIgnoredHolders) {
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
-    if (force) {
+    if (updateIgnoredHolders) {
       updateIgnoredFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
     }
     GitIndexFileSystemRefresher.refreshFilePaths(project, files);

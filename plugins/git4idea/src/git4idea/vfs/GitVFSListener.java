@@ -122,7 +122,12 @@ public final class GitVFSListener extends VcsVFSListener {
     performBackgroundOperation(filesToAdd, message("add.adding"), new LongOperationPerRootExecutor() {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
-        executeAdding(root, files);
+        if (isStageEnabled()) {
+          executeAddingToIndex(root, files);
+        }
+        else {
+          executeAdding(root, files);
+        }
         if (!myProject.isDisposed()) {
           VcsFileUtil.markFilesDirty(myProject, files);
         }
@@ -229,6 +234,12 @@ public final class GitVFSListener extends VcsVFSListener {
     throws VcsException {
     LOG.debug("Git: adding files: " + files);
     GitFileUtils.addPaths(myProject, root, files, false, false);
+  }
+
+  private void executeAddingToIndex(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files)
+    throws VcsException {
+    LOG.debug("Git: adding files to index: " + files);
+    GitFileUtils.addPathsToIndex(myProject, root, files);
   }
 
   private void executeDeletion(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files)
