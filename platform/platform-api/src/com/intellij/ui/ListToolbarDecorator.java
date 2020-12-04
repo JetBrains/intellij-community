@@ -53,7 +53,7 @@ class ListToolbarDecorator<T> extends ToolbarDecorator {
 
   @Override
   public @NotNull ToolbarDecorator initPosition() {
-    setToolbarPosition(ActionToolbarPosition.BOTTOM);
+    setToolbarPosition(ActionToolbarPosition.TOP);
     return this;
   }
 
