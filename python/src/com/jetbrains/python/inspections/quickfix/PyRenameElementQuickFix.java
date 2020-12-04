@@ -32,7 +32,7 @@ public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPs
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyBundle.message("QFIX.NAME.rename.element");
+    return PyBundle.message("QFIX.FAMILY.NAME.rename.element");
   }
 
   @NotNull
