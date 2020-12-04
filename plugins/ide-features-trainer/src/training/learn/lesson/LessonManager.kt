@@ -13,9 +13,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
 import training.commands.kotlin.TaskContext
-import training.learn.CourseManager
 import training.learn.interfaces.Lesson
-import training.learn.interfaces.LessonType
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonExecutor
 import training.learn.lesson.kimpl.OpenPassedContext
@@ -178,14 +176,6 @@ class LessonManager {
     ), LessonMessagePane.MessageState.RESTORE)
     shownRestoreNotification = notification
   }
-
-  fun cleanUpBeforeLesson(project: Project) {
-
-    for (lesson in CourseManager.instance.lessonsForModules.filter { it.lessonType == LessonType.PROJECT }) {
-      lesson.cleanUp(project)
-    }
-  }
-
 
   companion object {
     @Volatile

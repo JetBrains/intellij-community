@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -140,10 +141,30 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
         return
       }
 
-      openLessonForPreparedProject(projectWhereToStartLesson, lesson)
+      if (lesson.lessonType == LessonType.PROJECT) {
+        cleanupAndOpenLesson(projectWhereToStartLesson, lesson)
+      }
+      else {
+        openLessonForPreparedProject(projectWhereToStartLesson, lesson)
+      }
     }
     catch (e: Exception) {
       LOG.error(e)
+    }
+  }
+
+  private fun cleanupAndOpenLesson(project: Project, lessonToOpen: Lesson) {
+    val lessons = CourseManager.instance.lessonsForModules.filter { it.lessonType == LessonType.PROJECT }
+    runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = project) {
+      LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
+
+      for (lesson in lessons) {
+        lesson.cleanup(project)
+      }
+
+      invokeLater {
+        openLessonForPreparedProject(project, lessonToOpen)
+      }
     }
   }
 
@@ -175,8 +196,6 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
     LOG.debug("${project.name}: Set lesson view")
     LearningUiManager.activeToolWindow?.setLearnPanel()
     LOG.debug("${project.name}: XmlLesson onStart()")
-    if (lesson.lessonType == LessonType.PROJECT)
-      LessonManager.instance.cleanUpBeforeLesson(project)
     lesson.onStart()
 
     //to start any lesson we need to do 4 steps:
@@ -267,7 +286,7 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
   @RequiresEdt
   private fun openLessonWhenLearnProjectStart(lesson: Lesson, myLearnProject: Project) {
     if (lesson.properties.canStartInDumbMode) {
-      openLesson(myLearnProject, lesson)
+      openLessonForPreparedProject(myLearnProject, lesson)
       return
     }
     fun openLesson() {
@@ -280,7 +299,7 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
           // Try to fix PyChar double startup indexing :(
           val openWhenSmart = {
             DumbService.getInstance(myLearnProject).runWhenSmart {
-              openLesson(myLearnProject, lesson)
+              openLessonForPreparedProject(myLearnProject, lesson)
             }
           }
           Alarm().addRequest(openWhenSmart, 500)

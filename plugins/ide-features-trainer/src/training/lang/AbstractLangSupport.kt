@@ -61,5 +61,9 @@ abstract class AbstractLangSupport : LangSupport {
     }, null, null)
   }
 
+  override fun cleanupBeforeLessons(project: Project) {
+    ProjectUtils.restoreProject(this, project)
+  }
+
   override fun toString(): String = primaryLanguage
 }
