@@ -175,7 +175,10 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     List<DetectedFrameworkDescription> newDescriptions = new ArrayList<>();
     List<DetectedFrameworkDescription> oldDescriptions = new ArrayList<>();
     for (String id : detectorsToProcess) {
-      final List<? extends DetectedFrameworkDescription> frameworks = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> runDetector(id, true));
+      final List<? extends DetectedFrameworkDescription> frameworks = ReadAction
+        .nonBlocking(() -> runDetector(id, true))
+        .inSmartMode(myProject)
+        .executeSynchronously();
       oldDescriptions.addAll(frameworks);
       final Collection<? extends DetectedFrameworkDescription> updated = myDetectedFrameworksData.updateFrameworksList(id, frameworks);
       newDescriptions.addAll(updated);
@@ -186,12 +189,14 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     }
 
     if (!newDescriptions.isEmpty()) {
-      Set<String> frameworkNames = new HashSet<>();
-      ReadAction.run(() -> {
+      Set<String> frameworkNames =
+      ReadAction.nonBlocking(() -> {
+        Set<String> names = new HashSet<>();
         for (final DetectedFrameworkDescription description : FrameworkDetectionUtil.removeDisabled(newDescriptions, oldDescriptions)) {
-          frameworkNames.add(description.getDetector().getFrameworkType().getPresentableName());
+          names.add(description.getDetector().getFrameworkType().getPresentableName());
         }
-      });
+        return names;
+      }).executeSynchronously();
       if (!frameworkNames.isEmpty()) {
         String names = StringUtil.join(frameworkNames, ", ");
         final String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());

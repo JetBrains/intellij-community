@@ -25,14 +25,12 @@ import java.util.*;
 public final class DetectedFrameworksData {
   private static final Logger LOG = Logger.getInstance(DetectedFrameworksData.class);
   private PersistentHashMap<String, TIntHashSet> myExistentFrameworkFiles;
-  private final Map<String, TIntHashSet> myNewFiles;
   private final MultiMap<String, DetectedFrameworkDescription> myDetectedFrameworks;
   private final Object myLock = new Object();
 
   public DetectedFrameworksData(@NotNull Project project) {
     myDetectedFrameworks = new MultiMap<>();
     Path file = ProjectUtil.getProjectCachePath(project, getDetectionDirPath(), true).resolve("files");
-    myNewFiles = new HashMap<>();
     try {
       myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, new TIntHashSetExternalizer());
     }
@@ -59,12 +57,6 @@ public final class DetectedFrameworksData {
 
   public Collection<VirtualFile> retainNewFiles(@NotNull String detectorId, @NotNull Collection<? extends VirtualFile> files) {
     synchronized (myLock) {
-      TIntHashSet oldSet = myNewFiles.get(detectorId);
-      if (oldSet == null) {
-        oldSet = new TIntHashSet();
-        myNewFiles.put(detectorId, oldSet);
-      }
-
       TIntHashSet existentFilesSet = null;
       try {
         existentFilesSet = myExistentFrameworkFiles.get(detectorId);
@@ -72,19 +64,14 @@ public final class DetectedFrameworksData {
       catch (IOException e) {
         LOG.info(e);
       }
-      final ArrayList<VirtualFile> newFiles = new ArrayList<>();
-      TIntHashSet newSet = new TIntHashSet();
+
+      List<VirtualFile> newFiles = new ArrayList<>();
       for (VirtualFile file : files) {
         final int fileId = FileBasedIndex.getFileId(file);
         if (existentFilesSet == null || !existentFilesSet.contains(fileId)) {
           newFiles.add(file);
-          newSet.add(fileId);
         }
       }
-      if (newSet.equals(oldSet)) {
-        return Collections.emptyList();
-      }
-      myNewFiles.put(detectorId, newSet);
       return newFiles;
     }
   }
