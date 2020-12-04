@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.idea.perf
 
+import org.jetbrains.kotlin.idea.perf.live.AbstractPerformanceProjectsTest
+
 /**
  * warm up: open simple `hello world` project
  */
