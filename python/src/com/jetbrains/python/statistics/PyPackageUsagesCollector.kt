@@ -28,12 +28,13 @@ class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
 
 private fun getPackages(project: Project): Set<MetricEvent> {
   val result = HashSet<MetricEvent>()
+  val pypiPackages = PyPIPackageCache.getInstance()
   for (module in project.modules) {
     val sdk = module.getSdk() ?: continue
     val usageData = FeatureUsageData().addPythonSpecificInfo(sdk)
-    PyPackageManager.getInstance(sdk).getRequirements(module)?.apply {
-      val packageNames = PyPIPackageCache.getInstance()
-      filter { packageNames.containsPackage(it.name) }.forEach { req ->
+    PyPackageManager.getInstance(sdk).getRequirements(module).orEmpty()
+      .filter { pypiPackages.containsPackage(it.name) }
+      .forEach { req ->
         ProgressManager.checkCanceled()
         val version = req.versionSpecs.firstOrNull()?.version?.trim() ?: "unknown"
         result.add(MetricEvent("python_package_installed",
@@ -41,7 +42,6 @@ private fun getPackages(project: Project): Set<MetricEvent> {
                                  .addData("package", req.name)
                                  .addData("package_version", version)))
       }
-    }
   }
   return result
 }
