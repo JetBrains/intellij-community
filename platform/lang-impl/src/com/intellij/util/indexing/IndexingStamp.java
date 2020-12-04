@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -201,8 +202,9 @@ public final class IndexingStamp {
     }
   }
 
+  private static final int INDEXING_STAMP_CACHE_CAPACITY = SystemProperties.getIntProperty("index.timestamp.cache.size", 100);
   private static final IntObjectMap<IndexingStamp.Timestamps> ourTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
-  private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(100);
+  private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
 
   static void dropTimestampMemoryCaches() {
     flushCaches();
