@@ -20,7 +20,8 @@ public class WelcomeScreenDefaultCustomization implements WelcomeScreenCustomiza
   @Override
   public @Nullable Component createQuickAccessComponent(@NotNull Disposable parentDisposable) {
     AnAction action = createShowPopupAction(IdeActions.GROUP_WELCOME_SCREEN_OPTIONS);
-    ActionLink link = new ActionLink("", AllIcons.General.GearPlain, action);
+    ActionLink link = new ActionLink("", AllIcons.General.Gear, action);
+    link.setHoveringIcon(AllIcons.General.GearHover);
     link.setToolTipText(ActionsBundle.groupText(IdeActions.GROUP_WELCOME_SCREEN_OPTIONS));
     return WelcomeScreenComponentFactory.wrapActionLink(link);
   }
