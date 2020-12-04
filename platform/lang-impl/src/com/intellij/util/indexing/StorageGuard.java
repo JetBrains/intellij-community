@@ -35,20 +35,19 @@ final class StorageGuard {
   @SuppressWarnings("WhileLoopSpinsOnField")
   @NotNull
   StorageModeExitHandler enter(boolean mode) {
-    ProgressManager progressManager = ProgressManager.getInstance();
-    assert !progressManager.isInNonCancelableSection();
+    boolean nonCancelableSection = ProgressManager.getInstance().isInNonCancelableSection();
     myLock.lock();
     try {
       if (mode) {
         while (myHolds < 0) {
-          ProgressIndicatorUtils.awaitWithCheckCanceled(myCondition);
+          await(nonCancelableSection);
         }
         myHolds++;
         return myTrueStorageModeExitHandler;
       }
       else {
         while (myHolds > 0) {
-          ProgressIndicatorUtils.awaitWithCheckCanceled(myCondition);
+          await(nonCancelableSection);
         }
         myHolds--;
         return myFalseStorageModeExitHandler;
@@ -56,6 +55,15 @@ final class StorageGuard {
     }
     finally {
       myLock.unlock();
+    }
+  }
+
+  private void await(boolean nonCancelableSection) {
+    if (nonCancelableSection) {
+      myCondition.awaitUninterruptibly();
+    }
+    else {
+      ProgressIndicatorUtils.awaitWithCheckCanceled(myCondition);
     }
   }
 
