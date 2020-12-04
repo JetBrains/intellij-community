@@ -46,7 +46,7 @@ class BundledJreManager {
       return targetDir
     }
 
-    File archive = findArchive(os, jreBuild, arch)
+    File archive = findJreArchive(os, arch)
     if (archive == null) {
       return null
     }
@@ -62,7 +62,11 @@ class BundledJreManager {
   }
 
   File findJreArchive(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    findArchive(os, jreBuild, arch)
+    def build =
+      buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}_${getJBRArchSuffix(arch)}") ?:
+      buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}") ?:
+      jreBuild
+    findArchive(os, build, arch)
   }
 
   private File findArchive(OsFamily os, String jreBuild, JvmArchitecture arch) {
