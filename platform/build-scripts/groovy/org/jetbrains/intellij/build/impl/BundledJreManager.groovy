@@ -42,8 +42,10 @@ class BundledJreManager {
       return targetDir
     }
 
-    File archive = findArchive(os, jreBuild, arch)
-    if (archive == null) return null
+    File archive = findJreArchive(os, arch)
+    if (archive == null) {
+      return null
+    }
 
     String destination = "${targetDir}/jbr"
     buildContext.messages.block("Extracting ${archive} into ${destination}") {
@@ -57,7 +59,11 @@ class BundledJreManager {
   }
 
   File findJreArchive(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    findArchive(os, jreBuild, arch)
+    def build =
+      buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}_${getJBRArchSuffix(arch)}") ?:
+      buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}") ?:
+      jreBuild
+    findArchive(os, build, arch)
   }
 
   private File findArchive(OsFamily os, String jreBuild, JvmArchitecture arch) {
@@ -105,7 +111,7 @@ class BundledJreManager {
   private static void fixJbrPermissions(String destination, boolean forWin) {
     Set<PosixFilePermission> exeOrDir = EnumSet.noneOf(PosixFilePermission.class)
     Collections.addAll(exeOrDir, OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE)
-    
+
     Set<PosixFilePermission> regular = EnumSet.of(OWNER_READ, OWNER_WRITE, GROUP_READ, OTHERS_READ)
 
     Path root = Paths.get(destination)

@@ -43,7 +43,8 @@ def jbrTasks(String defaultBuild, int version, String targetOs, String forcedPre
   platformsToDownload(targetOs).each { platform ->
     archToDownload(platform).each { arch ->
       prefixes(arch, forcedPrefix).each { prefix ->
-        def jbrBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
+        def jbrBuild = project.ext.has("jreBuild_${platform}_${arch}") ? project.ext["jreBuild_${platform}_${arch}"] :
+                       (project.ext.has("jreBuild_${platform}") ? project.ext["jreBuild_${platform}"] : defaultBuild)
         def (update, buildNumber) = splitJbrBuild(jbrBuild.toString(), version.toString())
         def jbrArtifactName = "$prefix$update-$platform-$arch-$buildNumber"
         downloadJbrTask(jbrArtifactName, jbrBuild.toString())
