@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -328,6 +329,10 @@ public final class ProgressIndicatorUtils {
     finally {
       lock.unlock();
     }
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull Condition condition) {
+    awaitWithCheckCanceled(() -> condition.await(10, TimeUnit.MILLISECONDS));
   }
 
   public static void awaitWithCheckCanceled(@NotNull CountDownLatch waiter) {

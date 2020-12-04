@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.locks.Condition;
@@ -31,6 +32,7 @@ final class StorageGuard {
     }
   };
 
+  @SuppressWarnings("WhileLoopSpinsOnField")
   @NotNull
   StorageModeExitHandler enter(boolean mode) {
     ProgressManager progressManager = ProgressManager.getInstance();
@@ -39,14 +41,14 @@ final class StorageGuard {
     try {
       if (mode) {
         while (myHolds < 0) {
-          myCondition.awaitUninterruptibly();
+          ProgressIndicatorUtils.awaitWithCheckCanceled(myCondition);
         }
         myHolds++;
         return myTrueStorageModeExitHandler;
       }
       else {
         while (myHolds > 0) {
-          myCondition.awaitUninterruptibly();
+          ProgressIndicatorUtils.awaitWithCheckCanceled(myCondition);
         }
         myHolds--;
         return myFalseStorageModeExitHandler;
