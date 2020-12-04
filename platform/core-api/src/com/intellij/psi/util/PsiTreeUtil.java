@@ -1299,7 +1299,7 @@ public class PsiTreeUtil {
       offsets.add(pos);
       cur = cur.getParent();
       if (cur == null) {
-        throw new IllegalStateException("Cannot find parent file");
+        throw new IllegalStateException("Cannot find parent file; element class: " + element.getClass());
       }
     }
     cur = copy;
