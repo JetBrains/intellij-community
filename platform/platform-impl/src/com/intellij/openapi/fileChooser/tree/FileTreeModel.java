@@ -355,7 +355,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       Icon icon = state.descriptor.getIcon(file);
       String name = state.descriptor.getName(file);
       String comment = state.descriptor.getComment(file);
-      if (name == null || comment == null) name = file.getName();
+      if (name == null || comment == null) name = file.getPresentableName();
 
       boolean updated = false;
       if (updateIcon(icon)) updated = true;
