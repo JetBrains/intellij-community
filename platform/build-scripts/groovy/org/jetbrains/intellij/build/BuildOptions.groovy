@@ -72,8 +72,12 @@ class BuildOptions {
   static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
   /** Build Linux tar.gz artifact without bundled JRE. */
   static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
+  /** Build Linux 32-bit JRE tar.gz. */
+  static final String LINUX_JRE_FOR_X86_STEP = "linux_jre_x86"
   /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
   static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
+  /** Build Windows 32-bit JRE tar.gz. */
+  static final String WINDOWS_JRE_FOR_X86_STEP = "windows_jre_x86"
   /** Build Frankenstein artifacts. */
   static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   /** Toolbox links generator step */

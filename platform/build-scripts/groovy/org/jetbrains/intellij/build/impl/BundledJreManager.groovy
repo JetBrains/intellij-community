@@ -219,8 +219,6 @@ class BundledJreManager {
 
   @CompileDynamic
   void repackageX86Jre(OsFamily osFamily) {
-    buildContext.messages.info("Packaging x86 JRE for ${osFamily}")
-
     if (x86JreDownloadUrl(osFamily) == null) {
       buildContext.messages.warning("... skipped: download URL is unknown")
       return

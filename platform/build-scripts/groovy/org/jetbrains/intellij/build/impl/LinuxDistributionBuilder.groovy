@@ -75,7 +75,9 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       if (customizer.buildOnlyBareTarGz) return
 
       if (customizer.includeX86Files) {
-        buildContext.bundledJreManager.repackageX86Jre(OsFamily.LINUX)
+        buildContext.executeStep("Packaging x86 JRE for $OsFamily.LINUX", BuildOptions.LINUX_JRE_FOR_X86_STEP) {
+          buildContext.bundledJreManager.repackageX86Jre(OsFamily.LINUX)
+        }
       }
 
       Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)

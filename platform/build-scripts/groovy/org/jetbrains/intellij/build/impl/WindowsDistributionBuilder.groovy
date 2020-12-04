@@ -91,7 +91,9 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   @CompileStatic(TypeCheckingMode.SKIP)
   void buildArtifacts(@NotNull Path winDistPath) {
     if (customizer.include32BitLauncher) {
-      buildContext.bundledJreManager.repackageX86Jre(OsFamily.WINDOWS)
+      buildContext.executeStep("Packaging x86 JRE for $OsFamily.WINDOWS", BuildOptions.WINDOWS_JRE_FOR_X86_STEP) {
+        buildContext.bundledJreManager.repackageX86Jre(OsFamily.WINDOWS)
+      }
     }
 
     String zipPath = null, exePath = null
