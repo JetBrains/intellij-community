@@ -3,8 +3,8 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SystemProperties;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
 
   private FontFamilyServiceImpl() {
     SortedMap<String, FontFamily> families = null;
-    if (Registry.is("new.editor.font.selector")) {
+    if (SystemProperties.is("new.editor.font.selector")) {
       if (GET_FONT_2D_METHOD == null || GET_TYPO_FAMILY_METHOD == null || GET_TYPO_SUBFAMILY_METHOD == null || GET_WEIGHT_METHOD == null) {
         LOG.warn("Couldn't access required runtime API, will fall back to basic logic of font selection");
       }

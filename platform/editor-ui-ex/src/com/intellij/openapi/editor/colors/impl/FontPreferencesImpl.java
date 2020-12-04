@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.SystemProperties;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -130,7 +130,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void register(@NotNull @NonNls String fontFamily, int size) {
-    String fallbackFontFamily = Registry.is("new.editor.font.selector")
+    String fallbackFontFamily = SystemProperties.is("new.editor.font.selector")
                                 ? null : FontPreferences.getFallbackName(fontFamily, size, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
@@ -155,7 +155,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void addFontFamily(@NotNull String fontFamily) {
-    String fallbackFontFamily = Registry.is("new.editor.font.selector")
+    String fallbackFontFamily = SystemProperties.is("new.editor.font.selector")
                                 ? null : FontPreferences.getFallbackName(fontFamily, DEFAULT_FONT_SIZE, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
