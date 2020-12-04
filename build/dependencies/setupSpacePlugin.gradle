@@ -10,7 +10,9 @@ task setupSpaceAutomationDefinitions {
       src "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/space/com/jetbrains/space-idea-script-definition/$version/space-idea-script-definition-${version}.jar"
       tempAndMove true
       dest artifact
-      timeout TimeUnit.MINUTES.toMillis(5).toInteger()
+      connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
+      readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
+      retries 10
     }
   }
 }

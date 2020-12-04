@@ -70,7 +70,9 @@ static def splitJbrBuild(String jreBuild, String version) {
         src jbrUrl
         dest outputFile
         tempAndMove true
-        timeout TimeUnit.MINUTES.toMillis(30).toInteger()
+        connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
+        readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
+        retries 10
       }
     }
   }
