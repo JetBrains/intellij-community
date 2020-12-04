@@ -61,16 +61,16 @@ class GradleDaemonServices {
 
   private static Object runAction(Object daemonClientFactory, ConsumerConnection connection, Class actionClass, Object arg) {
     def daemonClientClassLoader = UrlClassLoader.build()
-      .urls(
-        new File(PathManager.getJarPathForClass(actionClass)).toURI().toURL(),
+      .files(List.of(
+        new File(PathManager.getJarPathForClass(actionClass)).toPath(),
 
         // jars required for i18n utils
-        new File(PathManager.getJarPathForClass(DynamicBundle)).toURI().toURL(),
-        new File(PathManager.getJarPathForClass(AbstractBundle)).toURI().toURL(),
-        new File(PathManager.getJarPathForClass(TObjectHashingStrategy)).toURI().toURL(),
-        new File(PathManager.getJarPathForClass(Hash)).toURI().toURL(),
-        new File(PathManager.getJarPathForClass(Function)).toURI().toURL()
-      )
+        new File(PathManager.getJarPathForClass(DynamicBundle)).toPath(),
+        new File(PathManager.getJarPathForClass(AbstractBundle)).toPath(),
+        new File(PathManager.getJarPathForClass(TObjectHashingStrategy)).toPath(),
+        new File(PathManager.getJarPathForClass(Hash)).toPath(),
+        new File(PathManager.getJarPathForClass(Function)).toPath()
+      ))
       .parent(daemonClientFactory.class.classLoader)
       .allowLock(false)
       .get()

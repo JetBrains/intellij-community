@@ -9,6 +9,7 @@ import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,6 +32,9 @@ import java.util.List;
 import java.util.Properties;
 
 public final class Main {
+  private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+  private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.ide.plugins.MainRunner";
+
   public static final int NO_GRAPHICS = 1;
   public static final int RESTART_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
@@ -100,7 +105,7 @@ public final class Main {
     }
   }
 
-  private static void bootstrap(String[] args, LinkedHashMap<@NonNls String, Long> startupTimings) throws Exception {
+  private static void bootstrap(String[] args, LinkedHashMap<@NonNls String, Long> startupTimings) throws Throwable {
     startupTimings.put("properties loading", System.nanoTime());
     PathManager.loadProperties();
 
@@ -112,15 +117,18 @@ public final class Main {
     }
 
     startupTimings.put("classloader init", System.nanoTime());
-    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
+    UrlClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
 
     startupTimings.put("MainRunner search", System.nanoTime());
-    Class<?> klass = Class.forName("com.intellij.ide.plugins.MainRunner", true, newClassLoader);
-    WindowsCommandLineProcessor.ourMainRunnerClass = klass;
-    Method startMethod = klass.getMethod("start", String.class, String[].class, LinkedHashMap.class);
-    startMethod.setAccessible(true);
-    startMethod.invoke(null, Main.class.getName() + "Impl", args, startupTimings); //NON-NLS
+    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, true);
+    if (mainClass == null) {
+      throw new ClassNotFoundException(MAIN_RUNNER_CLASS_NAME);
+    }
+
+    WindowsCommandLineProcessor.ourMainRunnerClass = mainClass;
+    LOOKUP.findStatic(mainClass, "start", MethodType.methodType(void.class, String.class, String[].class, LinkedHashMap.class))
+      .invokeExact(Main.class.getName() + "Impl", args, startupTimings);
   }
 
   private static void installPluginUpdates() {

@@ -56,6 +56,8 @@ abstract class ProductProperties {
    */
   boolean toolsJarRequired = false
 
+  boolean isAntRequired = false
+
   /**
    * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
    */

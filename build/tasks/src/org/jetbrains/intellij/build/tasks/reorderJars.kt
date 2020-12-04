@@ -22,14 +22,25 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.ZipEntry
 
 // see JarMemoryLoader.SIZE_ENTRY
-const val SIZE_ENTRY = "META-INF/jb/$\$size$$"
+internal const val SIZE_ENTRY = "META-INF/jb/$\$size$$"
 
 fun main(args: Array<String>) {
   System.setProperty("java.util.logging.SimpleFormatter.format", "%5\$s %n")
-  reorderJars(Paths.get(args[0]), Paths.get(args[1]), listOf("bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar"), Paths.get(args[2]), System.getLogger(""))
+  reorderJars(homeDir = Paths.get(args[0]),
+              targetDir = Paths.get(args[1]),
+              bootClassPathJarNames = listOf("bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar"),
+              stageDir = Paths.get(args[2]),
+              antLibDir = null,
+              platformPrefix = "idea", logger = System.getLogger(""))
 }
 
-fun reorderJars(homeDir: Path, targetDir: Path, bootClassPathJarNames: Iterable<String>, stageDir: Path, logger: Logger, platformPrefix: String? = null) {
+fun reorderJars(homeDir: Path,
+                targetDir: Path,
+                bootClassPathJarNames: Iterable<String>,
+                stageDir: Path,
+                platformPrefix: String,
+                antLibDir: Path?,
+                logger: Logger): Path {
   val libDir = homeDir.resolve("lib")
   val ideaDirsParent = Files.createTempDirectory("idea-reorder-jars-")
 
@@ -44,7 +55,7 @@ fun reorderJars(homeDir: Path, targetDir: Path, bootClassPathJarNames: Iterable<
                               "-Didea.system.path=${ideaDirsParent.resolve("system")}",
                               "-Didea.config.path=${ideaDirsParent.resolve("config")}",
                               "-Didea.home.path=$homeDir",
-                              if (platformPrefix != null) "-Didea.platform.prefix=$platformPrefix" else null),
+                              "-Didea.platform.prefix=$platformPrefix"),
       classPath = bootClassPathJarNames.map { libDir.resolve(it).toString() },
       logger = logger
     )
@@ -54,11 +65,33 @@ fun reorderJars(homeDir: Path, targetDir: Path, bootClassPathJarNames: Iterable<
   }
 
   val sourceToNames = readClassLoadingLog(classLoadingLogFile, homeDir)
-  Files.writeString(stageDir.resolve("classpath-order.txt"),
-                    sourceToNames.keys.asSequence().filter { it.parent == libDir }.joinToString(separator = "\n"))
+  val appClassPathFile = stageDir.resolve("classpath.txt")
+  val appClassPath = LinkedHashSet<Path>()
+  // add first - should be listed first
+  sourceToNames.keys.asSequence().filter { it.parent == libDir }.toCollection(appClassPath)
+  addJarsFromDir(libDir) {
+    // sort to ensure stable performance results
+    appClassPath.addAll(it.sorted())
+  }
+  if (antLibDir != null) {
+    val distAntLib = libDir.resolve("ant/lib")
+    addJarsFromDir(antLibDir) { paths ->
+      // sort to ensure stable performance results
+      appClassPath.addAll(paths.map { distAntLib.resolve(antLibDir.relativize(it)) }.sorted())
+    }
+  }
+
+  Files.writeString(appClassPathFile, appClassPath.joinToString(separator = "\n") { homeDir.relativize(it).toString() })
 
   logger.log(Logger.Level.INFO, "Reordering *.jar files in $homeDir")
   doReorderJars(sourceToNames = sourceToNames, sourceDir = homeDir, targetDir = targetDir, logger = logger)
+  return appClassPathFile
+}
+
+private inline fun addJarsFromDir(dir: Path, consumer: (Sequence<Path>) -> Unit) {
+  Files.newDirectoryStream(dir).use { stream ->
+    consumer(stream.asSequence().filter { it.toString().endsWith(".jar") })
+  }
 }
 
 internal fun readClassLoadingLog(classLoadingLogFile: Path, rootDir: Path): Map<Path, List<String>> {
@@ -177,20 +210,4 @@ private fun addSizeEntry(orderedEntries: List<String>, zipCreator: ParallelScatt
 // see ZipShort.getBytes
 private fun getZipShortBytes(value: Int): ByteArray {
   return byteArrayOf((value and 0xFF).toByte(), ((value and 0xFF00) shr 8).toByte())
-}
-
-private fun getOrder(loadingFile: Path): Map<String, List<String>> {
-  val entriesOrder = LinkedHashMap<String, MutableList<String>>()
-  for (rawLine in Files.readAllLines(loadingFile)) {
-    val line = rawLine.trim { it <= ' ' }
-    val i = line.indexOf(":")
-    if (i == -1) {
-      continue
-    }
-
-    val entry = line.substring(0, i)
-    val jarUrl = line.substring(i + 1)
-    entriesOrder.computeIfAbsent(jarUrl) { mutableListOf() }.add(entry)
-  }
-  return entriesOrder
 }

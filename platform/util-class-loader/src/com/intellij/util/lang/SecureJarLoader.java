@@ -21,8 +21,8 @@ final class SecureJarLoader extends JarLoader {
   private @Nullable ProtectionDomain myProtectionDomain;
   private final Object myProtectionDomainMonitor = new Object();
 
-  SecureJarLoader(@NotNull URL url, @NotNull Path file, @NotNull ClassPath configuration) throws IOException {
-    super(url, file, configuration);
+  SecureJarLoader(@NotNull Path file, @NotNull ClassPath configuration) throws IOException {
+    super(file, configuration);
   }
 
   @Override

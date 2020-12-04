@@ -64,7 +64,6 @@ import java.awt.Dialog
 import java.awt.Frame
 import java.awt.KeyboardFocusManager
 import java.io.File
-import java.net.URL
 import java.nio.file.Path
 import java.time.Duration
 import java.util.*
@@ -116,12 +115,10 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
 
   private fun createScreenRecordingRuleIfNeeded(): TestRule? {
     try {
-      val screenRecorderJarUrl: URL? = getScreenRecorderJarUrl()
-      if (screenRecorderJarUrl == null) return null
+      val screenRecorderJarUrl = getScreenRecorderJarUrl() ?: return null
+      val testsToRecord = testsToRecord
 
-      val testsToRecord: List<String> = testsToRecord
-
-      val classLoader: ClassLoader = UrlClassLoader.build().urls(screenRecorderJarUrl).parent(javaClass.classLoader).get()
+      val classLoader: ClassLoader = UrlClassLoader.build().files(listOf(screenRecorderJarUrl)).parent(javaClass.classLoader).get()
       return Class.forName("org.jetbrains.intellij.deps.screenrecorder.ScreenRecorderRule", true, classLoader)
         .constructors
         .singleOrNull { it.parameterCount == 3 }
@@ -132,15 +129,12 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
     }
   }
 
-  private fun getScreenRecorderJarUrl(): URL? {
-    val jarDir: String? = screenRecorderJarDirPath
-    if (jarDir == null) return null
-
+  private fun getScreenRecorderJarUrl(): Path? {
+    val jarDir = screenRecorderJarDirPath ?: return null
     return File(jarDir)
       .listFiles { f -> f.name.startsWith("ui-screenrecorder") && f.name.endsWith("jar") }
       .firstOrNull()
-      ?.toURI()
-      ?.toURL()
+      ?.toPath()
   }
 
   inner class IdeHandling : TestRule {

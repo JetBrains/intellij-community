@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public final class BootstrapClassLoaderUtil {
-  public static final @NonNls String CLASSPATH_ORDER_FILE = "classpath-order.txt";
+  public static final @NonNls String CLASSPATH_ORDER_FILE = "classpath.txt";
 
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
@@ -39,8 +39,9 @@ public final class BootstrapClassLoaderUtil {
     return Logger.getInstance(BootstrapClassLoaderUtil.class);
   }
 
-  public static @NotNull ClassLoader initClassLoader() throws IOException {
+  public static @NotNull UrlClassLoader initClassLoader() throws IOException {
     Collection<Path> classpath = new LinkedHashSet<>();
+    Path distDir = Paths.get(PathManager.getHomePath());
     if (Boolean.getBoolean("idea.use.dev.build.server")) {
       try {
         loadClassPathFromDevBuildServer(classpath);
@@ -51,21 +52,23 @@ public final class BootstrapClassLoaderUtil {
     }
     else {
       parseClassPathString(System.getProperty("java.class.path"), classpath);
-      addIdeaLibraries(classpath, loadJarOrder());
+      addIdeaLibraries(distDir, classpath);
     }
-    addAdditionalClassPath(classpath);
+    parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
 
-    Path mpBoot = Paths.get(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR, "lib/boot/marketplace-bootstrap.jar");
-    boolean installMarketplace = shouldInstallMarketplace(mpBoot);
+    Path pluginDir = Paths.get(PathManager.getPluginsPath());
+    Path marketPlaceBootDir = pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot");
+    Path mpBoot = marketPlaceBootDir.resolve("marketplace-bootstrap.jar");
+    boolean installMarketplace = shouldInstallMarketplace(distDir, mpBoot);
     if (installMarketplace) {
-      Path marketplaceImpl = Paths.get(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR, "lib/boot/marketplace-impl.jar");
+      Path marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar");
       if (Files.exists(marketplaceImpl)) {
         classpath.add(marketplaceImpl);
       }
     }
 
     PathClassLoaderBuilder builder = UrlClassLoader.build()
-      .paths(filterClassPath(classpath))
+      .files(filterClassPath(classpath))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
       .logJarAccess(Boolean.getBoolean("idea.log.classpath.info"))
@@ -80,7 +83,7 @@ public final class BootstrapClassLoaderUtil {
       try {
         List<BytecodeTransformer> transformers = new ArrayList<>();
         UrlClassLoader spiLoader = UrlClassLoader.build()
-          .paths(Collections.singletonList(mpBoot))
+          .files(Collections.singletonList(mpBoot))
           .parent(BootstrapClassLoaderUtil.class.getClassLoader())
           .get();
         for (BytecodeTransformer transformer : ServiceLoader.load(BytecodeTransformer.class, spiLoader)) {
@@ -92,7 +95,7 @@ public final class BootstrapClassLoaderUtil {
       }
       catch (Throwable e) {
         // at this point logging is not initialized yet, so reporting the error directly
-        String path = Paths.get(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR).toString();
+        String path = pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).toString();
         String message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at " + path;
         Main.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"), new Exception(message, e));
       }
@@ -136,13 +139,12 @@ public final class BootstrapClassLoaderUtil {
     }
   }
 
-  private static boolean shouldInstallMarketplace(Path mpBoot) {
+  private static boolean shouldInstallMarketplace(@NotNull Path homePath, @NotNull Path mpBoot) {
     if (!Files.exists(mpBoot)) {
       return false;
     }
 
     try {
-      Path homePath = Paths.get(PathManager.getHomePath());
       SimpleVersion ideVersion = null;
       try (BufferedReader reader = Files.newBufferedReader(homePath.resolve("build.txt"))) {
         ideVersion = SimpleVersion.parse(reader.readLine());
@@ -171,61 +173,42 @@ public final class BootstrapClassLoaderUtil {
     return true;
   }
 
-  private static void addIdeaLibraries(Collection<Path> classpath, Collection<String> jarOrder) throws IOException {
-    Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
-    String selfRootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-    assert selfRootPath != null;
-    Path selfRoot = Paths.get(selfRootPath);
-    Path libFolder = Paths.get(PathManager.getLibPath());
-    for (String jarName : jarOrder) {
-      if (jarName == null || jarName.isEmpty()) {
-        continue;
-      }
-
-      Path jarFile = libFolder.resolve(jarName);
-      if (Files.exists(jarFile)) {
-        classpath.add(jarFile);
-      }
-    }
-
-    classpath.add(selfRoot);
-    addLibraries(classpath, libFolder, selfRoot);
-    addLibraries(classpath, libFolder.resolve("ext"), selfRoot);
-    addLibraries(classpath, libFolder.resolve("ant/lib"), selfRoot);
-  }
-
-  private static @NotNull List<String> loadJarOrder() {
-    Path distDir = Paths.get(PathManager.getHomePath());
-    Path file = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve(CLASSPATH_ORDER_FILE);
-    try (BufferedReader stream = Files.newBufferedReader(file)) {
-      List<String> lines = new ArrayList<>();
-      String line;
-      while ((line = stream.readLine()) != null) {
-        lines.add(line);
-      }
-      return lines;
+  private static void addIdeaLibraries(@NotNull Path distDir, @NotNull Collection<Path> classpath) throws IOException {
+    Path classPathFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve(CLASSPATH_ORDER_FILE);
+    try (Stream<String> stream = Files.lines(classPathFile)) {
+      stream.forEach(jarName -> {
+        if (!jarName.isEmpty()) {
+          classpath.add(distDir.resolve(jarName));
+        }
+      });
+      return;
     }
     catch (NoSuchFileException ignored) {
     }
     catch (Exception e) {
-      getLogger().error("Cannot read " + file + ": ", e);
+      getLogger().error("Cannot read " + classPathFile + ": ", e);
     }
-    return Collections.emptyList();
+
+    // no classpath file - compute classpath
+    Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
+    String selfRootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+    assert selfRootPath != null;
+    Path selfRoot = Paths.get(selfRootPath);
+    classpath.add(selfRoot);
+    Path libFolder = Paths.get(PathManager.getLibPath());
+    addLibraries(classpath, libFolder, selfRoot);
+    addLibraries(classpath, libFolder.resolve("ant/lib"), null);
   }
 
-  private static void addLibraries(Collection<Path> classPath, Path fromDir, Path selfRoot) throws IOException {
+  private static void addLibraries(Collection<Path> classPath, Path fromDir, @Nullable Path selfRoot) throws IOException {
     try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(fromDir)) {
       for (Path file : dirStream) {
-        if (Files.isDirectory(file)) {
-          continue;
-        }
-
         String path = file.toString();
         int lastDotIndex = path.length() - 4;
         if (lastDotIndex > 0 &&
             path.charAt(lastDotIndex) == '.' &&
             (path.regionMatches(true, lastDotIndex + 1, "jar", 0, 3) || path.regionMatches(true, lastDotIndex + 1, "zip", 0, 3))) {
-          if (!selfRoot.equals(file)) {
+          if (selfRoot == null || !selfRoot.equals(file)) {
             classPath.add(file);
           }
         }
@@ -235,11 +218,7 @@ public final class BootstrapClassLoaderUtil {
     }
   }
 
-  private static void addAdditionalClassPath(Collection<Path> classpath) {
-    parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
-  }
-
-  private static void parseClassPathString(String pathString, Collection<Path> classpath) {
+  private static void parseClassPathString(@Nullable String pathString, @NotNull Collection<Path> classpath) {
     if (pathString == null || pathString.isEmpty()) {
       return;
     }

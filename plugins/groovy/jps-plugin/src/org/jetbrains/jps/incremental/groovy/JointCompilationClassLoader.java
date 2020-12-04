@@ -26,6 +26,6 @@ final class JointCompilationClassLoader extends UrlClassLoader {
   }
 
   void resetCache() {
-    getClassPath().reset(getUrls());
+    getClassPath().reset(getFiles());
   }
 }

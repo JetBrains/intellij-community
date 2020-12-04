@@ -24,7 +24,6 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
@@ -207,23 +206,17 @@ final class InProcessGroovyc implements GroovycFlavor {
 
   private PathClassLoaderBuilder buildCompilationClassLoader(Collection<String> compilationClassPath, ClassLoader parent) {
     return UrlClassLoader.build().
-      paths(toPaths(compilationClassPath))
+      files(toPaths(compilationClassPath))
       .parent(parent)
       .allowLock().
-      useCache(ourLoaderCachePool, url -> {
-        try {
-          String file = FileUtil.toCanonicalPath(new File(url.toURI()).getPath());
-          for (String output : myOutputs) {
-            if (FileUtil.startsWith(output, file)) {
-              return false;
-            }
+      useCache(ourLoaderCachePool, file -> {
+        String filePath = FileUtil.toCanonicalPath(file.toString());
+        for (String output : myOutputs) {
+          if (FileUtil.startsWith(output, filePath)) {
+            return false;
           }
-          return true;
         }
-        catch (URISyntaxException e) {
-          LOG.info(e);
-          return false;
-        }
+        return true;
       });
   }
 
@@ -305,7 +298,7 @@ final class InProcessGroovyc implements GroovycFlavor {
       }
     };
     PathClassLoaderBuilder builder = UrlClassLoader.build();
-    builder.paths(toPaths(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyJar))));
+    builder.files(toPaths(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyJar))));
     builder.allowLock();
     builder.useCache(ourLoaderCachePool, url -> true);
 

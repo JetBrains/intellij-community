@@ -13,7 +13,6 @@ import com.intellij.util.io.isFile
 import com.intellij.util.lang.UrlClassLoader
 import org.languagetool.Language
 import org.languagetool.Languages
-import org.languagetool.rules.patterns.PasswordAuthenticator
 import java.io.InputStream
 import java.net.Authenticator
 import java.net.URL
@@ -39,7 +38,7 @@ internal object GrazieDynamic : DynamicPluginListener {
     hashSetOf<ClassLoader>(
       UrlClassLoader.build()
         .parent(GraziePlugin.classLoader)
-        .urls(GrazieRemote.allAvailableLocally().map { it.remote.file.toUri().toURL() }).get()
+        .files(GrazieRemote.allAvailableLocally().map { it.remote.file }).get()
     )
   }
 

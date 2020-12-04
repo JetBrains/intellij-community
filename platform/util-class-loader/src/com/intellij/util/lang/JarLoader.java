@@ -45,11 +45,11 @@ class JarLoader extends Loader {
   private final AtomicInteger myNumberOfRequests = new AtomicInteger();
   private volatile StrippedIntOpenHashSet myPackageHashesInside;
 
-  JarLoader(@NotNull URL url, @NotNull Path file, @NotNull ClassPath configuration) throws IOException {
+  JarLoader(@NotNull Path file, @NotNull ClassPath configuration) throws IOException {
     super(file);
 
     this.configuration = configuration;
-    this.url = new URL("jar", "", -1, url + "!/");
+    this.url = new URL("jar", "", -1, "file:" + file + "!/");
 
     if (!configuration.lazyClassloadingCaches) {
       // IOException from opening is propagated to caller if zip file isn't valid,
@@ -111,12 +111,12 @@ class JarLoader extends Loader {
 
         ZipFile zipFile = getZipFile();
         try {
-          Attributes manifestAttributes = configuration.getManifestData(url);
+          Attributes manifestAttributes = configuration.getManifestData(path);
           if (manifestAttributes == null) {
             ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
             if (entry != null) manifestAttributes = loadManifestAttributes(zipFile.getInputStream(entry));
             if (manifestAttributes == null) manifestAttributes = new Attributes(0);
-            configuration.cacheManifestData(url, manifestAttributes);
+            configuration.cacheManifestData(path, manifestAttributes);
           }
 
           attributes = getAttributes(manifestAttributes);

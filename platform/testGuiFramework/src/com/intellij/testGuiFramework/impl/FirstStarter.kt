@@ -4,6 +4,7 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.openapi.util.ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9
 import com.intellij.util.lang.UrlClassLoader
 import java.net.URL
+import java.nio.file.Paths
 import kotlin.concurrent.thread
 
 class FirstStarter
@@ -37,7 +38,7 @@ private fun startRobotRoutine() {
 
 fun createRobotClassLoader(): UrlClassLoader {
   val builder = UrlClassLoader.build()
-    .urls(getUrlOfBaseClassLoader())
+    .files(getUrlOfBaseClassLoader().map { Paths.get(it.path) })
     .allowLock()
     .usePersistentClasspathIndexForLocalClassDirectories()
     .useCache()
@@ -46,14 +47,17 @@ fun createRobotClassLoader(): UrlClassLoader {
   return builder.get()
 }
 
-fun getUrlOfBaseClassLoader(): List<URL> {
+private fun getUrlOfBaseClassLoader(): List<URL> {
   val classLoader = Thread.currentThread().contextClassLoader
   val urlClassLoaderClass = classLoader.javaClass
   val getUrlsMethod = urlClassLoaderClass.methods.firstOrNull { it.name.toLowerCase() == "geturls" } ?: throw Exception(
     "Unable to get URLs for UrlClassLoader")
   @Suppress("UNCHECKED_CAST")
   val urlsListOrArray = getUrlsMethod.invoke(classLoader)
-  return if (urlsListOrArray is Array<*>) urlsListOrArray.toList() as List<URL>
-  else urlsListOrArray as List<URL>
-
+  if (urlsListOrArray is Array<*>) {
+    return urlsListOrArray.toList() as List<URL>
+  }
+  else {
+    return urlsListOrArray as List<URL>
+  }
 }

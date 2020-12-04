@@ -116,14 +116,16 @@ final class DistributionJARsBuilder {
       }
     }
 
-    Set<String> allProductDependencies = (
-      productLayout.getIncludedPluginModules(enabledPluginModules) + getIncludedPlatformModules(productLayout)).
-      collectMany(new LinkedHashSet<String>()) {
-        JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect { it.name }
+    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(enabledPluginModules) +
+                                          getIncludedPlatformModules(productLayout))
+      .collectMany(new LinkedHashSet<String>()) {
+        JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it))
+          .productionOnly()
+          .getModules()
+          .collect { it.name }
       }
 
     platform = PlatformLayout.platform(productLayout.platformLayoutCustomizer) {
-
       BaseLayoutSpec.metaClass.addModule = { String moduleName ->
         if (!productLayout.excludedModuleNames.contains(moduleName)) {
           withModule(moduleName)
@@ -300,11 +302,14 @@ final class DistributionJARsBuilder {
 
   static void reorderJars(@NotNull BuildContext buildContext) {
     Path distDir = Paths.get(buildContext.paths.distAll)
-    BuildHelper.getInstance(buildContext).reorderJars.invokeWithArguments(distDir, distDir,
-                                                                          buildContext.getBootClassPathJarNames(),
-                                                                          buildContext.paths.tempDir,
-                                                                          buildContext.messages,
-                                                                          buildContext.productProperties.platformPrefix)
+    Path result = (Path)BuildHelper.getInstance(buildContext).reorderJars
+      .invokeWithArguments(distDir, distDir,
+                           buildContext.getBootClassPathJarNames(),
+                           buildContext.paths.tempDir,
+                           buildContext.productProperties.platformPrefix ?: "idea",
+                           buildContext.productProperties.isAntRequired ? Paths.get(buildContext.paths.communityHome, "lib/ant/lib") : null,
+                           buildContext.messages)
+    buildContext.addResourceFile(result)
   }
 
   private static BuildTaskRunnable<Void> createBuildBrokenPluginListTask() {
@@ -642,31 +647,31 @@ final class DistributionJARsBuilder {
    * This function builds a blockmap and hash files for each non bundled plugin
    * to provide downloading plugins via incremental downloading algorithm Blockmap.
    */
-  void buildNonBundledPluginsBlockMaps(){
+  private void buildNonBundledPluginsBlockMaps(){
     def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
     def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
-    def path = Paths.get(nonBundledPluginsArtifacts)
-    if(path.toFile().exists()){
-      Files.walk(path)
-        .filter({ it -> Files.isRegularFile(it)} )
-        .filter({ it -> it.toString().endsWith(".zip") })
-        .collect(Collectors.toList())
-        .forEach { Path it ->
-          Path blockMapFile = it.parent.resolve("${it.fileName}.blockmap.zip")
-          Path hashFile = it.parent.resolve("${it.fileName}.hash.json")
-          String blockMapJson = "blockmap.json"
-          String algorithm = "SHA-256"
-          new BufferedInputStream(Files.newInputStream(it)).withCloseable { input ->
-            def blockMap = new BlockMap(input, algorithm)
-            new BufferedOutputStream(Files.newOutputStream(blockMapFile)).withCloseable { output ->
-              writeBlockMapToZip(output, JsonOutput.toJson(blockMap).bytes, blockMapJson)
-            }
-          }
-          new BufferedInputStream(Files.newInputStream(it)).withCloseable { input ->
-            Files.writeString(hashFile, JsonOutput.toJson(new FileHash(input, algorithm)))
+    Path path = Paths.get(nonBundledPluginsArtifacts)
+    if (!Files.exists(path)) {
+      return
+    }
+
+    Files.walk(path)
+      .filter({ it -> (it.toString().endsWith(".zip") && Files.isRegularFile(it)) })
+      .forEach { Path file ->
+        Path blockMapFile = file.parent.resolve("${file.fileName}.blockmap.zip")
+        Path hashFile = file.parent.resolve("${file.fileName}.hash.json")
+        String blockMapJson = "blockmap.json"
+        String algorithm = "SHA-256"
+        new BufferedInputStream(Files.newInputStream(file)).withCloseable { input ->
+          BlockMap blockMap = new BlockMap(input, algorithm)
+          new BufferedOutputStream(Files.newOutputStream(blockMapFile)).withCloseable { output ->
+            writeBlockMapToZip(output, JsonOutput.toJson(blockMap).bytes, blockMapJson)
           }
         }
-    }
+        new BufferedInputStream(Files.newInputStream(file)).withCloseable { input ->
+          Files.writeString(hashFile, JsonOutput.toJson(new FileHash(input, algorithm)))
+        }
+      }
   }
 
   private static void writeBlockMapToZip(OutputStream output, byte[] bytes, String blockMapJson){

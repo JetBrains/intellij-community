@@ -144,7 +144,7 @@ public final class AntTasksProvider {
       });
     }
 
-    private static PathClassLoaderBuilder getBuilder(ArrayList<URL> urls) {
+    private static PathClassLoaderBuilder getBuilder(List<URL> urls) {
       PathClassLoaderBuilder builder = build()
         .urls(urls)
         .allowUnescaped()

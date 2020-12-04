@@ -116,7 +116,7 @@ final class ClassLoaderConfigurator {
     this.additionalLayoutMap = additionalLayoutMap;
 
     hasAllModules = idMap.containsKey(PluginManagerCore.ALL_MODULES_MARKER);
-    urlClassLoaderBuilder = UrlClassLoader.build().allowLock().useCache().urlsInterned();
+    urlClassLoaderBuilder = UrlClassLoader.build().allowLock().useCache();
   }
 
   @SuppressWarnings("RedundantSuppression")
@@ -133,7 +133,7 @@ final class ClassLoaderConfigurator {
 
       if (isClassloaderPerDescriptorEnabled(mainDependent)) {
         for (PluginDependency dependency : Objects.requireNonNull(mainDependent.pluginDependencies)) {
-          urlClassLoaderBuilder.urls(mainDependentClassLoader.getUrls());
+          urlClassLoaderBuilder.files(mainDependentClassLoader.getFiles());
           for (IdeaPluginDescriptorImpl subDescriptor : entry.getValue()) {
             if (subDescriptor == dependency.subDescriptor) {
               configureSubPlugin(dependency, mainDependentClassLoader, mainDependent);
@@ -151,7 +151,7 @@ final class ClassLoaderConfigurator {
     }
 
     loaders.clear();
-    urlClassLoaderBuilder.urls(Collections.emptyList());
+    urlClassLoaderBuilder.files(Collections.emptyList());
   }
 
   void configure(@NotNull IdeaPluginDescriptorImpl mainDependent) {
@@ -193,7 +193,7 @@ final class ClassLoaderConfigurator {
       mainDependent.jarFiles = null;
     }
 
-    urlClassLoaderBuilder.paths(classPath);
+    urlClassLoaderBuilder.files(classPath);
 
     List<PluginDependency> pluginDependencies = mainDependent.pluginDependencies;
     if (pluginDependencies == null) {
@@ -229,7 +229,7 @@ final class ClassLoaderConfigurator {
 
     // reset to ensure that stalled data will be not reused somehow later
     loaders.clear();
-    urlClassLoaderBuilder.urls(Collections.emptyList());
+    urlClassLoaderBuilder.files(Collections.emptyList());
   }
 
   private @NotNull PluginClassLoader createPluginClassLoader(@NotNull IdeaPluginDescriptorImpl descriptor) {

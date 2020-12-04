@@ -80,7 +80,7 @@ public final class AppEngineSdkUtil {
   public static Map<String, Set<String>> computeWhiteList(final File toolsApiJarFile) {
     try {
       Map<String, Set<String>> map = new HashMap<>();
-      final ClassLoader loader = UrlClassLoader.build().urls(toolsApiJarFile.toURI().toURL()).parent(
+      final ClassLoader loader = UrlClassLoader.build().files(Collections.singletonList(toolsApiJarFile.toPath())).parent(
         AppEngineSdkUtil.class.getClassLoader()).get();
       final Class<?> whiteListClass = Class.forName("com.google.apphosting.runtime.security.WhiteList", true, loader);
       final Set<String> classes = (Set<String>)whiteListClass.getMethod("getWhiteList").invoke(null);

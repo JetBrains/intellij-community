@@ -83,6 +83,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.featuresTrainer",
     "intellij.space",
   ]
+
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     ""                                                          : "11",
     "lib/idea_rt.jar"                                           : "1.6",
@@ -162,6 +163,8 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
+
+    isAntRequired = true
   }
 
   @Override
@@ -170,11 +173,15 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
       fileset(dir: "$context.paths.communityHome/java/jdkAnnotations")
     }
-    context.ant.copy(todir: "$targetDirectory/lib/ant") {
-      fileset(dir: "$context.paths.communityHome/lib/ant") {
-        exclude(name: "**/src/**")
+
+    if (isAntRequired) {
+      context.ant.copy(todir: "$targetDirectory/lib/ant") {
+        fileset(dir: "$context.paths.communityHome/lib/ant") {
+          exclude(name: "**/src/**")
+        }
       }
     }
+
     context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
       fileset(dir: "$context.paths.kotlinHome")
     }

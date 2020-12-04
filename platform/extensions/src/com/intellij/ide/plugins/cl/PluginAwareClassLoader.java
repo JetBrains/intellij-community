@@ -7,7 +7,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URL;
+import java.nio.file.Path;
 import java.util.Collection;
 
 public interface PluginAwareClassLoader {
@@ -26,7 +26,7 @@ public interface PluginAwareClassLoader {
 
   long getLoadedClassCount();
 
-  @NotNull Collection<URL> getUrls();
+  @NotNull Collection<Path> getFiles();
 
   @MagicConstant(intValues = {ACTIVE, UNLOAD_IN_PROGRESS})
   int getState();

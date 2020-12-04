@@ -4,18 +4,17 @@ package com.intellij.util.lang;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -28,6 +27,11 @@ public class UrlClassLoader extends ClassLoader {
   private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<>();
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
+
+  private final List<Path> files;
+  private final ClassPath classPath;
+  private final ClassLoadingLocks classLoadingLocks;
+  private final boolean isBootstrapResourcesAllowed;
 
   static {
     boolean ibmJvm = System.getProperty("java.vm.vendor", "unknown").toLowerCase(Locale.ENGLISH).contains("ibm");
@@ -59,13 +63,10 @@ public class UrlClassLoader extends ClassLoader {
    */
   @SuppressWarnings("unused")
   final void appendToClassPathForInstrumentation(@NotNull String jar) {
-    try {
-      URL url = new File(jar).toURI().toURL();
-      //noinspection deprecation
-      classPath.addURL(UrlUtilRt.internProtocol(url));
-      urls.add(url);
-    }
-    catch (MalformedURLException ignore) { }
+    Path file = Paths.get(jar);
+    //noinspection deprecation
+    classPath.addURL(file);
+    files.add(file);
   }
 
   /**
@@ -96,11 +97,6 @@ public class UrlClassLoader extends ClassLoader {
     return new PathClassLoaderBuilder();
   }
 
-  private final List<URL> urls;
-  private final ClassPath classPath;
-  private final ClassLoadingLocks classLoadingLocks;
-  private final boolean isBootstrapResourcesAllowed;
-
   /** @deprecated use {@link #build()} (left for compatibility with `java.system.class.loader` setting) */
   @Deprecated
   @ReviseWhenPortedToJDK("9")
@@ -124,39 +120,14 @@ public class UrlClassLoader extends ClassLoader {
   protected UrlClassLoader(@NotNull PathClassLoaderBuilder builder) {
     super(builder.myParent);
 
-    if (builder.urls.isEmpty() || builder.myUrlsInterned) {
-      List<Path> paths = builder.paths;
-      if (paths.isEmpty()) {
-        urls = builder.urls;
-      }
-      else {
-        urls = new ArrayList<>(paths.size());
-        for (Path path : paths) {
-          try {
-            urls.add(path.normalize().toUri().toURL());
-          }
-          catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }
-    }
-    else {
-      urls = new ArrayList<>(builder.urls.size());
-      for (URL url : builder.urls) {
-        URL internedUrl = UrlUtilRt.internProtocol(url);
-        if (internedUrl != null) {
-          urls.add(internedUrl);
-        }
-      }
-    }
+    files = builder.files;
 
-    Set<URL> urlsWithProtectionDomain = builder.urlsWithProtectionDomain;
+    Set<Path> urlsWithProtectionDomain = builder.pathsWithProtectionDomain;
     if (urlsWithProtectionDomain == null) {
       urlsWithProtectionDomain = Collections.emptySet();
     }
 
-    classPath = new ClassPath(urls, urlsWithProtectionDomain, builder);
+    classPath = new ClassPath(files, urlsWithProtectionDomain, builder);
 
     isBootstrapResourcesAllowed = builder.myAllowBootstrapResources;
     classLoadingLocks = ourParallelCapableLoaders != null && ourParallelCapableLoaders.contains(getClass()) ? new ClassLoadingLocks() : null;
@@ -165,12 +136,25 @@ public class UrlClassLoader extends ClassLoader {
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
   public final void addURL(@NotNull URL url) {
-    classPath.addURL(UrlUtilRt.internProtocol(url));
-    urls.add(url);
+    Path file = Paths.get(url.getPath());
+    classPath.addURL(file);
+    files.add(file);
   }
 
   public final @NotNull List<URL> getUrls() {
-    return Collections.unmodifiableList(urls);
+    List<URL> result = new ArrayList<>();
+    for (Path file : files) {
+      try {
+        result.add(file.toUri().toURL());
+      }
+      catch (MalformedURLException ignored) {
+      }
+    }
+    return result;
+  }
+
+  public final @NotNull List<Path> getFiles() {
+    return Collections.unmodifiableList(files);
   }
 
   public final boolean hasLoadedClass(String name) {
@@ -308,18 +292,20 @@ public class UrlClassLoader extends ClassLoader {
         return c;
       }
 
-      // "self" makes sense for PluginClassLoader, but not for UrlClassLoader - our parent it is implementation detail
-      ClassLoader parent = getParent();
-      if (parent != null) {
-        try {
-          c = parent.loadClass(name);
+      if (!forceLoadFromSubPluginClassloader) {
+        // "self" makes sense for PluginClassLoader, but not for UrlClassLoader - our parent it is implementation detail
+        ClassLoader parent = getParent();
+        if (parent != null) {
+          try {
+            c = parent.loadClass(name);
+          }
+          catch (ClassNotFoundException ignore) {
+          }
         }
-        catch (ClassNotFoundException ignore) {
-        }
-      }
 
-      if (c != null) {
-        return c;
+        if (c != null) {
+          return c;
+        }
       }
       return _findClass(name);
     }

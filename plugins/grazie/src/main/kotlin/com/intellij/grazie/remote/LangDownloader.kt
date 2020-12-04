@@ -9,7 +9,6 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.project.Project
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.lang.UrlClassLoader
-import java.nio.file.Paths
 
 internal object LangDownloader {
   private val downloader by lazy { DownloadableFileService.getInstance() }
@@ -26,7 +25,7 @@ internal object LangDownloader {
     // null if canceled or failed, zero result if nothing found
     if (result != null && result.isNotEmpty()) {
       val classLoader = UrlClassLoader.build().parent(GraziePlugin.classLoader)
-        .urls(result.map { Paths.get(it.presentableUrl).toUri().toURL() }).get()
+        .files(result.map { it.toNioPath() }).get()
 
       GrazieDynamic.addDynClassLoader(classLoader)
 

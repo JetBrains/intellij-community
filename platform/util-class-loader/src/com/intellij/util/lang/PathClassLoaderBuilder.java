@@ -1,24 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 
 public final class PathClassLoaderBuilder {
   private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
-  List<URL> urls = Collections.emptyList();
-  List<Path> paths = Collections.emptyList();
-  Set<URL> urlsWithProtectionDomain;
+  List<Path> files = Collections.emptyList();
+  Set<Path> pathsWithProtectionDomain;
   ClassLoader myParent;
   boolean lockJars;
   boolean useCache;
@@ -30,40 +28,39 @@ public final class PathClassLoaderBuilder {
   boolean lazyClassloadingCaches;
   boolean logJarAccess;
   @Nullable CachePoolImpl cachePool;
-  @Nullable Predicate<URL> cachingCondition;
-
-  boolean myUrlsInterned;
+  @Nullable Predicate<Path> cachingCondition;
 
   PathClassLoaderBuilder() { }
 
   public @NotNull PathClassLoaderBuilder urls(@NotNull List<URL> urls) {
-    this.urls = urls;
+    List<Path> files = new ArrayList<>(urls.size());
+    for (URL url : urls) {
+      files.add(Paths.get(url.getPath()));
+    }
+    this.files = files;
     return this;
   }
 
-  public @NotNull PathClassLoaderBuilder paths(@NotNull List<Path> paths) {
-    this.paths = paths;
-    return this;
-  }
-
-  public @NotNull PathClassLoaderBuilder urls(URL @NotNull ... urls) {
-    this.urls = Arrays.asList(urls);
+  public @NotNull PathClassLoaderBuilder files(@NotNull List<Path> paths) {
+    this.files = paths;
     return this;
   }
 
   // Presense of this method is also checked in JUnitDevKitPatcher
   PathClassLoaderBuilder urlsFromAppClassLoader(ClassLoader classLoader) {
     if (classLoader instanceof URLClassLoader) {
-      return urls(((URLClassLoader)classLoader).getURLs());
+      URL[] urls = ((URLClassLoader)classLoader).getURLs();
+      files = new ArrayList<>(urls.length);
+      for (URL url : urls) {
+        files.add(Paths.get(url.getPath()));
+      }
+      return this;
     }
+
     String[] parts = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
-    urls = new ArrayList<>(parts.length);
+    files = new ArrayList<>(parts.length);
     for (String s : parts) {
-      try {
-        urls.add(new File(s).toURI().toURL());
-      }
-      catch (IOException ignored) {
-      }
+      files.add(new File(s).toPath());
     }
     return this;
   }
@@ -71,8 +68,8 @@ public final class PathClassLoaderBuilder {
   /**
    * Marks URLs that are signed by Sun/Oracle and whose signatures must be verified.
    */
-  @NotNull PathClassLoaderBuilder urlsWithProtectionDomain(@NotNull Set<URL> urls) {
-    urlsWithProtectionDomain = urls;
+  @NotNull PathClassLoaderBuilder urlsWithProtectionDomain(@NotNull Set<Path> value) {
+    pathsWithProtectionDomain = value;
     return this;
   }
 
@@ -128,11 +125,6 @@ public final class PathClassLoaderBuilder {
     return this;
   }
 
-  public @NotNull PathClassLoaderBuilder urlsInterned() {
-    myUrlsInterned = true;
-    return this;
-  }
-
   /**
    * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
    * that can be shared between several loaders.
@@ -140,7 +132,7 @@ public final class PathClassLoaderBuilder {
    * @param pool      cache pool
    * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
    */
-  public @NotNull PathClassLoaderBuilder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<URL> condition) {
+  public @NotNull PathClassLoaderBuilder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<Path> condition) {
     useCache = true;
     cachePool = (CachePoolImpl)pool;
     cachingCondition = condition;
@@ -182,22 +174,30 @@ public final class PathClassLoaderBuilder {
   }
 
   public @NotNull PathClassLoaderBuilder autoAssignUrlsWithProtectionDomain() {
-    Set<URL> result = new HashSet<>();
-    for (URL url : urls) {
-      if (isUrlNeedsProtectionDomain(url)) {
-        result.add(url);
+    Set<Path> result = new HashSet<>();
+    for (Path path : files) {
+      if (isUrlNeedsProtectionDomain(path)) {
+        result.add(path);
       }
     }
-    return urlsWithProtectionDomain(result);
+    pathsWithProtectionDomain = result;
+    return this;
   }
 
   public @NotNull UrlClassLoader get() {
     return new UrlClassLoader(this);
   }
 
-  private static boolean isUrlNeedsProtectionDomain(@NotNull URL url) {
-    String name = PathUtilRt.getFileName(url.getPath());
-    //noinspection SpellCheckingInspection
-    return name.endsWith(".jar") && (name.startsWith("bcprov-") || name.startsWith("bcpkix-"));  // BouncyCastle needs protection domain
+  private static boolean isUrlNeedsProtectionDomain(@NotNull Path file) {
+    String path = file.toString();
+    // BouncyCastle needs a protection domain
+    if (path.endsWith(".jar")) {
+      int offset = path.lastIndexOf(file.getFileSystem().getSeparator().charAt(0)) + 1;
+      //noinspection SpellCheckingInspection
+      if (path.startsWith("bcprov-", offset) || path.startsWith("bcpkix-", offset)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

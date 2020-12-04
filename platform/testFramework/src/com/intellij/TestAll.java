@@ -128,17 +128,17 @@ public class TestAll implements Test {
       System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
       return ContainerUtil.map(testRoots.split(";"), Paths::get);
     }
-    List<File> roots = ExternalClasspathClassLoader.getRoots();
+    List<Path> roots = ExternalClasspathClassLoader.getRoots();
     if (roots != null) {
-      List<File> excludeRoots = ExternalClasspathClassLoader.getExcludeRoots();
+      List<Path> excludeRoots = ExternalClasspathClassLoader.getExcludeRoots();
       if (excludeRoots != null) {
         System.out.println("Skipping tests from " + excludeRoots.size() + " roots");
         roots = new ArrayList<>(roots);
-        roots.removeAll(FileCollectionFactory.createCanonicalFileSet(excludeRoots));
+        roots.removeAll(FileCollectionFactory.createCanonicalPathSet(excludeRoots));
       }
 
       System.out.println("Collecting tests from roots specified by classpath.file property: " + roots);
-      return ContainerUtil.map(roots, File::toPath);
+      return roots;
     }
     else {
       ClassLoader loader = TestAll.class.getClassLoader();
@@ -389,7 +389,7 @@ public class TestAll implements Test {
       }
       catch (Exception e) {
         System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used" +
-                           " and ignored tests won't be properly reported: " + e.toString());
+                           " and ignored tests won't be properly reported: " + e);
         ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
       }
     }
