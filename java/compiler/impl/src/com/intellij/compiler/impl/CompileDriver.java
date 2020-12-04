@@ -369,6 +369,11 @@ public final class CompileDriver {
 
         }
       }
+
+      @Override
+      public @NotNull ProgressIndicator getProgressIndicator() {
+        return compileContext.getProgressIndicator();
+      }
     });
   }
 

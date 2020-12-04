@@ -839,7 +839,7 @@ public final class BuildManager implements Disposable {
                   }
                 }
 
-                processHandler = launchBuildProcess(project, sessionId, false);
+                processHandler = launchBuildProcess(project, sessionId, false, messageHandler.getProgressIndicator());
                 errorsOnLaunch = new StringBuffer();
                 processHandler.addProcessListener(new StdOutputCollector((StringBuffer)errorsOnLaunch));
                 processHandler.startNotify();
@@ -1024,7 +1024,7 @@ public final class BuildManager implements Disposable {
                             new CancelBuildSessionAction<>());
       try {
         myMessageDispatcher.registerBuildMessageHandler(future, null);
-        final OSProcessHandler processHandler = launchBuildProcess(project, future.getRequestID(), true);
+        final OSProcessHandler processHandler = launchBuildProcess(project, future.getRequestID(), true, null);
         final StringBuffer errors = new StringBuffer();
         processHandler.addProcessListener(new StdOutputCollector(errors));
         STDERR_OUTPUT.set(processHandler, errors);
@@ -1052,7 +1052,8 @@ public final class BuildManager implements Disposable {
     return null;
   }
 
-  private OSProcessHandler launchBuildProcess(@NotNull Project project, @NotNull UUID sessionId, boolean requestProjectPreload) throws ExecutionException {
+  private OSProcessHandler launchBuildProcess(@NotNull Project project, @NotNull UUID sessionId, boolean requestProjectPreload,
+                                              @Nullable ProgressIndicator progressIndicator) throws ExecutionException {
     String compilerPath = null;
     final String vmExecutablePath;
     JavaSdkVersion sdkVersion = null;
@@ -1112,7 +1113,7 @@ public final class BuildManager implements Disposable {
     BuildCommandLineBuilder cmdLine;
     Pair<String, @Nullable WSLDistribution> pair = WslDistributionManager.getInstance().parseWslPath(vmExecutablePath);
     if (pair != null && pair.second != null) {
-      cmdLine = new WslBuildCommandLineBuilder(project, pair.second, pair.first);
+      cmdLine = new WslBuildCommandLineBuilder(project, pair.second, pair.first, progressIndicator);
     }
     else {
       cmdLine = new LocalBuildCommandLineBuilder(vmExecutablePath);

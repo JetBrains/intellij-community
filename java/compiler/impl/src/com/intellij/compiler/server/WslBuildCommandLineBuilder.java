@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,7 @@ import java.util.List;
 class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   private final Project myProject;
   private final @NotNull WSLDistribution myDistribution;
+  private final @Nullable ProgressIndicator myProgressIndicator;
   private final GeneralCommandLine myCommandLine = new GeneralCommandLine();
   private final @NotNull String myWorkingDirectory;
   private final @NotNull String myHostWorkingDirectory;
@@ -33,10 +35,13 @@ class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   private final @Nullable Path myHostClasspathDirectory;
 
   private static boolean CURRENT_SNAPSHOT_COPIED = false;
+  private boolean myReportedProgress;
 
-  WslBuildCommandLineBuilder(@NotNull Project project, @NotNull WSLDistribution distribution, @NotNull String sdkPath) {
+  WslBuildCommandLineBuilder(@NotNull Project project, @NotNull WSLDistribution distribution, @NotNull String sdkPath,
+                             @Nullable ProgressIndicator progressIndicator) {
     myProject = project;
     myDistribution = distribution;
+    myProgressIndicator = progressIndicator;
     myCommandLine.setExePath(sdkPath);
 
     String home = distribution.getUserHome();
@@ -52,6 +57,10 @@ class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       if (ApplicationInfo.getInstance().getBuild().isSnapshot() && !CURRENT_SNAPSHOT_COPIED) {
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         CURRENT_SNAPSHOT_COPIED = true;
+        if (myProgressIndicator != null) {
+          myProgressIndicator.setText(JavaCompilerBundle.message("progress.preparing.wsl.build.environment"));
+          myReportedProgress = true;
+        }
         try {
           FileUtil.delete(myHostClasspathDirectory);
         }
@@ -81,7 +90,7 @@ class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   @Override
   public void addClasspathParameter(List<String> classpathInHost, List<String> classpathInTarget) {
     StringBuilder builder = new StringBuilder();
-    long startTime = System.currentTimeMillis();
+    myReportedProgress = false;
     for (String pathName : classpathInHost) {
       if (builder.length() > 0) {
         builder.append(":");
@@ -91,6 +100,10 @@ class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
         Path targetPath = myHostClasspathDirectory.resolve(path.getFileName());
         try {
           if (!targetPath.toFile().exists()) {
+            if (!myReportedProgress && myProgressIndicator != null) {
+              myProgressIndicator.setText(JavaCompilerBundle.message("progress.preparing.wsl.build.environment"));
+              myReportedProgress = true;
+            }
             FileUtil.copyFileOrDir(path.toFile(), targetPath.toFile());
           }
           builder.append(myDistribution.getWslPath(targetPath.toString()));
@@ -103,7 +116,6 @@ class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
       builder.append(myDistribution.getWslPath(pathName));
     }
-    long endTime = System.currentTimeMillis();
     for (String s : classpathInTarget) {
       if (builder.length() > 0) {
         builder.append(":");
