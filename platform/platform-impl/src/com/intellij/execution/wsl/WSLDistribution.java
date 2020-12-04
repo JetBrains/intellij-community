@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
@@ -510,12 +511,21 @@ public class WSLDistribution {
   }
 
   /**
-   * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
+   * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
    */
   @ApiStatus.Experimental
   @NotNull
+  @Deprecated
   public File getUNCRoot() {
     return new File(UNC_PREFIX + myDescriptor.getMsId());
+  }
+
+  /**
+   * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
+   */
+  @ApiStatus.Experimental
+  public @NotNull Path getUNCRootPath() {
+    return Paths.get(UNC_PREFIX + myDescriptor.getMsId());
   }
 
   /**
