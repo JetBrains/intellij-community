@@ -100,4 +100,20 @@ public class ModelBranchUtil {
     }
     return data;
   }
+
+  /**
+   * Checks that both files belong to the same branch (or both do not belong to any branch)
+   * 
+   * @param left left file
+   * @param right right file
+   * @throws IllegalArgumentException if files belong to different branches or one of the file
+   * belongs to the branch while other doesn't.
+   */
+  public static void checkSameBranch(@NotNull VirtualFile left, @NotNull VirtualFile right) {
+    ModelBranch leftBranch = ModelBranch.getFileBranch(left);
+    ModelBranch rightBranch = ModelBranch.getFileBranch(right);
+    if (leftBranch != rightBranch) {
+      throw new IllegalArgumentException("Files from different branches: " + leftBranch + " vs " + rightBranch);
+    }
+  }
 }
