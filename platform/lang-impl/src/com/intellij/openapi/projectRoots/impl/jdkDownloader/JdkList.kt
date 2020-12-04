@@ -407,7 +407,7 @@ abstract class JdkListDownloaderBase {
 
   fun findWslJdk(item: JdkItem): JdkItem {
     val jdkList = downloadJdksListWithCache(feedUrl, null)
-    return jdkList.firstOrNull { it.product.vendor == item.product.vendor && it.versionString == item.versionString } ?: item
+    return jdkList.firstOrNull { it.product.vendor == item.product.vendor && it.versionString == item.versionString && it.os == "linux" } ?: item
   }
 
   private val jdksListCache = CachedValueWithTTL<List<JdkItem>>(15 to TimeUnit.MINUTES)
