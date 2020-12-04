@@ -425,6 +425,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ExternalTools = load("general/externalTools.svg", -6856678828470399892L, 2);
     /** 16x16 */ public static final @NotNull Icon Filter = load("general/filter.svg", 8424547176780303664L, 2);
     /** 16x16 */ public static final @NotNull Icon FitContent = load("general/fitContent.svg", -8164840460982613929L, 2);
+    /** 16x16 */ public static final @NotNull Icon Gear = load("general/gear.svg", -2323667661656053817L, 0);
+    /** 16x16 */ public static final @NotNull Icon GearHover = load("general/gearHover.svg", 6953069430927641152L, 0);
     /** 16x16 */ public static final @NotNull Icon GearPlain = load("general/gearPlain.svg", -277797916421653758L, 2);
     /** 16x16 */ public static final @NotNull Icon HideToolWindow = load("general/hideToolWindow.svg", -8384226792954975648L, 2);
     /** 16x16 */ public static final @NotNull Icon ImplementingMethod = load("general/implementingMethod.svg", 3378222749158544348L, 1);
