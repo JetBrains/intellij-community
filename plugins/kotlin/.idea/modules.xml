@@ -525,6 +525,7 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/groovy/structuralsearch-groovy/intellij.groovy.structuralSearch.iml" filepath="$PROJECT_DIR$/intellij/plugins/groovy/structuralsearch-groovy/intellij.groovy.structuralSearch.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/groovy/groovy-uast-tests/intellij.groovy.uast.tests.iml" filepath="$PROJECT_DIR$/intellij/plugins/groovy/groovy-uast-tests/intellij.groovy.uast.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/build/intellij.idea.community.build.iml" filepath="$PROJECT_DIR$/intellij/build/intellij.idea.community.build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/build/tasks/intellij.idea.community.build.tasks.iml" filepath="$PROJECT_DIR$/intellij/build/tasks/intellij.idea.community.build.tasks.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/community-guitests/intellij.idea.community.guiTests.iml" filepath="$PROJECT_DIR$/intellij/community-guitests/intellij.idea.community.guiTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/intellij.idea.community.main.iml" filepath="$PROJECT_DIR$/intellij/intellij.idea.community.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/intellij.idea.community.main.android.iml" filepath="$PROJECT_DIR$/intellij/intellij.idea.community.main.android.iml" />
