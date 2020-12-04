@@ -15,6 +15,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.space.chat.markdown.convertToHtml
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItemWithThread
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
@@ -103,14 +104,16 @@ internal fun TD_MemberProfile.link(): HtmlChunk =
   HtmlChunk.link(SpaceUrls.member(username), name.fullName()) // NON-NLS
 
 @NlsSafe
-internal fun processItemText(server: String, @NlsSafe text: String, isEdited: Boolean) = MentionConverter.html(text, server).let {
-  if (isEdited) {
-    it + " " + getGrayTextHtml(SpaceBundle.message("chat.message.edited.text"))
+internal fun processItemText(server: String, @NlsSafe text: String, isEdited: Boolean) = convertToHtml(
+  MentionConverter.markdown(text, server).let {
+    if (isEdited) {
+      it + " " + getGrayTextHtml(SpaceBundle.message("chat.message.edited.text"))
+    }
+    else {
+      it
+    }
   }
-  else {
-    it
-  }
-}
+)
 
 @NlsSafe
 internal fun getGrayTextHtml(@Nls text: String): String =

@@ -141,5 +141,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="library" name="intellij-markdown" level="project" />
   </component>
 </module>
