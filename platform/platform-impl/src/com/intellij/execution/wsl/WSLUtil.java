@@ -14,15 +14,16 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Class for working with WSL after Fall Creators Update
@@ -180,21 +181,6 @@ public final class WSLUtil {
       return null;
     }
     return FileUtil.toSystemDependentName(Character.toUpperCase(wslPath.charAt(driveLetterIndex)) + ":" + wslPath.substring(slashIndex));
-  }
-
-  /**
-   * @return list of existing UNC roots for known WSL distributions
-   */
-  @ApiStatus.Experimental
-  @NotNull
-  public static List<File> getExistingUNCRoots() {
-    if (!isSystemCompatible() || !Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {
-      return Collections.emptyList();
-    }
-    return getAvailableDistributions().stream()
-      .map(WSLDistribution::getUNCRoot)
-      .filter(File::exists)
-      .collect(Collectors.toList());
   }
 
   @NotNull
