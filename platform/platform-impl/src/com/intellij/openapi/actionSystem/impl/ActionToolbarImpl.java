@@ -1133,7 +1133,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private CancellablePromise<List<AnAction>> myLastUpdate;
 
   protected void actionsUpdated(boolean forced, @NotNull List<? extends AnAction> newVisibleActions) {
-    if (forced || !newVisibleActions.equals(myVisibleActions)) {
+    if (forced || !newVisibleActions.equals(myVisibleActions) || myPresentationFactory.isNeedRebuild()) {
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;
 
@@ -1143,6 +1143,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       mySecondaryActions.removeAll();
       mySecondaryActionsButton = null;
       fillToolBar(myVisibleActions, getLayoutPolicy() == AUTO_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL);
+      myPresentationFactory.resetNeedRebuild();
 
       Dimension newSize = getPreferredSize();
       if (!mySkipWindowAdjustments) {
