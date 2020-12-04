@@ -164,6 +164,8 @@ public final class DocRenderItem {
         editor.getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(editor), connection);
         editor.getInlayModel().addListener(new MyInlayListener(), connection);
 
+        Disposer.register(connection, () -> DocRenderer.clearCachedLoadingPane(editor));
+
         editor.putUserData(LISTENERS_DISPOSABLE, connection);
       }
     }
@@ -348,6 +350,9 @@ public final class DocRenderItem {
   }
 
   private static void updateInlays(@NotNull Editor editor, boolean recreateContent) {
+    if (recreateContent) {
+      DocRenderer.clearCachedLoadingPane(editor);
+    }
     Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
     if (items != null) updateInlays(items, recreateContent);
   }
