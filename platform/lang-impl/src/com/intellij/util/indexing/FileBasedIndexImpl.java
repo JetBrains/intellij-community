@@ -476,7 +476,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return; // already shut down
     }
 
-    registeredIndexes.waitUntilAllIndicesAreInitialized();
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      registeredIndexes.waitUntilAllIndicesAreInitialized();
+    });
     try {
       if (myShutDownTask != null) {
         ShutDownTracker.getInstance().unregisterShutdownTask(myShutDownTask);
