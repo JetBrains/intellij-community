@@ -257,6 +257,10 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     def root = new XmlParser().parse(applicationInfoFile)
     def iconNode = root.icon.first()
     iconNode.@ico = icoFile.name
+
+    // Android Studio: Make "Product Version" match "Product Version Number", as we don't have all the info at this time
+    root.build.@number = "0"
+
     def patchedFile = new File(buildContext.paths.temp, "win-launcher-application-info.xml")
     patchedFile.withWriter {
       XmlUtil.serialize(root, it)
