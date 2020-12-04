@@ -13,15 +13,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 
-internal fun gotoDeclaration(file: PsiFile, offset: Int): GTDActionData? {
+@ApiStatus.Internal
+fun gotoDeclaration(file: PsiFile, offset: Int): GTDActionData? {
   return processInjectionThenHost(file, offset, ::gotoDeclarationInner)
 }
 
 /**
  * "Go To Declaration" action data
  */
-internal interface GTDActionData {
+@ApiStatus.Internal
+interface GTDActionData {
 
   fun ctrlMouseInfo(): CtrlMouseInfo
 
@@ -31,7 +34,8 @@ internal interface GTDActionData {
 /**
  * "Go To Declaration" action result
  */
-internal sealed class GTDActionResult {
+@ApiStatus.Internal
+sealed class GTDActionResult {
 
   /**
    * Single [Navigatable].
@@ -47,7 +51,8 @@ internal sealed class GTDActionResult {
   }
 }
 
-internal data class GTDTarget(val navigatable: Navigatable, val presentation: TargetPopupPresentation, val navigationProvider: Any?)
+@ApiStatus.Internal
+data class GTDTarget(val navigatable: Navigatable, val presentation: TargetPopupPresentation, val navigationProvider: Any?)
 
 private fun gotoDeclarationInner(file: PsiFile, offset: Int): GTDActionData? {
   return fromDirectNavigation(file, offset)
