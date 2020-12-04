@@ -761,6 +761,7 @@ idea.fatal.error.notification=disabled
   }
 
   static <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks, BuildContext buildContext) {
+    if (tasks.empty) return Collections.emptyList()
     if (!buildContext.options.runBuildStepsInParallel) {
       return tasks.collect {
         it.execute(buildContext)
