@@ -2,6 +2,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,6 +242,13 @@ public final class ClassPath {
       }
     }
 
+    if (SystemInfoRt.isWindows && path.startsWith("/")) {
+      // trim leading slashes before drive letter
+      int pos = path.indexOf(':');
+      if (pos > 1) {
+        path = path.substring(pos - 1);
+      }
+    }
     Path file = Paths.get(path);
     String filePath = file.toString();
     Loader loader = createLoader(url, file, filePath.startsWith(CLASSPATH_JAR_FILE_NAME_PREFIX, filePath.lastIndexOf('/') + 1));
