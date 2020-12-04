@@ -54,15 +54,15 @@
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module-library" scope="TEST">
       <library name="junit-jupiter-params:5.6.0" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-params:5.6.0" />
+        <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-params:5.7.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.6.0/junit-jupiter-params-5.6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.7.0/junit-jupiter-params-5.7.0.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.6.0/junit-jupiter-params-5.6.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.7.0/junit-jupiter-params-5.7.0-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.6.0/junit-jupiter-params-5.6.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.7.0/junit-jupiter-params-5.7.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
