@@ -196,7 +196,8 @@ public final class PluginManager {
     }
 
     for (String vendor : StringUtil.split(vendorString, ",")) {
-      if (PluginManagerCore.VENDOR_JETBRAINS.equals(vendor.trim())) {
+      String vendorItem = vendor.trim();
+      if (PluginManagerCore.VENDOR_JETBRAINS.equals(vendorItem) || PluginManagerCore.VENDOR_JETBRAINS_SRO.equals(vendorItem)) {
         return true;
       }
     }
