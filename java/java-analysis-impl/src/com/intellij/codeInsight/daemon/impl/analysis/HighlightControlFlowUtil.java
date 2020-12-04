@@ -324,6 +324,7 @@ public final class HighlightControlFlowUtil {
             // variable must be initialized before its usage
             //???
             //if (startOffset < redirectedConstructor.getTextRange().getStartOffset()) continue;
+            if (JavaPsiRecordUtil.isCompactConstructor(redirectedConstructor)) return null;
             PsiCodeBlock body = redirectedConstructor.getBody();
             if (body != null && variableDefinitelyAssignedIn(variable, body)) {
               return null;
