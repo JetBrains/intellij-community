@@ -14,6 +14,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -27,6 +29,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitDisposable;
 import git4idea.GitUtil;
@@ -175,8 +178,19 @@ public class GitConflictResolver {
    * Invoke the merge dialog, but execute nothing after merge is completed.
    * @return true if all changes were merged, false if unresolved merges remain.
    */
+  @RequiresBackgroundThread
   public final boolean mergeNoProceed() {
     return merge(true);
+  }
+
+  @RequiresEdt
+  public final void mergeNoProceedInBackground() {
+    new Task.Backgroundable(myProject, GitBundle.message("apply.changes.resolving.conflicts.progress.title")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        mergeNoProceed();
+      }
+    }.queue();
   }
 
   /**

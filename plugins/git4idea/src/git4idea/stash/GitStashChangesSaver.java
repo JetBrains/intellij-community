@@ -149,7 +149,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
                 GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
               }
               else if (event.getDescription().equals("resolve")) {
-                mergeNoProceed();
+                mergeNoProceedInBackground();
               }
             }
           }

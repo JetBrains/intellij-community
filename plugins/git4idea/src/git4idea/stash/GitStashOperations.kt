@@ -155,7 +155,7 @@ private class UnstashConflictResolver(project: Project,
     ) { _, event ->
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == "resolve") {
-          UnstashConflictResolver(myProject, stashInfo).mergeNoProceed()
+          UnstashConflictResolver(myProject, stashInfo).mergeNoProceedInBackground()
         }
       }
     }

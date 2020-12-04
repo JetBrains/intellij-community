@@ -385,11 +385,7 @@ class GitApplyChangesProcess(private val project: Project,
     override fun hyperlinkUpdate(notification: Notification, event: HyperlinkEvent) {
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == RESOLVE) {
-          object: Task.Backgroundable(project, GitBundle.message("apply.changes.resolving.conflicts.progress.title")) {
-            override fun run(indicator: ProgressIndicator) {
-              ConflictResolver(project, root, hash, author, message, operationName).mergeNoProceed()
-            }
-          }.queue()
+          ConflictResolver(project, root, hash, author, message, operationName).mergeNoProceedInBackground()
         }
       }
     }
