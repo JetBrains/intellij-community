@@ -427,4 +427,49 @@ class DiffBuilderTest {
 
     assertOneElement(target.entities(SampleEntity::class.java).toList())
   }
+
+  @Test
+  fun `remove entity and reference`() {
+    val initial = WorkspaceEntityStorageBuilderImpl.create()
+    val parentEntity = initial.addParentEntity()
+    val childEntity = initial.addChildWithOptionalParentEntity(parentEntity)
+
+    val source = WorkspaceEntityStorageBuilderImpl.from(initial)
+
+    source.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, childEntity) {
+      this.childProperty = "newProp"
+    }
+
+    source.modifyEntity(ModifiableParentEntity::class.java, parentEntity) {
+      this.optionalChildren = emptySequence()
+    }
+
+    source.removeEntity(childEntity)
+
+    val res = initial.applyDiff(source)
+
+    assertTrue(res.entities(ChildWithOptionalParentEntity::class.java).toList().isEmpty())
+    val newParent = assertOneElement(res.entities(ParentEntity::class.java).toList())
+    assertTrue(newParent.optionalChildren.toList().isEmpty())
+  }
+
+  @Test
+  fun `remove reference to created entity`() {
+    val initial = WorkspaceEntityStorageBuilderImpl.create()
+    val parentEntity = initial.addParentEntity()
+    initial.addChildWithOptionalParentEntity(parentEntity)
+    val source = WorkspaceEntityStorageBuilderImpl.from(initial)
+
+    source.addChildWithOptionalParentEntity(parentEntity)
+
+    source.modifyEntity(ModifiableParentEntity::class.java, parentEntity) {
+      this.optionalChildren = emptySequence()
+    }
+
+    val res = initial.applyDiff(source)
+
+    assertEquals(2, res.entities(ChildWithOptionalParentEntity::class.java).toList().size)
+    val newParent = assertOneElement(res.entities(ParentEntity::class.java).toList())
+    assertTrue(newParent.optionalChildren.toList().isEmpty())
+  }
 }
