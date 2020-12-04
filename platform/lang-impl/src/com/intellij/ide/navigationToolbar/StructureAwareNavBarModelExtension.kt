@@ -130,7 +130,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
       .all { processStructureViewChildren(it, `object`, processor) }
   }
 
-  protected fun childrenFromNodeAndProviders(parent: StructureViewTreeElement): List<TreeElement> {
+  protected open fun childrenFromNodeAndProviders(parent: StructureViewTreeElement): List<TreeElement> {
     val children = if (parent is PsiTreeElementBase<*>) parent.childrenWithoutCustomRegions else parent.children.toList()
     return children + applicableNodeProviders.flatMap { it.provideNodes(parent) }
   }
