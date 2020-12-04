@@ -4,6 +4,7 @@ package com.intellij.execution.wsl.target
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WSLUtil
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -13,7 +14,7 @@ class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTa
   private var distributionMsId: String? = null
   private val distributionLazy: SynchronizedClearableLazy<WSLDistribution?> = SynchronizedClearableLazy {
     distributionMsId ?: return@SynchronizedClearableLazy null
-    WSLUtil.getAvailableDistributions().first { it.msId === distributionMsId }
+    WslDistributionManager.getInstance().installedDistributions.first { it.msId.equals(distributionMsId, true) }
   }
   var distribution: WSLDistribution?
     get() = distributionLazy.value

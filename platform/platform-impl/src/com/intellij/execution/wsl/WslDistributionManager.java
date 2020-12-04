@@ -77,7 +77,7 @@ public final class WslDistributionManager implements Disposable {
       return null;
     }
     for (WSLDistribution distribution : getInstalledDistributions()) {
-      if (name.equals(distribution.getMsId())) {
+      if (name.equalsIgnoreCase(distribution.getMsId())) {
         return distribution;
       }
     }

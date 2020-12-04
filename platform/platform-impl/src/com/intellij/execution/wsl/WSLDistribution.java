@@ -14,7 +14,6 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -438,7 +437,7 @@ public class WSLDistribution {
       if (index == -1) return null;
 
       String distName = windowsPath.substring(0, index);
-      if (!distName.equals(myDescriptor.getMsId())) {
+      if (!distName.equalsIgnoreCase(myDescriptor.getMsId())) {
         throw new IllegalArgumentException("Trying to get WSL path from a different WSL distribution");
       }
       return FileUtil.toSystemIndependentName(windowsPath.substring(index));
