@@ -51,14 +51,15 @@ class SpaceChatCodeDiscussionComponentFactory(
     val collapseButton = InlineIconButton(AllIcons.General.CollapseComponent, AllIcons.General.CollapseComponentHover)
     val expandButton = InlineIconButton(AllIcons.General.ExpandComponent, AllIcons.General.ExpandComponentHover)
 
+    val filePath = discussion.anchor.filename ?: return null
     val fileNameComponent = JBUI.Panels.simplePanel(
-      createFileNameComponent(discussion.anchor.filename!!, collapseButton, expandButton, resolved)
+      createFileNameComponent(filePath, collapseButton, expandButton, resolved)
     ).apply {
       isOpaque = false
       border = JBUI.Borders.empty(8)
     }
-
-    val diffEditorComponent = when (val snippet = discussion.snippet!!) {
+    val snippet = discussion.snippet ?: return null
+    val diffEditorComponent = when (snippet) {
       is CodeDiscussionSnippet.PlainSnippet -> {
         return null
       }
