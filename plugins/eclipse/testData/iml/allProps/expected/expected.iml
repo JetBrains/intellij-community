@@ -104,15 +104,6 @@
     </orderEntry>
     <orderEntry type="library" exported="" name="lib-8" level="project" />
     <orderEntry type="module-library">
-      <library name="junit3">
-        <CLASSES>
-          <root url="jar://$JUNIT3_PATH$!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
       <library name="junit4">
         <CLASSES>
           <root url="jar://$JUNIT4_PATH$!/" />

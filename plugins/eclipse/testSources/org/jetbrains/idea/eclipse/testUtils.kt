@@ -93,7 +93,6 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
     PathMacros.getInstance().setMacro(name, projectDir.resolve(relativePath).toAbsolutePath().toString())
   }
   val junitUrls = mapOf(
-    "JUNIT3_PATH" to EclipseClasspathReader.getJunitClsUrl(false),
     "JUNIT4_PATH" to EclipseClasspathReader.getJunitClsUrl(true)
   )
   for ((name, url) in junitUrls) {
