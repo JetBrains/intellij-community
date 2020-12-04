@@ -109,7 +109,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       "<br style=\"font-size:8;\"/><p>Please note that this will not include personal data or any sensitive information, such as source code, file names, etc. The data sent complies with the <a href=\"#sometag\">JetBrains Privacy Policy</a></p>";
 
     private static final String GOT_IT_HEADER = "IDE features trainer";
-    private static final String GOT_IT_TEXT = "Learn the most useful shortcuts and essential IDE features interactively";
+    private static final String GOT_IT_TEXT = "Learn the most useful shortcuts <icon src=\"AllIcons.Actions.More\"/> and essential IDE features interactively." +
+      " Use <icon src=\"AllIcons.Actions.Diff\" valign=\"1.0f\"/> for details.";
     private static final String GOT_IT_TEXT2 = "Some textfield that actually means nothing";
 
     private final Alarm myAlarm = new Alarm(getDisposable());

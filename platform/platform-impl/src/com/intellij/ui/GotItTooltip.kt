@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -28,10 +29,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
-import com.intellij.util.ui.GridBag
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.PositionTracker
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -39,11 +37,15 @@ import java.awt.event.ActionListener
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
+import java.io.StringReader
 import java.net.URL
 import javax.swing.*
 import javax.swing.event.AncestorEvent
-import javax.swing.plaf.basic.BasicHTML
-import javax.swing.text.View
+import javax.swing.text.*
+import javax.swing.text.html.HTML
+import javax.swing.text.html.HTMLDocument
+import javax.swing.text.html.HTMLEditorKit
+import javax.swing.text.html.StyleSheet
 
 /**
  * id is a unique id for the tooltip that will be used to store the tooltip state in <code>PropertiesComponent</code>
@@ -326,6 +328,9 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
         }
       }.also{ Disposer.register(this, Disposable { component.removeAncestorListener(it) }) })
     }
+    else {
+      chainFunction()
+    }
   }
 
   private fun createAndShow(tracker: PositionTracker<Balloon>) : Balloon = createBalloon().also {
@@ -507,7 +512,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
     private val SHORTCUT_COLOR = JBColor.namedColor("GotItTooltip.shortcutForeground", JBUI.CurrentTheme.Tooltip.shortcutForeground())
     private val BACKGROUND_COLOR = JBColor.namedColor("GotItTooltip.background", UIUtil.getToolTipBackground())
     private val BORDER_COLOR = JBColor.namedColor("GotItTooltip.borderColor", JBUI.CurrentTheme.Tooltip.borderColor())
-    private val LINK_FOREGROUND = JBColor.namedColor("GotItTooltip.linkForeground", JBUI.CurrentTheme.Link.linkColor());
+    private val LINK_FOREGROUND = JBColor.namedColor("GotItTooltip.linkForeground", JBUI.CurrentTheme.Link.linkColor())
 
     private val PANEL_MARGINS = JBUI.Borders.empty(7, 4, 9, 9)
 
@@ -538,20 +543,31 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
 }
 
 private class LimitedWidthLabel(val htmlBuilder: HtmlBuilder, val limit: Int) : JLabel() {
+  val htmlView : View
+
   init {
-    var view = BasicHTML.createHTMLView(this, htmlBuilder.wrapWith(HtmlChunk.html()).toString())
+    var htmlText = htmlBuilder.wrapWith(HtmlChunk.div()).wrapWith(HtmlChunk.html()).toString()
+    var view = createHTMLView(this, htmlText)
     var width = view.getPreferredSpan(View.X_AXIS)
 
-    if (width < limit) {
-      text = htmlBuilder.wrapWith(HtmlChunk.div()).wrapWith(HtmlChunk.html()).toString()
+    if (width > limit) {
+      view = createHTMLView(this, htmlBuilder.wrapWith(HtmlChunk.div().attr("width", limit)).wrapWith(HtmlChunk.html()).toString())
+      width = rows(view).maxOfOrNull { it.getPreferredSpan(View.X_AXIS) } ?: limit.toFloat()
+
+      htmlText = htmlBuilder.wrapWith(HtmlChunk.div().attr("width", width.toInt())).wrapWith(HtmlChunk.html()).toString()
+      view = createHTMLView(this, htmlText)
     }
-    else {
-      view = BasicHTML.createHTMLView(this, htmlBuilder.wrapWith(HtmlChunk.div().attr("width", limit)).wrapWith(HtmlChunk.html()).toString())
-      width = rows(view).maxOf { it.getPreferredSpan(View.X_AXIS) }
-      text = htmlBuilder.wrapWith(HtmlChunk.div().attr("width", width.toInt())).wrapWith(HtmlChunk.html()).toString()
-    }
+
+    htmlView = view
+    preferredSize = Dimension(view.getPreferredSpan(View.X_AXIS).toInt(), view.getPreferredSpan(View.Y_AXIS).toInt())
   }
 
+  override fun paintComponent(g: Graphics) {
+    val rect = Rectangle(width, height)
+    JBInsets.removeFrom(rect, insets)
+    htmlView.paint(g, rect)
+  }
+  
   private fun rows(root: View) : Collection<View> {
     return ArrayList<View>().also { visit(root, it) }
   }
@@ -563,5 +579,178 @@ private class LimitedWidthLabel(val htmlBuilder: HtmlBuilder, val limit: Int) : 
     for (i in 0 until view.viewCount) {
       visit(view.getView(i), collection)
     }
+  }
+
+  companion object {
+    val editorKit = GotItEditorKit()
+
+    private fun createHTMLView(component: JComponent, html: String) : View {
+      val document = editorKit.createDocument(component.font, component.foreground)
+      StringReader(html).use { editorKit.read(it, document, 0) }
+
+      val factory = editorKit.viewFactory
+      return RootView(component, factory, factory.create(document.defaultRootElement))
+    }
+  }
+
+  private class GotItEditorKit : HTMLEditorKit() {
+    companion object {
+      private const val STYLES = "p { margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0 }" +
+                                 "body { margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0 }"
+    }
+
+    private val viewFactory = object : HTMLFactory() {
+      override fun create(elem: Element) : View {
+        val attr = elem.attributes
+        if ("icon" == elem.name) {
+          val src = attr.getAttribute(HTML.Attribute.SRC) as String
+          val icon = IconLoader.findIcon(src, AllIcons::class.java)
+          if (icon != null) {
+            return GotItIconView(icon, elem)
+          }
+        }
+        return super.create(elem)
+      }
+    }
+
+    private val style = StyleSheet()
+    private var initialized = false
+
+    override fun getStyleSheet(): StyleSheet {
+      if (!initialized) {
+        StringReader(STYLES).use { style.loadRules(it, null) }
+        style.addStyleSheet(super.getStyleSheet())
+        initialized = true
+      }
+      return style
+    }
+
+    override fun getViewFactory(): ViewFactory = viewFactory
+
+    fun createDocument(font: Font, foreground: Color) : Document {
+      val s = StyleSheet().also {
+        it.addStyleSheet(styleSheet)
+        it.addRule(displayPropertiesToCSS(font, foreground))
+      }
+
+      return HTMLDocument(s).also {
+        it.asynchronousLoadPriority = Int.MAX_VALUE
+        it.preservesUnknownTags = true
+      }
+    }
+
+    private fun displayPropertiesToCSS(font: Font?, fg: Color?): String {
+      val rule = StringBuilder("body {")
+      font?.let {
+        rule.append(" font-family: ").append(it.family).append(" ; ").append(" font-size: ").append(it.size).append("pt ;")
+        if (it.isBold) rule.append(" font-weight: 700 ; ")
+        if (it.isItalic) rule.append(" font-style: italic ; ")
+      }
+
+      fg?.let {
+        rule.append(" color: #")
+
+        if (it.red < 16) rule.append('0')
+        rule.append(Integer.toHexString(it.red))
+
+        if (it.green < 16) rule.append('0')
+        rule.append(Integer.toHexString(it.green))
+
+        if (it.blue < 16) rule.append('0')
+        rule.append(Integer.toHexString(it.blue))
+
+        rule.append(" ; ")
+      }
+
+      return rule.append(" }").toString()
+    }
+  }
+
+  private class GotItIconView(private val icon: Icon, elem: Element) : View(elem) {
+    private val hAlign = (elem.attributes.getAttribute(HTML.Attribute.HALIGN) as String?)?.toFloatOrNull() ?: 0.5f
+    private val vAlign = (elem.attributes.getAttribute(HTML.Attribute.VALIGN) as String?)?.toFloatOrNull() ?: 0.75f
+
+    override fun getPreferredSpan(axis: Int): Float =
+      (if (axis == X_AXIS) icon.iconWidth else icon.iconHeight).toFloat()
+
+    override fun getToolTipText(x: Float, y: Float, allocation: Shape): String? =
+      if (icon is IconWithToolTip) icon.getToolTip(true) else
+        element.attributes.getAttribute(HTML.Attribute.ALT) as String?
+
+    override fun paint(g: Graphics, allocation: Shape) {
+      allocation.bounds.let { icon.paintIcon(null, g, it.x, it.y) }
+    }
+
+    override fun modelToView(pos: Int, a: Shape, b: Position.Bias?): Shape {
+      if (pos in startOffset .. endOffset) {
+        val rect = a.bounds
+        if (pos == endOffset) {
+          rect.x += rect.width
+        }
+        rect.width = 0
+        return rect
+      }
+      throw BadLocationException("$pos not in range $startOffset,$endOffset", pos)
+    }
+
+    override fun getAlignment(axis: Int): Float =
+      if (axis == X_AXIS) hAlign else vAlign
+
+    override fun viewToModel(x: Float, y: Float, a: Shape, bias: Array<Position.Bias>): Int {
+      val alloc = a as Rectangle
+      if (x < alloc.x + alloc.width / 2f) {
+        bias[0] = Position.Bias.Forward
+        return startOffset
+      }
+      bias[0] = Position.Bias.Backward
+      return endOffset
+    }
+  }
+
+  private class RootView(private val host : JComponent, private val factory: ViewFactory, private val view : View) : View(null) {
+    private var width : Float = 0.0f
+
+    init {
+      view.parent = this
+      setSize(view.getPreferredSpan(X_AXIS), view.getPreferredSpan(Y_AXIS))
+    }
+
+    override fun preferenceChanged(child: View?, width: Boolean, height: Boolean) {
+      host.revalidate()
+      host.repaint()
+    }
+
+    override fun paint(g: Graphics, allocation: Shape) {
+      val bounds = allocation.bounds
+      view.setSize(bounds.width.toFloat(), bounds.height.toFloat())
+      view.paint(g, bounds)
+    }
+
+    override fun setParent(parent: View) {
+      throw Error("Can't set parent on root view")
+    }
+
+    override fun setSize(width: Float, height: Float) {
+      this.width = width
+      view.setSize(width, height)
+    }
+
+    // Mostly delegation
+    override fun getAttributes(): AttributeSet? = null
+    override fun getPreferredSpan(axis: Int): Float = if (axis == X_AXIS) width else view.getPreferredSpan(axis)
+    override fun getMinimumSpan(axis: Int): Float = view.getMinimumSpan(axis)
+    override fun getMaximumSpan(axis: Int): Float = Int.MAX_VALUE.toFloat()
+    override fun getAlignment(axis: Int): Float = view.getAlignment(axis)
+    override fun getViewCount(): Int = 1
+    override fun getView(n: Int) = view
+    override fun modelToView(pos: Int, a: Shape, b: Position.Bias): Shape = view.modelToView(pos, a, b)
+    override fun modelToView(p0: Int, b0: Position.Bias, p1: Int, b1: Position.Bias, a: Shape): Shape = view.modelToView(p0, b0, p1, b1, a)
+    override fun viewToModel(x: Float, y: Float, a: Shape, bias: Array<out Position.Bias>): Int = view.viewToModel(x, y, a, bias)
+    override fun getDocument(): Document = view.document
+    override fun getStartOffset(): Int = view.startOffset
+    override fun getEndOffset(): Int = view.endOffset
+    override fun getElement(): Element = view.element
+    override fun getContainer(): Container = host
+    override fun getViewFactory(): ViewFactory = factory
   }
 }
