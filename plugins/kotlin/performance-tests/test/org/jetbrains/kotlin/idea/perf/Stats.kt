@@ -49,7 +49,7 @@ class Stats(
 
         metricChildren.add(
             Metric(
-                "", metricValue = calcMean.mean.toLong(),
+                "_value", metricValue = calcMean.mean.toLong(),
                 hasError = hasError,
                 metricError = calcMean.stdDev.toLong(),
                 rawMetrics = rawMetricChildren
@@ -161,6 +161,8 @@ class Stats(
         } else {
             block()
         }
+
+        flush()
     }
 
     private fun convertStatInfoIntoMetrics(
@@ -168,6 +170,7 @@ class Stats(
         statInfoArray: Array<StatInfos>,
         printOnlyErrors: Boolean = false,
         metricChildren: MutableList<Metric>,
+        warmUp: Boolean = false,
         attemptFn: (Int) -> String = { attempt -> "#$attempt" }
     ) {
         for (statInfoIndex in statInfoArray.withIndex()) {
@@ -194,7 +197,15 @@ class Stats(
                         }
                     }
                 }
-                metricChildren.add(Metric(attemptString, metricValue = durationMs, metrics = childrenMetrics))
+                metricChildren.add(
+                    Metric(
+                        metricName = attemptString,
+                        index = attempt,
+                        warmUp = if (warmUp) true else null,
+                        metricValue = durationMs,
+                        metrics = childrenMetrics
+                    )
+                )
             }
         }
     }
@@ -203,7 +214,7 @@ class Stats(
         prefix: String,
         warmUpStatInfosArray: Array<StatInfos>,
         metricChildren: MutableList<Metric>
-    ) = convertStatInfoIntoMetrics(prefix, warmUpStatInfosArray, metricChildren = metricChildren) { attempt -> "warm-up #$attempt" }
+    ) = convertStatInfoIntoMetrics(prefix, warmUpStatInfosArray, warmUp = true, metricChildren = metricChildren) { attempt -> "warm-up #$attempt" }
 
     fun processTimings(
         prefix: String,
@@ -227,6 +238,7 @@ class Stats(
                 phaseData.testName,
                 printOnlyErrors = true,
                 statInfoArray = warmUpStatInfosArray,
+                warmUp = true,
                 metricChildren = metricChildren
             ) { attempt -> "warm-up #$attempt" }
         }
@@ -311,7 +323,7 @@ class Stats(
         phaseName: String,
         profilerConfig: ProfilerConfig
     ): PhaseProfiler {
-        profilerConfig.name = "$testName${if (phaseName.isEmpty()) "" else "-"+phaseName}"
+        profilerConfig.name = "$testName${if (phaseName.isEmpty()) "" else "-$phaseName"}"
         profilerConfig.path = pathToResource("profile/${plainname(name)}")
         val profilerHandler = if (profilerConfig.enabled && !profilerConfig.warmup)
             ProfilerHandler.getInstance(profilerConfig)
@@ -339,7 +351,7 @@ class Stats(
         flush()
     }
 
-    fun flush() {
+    private fun flush() {
         val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
         simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
 //        properties["buildTimestamp"] = simpleDateFormat.format(Date())
@@ -350,6 +362,7 @@ class Stats(
         var buildId: Int? = null
         var agentName: String? = null
         var buildBranch: String? = null
+        var commit: String? = null
 
         System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE")?.let { teamcityConfig ->
             val buildProperties = Properties()
@@ -358,6 +371,7 @@ class Stats(
             buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
             agentName = buildProperties["agent.name"]?.toString()
             buildBranch = buildProperties["teamcity.build.branch"]?.toString()
+            commit = buildProperties["build.vcs.number"]?.toString()
         }
 
         if (perfTestRawDataMs.isNotEmpty()) {
@@ -370,6 +384,7 @@ class Stats(
                 val benchmark = Benchmark(
                     agentName = agentName,
                     buildBranch = buildBranch,
+                    commit = commit,
                     buildId = buildId,
                     benchmark = name,
                     name = it.metricName,
@@ -379,31 +394,8 @@ class Stats(
                     metrics = it.metrics ?: emptyList()
                 )
 
-                if (benchmark.name == "ParameterNameAndType - TypeParameter") {
-                    println(benchmark)
-                }
-
                 benchmark.writeJson()
-
-                with(
-                    Benchmark(
-                        agentName = agentName,
-                        buildBranch = buildBranch,
-                        buildId = buildId,
-                        benchmark = name,
-                        synthetic = true,
-                        name = "geomMean",
-                        buildTimestamp = simpleDateFormat.format(Date())
-                    )
-                ) {
-                    loadJson()
-                    merge(benchmark)
-
-                    if (benchmark.name == "ParameterNameAndType - TypeParameter") {
-                        println(this)
-                    }
-                    writeJson()
-                }
+                ESUploader.upload(benchmark)
             }
         } finally {
             metric = null
@@ -418,7 +410,7 @@ class Stats(
         const val WARM_UP = "warm-up"
         const val GEOM_MEAN = "geomMean"
 
-        internal val extraMetricNames = setOf("", GEOM_MEAN, "mean", "stdDev")
+        internal val extraMetricNames = setOf("", "_value", GEOM_MEAN, "mean", "stdDev")
 
         inline fun runAndMeasure(note: String, block: () -> Unit) {
             val openProjectMillis = measureTimeMillis {
