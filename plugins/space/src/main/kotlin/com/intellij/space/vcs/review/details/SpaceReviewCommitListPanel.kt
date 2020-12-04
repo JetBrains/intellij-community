@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.SideBorder
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JComponent
 
@@ -17,10 +19,14 @@ internal class SpaceReviewCommitListPanel(reviewDetailsVm: SpaceReviewDetailsVm<
       firstComponent = SpaceReviewCommitListFactory.createCommitList(reviewDetailsVm)
 
 
-      val tree = SpaceReviewChangesTreeFactory.create(reviewDetailsVm.ideaProject,
-                                                      this,
-                                                      reviewDetailsVm.changesVm,
-                                                      reviewDetailsVm.spaceDiffVm)
+      val tree = SpaceReviewChangesTreeFactory.create(
+        reviewDetailsVm.ideaProject,
+        this,
+        reviewDetailsVm.changesVm,
+        reviewDetailsVm.spaceDiffVm
+      ).apply {
+        border = IdeBorderFactory.createBorder(SideBorder.TOP)
+      }
       val treeActionsToolbarPanel = createChangesBrowserToolbar(tree)
       secondComponent = BorderLayoutPanel()
         .addToTop(treeActionsToolbarPanel)
