@@ -44,7 +44,6 @@ class PropertyTest {
     }
   }
 
-  @Ignore("Temporally disable")
   @Test
   fun testAddDiff() {
     PropertyChecker.checkScenarios {
@@ -65,8 +64,11 @@ private class AddDiff(private val storage: WorkspaceEntityStorageBuilder) : Impe
     env.logMessage("Modify diff:")
     env.executeCommands(getEntityManipulation(another))
 
+    /*
+    // Do not modify local store currently
     env.logMessage("Modify original storage:")
     env.executeCommands(getEntityManipulation(storage as WorkspaceEntityStorageBuilderImpl))
+    */
 
     try {
       storage.addDiff(another)
