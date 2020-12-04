@@ -19,7 +19,6 @@ import com.intellij.execution.runners.JvmPatchableProgramRunner;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -60,7 +59,6 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
-        Experiments.getInstance().isFeatureEnabled("run.targets") &&
         state instanceof TargetEnvironmentAwareRunProfileState &&
         ((TargetEnvironmentAwareRunProfile)runProfile).needPrepareTarget()) {
       executionManager.startRunProfileWithPromise(environment, state, (ignored) -> {

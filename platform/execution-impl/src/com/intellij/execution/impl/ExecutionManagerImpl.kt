@@ -541,8 +541,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   }
 
   override fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?> {
-    if (!(environment.runProfile is TargetEnvironmentAwareRunProfile &&
-          Experiments.getInstance().isFeatureEnabled("run.targets"))) {
+    if (!(environment.runProfile is TargetEnvironmentAwareRunProfile)) {
       return resolvedPromise()
     }
 
