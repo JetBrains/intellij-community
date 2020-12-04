@@ -699,7 +699,17 @@ idea.fatal.error.notification=disabled
     CompilationTasks.create(buildContext).compileModules(moduleNames, includingTestsInModules)
   }
 
-  private <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks) {
+  static <V> BuildTaskRunnable<V> createAsyncTask(String taskName, Function<BuildContext, V> factory) {
+    new BuildTaskRunnable<V>(taskName) {
+      @Override
+      String run(BuildContext context) {
+        return factory.apply(context)
+      }
+    }
+  }
+
+  static <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks, BuildContext buildContext) {
+    if (tasks.empty) return Collections.emptyList()
     if (!buildContext.options.runBuildStepsInParallel) {
       return tasks.collect {
         it.run(buildContext)
@@ -851,7 +861,7 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private abstract static class BuildTaskRunnable<V> {
+  abstract static class BuildTaskRunnable<V> {
     final String taskName
 
     BuildTaskRunnable(String name) {
