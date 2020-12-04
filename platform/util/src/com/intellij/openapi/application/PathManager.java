@@ -470,7 +470,7 @@ public final class PathManager {
   }
 
   // do not use URLUtil.splitJarUrl here - used in bootstrap
-  public static @Nullable String splitJarUrl(@NotNull String url) {
+  private static @Nullable String splitJarUrl(@NotNull String url) {
     int pivot = url.indexOf(URLUtil.JAR_SEPARATOR);
     if (pivot < 0) {
       return null;
