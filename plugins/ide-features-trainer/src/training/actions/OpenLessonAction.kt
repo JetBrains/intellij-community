@@ -19,7 +19,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Computable
@@ -31,7 +30,6 @@ import training.lang.LangSupport
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.NewLearnProjectUtil
-import training.learn.exceptons.InvalidSdkException
 import training.learn.interfaces.Lesson
 import training.learn.interfaces.LessonType
 import training.learn.lesson.LessonManager
@@ -200,16 +198,6 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       LOG.debug("${projectWhereToStartLesson.name}: 4. Process lesson")
       if (lesson is KLesson) processDslLesson(lesson, textEditor, projectWhereToStartLesson)
       else error("Unknown lesson format")
-    }
-    catch (invalidSdkException: InvalidSdkException) {
-      LOG.error(invalidSdkException)
-      if (ProjectSettingsService.getInstance(projectWhereToStartLesson).chooseAndSetSdk() != null) {
-        LOG.error("Install SDK by deprecated way!")
-        openLesson(projectWhereToStartLesson, lesson)
-      }
-      else {
-        LOG.error("No SDK installed!")
-      }
     }
     catch (e: Exception) {
       LOG.error(e)
