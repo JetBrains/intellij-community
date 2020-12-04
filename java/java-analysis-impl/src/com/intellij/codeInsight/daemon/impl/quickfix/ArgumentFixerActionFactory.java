@@ -90,8 +90,7 @@ public abstract class ArgumentFixerActionFactory {
           PsiSubstitutor substitutor = candidate.getSubstitutor();
           PsiType originalParameterType = PsiTypesUtil.getParameterType(method.getParameterList().getParameters(), i, true);
           PsiType parameterType = substitutor.substitute(originalParameterType);
-          if (parameterType instanceof PsiWildcardType) continue;
-          if (!GenericsUtil.isFromExternalTypeLanguage(parameterType)) continue;
+          if (!PsiTypesUtil.isDenotableType(parameterType, call)) continue;
           if (suggestedCasts.contains(parameterType.getCanonicalText())) continue;
           if (TypeConversionUtil.isPrimitiveAndNotNull(exprType) && parameterType instanceof PsiClassType) {
             PsiType unboxedParameterType = PsiPrimitiveType.getUnboxedType(parameterType);
