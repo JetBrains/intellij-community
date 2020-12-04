@@ -287,54 +287,51 @@ public final class IndexingStamp {
   }
 
   public static void flushCaches() {
-    flushCache(null);
+    doFlush();
   }
 
-  public static void flushCache(@Nullable Integer finishedFile) {
-    if (finishedFile != null && finishedFile == INVALID_FILE_ID) finishedFile = 0;
-
-    if (finishedFile != null) {
-      Lock readLock = getStripedLock(finishedFile).readLock();
-      readLock.lock();
-      try {
-        Timestamps timestamps = ourTimestampsCache.get(finishedFile);
-        if (timestamps == null) return;
-        if (!timestamps.isDirty()) {
-          ourTimestampsCache.remove(finishedFile);
-          return;
-        }
-      } finally {
-        readLock.unlock();
+  public static void flushCache(int finishedFile) {
+    Lock readLock = getStripedLock(finishedFile).readLock();
+    readLock.lock();
+    try {
+      Timestamps timestamps = ourTimestampsCache.get(finishedFile);
+      if (timestamps == null) return;
+      if (!timestamps.isDirty()) {
+        ourTimestampsCache.remove(finishedFile);
+        return;
       }
+    } finally {
+      readLock.unlock();
     }
 
-    // todo make better (e.g. FinishedFiles striping, remove integers)
-    while (finishedFile == null || !ourFinishedFiles.offer(finishedFile)) {
-      List<Integer> files = new ArrayList<>(ourFinishedFiles.size());
-      ourFinishedFiles.drainTo(files);
+    while (!ourFinishedFiles.offer(finishedFile)) {
+      doFlush();
+    }
+  }
 
-      if (!files.isEmpty()) {
-        for (Integer file : files) {
-          Lock writeLock = getStripedLock(file).writeLock();
-          writeLock.lock();
-          try {
-            Timestamps timestamp = ourTimestampsCache.remove(file);
-            if (timestamp == null) continue;
+  private static void doFlush() {
+    List<Integer> files = new ArrayList<>(ourFinishedFiles.size());
+    ourFinishedFiles.drainTo(files);
 
-            if (timestamp.isDirty() /*&& file.isValid()*/) {
-              try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
-                timestamp.writeToStream(sink);
-              }
+    if (!files.isEmpty()) {
+      for (Integer file : files) {
+        Lock writeLock = getStripedLock(file).writeLock();
+        writeLock.lock();
+        try {
+          Timestamps timestamp = ourTimestampsCache.remove(file);
+          if (timestamp == null) continue;
+
+          if (timestamp.isDirty() /*&& file.isValid()*/) {
+            try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
+              timestamp.writeToStream(sink);
             }
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          } finally {
-            writeLock.unlock();
           }
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        } finally {
+          writeLock.unlock();
         }
       }
-      if (finishedFile == null) break;
-      // else repeat until ourFinishedFiles.offer() succeeds
     }
   }
 
