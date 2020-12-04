@@ -36,10 +36,21 @@ class PooledCoroutineContextTest : UsefulTestCase() {
       }
     })
     return try {
-      block()
+      withNoopThreadUncaughtExceptionHandler { block() }
     }
     finally {
       LoggedErrorProcessor.setNewInstance(savedInstance)
+    }
+  }
+
+  private suspend fun <T> withNoopThreadUncaughtExceptionHandler(block: suspend () -> T): T {
+    val savedHandler = Thread.getDefaultUncaughtExceptionHandler()
+    Thread.setDefaultUncaughtExceptionHandler { _, _ -> }
+    return try {
+      block()
+    }
+    finally {
+      Thread.setDefaultUncaughtExceptionHandler(savedHandler)
     }
   }
 
