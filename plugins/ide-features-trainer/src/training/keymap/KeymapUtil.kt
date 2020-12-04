@@ -46,6 +46,7 @@ object KeymapUtil {
   private val KeyboardShortcut.isNumpadKey: Boolean
     get() = firstKeyStroke.keyCode in KeyEvent.VK_NUMPAD0..KeyEvent.VK_DIVIDE || firstKeyStroke.keyCode == KeyEvent.VK_NUM_LOCK
 
+  @NlsSafe
   fun getKeyStrokeText(keyStroke: KeyStroke?): String {
     if (keyStroke == null) return ""
     val modifiers = getModifiersText(keyStroke.modifiers)
