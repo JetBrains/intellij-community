@@ -93,7 +93,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   }
 
   private void assertCorrectVersion() {
-    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(myProject).getMavenDistribution().getVersion());
+    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath()).getMavenDistribution().getVersion());
   }
 
   @Test

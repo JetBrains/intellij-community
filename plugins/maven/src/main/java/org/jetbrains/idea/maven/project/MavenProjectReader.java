@@ -55,7 +55,7 @@ public class MavenProjectReader {
       doReadProjectModel(generalSettings, file, explicitProfiles, new THashSet<>(), locator);
 
     File basedir = getBaseDir(file);
-    MavenModel model = MavenServerManager.getInstance().getConnector(myProject).interpolateAndAlignModel(readResult.first.model, basedir);
+    MavenModel model = MavenServerManager.getInstance().getConnector(myProject, basedir.getPath()).interpolateAndAlignModel(readResult.first.model, basedir);
 
     Map<String, String> modelMap = new HashMap<>();
     modelMap.put("groupId", model.getMavenId().getGroupId());
@@ -412,7 +412,7 @@ public class MavenProjectReader {
                                                  File basedir,
                                                  MavenExplicitProfiles explicitProfiles,
                                                  Collection<String> alwaysOnProfiles) {
-    return MavenServerManager.getInstance().getConnector(myProject).applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+    return MavenServerManager.getInstance().getConnector(myProject, basedir.getAbsolutePath()).applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
   }
 
   private MavenModel resolveInheritance(final MavenGeneralSettings generalSettings,
@@ -481,7 +481,7 @@ public class MavenProjectReader {
                                                        MavenProjectProblem.ProblemType.PARENT));
       }
 
-      model = MavenServerManager.getInstance().getConnector(myProject).assembleInheritance(model, parentModel);
+      model = MavenServerManager.getInstance().getConnector(myProject, file.getPath()).assembleInheritance(model, parentModel);
 
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
       List<MavenProfile> profiles = model.getProfiles();

@@ -12,7 +12,7 @@ public class MavenDistributionConverter extends Converter<MavenDistribution> {
   @Override
   public MavenDistribution fromString(@NotNull String value) {
     File file = MavenServerManager.getMavenHomeFile(value);
-    return file == null ? null : new MavenDistribution(file, value);
+    return file == null ? null : new LocalMavenDistribution(file, value);
   }
 
   @Override

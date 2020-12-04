@@ -84,7 +84,7 @@ class MavenCommandLineSetup(private val project: Project,
     }
 
     val homePath: String
-    if (generalSettings.mavenHome == MavenServerManager.BUNDLED_MAVEN_3) {
+    if (generalSettings.mavenHome == MavenServerManager.BUNDLED_MAVEN_3 || generalSettings.mavenHome == MavenServerManager.WRAPPED_MAVEN) {
       homePath = defaultMavenRuntimeConfiguration.homePath
     }
     else {

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
+import com.intellij.build.FilePosition
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
@@ -12,8 +13,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.HttpRequests
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.execution.SyncBundle
-import org.jetbrains.idea.maven.project.actions.UseWrapperAction
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.*
@@ -59,7 +60,7 @@ internal class MavenWrapperSupport {
     if (cachedHome != null) {
       val file = File(cachedHome)
       if (file.isDirectory) {
-        return MavenDistribution(file, urlString)
+        return LocalMavenDistribution(file, urlString)
       }
       else {
         mapping.myState.mapping.remove(urlString)
@@ -71,7 +72,7 @@ internal class MavenWrapperSupport {
       val partFile = File(zipFile.parentFile, "${zipFile.name}.part-${System.currentTimeMillis()}")
       indicator?.apply { text = SyncBundle.message("maven.sync.wrapper.dowloading.from", urlString) }
       HttpRequests.request(urlString)
-        .forceHttps(true)
+        .forceHttps(false)
         .connectTimeout(30_000)
         .readTimeout(30_000)
         .saveToFile(partFile, indicator)
@@ -83,7 +84,7 @@ internal class MavenWrapperSupport {
     }
     val home = unpackZipFile(zipFile, indicator).canonicalFile
     mapping.myState.mapping[urlString] = home.absolutePath
-    return MavenDistribution(home, urlString)
+    return LocalMavenDistribution(home, urlString)
   }
 
   private fun unpackZipFile(zipFile: File, indicator: ProgressIndicator?): File {
@@ -175,16 +176,31 @@ internal class MavenWrapperSupport {
 
 
   companion object {
+    val DISTRIBUTION_URL_PROPERTY = "distributionUrl";
     @JvmStatic
     fun getWrapperDistributionUrl(baseDir: VirtualFile?): String? {
-      if (!UseWrapperAction.canUseWrapper()) return null
-      val wrapperProperties = baseDir?.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties") ?: return null
+      val wrapperProperties = getWrapperProperties(baseDir) ?: return null
 
       val properties = Properties()
 
       val stream = ByteArrayInputStream(wrapperProperties.contentsToByteArray(true))
       properties.load(stream)
-      return properties.getProperty("distributionUrl")
+      return properties.getProperty(DISTRIBUTION_URL_PROPERTY)
     }
+
+    @JvmStatic
+    fun showUnsecureWarning(console: MavenSyncConsole, mavenProjectMultimodulePath: VirtualFile?) {
+      val properties = getWrapperProperties(mavenProjectMultimodulePath)
+
+      val line = properties?.inputStream?.bufferedReader(properties.charset)?.readLines()?.indexOfFirst{ it.startsWith(DISTRIBUTION_URL_PROPERTY)} ?: -1
+      val position = properties?.let { FilePosition(it.toNioPath().toFile(), line, 0) }
+      console.addWarning(SyncBundle.message("maven.sync.wrapper.http.title"),
+                         SyncBundle.message("maven.sync.wrapper.http.description"),
+                         position)
+    }
+
+
+    private fun getWrapperProperties(baseDir: VirtualFile?) =
+      baseDir?.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties")
   }
 }
