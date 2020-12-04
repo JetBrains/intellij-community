@@ -6,7 +6,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -15,8 +14,8 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +36,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
     myProject = project;
     myExecutor = executor;
 
-    //noinspection HardCodedStringLiteral
-    setTitle(ExecutionUtil.getExecutorName(executor));
+    setTitle(executor.getActionName());
 
     setOKButtonText(executor.getActionName());
     //setOKButtonIcon(executor.getIcon());
