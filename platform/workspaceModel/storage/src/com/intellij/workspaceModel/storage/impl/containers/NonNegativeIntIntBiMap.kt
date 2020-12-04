@@ -28,6 +28,14 @@ class MutableNonNegativeIntIntBiMap private constructor(
 
   fun putAll(keys: IntArray, value: Int) {
     startWrite()
+
+    keys.forEach { key ->
+      if (key in key2Value) {
+        val oldValue = key2Value[key]
+        value2Keys.remove(oldValue, key)
+      }
+    }
+
     value2Keys.putAll(value, keys)
     keys.forEach { key2Value[it] = value }
   }
