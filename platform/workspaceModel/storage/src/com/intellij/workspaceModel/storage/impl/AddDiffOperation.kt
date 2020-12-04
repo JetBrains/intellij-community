@@ -238,9 +238,8 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
       val removedChildrenSet = removedChildrenMap[connectionId] ?: emptySet()
       for (removedChild in removedChildrenSet) {
-        val removed = mutableChildren.remove(removedChild)
-        if (!removed) target.addDiffAndReport("Trying to remove child that isn't present", initialStorage,
-                                              diff, target)
+        // This method may return false if this child is already removed
+        mutableChildren.remove(removedChild)
       }
 
       // .... Update if something changed
@@ -251,9 +250,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
       removedChildrenMap.removeAll(connectionId)
     }
 
-    // Do we have more children to remove? target should not happen
-    if (!removedChildrenMap.isEmpty) target.addDiffAndReport("Trying to remove children that aren't present", initialStorage,
-                                                             diff, target)
+    // N.B: removedChildrenMap may contain some entities, but this means that these entities was already removed
 
     // Do we have more children to add? Add them
     for ((connectionId, children) in addedChildrenMap.asMap()) {
