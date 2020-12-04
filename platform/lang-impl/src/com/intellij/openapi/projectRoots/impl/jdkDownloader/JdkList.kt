@@ -383,8 +383,8 @@ abstract class JdkListDownloaderBase {
    * contains few more entries than the result of the [downloadForUI] call.
    * Entries are sorter from the best suggested to the worst suggested items.
    */
-  fun downloadModelForJdkInstaller(progress: ProgressIndicator?): List<JdkItem> {
-    return downloadJdksListWithCache(feedUrl, progress).filter { it.os == JdkPredicate.currentOS }
+  fun downloadModelForJdkInstaller(progress: ProgressIndicator?, os: String = JdkPredicate.currentOS): List<JdkItem> {
+    return downloadJdksListWithCache(feedUrl, progress).filter { it.os == os }
   }
 
   /**

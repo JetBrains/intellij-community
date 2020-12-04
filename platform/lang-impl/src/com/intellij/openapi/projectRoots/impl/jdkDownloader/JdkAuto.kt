@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.BaseState
@@ -99,7 +100,8 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         indicator.pushState()
         indicator.text = ProjectBundle.message("progress.text.downloading.jdk.list")
         try {
-          JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator)
+          val requiredOS = if (project?.basePath?.let { WslDistributionManager.isWslPath(it) } == true) "linux" else JdkPredicate.currentOS
+          JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, requiredOS)
         } catch(e: ProcessCanceledException) {
           throw e
         } catch (t: Throwable) {
@@ -216,8 +218,9 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
         fun List<JavaLocalSdkFix>.pickBestMatch() = this.maxBy { it.version }
 
-        val localSdkFix = tryUsingExistingSdk(req, sdk.sdkType, indicator).pickBestMatch()
-                          ?: lazyLocalJdks.filter { req.matches(it) }.pickBestMatch()
+        val projectInWsl = project?.basePath?.let { WslDistributionManager.isWslPath(it) } ?: false
+        val localSdkFix = tryUsingExistingSdk(req, sdk.sdkType, indicator).filterByWsl(projectInWsl).pickBestMatch()
+                          ?: lazyLocalJdks.filter { req.matches(it) }.filterByWsl(projectInWsl).pickBestMatch()
 
         return localSdkFix?.copy(includeJars = resolveHint(sdk)?.includeJars ?: listOf())
       }
@@ -241,6 +244,10 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         }
 
         return result
+      }
+
+      private fun List<JavaLocalSdkFix>.filterByWsl(wsl: Boolean): List<JavaLocalSdkFix> {
+        return filter { WslDistributionManager.isWslPath(it.homeDir) == wsl }
       }
     }
   }

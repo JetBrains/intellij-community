@@ -131,7 +131,7 @@ object JdkRequirements {
   fun parseRequirement(request: String): JdkRequirement? {
     try {
       val versionMatcher = if (request.trim().startsWith("=")) ::strictVersionMatcher else ::sameMajorVersionMatcher
-      val text = request.trimStart('=').trim()
+      val text = request.trimStart('=').removeSuffix("(WSL)").trim()
 
       //case 1. <vendor>-<version>
       run {
