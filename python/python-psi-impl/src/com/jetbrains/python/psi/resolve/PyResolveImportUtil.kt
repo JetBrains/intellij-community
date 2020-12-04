@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.typing.isInInlinePackage
@@ -338,8 +339,15 @@ private fun findCache(context: PyQualifiedNameResolveContext): PythonPathCache? 
 private fun isSameDirectoryResult(element: PsiElement, context: PyQualifiedNameResolveContext, name: QualifiedName): Boolean {
   if (context.relativeLevel != 0) return false
   val sameDirectoryImportsEnabled = !ResolveImportUtil.isAbsoluteImportEnabledFor(context.foothold)
-  return sameDirectoryImportsEnabled && element is PsiFileSystemItem &&
-         !name.matchesPrefix(QualifiedNameFinder.findShortestImportableQName(element))
+  if (!sameDirectoryImportsEnabled || element !is PsiFileSystemItem) return false
+  val shortestImportableQName = QualifiedNameFinder.findShortestImportableQName(element)
+  if (shortestImportableQName != null) {
+    return name != shortestImportableQName
+  }
+  else {
+    val footholdDir = context.containingDirectory ?: return false
+    return PsiTreeUtil.isAncestor(footholdDir, element, true)
+  }
 }
 
 private fun isSameDirectoryOrRelativeImportResult(name: QualifiedName, directory: PsiDirectory, result: PsiElement,
