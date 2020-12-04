@@ -218,8 +218,15 @@ public final class GitIndexUtil {
   public static Hash write(@NotNull Project project, @NotNull VirtualFile root,
                            @NotNull FilePath filePath, @NotNull InputStream content,
                            boolean executable) throws VcsException {
+    return write(project, root, filePath, content, executable, false);
+  }
+
+  @NotNull
+  public static Hash write(@NotNull Project project, @NotNull VirtualFile root,
+                           @NotNull FilePath filePath, @NotNull InputStream content,
+                           boolean executable, boolean addNewFiles) throws VcsException {
     Hash hash = hashObject(project, root, filePath, content);
-    updateIndex(project, root, filePath, hash, executable);
+    updateIndex(project, root, filePath, hash, executable, addNewFiles);
     return hash;
   }
 
@@ -241,16 +248,19 @@ public final class GitIndexUtil {
                                  @NotNull FilePath filePath,
                                  @NotNull Hash blobHash,
                                  boolean isExecutable) throws VcsException {
-    updateIndex(repository.getProject(), repository.getRoot(), filePath, blobHash, isExecutable);
+    updateIndex(repository.getProject(), repository.getRoot(), filePath, blobHash, isExecutable, false);
   }
 
   public static void updateIndex(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath filePath,
                                  @NotNull Hash blobHash,
-                                 boolean isExecutable) throws VcsException {
+                                 boolean isExecutable, boolean addNewFiles) throws VcsException {
     String mode = isExecutable ? EXECUTABLE_MODE : DEFAULT_MODE;
     String path = VcsFileUtil.relativePath(root, filePath);
 
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.UPDATE_INDEX);
+    if (addNewFiles) {
+      h.addParameters("--add");
+    }
     if (GitVersionSpecialty.CACHEINFO_SUPPORTS_SINGLE_PARAMETER_FORM.existsIn(project)) {
       h.addParameters("--cacheinfo", mode + "," + blobHash.asString() + "," + path);
     }
