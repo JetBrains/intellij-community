@@ -173,7 +173,7 @@ class JdkInstaller {
       error("URL must use https:// protocol, but was: $url")
     }
 
-    if (!item.archiveFileName.matches(Regex("[A-Za-z0-9._\\-]+"))) {
+    if (!item.archiveFileName.matches(Regex("[A-Za-z0-9._\\-+]+"))) {
       error("Archive file name contains invalid characters: ${item.archiveFileName}")
     }
     val fullMatchPath = item.packageRootPrefix.removePrefix("./").trim('/')
