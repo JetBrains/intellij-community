@@ -35,7 +35,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * </code></pre>
  */
 public class PyFStringLikeCompletionContributor extends CompletionContributor {
-  private static final String FEATURE_ID = "python.completion.fstring.like";
 
   private static final PsiElementPattern.Capture<PyPlainStringElement> INSIDE_NON_FORMATTED_STRING_ELEMENT =
     psiElement(PyPlainStringElement.class)
@@ -88,8 +87,6 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
           prefixPatchedResultSet.addElement(new LookupElementDecorator<LookupElement>(variant) {
             @Override
             public void handleInsert(@NotNull InsertionContext context) {
-              FeatureUsageTracker.getInstance().triggerFeatureUsed(FEATURE_ID);
-
               super.handleInsert(context);
               Document document = context.getDocument();
               CharSequence docChars = document.getCharsSequence();
