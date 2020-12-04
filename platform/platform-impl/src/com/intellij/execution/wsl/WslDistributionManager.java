@@ -114,7 +114,7 @@ public final class WslDistributionManager implements Disposable {
     return null;
   }
 
-  public boolean isWslPath(@NotNull String path) {
+  public static boolean isWslPath(@NotNull String path) {
     return FileUtil.toSystemDependentName(path).startsWith(WSLDistribution.UNC_PREFIX);
   }
 

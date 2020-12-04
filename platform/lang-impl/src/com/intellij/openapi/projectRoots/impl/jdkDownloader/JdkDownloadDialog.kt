@@ -342,7 +342,7 @@ internal class JdkDownloadDialog(
     if (selectedFile == null) {
       return null
     }
-    if (WslDistributionManager.getInstance().isWslPath(selectedPath)) {
+    if (WslDistributionManager.isWslPath(selectedPath)) {
       selectedItem = service<JdkListDownloader>().findWslJdk(selectedItem)
     }
     return selectedItem to selectedFile

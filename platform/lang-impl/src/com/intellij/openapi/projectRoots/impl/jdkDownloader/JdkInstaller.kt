@@ -360,7 +360,7 @@ class JdkInstaller {
     try {
       if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
-      val expectOs = if (WslDistributionManager.getInstance().isWslPath(jdkPath.toString())) "linux" else JdkPredicate.currentOS
+      val expectOs = if (WslDistributionManager.isWslPath(jdkPath.toString())) "linux" else JdkPredicate.currentOS
 
       // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
       val markerFile = generateSequence(jdkPath, { file -> file.parent })

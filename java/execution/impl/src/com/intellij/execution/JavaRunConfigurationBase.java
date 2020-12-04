@@ -28,7 +28,7 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
   protected boolean runsUnderWslJdk() {
     String path = getAlternativeJrePath();
     if (path != null) {
-      return WslDistributionManager.getInstance().isWslPath(path);
+      return WslDistributionManager.isWslPath(path);
     }
     Module module = getConfigurationModule().getModule();
     if (module != null) {
@@ -40,7 +40,7 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
         return false;
       }
       String sdkHomePath = sdk.getHomePath();
-      return sdkHomePath != null && WslDistributionManager.getInstance().isWslPath(sdkHomePath);
+      return sdkHomePath != null && WslDistributionManager.isWslPath(sdkHomePath);
     }
     return false;
   }
