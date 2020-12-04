@@ -2,6 +2,8 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.model.BranchableSyntheticPsiElement;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -20,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 
-public class LightRecordMethod extends LightMethod implements LightRecordMember {
+public final class LightRecordMethod extends LightMethod implements LightRecordMember, BranchableSyntheticPsiElement {
   private final @NotNull PsiRecordComponent myRecordComponent;
 
   public LightRecordMethod(@NotNull PsiManager manager,
@@ -105,6 +107,19 @@ public class LightRecordMethod extends LightMethod implements LightRecordMember 
   @Override
   public PsiElement getContext() {
     return getContainingClass();
+  }
+
+  @Override
+  public @NotNull LightRecordMethod obtainBranchCopy(@NotNull ModelBranch branch) {
+    PsiClass recordCopy = branch.obtainPsiCopy(myContainingClass);
+    PsiMethod accessorCopy = recordCopy.findMethodBySignature(this, false);
+    assert accessorCopy instanceof LightRecordMethod;
+    return (LightRecordMethod)accessorCopy;
+  }
+
+  @Override
+  public @Nullable ModelBranch getModelBranch() {
+    return ModelBranch.getPsiBranch(myRecordComponent);
   }
 
   private static boolean hasTargetApplicableForMethod(PsiAnnotation annotation) {
