@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import training.learn.exceptons.InvalidSdkException
 import training.learn.exceptons.NoSdkException
 import java.nio.file.Path
@@ -66,4 +67,7 @@ interface LangSupport {
 
   /** true means block source code modification in demo learning projects (scratches can be modified anyway)*/
   fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean = false
+
+  @RequiresBackgroundThread
+  fun cleanupBeforeLessons(project: Project) = Unit
 }

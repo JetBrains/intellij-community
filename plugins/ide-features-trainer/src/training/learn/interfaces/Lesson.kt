@@ -2,6 +2,7 @@
 package training.learn.interfaces
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import training.commands.kotlin.TaskTestContext
@@ -55,7 +56,8 @@ interface Lesson {
   }
 
   /** This method is called for all project-based lessons before the start of any project-based lesson */
-  fun cleanUp(project: Project) = Unit
+  @RequiresBackgroundThread
+  fun cleanup(project: Project) = Unit
 
   fun pass() {
     LessonStateManager.setPassed(this)
