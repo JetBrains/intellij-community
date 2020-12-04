@@ -176,11 +176,10 @@ public class GitConflictResolver {
 
   /**
    * Invoke the merge dialog, but execute nothing after merge is completed.
-   * @return true if all changes were merged, false if unresolved merges remain.
    */
   @RequiresBackgroundThread
-  public final boolean mergeNoProceed() {
-    return merge(true);
+  public final void mergeNoProceed() {
+    merge(true);
   }
 
   @RequiresEdt
