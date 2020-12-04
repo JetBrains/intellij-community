@@ -20,16 +20,24 @@ import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_15;
+
 public class RenameFieldTest extends LightRefactoringTestCase {
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_15;
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -39,7 +47,7 @@ public class RenameFieldTest extends LightRefactoringTestCase {
   protected void doTest(@NonNls String newName, @NonNls String ext) {
     String suffix = getTestName(false);
     configureByFile("/refactoring/renameField/before" + suffix + "." + ext);
-    performRenameWithAutomaticRenamers(newName, getEditor(), getProject());
+    perform(newName);
     checkResultByFile("/refactoring/renameField/after" + suffix + "." + ext);
   }
 
@@ -91,12 +99,46 @@ public class RenameFieldTest extends LightRefactoringTestCase {
     CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true;
     doTest("jj", "java");
   }
-  
-  public static void performRenameWithAutomaticRenamers(String newName, Editor editor, Project project) {
-    PsiElement element = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED |
-                                                                          TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
 
-    RenameProcessor processor = new RenameProcessor(project, element, newName, false, false);
+  public void testRecordComponent() {
+    doTest("baz", "java");
+  }
+
+  public void testRecordCanonicalConstructor() {
+    doTest("baz", "java");
+  }
+
+  public void testRecordCompactConstructorReference() {
+    doTest("baz", "java");
+  }
+
+  public void testRecordExplicitGetter() {
+    doTest("baz", "java");
+  }
+
+  public void testRecordWithCanonicalConstructor() {
+    doTest("baz", "java");
+  }
+
+  public void testRecordGetterOverloadPresent() {
+    doTest("baz", "java");
+  }
+  public void testRecordComponentUsedInOuterClass() {
+    doTest("baz", "java");
+  }
+
+  public void testRecordOverloads() {
+    doTest("baz", "java");
+  }
+
+  private void perform(String newName) {
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil
+                                                                            .ELEMENT_NAME_ACCEPTED |
+                                                                          TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    element = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, getEditor());
+    assertNotNull(element);
+
+    RenameProcessor processor = new RenameProcessor(getProject(), element, newName, false, false);
     for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
       processor.addRenamerFactory(factory);
     }

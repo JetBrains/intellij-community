@@ -5,6 +5,6 @@ class Main {
       this.y = y;
     }
 
-    void x(int y) {}
+    void baz(int y) {}
   }
 }

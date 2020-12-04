@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.java.refactoring.RenameFieldTest;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -67,45 +66,6 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
     assertNotNull(decl);
     ReassignVariableUtil.registerDeclaration(getEditor(), decl, getTestRootDisposable());
     ReassignVariableUtil.reassign(getEditor());
-  }
-
-  public void testRenameOnRecordComponent() {
-    doTestRename();
-  }
-
-  public void testRenameOnRecordCanonicalConstructor() {
-    doTestRename();
-  }
-
-  public void testRenameOnCompactConstructorReference() {
-    doTestRename();
-  }
-
-  public void testRenameOnExplicitGetter() {
-    doTestRename();
-  }
-
-  public void testRenameWithCanonicalConstructor() {
-    doTestRename();
-  }
-
-  public void testRenameGetterOverloadPresent() {
-    doTestRename();
-  }
-  public void testRenameComponentUsedInOuterClass() {
-    doTestRename();
-  }
-
-  public void testRenameOverloads() {
-    doTest();
-    RenameFieldTest.performRenameWithAutomaticRenamers("baz", getEditor(), getProject());
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
-  }
-
-  private void doTestRename() {
-    doTest();
-    myFixture.renameElementAtCaret("baz");
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
   private void doTest() {
