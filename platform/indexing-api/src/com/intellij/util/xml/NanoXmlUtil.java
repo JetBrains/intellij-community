@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharSequenceReader;
-import com.intellij.util.text.StringFactory;
 import net.n3.nanoxml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -174,7 +173,7 @@ public final class NanoXmlUtil {
     }
 
     protected static String readText(final Reader reader) throws IOException {
-      return StringFactory.createShared(StreamUtil.readTextAndConvertSeparators(reader));
+      return new String(StreamUtil.readTextAndConvertSeparators(reader));
     }
 
     protected @NonNls String getLocation() {

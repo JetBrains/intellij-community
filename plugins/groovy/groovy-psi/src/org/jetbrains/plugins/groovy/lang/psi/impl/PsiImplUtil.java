@@ -21,7 +21,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -430,6 +429,7 @@ public final class PsiImplUtil {
   /**
    * see {@link AstBufferUtil#getTextSkippingWhitespaceComments(ASTNode)}
    */
+  @NotNull
   public static String getTextSkipWhiteSpaceAndComments(ASTNode node) {
     final TreeElement treeElement = (TreeElement)node;
     final int length;
@@ -443,14 +443,14 @@ public final class PsiImplUtil {
       final GroovyBufferVisitor textVisitor = new GroovyBufferVisitor(true, true, 0, buffer);
       treeElement.acceptTree(textVisitor);
     }
-    return StringFactory.createShared(buffer);
+    return new String(buffer);
   }
 
-  public static class GroovyBufferVisitor extends AstBufferUtil.BufferVisitor {
+  private static class GroovyBufferVisitor extends AstBufferUtil.BufferVisitor {
 
     private final boolean mySkipWhiteSpace;
 
-    public GroovyBufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
+    GroovyBufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
       super(skipWhitespace, skipComments, offset, buffer);
       mySkipWhiteSpace = skipWhitespace;
     }

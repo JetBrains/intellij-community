@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.StringFactory;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -246,13 +245,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     int prefixLen = protocol.length() + "://".length();
     char[] chars = appendPathOnFileSystem(prefixLen, new int[]{prefixLen});
     copyString(chars, copyString(chars, 0, protocol), "://");
-    return StringFactory.createShared(chars);
+    return new String(chars);
   }
 
   @Override
   @NotNull
   public String getPath() {
-    return StringFactory.createShared(appendPathOnFileSystem(0, new int[]{0}));
+    return new String(appendPathOnFileSystem(0, new int[]{0}));
   }
 
   @Override

@@ -12,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.*;
 
 import javax.swing.text.MutableAttributeSet;
@@ -1102,11 +1101,12 @@ public class StringUtil extends StringUtilRt {
     return ExceptionUtil.getMessage(e);
   }
 
+  @ReviseWhenPortedToJDK("11") // Character.toString(aChar).repeat(count)
   @Contract(pure = true)
   public static @NotNull String repeatSymbol(final char aChar, final int count) {
     char[] buffer = new char[count];
     Arrays.fill(buffer, aChar);
-    return StringFactory.createShared(buffer);
+    return new String(buffer);
   }
 
   @Contract(pure = true)
@@ -1547,7 +1547,7 @@ public class StringUtil extends StringUtilRt {
 
     char[] buffer = displayString.toCharArray();
     buffer[0] = uppedFirstChar;
-    return StringFactory.createShared(buffer);
+    return new String(buffer);
   }
 
   /**

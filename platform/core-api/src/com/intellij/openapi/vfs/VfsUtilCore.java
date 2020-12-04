@@ -20,7 +20,6 @@ import com.intellij.util.UrlUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -156,7 +155,7 @@ public class VfsUtilCore {
       }
       parent = parent.getParent();
     }
-    return StringFactory.createShared(chars);
+    return new String(chars);
   }
 
   /**
@@ -373,7 +372,7 @@ public class VfsUtilCore {
 
   public static @NotNull String loadText(@NotNull VirtualFile file, int length) throws IOException {
     try (InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset())) {
-      return StringFactory.createShared(FileUtilRt.loadText(reader, length));
+      return new String(FileUtilRt.loadText(reader, length));
     }
   }
 

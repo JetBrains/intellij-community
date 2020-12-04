@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -46,7 +45,7 @@ public class BulkChangesMerger {
    * @return              merge result
    */
   public CharSequence mergeToCharSequence(char @NotNull [] text, int textLength, @NotNull List<? extends TextChange> changes) {
-    return StringFactory.createShared(mergeToCharArray(text, textLength, changes));
+    return new String(mergeToCharArray(text, textLength, changes));
   }
   
   /**

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
@@ -98,7 +97,7 @@ public final class Base64Converter {
       out[outIndex] = '=';
     }
 
-    return StringFactory.createShared(out);
+    return new String(out);
   }
 
   public static String decode(@NotNull String s) {

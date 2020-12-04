@@ -341,7 +341,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
       int len = length();
       char[] data = new char[len];
       getChars(0, len, data, 0);
-      return StringFactory.createShared(data);
+      return new String(data);
     }
     @Override
     public CharSequence subSequence(int start, int end) {
@@ -426,7 +426,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     @NotNull
     @Override
     public String toString() {
-      return StringFactory.createShared(data);
+      return new String(data);
     }
 
     @Override

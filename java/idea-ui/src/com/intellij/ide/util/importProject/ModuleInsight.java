@@ -15,7 +15,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.text.StringFactory;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -468,8 +467,8 @@ public abstract class ModuleInsight {
     @NlsSafe final String name = file.getName();
     myProgress.setText2(name);
     try {
-      final char[] chars = FileUtil.loadFileText(file);
-      scanSourceFileForImportedPackages(StringFactory.createShared(chars), s -> usedPackages.add(myInterner.intern(s)));
+      String chars = FileUtil.loadFile(file, (String)null);
+      scanSourceFileForImportedPackages(chars, s -> usedPackages.add(myInterner.intern(s)));
     }
     catch (IOException e) {
       LOG.info(e);

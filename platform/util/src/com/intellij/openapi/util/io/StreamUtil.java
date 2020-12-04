@@ -3,7 +3,6 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +23,8 @@ public final class StreamUtil {
    */
   public static int copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
     byte[] buffer = new byte[8 * 1024];
-    int read, total = 0;
+    int read;
+    int total = 0;
     while ((read = inputStream.read(buffer)) > 0) {
       outputStream.write(buffer, 0, read);
       total += read;
@@ -39,17 +39,16 @@ public final class StreamUtil {
   }
 
   public static @NotNull String readText(@NotNull Reader reader) throws IOException {
-    char[] chars = readChars(reader);
-    return StringFactory.createShared(chars);
+    return readChars(reader).toString();
   }
 
   public static @NotNull String convertSeparators(@NotNull String s) {
-    return StringFactory.createShared(convertSeparators(s.toCharArray()));
+    return new String(convertSeparators(s.toCharArray()));
   }
 
   public static char @NotNull [] readTextAndConvertSeparators(@NotNull Reader reader) throws IOException {
-    char[] chars = readChars(reader);
-    return convertSeparators(chars);
+    CharArrayWriter chars = readChars(reader);
+    return convertSeparators(chars.toCharArray());
   }
 
   private static char[] convertSeparators(char [] buffer) {
@@ -76,12 +75,13 @@ public final class StreamUtil {
     return Arrays.copyOf(buffer, dst);
   }
 
-  private static char[] readChars(Reader reader) throws IOException {
+  @NotNull
+  private static CharArrayWriter readChars(Reader reader) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
     char[] buffer = new char[2048];
     int read;
     while ((read = reader.read(buffer)) > 0) writer.write(buffer, 0, read);
-    return writer.toCharArray();
+    return writer;
   }
 
   //<editor-fold desc="Deprecated stuff.">

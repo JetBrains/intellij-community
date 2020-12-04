@@ -23,7 +23,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,7 +208,7 @@ public class CompositeElement extends TreeElement {
   @Override
   @NotNull
   public String getText() {
-    return StringFactory.createShared(textToCharArray());
+    return new String(textToCharArray());
   }
 
   @NotNull

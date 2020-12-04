@@ -47,7 +47,7 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
   @NotNull
   public String toString() {
     if (myChars instanceof String) return ((String)myChars).substring(myStart, myEnd);
-    return StringFactory.createShared(CharArrayUtil.fromSequence(myChars, myStart, myEnd));
+    return new String(CharArrayUtil.fromSequence(myChars, myStart, myEnd));
   }
 
   @NotNull
