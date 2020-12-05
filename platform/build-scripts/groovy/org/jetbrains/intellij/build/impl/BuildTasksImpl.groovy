@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -513,12 +514,15 @@ idea.fatal.error.notification=disabled
     jarsBuilder.generateProjectStructureMapping(targetFile)
   }
 
-  private void setupJBre() {
+  private void setupJBre(String targetArch = null) {
     logFreeDiskSpace("before downloading JREs")
     String[] args = [
       'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
       "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
     ]
+    if (targetArch != null) {
+      args += "-Dintellij.build.target.arch=" + targetArch
+    }
     String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
     if (prefix != null) {
       args += "-Dintellij.build.bundled.jre.prefix=" + prefix
@@ -901,7 +905,8 @@ idea.fatal.error.notification=disabled
     Path patchedApplicationInfo = patchApplicationInfo()
     compileModulesForDistribution(patchedApplicationInfo).buildJARs()
     if (includeBinAndRuntime) {
-      setupJBre()
+      JvmArchitecture arch = SystemInfo.isArm64 ? JvmArchitecture.aarch64 : SystemInfo.is64Bit ? JvmArchitecture.x64 : JvmArchitecture.x32
+      setupJBre(arch.name())
     }
     layoutShared()
 

@@ -10,10 +10,11 @@ task setupJbre() {
 }
 
 def targetOs = System.getProperty("intellij.build.target.os", "all")
+def targetArch = System.getProperty("intellij.build.target.arch")
 def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
 def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
 def forcedPrefix = System.getProperty("intellij.build.bundled.jre.prefix")
-jbrTasks(jreBuild, jreVersion, targetOs, forcedPrefix)
+jbrTasks(jreBuild, jreVersion, targetOs, targetArch, forcedPrefix)
 
 /**
  * Update this method together with:
@@ -39,9 +40,9 @@ static def splitJbrBuild(String jreBuild, String version) {
   }
 }
 
-def jbrTasks(String defaultBuild, int version, String targetOs, String forcedPrefix) {
+def jbrTasks(String defaultBuild, int version, String targetOs, String targetArch, String forcedPrefix) {
   platformsToDownload(targetOs).each { platform ->
-    archToDownload(platform).each { arch ->
+    archToDownload(platform, targetArch).each { arch ->
       prefixes(arch, forcedPrefix).each { prefix ->
         def jbrBuild = project.ext.has("jreBuild_${platform}_${arch}") ? project.ext["jreBuild_${platform}_${arch}"] :
                        (project.ext.has("jreBuild_${platform}") ? project.ext["jreBuild_${platform}"] : defaultBuild)
@@ -94,7 +95,10 @@ enum Arch {
   x86, x64, aarch64
 }
 
-static def archToDownload(platform) {
+static def archToDownload(String platform, String targetArch) {
+  if (targetArch != null) {
+    return List.of(Arch.valueOf(targetArch))
+  }
   platform != 'osx' ? [Arch.x86, Arch.x64] : [Arch.x64, Arch.aarch64]
 }
 
