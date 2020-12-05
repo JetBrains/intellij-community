@@ -6,12 +6,14 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.util.elementType
+import com.intellij.refactoring.suggested.startOffset
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
 class MarkdownNumberHighlightingAnnotator : Annotator {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    if (element !is LeafPsiElement) {
+    if (element.elementType !== MarkdownTokenTypes.TEXT) {
       return
     }
 
