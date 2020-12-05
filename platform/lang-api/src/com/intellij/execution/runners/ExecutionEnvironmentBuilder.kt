@@ -19,7 +19,6 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
   private var contentToReuse: RunContentDescriptor? = null
   private var runnerAndConfigurationSettings: RunnerAndConfigurationSettings? = null
   private var runner: ProgramRunner<*>? = null
-  private var assignNewId = false
   private var executionId: Long? = null
   private var dataContext: DataContext? = null
   private val userData = UserDataHolderBase()
@@ -135,7 +134,6 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
 
   fun executionId(executionId: Long): ExecutionEnvironmentBuilder {
     this.executionId = executionId
-    assignNewId = false
     return this
   }
 
@@ -162,9 +160,6 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
       environment = ExecutionEnvironment(runProfile!!, executor, target, project, runnerSettings,
                                          configurationSettings, contentToReuse,
                                          runnerAndConfigurationSettings, runner!!, callback)
-    }
-    if (assignNewId) {
-      environment.assignNewExecutionId()
     }
     if (executionId != null) {
       environment.executionId = executionId!!
