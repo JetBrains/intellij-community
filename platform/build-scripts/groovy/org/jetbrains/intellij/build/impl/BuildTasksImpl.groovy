@@ -402,7 +402,7 @@ idea.fatal.error.notification=disabled
         }))
       }
 
-      List<String> paths = runInParallel(tasks).findAll { it != null }
+      List<String> paths = runInParallel(tasks, buildContext).findAll { it != null }
 
       if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
         if (buildContext.buildNumber == null) {
