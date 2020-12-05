@@ -17,7 +17,7 @@ class MarkdownNumberHighlightingAnnotator : Annotator {
 
     val offset = element.startOffset
 
-    for (match in numberRegex.findAll(element.text)) {
+    for (match in isolatedNumberRegex.findAll(element.text)) {
       holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
         .range(TextRange.create(offset + match.range.first, offset + match.range.last + 1))
         .textAttributes(MarkdownHighlighterColors.NUMBER)
@@ -26,6 +26,7 @@ class MarkdownNumberHighlightingAnnotator : Annotator {
   }
 
   companion object {
-    private val numberRegex = Regex("""\d(\d|_)*([.,]\d(\d|_)*)?""")
+    private const val numberRegexStr = """\d(\d|_)*([.,]\d(\d|_)*)?"""
+    private val isolatedNumberRegex = Regex("""(?<=(^|[^a-zA-Z\d]))(${numberRegexStr})(?=($|[^a-zA-Z\d]))""")
   }
 }
