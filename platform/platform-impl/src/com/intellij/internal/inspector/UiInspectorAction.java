@@ -519,13 +519,20 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
     Container parent = component.getParent();
     int deepness = 1;
     while(parent != null && deepness <= MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME) {
-      Class<? extends Container> aClass = parent.getClass();
-      Field[] fields = aClass.getDeclaredFields();
-      for (Field field : fields) {
+      Class<?> aClass = parent.getClass();
+      Map<Field, Class> fields = new HashMap<>();
+      while (aClass != null) {
+        for (Field field : aClass.getDeclaredFields()) {
+          fields.put(field, aClass);
+        }
+        aClass = aClass.getSuperclass();
+      }
+      for (Map.Entry<Field, Class> entry : fields.entrySet()) {
         try {
+          Field field = entry.getKey();
           field.setAccessible(true);
           if (field.get(parent) == component) {
-            return Pair.create(parent.getClass(), field.getName());
+            return Pair.create(entry.getValue(), field.getName());
           }
         }
         catch (IllegalAccessException e) {
