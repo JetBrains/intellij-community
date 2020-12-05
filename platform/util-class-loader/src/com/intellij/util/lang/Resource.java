@@ -32,4 +32,16 @@ public abstract class Resource {
   public String toString() {
     return getURL().toString();
   }
+
+  @SuppressWarnings("DuplicatedCode")
+  public static byte @NotNull [] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+    byte[] bytes = new byte[length];
+    int count = 0;
+    while (count < length) {
+      int n = stream.read(bytes, count, length - count);
+      if (n <= 0) break;
+      count += n;
+    }
+    return bytes;
+  }
 }

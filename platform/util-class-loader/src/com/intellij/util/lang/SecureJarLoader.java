@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,7 @@ final class SecureJarLoader extends JarLoader {
       try {
         InputStream stream = file.getInputStream(entry);
         try {
-          byte[] result = FileUtilRt.loadBytes(stream, (int)entry.getSize());
+          byte[] result = Resource.loadBytes(stream, (int)entry.getSize());
           synchronized (myProtectionDomainMonitor) {
             if (myProtectionDomain == null) {
               JarEntry jarEntry = file.getJarEntry(entry.getName());

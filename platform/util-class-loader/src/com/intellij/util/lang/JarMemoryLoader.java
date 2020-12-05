@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ public final class JarMemoryLoader {
       return null;
     }
 
-    byte[] bytes = FileUtilRt.loadBytes(zipFile.getInputStream(sizeEntry), 2);
+    byte[] bytes = Resource.loadBytes(zipFile.getInputStream(sizeEntry), 2);
     int size = ((bytes[1] & 0xFF) << 8) + (bytes[0] & 0xFF);
 
     Map<String, Resource> map = new HashMap<>();

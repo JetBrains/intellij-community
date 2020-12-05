@@ -3,7 +3,7 @@ package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.LoggerRt;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,8 +241,8 @@ public class UrlClassLoader extends ClassLoader {
     return resource == null ? null : resource.getURL();
   }
 
-  private @Nullable Resource findResourceImpl(String name) {
-    String n = FileUtilRt.toCanonicalPath(name, '/', false);
+  private @Nullable Resource findResourceImpl(@NotNull String name) {
+    String n = toCanonicalPath(name);
     Resource resource = classPath.getResource(n);
     // compatibility with existing code, non-standard classloader behavior
     if (resource == null && n.startsWith("/")) {
@@ -328,5 +328,120 @@ public class UrlClassLoader extends ClassLoader {
    */
   public static @NotNull CachePool createCachePool() {
     return new CachePoolImpl();
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  private static String toCanonicalPath(@NotNull String path) {
+    if (path.isEmpty()) {
+      return path;
+    }
+
+    if (path.charAt(0) == '.') {
+      if (path.length() == 1) {
+        return "";
+      }
+      char c = path.charAt(1);
+      if (c == '/') {
+        path = path.substring(2);
+      }
+    }
+
+    // trying to speedup the common case when there are no "//" or "/."
+    int index = -1;
+    do {
+      index = path.indexOf('/', index + 1);
+      char next = index == path.length() - 1 ? 0 : path.charAt(index + 1);
+      if (next == '.' || next == '/') {
+        break;
+      }
+    }
+    while (index != -1);
+    if (index == -1) {
+      return path;
+    }
+
+    StringBuilder result = new StringBuilder(path.length());
+    int start = processRoot(path, result);
+    int dots = 0;
+    boolean separator = true;
+
+    for (int i = start; i < path.length(); ++i) {
+      char c = path.charAt(i);
+      if (c == '/') {
+        if (!separator) {
+          processDots(result, dots, start);
+          dots = 0;
+        }
+        separator = true;
+      }
+      else if (c == '.') {
+        if (separator || dots > 0) {
+          ++dots;
+        }
+        else {
+          result.append('.');
+        }
+        separator = false;
+      }
+      else {
+        while (dots > 0) {
+          result.append('.');
+          dots--;
+        }
+        result.append(c);
+        separator = false;
+      }
+    }
+
+    if (dots > 0) {
+      processDots(result, dots, start);
+    }
+    return result.toString();
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  private static void processDots(@NotNull StringBuilder result, int dots, int start) {
+    if (dots == 2) {
+      int pos = -1;
+      if (!StringUtilRt.endsWith(result, "/../") && !"../".contentEquals(result)) {
+        pos = StringUtilRt.lastIndexOf(result, '/', start, result.length() - 1);
+        if (pos >= 0) {
+          ++pos;  // separator found, trim to next char
+        }
+        else if (start > 0) {
+          pos = start;  // path is absolute, trim to root ('/..' -> '/')
+        }
+        else if (result.length() > 0) {
+          pos = 0;  // path is relative, trim to default ('a/..' -> '')
+        }
+      }
+      if (pos >= 0) {
+        result.delete(pos, result.length());
+      }
+      else {
+        result.append("../");  // impossible to traverse, keep as-is
+      }
+    }
+    else if (dots != 1) {
+      for (int i = 0; i < dots; i++) {
+        result.append('.');
+      }
+      result.append('/');
+    }
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  private static int processRoot(@NotNull String path, @NotNull StringBuilder result) {
+    if (!path.isEmpty() && path.charAt(0) == '/') {
+      result.append('/');
+      return 1;
+    }
+
+    if (path.length() > 2 && path.charAt(1) == ':' && path.charAt(2) == '/') {
+      result.append(path, 0, 3);
+      return 3;
+    }
+
+    return 0;
   }
 }

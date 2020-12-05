@@ -2,7 +2,6 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.lang.fastutil.StrippedIntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -279,7 +278,7 @@ class JarLoader extends Loader {
     public byte @NotNull [] getBytes() throws IOException {
       ZipFile file = getZipFile();
       try (InputStream stream = file.getInputStream(entry)) {
-        return FileUtilRt.loadBytes(stream, (int)entry.getSize());
+        return Resource.loadBytes(stream, (int)entry.getSize());
       }
       finally {
         releaseZipFile(file);
