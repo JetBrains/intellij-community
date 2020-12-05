@@ -49,7 +49,6 @@ public final class FSRecords {
   public static final boolean WE_HAVE_CONTENT_HASHES = SystemProperties.getBooleanProperty("idea.share.contents", true);
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
 
-  private static final boolean lazyVfsDataCleaning = SystemProperties.getBooleanProperty("idea.lazy.vfs.data.cleaning", true);
   private static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
   private static final boolean inlineAttributes = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
   private static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
@@ -594,7 +593,7 @@ public final class FSRecords {
         return newRecord;
       }
       else {
-        if (lazyVfsDataCleaning) deleteContentAndAttributes(free);
+        deleteContentAndAttributes(free);
         DbConnection.cleanRecord(free);
         return free;
       }
@@ -608,12 +607,7 @@ public final class FSRecords {
   static void deleteRecordRecursively(int id) {
     writeAndHandleErrors(() -> {
       incModCount(id);
-      if (lazyVfsDataCleaning) {
-        markAsDeletedRecursively(id);
-      }
-      else {
-        doDeleteRecursively(id);
-      }
+      markAsDeletedRecursively(id);
     });
   }
 
@@ -621,31 +615,12 @@ public final class FSRecords {
     for (int subRecord : listIds(id)) {
       markAsDeletedRecursively(subRecord);
     }
-
     markAsDeleted(id);
   }
 
   private static void markAsDeleted(final int id) {
     writeAndHandleErrors(() -> {
       DbConnection.markDirty();
-      addToFreeRecordsList(id);
-    });
-  }
-
-  private static void doDeleteRecursively(final int id) {
-    for (int subRecord : listIds(id)) {
-      doDeleteRecursively(subRecord);
-    }
-
-    deleteRecord(id);
-  }
-
-  private static void deleteRecord(final int id) {
-    writeAndHandleErrors(() -> {
-      DbConnection.markDirty();
-      deleteContentAndAttributes(id);
-
-      DbConnection.cleanRecord(id);
       addToFreeRecordsList(id);
     });
   }
@@ -1512,11 +1487,8 @@ public final class FSRecords {
     DataInputOutputUtil.writeINT(appender, fileId);
   }
 
-  private static void checkFileIsValid(int fileId) throws IOException {
+  private static void checkFileIsValid(int fileId) {
     assert fileId > 0 : fileId;
-    if (!lazyVfsDataCleaning) {
-      assert !BitUtil.isSet(doGetFlags(fileId), FREE_RECORD_FLAG) : "Accessing attribute of a deleted page: " + fileId + ":" + doGetNameSequence(fileId);
-    }
   }
 
   static int acquireFileContent(int fileId) {
