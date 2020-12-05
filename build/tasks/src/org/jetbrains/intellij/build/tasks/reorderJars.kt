@@ -29,7 +29,7 @@ fun main(args: Array<String>) {
   reorderJars(Paths.get(args[0]), Paths.get(args[1]), listOf("bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar"), Paths.get(args[2]), System.getLogger(""))
 }
 
-fun reorderJars(homeDir: Path, targetDir: Path, bootClassPathJarNames: Iterable<String>, stageDir: Path, logger: Logger) {
+fun reorderJars(homeDir: Path, targetDir: Path, bootClassPathJarNames: Iterable<String>, stageDir: Path, logger: Logger, platformPrefix: String? = null) {
   val libDir = homeDir.resolve("lib")
   val ideaDirsParent = Files.createTempDirectory("idea-reorder-jars-")
 
@@ -39,11 +39,12 @@ fun reorderJars(homeDir: Path, targetDir: Path, bootClassPathJarNames: Iterable<
     runJava(
       mainClass = "com.intellij.idea.Main",
       args = listOf("jarOrder", classLoadingLogFile.toString()),
-      jvmArgs = listOf("-Xmx1024m",
-                       "-Didea.log.classpath.info=true",
-                       "-Didea.system.path=${ideaDirsParent.resolve("system")}",
-                       "-Didea.config.path=${ideaDirsParent.resolve("config")}",
-                       "-Didea.home.path=$homeDir"),
+      jvmArgs = listOfNotNull("-Xmx1024m",
+                              "-Didea.log.classpath.info=true",
+                              "-Didea.system.path=${ideaDirsParent.resolve("system")}",
+                              "-Didea.config.path=${ideaDirsParent.resolve("config")}",
+                              "-Didea.home.path=$homeDir",
+                              if (platformPrefix != null) "-Didea.platform.prefix=$platformPrefix" else null),
       classPath = bootClassPathJarNames.map { libDir.resolve(it).toString() },
       logger = logger
     )

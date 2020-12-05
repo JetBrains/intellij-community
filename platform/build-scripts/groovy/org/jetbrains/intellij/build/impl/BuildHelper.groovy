@@ -47,7 +47,8 @@ final class BuildHelper {
 
     reorderJars = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ReorderJarsKt"),
                                                      "reorderJars",
-                                                     MethodType.methodType(voidClass, path, path, iterable, path, logger))
+                                                     MethodType.methodType(voidClass,
+                                                                           path, path, iterable, path, logger, String.class as Class<?>))
   }
 
   static void zipForWindows(@NotNull BuildContext buildContext, @NotNull Path targetFile, Iterable<Path> dirs) {

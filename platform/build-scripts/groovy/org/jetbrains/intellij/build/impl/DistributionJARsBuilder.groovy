@@ -303,7 +303,8 @@ final class DistributionJARsBuilder {
     BuildHelper.getInstance(buildContext).reorderJars.invokeWithArguments(distDir, distDir,
                                                                           buildContext.getBootClassPathJarNames(),
                                                                           buildContext.paths.tempDir,
-                                                                          buildContext.messages)
+                                                                          buildContext.messages,
+                                                                          buildContext.productProperties.platformPrefix)
   }
 
   private static BuildTaskRunnable<Void> createBuildBrokenPluginListTask() {
