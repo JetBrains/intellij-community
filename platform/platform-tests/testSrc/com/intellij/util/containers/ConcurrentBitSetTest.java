@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 
 public class ConcurrentBitSetTest extends TestCase {
   private static final Logger LOG = Logger.getInstance(ConcurrentBitSetTest.class);
-  public void test() {
+  public void testSanity() {
     ConcurrentBitSet bitSet = ConcurrentBitSet.create();
     assertEquals(0, bitSet.nextClearBit(0));
     assertEquals(-1, bitSet.nextSetBit(0));

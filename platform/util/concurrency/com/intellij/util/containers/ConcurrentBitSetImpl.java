@@ -2,37 +2,22 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.BitUtil;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
-import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
-import sun.misc.Unsafe;
 
 import java.io.*;
 import java.util.concurrent.locks.StampedLock;
+import java.util.function.IntUnaryOperator;
 
 class ConcurrentBitSetImpl implements ConcurrentBitSet {
   ConcurrentBitSetImpl() {
     clear();
   }
 
-  private static final Unsafe UNSAFE = (Unsafe)AtomicFieldUpdater.getUnsafe();
-  private static final int base = UNSAFE.arrayBaseOffset(int[].class);
-  private static final int shift;
-
-  static {
-    int scale = UNSAFE.arrayIndexScale(int[].class);
-    if (!BitUtil.isPowerOfTwo(scale)) {
-      throw new Error("data type scale not a power of two, got: "+scale);
-    }
-    shift = 31 - Integer.numberOfLeadingZeros(scale);
-  }
-
   /**
    * store all bits here.
    * The bit at bitIndex is stored in {@code array[arrayIndex(bitIndex)]} word.
    */
-  private volatile int[] array;
+  private int[] array;
 
   private static int arrayIndex(int bitIndex) {
     return bitIndex >> ADDRESS_BITS_PER_WORD;
@@ -66,26 +51,16 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
     return (prevWord & mask) != 0;
   }
 
-  private static long byteOffset(int i) {
-    return ((long) i << shift) + base;
-  }
-
-  int changeWord(int bitIndex, @NotNull TIntFunction change) {
+  int changeWord(int bitIndex, @NotNull IntUnaryOperator changeWord) {
     ensureNonNegative(bitIndex);
 
     long stamp = lock.writeLock();
     try {
       int i = arrayIndex(bitIndex);
       int[] array = growArrayTo(i);
-      long offset = byteOffset(i);
-
-      int word;
-      int newWord;
-      do {
-        word = UNSAFE.getIntVolatile(array, offset);
-        newWord = change.execute(word);
-      }
-      while (!UNSAFE.compareAndSwapInt(array, offset, word, newWord));
+      int word = array[i];
+      int newWord = changeWord.applyAsInt(word);
+      array[i] = newWord;
       return word;
     }
     finally {
@@ -103,20 +78,11 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
     throw new IndexOutOfBoundsException("index < 0: " + fromIndex);
   }
 
-  private static int getVolatile(int[] array, int i) {
-    return UNSAFE.getIntVolatile(array, byteOffset(i));
-  }
-
-  private static final AtomicFieldUpdater<ConcurrentBitSetImpl, int[]> ARRAY_UPDATER = AtomicFieldUpdater.forFieldOfType(ConcurrentBitSetImpl.class, int[].class);
   private int[] growArrayTo(int arrayIndex) {
-    int[] newArray;
-    int[] array;
-    do {
-      array = this.array;
-      if (arrayIndex < array.length) return array;
-      newArray = ArrayUtil.realloc(array, Math.max(array.length * 2, arrayIndex + 1));
-    }
-    while (!ARRAY_UPDATER.compareAndSet(this, array, newArray));
+    int[] array = this.array;
+    if (arrayIndex < array.length) return array;
+    int[] newArray = ArrayUtil.realloc(array, Math.max(array.length * 2, arrayIndex + 1));
+    this.array = newArray;
     return newArray;
   }
 
@@ -173,7 +139,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
     do {
       stamp = lock.tryOptimisticRead();
       int[] array = this.array;
-      word = arrayIndex < array.length ? getVolatile(array, arrayIndex) : 0;
+      word = arrayIndex < array.length ? array[arrayIndex] : 0;
     } while (!lock.validate(stamp));
     return word;
   }
@@ -192,7 +158,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
       stamp = lock.tryOptimisticRead();
       int[] array = this.array;
       if (i < array.length) {
-        int w = getVolatile(array, i);
+        int w = array[i];
         int nextBitsInWord = w & -wordMaskForIndex(fromIndex);
         if (nextBitsInWord != 0) {
           int wordIndex = Integer.numberOfTrailingZeros(nextBitsInWord);
@@ -200,7 +166,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
         }
         else {
           for (i += 1; i < array.length; i++) {
-            w = getVolatile(array, i);
+            w = array[i];
             if (w == 0) continue;
             int wordIndex = Integer.numberOfTrailingZeros(w);
             result = i * BITS_PER_WORD + wordIndex;
@@ -232,7 +198,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
         result = fromIndex;
       }
       else {
-        int w = ~getVolatile(array, i);
+        int w = ~array[i];
         int nextBitsInWord = w & -wordMaskForIndex(fromIndex);
         if (nextBitsInWord != 0) {
           int wordIndex = Integer.numberOfTrailingZeros(nextBitsInWord);
@@ -240,7 +206,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
         }
         else {
           for (i += 1; i < array.length; i++) {
-            w = ~getVolatile(array, i);
+            w = ~array[i];
             if (w == 0) continue;
             int wordIndex = Integer.numberOfTrailingZeros(w);
             result = i * BITS_PER_WORD + wordIndex;
@@ -259,7 +225,14 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
    */
   @Override
   public int size() {
-    return array.length*BITS_PER_WORD;
+    long stamp;
+    int result;
+    do {
+      stamp = lock.tryOptimisticRead();
+      int[] array = this.array;
+      result = array.length << ADDRESS_BITS_PER_WORD;
+    } while (!lock.validate(stamp));
+    return result;
   }
 
   /**
@@ -304,6 +277,13 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
 
   @Override
   public int @NotNull [] toIntArray() {
+    long stamp;
+    int[] array;
+    do {
+      stamp = lock.tryOptimisticRead();
+      array = this.array;
+    } while (!lock.validate(stamp));
+
     return array.clone();
   }
 
