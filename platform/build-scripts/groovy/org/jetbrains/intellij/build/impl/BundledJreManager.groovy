@@ -163,11 +163,12 @@ class BundledJreManager {
     }
 
     String prefix
-    if (buildContext.options.bundledJrePrefix != null) {
-      prefix = buildContext.options.bundledJrePrefix
-    }
-    else if (arch == JvmArchitecture.aarch64) {
+    if (arch == JvmArchitecture.aarch64) {
+      // prefix cannot be overridden here
       prefix = 'jbr_nomod-'
+    }
+    else if (buildContext.options.bundledJrePrefix != null) {
+      prefix = buildContext.options.bundledJrePrefix
     }
     else if (arch == JvmArchitecture.x32 || buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
       prefix = 'jbr-'
