@@ -13,6 +13,8 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.containers.ContainerUtil;
+import de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +45,7 @@ public abstract class AbstractDelombokAction extends AnAction {
       return;
     }
 
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     if (psiDocumentManager.hasUncommitedDocuments()) {
       psiDocumentManager.commitAllDocuments();
     }
@@ -114,7 +116,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     final DataContext dataContext = event.getDataContext();
 
     final Project project = event.getProject();
-    if (project == null) {
+    if (project == null || !LombokProjectValidatorActivity.hasLombokLibrary(project)) {
       presentation.setEnabled(false);
       return;
     }
@@ -139,7 +141,7 @@ public abstract class AbstractDelombokAction extends AnAction {
         if (JavaFileType.INSTANCE.equals(file.getFileType())) {
           PsiJavaFile psiFile = (PsiJavaFile) psiManager.findFile(file);
           if (psiFile != null) {
-            isValid = Stream.of(psiFile.getClasses()).anyMatch(this::isValidForClass);
+            isValid = ContainerUtil.or(psiFile.getClasses(), this::isValidForClass);
           }
         }
         if (isValid) {
