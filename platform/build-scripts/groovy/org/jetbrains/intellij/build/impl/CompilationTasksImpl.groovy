@@ -33,13 +33,13 @@ class CompilationTasksImpl extends CompilationTasks {
 
   @Override
   void compileModules(List<String> moduleNames, List<String> includingTestsInModules) {
-    if (jpsCache.canBeUsed) {
-      context.messages.info("JPS remote cache will be used")
-      jpsCache.downloadCacheAndCompileProject()
-    }
-    else if (context.options.useCompiledClassesFromProjectOutput) {
+    if (context.options.useCompiledClassesFromProjectOutput) {
       context.messages.info("Compilation skipped, the compiled classes from the project output will be used")
       resolveProjectDependencies()
+    }
+    else if (jpsCache.canBeUsed) {
+      context.messages.info("JPS remote cache will be used")
+      jpsCache.downloadCacheAndCompileProject()
     }
     else if (context.options.pathToCompiledClassesArchive != null) {
       context.messages.info("Compilation skipped, the compiled classes from '${context.options.pathToCompiledClassesArchive}' will be used")
