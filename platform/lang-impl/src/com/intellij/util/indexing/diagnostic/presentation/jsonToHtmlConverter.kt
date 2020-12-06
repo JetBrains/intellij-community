@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
 import org.jetbrains.annotations.Nls
 
+@Suppress("HardCodedStringLiteral")
 fun JsonIndexDiagnostic.generateHtml(): String {
   return html {
     body {
@@ -200,21 +201,21 @@ private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
   return tagBuilder.toFragment().wrapWith(tag)
 }
 
-private fun HtmlBuilder.text(text: @Nls String) {
+private fun HtmlBuilder.text(@Nls text: String) {
   append(text)
 }
 
-private infix operator fun HtmlBuilder.plus(text: @Nls String) = text(text)
-private fun HtmlBuilder.h1(title: String) = append(HtmlChunk.text(title).wrapWith(tag("h1")))
+private infix operator fun HtmlBuilder.plus(@Nls text: String) = text(text)
+private fun HtmlBuilder.h1(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("h1")))
 
 private fun HtmlBuilder.table(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("table")))
 private fun HtmlBuilder.thead(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("thead")))
 private fun HtmlBuilder.tbody(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tbody")))
 private fun HtmlBuilder.tr(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tr")))
 private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("th")))
-private fun HtmlBuilder.th(text: String) = th { text(text) }
+private fun HtmlBuilder.th(@Nls text: String) = th { text(text) }
 private fun HtmlBuilder.td(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
-private fun HtmlBuilder.td(text: String) = td { text(text) }
+private fun HtmlBuilder.td(@Nls text: String) = td { text(text) }
 
 private fun HtmlBuilder.div(body: HtmlBuilder.() -> Unit) = append(createTag(body, div()))
 private fun HtmlBuilder.body(body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))
