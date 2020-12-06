@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -12,7 +13,9 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.ui.GithubAccountCombobox
+import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel
+import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel.Companion.accountSelector
+import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.RecordUniqueValidator
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
@@ -26,7 +29,7 @@ class GithubShareDialog(project: Project,
                         defaultAccount: GithubAccount?,
                         existingRemotes: Set<String>,
                         private val accountInformationSupplier: (GithubAccount, Component) -> Pair<Boolean, Set<String>>)
-  : DialogWrapper(project) {
+  : DialogWrapper(project), DataProvider {
 
   private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
 
@@ -37,7 +40,6 @@ class GithubShareDialog(project: Project,
   private val remoteName = if (existingRemotes.isEmpty()) "origin" else "github"
   private val remoteTextField = JBTextField(remoteName)
   private val descriptionTextArea = JTextArea()
-  private val accountSelector = GithubAccountCombobox(accounts, defaultAccount) { switchAccount(it) }
   private val existingRepoValidator = RecordUniqueValidator(repositoryTextField,
                                                             message("share.error.repo.with.selected.name.exists"))
   private val existingRemoteValidator = RecordUniqueValidator(remoteTextField,
@@ -45,14 +47,18 @@ class GithubShareDialog(project: Project,
     .apply { records = existingRemotes }
   private var accountInformationLoadingError: ValidationInfo? = null
 
+  private val accountsModel = GHAccountsComboBoxModel(accounts, defaultAccount ?: accounts.firstOrNull())
+
   init {
     title = message("share.on.github")
     setOKButtonText(message("share.button"))
     init()
-    DialogUtils.invokeLaterAfterDialogShown(this) { switchAccount(accountSelector.selectedItem as GithubAccount) }
+    DialogUtils.invokeLaterAfterDialogShown(this) { switchAccount(getAccount()) }
   }
 
-  private fun switchAccount(account: GithubAccount) {
+  private fun switchAccount(account: GithubAccount?) {
+    if (account == null) return
+
     try {
       accountInformationLoadingError = null
       accountInformationSupplier(account, window).let {
@@ -87,9 +93,9 @@ class GithubShareDialog(project: Project,
     row(message("share.dialog.description")) {
       scrollPane(descriptionTextArea)
     }
-    if (accountSelector.isEnabled) {
+    if (accountsModel.size != 1) {
       row(message("share.dialog.share.by")) {
-        accountSelector(growX, pushX)
+        accountSelector(accountsModel) { switchAccount(getAccount()) }
       }
     }
   }
@@ -118,6 +124,10 @@ class GithubShareDialog(project: Project,
   override fun getDimensionServiceKey(): String = "Github.ShareDialog"
   override fun getPreferredFocusedComponent(): JBTextField = repositoryTextField
 
+  override fun getData(dataId: String): Any? =
+    if (GHAccountsHost.KEY.`is`(dataId)) accountsModel
+    else null
+
   @NlsSafe
   fun getRepositoryName(): String = repositoryTextField.text
 
@@ -127,7 +137,7 @@ class GithubShareDialog(project: Project,
 
   @NlsSafe
   fun getDescription(): String = descriptionTextArea.text
-  fun getAccount(): GithubAccount = accountSelector.selectedItem as GithubAccount
+  fun getAccount(): GithubAccount? = accountsModel.selected
 
   @TestOnly
   fun testSetRepositoryName(name: String) {
