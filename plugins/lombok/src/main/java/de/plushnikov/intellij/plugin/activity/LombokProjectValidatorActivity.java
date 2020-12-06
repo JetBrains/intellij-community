@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.activity;
 
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -15,28 +14,21 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.List;
 
 /**
@@ -49,6 +41,10 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
 
   @Override
   public void runActivity(@NotNull Project project) {
+    // enable annotationProcessing check
+    final SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
+    connection.subscribe(BuildManagerListener.TOPIC, new LombokBuildManagerListener());
+
     LombokProcessorProvider lombokProcessorProvider = LombokProcessorProvider.getInstance(project);
     ReadAction.nonBlocking(() -> {
       if (project.isDisposed()) return null;
@@ -70,23 +66,6 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
           }
         }
       }
-
-      // Annotation Processing check
-      if (hasLombokLibrary &&
-          ProjectSettings.isEnabled(project, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true) &&
-          !hasAnnotationProcessorsEnabled(project)) {
-        return getNotificationGroup()
-          .createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
-                              LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
-                              NotificationType.ERROR,
-                              (not, e) -> {
-                                if (e.getEventType() ==
-                                    HyperlinkEvent.EventType.ACTIVATED) {
-                                  enableAnnotations(project);
-                                  not.expire();
-                                }
-                              });
-      }
       return null;
     }).expireWith(lombokProcessorProvider)
       .finishOnUiThread(ModalityState.NON_MODAL, notification -> {
@@ -100,33 +79,6 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
   @NotNull
   private static NotificationGroup getNotificationGroup() {
     return NotificationGroupManager.getInstance().getNotificationGroup(Version.PLUGIN_NAME);
-  }
-
-  private static void enableAnnotations(Project project) {
-    CompilerConfigurationImpl compilerConfiguration = getCompilerConfiguration(project);
-    compilerConfiguration.getDefaultProcessorProfile().setEnabled(true);
-    compilerConfiguration.getModuleProcessorProfiles().forEach(pp -> pp.setEnabled(true));
-
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(
-        LombokBundle.message("popup.content.java.annotation.processing.has.been.enabled"),
-        MessageType.INFO,
-        null
-      )
-      .setFadeoutTime(3000)
-      .createBalloon()
-      .show(RelativePoint.getNorthEastOf(statusBar.getComponent()), Balloon.Position.atRight);
-  }
-
-  private static CompilerConfigurationImpl getCompilerConfiguration(Project project) {
-    return (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
-  }
-
-  private static boolean hasAnnotationProcessorsEnabled(Project project) {
-    final CompilerConfigurationImpl compilerConfiguration = getCompilerConfiguration(project);
-    return compilerConfiguration.getDefaultProcessorProfile().isEnabled() &&
-           compilerConfiguration.getModuleProcessorProfiles().stream().allMatch(AnnotationProcessingConfiguration::isEnabled);
   }
 
   public static boolean hasLombokLibrary(Project project) {
