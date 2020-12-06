@@ -28,6 +28,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
 import org.jetbrains.plugins.github.util.*;
@@ -37,6 +38,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author oleg
@@ -92,8 +95,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                        final VirtualFile @Nullable [] files) {
     if (!GithubAccountsMigrationHelper.getInstance().migrate(project)) return;
     GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
-    if (!authManager.ensureHasAccounts(project)) return;
-
     GithubSettings settings = GithubSettings.getInstance();
     // Ask for description and other params
     GithubCreateGistDialog dialog = new GithubCreateGistDialog(project,
@@ -110,9 +111,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
     settings.setOpenInBrowserGist(dialog.isOpenInBrowser());
     settings.setCopyURLGist(dialog.isCopyURL());
 
-    GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(dialog.getAccount(), project);
+    GithubAccount account = requireNonNull(dialog.getAccount());
+    GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project);
     if (requestExecutor == null) return;
-    GithubServerPath server = dialog.getAccount().getServer();
 
     final Ref<String> url = new Ref<>();
     new Task.Backgroundable(project, GithubBundle.message("create.gist.process")) {
@@ -121,7 +122,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
         List<FileContent> contents = collectContents(project, editor, file, files);
         if (contents.isEmpty()) return;
 
-        String gistUrl = createGist(project, requestExecutor, indicator, server,
+        String gistUrl = createGist(project, requestExecutor, indicator, account.getServer(),
                                     contents, dialog.isSecret(), dialog.getDescription(), dialog.getFileName());
         url.set(gistUrl);
       }
