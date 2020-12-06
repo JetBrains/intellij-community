@@ -24,7 +24,7 @@ import java.util.*
 val MARKER_ACCEPT_MY = "__accept my__".toByteArray()
 val MARKER_ACCEPT_THEIRS = "__accept theirs__".toByteArray()
 
-internal class GitTest : GitTestCase() {
+internal class SettingsRepositoryGitTest : SettingsRepositoryGitTestBase() {
   init {
     conflictResolver = { files, mergeProvider ->
       val mergeSession = mergeProvider.createMergeSession(files)

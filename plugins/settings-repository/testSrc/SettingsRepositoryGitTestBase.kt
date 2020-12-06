@@ -17,7 +17,7 @@ import org.junit.rules.ExternalResource
 import java.nio.file.FileSystem
 import java.util.*
 
-internal abstract class GitTestCase : IcsTestCase() {
+internal abstract class SettingsRepositoryGitTestBase : IcsTestCase() {
   companion object {
     @JvmField
     @ClassRule
