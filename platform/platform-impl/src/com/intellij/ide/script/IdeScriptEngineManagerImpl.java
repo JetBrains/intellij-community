@@ -262,7 +262,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       long hash = StringHash.calc(base);
 
       Class<?> c = null;
-      ClassLoader guess1 = myLuckyGuess.get(hash);   // cached loader
+      ClassLoader guess1 = myLuckyGuess.get(hash);   // cached loader or "this" if not found
       ClassLoader guess2 = myLuckyGuess.get(0L);     // last recently used
       for (ClassLoader loader : JBIterable.of(guess1, guess2)) {
         if (loader == this) throw new ClassNotFoundException(name);
@@ -277,7 +277,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       if (c == null) {
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
           ClassLoader l = descriptor.getPluginClassLoader();
-          if (l == null || l == guess1 || l == guess2) continue;
+          if (l == null || !hasBase && (l == guess1 || l == guess2)) continue;
           try {
             if (hasBase) {
               l.loadClass(base);
