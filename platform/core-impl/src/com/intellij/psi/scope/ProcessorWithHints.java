@@ -12,16 +12,15 @@ import java.util.Map;
  * Base processor which stores hints in a map
  */
 public abstract class ProcessorWithHints implements PsiScopeProcessor {
-
-  private final Map<Key, Object> myHints = new HashMap<>();
+  private final Map<Key<?>, Object> myHints = new HashMap<>();
 
   protected final <H> void hint(@NotNull Key<H> key, @NotNull H hint) {
-    key.set(myHints, hint);
+    myHints.put(key, hint);
   }
 
   @Nullable
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
-    return hintKey.get(myHints);
+    return (T)myHints.get(hintKey);
   }
 }
