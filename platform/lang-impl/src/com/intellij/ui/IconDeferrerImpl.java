@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.SameThreadExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,14 @@ public final class IconDeferrerImpl extends IconDeferrer {
     // registry should be not used as at this point of time user registry maybe not yet loaded
     .maximumSize(SystemProperties.getIntProperty("ide.icons.deferrerCacheSize", 1000))
     // some icon implementations, e.g. ElementBase$ElementIconRequest, requires read action, so, perform cleanup in the requester thread
-    .executor(SameThreadExecutor.INSTANCE)
+    .executor(command -> {
+      try {
+        command.run();
+      }
+      catch (ProcessCanceledException ignore) {
+        // otherwise Caffeine will log it as a warning
+      }
+    })
     .build();
   private final AtomicLong lastClearTimestamp = new AtomicLong();
 
