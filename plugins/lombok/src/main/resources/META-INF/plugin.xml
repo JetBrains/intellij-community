@@ -282,16 +282,6 @@
       <separator/>
       <action id="defaultLombokLogger" class="de.plushnikov.intellij.plugin.action.lombok.LombokLoggerAction"/>
 
-      <!--<separator/>-->
-      <!--<action id="generalLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorGetterAction"-->
-      <!--text="Selectable @Getter"-->
-      <!--description="Action to replace some getter methods with lombok @Getter annotation">-->
-      <!--</action>-->
-      <!--<action id="generalLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorSetterAction"-->
-      <!--text="Selectable @Setter"-->
-      <!--description="Action to replace some setter methods with lombok @Setter annotation">-->
-      <!--</action>-->
-
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
     <group id="DelombokActionGroup" icon="LombokIcons.Lombok" popup="true">
