@@ -12,9 +12,10 @@ import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.resetHard
 import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.rules.ExternalResource
 import java.nio.file.FileSystem
 import java.util.*
-import kotlin.properties.Delegates
 
 internal abstract class GitTestCase : IcsTestCase() {
   companion object {
@@ -29,7 +30,17 @@ internal abstract class GitTestCase : IcsTestCase() {
   protected val repository: Repository
     get() = repositoryManager.repository
 
-  protected var remoteRepository: Repository by Delegates.notNull()
+  protected lateinit var remoteRepository: Repository
+
+  @JvmField
+  @Rule
+  val remoteRepositoryRule = object: ExternalResource() {
+    override fun after() {
+      if (::remoteRepository.isInitialized) {
+        remoteRepository.close()
+      }
+    }
+  }
 
   init {
     conflictResolver = { files, mergeProvider ->
