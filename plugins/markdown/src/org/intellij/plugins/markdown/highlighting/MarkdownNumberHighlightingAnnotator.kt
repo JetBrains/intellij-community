@@ -9,11 +9,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.ui.actions.styling.HighlightNumbersAction
 
 class MarkdownNumberHighlightingAnnotator : Annotator {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    if (element.elementType !== MarkdownTokenTypes.TEXT) {
+    if (!HighlightNumbersAction.isHighlightingEnabled || element.elementType !== MarkdownTokenTypes.TEXT) {
       return
     }
 

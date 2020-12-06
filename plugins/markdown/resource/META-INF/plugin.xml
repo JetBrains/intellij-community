@@ -198,6 +198,17 @@ Includes the following features:</p>
               id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
               icon="MarkdownIcons.EditorActions.Link">
       </action>
+
+      <separator/>
+
+      <group id="Markdown.Highlighting"
+             class="com.intellij.openapi.actionSystem.DefaultActionGroup"
+             popup="true"
+             icon="AllIcons.Actions.EditSource">
+        <action class="org.intellij.plugins.markdown.ui.actions.styling.HighlightNumbersAction"
+                id="org.intellij.plugins.markdown.ui.actions.styling.HighlightNumbersAction">
+        </action>
+      </group>
     </group>
 
     <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.CyclicSplitLayoutChangeAction"
