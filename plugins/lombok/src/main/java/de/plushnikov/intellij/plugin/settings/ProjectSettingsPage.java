@@ -15,7 +15,6 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   private JPanel myGeneralPanel;
 
   private JCheckBox myEnableLombokVersionWarning;
-  private JCheckBox myAnnotationProcessingWarning;
 
   private final Project myProject;
 
@@ -37,24 +36,18 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
 
   private void initFromSettings() {
     myEnableLombokVersionWarning.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false));
-    myAnnotationProcessingWarning
-      .setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true));
   }
 
   @Override
   public boolean isModified() {
     return
       myEnableLombokVersionWarning.isSelected() !=
-      ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false) ||
-      myAnnotationProcessingWarning.isSelected() !=
-      ProjectSettings.isEnabled(myProject, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true);
+      ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false);
   }
 
   @Override
   public void apply() {
     ProjectSettings.setEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
-    ProjectSettings
-      .setEnabled(myProject, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, myAnnotationProcessingWarning.isSelected());
 
     LombokProcessorProvider lombokProcessorProvider = myProject.getService(LombokProcessorProvider.class);
     lombokProcessorProvider.initProcessors();

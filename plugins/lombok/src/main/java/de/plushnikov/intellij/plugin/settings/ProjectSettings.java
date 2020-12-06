@@ -7,13 +7,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ProjectSettings {
   private static final String PREFIX = "LombokPlugin";
 
-  public static final String IS_ANNOTATION_PROCESSING_CHECK_ENABLED = PREFIX + "IS_ANNOTATION_PROCESSING_CHECK_Enabled";
   public static final String IS_LOMBOK_VERSION_CHECK_ENABLED = PREFIX + "IS_LOMBOK_VERSION_CHECK_Enabled";
-  public static final String IS_MISSING_LOMBOK_CHECK_ENABLED = PREFIX + "IS_MISSING_LOMBOK_CHECK_Enabled";
-
-  public static boolean isEnabled(@NotNull Project project, final String propertyName) {
-    return PropertiesComponent.getInstance(project).getBoolean(propertyName, true);
-  }
 
   public static boolean isEnabled(@NotNull Project project, final String propertyName, boolean defaultValue) {
     return PropertiesComponent.getInstance(project).getBoolean(propertyName, defaultValue);
