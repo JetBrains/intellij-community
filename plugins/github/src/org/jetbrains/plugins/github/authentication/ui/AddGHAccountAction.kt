@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -18,22 +19,22 @@ import javax.swing.JPanel
 
 class AddGHAccountAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.getData(GHAccountsPanel.KEY) != null
+    e.presentation.isEnabledAndVisible = e.getData(GHAccountsHost.KEY) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val accountsPanel = e.getData(GHAccountsPanel.KEY)!!
-    val dialog = createDialog(e.project, accountsPanel)
+    val accountsHost = e.getData(GHAccountsHost.KEY)!!
+    val dialog = createDialog(e.project, e.getData(CONTEXT_COMPONENT), accountsHost::isAccountUnique)
     dialog.setServer(GithubServerPath.DEFAULT_HOST, false)
 
     if (dialog.showAndGet()) {
-      accountsPanel.addAccount(dialog.server, dialog.login, dialog.token)
+      accountsHost.addAccount(dialog.server, dialog.login, dialog.token)
     }
   }
 
-  private fun createDialog(project: Project?, accountsPanel: GHAccountsPanel): BaseLoginDialog =
-    if (isOAuthEnabled()) GHOAuthLoginDialog(project, accountsPanel, accountsPanel::isAccountUnique)
-    else PasswordLoginDialog(project, accountsPanel, accountsPanel::isAccountUnique)
+  private fun createDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate): BaseLoginDialog =
+    if (isOAuthEnabled()) GHOAuthLoginDialog(project, parent, isAccountUnique)
+    else PasswordLoginDialog(project, parent, isAccountUnique)
 }
 
 private class PasswordLoginDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
