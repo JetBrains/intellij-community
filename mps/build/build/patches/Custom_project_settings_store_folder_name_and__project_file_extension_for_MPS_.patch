@@ -20,9 +20,9 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(revision 61123323d1e41021c7b63fbd2b6a76843f357fde)
-+++ community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(date 1600247501983)
-@@ -99,10 +99,11 @@
+--- community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(revision edfc93d9834e14df02f0ee6b13645e3ea2eaa32c)
++++ community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(date 1607337720164)
+@@ -101,10 +101,11 @@
      val storageManager = storageManager
      val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
      val macros = ArrayList<Macro>(5)
@@ -36,12 +36,12 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
        macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
 
        if (isUnitTestMode) {
-@@ -135,7 +136,7 @@
+@@ -137,7 +138,7 @@
      }
 
      val presentableUrl = (if (dotIdea == null) file else projectBasePath)
--    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, presentableUrl.fileName.toString().toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), ".", ".xml")
-+    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, presentableUrl.fileName.toString().toLowerCase(Locale.US).removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/), ".", ".xml")
+-    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, (presentableUrl.fileName ?: "").toString().toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), ".", ".xml")
++    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, (presentableUrl.fileName ?: "").toString().toLowerCase(Locale.US).removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/), ".", ".xml")
      macros.add(Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve(cacheFileName)))
 
      storageManager.setMacros(macros)
