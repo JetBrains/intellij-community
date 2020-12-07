@@ -14,7 +14,15 @@ class PropertyGraph(debugName: String? = null) {
   private val dependencies = ConcurrentHashMap<PropertyNode, CopyOnWriteArrayList<Dependency<*>>>()
   private val recursionGuard = RecursionManager.createGuard<PropertyNode>(PropertyGraph::class.java.name)
 
+  fun <T> dependsOn(child: AtomicProperty<T>, parent: ObservableClearableProperty<*>) {
+    addDependency(child, parent) { reset() }
+  }
+
   fun <T> dependsOn(child: AtomicProperty<T>, parent: ObservableClearableProperty<*>, update: () -> T) {
+    addDependency(child, parent) { updateAndGet { update() } }
+  }
+
+  private fun <T> addDependency(child: AtomicProperty<T>, parent: ObservableClearableProperty<*>, update: AtomicProperty<T>.() -> Unit) {
     val childNode = properties[child] ?: throw IllegalArgumentException("Unregistered child property")
     val parentNode = properties[parent] ?: throw IllegalArgumentException("Unregistered parent property")
     dependencies.putIfAbsent(parentNode, CopyOnWriteArrayList())
@@ -63,9 +71,11 @@ class PropertyGraph(debugName: String? = null) {
     var isPropagationBlocked = false
   }
 
-  private class Dependency<T>(val node: PropertyNode, private val property: AtomicProperty<T>, private val update: () -> T) {
-    fun applyUpdate() {
-      property.updateAndGet { update() }
-    }
+  private data class Dependency<T>(
+    val node: PropertyNode,
+    val property: AtomicProperty<T>,
+    val update: AtomicProperty<T>.() -> Unit
+  ) {
+    fun applyUpdate() = property.update()
   }
 }

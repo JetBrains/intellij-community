@@ -36,6 +36,9 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   private final DefaultComboBoxModel pluginUpdatePolicyComboModel = new DefaultComboBoxModel();
   private JComponent anchor;
 
+  private JCheckBox showDialogWithAdvancedSettingsCheckBox;
+  private boolean isShowAdvancedSettingsCheckBox = false;
+
   public MavenGeneralPanel() {
     fillOutputLevelCombobox();
     fillChecksumPolicyCombobox();
@@ -61,7 +64,14 @@ public class MavenGeneralPanel implements PanelWithAnchor {
                           each -> Pair.create(each.getDisplayString(), each));
   }
 
+
+  public void showCheckBoxWithAdvancedSettings() {
+    isShowAdvancedSettingsCheckBox = true;
+  }
+
   public JComponent createComponent() {
+    showDialogWithAdvancedSettingsCheckBox.setVisible(isShowAdvancedSettingsCheckBox);
+
     mavenPathsForm.createComponent(); // have to initialize all listeners
     return panel;
   }
@@ -83,6 +93,8 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     data.setAlwaysUpdateSnapshots(alwaysUpdateSnapshotsCheckBox.isSelected());
     data.setThreads(threadsEditor.getText());
 
+    data.setShowDialogWithAdvancedSettings(showDialogWithAdvancedSettingsCheckBox.isSelected());
+
     data.endUpdate();
   }
 
@@ -101,6 +113,8 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     ComboBoxUtil.select(checksumPolicyComboModel, data.getChecksumPolicy());
     ComboBoxUtil.select(failPolicyComboModel, data.getFailureBehavior());
     ComboBoxUtil.select(pluginUpdatePolicyComboModel, data.getPluginUpdatePolicy());
+
+    showDialogWithAdvancedSettingsCheckBox.setSelected(data.isShowDialogWithAdvancedSettings());
   }
 
   @Nls
