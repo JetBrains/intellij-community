@@ -19,7 +19,10 @@ import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Rectangle
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.event.AncestorEvent
@@ -33,7 +36,8 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
 
   private val viewComponent: JPanel = JPanel().apply { layout = BorderLayout(); background = WelcomeScreenUIManager.getProjectsBackground() }
   private val myScrollPane: JBScrollPane = JBScrollPane(viewComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                                                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply { border = JBUI.Borders.empty()}
+                                                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply { border = JBUI.Borders.empty() }
+  private val contentPanel: JPanel = JPanel()
 
   private val interactiveCoursesHeader: JTextPane = HeightLimitedPane(IdeBundle.message("welcome.screen.learnIde.interactive.courses.text"),
                                                                       5, HeaderColor, true)
@@ -47,26 +51,25 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     isOpaque = true
     background = WelcomeScreenUIManager.getProjectsBackground()
 
-    val contentPanel = JPanel()
-    contentPanel.layout = BoxLayout(contentPanel, BoxLayout.PAGE_AXIS)
-
-    //get all Interactive Courses
-    contentPanel.initInteractiveCoursesPanel()
-    contentPanel.addHelpAndResourcesPanel()
-    contentPanel.add(Box.createVerticalGlue())
+    contentPanel.apply {
+      layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
+      border = EmptyBorder(24, 24, 24, 24)
+      isOpaque = false
+      initInteractiveCoursesPanel()
+      initHelpAndResourcePanel()
+      add(helpAndResourcesPanel)
+      add(Box.createVerticalGlue())
+      viewComponent.add(this, BorderLayout.CENTER)
+    }
 
     //set LearnPanel UI
-    contentPanel.border = EmptyBorder(24, 24, 24, 24)
-    contentPanel.isOpaque = false
-    viewComponent.add(contentPanel, BorderLayout.CENTER)
     add(myScrollPane, BorderLayout.CENTER)
-
     contentPanel.bounds = Rectangle(contentPanel.location, contentPanel.preferredSize)
     revalidate()
     repaint()
   }
 
-  private fun Container.addHelpAndResourcesPanel() {
+  private fun initHelpAndResourcePanel() {
     helpAndResourcesPanel.apply {
       layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
       isOpaque = false
@@ -74,28 +77,28 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
       add(rigid(0, 1))
       addHelpActions()
     }
-    this.add(helpAndResourcesPanel)
   }
 
-  private fun Container.initInteractiveCoursesPanel() {
-    this.updateInteractiveCoursesPanel()
-    InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.addExtensionPointListener(object: ExtensionPointListener<InteractiveCourseFactory> {
-      override fun extensionAdded(extension: InteractiveCourseFactory, pluginDescriptor: PluginDescriptor) {
-        this@initInteractiveCoursesPanel.updateInteractiveCoursesPanel()
-      }
+  private fun initInteractiveCoursesPanel() {
+    updateInteractiveCoursesPanel()
+    InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.addExtensionPointListener(
+      object : ExtensionPointListener<InteractiveCourseFactory> {
+        override fun extensionAdded(extension: InteractiveCourseFactory, pluginDescriptor: PluginDescriptor) {
+          updateInteractiveCoursesPanel()
+        }
 
-      override fun extensionRemoved(extension: InteractiveCourseFactory, pluginDescriptor: PluginDescriptor) {
-        this@initInteractiveCoursesPanel.updateInteractiveCoursesPanel()
-      }
-    }, parentDisposable)
+        override fun extensionRemoved(extension: InteractiveCourseFactory, pluginDescriptor: PluginDescriptor) {
+          updateInteractiveCoursesPanel()
+        }
+      }, parentDisposable)
   }
 
-  private fun Container.updateInteractiveCoursesPanel() {
+  private fun updateInteractiveCoursesPanel() {
     val interactiveCoursesExtensions: Array<InteractiveCourseFactory> = InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.extensions
     //clear before
     interactiveCoursesPanel.removeAll()
-    this.remove(interactiveCoursesPanel)
-    this.remove(interactiveCoursesPanelBottomGap)
+    contentPanel.remove(interactiveCoursesPanel)
+    contentPanel.remove(interactiveCoursesPanelBottomGap)
 
     interactiveCoursesPanel.layout = BoxLayout(interactiveCoursesPanel, BoxLayout.PAGE_AXIS)
     interactiveCoursesPanel.isOpaque = false
@@ -114,12 +117,11 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
           rootPane?.defaultButton = actionButton
         }
       })
-      this.add(interactiveCoursesPanel)
-      this.add(interactiveCoursesPanelBottomGap)
+      contentPanel.add(interactiveCoursesPanel)
+      contentPanel.add(interactiveCoursesPanelBottomGap)
     }
-    this.revalidate()
-    this.repaint()
-
+    revalidate()
+    repaint()
   }
 
 
@@ -133,7 +135,7 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     val anActionEvent = emptyWelcomeScreenEventFromAction(helpActions)
     helpActions.getChildren(anActionEvent).forEach {
       if (setOf<String>(HelpTopicsAction::class.java.simpleName, OnlineDocAction::class.java.simpleName,
-                        JetBrainsTvAction::class.java.simpleName).any { simpleName ->  simpleName == it.javaClass.simpleName }) {
+                        JetBrainsTvAction::class.java.simpleName).any { simpleName -> simpleName == it.javaClass.simpleName }) {
         helpAndResourcesPanel.add(linkLabelByAction(it).wrapWithUrlPanel())
       }
       else {
@@ -145,7 +147,7 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
   }
 
   private fun LinkLabel<Any>.wrapWithUrlPanel(): JPanel {
-    val jPanel =  JPanel()
+    val jPanel = JPanel()
     jPanel.isOpaque = false
     jPanel.layout = BoxLayout(jPanel, BoxLayout.LINE_AXIS)
     jPanel.add(this, BorderLayout.CENTER)
