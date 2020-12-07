@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.lang.PathClassLoaderBuilder;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
@@ -132,7 +131,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private final int instanceId;
   private volatile int state = ACTIVE;
 
-  public PluginClassLoader(@NotNull PathClassLoaderBuilder builder,
+  public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot,

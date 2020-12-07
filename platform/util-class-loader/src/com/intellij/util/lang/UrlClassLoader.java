@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * A class loader that allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
@@ -95,8 +96,8 @@ public class UrlClassLoader extends ClassLoader {
     return new long[]{ClassPath.getTotalTime(), ClassPath.getTotalRequests()};
   }
 
-  public static @NotNull PathClassLoaderBuilder build() {
-    return new PathClassLoaderBuilder();
+  public static @NotNull UrlClassLoader.Builder build() {
+    return new Builder();
   }
 
   /** @deprecated use {@link #build()} (left for compatibility with `java.system.class.loader` setting) */
@@ -115,8 +116,8 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
-  private static @NotNull PathClassLoaderBuilder createDefaultBuilderForJdk(@NotNull ClassLoader parent) {
-    PathClassLoaderBuilder configuration = new PathClassLoaderBuilder();
+  private static @NotNull UrlClassLoader.Builder createDefaultBuilderForJdk(@NotNull ClassLoader parent) {
+    Builder configuration = new Builder();
 
     if (parent instanceof URLClassLoader) {
       URL[] urls = ((URLClassLoader)parent).getURLs();
@@ -143,7 +144,7 @@ public class UrlClassLoader extends ClassLoader {
     return configuration;
   }
 
-  protected UrlClassLoader(@NotNull PathClassLoaderBuilder builder) {
+  protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder) {
     super(builder.parent);
 
     files = builder.files;
@@ -344,7 +345,7 @@ public class UrlClassLoader extends ClassLoader {
    * The implementation is subject to change so one shouldn't rely on it.
    *
    * @see #createCachePool()
-   * @see PathClassLoaderBuilder#useCache
+   * @see Builder#useCache
    */
   public interface CachePool { }
 
@@ -469,5 +470,168 @@ public class UrlClassLoader extends ClassLoader {
     }
 
     return 0;
+  }
+
+  public static final class Builder {
+    private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
+
+    List<Path> files = Collections.emptyList();
+    Set<Path> pathsWithProtectionDomain;
+    ClassLoader parent;
+    boolean lockJars = true;
+    boolean useCache;
+    boolean isClassPathIndexEnabled;
+    boolean preloadJarContents = true;
+    boolean isBootstrapResourcesAllowed;
+    boolean errorOnMissingJar = true;
+    boolean lazyClassloadingCaches;
+    @Nullable CachePoolImpl cachePool;
+    @Nullable Predicate<Path> cachingCondition;
+
+    Builder() { }
+
+    /**
+     * @deprecated Use {@link #files(List)}. Using of {@link URL} is discoruaged in favoir of modern {@lin Path}.
+     */
+    @Deprecated
+    public @NotNull UrlClassLoader.Builder urls(@NotNull List<URL> urls) {
+      List<Path> files = new ArrayList<>(urls.size());
+      for (URL url : urls) {
+        files.add(Paths.get(url.getPath()));
+      }
+      this.files = files;
+      return this;
+    }
+
+    public @NotNull UrlClassLoader.Builder files(@NotNull List<Path> paths) {
+      this.files = paths;
+      return this;
+    }
+
+    /**
+     * Marks URLs that are signed by Sun/Oracle and whose signatures must be verified.
+     */
+    @NotNull UrlClassLoader.Builder urlsWithProtectionDomain(@NotNull Set<Path> value) {
+      pathsWithProtectionDomain = value;
+      return this;
+    }
+
+    public @NotNull UrlClassLoader.Builder parent(ClassLoader parent) {
+      this.parent = parent;
+      return this;
+    }
+
+    /**
+     * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading
+     * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification.
+     * Thus, the option is recommended when jars are not modified or process that uses this option is transient.
+     */
+    public @NotNull UrlClassLoader.Builder disallowLock() {
+      lockJars = false;
+      return this;
+    }
+
+    public @NotNull UrlClassLoader.Builder allowLock(boolean lockJars) {
+      this.lockJars = lockJars;
+      return this;
+    }
+
+    /**
+     * Build backward index of packages / class or resource names that allows avoiding IO during classloading.
+     */
+    public @NotNull UrlClassLoader.Builder useCache() {
+      useCache = true;
+      return this;
+    }
+
+    public @NotNull UrlClassLoader.Builder useCache(boolean useCache) {
+      this.useCache = useCache;
+      return this;
+    }
+
+    /**
+     * FileLoader will save list of files / packages under its root and use this information instead of walking filesystem for
+     * speedier classloading. Should be used only when the caches could be properly invalidated, e.g. when new file appears under
+     * FileLoader's root. Currently, the flag is used for faster unit test / developed Idea running, because Idea's make (as of 14.1) ensures deletion of
+     * such information upon appearing new file for output root.
+     * N.b. Idea make does not ensure deletion of cached information upon deletion of some file under local root but false positives are not a
+     * logical error since code is prepared for that and disk access is performed upon class / resource loading.
+     * See also Builder#usePersistentClasspathIndexForLocalClassDirectories.
+     */
+    public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories() {
+      this.isClassPathIndexEnabled = isClassPathIndexEnabledGlobalValue;
+      return this;
+    }
+
+    /**
+     * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
+     * that can be shared between several loaders.
+     *
+     * @param pool      cache pool
+     * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
+     */
+    public @NotNull UrlClassLoader.Builder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<Path> condition) {
+      useCache = true;
+      cachePool = (CachePoolImpl)pool;
+      cachingCondition = condition;
+      return this;
+    }
+
+    public @NotNull UrlClassLoader.Builder noPreload() {
+      preloadJarContents = false;
+      return this;
+    }
+
+    public @NotNull UrlClassLoader.Builder allowBootstrapResources() {
+      return allowBootstrapResources(true);
+    }
+
+    public @NotNull UrlClassLoader.Builder allowBootstrapResources(boolean allowBootstrapResources) {
+      isBootstrapResourcesAllowed = allowBootstrapResources;
+      return this;
+    }
+
+    public @NotNull UrlClassLoader.Builder setLogErrorOnMissingJar(boolean log) {
+      errorOnMissingJar = log;
+      return this;
+    }
+
+    /**
+     * Package contents information in Jar/File loaders will be lazily retrieved / cached upon classloading.
+     * Important: this option will result in much smaller initial overhead but for bulk classloading (like complete IDE start) it is less
+     * efficient (in number of disk / native code accesses / CPU spent) than combination of useCache / usePersistentClasspathIndexForLocalClassDirectories.
+     */
+    public @NotNull UrlClassLoader.Builder useLazyClassloadingCaches(boolean pleaseBeLazy) {
+      lazyClassloadingCaches = pleaseBeLazy;
+      return this;
+    }
+
+    public @NotNull UrlClassLoader.Builder autoAssignUrlsWithProtectionDomain() {
+      Set<Path> result = new HashSet<>();
+      for (Path path : files) {
+        if (isUrlNeedsProtectionDomain(path)) {
+          result.add(path);
+        }
+      }
+      pathsWithProtectionDomain = result;
+      return this;
+    }
+
+    public @NotNull UrlClassLoader get() {
+      return new UrlClassLoader(this);
+    }
+
+    private static boolean isUrlNeedsProtectionDomain(@NotNull Path file) {
+      String path = file.toString();
+      // BouncyCastle needs a protection domain
+      if (path.endsWith(".jar")) {
+        int offset = path.lastIndexOf(file.getFileSystem().getSeparator().charAt(0)) + 1;
+        //noinspection SpellCheckingInspection
+        if (path.startsWith("bcprov-", offset) || path.startsWith("bcpkix-", offset)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

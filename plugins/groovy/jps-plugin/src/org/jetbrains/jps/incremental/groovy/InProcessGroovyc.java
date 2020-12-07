@@ -13,7 +13,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.PathClassLoaderBuilder;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,7 +203,7 @@ final class InProcessGroovyc implements GroovycFlavor {
     return new JointCompilationClassLoader(buildCompilationClassLoader(compilationClassPath, groovyClassLoader));
   }
 
-  private PathClassLoaderBuilder buildCompilationClassLoader(Collection<String> compilationClassPath, ClassLoader parent) {
+  private UrlClassLoader.Builder buildCompilationClassLoader(Collection<String> compilationClassPath, ClassLoader parent) {
     return UrlClassLoader.build().
       files(toPaths(compilationClassPath))
       .parent(parent)

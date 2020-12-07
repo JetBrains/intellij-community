@@ -66,7 +66,7 @@ public final class ClassPath {
     }
   }
 
-  ClassPath(List<Path> files, @NotNull Set<Path> filesWithProtectionDomain, @NotNull PathClassLoaderBuilder configuration) {
+  ClassPath(List<Path> files, @NotNull Set<Path> filesWithProtectionDomain, @NotNull UrlClassLoader.Builder configuration) {
     lazyClassloadingCaches = configuration.lazyClassloadingCaches;
     lockJars = configuration.lockJars;
     useCache = configuration.useCache && !lazyClassloadingCaches;

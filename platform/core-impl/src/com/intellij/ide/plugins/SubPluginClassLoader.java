@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.util.lang.PathClassLoaderBuilder;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +10,7 @@ final class SubPluginClassLoader extends PluginClassLoader {
   private final String[] packagePrefixes;
 
   SubPluginClassLoader(@NotNull IdeaPluginDescriptorImpl pluginDescriptor,
-                       @NotNull PathClassLoaderBuilder urlClassLoaderBuilder,
+                       @NotNull UrlClassLoader.Builder urlClassLoaderBuilder,
                        @NotNull ClassLoader @NotNull [] parents,
                        @NotNull String @NotNull [] packagePrefixes,
                        @NotNull ClassLoader coreLoader) {

@@ -36,7 +36,7 @@ import static org.junit.Assert.*;
 public class SecureUrlClassLoaderTest {
   /**
    * IDEA's UrlClassLoader should verify JAR signatures and checksum if they are exists
-   * but only if JAR url specified in {@link PathClassLoaderBuilder#pathsWithProtectionDomain}.
+   * but only if JAR url specified in {@link UrlClassLoader.Builder#pathsWithProtectionDomain}.
    */
   @Test
   public void testSignedJars() throws Exception {

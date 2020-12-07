@@ -18,7 +18,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.PathClassLoaderBuilder;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -138,8 +137,8 @@ public final class AntTasksProvider {
       });
     }
 
-    private static PathClassLoaderBuilder getBuilder(List<Path> files) {
-      PathClassLoaderBuilder builder = build().files(files).disallowLock().noPreload();
+    private static Builder getBuilder(List<Path> files) {
+      Builder builder = build().files(files).disallowLock().noPreload();
       builder.parent(ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9());
       return builder;
     }

@@ -5,7 +5,6 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.lang.PathClassLoaderBuilder;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +65,7 @@ public final class BootstrapClassLoaderUtil {
       }
     }
 
-    PathClassLoaderBuilder builder = UrlClassLoader.build()
+    UrlClassLoader.Builder builder = UrlClassLoader.build()
       .files(filterClassPath(classpath))
       .usePersistentClasspathIndexForLocalClassDirectories()
       .autoAssignUrlsWithProtectionDomain()
@@ -248,7 +247,7 @@ public final class BootstrapClassLoaderUtil {
   private static final class TransformingLoader extends UrlClassLoader {
     private final List<BytecodeTransformer> myTransformers;
 
-    TransformingLoader(PathClassLoaderBuilder builder, List<BytecodeTransformer> transformers) {
+    TransformingLoader(Builder builder, List<BytecodeTransformer> transformers) {
       super(builder);
       myTransformers = Collections.unmodifiableList(transformers);
     }
