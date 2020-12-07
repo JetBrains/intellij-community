@@ -972,7 +972,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @NotNull
     private PatchDiffRequest createTextShelveRequest(@NotNull ShelvedChange shelvedChange, @Nullable @Nls String title)
       throws VcsException {
-      TextFilePatch patch = myPreloader.getPatch(shelvedChange, null);
+      TextFilePatch patch = myPreloader.getPatch(shelvedChange);
       return new PatchDiffRequest(createAppliedTextPatch(patch), title, null);
     }
 
