@@ -61,9 +61,9 @@ object JavaCompletionFeatures {
     ANOTHER;
 
     companion object {
-      val ALL_VALUES: List<JavaKeyword> = values().toList()
+      private val ALL_VALUES: Map<String, JavaKeyword> = values().associateBy { it.toString() }
 
-      fun getValue(text: String): JavaKeyword? = ALL_VALUES.find { it.toString() == text }
+      fun getValue(text: String): JavaKeyword? = ALL_VALUES[text]
     }
 
     override fun toString(): String = name.toLowerCase(Locale.ENGLISH)
