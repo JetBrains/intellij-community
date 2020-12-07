@@ -39,17 +39,16 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
+  private final AppEditorFontPanel myMainPanel;
   private final EditorColorsScheme myScheme;
   private JPanel myWarningPanel;
   private JLabel myEditorFontLabel;
-  private JButton myRestoreButton;
   private final FontPreferences myDefaultPreferences;
 
-  protected AppEditorFontOptionsPanel(EditorColorsScheme scheme) {
+  protected AppEditorFontOptionsPanel(@NotNull AppEditorFontPanel mainPanel, EditorColorsScheme scheme) {
+    myMainPanel = mainPanel;
     myScheme = scheme;
     myDefaultPreferences = new FontPreferencesImpl();
     AppEditorFontOptions.initDefaults((ModifiableFontPreferences)myDefaultPreferences);
@@ -73,17 +72,6 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     c.gridy ++;
     c.insets = JBUI.insets(ADDITIONAL_VERTICAL_GAP, 0);
     topPanel.add(createTypographySettingsPanel(), c);
-    c.gridy ++;
-    topPanel.add(new JSeparator(), c);
-    c.gridy ++;
-    c.fill = GridBagConstraints.NONE;
-    myRestoreButton = new JButton(ApplicationBundle.message("settings.editor.font.restored.defaults"));
-    myRestoreButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        restoreDefaults();
-      }
-    });
     addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
       public void fontChanged() {
@@ -91,7 +79,6 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
         updateRestoreButtonState();
       }
     });
-    topPanel.add(myRestoreButton, c);
     return topPanel;
   }
 
@@ -106,7 +93,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     return typographyPanel;
   }
 
-  private void restoreDefaults() {
+  void restoreDefaults() {
     AppEditorFontOptions.initDefaults((ModifiableFontPreferences)getFontPreferences());
     updateOnChangedFont();
   }
@@ -117,7 +104,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
   }
 
   private void updateRestoreButtonState() {
-    myRestoreButton.setEnabled(!myDefaultPreferences.equals(getFontPreferences()));
+    myMainPanel.setRestoreLabelEnabled(!myDefaultPreferences.equals(getFontPreferences()));
   }
 
   private JPanel createMessagePanel() {
