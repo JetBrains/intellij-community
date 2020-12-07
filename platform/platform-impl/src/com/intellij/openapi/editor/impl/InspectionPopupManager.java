@@ -238,6 +238,9 @@ class InspectionPopupManager {
       else if (getAnalyzerStatus().getExpandedStatus().size() > 0 && getAnalyzerStatus().getAnalyzingType() != AnalyzingType.EMPTY) {
         myContent.add(createDetailsPanel(), gc);
       }
+      else if (!passes.isEmpty()){
+        myProgressPanel.setBorder(JBUI.Borders.emptyBottom(12));
+      }
     }
 
     myContent.add(createLowerPanel(controller),
