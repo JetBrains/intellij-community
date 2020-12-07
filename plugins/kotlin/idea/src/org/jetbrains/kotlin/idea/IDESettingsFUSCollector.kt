@@ -57,7 +57,8 @@ class IDESettingsFUSCollector : ProjectUsagesCollector() {
                 "KotlinBuildScript",
                 "Script_definition_for_extension_scripts_and_IDE_console",
                 "MainKtsScript",
-                "Kotlin_Script"
+                "Kotlin_Script",
+                "Space_Automation"
             )
         )
         private val scriptingPluginInfoField = EventFields.PluginInfo
