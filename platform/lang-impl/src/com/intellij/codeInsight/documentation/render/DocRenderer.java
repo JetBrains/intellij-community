@@ -86,36 +86,52 @@ class DocRenderer implements EditorCustomElementRenderer {
   final DocRenderItem myItem;
   private boolean myContentUpdateNeeded;
   private EditorPane myPane;
+  private int myCachedWidth = -1;
+  private int myCachedHeight = -1;
 
   DocRenderer(@NotNull DocRenderItem item) {
     myItem = item;
   }
 
-  void updateContent() {
+  void update(boolean updateSize, boolean updateContent) {
     Inlay<DocRenderer> inlay = myItem.inlay;
     if (inlay != null) {
-      myContentUpdateNeeded = true;
+      if (updateSize) {
+        myCachedWidth = -1;
+        myCachedHeight = -1;
+      }
+      myContentUpdateNeeded = updateContent;
       inlay.update();
     }
   }
 
   @Override
   public int calcWidthInPixels(@NotNull Inlay inlay) {
-    return calcInlayWidth(inlay.getEditor());
+    if (myCachedWidth < 0) {
+      return myCachedWidth = calcInlayWidth(inlay.getEditor());
+    }
+    else {
+      return myCachedWidth;
+    }
   }
 
   @Override
   public int calcHeightInPixels(@NotNull Inlay inlay) {
-    Editor editor = inlay.getEditor();
-    int indent = 0;
-    // optimize editor opening: skip 'proper' width calculation for 'Loading...' inlays
-    if (myItem.textToRender != null) {
-      indent = calcInlayStartX() - editor.getInsets().left;
+    if (myCachedHeight < 0) {
+      Editor editor = inlay.getEditor();
+      int indent = 0;
+      // optimize editor opening: skip 'proper' width calculation for 'Loading...' inlays
+      if (myItem.textToRender != null) {
+        indent = calcInlayStartX() - editor.getInsets().left;
+      }
+      int width = Math.max(0, calcInlayWidth(editor) - indent - scale(LEFT_INSET) - scale(RIGHT_INSET));
+      JComponent component = getRendererComponent(inlay, width);
+      return myCachedHeight = Math.max(editor.getLineHeight(),
+                                       component.getPreferredSize().height + scale(TOP_BOTTOM_INSETS) * 2 + scale(TOP_BOTTOM_MARGINS) * 2);
     }
-    int width = Math.max(0, calcInlayWidth(editor) - indent - scale(LEFT_INSET) - scale(RIGHT_INSET));
-    JComponent component = getRendererComponent(inlay, width);
-    return Math.max(editor.getLineHeight(),
-                    component.getPreferredSize().height + scale(TOP_BOTTOM_INSETS) * 2 + scale(TOP_BOTTOM_MARGINS) * 2);
+    else {
+      return myCachedHeight;
+    }
   }
 
   @Override
