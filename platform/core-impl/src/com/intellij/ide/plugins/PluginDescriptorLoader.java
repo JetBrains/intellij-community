@@ -2,10 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
@@ -262,11 +259,11 @@ public final class PluginDescriptorLoader {
     try {
       Path file;
       if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
-        file = Paths.get(Strings.trimEnd(urlToFilePath(resource.getPath()).replace('\\', '/'), pathName)).getParent();
+        file = Paths.get(Strings.trimEnd(urlToFilePath(resource.getPath(), SystemInfoRt.isWindows).replace('\\', '/'), pathName)).getParent();
         return loadDescriptorFromFileOrDir(file, pathName, loadingContext, Files.isDirectory(file));
       }
       else if (URLUtil.JAR_PROTOCOL.equals(resource.getProtocol())) {
-        file = Paths.get(urlToFilePath(resource.getPath()));
+        file = Paths.get(urlToFilePath(resource.getPath(), SystemInfoRt.isWindows));
         Path parentFile = file.getParent();
         if (parentFile == null || !parentFile.endsWith("lib")) {
           return loadDescriptorFromJar(file, pathName, loadingContext.pathResolver, loadingContext, null);
@@ -299,9 +296,15 @@ public final class PluginDescriptorLoader {
 
   // work around corrupted URLs produced by File.getURL()
   // public for test
-  public static @NotNull String urlToFilePath(@NotNull String url) {
+  public static @NotNull String urlToFilePath(@NotNull String url, boolean isPoorOs) {
     int start = url.startsWith("file:") ? "file:".length() : 0;
     int end = url.indexOf(URLUtil.JAR_SEPARATOR);
+    if (isPoorOs && url.charAt(start) == '/') {
+      // trim leading slashes before drive letter
+      if (url.length() > (start + 2) && url.charAt(start + 2) == ':') {
+        start++;
+      }
+    }
     return URLUtil.unescapePercentSequences(url, start, end < 0 ? url.length() : end).toString();
   }
 

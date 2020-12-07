@@ -3,7 +3,6 @@
 package com.intellij.util.io;
 
 import com.google.common.collect.Maps;
-import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -18,6 +17,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 
+import static com.intellij.ide.plugins.PluginDescriptorLoader.urlToFilePath;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
@@ -59,15 +59,16 @@ public class UrlUtilTest {
 
   @Test
   public void urlToPath() {
-    String p1 = PluginDescriptorLoader.urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar!/");
-    String p2 = PluginDescriptorLoader.urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar");
-    String p3 = PluginDescriptorLoader.urlToFilePath("C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar");
+    String p1 = urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar!/", false);
+    String p2 = urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar", false);
+    String p3 = urlToFilePath("C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar", false);
     assertThat(p1).isEqualTo(p2);
     assertThat(p1).isEqualTo(p3);
     assertThat(p1).isEqualTo("C:\\Program Files\\JetBrains\\IntelliJ IDEA 211.2638\\lib\\resources.jar");
-    assertThat(PluginDescriptorLoader.urlToFilePath("file:/Users/foo/r.jar")).isEqualTo("/Users/foo/r.jar");
-    assertThat(PluginDescriptorLoader.urlToFilePath("file:/Users/path with space/r.jar")).isEqualTo("/Users/path with space/r.jar");
-    assertThat(PluginDescriptorLoader.urlToFilePath("/Users/path with space/r.jar")).isEqualTo("/Users/path with space/r.jar");
+    assertThat(urlToFilePath("file:/C:\\Program%20Files\\JetBrains\\resources.jar!/", true)).isEqualTo("C:\\Program Files\\JetBrains\\resources.jar");
+    assertThat(urlToFilePath("file:/Users/foo/r.jar", false)).isEqualTo("/Users/foo/r.jar");
+    assertThat(urlToFilePath("file:/Users/path with space/r.jar", false)).isEqualTo("/Users/path with space/r.jar");
+    assertThat(urlToFilePath("/Users/path with space/r.jar", false)).isEqualTo("/Users/path with space/r.jar");
   }
 
   @Test
