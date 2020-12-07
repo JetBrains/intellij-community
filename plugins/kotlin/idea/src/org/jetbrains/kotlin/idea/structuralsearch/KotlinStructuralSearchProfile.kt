@@ -343,7 +343,10 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
     }
 
     private fun isProbableExpression(pattern: String, fileType: LanguageFileType, dialect: Language, project: Project): Boolean {
-        val searchElements = createPatternTree(pattern, PatternTreeContext.Block, fileType, dialect, null, project, false)
+        if(pattern.isEmpty()) return false
+        val searchElements = try {
+            createPatternTree(pattern, PatternTreeContext.Block, fileType, dialect, null, project, false)
+        } catch (e: Exception) { return false }
         return searchElements[0] is KtDeclaration
     }
 

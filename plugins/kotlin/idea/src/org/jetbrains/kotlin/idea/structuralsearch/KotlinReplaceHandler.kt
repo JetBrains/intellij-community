@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.util.elementType
 import com.intellij.structuralsearch.StructuralReplaceHandler
 import com.intellij.structuralsearch.StructuralSearchUtil
