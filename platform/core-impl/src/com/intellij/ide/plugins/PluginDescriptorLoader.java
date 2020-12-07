@@ -7,7 +7,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.serialization.SerializationException;
@@ -23,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
@@ -266,12 +262,11 @@ public final class PluginDescriptorLoader {
     try {
       Path file;
       if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
-        file = Paths.get(Strings.trimEnd(FileUtilRt.toSystemIndependentName(urlToFile(resource).toString()), pathName)).getParent();
+        file = Paths.get(Strings.trimEnd(urlToFilePath(resource.getPath()).replace('\\', '/'), pathName)).getParent();
         return loadDescriptorFromFileOrDir(file, pathName, loadingContext, Files.isDirectory(file));
       }
       else if (URLUtil.JAR_PROTOCOL.equals(resource.getProtocol())) {
-        String path = resource.getFile();
-        file = urlToFile(path.substring(0, path.indexOf(URLUtil.JAR_SEPARATOR)));
+        file = Paths.get(urlToFilePath(resource.getPath()));
         Path parentFile = file.getParent();
         if (parentFile == null || !parentFile.endsWith("lib")) {
           return loadDescriptorFromJar(file, pathName, loadingContext.pathResolver, loadingContext, null);
@@ -303,30 +298,11 @@ public final class PluginDescriptorLoader {
   }
 
   // work around corrupted URLs produced by File.getURL()
-  private static @NotNull Path urlToFile(@NotNull String url) throws URISyntaxException {
-    try {
-      return Paths.get(new URI(url));
-    }
-    catch (URISyntaxException e) {
-      if (url.indexOf(' ') > 0) {
-        return Paths.get(new URI(url.replace(" ", "%20")));
-      }
-      throw e;
-    }
-  }
-
-  // work around corrupted URLs produced by File.getURL()
-  private static @NotNull Path urlToFile(URL url) throws URISyntaxException, MalformedURLException {
-    try {
-      return Paths.get(url.toURI());
-    }
-    catch (URISyntaxException e) {
-      String str = url.toString();
-      if (str.indexOf(' ') > 0) {
-        return Paths.get(new URL(str.replace(" ", "%20")).toURI());
-      }
-      throw e;
-    }
+  // public for test
+  public static @NotNull String urlToFilePath(@NotNull String url) {
+    int start = url.startsWith("file:") ? "file:".length() : 0;
+    int end = url.indexOf(URLUtil.JAR_SEPARATOR);
+    return URLUtil.unescapePercentSequences(url, start, end < 0 ? url.length() : end).toString();
   }
 
   private static void loadDescriptorsFromProperty(@NotNull PluginLoadingResult result,

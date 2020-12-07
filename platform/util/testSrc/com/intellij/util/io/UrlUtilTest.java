@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.io;
 
 import com.google.common.collect.Maps;
+import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -54,6 +55,19 @@ public class UrlUtilTest {
     assertNotNull(pair);
     assertEquals(expected1, pair.first);
     assertEquals(expected2, pair.second);
+  }
+
+  @Test
+  public void urlToPath() {
+    String p1 = PluginDescriptorLoader.urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar!/");
+    String p2 = PluginDescriptorLoader.urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar");
+    String p3 = PluginDescriptorLoader.urlToFilePath("C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar");
+    assertThat(p1).isEqualTo(p2);
+    assertThat(p1).isEqualTo(p3);
+    assertThat(p1).isEqualTo("C:\\Program Files\\JetBrains\\IntelliJ IDEA 211.2638\\lib\\resources.jar");
+    assertThat(PluginDescriptorLoader.urlToFilePath("file:/Users/foo/r.jar")).isEqualTo("/Users/foo/r.jar");
+    assertThat(PluginDescriptorLoader.urlToFilePath("file:/Users/path with space/r.jar")).isEqualTo("/Users/path with space/r.jar");
+    assertThat(PluginDescriptorLoader.urlToFilePath("/Users/path with space/r.jar")).isEqualTo("/Users/path with space/r.jar");
   }
 
   @Test
