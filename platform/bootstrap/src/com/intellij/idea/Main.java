@@ -7,8 +7,6 @@ import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -87,13 +85,6 @@ public final class Main {
 
     if (!isHeadless() && !checkGraphics()) {
       System.exit(NO_GRAPHICS);
-    }
-
-    // avoid loading of JavaVersion class
-    if (!System.getProperty("java.version", "").startsWith("11.") && JavaVersion.current().compareTo(JavaVersion.compose(11, 0, 0, 0, false)) < 0) {
-      showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.java.version"),
-                  BootstrapBundle.message("bootstrap.error.message.cannot.start.under.java.0.java.11.or.later.is.required", SystemInfo.JAVA_RUNTIME_VERSION), true);
-      System.exit(UNSUPPORTED_JAVA_VERSION);
     }
 
     try {

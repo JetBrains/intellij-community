@@ -4,9 +4,7 @@ package com.intellij.util.lang;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -17,12 +15,12 @@ public final class PathClassLoaderBuilder {
 
   List<Path> files = Collections.emptyList();
   Set<Path> pathsWithProtectionDomain;
-  ClassLoader myParent;
+  ClassLoader parent;
   boolean lockJars;
   boolean useCache;
   boolean isClassPathIndexEnabled;
   boolean preloadJarContents = true;
-  boolean myAllowBootstrapResources;
+  boolean isBootstrapResourcesAllowed;
   boolean errorOnMissingJar = true;
   boolean lazyClassloadingCaches;
   boolean logJarAccess;
@@ -45,25 +43,6 @@ public final class PathClassLoaderBuilder {
     return this;
   }
 
-  // Presense of this method is also checked in JUnitDevKitPatcher
-  PathClassLoaderBuilder urlsFromAppClassLoader(ClassLoader classLoader) {
-    if (classLoader instanceof URLClassLoader) {
-      URL[] urls = ((URLClassLoader)classLoader).getURLs();
-      files = new ArrayList<>(urls.length);
-      for (URL url : urls) {
-        files.add(Paths.get(url.getPath()));
-      }
-      return this;
-    }
-
-    String[] parts = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
-    files = new ArrayList<>(parts.length);
-    for (String s : parts) {
-      files.add(new File(s).toPath());
-    }
-    return this;
-  }
-
   /**
    * Marks URLs that are signed by Sun/Oracle and whose signatures must be verified.
    */
@@ -73,7 +52,7 @@ public final class PathClassLoaderBuilder {
   }
 
   public @NotNull PathClassLoaderBuilder parent(ClassLoader parent) {
-    myParent = parent;
+    this.parent = parent;
     return this;
   }
 
@@ -119,11 +98,6 @@ public final class PathClassLoaderBuilder {
     return this;
   }
 
-  public @NotNull PathClassLoaderBuilder logJarAccess(boolean logJarAccess) {
-    this.logJarAccess = logJarAccess;
-    return this;
-  }
-
   /**
    * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
    * that can be shared between several loaders.
@@ -148,7 +122,7 @@ public final class PathClassLoaderBuilder {
   }
 
   public @NotNull PathClassLoaderBuilder allowBootstrapResources(boolean allowBootstrapResources) {
-    myAllowBootstrapResources = allowBootstrapResources;
+    isBootstrapResourcesAllowed = allowBootstrapResources;
     return this;
   }
 

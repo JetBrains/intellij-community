@@ -58,7 +58,9 @@ final class ClasspathCache {
 
     private static void writeIntArray(@NotNull DataOutput writer, int @NotNull [] hashes) throws IOException {
       DataInputOutputUtilRt.writeINT(writer, hashes.length);
-      for(int hash: hashes) DataInputOutputUtilRt.writeINT(writer, hash);
+      for (int hash : hashes) {
+        DataInputOutputUtilRt.writeINT(writer, hash);
+      }
     }
 
     @NotNull NameFilter getNameFilter() {

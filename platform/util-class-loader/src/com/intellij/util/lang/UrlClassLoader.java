@@ -8,11 +8,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.ProtectionDomain;
@@ -101,11 +103,7 @@ public class UrlClassLoader extends ClassLoader {
   @Deprecated
   @ReviseWhenPortedToJDK("9")
   public UrlClassLoader(@NotNull ClassLoader parent) {
-    this(build().urlsFromAppClassLoader(parent).parent(parent.getParent()).allowLock().useCache()
-           .usePersistentClasspathIndexForLocalClassDirectories()
-           .allowBootstrapResources(Boolean.parseBoolean(System.getProperty("idea.allow.bootstrap.resources", "true")))
-           .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
-           .autoAssignUrlsWithProtectionDomain());
+    this(createDefaultBuilderForJdk(parent));
 
     // without this ToolProvider.getSystemJavaCompiler() does not work in jdk 9+
     try {
@@ -117,8 +115,36 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
+  private static @NotNull PathClassLoaderBuilder createDefaultBuilderForJdk(@NotNull ClassLoader parent) {
+    PathClassLoaderBuilder configuration = new PathClassLoaderBuilder();
+
+    if (parent instanceof URLClassLoader) {
+      URL[] urls = ((URLClassLoader)parent).getURLs();
+      configuration.files = new ArrayList<>(urls.length);
+      for (URL url : urls) {
+        configuration.files.add(Paths.get(url.getPath()));
+      }
+    }
+    else {
+      String[] parts = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
+      configuration.files = new ArrayList<>(parts.length);
+      for (String s : parts) {
+        configuration.files.add(new File(s).toPath());
+      }
+    }
+
+    configuration.parent = parent.getParent();
+    configuration.lockJars = true;
+    configuration.useCache = true;
+    configuration.isClassPathIndexEnabled = true;
+    configuration.isBootstrapResourcesAllowed = Boolean.parseBoolean(System.getProperty("idea.allow.bootstrap.resources", "true"));
+    configuration.lazyClassloadingCaches = Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false"));
+    configuration.autoAssignUrlsWithProtectionDomain();
+    return configuration;
+  }
+
   protected UrlClassLoader(@NotNull PathClassLoaderBuilder builder) {
-    super(builder.myParent);
+    super(builder.parent);
 
     files = builder.files;
 
@@ -129,7 +155,7 @@ public class UrlClassLoader extends ClassLoader {
 
     classPath = new ClassPath(files, urlsWithProtectionDomain, builder);
 
-    isBootstrapResourcesAllowed = builder.myAllowBootstrapResources;
+    isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
     classLoadingLocks = ourParallelCapableLoaders != null && ourParallelCapableLoaders.contains(getClass()) ? new ClassLoadingLocks() : null;
   }
 

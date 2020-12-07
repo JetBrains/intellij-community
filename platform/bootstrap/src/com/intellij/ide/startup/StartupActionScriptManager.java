@@ -3,7 +3,6 @@ package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -126,9 +125,9 @@ public final class StartupActionScriptManager {
 
   private static ActionCommand mapPaths(ActionCommand command, Path oldTarget, Path newTarget) {
     if (command instanceof CopyCommand) {
-      Path destination = mapPath(((CopyCommand)command).myDestination, oldTarget, newTarget);
+      Path destination = mapPath(((CopyCommand)command).destination, oldTarget, newTarget);
       if (destination != null) {
-        return new CopyCommand(Paths.get(((CopyCommand)command).mySource), destination);
+        return new CopyCommand(Paths.get(((CopyCommand)command).source), destination);
       }
     }
     else if (command instanceof UnzipCommand) {
@@ -169,12 +168,12 @@ public final class StartupActionScriptManager {
   public static final class CopyCommand implements Serializable, ActionCommand {
     private static final long serialVersionUID = 201708031943L;
 
-    private final String mySource;
-    private final String myDestination;
+    private final String source;
+    private final String destination;
 
     public CopyCommand(@NotNull Path source, @NotNull Path destination) {
-      mySource = source.toAbsolutePath().toString();
-      myDestination = destination.toAbsolutePath().toString();
+      this.source = source.toAbsolutePath().toString();
+      this.destination = destination.toAbsolutePath().toString();
     }
 
     /**
@@ -182,33 +181,26 @@ public final class StartupActionScriptManager {
      */
     @Deprecated
     public CopyCommand(@NotNull File source, @NotNull File destination) {
-      mySource = source.getAbsolutePath();
-      myDestination = destination.getAbsolutePath();
+      this.source = source.getAbsolutePath();
+      this.destination = destination.getAbsolutePath();
     }
 
     @Override
     public void execute() throws IOException {
-      File source = new File(mySource), destination = new File(myDestination);
-      if (!source.isFile()) {
-        throw new IOException("Source file missing: " + source);
-      }
-
-      File destDir = destination.getParentFile();
-      if (!(destDir.isDirectory() || destDir.mkdirs())) {
-        throw new IOException("Cannot create a directory: " + destDir);
-      }
-
-      FileUtilRt.copy(source, destination);
+      Path destination = Paths.get(this.destination);
+      Path destDir = destination.getParent();
+      Files.createDirectories(destDir);
+      Files.copy(Paths.get(source), destination);
     }
 
     @Override
     @NonNls
     public String toString() {
-      return "copy[" + mySource + "," + myDestination + "]";
+      return "copy[" + source + "," + destination + "]";
     }
 
     public String getSource() {
-      return mySource;
+      return source;
     }
   }
 
@@ -280,10 +272,7 @@ public final class StartupActionScriptManager {
 
     @Override
     public void execute() throws IOException {
-      File source = new File(mySource);
-      if (source.exists() && !FileUtilRt.delete(source)) {
-        throw new IOException("Cannot delete: " + source);
-      }
+      Files.deleteIfExists(Paths.get(mySource));
     }
 
     @Override

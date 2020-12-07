@@ -25,7 +25,8 @@ public final class ClassPath {
   private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
 
-  static final boolean recordLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
+  static final boolean recordLoadingInfo = Boolean.getBoolean("idea.record.classpath.info");
+  static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
 
   private static final Collection<Map.Entry<String, Path>> loadedClasses;
   private static final AtomicLong ourTotalTime = new AtomicLong();
@@ -55,7 +56,7 @@ public final class ClassPath {
     // insertion order must be preserved
     loadedClasses = (recordLoadingInfo || Boolean.getBoolean("idea.record.classloading.stats")) ? new ConcurrentLinkedQueue<>() : null;
 
-    if (recordLoadingInfo) {
+    if (logLoadingInfo) {
       Runtime.getRuntime().addShutdownHook(new Thread(() -> {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("Classloading requests: " + ClassPath.class.getClassLoader() + "," +
@@ -257,7 +258,7 @@ public final class ClassPath {
           }
         }
         push(urls);
-        if (recordLoadingInfo) {
+        if (logLoadingInfo) {
           //noinspection UseOfSystemOutOrSystemErr
           System.out.println("Loaded all " + referencedJars.length + " files " + (System.nanoTime() - s2) / 1000000 + "ms");
         }
@@ -434,7 +435,7 @@ public final class ClassPath {
     long time = System.nanoTime() - started;
     long totalTime = ourTotalTime.addAndGet(time);
     int totalRequests = ourTotalRequests.incrementAndGet();
-    if (recordLoadingInfo) {
+    if (logLoadingInfo) {
       if (time > 3000000L) {
         System.out.println(time / 1000000 + " ms for " + resourceName);
       }

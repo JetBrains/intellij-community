@@ -4,7 +4,6 @@ package com.intellij.ide;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.lang.PathClassLoaderBuilder;
 import com.intellij.util.lang.UrlClassLoader;
@@ -71,9 +70,8 @@ public final class BootstrapClassLoaderUtil {
       .files(filterClassPath(classpath))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
-      .logJarAccess(Boolean.getBoolean("idea.log.classpath.info"))
       .autoAssignUrlsWithProtectionDomain()
-      .parent(ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9())
+      .parent(ClassLoader.getPlatformClassLoader())
       .useCache();
     if (Boolean.parseBoolean(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
       builder.allowBootstrapResources();
