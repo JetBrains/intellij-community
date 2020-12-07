@@ -9,7 +9,6 @@ import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -30,9 +29,6 @@ import java.util.List;
 import java.util.Properties;
 
 public final class Main {
-  private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
-  private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.ide.plugins.MainRunner";
-
   public static final int NO_GRAPHICS = 1;
   public static final int RESTART_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
@@ -42,7 +38,7 @@ public final class Main {
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
   public static final int OUT_OF_MEMORY = 9;
-  public static final int UNSUPPORTED_JAVA_VERSION = 10;
+  @SuppressWarnings("unused") public static final int UNSUPPORTED_JAVA_VERSION = 10;  // reserved for future use, again
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
   public static final int ACTIVATE_WRONG_TOKEN_CODE = 13;
@@ -52,14 +48,13 @@ public final class Main {
 
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
 
+  private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.ide.plugins.MainRunner";
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  @SuppressWarnings("SSBasedInspection")
-  private static final String[] NO_ARGS = new String[0];
-  private static final List<@NonNls String> HEADLESS_COMMANDS = Arrays.asList(
+  private static final List<String> HEADLESS_COMMANDS = Arrays.asList(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
     "rdserver-headless", "thinClient-headless");
-  private static final List<@NonNls String> GUI_COMMANDS = Arrays.asList("diff", "merge");
+  private static final List<String> GUI_COMMANDS = Arrays.asList("diff", "merge");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
@@ -69,16 +64,18 @@ public final class Main {
   private Main() { }
 
   public static void main(String[] args) {
-    LinkedHashMap<@NonNls String, Long> startupTimings = new LinkedHashMap<>(6);
+    LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>(6);
     startupTimings.put("startup begin", System.nanoTime());
 
-    if (args.length == 1 && "%f".equals(args[0])) { // NON-NLS
-      args = NO_ARGS;
+    if (args.length == 1 && "%f".equals(args[0])) {
+      //noinspection SSBasedInspection
+      args = new String[0];
     }
 
     if (args.length == 1 && args[0].startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(args[0]);
-      args = NO_ARGS;
+      //noinspection SSBasedInspection
+      args = new String[0];
     }
 
     setFlags(args);
@@ -96,7 +93,7 @@ public final class Main {
     }
   }
 
-  private static void bootstrap(String[] args, LinkedHashMap<@NonNls String, Long> startupTimings) throws Throwable {
+  private static void bootstrap(String[] args, LinkedHashMap<String, Long> startupTimings) throws Throwable {
     startupTimings.put("properties loading", System.nanoTime());
     PathManager.loadProperties();
 
@@ -118,7 +115,8 @@ public final class Main {
     }
 
     WindowsCommandLineProcessor.ourMainRunnerClass = mainClass;
-    LOOKUP.findStatic(mainClass, "start", MethodType.methodType(void.class, String.class, String[].class, LinkedHashMap.class))
+    MethodHandles.lookup()
+      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class, String[].class, LinkedHashMap.class))
       .invokeExact(Main.class.getName() + "Impl", args, startupTimings);
   }
 
@@ -255,15 +253,12 @@ public final class Main {
     stream.println(message);
 
     boolean headless = !hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless();
-    if (headless) {
-      return;
-    }
+    if (headless) return;
 
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     }
-    catch (Throwable ignore) {
-    }
+    catch (Throwable ignore) { }
 
     try {
       JTextPane textPane = new JTextPane();
