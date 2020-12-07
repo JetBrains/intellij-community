@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -218,13 +219,15 @@ final class MacDmgBuilder {
   @CompileStatic(TypeCheckingMode.SKIP)
   private void buildDmg(String targetFileName) {
     buildContext.messages.progress("Building ${targetFileName}.dmg")
-    def dmgImageCopy = "$artifactsPath/${buildContext.fullBuildNumber}.png"
-    def dmgImagePath = (buildContext.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath
-    ant.copy(file: dmgImagePath, tofile: dmgImageCopy)
+    Path tempDir = buildContext.paths.tempDir.resolve("files-for-dmg-$targetFileName")
+    Files.createDirectories(tempDir)
+
+    Path dmgImageCopy = tempDir.resolve("${buildContext.fullBuildNumber}.png")
+    String dmgImagePath = (buildContext.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath
+    Files.copy(Paths.get(dmgImagePath), dmgImageCopy, StandardCopyOption.REPLACE_EXISTING)
     ftpAction("put") {
-      ant.fileset(file: dmgImageCopy)
+      ant.fileset(file: dmgImageCopy.toString())
     }
-    ant.delete(file: dmgImageCopy)
 
     ftpAction("put", false, "777") {
       ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
