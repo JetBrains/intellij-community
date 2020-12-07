@@ -42,8 +42,15 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
     }
   }
 
+  companion object {
+    val PLAIN_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED)
+    val MULTILINE_STRING_OPTIONS = arrayOf(UNDEFINED, TRIPLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED)
+    val ESCAPED_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED)
+    val INTERPOLATED_STRING_OPTIONS = arrayOf(UNDEFINED, DOUBLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED)
+  }
+
   @Volatile
-  var currentVersion = DOUBLE_QUOTED
+  var plainVersion = SINGLE_QUOTED
 
   @Volatile
   var escapeVersion = UNDEFINED
@@ -56,10 +63,6 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
 
   @Volatile
   var inspectGradle: Boolean = true
-
-  @Volatile
-  var inspectScripts: Boolean = true
-
 
   private fun JPanel.addStringKindComboBox(@Nls description: String,
                                            field: KMutableProperty<StringKind>,
@@ -88,15 +91,14 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
     val constraints = GridBagConstraints().apply {
       weightx = 1.0; weighty = 1.0; fill = GridBagConstraints.HORIZONTAL; anchor = GridBagConstraints.WEST
     }
-    val activeStringKinds = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED)
-    addStringKindComboBox("Default", ::currentVersion, activeStringKinds, 0, constraints)
-    addStringKindComboBox("Strings with escaping", ::escapeVersion, StringKind.values(), 1, constraints)
-    addStringKindComboBox("Strings with interpolation", ::interpolationVersion, StringKind.values(), 2, constraints)
-    addStringKindComboBox("Multiline string", ::multilineVersion, arrayOf(UNDEFINED, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED), 3, constraints)
+    addStringKindComboBox("Default", ::plainVersion, PLAIN_STRING_OPTIONS, 0, constraints)
+    addStringKindComboBox("Strings with escaping", ::escapeVersion, arrayOf(UNDEFINED, *ESCAPED_STRING_OPTIONS), 1, constraints)
+    addStringKindComboBox("Strings with interpolation", ::interpolationVersion, arrayOf(UNDEFINED, *INTERPOLATED_STRING_OPTIONS), 2, constraints)
+    addStringKindComboBox("Multiline string", ::multilineVersion, arrayOf(UNDEFINED, *MULTILINE_STRING_OPTIONS), 3, constraints)
   }
 
   private enum class TargetKind {
-    PLAIN_STRING, MULTILINE_STRING, ESCAPED_STRING
+    PLAIN_STRING, MULTILINE_STRING, ESCAPED_STRING, INTERPOLATED_STRING
   }
 
 
@@ -115,9 +117,16 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
       MULTILINE_STRING -> when (desiredKind) {
         TRIPLE_QUOTED -> "Multiline string should be quoted with '''"
         TRIPLE_DOUBLE_QUOTED -> "Multiline string should be quoted with \"\"\""
+        SLASHY -> "Multiline string should be slashy-quoted"
         else -> error("Unexpected error message")
       }
       ESCAPED_STRING -> "Escaping could be minimized"
+      INTERPOLATED_STRING -> when (desiredKind) {
+        DOUBLE_QUOTED -> "Interpolated string should be double-quoted"
+        SLASHY -> "Interpolated string should be slashy-quoted"
+        TRIPLE_DOUBLE_QUOTED -> "Interpolated string should be quoted with \"\"\""
+        else -> error("Unexpected error message")
+      }
     }
   }
 
@@ -133,7 +142,6 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
     containerPanel.apply {
       add(SeparatorFactory.createSeparator("Domain of usage", null))
       add(SingleCheckboxOptionsPanel("Inspect Gradle files", this@GroovyStringStyleViolationInspection, "inspectGradle"))
-      add(SingleCheckboxOptionsPanel("Inspect script files", this@GroovyStringStyleViolationInspection, "inspectScripts"))
     }
 
     compressingPanel.add(containerPanel, BorderLayout.NORTH)
@@ -142,37 +150,41 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
 
   override fun buildVisitor(): BaseInspectionVisitor = object : BaseInspectionVisitor() {
     override fun visitLiteralExpression(literal: GrLiteral) {
-      if (literal !is GrString) {
+      if (literal is GrString) {
+        handleGString(literal)
+      }
+      else {
         handlePlainString(literal)
       }
       super.visitLiteralExpression(literal)
     }
 
 
+    private fun handleGString(literal: GrLiteral) {
+      checkInconsistency(interpolationVersion, literal, INTERPOLATED_STRING, INTERPOLATED_STRING_OPTIONS)
+    }
+
     private fun handlePlainString(literal: GrLiteral) {
       if (multilineVersion != UNDEFINED && GrStringUtil.isMultilineStringLiteral(literal) && literal.text.contains("\n")) {
-        checkInconsistency(multilineVersion, literal, MULTILINE_STRING,
-                           setOf(TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED))
+        checkInconsistency(multilineVersion, literal, MULTILINE_STRING, MULTILINE_STRING_OPTIONS)
         return
       }
       else if (escapeVersion != UNDEFINED) {
-        val bestEscaping = findBestEscaping(literal, escapeVersion, currentVersion)
+        val bestEscaping = findBestEscaping(literal, escapeVersion, plainVersion)
         if (bestEscaping != null) {
           if (bestEscaping.second != 0) {
-            checkInconsistency(bestEscaping.first, literal, ESCAPED_STRING,
-                               setOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED))
+            checkInconsistency(bestEscaping.first, literal, ESCAPED_STRING, ESCAPED_STRING_OPTIONS)
           }
           return
         }
       }
-      checkInconsistency(currentVersion, literal, PLAIN_STRING,
-                         setOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED))
+      checkInconsistency(plainVersion, literal, PLAIN_STRING, PLAIN_STRING_OPTIONS)
     }
 
     private fun checkInconsistency(expected: StringKind,
                                    literal: GrLiteral,
                                    carrierKind: TargetKind,
-                                   availableStringKinds: Set<StringKind>) {
+                                   availableStringKinds: Array<StringKind>) {
       if (expected !in availableStringKinds) {
         return
       }
