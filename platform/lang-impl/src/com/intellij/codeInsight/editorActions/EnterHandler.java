@@ -190,7 +190,7 @@ public class EnterHandler extends BaseEnterHandler {
     String commentText = comment.getText();
     final boolean docComment = isDocComment(comment, commenter);
     final String expectedCommentEnd = docComment ? commenter.getDocumentationCommentSuffix():commenter.getBlockCommentSuffix();
-    if (!commentText.endsWith(expectedCommentEnd)) return false;
+    if (expectedCommentEnd != null && !commentText.endsWith(expectedCommentEnd)) return false;
 
     final PsiFile containingFile = comment.getContainingFile();
     final Language language = containingFile.getLanguage();
@@ -365,6 +365,7 @@ public class EnterHandler extends BaseEnterHandler {
         Commenter langCommenter = language != null ? LanguageCommenters.INSTANCE.forLanguage(language) : null;
         CodeDocumentationUtil.CommentContext commentContext
           = CodeDocumentationUtil.tryParseCommentContext(langCommenter, chars, lineStart);
+        boolean isBeforeEof = myOffset == chars.length() && chars.charAt(myOffset - 1) == '\n';
 
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
         if (commentContext.docStart) {
@@ -379,7 +380,7 @@ public class EnterHandler extends BaseEnterHandler {
             PsiComment comment = isDocComment(parent, commentContext.commenter) ? (PsiComment)parent:(PsiComment)element;
             int commentEnd = comment.getTextRange().getEndOffset();
 
-            if (myOffset >= commentEnd) {
+            if (myOffset > commentEnd || myOffset == commentEnd && !isBeforeEof) {
               commentContext.docStart = false;
             }
             else {
@@ -447,7 +448,7 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         if ((commentContext.docAsterisk || commentContext.docStart) && !docIndentApplied) {
-          if (myInsertSpace) {
+          if (myInsertSpace && !(commentContext.docStart && isBeforeEof)) {
             if (myOffset == myDocument.getTextLength()) {
               myDocument.insertString(myOffset, " ");
             }
