@@ -320,6 +320,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myCancelOnWindow = cancelOnWindow;
     myMinSize = minSize;
 
+    if (Registry.is("ide.popup.horizontal.scroll.bar.opaque")) {
+      forHorizontalScrollBar(bar -> bar.setOpaque(true));
+    }
+
     for (Pair<ActionListener, KeyStroke> pair : keyboardActions) {
       myContent.registerKeyboardAction(pair.getFirst(), pair.getSecond(), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
@@ -1366,13 +1370,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       if (size.width < prefSize.width) {
         if (!SystemInfo.isMac || Registry.is("mac.scroll.horizontal.gap")) {
           // we shrank horizontally - need to increase height to fit the horizontal scrollbar
-          JScrollPane scrollPane = ScrollUtil.findScrollPane(myContent);
-          if (scrollPane != null && scrollPane.getHorizontalScrollBarPolicy() != ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
-            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
-            if (scrollBar != null) {
-              prefSize.height += scrollBar.getPreferredSize().height;
-            }
-          }
+          forHorizontalScrollBar(bar -> prefSize.height += bar.getPreferredSize().height);
         }
       }
       size.height = prefSize.height;
@@ -2074,5 +2072,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       }
     }
     return null;
+  }
+
+  private @Nullable JScrollBar findHorizontalScrollBar() {
+    JScrollPane pane = ScrollUtil.findScrollPane(myContent);
+    if (pane == null || ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER == pane.getHorizontalScrollBarPolicy()) return null;
+    return pane.getHorizontalScrollBar();
+  }
+
+  private void forHorizontalScrollBar(@NotNull Consumer<JScrollBar> consumer) {
+    JScrollBar bar = findHorizontalScrollBar();
+    if (bar != null) consumer.consume(bar);
   }
 }
