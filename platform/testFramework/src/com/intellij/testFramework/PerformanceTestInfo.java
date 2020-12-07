@@ -163,21 +163,15 @@ public class PerformanceTestInfo {
     String colorCode = iterationResult == IterationResult.ACCEPTABLE ? "32;1m" : // green
                        iterationResult == IterationResult.BORDERLINE ? "33;1m" : // yellow
                        "31;1m"; // red
-    return String.format(
-      "%s took \u001B[%s%d%% %s time\u001B[0m than expected" +
-      "\n  Expected: %sms (%s)" +
-      "\n  Actual:   %sms (%s)" +
-      "\n  Timings:  %s" +
-      "\n  Threads:  %s" +
-      "\n  GC stats: %s" +
-      "\n  Process:  %s",
-      what, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
-      expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
-      duration, StringUtil.formatDuration(duration),
-      Timings.getStatistics(),
-      data.getThreadStats(),
-      data.getGcStats(),
-      data.getProcessCpuStats());
+    return
+      what+" took \u001B[" + colorCode + Math.abs(percentage) + "% " + (percentage > 0 ? "more" : "less") + " time\u001B[0m than expected" +
+      (iterationResult == IterationResult.DISTRACTED ? " (but JIT compilation took too long, will retry anyway)" : "") +
+      "\n  Expected: " + expectedOnMyMachine + "ms (" + StringUtil.formatDuration(expectedOnMyMachine) + ")" +
+      "\n  Actual:   " + duration + "ms (" + StringUtil.formatDuration(duration) + ")" +
+      "\n  Timings:  " + Timings.getStatistics() +
+      "\n  Threads:  " + data.getThreadStats() +
+      "\n  GC stats: " + data.getGcStats() +
+      "\n  Process:  " + data.getProcessCpuStats();
   }
 
   private long lastJitUsage;
