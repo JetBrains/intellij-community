@@ -9,8 +9,8 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
-import org.jetbrains.plugins.groovy.codeInspection.style.GroovyStringStyleViolationInspection.ErrorKind.*
 import org.jetbrains.plugins.groovy.codeInspection.style.GroovyStringStyleViolationInspection.StringKind.*
+import org.jetbrains.plugins.groovy.codeInspection.style.GroovyStringStyleViolationInspection.TargetKind.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil
@@ -95,26 +95,29 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
     addStringKindComboBox("Multiline string", ::multilineVersion, arrayOf(UNDEFINED, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED), 3, constraints)
   }
 
-  private enum class ErrorKind {
-    PLAIN_STRING_SHOULD_BE_DOUBLE_QUOTED,
-    PLAIN_STRING_SHOULD_BE_SINGLE_QUOTED,
-    PLAIN_STRING_SHOULD_BE_SLASHY_QUOTED,
-    PLAIN_STRING_SHOULD_BE_TRIPLE_QUOTED,
-    PLAIN_STRING_SHOULD_BE_DOUBLY_TRIPLE_QUOTED,
-    MULTILINE_STRING_SHOULD_BE_TRIPLE_QUOTED,
-    MULTILINE_STRING_SHOULD_BE_DOUBLY_TRIPLE_QUOTED
+  private enum class TargetKind {
+    PLAIN_STRING, MULTILINE_STRING, ESCAPED_STRING
   }
 
 
   override fun buildErrorString(vararg args: Any?): String {
-    return when (args[0]!! as ErrorKind) {
-      PLAIN_STRING_SHOULD_BE_DOUBLE_QUOTED -> "Plain string should be double-quoted"
-      PLAIN_STRING_SHOULD_BE_SINGLE_QUOTED -> "Plain string should be single-quoted"
-      PLAIN_STRING_SHOULD_BE_SLASHY_QUOTED -> "Plain string should be slashy-quoted"
-      PLAIN_STRING_SHOULD_BE_TRIPLE_QUOTED -> "Plain string should be quoted with '''"
-      PLAIN_STRING_SHOULD_BE_DOUBLY_TRIPLE_QUOTED -> "Plain string should quoted with \"\"\""
-      MULTILINE_STRING_SHOULD_BE_TRIPLE_QUOTED -> "Multiline string should be quoted with '''"
-      MULTILINE_STRING_SHOULD_BE_DOUBLY_TRIPLE_QUOTED -> "Multiline string should be quoted with \"\"\""
+    val carrierString = args[0] as TargetKind
+    val desiredKind = args[1] as StringKind
+    return when (carrierString) {
+      PLAIN_STRING -> when (desiredKind) {
+        DOUBLE_QUOTED -> "Plain string should be double-quoted"
+        SINGLE_QUOTED -> "Plain string should be single-quoted"
+        SLASHY -> "Plain string should be slashy-quoted"
+        TRIPLE_QUOTED -> "Plain string should be quoted with '''"
+        TRIPLE_DOUBLE_QUOTED -> "Plain string should quoted with \"\"\""
+        else -> error("Unexpected error message")
+      }
+      MULTILINE_STRING -> when (desiredKind) {
+        TRIPLE_QUOTED -> "Multiline string should be quoted with '''"
+        TRIPLE_DOUBLE_QUOTED -> "Multiline string should be quoted with \"\"\""
+        else -> error("Unexpected error message")
+      }
+      ESCAPED_STRING -> "Escaping could be minimized"
     }
   }
 
@@ -140,38 +143,93 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
   override fun buildVisitor(): BaseInspectionVisitor = object : BaseInspectionVisitor() {
     override fun visitLiteralExpression(literal: GrLiteral) {
       if (literal !is GrString) {
-        if (multilineVersion != UNDEFINED && GrStringUtil.isMultilineStringLiteral(literal)) {
-          checkInconsistency(multilineVersion, literal,
-                             mapOf(TRIPLE_QUOTED to MULTILINE_STRING_SHOULD_BE_TRIPLE_QUOTED,
-                                   TRIPLE_DOUBLE_QUOTED to MULTILINE_STRING_SHOULD_BE_DOUBLY_TRIPLE_QUOTED))
-        }
-        else {
-          checkInconsistency(currentVersion, literal,
-                             mapOf(DOUBLE_QUOTED to PLAIN_STRING_SHOULD_BE_DOUBLE_QUOTED,
-                                   SINGLE_QUOTED to PLAIN_STRING_SHOULD_BE_SINGLE_QUOTED,
-                                   SLASHY to PLAIN_STRING_SHOULD_BE_SLASHY_QUOTED,
-                                   TRIPLE_QUOTED to PLAIN_STRING_SHOULD_BE_TRIPLE_QUOTED,
-                                   TRIPLE_DOUBLE_QUOTED to PLAIN_STRING_SHOULD_BE_DOUBLY_TRIPLE_QUOTED))
-        }
+        handlePlainString(literal)
       }
       super.visitLiteralExpression(literal)
     }
 
 
-    private fun checkInconsistency(expected: StringKind, literal: GrLiteral, errorKinds: Map<StringKind, ErrorKind>) {
-      fun doCheck(kind: StringKind, predicate: (GrLiteral) -> Boolean) {
-        val errorKind = errorKinds[expected]
-        if (errorKind != null && expected == kind && !predicate(literal)) {
-          registerError(literal, errorKind)
+    private fun handlePlainString(literal: GrLiteral) {
+      if (multilineVersion != UNDEFINED && GrStringUtil.isMultilineStringLiteral(literal) && literal.text.contains("\n")) {
+        checkInconsistency(multilineVersion, literal, MULTILINE_STRING,
+                           setOf(TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED))
+        return
+      }
+      else if (escapeVersion != UNDEFINED) {
+        val bestEscaping = findBestEscaping(literal, escapeVersion, currentVersion)
+        if (bestEscaping != null) {
+          if (bestEscaping.second != 0) {
+            checkInconsistency(bestEscaping.first, literal, ESCAPED_STRING,
+                               setOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED))
+          }
+          return
         }
       }
-      doCheck(SINGLE_QUOTED, GrStringUtil::isSingleQuoteString)
-      doCheck(DOUBLE_QUOTED, GrStringUtil::isDoubleQuoteString)
-      doCheck(TRIPLE_QUOTED, GrStringUtil::isTripleQuoteString)
-      doCheck(TRIPLE_DOUBLE_QUOTED, GrStringUtil::isTripleDoubleQuoteString)
-      doCheck(SLASHY, GrStringUtil::isSlashyString)
+      checkInconsistency(currentVersion, literal, PLAIN_STRING,
+                         setOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED))
     }
 
+    private fun checkInconsistency(expected: StringKind,
+                                   literal: GrLiteral,
+                                   carrierKind: TargetKind,
+                                   availableStringKinds: Set<StringKind>) {
+      if (expected !in availableStringKinds) {
+        return
+      }
+      fun doCheck(predicate: (GrLiteral) -> Boolean) {
+        if (!predicate(literal)) {
+          registerError(literal, carrierKind, expected)
+        }
+      }
+      when (expected) {
+        DOUBLE_QUOTED -> doCheck(GrStringUtil::isDoubleQuoteString)
+        SINGLE_QUOTED -> doCheck(GrStringUtil::isSingleQuoteString)
+        SLASHY -> doCheck(GrStringUtil::isSlashyString)
+        TRIPLE_QUOTED -> doCheck(GrStringUtil::isTripleQuoteString)
+        TRIPLE_DOUBLE_QUOTED -> doCheck(GrStringUtil::isTripleDoubleQuoteString)
+        else -> Unit
+      }
+    }
+
+  }
+
+  private fun findBestEscaping(literal: GrLiteral, preferredKindInEscaping: StringKind, mainKind: StringKind): Pair<StringKind, Int>? {
+    val stringContent = literal.text
+    val startQuote = GrStringUtil.getStartQuote(stringContent)
+    val meaningfulText = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(stringContent))
+    val doubleQuotes = meaningfulText.count { it == '"' }
+    val singleQuotes = meaningfulText.count { it == '\'' }
+    val windows = meaningfulText.windowed(3)
+    val tripleQuotes = windows.count { it == GrStringUtil.TRIPLE_QUOTES }
+    val tripleDoubleQuotes = windows.count { it == GrStringUtil.TRIPLE_DOUBLE_QUOTES }
+    val slashes = meaningfulText.count { it == '/' }
+    val reversedSlashes = meaningfulText.count { it == '\\' }
+    val currentEscapingScore = when (startQuote) {
+      GrStringUtil.QUOTE -> singleQuotes + reversedSlashes
+      GrStringUtil.DOUBLE_QUOTES -> doubleQuotes + reversedSlashes
+      GrStringUtil.TRIPLE_QUOTES -> tripleQuotes
+      GrStringUtil.TRIPLE_DOUBLE_QUOTES -> tripleDoubleQuotes
+      GrStringUtil.SLASH -> slashes
+      else -> return null
+    }
+    val bestEscaping = listOf(DOUBLE_QUOTED to doubleQuotes + reversedSlashes,
+                              SINGLE_QUOTED to singleQuotes + reversedSlashes,
+                              TRIPLE_QUOTED to tripleQuotes,
+                              TRIPLE_DOUBLE_QUOTED to tripleDoubleQuotes)
+      .map { it.first to currentEscapingScore - it.second }
+      .maxWithOrNull { (kind, num), (kind2, num2) ->
+        if (num == num2) {
+          if (kind == mainKind) return@maxWithOrNull 1
+          if (kind2 == mainKind) return@maxWithOrNull -1
+          if (kind == preferredKindInEscaping) return@maxWithOrNull 1
+          if (kind2 == preferredKindInEscaping) return@maxWithOrNull -1
+          kind.toString().compareTo(kind2.toString()) // induce total order
+        }
+        else {
+          num.compareTo(num2)
+        }
+      }
+    return bestEscaping?.takeIf { it.first != mainKind && it.second >= 0 }
   }
 
 
