@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URL;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,8 +22,8 @@ public final class AntResourcesClassLoader extends UrlClassLoader {
     }
   }
 
-  public AntResourcesClassLoader(final List<URL> urls, final ClassLoader parentLoader, final boolean canLockJars, final boolean canUseCache) {
-    super(build().urls(urls).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload());
+  public AntResourcesClassLoader(List<Path> files, ClassLoader parentLoader, boolean canLockJars, boolean canUseCache) {
+    super(build().files(files).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload());
   }
 
   @Override

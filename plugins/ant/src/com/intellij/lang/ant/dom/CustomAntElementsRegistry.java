@@ -27,15 +27,13 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.xml.XmlName;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -260,10 +258,6 @@ public final class CustomAntElementsRegistry {
     myDeclarations.put(xmlName, declaringTag);
   }
 
-  private static PsiFile createDummyFile(@NonNls final String name, final LanguageFileType type, final CharSequence str, Project project) {
-    return PsiFileFactory.getInstance(project).createFileFromText(name, type, str, LocalTimeCounter.currentTime(), false, false);
-  }
-
   private static boolean isXmlFormat(AntDomTypeDef typedef, @NotNull final String resourceOrFileName) {
     final String format = typedef.getFormat().getStringValue();
     if (format != null) {
@@ -272,16 +266,15 @@ public final class CustomAntElementsRegistry {
     return StringUtil.endsWithIgnoreCase(resourceOrFileName, ".xml");
   }
 
-  @NotNull
-  public static ClassLoader createClassLoader(final List<URL> urls, final AntDomProject antProject) {
-    final ClassLoader parentLoader = antProject.getClassLoader();
-    if (urls.size() == 0) {
+  public static @NotNull ClassLoader createClassLoader(List<Path> files, AntDomProject antProject) {
+    ClassLoader parentLoader = antProject.getClassLoader();
+    if (files.isEmpty()) {
       return parentLoader;
     }
-    return new AntResourcesClassLoader(urls, parentLoader, false, false);
+    return new AntResourcesClassLoader(files, parentLoader, false, false);
   }
 
-  public static List<URL> collectUrls(AntDomClasspathElement typedef) {
+  public static List<Path> collectUrls(AntDomClasspathElement typedef) {
     boolean cleanupNeeded = false;
     if (!ourIsBuildingClasspathForCustomTagLoading.get()) {
       ourIsBuildingClasspathForCustomTagLoading.set(Boolean.TRUE);
@@ -289,17 +282,12 @@ public final class CustomAntElementsRegistry {
     }
 
     try {
-      final List<URL> urls = new ArrayList<>();
+      List<Path> paths = new ArrayList<>();
       // check classpath attribute
-      final List<File> cpFiles = typedef.getClasspath().getValue();
+      List<File> cpFiles = typedef.getClasspath().getValue();
       if (cpFiles != null) {
         for (File file : cpFiles) {
-          try {
-            urls.add(toLocalURL(file));
-          }
-          catch (MalformedURLException ignored) {
-            LOG.info(ignored);
-          }
+          paths.add(file.toPath());
         }
       }
 
@@ -307,41 +295,26 @@ public final class CustomAntElementsRegistry {
       final AntDomElement referencedPath = typedef.getClasspathRef().getValue();
       if (referencedPath instanceof AntFilesProvider) {
         for (File cpFile : ((AntFilesProvider)referencedPath).getFiles(processed)) {
-          try {
-            urls.add(toLocalURL(cpFile));
-          }
-          catch (MalformedURLException ignored) {
-            LOG.info(ignored);
-          }
+          paths.add(cpFile.toPath());
         }
       }
       // check nested elements
-
-      for (final Iterator<AntDomElement> it = typedef.getAntChildrenIterator(); it.hasNext();) {
+      for (Iterator<AntDomElement> it = typedef.getAntChildrenIterator(); it.hasNext();) {
         AntDomElement child = it.next();
         if (child instanceof AntFilesProvider) {
           for (File cpFile : ((AntFilesProvider)child).getFiles(processed)) {
-            try {
-              urls.add(toLocalURL(cpFile));
-            }
-            catch (MalformedURLException ignored) {
-              LOG.info(ignored);
-            }
+            paths.add(cpFile.toPath());
           }
         }
       }
 
-      return urls;
+      return paths;
     }
     finally {
       if (cleanupNeeded) {
         ourIsBuildingClasspathForCustomTagLoading.remove();
       }
     }
-  }
-
-  private static URL toLocalURL(final File file) throws MalformedURLException {
-    return file.toURI().toURL();
   }
 
   private class CustomTagDefinitionFinder extends AntDomRecursiveVisitor {
@@ -434,12 +407,12 @@ public final class CustomAntElementsRegistry {
                   if (reflectedProject == null) { // lazy init
                     reflectedProject = ReflectedProject.getProject(myAntProject.getClassLoader());
                   }
-                  final Hashtable<String, Class> coreTasks = reflectedProject.getTaskDefinitions();
+                  Map<String, Class> coreTasks = reflectedProject.getTaskDefinitions();
                   if (coreTasks != null) {
                     clazz = coreTasks.get(typeName);
                   }
                   if (clazz == null) {
-                    final Hashtable<String, Class> coreTypes = reflectedProject.getDataTypeDefinitions();
+                    Map<String, Class> coreTypes = reflectedProject.getDataTypeDefinitions();
                     if (coreTypes != null) {
                       clazz = coreTypes.get(typeName);
                     }
@@ -584,6 +557,5 @@ public final class CustomAntElementsRegistry {
         }
       }
     }
-
   }
 }
