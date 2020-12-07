@@ -24,6 +24,9 @@ import java.util.zip.ZipEntry
 // see JarMemoryLoader.SIZE_ENTRY
 internal const val SIZE_ENTRY = "META-INF/jb/$\$size$$"
 
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+private val excludedLibJars = java.util.Set.of("testFramework.core.jar", "testFramework.jar", "testFramework-java.jar")
+
 fun main(args: Array<String>) {
   System.setProperty("java.util.logging.SimpleFormatter.format", "%5\$s %n")
   reorderJars(homeDir = Paths.get(args[0]),
@@ -69,9 +72,9 @@ fun reorderJars(homeDir: Path,
   val appClassPath = LinkedHashSet<Path>()
   // add first - should be listed first
   sourceToNames.keys.asSequence().filter { it.parent == libDir }.toCollection(appClassPath)
-  addJarsFromDir(libDir) {
+  addJarsFromDir(libDir) { paths ->
     // sort to ensure stable performance results
-    appClassPath.addAll(it.sorted())
+    appClassPath.addAll(paths.filter { !excludedLibJars.contains(it.fileName.toString()) }.sorted())
   }
   if (antLibDir != null) {
     val distAntLib = libDir.resolve("ant/lib")
