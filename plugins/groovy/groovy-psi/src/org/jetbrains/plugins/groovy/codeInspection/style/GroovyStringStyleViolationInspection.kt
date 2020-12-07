@@ -155,6 +155,9 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
 
   override fun buildVisitor(): BaseInspectionVisitor = object : BaseInspectionVisitor() {
     override fun visitLiteralExpression(literal: GrLiteral) {
+      if (!inspectGradle && literal.containingFile.fileType.defaultExtension == "gradle") {
+        return
+      }
       if (literal is GrString) {
         handleGString(literal)
       }

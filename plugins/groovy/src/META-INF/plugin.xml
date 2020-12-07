@@ -1081,7 +1081,7 @@
                      enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyImplicitNullArgumentCallInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.string.style.violation"
-                     level="WARNING"
+                     level="WEAK WARNING"
                      groupKey="inspection.style"
                      enabledByDefault="false"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GroovyStringStyleViolationInspection"/>
