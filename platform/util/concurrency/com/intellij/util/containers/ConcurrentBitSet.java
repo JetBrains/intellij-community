@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see java.util.BitSet
  */
-@ReviseWhenPortedToJDK("9") // todo port to VarHandles
 public interface ConcurrentBitSet {
   @NotNull
   @Contract("->new")

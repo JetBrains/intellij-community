@@ -113,13 +113,13 @@ public class ConcurrentBitSetTest extends TestCase {
     int s = 0;
     for (int i = 0; i < len; i++) {
       set.set(i, random.nextBoolean());
-      s += set.get(i)?1:0;
+      s += set.get(i) ? 1 : 0;
     }
     int sum = s;
 
     int N = 10_000;
 
-    PlatformTestUtil.startPerformanceTest("ConcurrentBitSet.get() must be fast", 20_000, ()-> {
+    PlatformTestUtil.startPerformanceTest("ConcurrentBitSet.get() must be fast", 30_000, ()-> {
       int r = 0;
       for (int n = 0; n < N; n++) {
         for (int j = 0; j < len; j++) {
