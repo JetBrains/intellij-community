@@ -145,7 +145,7 @@ public final class LoaderFactory implements Disposable {
     private final String myModuleName;
 
     DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
-      super(build().urls(urls).parent(parent));
+      super(build().urls(urls).disallowLock().parent(parent));
       myModuleName = moduleName;
     }
 

@@ -139,7 +139,7 @@ public final class AntTasksProvider {
     }
 
     private static PathClassLoaderBuilder getBuilder(List<Path> files) {
-      PathClassLoaderBuilder builder = build().files(files).noPreload();
+      PathClassLoaderBuilder builder = build().files(files).disallowLock().noPreload();
       builder.parent(ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9());
       return builder;
     }

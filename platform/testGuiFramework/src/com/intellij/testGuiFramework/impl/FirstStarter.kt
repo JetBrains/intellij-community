@@ -36,15 +36,12 @@ private fun startRobotRoutine() {
   }
 }
 
-fun createRobotClassLoader(): UrlClassLoader {
-  val builder = UrlClassLoader.build()
+private fun createRobotClassLoader(): UrlClassLoader {
+  return UrlClassLoader.build()
     .files(getUrlOfBaseClassLoader().map { Paths.get(it.path) })
-    .allowLock()
     .usePersistentClasspathIndexForLocalClassDirectories()
     .useCache()
-
-  builder.parent(getPlatformLoaderParentIfOnJdk9())
-  return builder.get()
+    .parent(getPlatformLoaderParentIfOnJdk9()).get()
 }
 
 private fun getUrlOfBaseClassLoader(): List<URL> {

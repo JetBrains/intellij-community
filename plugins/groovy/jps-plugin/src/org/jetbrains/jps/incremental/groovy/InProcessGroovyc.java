@@ -208,8 +208,7 @@ final class InProcessGroovyc implements GroovycFlavor {
     return UrlClassLoader.build().
       files(toPaths(compilationClassPath))
       .parent(parent)
-      .allowLock().
-      useCache(ourLoaderCachePool, file -> {
+      .useCache(ourLoaderCachePool, file -> {
         String filePath = FileUtil.toCanonicalPath(file.toString());
         for (String output : myOutputs) {
           if (FileUtil.startsWith(output, filePath)) {
@@ -297,13 +296,10 @@ final class InProcessGroovyc implements GroovycFlavor {
         return false;
       }
     };
-    PathClassLoaderBuilder builder = UrlClassLoader.build();
-    builder.files(toPaths(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyJar))));
-    builder.allowLock();
-    builder.useCache(ourLoaderCachePool, url -> true);
-
-    builder.parent(ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9());
-    UrlClassLoader groovyAllLoader = builder.get();
+    UrlClassLoader groovyAllLoader = UrlClassLoader.build()
+      .files(toPaths(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyJar))))
+      .useCache(ourLoaderCachePool, url -> true)
+      .parent(ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9()).get();
 
     ClassLoader wrapper = new URLClassLoader(new URL[0], groovyAllLoader) {
       @Override

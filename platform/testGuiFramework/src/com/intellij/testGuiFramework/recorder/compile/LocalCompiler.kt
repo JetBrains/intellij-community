@@ -76,7 +76,7 @@ internal class LocalCompiler {
     catch (cfe: ClassNotFoundException) {
       classLoadersArray = arrayOf(ApplicationManager::class.java.classLoader, this.javaClass.classLoader)
     }
-    val pluginClassLoader = PluginClassLoader(UrlClassLoader.build().files(listOf(tempDir.toPath())).allowLock().useCache(),
+    val pluginClassLoader = PluginClassLoader(UrlClassLoader.build().files(listOf(tempDir.toPath())).useCache(),
                                               classLoadersArray, DefaultPluginDescriptor("SubGuiScriptRecorder"), null as Path?,
                                               PluginManagerCore::class.java.classLoader, null)
     val currentTest = pluginClassLoader.loadClass(TEST_CLASS_NAME)

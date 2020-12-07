@@ -16,14 +16,13 @@ public final class PathClassLoaderBuilder {
   List<Path> files = Collections.emptyList();
   Set<Path> pathsWithProtectionDomain;
   ClassLoader parent;
-  boolean lockJars;
+  boolean lockJars = true;
   boolean useCache;
   boolean isClassPathIndexEnabled;
   boolean preloadJarContents = true;
   boolean isBootstrapResourcesAllowed;
   boolean errorOnMissingJar = true;
   boolean lazyClassloadingCaches;
-  boolean logJarAccess;
   @Nullable CachePoolImpl cachePool;
   @Nullable Predicate<Path> cachingCondition;
 
@@ -61,8 +60,8 @@ public final class PathClassLoaderBuilder {
    * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification.
    * Thus, the option is recommended when jars are not modified or process that uses this option is transient.
    */
-  public @NotNull PathClassLoaderBuilder allowLock() {
-    lockJars = true;
+  public @NotNull PathClassLoaderBuilder disallowLock() {
+    lockJars = false;
     return this;
   }
 

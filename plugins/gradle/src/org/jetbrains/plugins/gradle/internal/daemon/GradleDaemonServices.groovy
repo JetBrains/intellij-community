@@ -72,7 +72,7 @@ class GradleDaemonServices {
         new File(PathManager.getJarPathForClass(Function)).toPath()
       ))
       .parent(daemonClientFactory.class.classLoader)
-      .allowLock(false)
+      .disallowLock()
       .get()
 
     String serviceDirectoryPath = GradleSystemSettings.instance.getServiceDirectoryPath()

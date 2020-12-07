@@ -71,7 +71,6 @@ public final class ExternalClasspathClassLoader {
     Object builder = auxLoader.loadClass("com.intellij.util.lang.UrlClassLoader").getMethod("build").invoke(null);
     builder.getClass().getMethod("files", List.class).invoke(builder, files);
     builder.getClass().getMethod("useCache").invoke(builder);
-    builder.getClass().getMethod("allowLock").invoke(builder);
     builder.getClass().getMethod("allowBootstrapResources").invoke(builder);
     builder.getClass().getMethod("parent", ClassLoader.class).invoke(builder, auxLoader.getParent());
     return (ClassLoader)builder.getClass().getMethod("get").invoke(builder);

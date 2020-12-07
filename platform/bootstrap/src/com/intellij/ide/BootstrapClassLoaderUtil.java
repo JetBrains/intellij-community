@@ -68,7 +68,6 @@ public final class BootstrapClassLoaderUtil {
 
     PathClassLoaderBuilder builder = UrlClassLoader.build()
       .files(filterClassPath(classpath))
-      .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
       .autoAssignUrlsWithProtectionDomain()
       .parent(ClassLoader.getPlatformClassLoader())
