@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.java.JavaBundle;
@@ -16,7 +17,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,21 +41,19 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
         if (qualifier == null) return;
         final PsiExpression arg = call.getArgumentList().getExpressions()[0];
         final TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(arg));
-        final PsiType type = constraint.getPsiType(call.getProject());
-        final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-        if (aClass == null || !InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_LIST)) return;
-        final Long setSize = getMaxSizeOfCollection(qualifier);
-        if (setSize != null && setSize <= 1) return;
-        final Long listSize = getMaxSizeOfCollection(arg);
-        if (listSize != null && listSize <= 2) return;
-        if (setSize != null && listSize != null && setSize > listSize) return;
+        final PsiType type = constraint.getPsiType(holder.getProject());
+        if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_LIST)) return;
+        final LongRangeSet setSizeRange = getSizeRangeOfCollection(qualifier);
+        if (setSizeRange != null && (setSizeRange.isEmpty() || setSizeRange.max() <= 1)) return;
+        final LongRangeSet listSizeRange = getSizeRangeOfCollection(arg);
+        if (listSizeRange != null && (listSizeRange.isEmpty() || listSizeRange.max() <= 2)) return;
+        if (setSizeRange != null && listSizeRange != null && setSizeRange.min() > listSizeRange.max()) return;
         final String replacement;
         final LocalQuickFix fix;
         if (PsiUtil.isLanguageLevel8OrHigher(call) && ExpressionUtils.isVoidContext(call)) {
           replacement = ParenthesesUtils.getText(arg, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".forEach(" + qualifier.getText() + "::remove)";
           fix = new ReplaceWithListForEachFix(replacement);
         } else {
-          replacement = null;
           fix = null;
         }
         final PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
@@ -69,13 +67,13 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
     };
   }
 
-  private static Long getMaxSizeOfCollection(PsiExpression expression) {
+  private static LongRangeSet getSizeRangeOfCollection(PsiExpression expression) {
     final SpecialField lengthField = SpecialField.COLLECTION_SIZE;
     final DfType origType = CommonDataflow.getDfType(expression);
     final DfType length = lengthField.getFromQualifier(origType);
     final DfIntegralType dfType = ObjectUtils.tryCast(length, DfIntegralType.class);
-    if (dfType == null || dfType.getRange().isEmpty()) return null;
-    return dfType.getRange().max();
+    if (dfType == null) return null;
+    return dfType.getRange();
   }
 
   private static class ReplaceWithListForEachFix implements LocalQuickFix {

@@ -1403,7 +1403,7 @@
                      implementationClass="com.intellij.codeInspection.RedundantFileCreationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SlowAbstractSetRemoveAll"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      bundle="messages.JavaBundle"
                      key="inspection.slow.abstract.set.remove.all.description"
                      implementationClass="com.intellij.codeInspection.SlowAbstractSetRemoveAllInspection"/>
