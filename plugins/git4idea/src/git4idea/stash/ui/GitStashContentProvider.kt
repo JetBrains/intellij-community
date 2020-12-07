@@ -2,7 +2,9 @@
 package git4idea.stash.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
@@ -64,6 +66,13 @@ class GitStashDisplayNameSupplier : Supplier<String> {
 }
 
 class GitStashStartupActivity : StartupActivity.DumbAware {
+  init {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.INSTANCE
+    }
+  }
+
   override fun runActivity(project: Project) {
     runInEdt(project) {
       val gitStashTracker = project.service<GitStashTracker>()
