@@ -28,7 +28,8 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
     SINGLE_QUOTED,
     SLASHY,
     TRIPLE_QUOTED,
-    TRIPLE_DOUBLE_QUOTED;
+    TRIPLE_DOUBLE_QUOTED,
+    DOLLAR_SLASHY_QUOTED;
 
     override fun toString(): String {
       return when (this) {
@@ -38,15 +39,16 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
         SLASHY -> "Slashy string"
         TRIPLE_QUOTED -> "Triple-quoted string"
         TRIPLE_DOUBLE_QUOTED -> "Triple-double-quoted string"
+        DOLLAR_SLASHY_QUOTED -> "Dollar-slashy string"
       }
     }
   }
 
   companion object {
-    val PLAIN_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED)
-    val MULTILINE_STRING_OPTIONS = arrayOf(UNDEFINED, TRIPLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED)
-    val ESCAPED_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED)
-    val INTERPOLATED_STRING_OPTIONS = arrayOf(UNDEFINED, DOUBLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED)
+    val PLAIN_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
+    val MULTILINE_STRING_OPTIONS = arrayOf(UNDEFINED, TRIPLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
+    val ESCAPED_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
+    val INTERPOLATED_STRING_OPTIONS = arrayOf(UNDEFINED, DOUBLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
   }
 
   @Volatile
@@ -110,19 +112,22 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
         DOUBLE_QUOTED -> "Plain string should be double-quoted"
         SINGLE_QUOTED -> "Plain string should be single-quoted"
         SLASHY -> "Plain string should be slashy-quoted"
+        DOLLAR_SLASHY_QUOTED -> "Plain string should be dollar-slashy-quoted"
         TRIPLE_QUOTED -> "Plain string should be quoted with '''"
-        TRIPLE_DOUBLE_QUOTED -> "Plain string should quoted with \"\"\""
+        TRIPLE_DOUBLE_QUOTED -> "Plain string should be quoted with \"\"\""
         else -> error("Unexpected error message")
       }
       MULTILINE_STRING -> when (desiredKind) {
         TRIPLE_QUOTED -> "Multiline string should be quoted with '''"
         TRIPLE_DOUBLE_QUOTED -> "Multiline string should be quoted with \"\"\""
         SLASHY -> "Multiline string should be slashy-quoted"
+        DOLLAR_SLASHY_QUOTED -> "Multiline string should be dollar-slashy-quoted"
         else -> error("Unexpected error message")
       }
       ESCAPED_STRING -> "Escaping could be minimized"
       INTERPOLATED_STRING -> when (desiredKind) {
         DOUBLE_QUOTED -> "Interpolated string should be double-quoted"
+        DOLLAR_SLASHY_QUOTED -> "Interpolated string should be dollar-slashy-quoted"
         SLASHY -> "Interpolated string should be slashy-quoted"
         TRIPLE_DOUBLE_QUOTED -> "Interpolated string should be quoted with \"\"\""
         else -> error("Unexpected error message")
@@ -199,6 +204,7 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
         SLASHY -> doCheck(GrStringUtil::isSlashyString)
         TRIPLE_QUOTED -> doCheck(GrStringUtil::isTripleQuoteString)
         TRIPLE_DOUBLE_QUOTED -> doCheck(GrStringUtil::isTripleDoubleQuoteString)
+        DOLLAR_SLASHY_QUOTED -> doCheck(GrStringUtil::isDollarSlashyString)
         else -> Unit
       }
     }
@@ -211,6 +217,7 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
     val meaningfulText = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(stringContent))
     val doubleQuotes = meaningfulText.count { it == '"' }
     val singleQuotes = meaningfulText.count { it == '\'' }
+    val dollars = meaningfulText.count { it == '$' }
     val windows = meaningfulText.windowed(3)
     val tripleQuotes = windows.count { it == GrStringUtil.TRIPLE_QUOTES }
     val tripleDoubleQuotes = windows.count { it == GrStringUtil.TRIPLE_DOUBLE_QUOTES }
@@ -221,12 +228,15 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
       GrStringUtil.DOUBLE_QUOTES -> doubleQuotes + reversedSlashes
       GrStringUtil.TRIPLE_QUOTES -> tripleQuotes
       GrStringUtil.TRIPLE_DOUBLE_QUOTES -> tripleDoubleQuotes
+      GrStringUtil.DOLLAR_SLASH -> dollars
       GrStringUtil.SLASH -> slashes
       else -> return null
     }
     val bestEscaping = listOf(DOUBLE_QUOTED to doubleQuotes + reversedSlashes,
                               SINGLE_QUOTED to singleQuotes + reversedSlashes,
                               TRIPLE_QUOTED to tripleQuotes,
+                              SLASHY to slashes,
+                              DOLLAR_SLASHY_QUOTED to dollars,
                               TRIPLE_DOUBLE_QUOTED to tripleDoubleQuotes)
       .map { it.first to currentEscapingScore - it.second }
       .maxWithOrNull { (kind, num), (kind2, num2) ->
