@@ -24,7 +24,7 @@ public class ToggleRenderedDocPresentationAction extends EditorAction {
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       DocRenderItem item = getItem(editor);
       if (item != null) {
-        item.toggle(null);
+        item.toggle();
       }
     }
 
