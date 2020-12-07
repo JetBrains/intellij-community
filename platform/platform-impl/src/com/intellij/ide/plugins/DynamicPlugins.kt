@@ -164,7 +164,7 @@ object DynamicPlugins {
     LOG.info(message)
 
     return if (descriptors.all { allowLoadUnloadWithoutRestart(it, context = descriptors) })
-      PluginManagerCore.getPluginsSortedByDependency(descriptors, true)
+      PluginManagerCore.getPluginsSortedByDependency(descriptors, load)
     else
       null
   }

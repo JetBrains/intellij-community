@@ -128,10 +128,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
     fun enablePlugins(enabled: Boolean) = DisabledPluginsState.enablePlugins(descriptors, enabled)
 
-    fun startTrackingPerProject(enable: Boolean) {
-      descriptors.forEach { it.isEnabled = enable }
-      pluginTracker!!.startTrackingPerProject(pluginIds, enable)
-    }
+    fun startTrackingPerProject(enable: Boolean) = pluginTracker!!.startTrackingPerProject(pluginIds, enable)
 
     fun stopTrackingPerProject() = pluginTracker?.stopTrackingPerProject(pluginIds)
 
@@ -151,6 +148,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       }
       PluginEnableDisableAction.ENABLE_FOR_PROJECT_DISABLE_GLOBALLY -> {
         enablePlugins(false)
+        descriptors.forEach { it.isEnabled = true }
         startTrackingPerProject(true)
         true
       }

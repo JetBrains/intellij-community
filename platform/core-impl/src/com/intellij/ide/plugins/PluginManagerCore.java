@@ -1158,10 +1158,14 @@ public final class PluginManagerCore {
     return sortedRequired;
   }
 
-  public static List<IdeaPluginDescriptorImpl> getPluginsSortedByDependency(@NotNull List<IdeaPluginDescriptorImpl> plugins, boolean withOptional) {
+  public static @NotNull List<IdeaPluginDescriptorImpl> getPluginsSortedByDependency(@NotNull List<IdeaPluginDescriptorImpl> plugins,
+                                                                                     boolean enabled) {
+    for (IdeaPluginDescriptorImpl descriptor : plugins) {
+      descriptor.setEnabled(enabled);
+    }
     InboundSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(plugins,
                                                                            id -> (IdeaPluginDescriptorImpl)getPlugin(id),
-                                                                           withOptional,
+                                                                           true,
                                                                            findPluginByModuleDependency(ALL_MODULES_MARKER) != null);
     return Arrays.asList(getTopologicallySorted(graph));
   }
