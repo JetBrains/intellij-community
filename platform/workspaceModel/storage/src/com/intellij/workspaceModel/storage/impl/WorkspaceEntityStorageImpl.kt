@@ -18,6 +18,7 @@ import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapp
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
+import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.File
@@ -648,6 +649,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
       identifier) { MutableExternalEntityMappingImpl<T>() } as MutableExternalEntityMappingImpl<T>
     mapping.setTypedEntityStorage(this)
     return mapping
+  }
+
+  override fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex {
+    val virtualFileIndex = indexes.virtualFileIndex
+    virtualFileIndex.setTypedEntityStorage(this)
+    return virtualFileIndex
   }
 
   fun removeExternalMapping(identifier: String) {

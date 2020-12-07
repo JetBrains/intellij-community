@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import kotlin.reflect.KClass
@@ -198,6 +199,9 @@ interface WorkspaceEntityStorageDiffBuilder {
   fun addDiff(diff: WorkspaceEntityStorageDiffBuilder)
   fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
   fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
+  fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
+  fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
+
 
   val modificationCount: Long
 

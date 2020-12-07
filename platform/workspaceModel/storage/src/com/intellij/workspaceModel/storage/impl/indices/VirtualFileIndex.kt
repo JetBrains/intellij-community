@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import org.jetbrains.annotations.TestOnly
@@ -50,9 +51,14 @@ open class VirtualFileIndex internal constructor(
     // and call [startWrite] before write.
     override var entityId2VirtualFileUrl: EntityId2Vfu,
     override var vfu2EntityId: Vfu2EntityId
-  ) : VirtualFileIndex(entityId2VirtualFileUrl, vfu2EntityId) {
+  ) : VirtualFileIndex(entityId2VirtualFileUrl, vfu2EntityId), MutableVirtualFileUrlIndex {
 
     private var freezed = true
+
+    @Synchronized
+    override fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
+      index((entity as WorkspaceEntityBase).id, propertyName, virtualFileUrl)
+    }
 
     @Synchronized
     internal fun index(id: EntityId, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
