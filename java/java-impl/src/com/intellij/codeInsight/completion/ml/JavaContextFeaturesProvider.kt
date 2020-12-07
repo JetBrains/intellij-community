@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.ml
 
+import com.intellij.codeInsight.completion.JavaCompletionUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NotNull
 
@@ -11,7 +12,9 @@ class JavaContextFeaturesProvider : ContextFeatureProvider {
     val features = mutableMapOf<String, MLFeatureValue>()
 
     JavaCompletionFeatures.calculateVariables(environment)
-
+    JavaCompletionUtil.getExpectedTypes(environment.parameters)?.forEach {
+      features["${JavaCompletionFeatures.asJavaType(it).name.toLowerCase()}_expected"] = MLFeatureValue.binary(true)
+    }
     PsiTreeUtil.prevVisibleLeaf(environment.parameters.position)?.let { prevLeaf ->
       JavaCompletionFeatures.asKeyword(prevLeaf.text)?.let { keyword ->
         features["prev_neighbour_keyword"] = MLFeatureValue.categorical(keyword)

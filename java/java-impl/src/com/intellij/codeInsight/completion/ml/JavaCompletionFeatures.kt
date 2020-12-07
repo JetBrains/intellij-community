@@ -76,7 +76,7 @@ internal object JavaCompletionFeatures {
     CHAR,
     ENUM,
     ARRAY,
-    ITERABLE,
+    COLLECTION,
     MAP,
     THROWABLE,
     ANOTHER;
@@ -90,7 +90,7 @@ internal object JavaCompletionFeatures {
           TypeConversionUtil.isBooleanType(type) -> BOOLEAN
           TypeConversionUtil.isNumericType(type) -> NUMERIC
           type is PsiArrayType -> ARRAY
-          InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE) -> ITERABLE
+          InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) -> COLLECTION
           InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP) -> MAP
           InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE) -> THROWABLE
           TypeConversionUtil.isEnumType(type) -> ENUM
