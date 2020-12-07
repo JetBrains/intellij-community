@@ -10,10 +10,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.FontComboBox;
-import com.intellij.ui.FontInfoRenderer;
-import com.intellij.ui.TooltipWithClickableLinks;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.IntegerField;
@@ -38,15 +35,21 @@ import java.util.Set;
 
 public abstract class AbstractFontOptionsPanel extends JPanel implements OptionsPanel {
 
+  private static final FontInfoRenderer DEFAULT_FONT_COMBO_RENDERER = new FontInfoRenderer() {
+    @Override
+    protected boolean isEditorFont() {
+      return true;
+    }
+  };
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   @NotNull private final JTextField myEditorFontSizeField = new IntegerField(null,
                                                                              EditorFontsConstants.getMinEditorFontSize(),
                                                                              EditorFontsConstants.getMaxEditorFontSize());
   @NotNull private final JTextField myLineSpacingField = new JTextField(4);
-  private final FontComboBox myPrimaryCombo = new FontComboBox();
+  private final AbstractFontCombo<?> myPrimaryCombo;
   private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
-  private final FontComboBox mySecondaryCombo = new FontComboBox(false, false, true);
+  private final AbstractFontCombo<?> mySecondaryCombo;
 
   @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
     new JBCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));
@@ -61,16 +64,31 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   private JLabel myLineSpacingLabel;
 
   protected AbstractFontOptionsPanel() {
+    myPrimaryCombo = createPrimaryFontCombo();
+    mySecondaryCombo = createSecondaryFontCombo();
     setLayout(new FlowLayout(FlowLayout.LEFT));
     add(createControls());
     myEditorFontSizeField.setColumns(4);
+  }
+
+  protected AbstractFontCombo<?> createPrimaryFontCombo() {
+    FontComboBox primaryCombo = new FontComboBox();
+    //noinspection unchecked
+    primaryCombo.setRenderer(DEFAULT_FONT_COMBO_RENDERER);
+    return primaryCombo;
+  }
+
+  protected AbstractFontCombo<?> createSecondaryFontCombo() {
+     FontComboBox secondaryCombo = new FontComboBox(false, false, true);
+    //noinspection unchecked
+    secondaryCombo.setRenderer(DEFAULT_FONT_COMBO_RENDERER);
+    return secondaryCombo;
   }
 
   protected JComponent createControls() {
     return createFontSettingsPanel();
   }
 
-  @SuppressWarnings("unchecked")
   protected final JPanel createFontSettingsPanel() {
     Insets baseInsets = getInsets(0, 0);
 
@@ -135,26 +153,24 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     c.insets.bottom = BASE_INSET;
     fontPanel.add(panel, c);
 
-    myOnlyMonospacedCheckBox.setBorder(null);
     mySecondaryCombo.setEnabled(false);
 
-    myOnlyMonospacedCheckBox.setSelected(EditorColorsManager.getInstance().isUseOnlyMonospacedFonts());
-    myOnlyMonospacedCheckBox.addActionListener(e -> {
-      EditorColorsManager.getInstance().setUseOnlyMonospacedFonts(myOnlyMonospacedCheckBox.isSelected());
-      myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-      mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-    });
-    myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-    FontInfoRenderer renderer = new FontInfoRenderer() {
-      @Override
-      protected boolean isEditorFont() {
-        return true;
-      }
-    };
-    myPrimaryCombo.setRenderer(renderer);
+    if (myPrimaryCombo.isMonospacedOnlySupported()) {
+      myOnlyMonospacedCheckBox.setVisible(true);
+      myOnlyMonospacedCheckBox.setBorder(null);
+      myOnlyMonospacedCheckBox.setSelected(EditorColorsManager.getInstance().isUseOnlyMonospacedFonts());
+      myOnlyMonospacedCheckBox.addActionListener(e -> {
+        EditorColorsManager.getInstance().setUseOnlyMonospacedFonts(myOnlyMonospacedCheckBox.isSelected());
+        myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
+        mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
+      });
+    }
+    else {
+      myOnlyMonospacedCheckBox.setVisible(false);
+    }
 
+    myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
     mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-    mySecondaryCombo.setRenderer(renderer);
 
     ItemListener itemListener = this::syncFontFamilies;
     myPrimaryCombo.addItemListener(itemListener);
@@ -227,7 +243,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     return fontPanel;
   }
 
-  protected void createSecondaryFontComboAndLabel(@NotNull JPanel target, @NotNull GridBagConstraints c) {
+  protected final void createSecondaryFontComboAndLabel(@NotNull JPanel target, @NotNull GridBagConstraints c) {
     mySecondaryFontLabel = new JLabel(ApplicationBundle.message("secondary.font"));
     mySecondaryFontLabel.setLabelFor(mySecondaryCombo);
     target.add(mySecondaryFontLabel, c);
@@ -276,8 +292,8 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
    */
   private void syncFontFamilies(AWTEvent event) {
     Object source = event.getSource();
-    if (source instanceof FontComboBox) {
-      FontComboBox combo = (FontComboBox)source;
+    if (source instanceof AbstractFontCombo) {
+      AbstractFontCombo<?> combo = (AbstractFontCombo<?>)source;
       if (combo.isEnabled() && combo.isShowing() && combo.getSelectedItem() != null) {
         syncFontFamilies();
       }

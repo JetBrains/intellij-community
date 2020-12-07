@@ -27,8 +27,10 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.ui.AbstractFontCombo;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
@@ -186,6 +188,26 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
           allSettings.select(fontOptions);
         }
       }
+    }
+  }
+
+  @Override
+  protected AbstractFontCombo<?> createPrimaryFontCombo() {
+    if (FontFamilyService.isServiceSupported()) {
+      return new FontFamilyCombo(false);
+    }
+    else {
+      return super.createPrimaryFontCombo();
+    }
+  }
+
+  @Override
+  protected AbstractFontCombo<?> createSecondaryFontCombo() {
+    if (FontFamilyService.isServiceSupported()) {
+      return new FontFamilyCombo(true);
+    }
+    else {
+      return super.createSecondaryFontCombo();
     }
   }
 }
