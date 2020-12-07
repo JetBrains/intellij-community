@@ -43,7 +43,9 @@ public final class StreamUtil {
   }
 
   public static @NotNull String convertSeparators(@NotNull String s) {
-    return new String(convertSeparators(s.toCharArray()));
+    char[] source = s.toCharArray();
+    char[] converted = convertSeparators(source);
+    return converted == source ? s : new String(converted);
   }
 
   public static char @NotNull [] readTextAndConvertSeparators(@NotNull Reader reader) throws IOException {
