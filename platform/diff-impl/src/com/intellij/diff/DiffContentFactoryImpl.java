@@ -109,7 +109,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull String text, @NotNull FilePath filePath) {
+  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FilePath filePath) {
     return readOnlyDocumentContent(project)
       .contextByFilePath(filePath)
       .buildFromText(text, true);

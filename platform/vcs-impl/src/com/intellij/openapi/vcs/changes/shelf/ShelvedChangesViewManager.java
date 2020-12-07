@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
@@ -22,7 +23,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
+import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.apply.PlainSimplePatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -32,6 +37,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -91,6 +97,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSIT
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
@@ -970,10 +977,55 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @NotNull
-    private PatchDiffRequest createTextShelveRequest(@NotNull ShelvedChange shelvedChange, @Nullable @Nls String title)
+    private DiffRequest createTextShelveRequest(@NotNull ShelvedChange shelvedChange, @Nullable @Nls String title)
       throws VcsException {
-      TextFilePatch patch = myPreloader.getPatch(shelvedChange);
+      DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
+      Pair<TextFilePatch, CommitContext> pair = myPreloader.getPatchWithContext(shelvedChange);
+      TextFilePatch patch = pair.first;
+      CommitContext commitContext = pair.second;
+
+      FilePath contextFilePath = getContextFilePath(shelvedChange);
+
+      if (patch.isDeletedFile() || patch.isNewFile()) {
+        DiffContent shelfContent = factory.create(myProject, patch.getSingleHunkPatchText(), contextFilePath);
+        DiffContent emptyContent = factory.createEmpty();
+
+        DiffContent leftContent = patch.isDeletedFile() ? shelfContent : emptyContent;
+        DiffContent rightContent = !patch.isDeletedFile() ? shelfContent : emptyContent;
+        String leftTitle = DiffBundle.message("merge.version.title.base");
+        String rightTitle = VcsBundle.message("shelve.shelved.version");
+        return new SimpleDiffRequest(title, leftContent, rightContent, leftTitle, rightTitle);
+      }
+
+      String path = chooseNotNull(patch.getAfterName(), patch.getBeforeName());
+      CharSequence baseContents = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class)
+        .provideContent(myProject, path, commitContext);
+      if (baseContents != null) {
+        String patchedContent = PlainSimplePatchApplier.apply(baseContents, patch.getHunks());
+        if (patchedContent != null) {
+          DiffContent leftContent = factory.create(myProject, baseContents.toString(), contextFilePath);
+          DiffContent rightContent = factory.create(myProject, patchedContent, contextFilePath);
+
+          String leftTitle = DiffBundle.message("merge.version.title.base");
+          String rightTitle = VcsBundle.message("shelve.shelved.version");
+          return new SimpleDiffRequest(title, leftContent, rightContent, leftTitle, rightTitle);
+        }
+      }
+
       return new PatchDiffRequest(createAppliedTextPatch(patch), title, null);
+    }
+
+    @NotNull
+    private static FilePath getContextFilePath(@NotNull ShelvedChange shelvedChange) {
+      Change change = shelvedChange.getChange();
+      if (change.getType() == Change.Type.MOVED) {
+        FilePath bPath = requireNonNull(ChangesUtil.getBeforePath(change));
+        FilePath aPath = requireNonNull(ChangesUtil.getAfterPath(change));
+        if (bPath.getVirtualFile() != null) return bPath;
+        if (aPath.getVirtualFile() != null) return aPath;
+        return bPath;
+      }
+      return ChangesUtil.getFilePath(change);
     }
 
     @NotNull
