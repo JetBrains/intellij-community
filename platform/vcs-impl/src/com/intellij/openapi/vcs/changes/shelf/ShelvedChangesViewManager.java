@@ -1,8 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.diff.DiffContentFactoryEx;
+import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
@@ -21,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -948,26 +950,44 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     protected DiffRequest loadRequest(@NotNull ShelvedWrapper provider, @NotNull ProgressIndicator indicator)
       throws ProcessCanceledException, DiffRequestProducerException {
+      String title = getRequestName(provider);
       try {
         ShelvedChange shelvedChange = provider.getShelvedChange();
         if (shelvedChange != null) {
-          return new PatchDiffRequest(createAppliedTextPatch(myPreloader.getPatch(shelvedChange, null)));
+          return createTextShelveRequest(shelvedChange, title);
         }
 
-        DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
-        ShelvedBinaryFile binaryFile = requireNonNull(provider.getBinaryFile());
-        if (binaryFile.AFTER_PATH == null) {
-          throw new DiffRequestProducerException(VcsBundle.message("changes.error.content.for.0.was.removed", getRequestName(provider)));
+        ShelvedBinaryFile binaryFile = provider.getBinaryFile();
+        if (binaryFile != null) {
+          return createBinaryShelveRequest(binaryFile, title);
         }
-        //
-        byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
-        FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
-        return new SimpleDiffRequest(getRequestName(provider), factory.createEmpty(),
-                                     factory.createBinary(myProject, binaryContent, fileType, getRequestName(provider)), null, null);
+
+        throw new IllegalStateException("Empty shelved wrapper: " + provider);
       }
       catch (VcsException | IOException e) {
-        throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", getRequestName(provider)), e);
+        throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", title), e);
       }
+    }
+
+    @NotNull
+    private PatchDiffRequest createTextShelveRequest(@NotNull ShelvedChange shelvedChange, @Nullable @Nls String title)
+      throws VcsException {
+      TextFilePatch patch = myPreloader.getPatch(shelvedChange, null);
+      return new PatchDiffRequest(createAppliedTextPatch(patch), title, null);
+    }
+
+    @NotNull
+    private SimpleDiffRequest createBinaryShelveRequest(@NotNull ShelvedBinaryFile binaryFile, @Nullable @Nls String title)
+      throws DiffRequestProducerException, VcsException, IOException {
+      DiffContentFactory factory = DiffContentFactory.getInstance();
+      if (binaryFile.AFTER_PATH == null) {
+        throw new DiffRequestProducerException(VcsBundle.message("changes.error.content.for.0.was.removed", title));
+      }
+
+      byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
+      FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
+      DiffContent shelfContent = factory.createBinary(myProject, binaryContent, fileType, title);
+      return new SimpleDiffRequest(title, factory.createEmpty(), shelfContent, null, null);
     }
   }
 
