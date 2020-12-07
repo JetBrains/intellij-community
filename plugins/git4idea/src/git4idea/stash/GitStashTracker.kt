@@ -2,6 +2,8 @@
 package git4idea.stash
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -42,10 +44,13 @@ class GitStashTracker(private val project: Project) : Disposable {
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsListener {
       scheduleRefresh()
     })
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      scheduleRefresh()
+    }
   }
 
   fun scheduleRefresh() {
-    if (!isStashToolWindowAvailable(project)) return
+    if (!isStashToolWindowEnabled(project)) return
 
     updateQueue.queue(DisposableUpdate.createDisposable(this, "update", Runnable {
       val newStashes = mutableMapOf<VirtualFile, List<StashInfo>>()
@@ -74,9 +79,16 @@ interface GitStashTrackerListener : EventListener {
   fun stashesUpdated()
 }
 
+fun GitStashTracker.isNotEmpty() = stashes.values.any { it.isNotEmpty() }
+
 fun stashToolWindowRegistryOption() = Registry.get("git.enable.stash.toolwindow")
-fun isStashToolWindowAvailable(): Boolean = stashToolWindowRegistryOption().asBoolean()
-fun isStashToolWindowAvailable(project: Project): Boolean {
+fun isStashToolWindowEnabled(): Boolean = stashToolWindowRegistryOption().asBoolean()
+fun isStashToolWindowEnabled(project: Project): Boolean {
   return stashToolWindowRegistryOption().asBoolean() &&
          ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { it.keyInstanceMethod == GitVcs.getKey() }
+}
+
+fun isStashToolWindowAvailable(project: Project): Boolean {
+  return isStashToolWindowEnabled(project) &&
+         project.serviceIfCreated<GitStashTracker>()?.isNotEmpty() == true
 }

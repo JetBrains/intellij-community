@@ -13,10 +13,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
+import com.intellij.vcs.log.runInEdt
 import git4idea.i18n.GitBundle
-import git4idea.stash.GitStashTracker
-import git4idea.stash.isStashToolWindowAvailable
-import git4idea.stash.stashToolWindowRegistryOption
+import git4idea.stash.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
@@ -64,16 +63,25 @@ class GitStashDisplayNameSupplier : Supplier<String> {
   }
 }
 
-class GitStashStartupActivity : StartupActivity.Background {
+class GitStashStartupActivity : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
-    val gitStashTracker = project.service<GitStashTracker>()
-    stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        if (isStashToolWindowAvailable(project)) {
-          gitStashTracker.scheduleRefresh()
+    runInEdt(project) {
+      val gitStashTracker = project.service<GitStashTracker>()
+      gitStashTracker.addListener(object : GitStashTrackerListener {
+        private var hasStashes = gitStashTracker.isNotEmpty()
+        override fun stashesUpdated() {
+          if (hasStashes != gitStashTracker.isNotEmpty()) {
+            hasStashes = gitStashTracker.isNotEmpty()
+            project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+          }
         }
-        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-      }
-    }, gitStashTracker)
+      }, gitStashTracker)
+      stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          gitStashTracker.scheduleRefresh()
+          project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+        }
+      }, gitStashTracker)
+    }
   }
 }

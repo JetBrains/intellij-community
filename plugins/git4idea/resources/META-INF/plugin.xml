@@ -572,7 +572,7 @@
                         isInCommitToolWindow="true"/>
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
     <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
-    <backgroundPostStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
+    <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
