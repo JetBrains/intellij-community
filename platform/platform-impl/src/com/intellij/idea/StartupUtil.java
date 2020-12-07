@@ -63,17 +63,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-
-import static java.nio.file.attribute.PosixFilePermission.*;
 
 @ApiStatus.Internal
 public final class StartupUtil {
@@ -504,20 +502,22 @@ public final class StartupUtil {
         problem = "bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.temporary.file.in.the.directory";
         reason = "bootstrap.error.message.check.ide.directory.possible.reason.directory.is.read.only.or.the.user.lacks.necessary.permissions";
         tempFile = directory.resolve("ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
-        OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
-        Files.write(tempFile, "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
+        Files.writeString(tempFile, "#!/bin/sh\nexit 0", StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
 
         if (checkLock) {
           problem = "bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.lock.in.directory";
           reason = "bootstrap.error.message.check.ide.directory.possible.reason.the.directory.is.located.on.a.network.disk";
-          try (FileChannel channel = FileChannel.open(tempFile, StandardOpenOption.WRITE); FileLock lock = channel.tryLock()) {
-            if (lock == null) throw new IOException("File is locked");
+          try (FileChannel channel = FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE)); FileLock lock = channel.tryLock()) {
+            if (lock == null) {
+              throw new IOException("File is locked");
+            }
           }
         }
         else if (checkExec) {
           problem = "bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.execute.test.script";
           reason = "bootstrap.error.message.check.ide.directory.possible.reason.partition.is.mounted.with.no.exec.option";
-          Files.getFileAttributeView(tempFile, PosixFileAttributeView.class).setPermissions(EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE));
+          Files.getFileAttributeView(tempFile, PosixFileAttributeView.class)
+            .setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE));
           int ec = new ProcessBuilder(tempFile.toAbsolutePath().toString()).start().waitFor();
           if (ec != 0) {
             throw new IOException("Unexpected exit value: " + ec);

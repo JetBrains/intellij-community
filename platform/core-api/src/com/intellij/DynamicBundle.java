@@ -17,6 +17,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Locale;
@@ -25,7 +27,18 @@ import java.util.ResourceBundle;
 
 public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
-  private static final Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
+  private static final MethodHandle SET_PARENT;
+
+  static {
+    try {
+      Method method = ResourceBundle.class.getDeclaredMethod("setParent", ResourceBundle.class);
+      method.setAccessible(true);
+      SET_PARENT = MethodHandles.lookup().unreflect(method);
+    }
+    catch (NoSuchMethodException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
   private static final Map<String, DynamicBundle> ourBundlesForForms = CollectionFactory.createConcurrentSoftValueMap();
@@ -48,11 +61,11 @@ public class DynamicBundle extends AbstractBundle {
         if (pluginBundle != null) {
           try {
             if (SET_PARENT != null) {
-              SET_PARENT.invoke(pluginBundle, base);
+              SET_PARENT.bindTo(pluginBundle).invoke(base);
             }
             return pluginBundle;
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             LOG.warn(e);
           }
         }
