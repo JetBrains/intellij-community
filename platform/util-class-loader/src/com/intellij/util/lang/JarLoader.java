@@ -7,10 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
@@ -48,7 +51,7 @@ class JarLoader extends Loader {
     super(file);
 
     this.configuration = configuration;
-    this.url = new URL("jar", "", -1, "file:" + file + "!/");
+    this.url = new URL("jar", "", -1, fileToUri(file) + "!/");
 
     if (!configuration.lazyClassloadingCaches) {
       // IOException from opening is propagated to caller if zip file isn't valid,
@@ -64,6 +67,24 @@ class JarLoader extends Loader {
       finally {
         releaseZipFile(zipFile);
       }
+    }
+  }
+
+  // Path.toUri is broken — do not use it
+  private static @NotNull URI fileToUri(@NotNull Path file) {
+    String path = file.toString().replace(File.separatorChar, '/');
+    if (!path.startsWith("/")) {
+      path = '/' + path;
+    }
+    else if (path.startsWith("//")) {
+      path = "//" + path;
+    }
+
+    try {
+      return new URI("file", null, path, null);
+    }
+    catch (URISyntaxException e) {
+      throw new IllegalArgumentException(path, e);
     }
   }
 
