@@ -319,13 +319,20 @@ public final class ImageLoader {
   }
 
   static @Nullable InputStream getResourceData(@NotNull String path, @Nullable Class<?> resourceClass, @Nullable ClassLoader classLoader) {
-    if (resourceClass == null) {
-      assert classLoader != null;
-      return classLoader.getResourceAsStream(path.startsWith("/") ? path.substring(1) : path);
+    assert resourceClass != null || classLoader != null;
+
+    if (classLoader != null) {
+      InputStream stream = classLoader.getResourceAsStream(path.startsWith("/") ? path.substring(1) : path);
+      if (stream != null) {
+        return stream;
+      }
     }
-    else {
+
+    if (resourceClass != null) {
       return resourceClass.getResourceAsStream(path);
     }
+
+    return null;
   }
 
   private static @Nullable Image loadPngFromClassResource(String path,
