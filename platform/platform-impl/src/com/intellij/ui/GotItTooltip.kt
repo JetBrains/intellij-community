@@ -516,6 +516,27 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
 
     private val PANEL_MARGINS = JBUI.Borders.empty(7, 4, 9, 9)
 
+    private val iconClasses = hashMapOf<String, Class<*>>()
+
+    internal fun findIcon(src: String) : Icon? {
+      val iconClassName = src.split(".")[0]
+      val iconClass = iconClasses[iconClassName] ?: AllIcons::class.java
+      return IconLoader.findIcon(src, iconClass)
+    }
+
+    /**
+     * Register icon class that's used for resolving icons from icon tags.
+     * parentDisposable should be disposed on plugin removal.
+     * AllIcons is used by default if corresponding icons class hasn't been registered or found so
+     * there is not need to explicitly register it.
+     */
+    fun registerIconClass(iconClass: Class<*>, parentDisposable: Disposable) {
+      iconClasses[iconClass.simpleName] = iconClass
+
+      Disposer.register(parentDisposable) {
+        iconClasses.remove(iconClass.simpleName)
+      }
+    }
 
     /**
      * Use this method for following an ActionToolbar component.
@@ -542,7 +563,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
   }
 }
 
-private class LimitedWidthLabel(val htmlBuilder: HtmlBuilder, val limit: Int) : JLabel() {
+private class LimitedWidthLabel(htmlBuilder: HtmlBuilder, limit: Int) : JLabel() {
   val htmlView : View
 
   init {
@@ -604,7 +625,7 @@ private class LimitedWidthLabel(val htmlBuilder: HtmlBuilder, val limit: Int) : 
         val attr = elem.attributes
         if ("icon" == elem.name) {
           val src = attr.getAttribute(HTML.Attribute.SRC) as String
-          val icon = IconLoader.findIcon(src, AllIcons::class.java)
+          val icon = GotItTooltip.findIcon(src)
           if (icon != null) {
             return GotItIconView(icon, elem)
           }
