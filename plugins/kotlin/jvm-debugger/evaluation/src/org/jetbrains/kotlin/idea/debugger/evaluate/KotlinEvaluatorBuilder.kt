@@ -454,6 +454,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                     Errors.EXPERIMENTAL_API_USAGE_ERROR,
                     Errors.MISSING_DEPENDENCY_SUPERCLASS,
                     Errors.IR_COMPILED_CLASS,
+                    Errors.FIR_COMPILED_CLASS,
                     Errors.ILLEGAL_SUSPEND_FUNCTION_CALL
                 )
 
