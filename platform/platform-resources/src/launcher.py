@@ -133,9 +133,11 @@ def start_new_instance(args):
             args.insert(0, '-W')
         os.execv('/usr/bin/open', ['open', '-na', RUN_PATH] + args)
     else:
-        bin_file = os.path.split(RUN_PATH)[1]
-        os.execv(RUN_PATH, [bin_file] + args)
-
+        if '--wait' in args:
+            bg = 'bg'
+        else:
+            bg = ''
+        os.execv('/bin/sh', ['sh', '-c', 'exec "$@" 2>/dev/null ' + bg, '-', RUN_PATH] + args)
 
 ide_args = process_args(sys.argv)
 if not try_activate_instance(ide_args):
