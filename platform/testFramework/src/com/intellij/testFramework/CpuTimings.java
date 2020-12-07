@@ -32,7 +32,7 @@ final class CpuTimings {
         minIteration = i;
       }
       else if (i - minIteration > 100) {
-        System.out.println("CPU timing: " + minTime + ", calculated in " + (System.currentTimeMillis() - start) + "ms");
+        System.out.println("CPU timing rating: " + minTime + " (calculated in " + (System.currentTimeMillis() - start) + "ms)");
         return minTime;
       }
     }
