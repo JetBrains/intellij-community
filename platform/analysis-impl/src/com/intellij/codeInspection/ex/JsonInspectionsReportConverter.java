@@ -40,6 +40,10 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls protected static final String PROBLEM = "problem";
   @NonNls protected static final String PROBLEMS = "problems";
   @NonNls private static final String DESCRIPTION = "description";
+  @NonNls private static final String PLUGIN_ID = "pluginId";
+  @NonNls private static final String PLUGIN_VERSION = "pluginVersion";
+  @NonNls private static final String GLOBAL_TOOL = "isGlobalTool";
+  @NonNls private static final String LANGUAGE = "language";
   @NonNls private static final String SEVERITY_ATTR = "severity";
   @NonNls private static final String ATTRIBUTE_KEY_ATTR = "attribute_key";
   @NonNls private static final String HINT = "hint";
@@ -265,6 +269,10 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
       .name(SHORT_NAME).value(inspection.getAttributeValue(SHORT_NAME))
       .name(DISPLAY_NAME).value(inspection.getAttributeValue(DISPLAY_NAME))
       .name(DEFAULT_SEVERITY).value(inspection.getAttributeValue(DEFAULT_SEVERITY))
+      .name(PLUGIN_ID).value(inspection.getAttributeValue(PLUGIN_ID))
+      .name(PLUGIN_VERSION).value(inspection.getAttributeValue(PLUGIN_VERSION))
+      .name(LANGUAGE).value(inspection.getAttributeValue(LANGUAGE))
+      .name(GLOBAL_TOOL).value(Boolean.parseBoolean(inspection.getAttributeValue(GLOBAL_TOOL)))
       .name(ENABLED).value(Boolean.parseBoolean(inspection.getAttributeValue(ENABLED)))
       .name(DESCRIPTION).value(inspection.getValue())
       .endObject();

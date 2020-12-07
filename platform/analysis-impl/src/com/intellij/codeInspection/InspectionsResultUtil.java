@@ -2,13 +2,11 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.ToolsImpl;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,6 +65,18 @@ public final class InspectionsResultUtil {
           xmlWriter.addAttribute("defaultSeverity", toolWrapper.getDefaultLevel().getSeverity().getName());
           xmlWriter.addAttribute("displayName", toolWrapper.getDisplayName());
           xmlWriter.addAttribute("enabled", Boolean.toString(isToolEnabled(profile, shortName)));
+          String language = toolWrapper.getLanguage();
+          if (language != null) {
+            xmlWriter.addAttribute("language", language);
+          }
+          InspectionEP extension = toolWrapper.getExtension();
+          if (extension != null) {
+            PluginDescriptor plugin = extension.getPluginDescriptor();
+            String pluginId = plugin.getPluginId().getIdString();
+            xmlWriter.addAttribute("pluginId", pluginId);
+            xmlWriter.addAttribute("pluginVersion", plugin.getVersion());
+          }
+          xmlWriter.addAttribute("isGlobalTool", String.valueOf(toolWrapper instanceof GlobalInspectionToolWrapper));
 
           final String description = toolWrapper.loadDescription();
           if (description != null) {
