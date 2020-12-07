@@ -13,7 +13,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.jetbrains.kotlin.idea.perf.Stats
 import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
-import org.jetbrains.kotlin.test.TestMetadataUtil
+import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.BufferedWriter
 import java.io.File
 
@@ -86,9 +86,9 @@ internal fun Benchmark.loadJson() {
 }
 
 private fun statsFile(name: String, extension: String) =
-    File(pathToResource("stats${statFilePrefix(name)}.$extension")).absoluteFile
+    pathToResource("stats${statFilePrefix(name)}.$extension").absoluteFile
 
-internal fun pathToResource(resource: String) = "out/$resource"
+internal fun pathToResource(resource: String) = File(KotlinRoot.DIR, "../out/$resource").canonicalFile
 
 internal fun statFilePrefix(name: String) = if (name.isNotEmpty()) "-${plainname(name)}" else ""
 

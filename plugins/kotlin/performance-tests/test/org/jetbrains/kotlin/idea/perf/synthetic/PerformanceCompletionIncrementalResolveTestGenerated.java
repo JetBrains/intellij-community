@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.perf.synthetic.AbstractPerformanceCompletionIncrementalResolveTest;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
@@ -19,9 +18,9 @@ import org.junit.runner.RunWith;
  */
 @SuppressWarnings("all")
 @TestRoot("performance-tests")
-@TestDataPath("/")
+@TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/incrementalResolve")
+@TestMetadata("../completion/testData/incrementalResolve")
 public class PerformanceCompletionIncrementalResolveTestGenerated extends AbstractPerformanceCompletionIncrementalResolveTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
@@ -29,51 +28,51 @@ public class PerformanceCompletionIncrementalResolveTestGenerated extends Abstra
 
     @TestMetadata("codeAboveChanged.kt")
     public void testCodeAboveChanged() throws Exception {
-        runTest("testData/incrementalResolve/codeAboveChanged.kt");
+        runTest("../completion/testData/incrementalResolve/codeAboveChanged.kt");
     }
 
     @TestMetadata("codeAboveChanged2.kt")
     public void testCodeAboveChanged2() throws Exception {
-        runTest("testData/incrementalResolve/codeAboveChanged2.kt");
+        runTest("../completion/testData/incrementalResolve/codeAboveChanged2.kt");
     }
 
     @TestMetadata("dataFlowInfoFromPrevStatement.kt")
     public void testDataFlowInfoFromPrevStatement() throws Exception {
-        runTest("testData/incrementalResolve/dataFlowInfoFromPrevStatement.kt");
+        runTest("../completion/testData/incrementalResolve/dataFlowInfoFromPrevStatement.kt");
     }
 
     @TestMetadata("dataFlowInfoFromSameStatement.kt")
     public void testDataFlowInfoFromSameStatement() throws Exception {
-        runTest("testData/incrementalResolve/dataFlowInfoFromSameStatement.kt");
+        runTest("../completion/testData/incrementalResolve/dataFlowInfoFromSameStatement.kt");
     }
 
     @TestMetadata("doNotAnalyzeComplexStatement.kt")
     public void testDoNotAnalyzeComplexStatement() throws Exception {
-        runTest("testData/incrementalResolve/doNotAnalyzeComplexStatement.kt");
+        runTest("../completion/testData/incrementalResolve/doNotAnalyzeComplexStatement.kt");
     }
 
     @TestMetadata("noDataFlowFromOldStatement.kt")
     public void testNoDataFlowFromOldStatement() throws Exception {
-        runTest("testData/incrementalResolve/noDataFlowFromOldStatement.kt");
+        runTest("../completion/testData/incrementalResolve/noDataFlowFromOldStatement.kt");
     }
 
     @TestMetadata("noPrevStatement.kt")
     public void testNoPrevStatement() throws Exception {
-        runTest("testData/incrementalResolve/noPrevStatement.kt");
+        runTest("../completion/testData/incrementalResolve/noPrevStatement.kt");
     }
 
     @TestMetadata("outOfBlockModification.kt")
     public void testOutOfBlockModification() throws Exception {
-        runTest("testData/incrementalResolve/outOfBlockModification.kt");
+        runTest("../completion/testData/incrementalResolve/outOfBlockModification.kt");
     }
 
     @TestMetadata("prevStatementNotResolved.kt")
     public void testPrevStatementNotResolved() throws Exception {
-        runTest("testData/incrementalResolve/prevStatementNotResolved.kt");
+        runTest("../completion/testData/incrementalResolve/prevStatementNotResolved.kt");
     }
 
     @TestMetadata("sameStatement.kt")
     public void testSameStatement() throws Exception {
-        runTest("testData/incrementalResolve/sameStatement.kt");
+        runTest("../completion/testData/incrementalResolve/sameStatement.kt");
     }
 }

@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.perf.synthetic.AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
@@ -19,9 +18,9 @@ import org.junit.runner.RunWith;
  */
 @SuppressWarnings("all")
 @TestRoot("performance-tests")
-@TestDataPath("/")
+@TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/copyPaste/literal")
+@TestMetadata("../idea/testData/copyPaste/literal")
 public class PerformanceLiteralKotlinToKotlinCopyPasteTestGenerated extends AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
@@ -29,31 +28,31 @@ public class PerformanceLiteralKotlinToKotlinCopyPasteTestGenerated extends Abst
 
     @TestMetadata("CollectionLiteralReference.kt")
     public void testCollectionLiteralReference() throws Exception {
-        runTest("testData/copyPaste/literal/CollectionLiteralReference.kt");
+        runTest("../idea/testData/copyPaste/literal/CollectionLiteralReference.kt");
     }
 
     @TestMetadata("DontEscapeEntries.kt")
     public void testDontEscapeEntries() throws Exception {
-        runTest("testData/copyPaste/literal/DontEscapeEntries.kt");
+        runTest("../idea/testData/copyPaste/literal/DontEscapeEntries.kt");
     }
 
     @TestMetadata("DontEscapeEntries2.kt")
     public void testDontEscapeEntries2() throws Exception {
-        runTest("testData/copyPaste/literal/DontEscapeEntries2.kt");
+        runTest("../idea/testData/copyPaste/literal/DontEscapeEntries2.kt");
     }
 
     @TestMetadata("DontEscapeThis.kt")
     public void testDontEscapeThis() throws Exception {
-        runTest("testData/copyPaste/literal/DontEscapeThis.kt");
+        runTest("../idea/testData/copyPaste/literal/DontEscapeThis.kt");
     }
 
     @TestMetadata("DontUnescapeLiteralWIthCode.kt")
     public void testDontUnescapeLiteralWIthCode() throws Exception {
-        runTest("testData/copyPaste/literal/DontUnescapeLiteralWIthCode.kt");
+        runTest("../idea/testData/copyPaste/literal/DontUnescapeLiteralWIthCode.kt");
     }
 
     @TestMetadata("UnescapeFullSelection.kt")
     public void testUnescapeFullSelection() throws Exception {
-        runTest("testData/copyPaste/literal/UnescapeFullSelection.kt");
+        runTest("../idea/testData/copyPaste/literal/UnescapeFullSelection.kt");
     }
 }

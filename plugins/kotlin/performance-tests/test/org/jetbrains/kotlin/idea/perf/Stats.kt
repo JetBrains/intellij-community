@@ -324,7 +324,7 @@ class Stats(
         profilerConfig: ProfilerConfig
     ): PhaseProfiler {
         profilerConfig.name = "$testName${if (phaseName.isEmpty()) "" else "-$phaseName"}"
-        profilerConfig.path = pathToResource("profile/${plainname(name)}")
+        profilerConfig.path = pathToResource("profile/${plainname(name)}").path
         val profilerHandler = if (profilerConfig.enabled && !profilerConfig.warmup)
             ProfilerHandler.getInstance(profilerConfig)
         else
