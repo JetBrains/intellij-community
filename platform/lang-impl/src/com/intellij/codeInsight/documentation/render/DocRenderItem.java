@@ -396,7 +396,7 @@ public final class DocRenderItem {
       else {
         highlighter.setGutterIconRenderer(null);
       }
-      if (inlay != null) inlay.update();
+      if (inlay != null) inlay.getRenderer().update(false, false);
     }
   }
 

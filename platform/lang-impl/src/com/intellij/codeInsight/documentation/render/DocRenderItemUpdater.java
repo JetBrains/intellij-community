@@ -53,12 +53,7 @@ public final class DocRenderItemUpdater implements Runnable {
           keeper.savePosition();
           return keeper;
         });
-        if (updateContent) {
-          inlay.getRenderer().updateContent();
-        }
-        else {
-          inlay.update();
-        }
+        inlay.getRenderer().update(true, updateContent);
       }
     }
     while (!toProcess.isEmpty() && System.currentTimeMillis() < deadline);
