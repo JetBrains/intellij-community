@@ -750,6 +750,12 @@ public final class FSRecords {
     return finder.findDescendantByIdPath();
   }
 
+  @ApiStatus.Internal
+  @NotNull
+  public static IntList getRemainFreeRecords() {
+    return readAndHandleErrors(() -> new IntArrayList(ourConnection.getFreeRecords()));
+  }
+
   static void setParent(int id, int parentId) {
     if (id == parentId) {
       LOG.error("Cyclic parent/child relations");

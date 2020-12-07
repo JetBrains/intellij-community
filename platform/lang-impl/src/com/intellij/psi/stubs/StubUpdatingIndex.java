@@ -5,6 +5,7 @@ import com.intellij.index.PrebuiltIndexProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -17,15 +18,16 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.KeyedExtensionCollector;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.BitUtil;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
@@ -34,6 +36,8 @@ import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage;
 import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.*;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +45,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -392,6 +397,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
         }
       });
     }
+    checkStubIndexDontContainDeletedRecords(index);
     return index;
   }
 
@@ -424,6 +430,28 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       for (KeyedLazyInstance<T> instance : point) {
         consumer.accept(instance.getInstance());
       }
+    }
+  }
+
+  private static void checkStubIndexDontContainDeletedRecords(@NotNull StubUpdatingIndexStorage stubIndex) throws StorageException {
+    if (!ApplicationManager.getApplication().isInternal()) {
+      return;
+    }
+
+    IntList staleIds = new IntArrayList();
+    for (int freeRecord : FSRecords.getRemainFreeRecords()) {
+      Map<Integer, SerializedStubTree> data = stubIndex.getIndexedFileData(freeRecord);
+      SerializedStubTree stubTree = ContainerUtil.getFirstItem(data.values());
+      if (stubTree != null) {
+        staleIds.add(freeRecord);
+      }
+    }
+
+    if (!staleIds.isEmpty()) {
+      LOG.error("Stub index contains several stale file ids (size = "
+                + staleIds.size()
+                + ". Sample stale ids: "
+                + StringUtil.first(staleIds.toString(), 300, true));
     }
   }
 }
