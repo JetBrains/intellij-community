@@ -428,7 +428,10 @@ class TestingTasksImpl extends TestingTasks {
     List<String> teamCityFormatterClasspath = createTeamCityFormatterClasspath()
 
     String jvmExecutablePath = options.customJrePath != null ? "$options.customJrePath/bin/java" : ""
-    context.ant.junit(fork: true, showoutput: isShowAntJunitOutput(), logfailedtests: false, tempdir: junitTemp, jvm: jvmExecutablePath, printsummary: (underTeamCity ? "off" : "on")) {
+    context.ant.junit(fork: true, showoutput: isShowAntJunitOutput(), logfailedtests: false,
+                      tempdir: junitTemp, jvm: jvmExecutablePath,
+                      printsummary: (underTeamCity ? "off" : "on"),
+                      haltOnFailure: (options.failFast ? "yes" : "no")) {
       jvmArgs.each { jvmarg(value: it) }
       systemProperties.each { key, value ->
         if (value != null) {

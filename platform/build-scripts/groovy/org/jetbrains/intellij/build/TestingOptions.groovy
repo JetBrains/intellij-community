@@ -109,6 +109,11 @@ class TestingOptions {
 
   boolean performanceTestsOnly = SystemProperties.getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
 
+  /**
+   * Terminate execution immediately if any test fails. Both build script and test JVMs are terminated.
+   */
+  boolean failFast = SystemProperties.getBooleanProperty("intellij.build.test.failFast", false)
+
   public static final String ALL_EXCLUDE_DEFINED_GROUP = "ALL_EXCLUDE_DEFINED"
   private static final String OLD_TEST_GROUP = System.getProperty("idea.test.group", ALL_EXCLUDE_DEFINED_GROUP)
   private static final String OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
