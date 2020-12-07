@@ -7,6 +7,8 @@ public interface TerminalListener {
 
   void setTtyResizeHandler(TtyResizeHandler ttyResizeHandler);
 
+  void setCloseFunction(String event, Runnable runnable);
+
   TerminalListener NULL = new TerminalListener() {
 
     @Override
@@ -16,6 +18,11 @@ public interface TerminalListener {
 
     @Override
     public void setTtyResizeHandler(TtyResizeHandler ttyResizeHandler) {
+      //
+    }
+
+    @Override
+    public void setCloseFunction(String event, Runnable runnable) {
       //
     }
   };
