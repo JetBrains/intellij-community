@@ -46,7 +46,7 @@ class IDESettingsFUSCollector : ProjectUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("kotlin.ide.settings", 3)
+        private val GROUP = EventLogGroup("kotlin.ide.settings", 4)
 
         // scriptingAutoReloadEnabled Event
         private val scriptingAREnabledField = EventFields.Boolean("enabled")
