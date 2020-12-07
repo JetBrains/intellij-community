@@ -97,7 +97,7 @@ enum Arch {
 
 static def archToDownload(String platform, String targetArch) {
   if (targetArch != null) {
-    return List.of(Arch.valueOf(targetArch))
+    return [Arch.valueOf(targetArch)]
   }
   platform != 'osx' ? [Arch.x86, Arch.x64] : [Arch.x64, Arch.aarch64]
 }
