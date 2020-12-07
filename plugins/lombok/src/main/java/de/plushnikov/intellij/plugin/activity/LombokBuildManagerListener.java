@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.activity;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.server.BuildManagerListener;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
@@ -14,7 +15,8 @@ public class LombokBuildManagerListener implements BuildManagerListener {
   @Override
   public void beforeBuildProcessStarted(@NotNull Project project,
                                         @NotNull UUID sessionId) {
-    if (!hasAnnotationProcessorsEnabled(project)) {
+    if (!hasAnnotationProcessorsEnabled(project) &&
+        ReadAction.compute(() -> LombokProjectValidatorActivity.hasLombokLibrary(project))) {
       enableAnnotationProcessors(project);
     }
   }
