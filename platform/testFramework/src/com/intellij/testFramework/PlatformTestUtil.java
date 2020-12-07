@@ -37,6 +37,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -1125,6 +1126,7 @@ public final class PlatformTestUtil {
       refRunContentDescriptor.set(descriptor);
       latch.countDown();
     });
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     LOG.debug("Waiting for process to start");
     if (!latch.await(60, TimeUnit.SECONDS)) {
       fail("Process failed to start in 60 seconds");
