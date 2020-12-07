@@ -55,13 +55,6 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls private static final String GROUPS = "groups";
   @NonNls private static final String INSPECTION = "inspection";
   @NonNls private static final String HIGHLIGHTED_ELEMENT = "highlighted_element";
-  @NonNls private static final String PROJECT_FINGERPRINT = "ProjectFingerprint";
-  @NonNls private static final String FILE_FINGERPRINT = "file_fingerprint";
-  @NonNls private static final String FILE_NAME = "file_name";
-  @NonNls private static final String FILE_PATH = "file_path";
-  @NonNls private static final String LANGUAGE = "language";
-  @NonNls private static final String LINES_COUNT = "lines_count";
-  @NonNls private static final String MODIFICATION_TIMESTAMP = "modification_timestamp";
   @NonNls private static final String DUPLICATED_CODE_AGGREGATE = "DuplicatedCode" + InspectionsResultUtil.AGGREGATE;
 
   @Override
@@ -98,9 +91,6 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
         Document doc = builder.build(inspectionDataFile);
         if (InspectionsResultUtil.DESCRIPTIONS.equals(fileNameWithoutExt)) {
           convertDescriptions(jsonWriter, doc);
-        }
-        else if (PROJECT_FINGERPRINT.equals(fileNameWithoutExt)) {
-          convertProjectFingerprint(jsonWriter, doc);
         }
         else if (DUPLICATED_CODE_AGGREGATE.equals(fileNameWithoutExt)) {
           convertDuplicatedCode(jsonWriter, doc);
@@ -143,39 +133,6 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     jsonWriter.name("start").value(Integer.parseInt(start));
     jsonWriter.name("end").value(Integer.parseInt(end));
     jsonWriter.endObject();
-  }
-
-  private static void convertProjectFingerprint(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {
-    jsonWriter.beginObject();
-    jsonWriter.name(PROBLEMS);
-    jsonWriter.beginArray();
-    for (Element fileFingerprint : problems.getRootElement().getChildren(FILE_FINGERPRINT)) {
-      convertFileFingerprint(jsonWriter, fileFingerprint);
-    }
-    jsonWriter.endArray();
-    jsonWriter.endObject();
-  }
-
-  private static void convertFileFingerprint(@NotNull JsonWriter writer, @NotNull Element problem) throws IOException {
-    writer.beginObject();
-    writer.name(FILE_NAME).value(problem.getChildText(FILE_NAME));
-    writer.name(FILE_PATH).value(problem.getChildText(FILE_PATH));
-    writer.name(LANGUAGE).value(problem.getChildText(LANGUAGE));
-    try {
-      int linesCount = Integer.parseInt(problem.getChildText(LINES_COUNT));
-      writer.name(LINES_COUNT).value(linesCount);
-    }
-    catch (NumberFormatException e) {
-      writer.name(LINES_COUNT).nullValue();
-    }
-    try {
-      long modificationStamp = Long.parseLong(problem.getChildText(MODIFICATION_TIMESTAMP));
-      writer.name(MODIFICATION_TIMESTAMP).value(modificationStamp);
-    }
-    catch (NumberFormatException e) {
-      writer.name(MODIFICATION_TIMESTAMP).nullValue();
-    }
-    writer.endObject();
   }
 
   private static void convertProblems(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {
