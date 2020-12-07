@@ -234,7 +234,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
           painter.paint(tree, g, insets.left, bounds.y, offset, bounds.height, control, depth, leaf, expanded, selected && focused);
           // TODO: editingComponent, editingRow ???
           if (editingComponent == null || editingRow != row) {
-            int width = helper.getX() + helper.getWidth() - insets.left - offset - helper.getRightMargin();
+            int width = helper.getX() + helper.getWidth() - insets.left - offset;
             if (width > 0) {
               Object value = path.getLastPathComponent();
               Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
@@ -242,8 +242,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
                 if (width < bounds.width && helper.isRendererShrinkingDisabled(row)) {
                   width = bounds.width; // disable shrinking a long nodes
                 }
-                setBackground(tree, component, background, false);
-                rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
+                else {
+                  width -= helper.getRightMargin(); // shrink a long node according to the right margin
+                }
+                if (width > 0) {
+                  setBackground(tree, component, background, false);
+                  rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
+                }
               }
             }
             if (!isMac && lead && g instanceof Graphics2D) {
