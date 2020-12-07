@@ -56,7 +56,7 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
   public boolean ignoreSuperLoggers = false;
 
   @SuppressWarnings("PublicField") public final ExternalizableStringSet annotations = new ExternalizableStringSet();
-  @SuppressWarnings("PublicField") public final ExternalizableStringSet ignoredClasses = new ExternalizableStringSet("java.lang.Throwable");
+  @SuppressWarnings("PublicField") public final ExternalizableStringSet ignoredClasses = new ExternalizableStringSet(CommonClassNames.JAVA_LANG_THROWABLE);
 
   public ClassWithoutLoggerInspection() {
     parseString(loggerNamesString, loggerNames);

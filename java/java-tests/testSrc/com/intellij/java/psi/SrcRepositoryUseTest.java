@@ -582,7 +582,7 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
   public void testAnonymousClass2() {
     setupLoadingFilter();
 
-    PsiClass throwable = myJavaFacade.findClass("java.lang.Throwable", GlobalSearchScope.allScope(myProject));
+    PsiClass throwable = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_THROWABLE, GlobalSearchScope.allScope(myProject));
     PsiClass[] inheritors = ClassInheritorsSearch.search(throwable, GlobalSearchScope.projectScope(myProject), true).toArray(PsiClass.EMPTY_ARRAY);
     assertEquals(1, inheritors.length);
     assertTrue(inheritors[0] instanceof PsiAnonymousClass);
@@ -591,7 +591,7 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     PsiClassType baseClassRef = anonClass.getBaseClassType();
     assertEquals("Throwable", baseClassRef.getPresentableText());
     assertEquals(throwable, baseClassRef.resolve());
-    assertEquals("java.lang.Throwable", baseClassRef.getCanonicalText());
+    assertEquals(CommonClassNames.JAVA_LANG_THROWABLE, baseClassRef.getCanonicalText());
 
     teardownLoadingFilter();
 

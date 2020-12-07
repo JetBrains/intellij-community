@@ -646,7 +646,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         }
 
         PsiClassType throwable = JavaPsiFacade.getElementFactory(myProject)
-          .createTypeByFQClassName("java.lang.Throwable", type.getResolveScope());
+          .createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, type.getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
           return JavaRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }

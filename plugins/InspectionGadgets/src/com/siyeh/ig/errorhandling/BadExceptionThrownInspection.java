@@ -18,6 +18,7 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiThrowStatement;
 import com.intellij.psi.PsiType;
@@ -38,7 +39,7 @@ public class BadExceptionThrownInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet exceptions =
     new ExternalizableStringSet(
-      "java.lang.Throwable",
+      CommonClassNames.JAVA_LANG_THROWABLE,
       "java.lang.Exception",
       "java.lang.Error",
       "java.lang.RuntimeException",
@@ -60,7 +61,7 @@ public class BadExceptionThrownInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     final ListTable table = new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message( "exception.class.column.name")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), "java.lang.Throwable");
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), CommonClassNames.JAVA_LANG_THROWABLE);
   }
 
   @Override

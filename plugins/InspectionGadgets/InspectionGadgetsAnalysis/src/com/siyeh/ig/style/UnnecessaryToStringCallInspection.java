@@ -137,7 +137,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
       return false;
     }
     if (qualifier instanceof PsiSuperExpression) return false;
-    final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(qualifier, "java.lang.Throwable");
+    final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_THROWABLE);
     return !ExpressionUtils.isConversionToStringNecessary(call, throwable);
   }
 }

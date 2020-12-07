@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -429,9 +430,9 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     if (!(literalExpression instanceof PsiLiteralExpression)) return null;
     Project project = literalExpression.getProject();
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      return getDuplicateLiterals(project,
-                                  (PsiLiteralExpression)literalExpression,
-                                  false /* here we want find all the expressions */);
+      return ReadAction.compute(()->getDuplicateLiterals(project,
+                                             (PsiLiteralExpression)literalExpression,
+                                             false /* here we want find all the expressions */));
     }, JavaI18nBundle.message("progress.title.searching.for.duplicates.of.0", ((PsiLiteralExpression)literalExpression).getValue()), true, project);
   }
 

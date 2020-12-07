@@ -433,7 +433,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).
               createInheritanceClassChooser(
                 JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"), scope,
-                JavaPsiFacade.getInstance(project).findClass("java.lang.Throwable", scope), true, true, null);
+                JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_THROWABLE, scope), true, true, null);
             chooser.showDialog();
             PsiClass selectedClass = chooser.getSelected();
             return selectedClass != null ? selectedClass.getQualifiedName() : null;

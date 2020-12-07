@@ -3072,7 +3072,7 @@ public final class HighlightUtil {
 
   static HighlightInfo checkMustBeThrowable(@NotNull PsiType type, @NotNull PsiElement context, boolean addCastIntention) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
-    PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", context.getResolveScope());
+    PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
     if (!TypeConversionUtil.isAssignable(throwable, type)) {
       HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(throwable, type, context.getTextRange(), 0);
       if (addCastIntention && TypeConversionUtil.areTypesConvertible(type, throwable)) {

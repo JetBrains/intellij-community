@@ -152,7 +152,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
         return null;
       }
     }
-    final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, "java.lang.Throwable");
+    final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, CommonClassNames.JAVA_LANG_THROWABLE);
     if (ExpressionUtils.isConversionToStringNecessary(call, throwable)) {
       if (!TypeUtils.isJavaLangString(argumentType) ||
           NullabilityUtil.getExpressionNullability(argument, true) != Nullability.NOT_NULL) {
