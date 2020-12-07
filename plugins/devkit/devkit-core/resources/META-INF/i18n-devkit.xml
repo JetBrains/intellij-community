@@ -11,6 +11,12 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlI18nInspection"
                      key="inspection.plugin.xml.i18n.display.name"/>
+    <localInspection language="XML" shortName="PluginXmlCapitalization" applyToDialects="false"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlCapitalizationInspection"
+                     key="inspection.plugin.xml.capitalization.display.name"/>
+
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="Properties"
                      groupKey="inspections.group.name"
