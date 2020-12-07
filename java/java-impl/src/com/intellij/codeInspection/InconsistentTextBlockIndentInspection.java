@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.google.common.base.Strings;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -31,9 +30,10 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
       public void visitLiteralExpression(PsiLiteralExpression expression) {
         String[] lines = PsiLiteralUtil.getTextBlockLines(expression);
         if (lines == null) return;
+        int tabSize = CodeStyle.getSettings(expression.getProject()).getTabSize(JavaFileType.INSTANCE);
+        if (tabSize == 1) return;
         MixedIndentModel indentModel = MixedIndentModel.create(lines);
         if (indentModel == null) return;
-        int tabSize = CodeStyle.getSettings(expression.getProject()).getTabSize(JavaFileType.INSTANCE);
         int desiredIndent = indentModel.findDesiredIndent(tabSize);
         int indexToReport = indentModel.findFirstInconsistentCharIdx(desiredIndent, tabSize);
         if (indexToReport == -1) return;
@@ -104,8 +104,7 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
       if (indentModel == null) return;
       int desiredIndent = indentModel.findDesiredIndent(myTabSize);
       if (desiredIndent == -1) return;
-      String indentText = myDesiredIndentType == IndentType.SPACES ?
-                          Strings.repeat(" ", desiredIndent) : Strings.repeat("\t", desiredIndent / myTabSize);
+      String indentText = myDesiredIndentType == IndentType.SPACES ? " ".repeat(desiredIndent) : "\t".repeat(desiredIndent / myTabSize);
       String newTextBlock = TrailingWhitespacesInTextBlockInspection
         .transformTextBlockLines(lines, (l, i) -> isContentPart(lines, i, l), contentLine -> {
         int lineIndent = MixedIndentModel.findLineIndent(contentLine, desiredIndent, myTabSize, myDesiredIndentType);
@@ -190,11 +189,7 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
             nSpaces++;
           }
           else if (c == '\t') {
-            if (nSpaces % tabSize != 0) {
-              indentTypes.remove(IndentType.TABS);
-            }
             indentToSee -= tabSize;
-            nSpaces = 0;
           }
           if (indentToSee <= 0) break;
         }
@@ -214,10 +209,6 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
           desiredIndent--;
         }
         else if (c == '\t') {
-          if (desiredIndentType == IndentType.TABS && nSpaces % tabSize != 0) {
-            return -1;
-          }
-          nSpaces = 0;
           desiredIndent -= tabSize;
         }
         if (desiredIndent <= 0) break;
