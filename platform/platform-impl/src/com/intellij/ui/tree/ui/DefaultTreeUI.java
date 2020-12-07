@@ -239,11 +239,9 @@ public final class DefaultTreeUI extends BasicTreeUI {
               Object value = path.getLastPathComponent();
               Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
               if (component != null) {
+                width -= helper.getRightMargin(); // shrink a long node according to the right margin
                 if (width < bounds.width && helper.isRendererShrinkingDisabled(row)) {
                   width = bounds.width; // disable shrinking a long nodes
-                }
-                else {
-                  width -= helper.getRightMargin(); // shrink a long node according to the right margin
                 }
                 if (width > 0) {
                   setBackground(tree, component, background, false);
