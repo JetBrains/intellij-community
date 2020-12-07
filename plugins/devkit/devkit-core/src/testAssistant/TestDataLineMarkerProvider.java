@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -14,7 +14,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -25,8 +24,8 @@ import java.util.Collections;
 /**
  * @author yole
  */
-public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
-  public static final String TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME = TestDataPath.class.getCanonicalName();
+public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
+  public static final String TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataPath";
   public static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
   public static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
 
@@ -51,7 +50,7 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
     if (uElement instanceof UMethod) {
       return new Info(ActionManager.getInstance().getAction("TestData.Navigate"));
     }
-    
+
     final PsiClass psiClass = ((UClass)uElement).getJavaPsi();
     final String testDataBasePath = getTestDataBasePath(psiClass);
     if (testDataBasePath == null) {
