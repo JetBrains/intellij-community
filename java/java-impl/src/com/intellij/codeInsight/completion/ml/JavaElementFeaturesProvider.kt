@@ -7,6 +7,11 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 
 class JavaElementFeaturesProvider : ElementFeatureProvider {
+  companion object {
+    private val POPULAR_MODIFIERS: List<JvmModifier> =
+      listOf(JvmModifier.PUBLIC, JvmModifier.PRIVATE, JvmModifier.PROTECTED,
+             JvmModifier.ABSTRACT, JvmModifier.FINAL, JvmModifier.STATIC)
+  }
 
   override fun getName(): String = "java"
 
@@ -17,7 +22,7 @@ class JavaElementFeaturesProvider : ElementFeatureProvider {
     val psi = element.psiElement
 
     if (psi is PsiModifierListOwner) {
-      for (modifier in JavaCompletionFeatures.POPULAR_MODIFIERS) {
+      for (modifier in POPULAR_MODIFIERS) {
         if (psi.hasModifier(modifier)) {
           features["is_${modifier.name.toLowerCase()}"] = MLFeatureValue.binary(true)
         }

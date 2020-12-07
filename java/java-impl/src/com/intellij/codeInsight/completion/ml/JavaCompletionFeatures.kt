@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion.ml
 
 import com.intellij.codeInsight.template.macro.MacroUtil
 import com.intellij.internal.ml.WordsSplitter
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
@@ -11,7 +10,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.TypeConversionUtil
 import java.util.*
 
-object JavaCompletionFeatures {
+internal object JavaCompletionFeatures {
   private val VARIABLES_KEY: Key<VariablesInfo> = Key.create("java.ml.completion.variables")
   private val CHILD_CLASS_WORDS_KEY: Key<List<String>> = Key.create("java.ml.completion.child.class.name.words")
 
@@ -100,9 +99,6 @@ object JavaCompletionFeatures {
       }
     }
   }
-
-  val POPULAR_MODIFIERS: List<JvmModifier> = listOf(JvmModifier.PUBLIC, JvmModifier.PRIVATE, JvmModifier.PROTECTED,
-                                                    JvmModifier.ABSTRACT, JvmModifier.FINAL, JvmModifier.STATIC)
 
   fun asKeyword(text: String): JavaKeyword? = JavaKeyword.getValue(text)
 
