@@ -26,8 +26,6 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
   companion object {
     private const val NEW_TOOLBAR_KEY = "NEW_TOOLBAR_KEY"
     const val navBarKey = "ide.new.navbar"
-    const val runDebugKey = "ide.new.navbar.run.debug"
-    const val vcsKey = "ide.new.navbar.vcs.group"
   }
 
   private val myPanel: JPanel = object : JPanel() {
@@ -51,8 +49,6 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
     val manager = ActionManager.getInstance()
 
     Registry.get(navBarKey).addListener(registryListener, this)
-    Registry.get(runDebugKey).addListener(registryListener, this)
-    Registry.get(vcsKey).addListener(registryListener, this)
 
     myPanel.layout = BorderLayout()
     myPanel.add(myLeftPanel, BorderLayout.WEST)
@@ -92,8 +88,8 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
     val toolbarSettingsService = ToolbarSettings.Companion.getInstance()
     if (toolbarSettingsService is ExperimentalToolbarSettings) {
       myPanel.isVisible = toolbarSettingsService.showNewToolbar && !instance.presentationMode
-      myLeftPanel.isVisible = toolbarSettingsService.showNewNavbarVcsGroup
-      myRightPanel.isVisible = toolbarSettingsService.showNewNavbarRunGroup
+      myLeftPanel.isVisible = myPanel.isVisible
+      myRightPanel.isVisible = myPanel.isVisible
     }
     else {
       myPanel.isVisible = false

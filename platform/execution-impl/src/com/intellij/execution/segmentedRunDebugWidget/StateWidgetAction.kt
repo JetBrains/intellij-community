@@ -11,7 +11,7 @@ import javax.swing.SwingUtilities
 
 class StateWidgetAction : PillActionComponent(), DumbAware {
   companion object {
-    const val runDebugKey = "ide.new.navbar.run.debug"
+    const val runDebugKey = "ide.new.navbar"
   }
 
   private fun isNewRunDebug(): Boolean {

@@ -17,12 +17,6 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   val newToolbarEnabled: Boolean
     get() = Registry.`is`("ide.new.navbar", false)
 
-  val showNewNavbarVcsGroup: Boolean
-    get() = Registry.`is`("ide.new.navbar.vcs.group", false)
-
-  val showNewNavbarRunGroup: Boolean
-    get() = Registry.`is`("ide.new.navbar.run.debug", false)
-
   private var toolbarState = ExperimentalToolbarStateWrapper()
 
   private val disposable = Disposer.newDisposable()
@@ -31,7 +25,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
     override fun afterValueChanged(value: RegistryValue) {
       val v = value.asBoolean()
       toolbarState.state =
-        getToolbarStateByVisibilityFlags(v, isToolbarVisible(), v,
+        getToolbarStateByVisibilityFlags(v, if(v) false else isToolbarVisible(), v,
                                          isNavBarVisible())
       updateSettingsState()
       UISettings.instance.fireUISettingsChanged()
