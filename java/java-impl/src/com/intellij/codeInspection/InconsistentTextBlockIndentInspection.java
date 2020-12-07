@@ -7,16 +7,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,28 +104,16 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
       if (indentModel == null) return;
       int desiredIndent = indentModel.findDesiredIndent(myTabSize);
       if (desiredIndent == -1) return;
-      StringBuilder newTextBlock = new StringBuilder();
-      newTextBlock.append("\"\"\"\n");
       String indentText = myDesiredIndentType == IndentType.SPACES ?
                           Strings.repeat(" ", desiredIndent) : Strings.repeat("\t", desiredIndent / myTabSize);
-      for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
-        if (i != 0) newTextBlock.append('\n');
-        if (!isContentPart(lines, i, line)) {
-          newTextBlock.append(line);
-          continue;
-        }
-        int lineIndent = MixedIndentModel.findLineIndent(line, desiredIndent, myTabSize, myDesiredIndentType);
-        if (lineIndent == -1) return;
-        MergingCharSequence newLine = StringUtil.replaceSubSequence(line, 0, lineIndent, indentText);
-        newTextBlock.append(newLine);
-      }
-      newTextBlock.append("\"\"\"");
-
-      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-      PsiExpression replacement = elementFactory.createExpressionFromText(newTextBlock.toString(), literalExpression);
-      CodeStyleManager manager = CodeStyleManager.getInstance(project);
-      manager.performActionWithFormatterDisabled((Runnable)() -> WriteAction.run(() -> literalExpression.replace(replacement)));
+      String newTextBlock = TrailingWhitespacesInTextBlockInspection
+        .transformTextBlockLines(lines, (l, i) -> isContentPart(lines, i, l), contentLine -> {
+        int lineIndent = MixedIndentModel.findLineIndent(contentLine, desiredIndent, myTabSize, myDesiredIndentType);
+        if (lineIndent == -1) return null;
+        return StringUtil.replaceSubSequence(contentLine, 0, lineIndent, indentText);
+      });
+      if (newTextBlock == null) return;
+      TrailingWhitespacesInTextBlockInspection.replaceTextBlock(project, literalExpression, newTextBlock);
     }
 
     @Override
@@ -168,7 +153,7 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
         if (i != 0) pos++;
         String line = myLines[i];
         if (!isContentPart(myLines, i, line)) {
-          if (!line.isEmpty()) pos += line.length();
+          pos += line.length();
           continue;
         }
         int indentToSee = desiredIndent;
