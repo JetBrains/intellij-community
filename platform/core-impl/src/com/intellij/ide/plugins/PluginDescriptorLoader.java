@@ -11,7 +11,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.serialization.SerializationException;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.io.URLUtil;
@@ -61,13 +61,15 @@ public final class PluginDescriptorLoader {
     }
     catch (SerializationException | JDOMException | IOException e) {
       if (context.isEssential) {
-        ExceptionUtil.rethrow(e);
+        ExceptionUtilRt.rethrowUnchecked(e);
+        throw new RuntimeException(e);
       }
       context.parentContext.result.reportCannotLoad(file, e);
     }
     catch (Throwable e) {
       if (context.isEssential) {
-        ExceptionUtil.rethrow(e);
+        ExceptionUtilRt.rethrowUnchecked(e);
+        throw new RuntimeException(e);
       }
       DescriptorListLoadingContext.LOG.warn("Cannot load " + descriptorFile, e);
     }
@@ -98,13 +100,15 @@ public final class PluginDescriptorLoader {
     }
     catch (SerializationException | InvalidDataException | JDOMException e) {
       if (context.isEssential) {
-        ExceptionUtil.rethrow(e);
+        ExceptionUtilRt.rethrowUnchecked(e);
+        throw new RuntimeException(e);
       }
       context.parentContext.result.reportCannotLoad(file, e);
     }
     catch (Throwable e) {
       if (context.isEssential) {
-        ExceptionUtil.rethrow(e);
+        ExceptionUtilRt.rethrowUnchecked(e);
+        throw new RuntimeException(e);
       }
       DescriptorListLoadingContext.LOG.info("Cannot load " + file + "!/META-INF/" + fileName, e);
     }
@@ -287,7 +291,8 @@ public final class PluginDescriptorLoader {
     }
     catch (Throwable e) {
       if (loadingContext.isEssential) {
-        ExceptionUtil.rethrow(e);
+        ExceptionUtilRt.rethrowUnchecked(e);
+        throw new RuntimeException(e);
       }
       DescriptorListLoadingContext.LOG.info("Cannot load " + resource, e);
       return null;
@@ -486,18 +491,24 @@ public final class PluginDescriptorLoader {
                                                                                   PluginManagerCore.createLoadingResult(buildNumber));
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, false);
-      if (descriptor == null && file.getFileName().toString().endsWith(".zip")) {
-        File outputDir = FileUtil.createTempDirectory("plugin", "");
-        try {
-          new Decompressor.Zip(file).extract(outputDir);
-          File[] files = outputDir.listFiles();
-          if (files != null && files.length == 1) {
-            descriptor = loadDescriptorFromFileOrDir(files[0].toPath(), PluginManagerCore.PLUGIN_XML, context, true);
+      if (descriptor != null || !file.toString().endsWith(".zip")) {
+        return descriptor;
+      }
+
+      Path outputDir = Files.createTempDirectory("plugin");
+      try {
+        new Decompressor.Zip(file).extract(outputDir);
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(outputDir)) {
+          Iterator<Path> iterator = stream.iterator();
+          if (iterator.hasNext()) {
+            descriptor = loadDescriptorFromFileOrDir(iterator.next(), PluginManagerCore.PLUGIN_XML, context, true);
           }
         }
-        finally {
-          FileUtil.delete(outputDir);
+        catch (NoSuchFileException ignore) {
         }
+      }
+      finally {
+        FileUtil.delete(outputDir);
       }
       return descriptor;
     }

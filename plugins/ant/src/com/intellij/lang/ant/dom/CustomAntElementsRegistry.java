@@ -101,8 +101,8 @@ public final class CustomAntElementsRegistry {
           continue;
         }
         if (declaringElement instanceof AntDomTypeDef) {
-          final AntDomTypeDef typedef = (AntDomTypeDef)declaringElement;
-          final Class clazz = lookupClass(xmlName);
+          AntDomTypeDef typedef = (AntDomTypeDef)declaringElement;
+          Class<?> clazz = lookupClass(xmlName);
           if (clazz != null && typedef.isTask(clazz)) {
             continue;
           }
@@ -162,8 +162,8 @@ public final class CustomAntElementsRegistry {
   }
 
   @Nullable
-  public Class lookupClass(XmlName xmlName) {
-    final ClassProvider provider = myCustomElements.get(xmlName);
+  public Class<?> lookupClass(XmlName xmlName) {
+    ClassProvider provider = myCustomElements.get(xmlName);
     return provider == null ? null : provider.lookupClass();
   }
 
@@ -317,7 +317,7 @@ public final class CustomAntElementsRegistry {
     }
   }
 
-  private class CustomTagDefinitionFinder extends AntDomRecursiveVisitor {
+  private final class CustomTagDefinitionFinder extends AntDomRecursiveVisitor {
     private final Set<AntDomElement> myElementsOnThePath = new HashSet<>();
     private final Set<String> processedAntlibs = new HashSet<>();
     private final AntDomProject myAntProject;
@@ -399,7 +399,7 @@ public final class CustomAntElementsRegistry {
               addCustomDefinition(element, customTagName, nsUri, ClassProvider.create(classname, classLoader));
             }
             else {
-              Class clazz = null;
+              Class<?> clazz = null;
               final String typeName = element.getElementType().getStringValue();
               if (typeName != null) {
                 clazz = lookupClass(new XmlName(typeName));
@@ -407,12 +407,12 @@ public final class CustomAntElementsRegistry {
                   if (reflectedProject == null) { // lazy init
                     reflectedProject = ReflectedProject.getProject(myAntProject.getClassLoader());
                   }
-                  Map<String, Class> coreTasks = reflectedProject.getTaskDefinitions();
+                  Map<String, Class<?>> coreTasks = reflectedProject.getTaskDefinitions();
                   if (coreTasks != null) {
                     clazz = coreTasks.get(typeName);
                   }
                   if (clazz == null) {
-                    Map<String, Class> coreTypes = reflectedProject.getDataTypeDefinitions();
+                    Map<String, Class<?>> coreTypes = reflectedProject.getDataTypeDefinitions();
                     if (coreTypes != null) {
                       clazz = coreTypes.get(typeName);
                     }

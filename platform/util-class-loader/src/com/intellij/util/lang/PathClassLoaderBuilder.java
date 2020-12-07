@@ -21,7 +21,6 @@ public final class PathClassLoaderBuilder {
   boolean lockJars;
   boolean useCache;
   boolean isClassPathIndexEnabled;
-  boolean acceptUnescapedUrls;
   boolean preloadJarContents = true;
   boolean myAllowBootstrapResources;
   boolean errorOnMissingJar = true;
@@ -136,11 +135,6 @@ public final class PathClassLoaderBuilder {
     useCache = true;
     cachePool = (CachePoolImpl)pool;
     cachingCondition = condition;
-    return this;
-  }
-
-  public @NotNull PathClassLoaderBuilder allowUnescaped() {
-    acceptUnescapedUrls = true;
     return this;
   }
 
