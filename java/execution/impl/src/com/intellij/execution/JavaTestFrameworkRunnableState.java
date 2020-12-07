@@ -187,7 +187,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
-    testConsoleProperties.setIdBasedTestTree(isIdBasedTestTree());
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
     final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties);

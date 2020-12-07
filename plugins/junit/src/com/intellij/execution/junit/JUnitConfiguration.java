@@ -611,7 +611,9 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @NotNull
   @Override
   public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
-    return new JUnitConsoleProperties(this, executor);
+    JUnitConsoleProperties properties = new JUnitConsoleProperties(this, executor);
+    properties.setIdBasedTestTree(getTestObject().isIdBasedTestTree());
+    return properties;
   }
 
   @Override
