@@ -947,7 +947,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     else if (rowHeight <= 0) {
       LOG.warn(key + " = " + value + " in " + UIManager.getLookAndFeel().getName() + "; it may lead to performance degradation");
     }
-    defaults.put(key, rowHeight <= 0 ? 0 : JBUIScale.scale((int)(rowHeight / prevScale)));
+    int custom = Registry.intValue("ide.override." + key, -1);
+    defaults.put(key, custom >= 0 ? custom : rowHeight <= 0 ? 0 : JBUIScale.scale((int)(rowHeight / prevScale)));
   }
 
   private static void fixMenuIssues(@NotNull UIDefaults uiDefaults) {
