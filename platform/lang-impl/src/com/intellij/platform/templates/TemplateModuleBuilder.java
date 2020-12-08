@@ -13,11 +13,8 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -36,7 +33,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -50,7 +46,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.exception.VelocityException;
-import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -412,9 +407,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         try {
           myProjectMode = true;
           unzip(name, path, false, indicator, false);
-          Project project = ProjectManagerEx.getInstanceEx().loadProject(baseDir);
-          loadFileEditorManagerState(project, baseDir);
-          return project;
+          return ProjectManagerEx.getInstanceEx().loadProject(baseDir);
         }
         finally {
           cleanup();
@@ -429,23 +422,5 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         }
       }
     });
-  }
-
-  private static void loadFileEditorManagerState(Project project, Path baseDir)  {
-    Path workspace = baseDir.resolve(".idea/workspace.xml");
-    if (!workspace.toFile().exists()) return;
-    try {
-      Element element = JDOMUtil.load(workspace);
-      Element state =
-        ContainerUtil.find(element.getChildren("component"), element1 -> "FileEditorManager".equals(element1.getAttributeValue("name")));
-      if (state == null) return;
-      PathMacroManager.getInstance(project).expandPaths(state);
-      FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-      if (!(fileEditorManager instanceof FileEditorManagerImpl)) return;
-      ApplicationManager.getApplication().invokeLater(() -> ((FileEditorManagerImpl)fileEditorManager).loadState(state));
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
   }
 }
