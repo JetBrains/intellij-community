@@ -159,7 +159,7 @@ fi
 VM_OPTIONS=""
 for VM_OPTIONS_FILE in \
     $IDE_BIN_HOME/__vm_options__$BITS.vmoptions \
-    ${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__$BITS.vmoptions \
+    ${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__$BITS.vmoptions \
     $IDE_HOME.vmoptions \
     $__product_uc___VM_OPTIONS; do
   if [ -r "$VM_OPTIONS_FILE" ]; then
