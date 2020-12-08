@@ -30,6 +30,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -2061,6 +2062,7 @@ public final class TreeUtil {
    * @return {@code true} if cyclic scrolling in trees is allowed, {@code false} otherwise
    */
   public static boolean isCyclicScrollingAllowed() {
+    if (ScreenReader.isActive()) return false;
     if (!Registry.is("ide.tree.ui.cyclic.scrolling.allowed")) return false;
     UISettings settings = UISettings.getInstanceOrNull();
     return settings != null && settings.getCycleScrolling();
