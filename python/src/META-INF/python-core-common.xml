@@ -664,6 +664,4 @@
   <applicationListeners>
     <listener activeInTestMode="false" class="com.jetbrains.python.testing.VFSTestFrameworkListenerImpl$Listener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
-
-  <depends optional="true" config-file="python-features-trainer.xml">training</depends>
 </idea-plugin>
