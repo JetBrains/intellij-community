@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.NonBlockingReadAction
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -43,6 +45,7 @@ class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTest
   override fun <R> waitForImport(action: () -> R): R = action()
 
   private fun waitForImportCompletion(project: Project) {
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     val projectManager = MavenProjectsManager.getInstance(project)
     ApplicationManager.getApplication().invokeAndWait {
       projectManager.waitForResolvingCompletion()

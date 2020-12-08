@@ -17,18 +17,22 @@ package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider;
-
-import java.util.List;
 
 public class AddManagedFilesAction extends MavenAction {
   @Override
@@ -58,14 +62,23 @@ public class AddManagedFilesAction extends MavenAction {
 
     VirtualFile[] files = FileChooser.chooseFiles(singlePomSelection, project, fileToSelect);
     if (files.length == 1) {
-      MavenOpenProjectProvider openProjectProvider = new MavenOpenProjectProvider();
-      openProjectProvider.linkToExistingProject(files[0], project);
-    }
-    else if (files.length > 1) {
-      List<VirtualFile> mavenFiles = ContainerUtil.filter(files, it -> !it.isDirectory());
-      if (!mavenFiles.isEmpty()) {
-        manager.addManagedFilesOrUnignore(mavenFiles);
-      }
+      VirtualFile projectFile = files[0];
+      ReadAction.nonBlocking(() -> projectFile.isDirectory() ? projectFile.getChildren() : files).
+        finishOnUiThread(ModalityState.defaultModalityState(), it -> {
+          if (ContainerUtil.exists(it, MavenActionUtil::isMavenProjectFile)) {
+            MavenOpenProjectProvider openProjectProvider = new MavenOpenProjectProvider();
+            openProjectProvider.linkToExistingProject(projectFile, project);
+          }
+          else {
+            String projectPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(projectFile.getPath()));
+            String message = projectFile.isDirectory()
+                             ? MavenProjectBundle.message("maven.AddManagedFiles.warning.message.directory", projectPath)
+                             : MavenProjectBundle.message("maven.AddManagedFiles.warning.message.file", projectPath);
+            String title = MavenProjectBundle.message("maven.AddManagedFiles.warning.title");
+            Messages.showWarningDialog(project, message, title);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 }
