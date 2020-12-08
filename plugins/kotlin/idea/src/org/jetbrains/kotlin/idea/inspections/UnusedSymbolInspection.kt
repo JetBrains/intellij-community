@@ -273,7 +273,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             if (declaration is KtProperty && declaration.isSerializationImplicitlyUsedField()) return
             if (declaration is KtNamedFunction && declaration.isSerializationImplicitlyUsedMethod()) return
             // properties can be referred by component1/component2, which is too expensive to search, don't mark them as unused
-            if (declaration is KtParameter && declaration.isDataClassProperty()) return
+            if (declaration is KtParameter && (declaration.isDataClassProperty() || declaration.isInlineClassProperty())) return
             // experimental annotations
             if (descriptor is ClassDescriptor && descriptor.kind == ClassKind.ANNOTATION_CLASS) {
                 val fqName = descriptor.fqNameSafe.asString()
@@ -625,6 +625,8 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 
         return list
     }
+
+    private fun KtParameter.isInlineClassProperty() = hasValOrVar() && containingClassOrObject?.hasModifier(KtTokens.INLINE_KEYWORD) == true
 }
 
 class SafeDeleteFix(declaration: KtDeclaration) : LocalQuickFix {

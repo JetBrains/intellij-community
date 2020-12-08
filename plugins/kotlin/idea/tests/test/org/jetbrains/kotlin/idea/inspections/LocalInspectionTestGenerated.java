@@ -13538,6 +13538,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/inlineClassMemberFunction.kt");
         }
 
+        @TestMetadata("inlineClassProperty.kt")
+        public void testInlineClassProperty() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/inlineClassProperty.kt");
+        }
+
         @TestMetadata("innerClass.kt")
         public void testInnerClass() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/innerClass.kt");
