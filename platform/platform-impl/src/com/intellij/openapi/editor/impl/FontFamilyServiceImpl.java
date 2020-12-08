@@ -5,6 +5,7 @@ import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.MultiMap;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,7 @@ import java.awt.*;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public final class FontFamilyServiceImpl extends FontFamilyService {
   private static final Logger LOG = Logger.getInstance(FontFamilyServiceImpl.class);
@@ -126,8 +128,8 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
         recommendedPlainSubFamilies = new HashMap<>();
         recommendedBoldSubFamilies = new HashMap<>();
         italics = new LinkedHashMap<>();
-        TreeMap<Integer, String> nonItalicsByWeight = new TreeMap<>();
-        TreeMap<Integer, String> italicsByWeight = new TreeMap<>();
+        OurWeightMap nonItalicsByWeight = new OurWeightMap();
+        OurWeightMap italicsByWeight = new OurWeightMap();
         for (Map.Entry<String, Font> e : members.entrySet()) {
           String subFamily = e.getKey();
           Font font = e.getValue();
@@ -136,9 +138,9 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
           if (LOG.isDebugEnabled()) {
             LOG.debug(family + "(" + subFamily + "): weight=" + weight + (isItalic ? ", italic" : ""));
           }
-          (isItalic ? italicsByWeight : nonItalicsByWeight).put(weight, subFamily);
+          (isItalic ? italicsByWeight : nonItalicsByWeight).putValue(weight, subFamily);
         }
-        TreeMap<Integer, String> baseSet = nonItalicsByWeight.isEmpty() ? italicsByWeight : nonItalicsByWeight;
+        OurWeightMap baseSet = nonItalicsByWeight.isEmpty() ? italicsByWeight : nonItalicsByWeight;
 
         class Candidate {
           final int desiredWeight;
@@ -164,7 +166,20 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
         baseSet.forEach((weight, subFamily) -> {
           preferred.updateIfBetterMatch(weight, subFamily);
 
-          String italicSubFamily = italicsByWeight.get(weight);
+          String italicSubFamily = null;
+          if (baseSet == italicsByWeight) {
+            italicSubFamily = subFamily;
+          }
+          else {
+            Collection<String> italicSubFamilyCandidates = italicsByWeight.get(weight);
+            for (String italicCandidate : italicSubFamilyCandidates) {
+              if (italicSubFamily == null
+                  // try to match by name, assuming italic variant is named by adding a suffix to the base variant
+                  || italicCandidate.startsWith(subFamily)) {
+                italicSubFamily = italicCandidate;
+              }
+            }
+          }
           italics.put(subFamily, italicSubFamily == null ? members.get(subFamily).deriveFont(Font.ITALIC) : members.get(italicSubFamily));
 
           candidates.forEach((original, candidate) -> candidate.updateIfBetterMatch(weight, subFamily));
@@ -174,7 +189,7 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
         candidates.forEach((original, boldCandidate) -> recommendedBoldSubFamilies.put(original, boldCandidate.bestSubFamily));
 
         candidates.clear();
-        baseSet.descendingMap().forEach((weight, subFamily) -> {
+        baseSet.forEachDescending((weight, subFamily) -> {
           candidates.forEach((original, candidate) -> candidate.updateIfBetterMatch(weight, subFamily));
           candidates.put(subFamily, new Candidate(subFamily, weight - PREFERRED_BOLD_WEIGHT_DIFF));
         });
@@ -242,6 +257,22 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
       }
       String target = (style & Font.BOLD) == 0 ? regularSubFamily : boldSubFamily;
       return (style & Font.ITALIC) == 0 ? members.get(target) : italics.get(target);
+    }
+  }
+
+  private static class OurWeightMap extends MultiMap<Integer, String> {
+    private OurWeightMap() {
+      super(new TreeMap<>());
+    }
+
+    private void forEach(BiConsumer<Integer, String> action) {
+      myMap.forEach((weight, list) -> list.forEach(subFamily -> action.accept(weight, subFamily)));
+    }
+
+    private void forEachDescending(BiConsumer<Integer, String> action) {
+      ((TreeMap<Integer, Collection<String>>)myMap).descendingMap().forEach((weight, list) -> {
+        list.forEach(subFamily -> action.accept(weight, subFamily));
+      });
     }
   }
 }
