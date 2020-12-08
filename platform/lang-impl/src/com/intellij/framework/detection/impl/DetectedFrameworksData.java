@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataExternalizer;
@@ -87,8 +88,8 @@ public final class DetectedFrameworksData {
     synchronized (myLock) {
       final Collection<DetectedFrameworkDescription> oldFrameworks = myDetectedFrameworks.remove(detectorId);
       myDetectedFrameworks.putValues(detectorId, frameworks);
-      if (oldFrameworks != null) {
-        frameworks.removeAll(oldFrameworks);
+      if (oldFrameworks != null && !oldFrameworks.isEmpty() && !frameworks.isEmpty()) {
+        return ContainerUtil.subtract(frameworks, oldFrameworks);
       }
       return frameworks;
     }
