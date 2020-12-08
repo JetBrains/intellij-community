@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -227,6 +226,12 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   public FoldRegion @NotNull [] getAllFoldRegions() {
     assertReadAccess();
     return myFoldTree.fetchAllRegions();
+  }
+
+  @Override
+  public @NotNull List<@NotNull FoldRegion> getRegionsOverlappingWith(int startOffset, int endOffset) {
+    assertReadAccess();
+    return myFoldTree.fetchOverlapping(startOffset, endOffset);
   }
 
   @Override
@@ -730,7 +735,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
                                                  boolean greedyToRight,
                                                  boolean stickingToRight,
                                                  int layer) {
-      return new RMNode<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+      return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
         void onRemoved() {
           for (Getter<FoldRegionImpl> getter : intervals) {

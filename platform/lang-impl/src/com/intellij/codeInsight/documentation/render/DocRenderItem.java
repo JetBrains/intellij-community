@@ -324,12 +324,14 @@ public final class DocRenderItem {
         inlay = null;
       };
       Runnable foldingTask = () -> {
-        for (FoldRegion region : foldingModel.getAllFoldRegions()) {
-          if (region.getStartOffset() >= foldRegion.getStartOffset() && region.getEndOffset() <= foldRegion.getEndOffset()) {
+        int startOffset = foldRegion.getStartOffset();
+        int endOffset = foldRegion.getEndOffset();
+        foldingModel.removeFoldRegion(foldRegion);
+        for (FoldRegion region : foldingModel.getRegionsOverlappingWith(startOffset, endOffset)) {
+          if (region.getStartOffset() >= startOffset && region.getEndOffset() <= endOffset) {
             region.setExpanded(true);
           }
         }
-        foldingModel.removeFoldRegion(foldRegion);
         foldRegion = null;
       };
       if (foldingTasks == null) {
