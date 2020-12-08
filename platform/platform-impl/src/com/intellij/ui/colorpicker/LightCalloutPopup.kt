@@ -109,6 +109,9 @@ class LightCalloutPopup(val content: JComponent,
   fun getPointerColor(showingPoint: RelativePoint, component: JComponent): Color? {
     val saturationBrightnessComponent = UIUtil.findComponentOfType(component, SaturationBrightnessComponent::class.java)
     if (saturationBrightnessComponent != null) {
+      if (Registry.`is`("ide.color.picker.new.pipette") && saturationBrightnessComponent.pipetteMode) {
+        return saturationBrightnessComponent.parent.background
+      }
       val point = showingPoint.getPoint(saturationBrightnessComponent)
       val size = saturationBrightnessComponent.size
       val location = saturationBrightnessComponent.location
