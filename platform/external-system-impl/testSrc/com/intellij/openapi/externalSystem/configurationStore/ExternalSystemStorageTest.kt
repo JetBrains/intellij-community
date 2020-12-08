@@ -51,8 +51,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.externalSystemOptions
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
@@ -376,6 +375,26 @@ class ExternalSystemStorageTest {
     loadModifySaveAndCheck("singleRegularModule", "singleModuleAfterMavenization") { project ->
       val module = ModuleManager.getInstance(project).modules.single()
       ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true)
+    }
+  }
+
+  @Test
+  fun `change storeExternally property and save libraries to internal storage`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("libraryInExternalStorage", "libraryAfterStoreExternallyPropertyChanged") { project ->
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
+    }
+  }
+
+  @Test
+  fun `change storeExternally property several times`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("libraryInExternalStorage", "libraryAfterStoreExternallyPropertyChanged") { project ->
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
+      runBlocking { project.stateStore.save() }
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(true)
+      runBlocking { project.stateStore.save() }
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
     }
   }
 
