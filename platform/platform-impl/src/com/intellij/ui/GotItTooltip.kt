@@ -71,20 +71,23 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
   private var maxWidth = MAX_WIDTH
   private var showCloseShortcut = false
   private var maxCount = 1
-  private var chainFunction: () -> Unit = {}
   private var position = Balloon.Position.below
   private var onBalloonCreated : (Balloon) -> Unit = {}
 
   // Ease the access (remove private or val to var) if fine tuning is needed.
   private val savedCount : (String) -> Int = { PropertiesComponent.getInstance().getInt(it, 0) }
   private val canShow : (String) -> Boolean = { savedCount(it) < maxCount }
-  private val onGotIt : (String) -> Unit = {
+  private val gotIt : (String) -> Unit = {
     val count = savedCount(it)
     if (count in 0 until maxCount) PropertiesComponent.getInstance().setValue(it, (count + 1).toString())
+    onGotIt()
   }
+  private var onGotIt: () -> Unit = {}
 
   private val alarm = Alarm()
   private var balloon : Balloon? = null
+  private var nextToShow : GotItTooltip? = null // Next tooltip in the global queue
+  private var pendingRefresh = false
 
   init {
     Disposer.register(parentDisposable, this)
@@ -292,16 +295,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
     }
     else {
       hideBalloon()
-      chainFunction()
     }
-  }
-
-  /**
-   * Chain this tooltip showing after another determined with the tooltip parameter.
-   * It's possible to build a chain of got it tooltips shown on the screen.
-   */
-  fun showAfter(tooltip: GotItTooltip, component: JComponent, pointProvider: (Component) -> Point) {
-    tooltip.chainFunction = { show(component, pointProvider) }
   }
 
   private fun followToolbarComponent(component: JComponent, toolbar: JComponent, pointProvider: (Component) -> Point) {
@@ -328,24 +322,31 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
         }
       }.also{ Disposer.register(this, Disposable { component.removeAncestorListener(it) }) })
     }
-    else {
-      chainFunction()
-    }
   }
 
-  private fun createAndShow(tracker: PositionTracker<Balloon>) : Balloon = createBalloon().also {
+  private fun createAndShow(tracker: PositionTracker<Balloon>) : Balloon {
+    val balloon = createBalloon().also {
       val dispatcherDisposable = Disposer.newDisposable()
       Disposer.register(this, dispatcherDisposable)
 
       it.addListener(object : JBPopupListener {
+        override fun beforeShown(event: LightweightWindowEvent) {
+          GotItUsageCollector.instance.logOpen(id, savedCount("$PROPERTY_PREFIX.$id") + 1)
+        }
+
         override fun onClosed(event: LightweightWindowEvent) {
           HelpTooltip.setMasterPopupOpenCondition(tracker.component, null)
           UIUtil.putClientProperty(tracker.component as JComponent, BALLOON_PROPERTY, null)
           Disposer.dispose(dispatcherDisposable)
 
           if (event.isOk) {
-            onGotIt("$PROPERTY_PREFIX.$id")
-            chainFunction()
+            currentlyShown?.nextToShow = null
+            currentlyShown = null
+
+            gotIt("$PROPERTY_PREFIX.$id")
+          }
+          else {
+            pendingRefresh = true
           }
         }
       })
@@ -363,11 +364,46 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
         it.isDisposed
       }
 
-      it.show(tracker, position)
       onBalloonCreated(it)
-
-      GotItUsageCollector.instance.logOpen(id, savedCount("$PROPERTY_PREFIX.$id") + 1)
     }
+
+    when {
+      currentlyShown == null -> {
+        balloon.show(tracker, position)
+        currentlyShown = this
+      }
+
+      currentlyShown!!.pendingRefresh -> {
+        nextToShow = currentlyShown!!.nextToShow
+        balloon.show(tracker, position)
+        currentlyShown = this
+      }
+
+      else -> {
+        var tooltip = currentlyShown as GotItTooltip
+        while (tooltip.nextToShow != null) {
+          tooltip = tooltip.nextToShow as GotItTooltip
+        }
+
+        tooltip.scheduleNext(this) {
+          if (tracker.component.isShowing && !tracker.component.bounds.isEmpty) {
+            balloon.show(tracker, position)
+            currentlyShown = this@GotItTooltip
+          }
+          else {
+            nextToShow?.let{ it.onGotIt() }
+          }
+        }
+      }
+    }
+
+    return balloon
+  }
+
+  private fun scheduleNext(tooltip: GotItTooltip, show: () -> Unit) {
+    nextToShow = tooltip
+    onGotIt = show
+  }
 
   private fun createBalloon() : Balloon {
     var button : JButton? = null
@@ -560,6 +596,9 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
 
     @JvmField
     val BOTTOM_MIDDLE : (Component) -> Point = { Point(it.width / 2, it.height) }
+
+    // Global tooltip queue start element
+    private var currentlyShown: GotItTooltip? = null
   }
 }
 

@@ -120,7 +120,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private final Project project;
 
     private JButton abracadabraButton;
-    private GotItTooltip gotItTooltip;
 
     private ComponentPanelTest(Project project) {
       super(project);
@@ -276,15 +275,15 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       topPanel.add(UI.PanelFactory.panel(abracadabraButton).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
       try {
-        gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
+        new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
           andShowCloseShortcut().
           withShowCount(3).
           withHeader(GOT_IT_HEADER).
           withIcon(AllIcons.General.BalloonInformation).
-          withBrowserLink("Learn more", new URL("https://www.jetbrains.com/"));
+          withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
+          show(abracadabraButton, GotItTooltip.BOTTOM_MIDDLE);
 
-        new GotItTooltip("textfield", GOT_IT_TEXT2, project).
-          withShowCount(5).showAfter(gotItTooltip, text1, GotItTooltip.BOTTOM_MIDDLE);
+        new GotItTooltip("textfield", GOT_IT_TEXT2, project).withShowCount(5).show(text1, GotItTooltip.BOTTOM_MIDDLE);
 
       } catch (MalformedURLException ex) {}
 
@@ -842,7 +841,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         {
           GotItTooltip actionGotIt = new GotItTooltip("short.action", "Short action text", project).withHeader("Header");
           actionGotIt.assignTo(getTemplatePresentation(), GotItTooltip.BOTTOM_MIDDLE);
-          gotItTooltip.showAfter(actionGotIt, abracadabraButton, GotItTooltip.BOTTOM_MIDDLE);
         }
       }.withShortCut("control K"));
       toolbarActions.add(new MyAction("Long", AllIcons.Ide.Rating2).withShortCut("control N"));
