@@ -408,6 +408,16 @@ class ExternalSystemStorageTest {
     }
   }
 
+  @Test
+  fun `clean up facet tag in iml file if we start store project model at external storage`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("importedFacetInImportedModule", "importedFacetAfterStoreExternallyPropertyChanged") { project ->
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
+      runBlocking { project.stateStore.save() }
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(true)
+    }
+  }
+
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
