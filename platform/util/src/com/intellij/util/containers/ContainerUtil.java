@@ -463,16 +463,6 @@ public class ContainerUtil {
   }
 
   @Contract(pure = true)
-  public static @NotNull <K, V> ConcurrentMap<K,V> newConcurrentMap(int initialCapacity) {
-    return new ConcurrentHashMap<>(initialCapacity);
-  }
-
-  @Contract(pure = true)
-  public static @NotNull <K, V> ConcurrentMap<K,V> newConcurrentMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    return new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
-  }
-
-  @Contract(pure = true)
   public static @NotNull <E> List<E> reverse(final @NotNull List<? extends E> elements) {
     if (elements.isEmpty()) {
       return emptyList();

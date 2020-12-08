@@ -37,10 +37,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends AbstractFileViewProvider {
-  protected final ConcurrentMap<Language, PsiFileImpl> myRoots = ContainerUtil.newConcurrentMap(1, 0.75f, 1);
+  protected final ConcurrentMap<Language, PsiFileImpl> myRoots = new ConcurrentHashMap<>(1, 0.75f, 1);
   private MultiplePsiFilesPerDocumentFileViewProvider myOriginal;
 
   public MultiplePsiFilesPerDocumentFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, boolean eventSystemEnabled) {
