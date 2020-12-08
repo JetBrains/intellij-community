@@ -3,6 +3,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -16,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.uiDesigner.core.Spacer;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
@@ -24,9 +24,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -95,7 +97,7 @@ public final class LoaderFactory implements Disposable {
   }
 
   private static ClassLoader createClassLoader(final String runClasspath, final String moduleName) {
-    final ArrayList<URL> urls = new ArrayList<>();
+    List<Path> files = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     final JarFileSystemImpl fileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
     final StringTokenizer tokenizer = new StringTokenizer(runClasspath, File.pathSeparator);
@@ -103,23 +105,16 @@ public final class LoaderFactory implements Disposable {
       final String s = tokenizer.nextToken();
       try {
         VirtualFile vFile = manager.findFileByUrl(VfsUtilCore.pathToUrl(s));
-        final File realFile = fileSystem.getMirroredFile(vFile);
-        urls.add(realFile != null ? realFile.toURI().toURL() : new File(s).toURI().toURL());
+        File realFile = fileSystem.getMirroredFile(vFile);
+        files.add(realFile == null ? new File(s).toPath() : realFile.toPath());
       }
       catch (Exception e) {
         // ignore ?
       }
     }
 
-    try {
-      urls.add(new File(PathUtil.getJarPathForClass(Spacer.class)).toURI().toURL());
-    }
-    catch (MalformedURLException ignored) {
-      // ignore
-    }
-
-    final URL[] _urls = urls.toArray(new URL[0]);
-    return new DesignTimeClassLoader(Arrays.asList(_urls), LoaderFactory.class.getClassLoader(), moduleName);
+    files.add(PathManager.getJarForClass(Spacer.class));
+    return new DesignTimeClassLoader(files, LoaderFactory.class.getClassLoader(), moduleName);
   }
 
   public void clearClassLoaderCache() {
@@ -139,13 +134,18 @@ public final class LoaderFactory implements Disposable {
     myProjectClassLoader = null;
   }
 
-  private static class DesignTimeClassLoader extends UrlClassLoader {
-    static { if (registerAsParallelCapable()) markParallelCapable(DesignTimeClassLoader.class); }
+  private static final class DesignTimeClassLoader extends UrlClassLoader {
+    static {
+      if (registerAsParallelCapable()) {
+        markParallelCapable(DesignTimeClassLoader.class);
+      }
+    }
 
     private final String myModuleName;
 
-    DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
-      super(build().urls(urls).disallowLock().parent(parent));
+    DesignTimeClassLoader(List<Path> files, ClassLoader parent, String moduleName) {
+      super(UrlClassLoader.build().files(files).allowLock(false).parent(parent));
+
       myModuleName = moduleName;
     }
 

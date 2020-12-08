@@ -626,8 +626,13 @@ public final class PathManager {
   }
 
   public static @Nullable String getJarPathForClass(@NotNull Class<?> aClass) {
+    Path resourceRoot = getJarForClass(aClass);
+    return resourceRoot == null ? null : resourceRoot.toString();
+  }
+
+  public static @Nullable Path getJarForClass(@NotNull Class<?> aClass) {
     String resourceRoot = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
-    return resourceRoot != null ? Paths.get(resourceRoot).toAbsolutePath().toString() : null;
+    return resourceRoot == null ? null : Paths.get(resourceRoot).toAbsolutePath();
   }
 
   /**

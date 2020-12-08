@@ -41,10 +41,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 
-/**
- * @author peter
- */
-public class GreclipseBuilder extends ModuleLevelBuilder {
+public final class GreclipseBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(GreclipseBuilder.class);
   private static final Key<Boolean> COMPILER_VERSION_INFO = Key.create("_greclipse_compiler_info_");
   public static final @NlsSafe String ID = "Groovy-Eclipse";
@@ -78,7 +75,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
     try {
       URL[] urls = {
         new File(jar).toURI().toURL(),
-        new File(Objects.requireNonNull(PathManager.getJarPathForClass(GreclipseMain.class))).toURI().toURL()
+        Objects.requireNonNull(PathManager.getJarForClass(GreclipseMain.class)).toUri().toURL()
       };
       ClassLoader loader = new URLClassLoader(urls, StandardJavaFileManager.class.getClassLoader());
       Class.forName("org.eclipse.jdt.internal.compiler.batch.Main", false, loader);

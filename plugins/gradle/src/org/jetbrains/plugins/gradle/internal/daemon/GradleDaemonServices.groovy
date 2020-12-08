@@ -23,9 +23,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 
 import java.lang.reflect.Method
 
-/**
- * @author Vladislav.Soroka
- */
 @ApiStatus.Internal
 @CompileStatic
 class GradleDaemonServices {
@@ -62,17 +59,17 @@ class GradleDaemonServices {
   private static Object runAction(Object daemonClientFactory, ConsumerConnection connection, Class actionClass, Object arg) {
     def daemonClientClassLoader = UrlClassLoader.build()
       .files(List.of(
-        new File(PathManager.getJarPathForClass(actionClass)).toPath(),
+        PathManager.getJarForClass(actionClass),
 
         // jars required for i18n utils
-        new File(PathManager.getJarPathForClass(DynamicBundle)).toPath(),
-        new File(PathManager.getJarPathForClass(AbstractBundle)).toPath(),
-        new File(PathManager.getJarPathForClass(TObjectHashingStrategy)).toPath(),
-        new File(PathManager.getJarPathForClass(Hash)).toPath(),
-        new File(PathManager.getJarPathForClass(Function)).toPath()
+        PathManager.getJarForClass(DynamicBundle),
+        PathManager.getJarForClass(AbstractBundle),
+        PathManager.getJarForClass(TObjectHashingStrategy),
+        PathManager.getJarForClass(Hash),
+        PathManager.getJarForClass(Function)
       ))
       .parent(daemonClientFactory.class.classLoader)
-      .disallowLock()
+      .allowLock(false)
       .get()
 
     String serviceDirectoryPath = GradleSystemSettings.instance.getServiceDirectoryPath()

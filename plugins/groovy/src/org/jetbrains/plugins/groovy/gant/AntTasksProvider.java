@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -138,9 +137,7 @@ public final class AntTasksProvider {
     }
 
     private static Builder getBuilder(List<Path> files) {
-      Builder builder = build().files(files).disallowLock().noPreload();
-      builder.parent(ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9());
-      return builder;
+      return build().files(files).allowLock(false).noPreload().parent(ClassLoader.getPlatformClassLoader());
     }
 
     @NotNull

@@ -53,6 +53,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -353,9 +354,9 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
-    String javaPluginClassesRootPath = PathManager.getJarPathForClass(JavaSdkImpl.class);
+    Path javaPluginClassesRootPath = PathManager.getJarForClass(JavaSdkImpl.class);
     LOG.assertTrue(javaPluginClassesRootPath != null);
-    File javaPluginClassesRoot = new File(javaPluginClassesRootPath);
+    File javaPluginClassesRoot = javaPluginClassesRootPath.toFile();
     VirtualFile root;
     VirtualFileManager vfm = VirtualFileManager.getInstance();
     LocalFileSystem lfs = LocalFileSystem.getInstance();

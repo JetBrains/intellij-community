@@ -526,11 +526,6 @@ public class UrlClassLoader extends ClassLoader {
      * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification.
      * Thus, the option is recommended when jars are not modified or process that uses this option is transient.
      */
-    public @NotNull UrlClassLoader.Builder disallowLock() {
-      lockJars = false;
-      return this;
-    }
-
     public @NotNull UrlClassLoader.Builder allowLock(boolean lockJars) {
       this.lockJars = lockJars;
       return this;
