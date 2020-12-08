@@ -11,7 +11,6 @@ import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LogMessage
 
-import java.text.MessageFormat
 import java.util.function.BiFunction
 import java.util.function.Supplier
 
@@ -58,7 +57,7 @@ class BuildMessagesImpl implements BuildMessages {
 
   @Override
   void log(System.Logger.Level level, ResourceBundle bundle, String message, Object... params) {
-    log(level, null, message == null ? message : MessageFormat.format(message, params), null as Throwable)
+    log(level, null, message, null as Throwable)
   }
 
   static BuildMessagesImpl create(Project antProject) {
