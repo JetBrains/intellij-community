@@ -23,7 +23,6 @@ import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
@@ -51,10 +50,10 @@ public final class Main {
   private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.ide.plugins.MainRunner";
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  private static final List<String> HEADLESS_COMMANDS = Arrays.asList(
+  private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
     "rdserver-headless", "thinClient-headless");
-  private static final List<String> GUI_COMMANDS = Arrays.asList("diff", "merge");
+  private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
@@ -120,6 +119,7 @@ public final class Main {
       .invokeExact(Main.class.getName() + "Impl", args, startupTimings);
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private static void installPluginUpdates() {
     if (isCommandLine() && !Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
       return;
@@ -129,8 +129,12 @@ public final class Main {
       StartupActionScriptManager.executeActionScript();
     }
     catch (IOException e) {
-      showMessage(BootstrapBundle.message("bootstrap.error.title.plugin.installation.error"),
-                  BootstrapBundle.message("bootstrap.error.message.plugin.installation.error", e.getMessage()), false);
+      showMessage("Plugin Installation Error",
+                  "The IDE failed to install some plugins.\n\n" +
+                  "Most probably, this happened because of a change in a serialization format.\n" +
+                  "Please try again, and if the problem persists, please report it\n" +
+                  "to https://jb.gg/ide/critical-startup-errors\n\n" +
+                  "The cause: " + e, false);
     }
   }
 
@@ -282,8 +286,7 @@ public final class Main {
       JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
     }
     catch (Throwable t) {
-      stream.println();
-      stream.println(BootstrapBundle.message("bootstrap.error.title.ui.exception.occurred.on.an.attempt.to.show.the.above.message"));
+      stream.println("\nAlso, a UI exception occurred on an attempt to show the above message");
       t.printStackTrace(stream);
     }
   }
