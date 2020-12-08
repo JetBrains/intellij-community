@@ -107,6 +107,7 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_
 public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(FileEditorManagerImpl.class);
   protected static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
+  public static final Key<Boolean> NOTHING_WAS_OPENED_ON_START = Key.create("NOTHING_WAS_OPENED_ON_START");
 
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
