@@ -114,11 +114,6 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
       if (newTextBlock == null) return;
       TrailingWhitespacesInTextBlockInspection.replaceTextBlock(project, literalExpression, newTextBlock);
     }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
   }
 
   private static class MixedIndentModel {

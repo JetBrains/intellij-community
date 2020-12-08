@@ -4,7 +4,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -127,7 +126,7 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiExpression replacement = elementFactory.createExpressionFromText(newTextBlock, toReplace);
     CodeStyleManager manager = CodeStyleManager.getInstance(project);
-    manager.performActionWithFormatterDisabled((Runnable)() -> WriteAction.run(() -> toReplace.replace(replacement)));
+    manager.performActionWithFormatterDisabled(() -> toReplace.replace(replacement));
   }
 
   private static class ReplaceTrailingWhiteSpacesFix implements LocalQuickFix {
