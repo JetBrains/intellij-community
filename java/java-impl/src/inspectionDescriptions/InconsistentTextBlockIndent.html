@@ -1,20 +1,20 @@
 <html>
 <body>
-Reports text blocks with indent that consists of both spaces and tabs.
-Such cases might be misleading since one space is treated as one tab during text block processing.
+Reports text blocks indented using both spaces and tabs.
+Such cases produce unexpected results since spaces and tabs are treated equally during text block processing.
 
-<p>For example (here spaces are visualized as <code>·</code> and tabs as <code>␉</code>, one tab takes 4 spaces in editor):</p>
+<p>In the following example, spaces and tabs are visualized as <code>·</code> and <code>␉</code> respectively, and a tab is equal to 4 spaces in the editor:</p>
 <pre><code>
 String colors = """
-····················red
-␉   ␉   ␉   ␉   ␉   green
-····················blue""";
+········red
+␉   ␉   green
+········blue""";
 </code></pre>
 
 <p>After printing such string the result would be:</p>
 <pre><code>
 red
-···············green
+······green
 blue
 </code></pre>
 <!-- tooltip end -->
