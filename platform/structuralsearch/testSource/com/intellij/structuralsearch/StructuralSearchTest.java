@@ -2470,10 +2470,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "   }\n" +
                      "}";
     String pattern7 = "(a) -> {\n" +
-                      "   $Statement$;\n" +
+                      "   '_Statement;\n" +
                       "   return new Function<String, String>() {\n" +
                       "      public String apply(String b) {\n" +
-                      "         $Statement$;\n" +
+                      "         '_Statement;\n" +
                       "      }\n" +
                       "   };\n" +
                       "}";
@@ -3177,6 +3177,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(source5, "new String()"));
     assertEquals("find code ignored comments 5a", 1,
                  findMatchesCount(source5, "new String('_a{0,0})"));
+
+    String source6 = "class X {\n" +
+                     "  void x() {\n" +
+                     "    final int x;\n" +
+                     "    // ok\n" +
+                     "  }" +
+                     "}";
+    assertEquals("find code while ignoring comments 6", 1,
+                 findMatchesCount(source6, "'_ReturnType? '_Method('_BeforeType '_BeforeParameter*) {\n" +
+                                           "  '_Expression1*;\n" +
+                                           "  final '_Type? '_Var+;\n" +
+                                           "  '_Expression2*; \n" +
+                                           "}"));
   }
 
   public void testFindLabeledStatements() {

@@ -18,6 +18,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -232,12 +233,6 @@ public class SubstitutionHandler extends MatchingHandler {
   public boolean handle(PsiElement match, int start, int end, @NotNull MatchContext context) {
     if (!validate(match, start, end, context)) {
       myNestedResult = null;
-      
-      //if (maxOccurs==1 && minOccurs==1) {
-      //  if (context.hasResult()) context.getResult().removeSon(name);
-      //}
-      // @todo we may fail fast the match by throwing an exception
-
       return false;
     }
 
@@ -340,9 +335,12 @@ public class SubstitutionHandler extends MatchingHandler {
       matchedOccurs = 0;
 
       boolean flag = false;
+      final List<PsiElement> matchedNodes = new SmartList<>();
 
       while (fNodes.hasNext() && matchedOccurs < minOccurs) {
-        if (handler.match(currentPatternNode, matchNodes.current(), context)) {
+        final PsiElement current = matchNodes.current();
+        if (handler.match(currentPatternNode, current, context)) {
+          matchedNodes.add(current);
           ++matchedOccurs;
         }
         else if (handler instanceof TopLevelMatchingHandler && matchedOccurs == 0 ||
@@ -365,7 +363,9 @@ public class SubstitutionHandler extends MatchingHandler {
         // go greedily to maxOccurs
 
         while (fNodes.hasNext() && matchedOccurs < maxOccurs) {
-          if (handler.match(currentPatternNode, matchNodes.current(), context)) {
+          final PsiElement current = matchNodes.current();
+          if (handler.match(currentPatternNode, current, context)) {
+            matchedNodes.add(current);
             ++matchedOccurs;
           }
           else if (handler instanceof TopLevelMatchingHandler && matchedOccurs == 0 ||
@@ -394,10 +394,11 @@ public class SubstitutionHandler extends MatchingHandler {
               return true;
             }
 
-            if (matchedOccurs > 0) {
-              matchNodes.rewind();
-              removeLastResults(1, context);
+            final int size = matchedNodes.size();
+            if (size > 0) {
+              matchNodes.rewindTo(matchedNodes.remove(size - 1));
             }
+            removeLastResults(1, context);
             --matchedOccurs;
           }
 
