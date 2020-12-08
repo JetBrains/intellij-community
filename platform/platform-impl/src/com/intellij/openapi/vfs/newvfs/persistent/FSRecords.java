@@ -80,7 +80,6 @@ public final class FSRecords {
                                      nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
                                      nextMask(ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP,0)))))))))));
 
-  private static boolean IS_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
   private static final IntList ourNewFreeRecords = new IntArrayList();
   static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
   private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -240,7 +239,7 @@ public final class FSRecords {
   }
 
   private static void addToFreeRecordsList(int id) {
-    if (IS_UNIT_TEST) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourNewFreeRecords.add(id);
     }
     // DbConnection.addFreeRecord(id); // important! Do not add fileId to free list until restart
