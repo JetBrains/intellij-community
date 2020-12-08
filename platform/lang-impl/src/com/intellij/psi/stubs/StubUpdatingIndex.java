@@ -459,7 +459,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     if (!staleTrees.isEmpty()) {
       LOG.error("Stub index contains several stale file ids (size = "
                 + staleTrees.size()
-                + "). Stale ids: "
+                + "). Ids & filenames: "
                 + StringUtil.first(staleTrees.toString(), 300, true)
                 + ".");
     }
