@@ -124,11 +124,11 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
   private static void addMatch(final List<LinkMatch> result, final TextRange range, final String replacement) {
     for (Iterator<LinkMatch> iterator = result.iterator(); iterator.hasNext(); ) {
       LinkMatch oldMatch = iterator.next();
-      if (range.contains(oldMatch.getRange())) {
+      if (oldMatch.getRange().intersectsStrict(range)) {
+        if (oldMatch.getRange().getStartOffset() <= range.getStartOffset()) {
+          return;
+        }
         iterator.remove();
-      }
-      else if (oldMatch.getRange().contains(range)) {
-        return;
       }
     }
     result.add(new LinkMatch(range, replacement));
@@ -140,7 +140,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     int pos = 0;
     for (IssueNavigationConfiguration.LinkMatch match : matches) {
       TextRange textRange = match.getRange();
-      if (pos > textRange.getStartOffset()) continue;
+      LOG.assertTrue(pos <= textRange.getStartOffset());
       if (textRange.getStartOffset() > pos) {
         textConsumer.accept(text.substring(pos, textRange.getStartOffset()));
       }
