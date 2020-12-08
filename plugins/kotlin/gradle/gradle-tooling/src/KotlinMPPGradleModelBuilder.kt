@@ -787,58 +787,6 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         return KotlinCompilationOutputImpl(classesDirs.files, destinationDir, resourcesDir)
     }
 
-    private fun computeSourceSetsDeferredInfo(
-        sourceSets: Map<String, KotlinSourceSetImpl>,
-        targets: Collection<KotlinTarget>,
-        isHMPPEnabled: Boolean,
-        coerceRootSourceSetsToCommon: Boolean
-    ) {
-        // includes only compilations where source set is listed
-        val compiledSourceSetToCompilations = LinkedHashMap<KotlinSourceSet, MutableSet<KotlinCompilation>>()
-        // includes compilations where source set is included via dependsOn
-        val allSourceSetToCompilations = LinkedHashMap<KotlinSourceSet, MutableSet<KotlinCompilation>>()
-        for (target in targets) {
-            for (compilation in target.compilations) {
-                for (sourceSet in compilation.sourceSets) {
-                    compiledSourceSetToCompilations.getOrPut(sourceSet) { LinkedHashSet() } += compilation
-                    allSourceSetToCompilations.getOrPut(sourceSet) { LinkedHashSet() } += compilation
-                    sourceSet.dependsOnSourceSets.mapNotNull { sourceSets[it] }.forEach {
-                        allSourceSetToCompilations.getOrPut(it) { LinkedHashSet() } += compilation
-                    }
-                }
-            }
-        }
-
-        for (sourceSet in sourceSets.values) {
-            val isRoot = sourceSet.name == COMMON_MAIN_SOURCE_SET_NAME || sourceSet.name == COMMON_TEST_SOURCE_SET_NAME
-
-            if (!isHMPPEnabled && isRoot) {
-                sourceSet.isTestModule = sourceSet.name == COMMON_TEST_SOURCE_SET_NAME
-                continue
-            }
-
-            sourceSet.isTestModule = allSourceSetToCompilations[sourceSet]?.all { it.isTestModule } ?: false
-
-            val platforms = if (isHMPPEnabled)
-                allSourceSetToCompilations[sourceSet]?.map { it.platform }
-            else
-                compiledSourceSetToCompilations[sourceSet]?.map { it.platform }
-
-            platforms?.let { sourceSet.actualPlatforms.addSimplePlatforms(it) }
-
-            // never makes sense to coerce single-targeted source-sets
-            if (sourceSet.actualPlatforms.platforms.size != 1) {
-                // pre-HMPP has only single-targeted source sets and COMMON
-                // in HMPP, we might want to coerce source sets to common, but only root ones,
-                // and only when the corresponding setting is turned on
-                // in all other cases, in HMPP we shouldn't coerce anything
-                if (!isHMPPEnabled || (isRoot && coerceRootSourceSetsToCommon)) {
-                    sourceSet.actualPlatforms.addSimplePlatforms(listOf(KotlinPlatform.COMMON))
-                }
-            }
-        }
-    }
-
     private class DependencyAdjuster(
         private val configuration: Configuration,
         private val scope: String,
@@ -985,6 +933,58 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             @Suppress("UNCHECKED_CAST")
             val compileKotlinTaskName = (getCompileKotlinTaskName(compilation) as? String) ?: return null
             return project.tasks.findByName(compileKotlinTaskName) ?: return null
+        }
+    }
+}
+
+fun computeSourceSetsDeferredInfo(
+    sourceSets: Map<String, KotlinSourceSetImpl>,
+    targets: Collection<KotlinTarget>,
+    isHMPPEnabled: Boolean,
+    coerceRootSourceSetsToCommon: Boolean
+) {
+    // includes only compilations where source set is listed
+    val compiledSourceSetToCompilations = LinkedHashMap<KotlinSourceSet, MutableSet<KotlinCompilation>>()
+    // includes compilations where source set is included via dependsOn
+    val allSourceSetToCompilations = LinkedHashMap<KotlinSourceSet, MutableSet<KotlinCompilation>>()
+    for (target in targets) {
+        for (compilation in target.compilations) {
+            for (sourceSet in compilation.sourceSets) {
+                compiledSourceSetToCompilations.getOrPut(sourceSet) { LinkedHashSet() } += compilation
+                allSourceSetToCompilations.getOrPut(sourceSet) { LinkedHashSet() } += compilation
+                sourceSet.dependsOnSourceSets.mapNotNull { sourceSets[it] }.forEach {
+                    allSourceSetToCompilations.getOrPut(it) { LinkedHashSet() } += compilation
+                }
+            }
+        }
+    }
+
+    for (sourceSet in sourceSets.values) {
+        val isRoot = sourceSet.name == COMMON_MAIN_SOURCE_SET_NAME || sourceSet.name == COMMON_TEST_SOURCE_SET_NAME
+
+        if (!isHMPPEnabled && isRoot) {
+            sourceSet.isTestModule = sourceSet.name == COMMON_TEST_SOURCE_SET_NAME
+            continue
+        }
+
+        sourceSet.isTestModule = allSourceSetToCompilations[sourceSet]?.all { it.isTestModule } ?: false
+
+        val platforms = if (isHMPPEnabled)
+            allSourceSetToCompilations[sourceSet]?.map { it.platform }
+        else
+            compiledSourceSetToCompilations[sourceSet]?.map { it.platform }
+
+        platforms?.let { sourceSet.actualPlatforms.addSimplePlatforms(it) }
+
+        // never makes sense to coerce single-targeted source-sets
+        if (sourceSet.actualPlatforms.platforms.size != 1) {
+            // pre-HMPP has only single-targeted source sets and COMMON
+            // in HMPP, we might want to coerce source sets to common, but only root ones,
+            // and only when the corresponding setting is turned on
+            // in all other cases, in HMPP we shouldn't coerce anything
+            if (!isHMPPEnabled || (isRoot && coerceRootSourceSetsToCommon)) {
+                sourceSet.actualPlatforms.addSimplePlatforms(listOf(KotlinPlatform.COMMON))
+            }
         }
     }
 }
