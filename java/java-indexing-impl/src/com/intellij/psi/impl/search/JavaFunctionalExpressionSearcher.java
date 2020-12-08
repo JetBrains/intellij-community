@@ -81,6 +81,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       if (InjectedLanguageManager.getInstance(project).isInjectedFragment(aClass.getContainingFile()) || !hasJava8Modules(project)) {
         return;
       }
+      PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(project);
 
       Set<PsiClass> visited = new HashSet<>();
       processSubInterfaces(aClass, visited);
@@ -90,7 +91,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
           PsiType samType = saMethod.getReturnType();
           if (samType == null) continue;
 
-          SearchScope scope = samClass.getUseScope().intersectWith(session.scope);
+          SearchScope scope = psiSearchHelper.getUseScope(samClass).intersectWith(session.scope);
           descriptors.add(new SamDescriptor(samClass, saMethod, samType, GlobalSearchScopeUtil.toGlobalSearchScope(scope, project)));
         }
       }
