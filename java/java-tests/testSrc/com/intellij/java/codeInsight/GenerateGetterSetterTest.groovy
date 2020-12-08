@@ -5,6 +5,8 @@ import com.intellij.codeInsight.generation.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiType
@@ -193,7 +195,7 @@ class Foo {
 '''
   }
 
-  void testLombokGeneratedFields() {
+  void "test lombok generated fields without containing file"() {
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), GenerateAccessorProviderRegistrar.EP_NAME, new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
       @Override
       Collection<EncapsulatableClassMember> fun(PsiClass dom) {
@@ -220,7 +222,8 @@ class A {
         boolean copyJavadocCheckbox,
         Project project,
         @Nullable Editor editor) {
-        super.createMembersChooser(members, allowEmptySelection, copyJavadocCheckbox, project)
+        def chooser = super.createMembersChooser(members, allowEmptySelection, copyJavadocCheckbox, project)
+        Disposer.register(getTestRootDisposable(), { chooser.close(DialogWrapper.OK_EXIT_CODE)} )
         return members
       }
     }.invoke(project, myFixture.editor, myFixture.file)
