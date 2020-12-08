@@ -74,18 +74,7 @@ if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${
     USER_JRE="$IDE_HOME/$USER_JRE"
   fi
   if [ -x "$USER_JRE/bin/java" ]; then
-    if [ -d "$USER_JRE/jre" ]; then
-      USER_JRE_VERSION="8"
-    elif [ -f "$USER_JRE/release" ]; then
-      USER_JRE_VERSION=$(${GREP} "JAVA_VERSION=" "$USER_JRE/release" | ${SED} -e 's/^.*"\([0-9]*\)\..*$/\1/')
-    fi
-    if [ -n "$USER_JRE_VERSION" ] && [ "${USER_JRE_VERSION}" -ge 11 ]; then
-      JDK="$USER_JRE"
-    else
-      echo
-      echo "WARN: ignoring JRE from ${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk: $USER_JRE_VERSION"
-      echo
-    fi
+    JDK="$USER_JRE"
   fi
 fi
 
