@@ -80,7 +80,8 @@ public final class FSRecords {
                                      nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
                                      nextMask(ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP,0)))))))))));
 
-
+  private static boolean IS_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
+  private static final IntList ourNewFreeRecords = new IntArrayList();
   static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
   private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
   static final ReentrantReadWriteLock lock;
@@ -239,6 +240,9 @@ public final class FSRecords {
   }
 
   private static void addToFreeRecordsList(int id) {
+    if (IS_UNIT_TEST) {
+      ourNewFreeRecords.add(id);
+    }
     // DbConnection.addFreeRecord(id); // important! Do not add fileId to free list until restart
     setFlags(id, FREE_RECORD_FLAG, false);
   }
@@ -754,6 +758,12 @@ public final class FSRecords {
   @NotNull
   public static IntList getRemainFreeRecords() {
     return readAndHandleErrors(() -> new IntArrayList(ourConnection.getFreeRecords()));
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public static IntList getNewFreeRecords() {
+    return readAndHandleErrors(() -> new IntArrayList(ourNewFreeRecords));
   }
 
   static void setParent(int id, int parentId) {

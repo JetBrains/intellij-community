@@ -399,7 +399,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
         }
       });
     }
-    checkStubIndexDontContainDeletedRecords(index);
+    checkStubIndexDontContainDeletedRecords(index, true);
     return index;
   }
 
@@ -435,13 +435,13 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
   }
 
-  private static void checkStubIndexDontContainDeletedRecords(@NotNull StubUpdatingIndexStorage stubIndex) throws StorageException {
+  static void checkStubIndexDontContainDeletedRecords(@NotNull StubUpdatingIndexStorage stubIndex, boolean onStartup) throws StorageException {
     if (!ApplicationManager.getApplication().isInternal()) {
       return;
     }
 
     Int2ObjectMap<String> staleTrees = new Int2ObjectOpenHashMap<>();
-    for (int freeRecord : FSRecords.getRemainFreeRecords()) {
+    for (int freeRecord : onStartup ? FSRecords.getRemainFreeRecords() : FSRecords.getNewFreeRecords()) {
       Map<Integer, SerializedStubTree> data = stubIndex.getIndexedFileData(freeRecord);
       SerializedStubTree stubTree = ContainerUtil.getFirstItem(data.values());
       if (stubTree != null) {
