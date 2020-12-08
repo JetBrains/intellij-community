@@ -763,7 +763,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "    case 4: yield  ;\n" +
                  "}",
                  "String s = switch (i) {\n" +
-                 "    case 0: yield (foo);\n" +
+                 "    case 0: yield(foo);\n" +
                  "    case 1: yield 42;\n" +
                  "    case 3: yield label;\n" +
                  "    case 4: yield ;\n" +
