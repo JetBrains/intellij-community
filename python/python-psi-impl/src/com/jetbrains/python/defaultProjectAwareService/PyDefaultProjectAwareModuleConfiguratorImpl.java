@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
@@ -58,10 +59,13 @@ public final class PyDefaultProjectAwareModuleConfiguratorImpl<
                                   @NotNull Function<Pair<Module, Collection<VirtualFile>>, ? extends STATE> detector) {
     final String extension = PythonFileType.INSTANCE.getDefaultExtension();
     // Module#getModuleScope() and GlobalSearchScope#getModuleScope() search only in source roots
-    final GlobalSearchScope searchScope = new ModulesScope(Collections.singleton(module), module.getProject());
+    Project project = module.getProject();
+    final GlobalSearchScope searchScope = new ModulesScope(Collections.singleton(module), project);
 
-    final Collection<VirtualFile> pyFiles =
-      ReadAction.compute(() -> FilenameIndex.getAllFilesByExt(module.getProject(), extension, searchScope));
+    Collection<VirtualFile> pyFiles = ReadAction.nonBlocking(() -> FilenameIndex
+        .getAllFilesByExt(project, extension, searchScope))
+        .inSmartMode(project)
+        .executeSynchronously();
 
     STATE state = detector.fun(Pair.create(module, pyFiles));
     if (state != null) {
