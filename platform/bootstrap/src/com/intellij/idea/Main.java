@@ -7,6 +7,7 @@ import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 
 public final class Main {
@@ -37,7 +39,7 @@ public final class Main {
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
   public static final int OUT_OF_MEMORY = 9;
-  @SuppressWarnings("unused") public static final int UNSUPPORTED_JAVA_VERSION = 10;  // reserved for future use, again
+  public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
   public static final int ACTIVATE_WRONG_TOKEN_CODE = 13;
@@ -84,6 +86,39 @@ public final class Main {
     }
 
     try {
+      if (Runtime.version().feature() < 11) {
+        String baseName = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
+        @Nls StringBuilder message = new StringBuilder(BootstrapBundle.message("bootstrap.error.message.unsupported.jre", 11)).append('\n');
+        int min = message.length();
+
+        String envVar = baseName.toUpperCase(Locale.ENGLISH) + "_JDK";
+        String envValue = System.getenv(envVar);
+        if (envValue != null && Files.isSameFile(Paths.get(envValue), Paths.get(System.getProperty("java.home")))) {
+          message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.env", envVar));
+        }
+        else {
+          String configPath = PathManager.getDefaultConfigPathFor(System.getProperty("idea.paths.selector", ""));
+          String suffix = System.getProperty("os.name", "").startsWith("Windows") ? "amd64".equals(System.getProperty("os.arch")) ? "64.exe" : ".exe" : "";
+          Path file = Paths.get(configPath, baseName.toLowerCase(Locale.ENGLISH) + suffix + ".jdk");
+          try {
+            Path jdkPath = Paths.get(Files.readString(file));
+            if (Files.isSameFile(jdkPath, Paths.get(System.getProperty("java.home")))) {
+              message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.file", file));
+            }
+          }
+          catch (IOException ignored) { }
+        }
+
+        if (message.length() == min) {
+          message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.other"));
+        }
+
+        message.append("\n\n").append(BootstrapBundle.message("bootstrap.error.message.jre.details", jreDetails()));
+
+        showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.jre"), message.toString(), true);
+        System.exit(UNSUPPORTED_JAVA_VERSION);
+      }
+
       bootstrap(args, startupTimings);
     }
     catch (Throwable t) {
@@ -227,14 +262,18 @@ public final class Main {
 
     t.printStackTrace(new PrintWriter(message));
 
+    message.append("\n-----\n").append(BootstrapBundle.message("bootstrap.error.message.jre.details", jreDetails()));
+
+    showMessage(title, message.toString(), true); //NON-NLS
+  }
+
+  private static @NlsSafe String jreDetails() {
     Properties sp = System.getProperties();
     String jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
     String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
     String arch = sp.getProperty("os.arch", "(unknown arch)");
     String home = sp.getProperty("java.home", "(unknown java.home)");
-    message.append(BootstrapBundle.message("bootstrap.error.title.jre.0.os.arch.1.by.vendor.2.java.home.3", jre, arch, vendor, home));
-
-    showMessage(title, message.toString(), true); //NON-NLS
+    return jre + ' ' + arch + " (" + vendor + ")\n" + home;
   }
 
   private static AWTError findGraphicsError(Throwable t) {
