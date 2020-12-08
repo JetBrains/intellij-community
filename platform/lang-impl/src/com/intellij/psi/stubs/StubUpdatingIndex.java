@@ -445,26 +445,23 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       Map<Integer, SerializedStubTree> data = stubIndex.getIndexedFileData(freeRecord);
       SerializedStubTree stubTree = ContainerUtil.getFirstItem(data.values());
       if (stubTree != null) {
-        String stub;
+        String name;
         try {
-          stub = DebugUtil.stubTreeToString(stubTree.getStub());
+          name = FSRecords.getName(freeRecord);
         }
         catch (Exception e) {
-          stub = e.getMessage();
+          name = e.getMessage();
         }
-        staleTrees.put(freeRecord, stub);
+        staleTrees.put(freeRecord, name);
       }
     }
 
     if (!staleTrees.isEmpty()) {
-      Int2ObjectMap.Entry<String> singleEntry = staleTrees.int2ObjectEntrySet().iterator().next();
-      Attachment sampleEntryAttachment = new Attachment("id" + singleEntry.getIntKey(), singleEntry.getValue());
       LOG.error("Stub index contains several stale file ids (size = "
                 + staleTrees.size()
                 + "). Stale ids: "
-                + StringUtil.first(staleTrees.keySet().toString(), 300, true)
-                + "." + sampleEntryAttachment.getDisplayText(),
-                sampleEntryAttachment);
+                + StringUtil.first(staleTrees.toString(), 300, true)
+                + ".");
     }
   }
 }
