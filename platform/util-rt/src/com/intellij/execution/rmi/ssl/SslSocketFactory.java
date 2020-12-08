@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.*;
 import java.io.*;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -19,17 +18,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class SslSocketFactory extends SSLSocketFactory {
+public class SslSocketFactory extends DelegateSslSocketFactory {
   public static final String SSL_CA_CERT_PATH = "sslCaCertPath";
   public static final String SSL_CLIENT_CERT_PATH = "sslClientCertPath";
   public static final String SSL_CLIENT_KEY_PATH = "sslClientKeyPath";
   public static final String SSL_TRUST_EVERYBODY = "sslTrustEverybody";
   public static final String SSL_USE_FACTORY = "sslUseFactory";
   private static final String END_CERTIFICATE = "-----END CERTIFICATE-----";
-  private final SSLSocketFactory myFactory;
 
   public SslSocketFactory() throws GeneralSecurityException {
-    super();
+    super(createDelegate());
+  }
+
+  @NotNull
+  private static SSLSocketFactory createDelegate() throws NoSuchAlgorithmException, KeyManagementException {
     SSLContext ctx = SSLContext.getInstance("TLS");
     TrustManager[] tms;
     KeyManager[] kms;
@@ -50,7 +52,7 @@ public class SslSocketFactory extends SSLSocketFactory {
     }
 
     ctx.init(kms, tms, null);
-    myFactory = ctx.getSocketFactory();
+    return ctx.getSocketFactory();
   }
 
   @NotNull
@@ -85,47 +87,6 @@ public class SslSocketFactory extends SSLSocketFactory {
     catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Override
-  @NotNull
-  public Socket createSocket(InetAddress host, int port) throws IOException {
-    return myFactory.createSocket(host, port);
-  }
-
-  @Override
-  @NotNull
-  public Socket createSocket(String host, int port) throws IOException {
-    return myFactory.createSocket(host, port);
-  }
-
-  @Override
-  @NotNull
-  public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
-    return myFactory.createSocket(host, port, localHost, localPort);
-  }
-
-  @Override
-  @NotNull
-  public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
-    return myFactory.createSocket(address, port, localAddress, localPort);
-  }
-
-  @Override
-  public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException {
-    return myFactory.createSocket(socket, host, port, autoClose);
-  }
-
-  @Override
-  @NotNull
-  public String[] getDefaultCipherSuites() {
-    return myFactory.getDefaultCipherSuites();
-  }
-
-  @Override
-  @NotNull
-  public String[] getSupportedCipherSuites() {
-    return myFactory.getSupportedCipherSuites();
   }
 
   @NotNull
@@ -192,7 +153,7 @@ public class SslSocketFactory extends SSLSocketFactory {
     }
   }
 
-  private static class MyTrustEverybodyManager implements X509TrustManager {
+  static class MyTrustEverybodyManager implements X509TrustManager {
     @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
     }
