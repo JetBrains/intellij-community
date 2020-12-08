@@ -15,6 +15,8 @@ import os
 import subprocess
 import sys
 
+from build import BINARY_DIRS, remove_binaries
+
 miniconda32_envs = os.getenv('MINICONDA32_ENVS', r'C:\tools\Miniconda32\envs')
 miniconda64_envs = os.getenv('MINICONDA64_ENVS', r'C:\tools\Miniconda\envs')
 
@@ -38,9 +40,10 @@ root_dir = os.path.dirname(os.path.dirname(__file__))
 
 
 def list_binaries():
-    for f in os.listdir(os.path.join(root_dir, '_pydevd_bundle')):
-        if f.endswith('.pyd'):
-            yield f
+    for binary_dir in BINARY_DIRS:
+        for f in os.listdir(os.path.join(root_dir, binary_dir)):
+            if f.endswith('.pyd'):
+                yield f
 
 
 def extract_version(python_install):
@@ -58,7 +61,6 @@ def main():
     for python_install in python_installations:
         assert os.path.exists(python_install)
 
-    from build import remove_binaries
     remove_binaries(['.pyd'])
 
     for f in list_binaries():

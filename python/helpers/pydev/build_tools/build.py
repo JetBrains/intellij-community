@@ -15,6 +15,9 @@ import sys
 
 from generate_code import remove_if_exists, root_dir, is_python_64bit, generate_dont_trace_files, generate_cython_module
 
+# noinspection SpellCheckingInspection
+BINARY_DIRS = '_pydevd_bundle', '_pydevd_frame_eval'
+
 
 def validate_pair(ob):
     try:
@@ -89,8 +92,7 @@ def get_environment_from_batch_command(env_cmd, initial=None):
 
 
 def remove_binaries(suffixes):
-    # noinspection SpellCheckingInspection
-    for binary_dir in '_pydevd_bundle', '_pydevd_frame_eval':
+    for binary_dir in BINARY_DIRS:
         for f in os.listdir(os.path.join(root_dir, binary_dir)):
             for suffix in suffixes:
                 if f.endswith(suffix):
