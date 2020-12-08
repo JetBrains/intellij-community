@@ -6,33 +6,79 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SideBorder
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
+import com.intellij.vcs.log.impl.VcsUserImpl
+import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
+import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import javax.swing.JComponent
 
 internal class SpaceReviewCommitListPanel(reviewDetailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
   init {
-    val commitsBrowser = OnePixelSplitter(true, "space.review.commit.list", 0.7f).apply {
-      firstComponent = SpaceReviewCommitListFactory.createCommitList(reviewDetailsVm)
+    val commitsBrowser = OnePixelSplitter(true, "space.review.commit.list", 0.4f).apply {
+      val selectedCommitDetails = OnePixelSplitter(true, "space.review.commit.list.details", 0.3f).apply {
+        val commitDetailsPanel = createCommitsDetailsPanel(reviewDetailsVm.ideaProject, reviewDetailsVm.changesVm)
+        val tree = SpaceReviewChangesTreeFactory.create(
+          reviewDetailsVm.ideaProject,
+          this,
+          reviewDetailsVm.changesVm,
+          reviewDetailsVm.spaceDiffVm
+        ).apply {
+          border = IdeBorderFactory.createBorder(SideBorder.TOP)
+        }
+        val treeActionsToolbarPanel = createChangesBrowserToolbar(tree)
 
-
-      val tree = SpaceReviewChangesTreeFactory.create(
-        reviewDetailsVm.ideaProject,
-        this,
-        reviewDetailsVm.changesVm,
-        reviewDetailsVm.spaceDiffVm
-      ).apply {
-        border = IdeBorderFactory.createBorder(SideBorder.TOP)
+        firstComponent = commitDetailsPanel
+        secondComponent = BorderLayoutPanel()
+          .addToTop(treeActionsToolbarPanel)
+          .addToCenter(tree)
       }
-      val treeActionsToolbarPanel = createChangesBrowserToolbar(tree)
-      secondComponent = BorderLayoutPanel()
-        .addToTop(treeActionsToolbarPanel)
-        .addToCenter(tree)
+
+      firstComponent = SpaceReviewCommitListFactory.createCommitList(reviewDetailsVm)
+      secondComponent = selectedCommitDetails
     }
     addToCenter(commitsBrowser)
+  }
+
+  private fun createCommitsDetailsPanel(project: Project, changesVm: SpaceReviewChangesVm): JComponent {
+    val disposable = Disposer.newDisposable()
+    val lifetime = changesVm.lifetime
+    lifetime.add { Disposer.dispose(disposable) }
+    val commitListPanel: CommitDetailsListPanel<CommitDetailsPanel> = object : CommitDetailsListPanel<CommitDetailsPanel>(disposable) {
+      init {
+        border = JBUI.Borders.empty()
+      }
+
+      override fun getCommitDetailsPanel() = CommitDetailsPanel(project) {}
+    }
+
+    val unknownRoot = LightVirtualFile()
+
+    changesVm.selectedCommits.forEach(lifetime) { selectedCommits ->
+      val selectedCommitsInfo = selectedCommits.map { selectedCommit ->
+        val commit = selectedCommit.commitWithGraph.commit
+        val hash = HashImpl.build(commit.id)
+        val parents = commit.parents.map { id -> HashImpl.build(id) }
+        val root = selectedCommit.spaceRepoInfo?.repository?.root ?: unknownRoot
+        val message = commit.message.trimEnd('\n')
+        val subject = message.substringBefore("\n\n")
+        val author = VcsUserImpl(commit.author.name, commit.author.email)
+        val committer = VcsUserImpl(commit.committer.name, commit.committer.email)
+        VcsCommitMetadataImpl(hash, parents, commit.commitDate, root, subject, author, message, committer, commit.authorDate)
+      }
+      commitListPanel.setCommits(selectedCommitsInfo)
+    }
+
+    return commitListPanel
   }
 
   private fun createChangesBrowserToolbar(target: JComponent): TreeActionsToolbarPanel {
