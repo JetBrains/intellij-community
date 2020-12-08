@@ -18,6 +18,7 @@ package com.intellij.execution.rmi;
 import com.intellij.execution.rmi.ssl.SslKeyStore;
 import com.intellij.execution.rmi.ssl.SslSocketFactory;
 import com.intellij.execution.rmi.ssl.SslTrustStore;
+import com.intellij.execution.rmi.ssl.SslUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,11 +140,11 @@ public class RemoteServer {
   }
 
   private static void setupSSL() {
-    boolean caCert = System.getProperty(SslSocketFactory.SSL_CA_CERT_PATH) != null;
-    boolean clientCert = System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH) != null;
-    boolean clientKey = System.getProperty(SslSocketFactory.SSL_CLIENT_KEY_PATH) != null;
+    boolean caCert = System.getProperty(SslUtil.SSL_CA_CERT_PATH) != null;
+    boolean clientCert = System.getProperty(SslUtil.SSL_CLIENT_CERT_PATH) != null;
+    boolean clientKey = System.getProperty(SslUtil.SSL_CLIENT_KEY_PATH) != null;
     boolean deferred = "true".equals(System.getProperty(SslKeyStore.SSL_DEFERRED_KEY_LOADING));
-    boolean useFactory = "true".equals(System.getProperty(SslSocketFactory.SSL_USE_FACTORY));
+    boolean useFactory = "true".equals(System.getProperty(SslUtil.SSL_USE_FACTORY));
     if (useFactory) {
       if (caCert || clientCert && clientKey) {
         Security.setProperty("ssl.SocketFactory.provider", SslSocketFactory.class.getName());
