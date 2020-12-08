@@ -883,7 +883,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return findTargetElementUnsafe(editor, offset, file, contextElement);
     }
     catch (IndexNotReadyException ex) {
-      LOG.warn("Index not ready");
       LOG.debug(ex);
       return null;
     }
