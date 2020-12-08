@@ -87,6 +87,12 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
     if (myStoredElement != null) {
       factoryName = myStoredElement.getAttributeValue("type");
     }
+    // Android Studio: customise the deprecation message for Android JUnit run configurations.
+    // This is to customise the message on the pop-up window when clicking run button.
+    if (factoryName != null && factoryName.equals("AndroidJUnit"))
+      throw new ExecutionException("Android JUnit test configurations are no longer supported. You should instead use the " +
+                                   "Gradle run configuration for your unit tests. " +
+                                   "<html><a href=\"http://d.android.com/r/tools/android-junit-deprecation\">Learn More.</a></html>");
     throw new ExecutionException("Unknown run configuration type" + (factoryName.isEmpty() ? "" : " " + factoryName));
   }
 
@@ -101,6 +107,17 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
+    // Android Studio: customise the deprecation message for Android JUnit run configurations.
+    // This is to customise the message in the Run configurations window.
+    String factoryName = "";
+    if (myStoredElement != null) {
+      factoryName = myStoredElement.getAttributeValue("type");
+    }
+    if (factoryName != null && factoryName.equals("AndroidJUnit"))
+      throw new RuntimeConfigurationException("<html><br/><b>Android JUnit test configurations are no longer supported:</b> " +
+                                              "You should instead use the Gradle run configuration for your unit tests. " +
+                                              "You can find your existing configurations at &lt;my-app&gt;/.idea/workspace.xml. " +
+                                              "<a href=\"http://d.android.com/r/tools/android-junit-deprecation\">Learn More.</a></html>");
     throw new RuntimeConfigurationException(LangBundle.message("dialog.message.broken.configuration"));
   }
 
