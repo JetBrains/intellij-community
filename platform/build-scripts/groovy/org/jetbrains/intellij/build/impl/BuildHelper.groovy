@@ -99,7 +99,7 @@ final class BuildHelper {
       .parent(ClassLoader.getSystemClassLoader())
       .usePersistentClasspathIndexForLocalClassDirectories()
       .useCache()
-      .allowLock()
+      .allowLock(true)
       .urls(classPathUrls)
       .get()
     return new BuildHelper(classLoader)
