@@ -1115,6 +1115,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           component.clearHistory();
         }
         callback.setDone();
+        getProject().getMessageBus().syncPublisher(DocumentationComponentListener.TOPIC).componentDataChanged();
       });
     }, 10);
     return callback;
