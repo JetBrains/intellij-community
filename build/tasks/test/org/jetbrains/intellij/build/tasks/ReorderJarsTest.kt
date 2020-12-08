@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.tasks
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.lang.JarMemoryLoader
+import com.intellij.util.lang.JdkZipFile
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
@@ -36,10 +37,10 @@ class ReorderJarsTest {
     val files = tempDir.toFile().listFiles()!!
     assertThat(files).isNotNull()
     assertThat(files).hasSize(1)
-    val file = files[0]
-    assertThat(file.name).isEqualTo("annotations.jar")
+    val file = files[0].toPath()
+    assertThat(file.fileName.toString()).isEqualTo("annotations.jar")
     var data: ByteArray
-    ZipFile(file).use { zipFile2 ->
+    ZipFile(file.toFile()).use { zipFile2 ->
       val entries = zipFile2.entriesInPhysicalOrder.toList()
       assertThat(entries[0].name).isEqualTo(SIZE_ENTRY)
       val entry = entries[1]
@@ -50,15 +51,13 @@ class ReorderJarsTest {
       assertThat(entries[3].name).isEqualTo("META-INF/MANIFEST.MF")
     }
 
-    java.util.zip.ZipFile(file).use { zipFile3 ->
-      val loader = JarMemoryLoader.load(zipFile3, file.toPath(), null)
-      assertThat(loader).isNotNull()
-      val resource = loader!!.getResource("org/jetbrains/annotations/Nullable.class")
-      assertThat(resource).isNotNull()
-      val bytes = resource!!.getBytes()
-      assertThat(bytes).hasSize(548)
-      assertThat(data.contentEquals(bytes)).isTrue()
-    }
+    val loader = JdkZipFile(file, true, false).preload(file, null)
+    assertThat(loader).isNotNull()
+    val resource = loader!!.getResource("org/jetbrains/annotations/Nullable.class")
+    assertThat(resource).isNotNull()
+    val bytes = resource!!.getBytes()
+    assertThat(bytes).hasSize(548)
+    assertThat(data.contentEquals(bytes)).isTrue()
   }
 
   @Test

@@ -19,10 +19,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
   private static final List<Map.Entry<Resource.Attribute, Attributes.Name>> PACKAGE_FIELDS = Arrays.asList(
@@ -34,13 +31,11 @@ class JarLoader extends Loader {
     new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
 
   private static final String NULL_STRING = "<null>";
-  private static final Object ourLock = new Object();
 
-  private final ClassPath configuration;
+  protected final ClassPath configuration;
   protected final URL url;
   private SoftReference<JarMemoryLoader> memoryLoader;
-  // Used only when configuration.canLockJars==true
-  private volatile SoftReference<ZipFile> zipFileSoftReference;
+  protected final ZipFileImpl zipFile;
   private volatile Map<Resource.Attribute, String> attributes;
   private volatile String classPathManifestAttribute;
 
@@ -48,17 +43,21 @@ class JarLoader extends Loader {
   private volatile StrippedIntOpenHashSet myPackageHashesInside;
 
   JarLoader(@NotNull Path file, @NotNull ClassPath configuration) throws IOException {
+    this(file, configuration, new JdkZipFile(file, configuration.lockJars, false));
+  }
+
+  JarLoader(@NotNull Path file, @NotNull ClassPath configuration, @NotNull ZipFileImpl zipFile) throws IOException {
     super(file);
 
     this.configuration = configuration;
+    this.zipFile = zipFile;
     this.url = new URL("jar", "", -1, fileToUri(file) + "!/");
 
     if (!configuration.lazyClassloadingCaches) {
       // IOException from opening is propagated to caller if zip file isn't valid,
-      ZipFile zipFile = getZipFile();
       try {
         if (configuration.preloadJarContents) {
-          JarMemoryLoader loader = JarMemoryLoader.load(zipFile, path, this);
+          JarMemoryLoader loader = zipFile.preload(path, this);
           if (loader != null) {
             memoryLoader = new SoftReference<>(loader);
           }
@@ -99,12 +98,8 @@ class JarLoader extends Loader {
     return manifestAttribute != NULL_STRING ? manifestAttribute : null;
   }
 
-  private static @Nullable Map<Resource.Attribute, String> getAttributes(@Nullable Attributes attributes) {
-    if (attributes == null) {
-      return null;
-    }
+  private static @Nullable Map<Resource.Attribute, String> getAttributes(@NotNull Attributes attributes) {
     Map<Resource.Attribute, String> map = null;
-
     for (Map.Entry<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
       String value = attributes.getValue(p.getValue());
       if (value != null) {
@@ -114,7 +109,6 @@ class JarLoader extends Loader {
         map.put(p.getKey(), value);
       }
     }
-
     return map;
   }
 
@@ -129,13 +123,13 @@ class JarLoader extends Loader {
           return;
         }
 
-        ZipFile zipFile = getZipFile();
         try {
           Attributes manifestAttributes = configuration.getManifestData(path);
           if (manifestAttributes == null) {
-            ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-            if (entry != null) manifestAttributes = loadManifestAttributes(zipFile.getInputStream(entry));
-            if (manifestAttributes == null) manifestAttributes = new Attributes(0);
+            manifestAttributes = zipFile.loadManifestAttributes();
+            if (manifestAttributes == null) {
+              manifestAttributes = new Attributes(0);
+            }
             configuration.cacheManifestData(path, manifestAttributes);
           }
 
@@ -153,70 +147,9 @@ class JarLoader extends Loader {
     }
   }
 
-  private static @Nullable Attributes loadManifestAttributes(InputStream stream) {
-    try {
-      try {
-        return new Manifest(stream).getMainAttributes();
-      }
-      finally {
-        stream.close();
-      }
-    }
-    catch (Exception ignored) { }
-    return null;
-  }
-
   @Override
   public final @NotNull ClasspathCache.LoaderData buildData() throws IOException {
-    ZipFile zipFile = getZipFile();
-    try {
-      ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder();
-      Enumeration<? extends ZipEntry> entries = zipFile.entries();
-
-      while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
-        String name = entry.getName();
-
-        if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
-          loaderDataBuilder.addClassPackageFromName(name);
-        }
-        else {
-          loaderDataBuilder.addResourcePackageFromName(name);
-        }
-
-        loaderDataBuilder.addPossiblyDuplicateNameEntry(name);
-      }
-
-      return loaderDataBuilder.build();
-    }
-    finally {
-      releaseZipFile(zipFile);
-    }
-  }
-
-  private @NotNull StrippedIntOpenHashSet buildPackageHashes() {
-    try {
-      ZipFile zipFile = getZipFile();
-      try {
-        Enumeration<? extends ZipEntry> entries = zipFile.entries();
-        StrippedIntOpenHashSet result = new StrippedIntOpenHashSet();
-
-        while (entries.hasMoreElements()) {
-          ZipEntry entry = entries.nextElement();
-          String name = entry.getName();
-          result.add(ClasspathCache.getPackageNameHash(name, name.lastIndexOf('/')));
-        }
-        result.add(0); // empty package is in every jar
-        return result;
-      }
-      finally {
-        releaseZipFile(zipFile);
-      }
-    }
-    catch (Exception e) {
-      error("url: " + path, e);
-      return new StrippedIntOpenHashSet(0);
-    }
+    return zipFile.buildClassPathCacheData();
   }
 
   @Override
@@ -226,7 +159,13 @@ class JarLoader extends Loader {
       StrippedIntOpenHashSet packagesInside = myPackageHashesInside;
 
       if (numberOfHits > ClasspathCache.NUMBER_OF_ACCESSES_FOR_LAZY_CACHING && packagesInside == null) {
-        myPackageHashesInside = packagesInside = buildPackageHashes();
+        try {
+          packagesInside = zipFile.buildPackageHashes();
+        }
+        catch (IOException e) {
+          packagesInside = new StrippedIntOpenHashSet(0);
+        }
+        myPackageHashesInside = packagesInside;
       }
 
       if (packagesInside != null && !packagesInside.contains(ClasspathCache.getPackageNameHash(name, name.lastIndexOf('/')))) {
@@ -243,16 +182,7 @@ class JarLoader extends Loader {
     }
 
     try {
-      ZipFile zipFile = getZipFile();
-      try {
-        ZipEntry entry = zipFile.getEntry(name);
-        if (entry != null) {
-          return instantiateResource(entry);
-        }
-      }
-      finally {
-        releaseZipFile(zipFile);
-      }
+      return zipFile.getResource(name, this);
     }
     catch (Exception e) {
       error("url: " + path, e);
@@ -297,8 +227,8 @@ class JarLoader extends Loader {
 
     @Override
     public byte @NotNull [] getBytes() throws IOException {
-      ZipFile file = getZipFile();
-      try (InputStream stream = file.getInputStream(entry)) {
+      JdkZipFile file = (JdkZipFile)zipFile;
+      try (InputStream stream = file.getZipFile().getInputStream(entry)) {
         return Resource.loadBytes(stream, (int)entry.getSize());
       }
       finally {
@@ -322,37 +252,7 @@ class JarLoader extends Loader {
     }
   }
 
-  protected final @NotNull ZipFile getZipFile() throws IOException {
-    // This code is executed at least 100K times (O(number of classes needed to load)) and it takes considerable time to open ZipFile's
-    // such number of times so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
-    if (configuration.lockJars) {
-      SoftReference<ZipFile> ref = zipFileSoftReference;
-      ZipFile zipFile = ref == null ? null : ref.get();
-      if (zipFile != null) {
-        return zipFile;
-      }
-
-      synchronized (ourLock) {
-        ref = zipFileSoftReference;
-        zipFile = ref == null ? null : ref.get();
-        if (zipFile != null) {
-          return zipFile;
-        }
-
-        zipFile = createZipFile(path);
-        zipFileSoftReference = new SoftReference<>(zipFile);
-        return zipFile;
-      }
-    }
-    return createZipFile(path);
-  }
-
-  protected @NotNull ZipFile createZipFile(@NotNull Path path) throws IOException {
-    // ZipFile's native implementation (ZipFile.c, zip_util.c) has path -> file descriptor cache
-    return new ZipFile(path.toFile());
-  }
-
-  protected final void releaseZipFile(@NotNull ZipFile zipFile) throws IOException {
+  protected final void releaseZipFile(@NotNull ZipFileImpl zipFile) throws IOException {
     // Closing of zip file when configuration.canLockJars=true happens in ZipFile.finalize
     if (!configuration.lockJars) {
       zipFile.close();

@@ -174,10 +174,9 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
     addSizeEntry(orderedNames, zipCreator)
     for (originalEntry in entries) {
       // by intention not the whole original ZipArchiveEntry is copied,
-      // but only selected properties are copied - that's enough and should be enough
+      // but only name, method and size are copied - that's enough and should be enough
       val entry = ZipArchiveEntry(originalEntry.name)
       entry.method = originalEntry.method
-      entry.lastModifiedTime = originalEntry.lastModifiedTime
       entry.size = originalEntry.size
       zipCreator.addArchiveEntry(entry, InputStreamSupplier {
         zipFile.getInputStream(originalEntry)

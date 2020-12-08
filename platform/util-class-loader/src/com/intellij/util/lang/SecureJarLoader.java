@@ -14,24 +14,18 @@ import java.security.ProtectionDomain;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 final class SecureJarLoader extends JarLoader {
   private @Nullable ProtectionDomain myProtectionDomain;
   private final Object myProtectionDomainMonitor = new Object();
 
   SecureJarLoader(@NotNull Path file, @NotNull ClassPath configuration) throws IOException {
-    super(file, configuration);
+    super(file, configuration, new JdkZipFile(file, configuration.lockJars, true));
   }
 
   @Override
   protected @NotNull Resource instantiateResource(@NotNull ZipEntry entry) throws IOException {
     return new SecureJarResource(url, (JarEntry)entry);
-  }
-
-  @Override
-  protected @NotNull ZipFile createZipFile(@NotNull Path file) throws IOException {
-    return new JarFile(file.toFile());
   }
 
   private final class SecureJarResource extends ZipFileResource {
@@ -41,7 +35,7 @@ final class SecureJarLoader extends JarLoader {
 
     @Override
     public byte @NotNull [] getBytes() throws IOException {
-      JarFile file = (JarFile)getZipFile();
+      JarFile file = (JarFile)((JdkZipFile)zipFile).getZipFile();
       try {
         InputStream stream = file.getInputStream(entry);
         try {
@@ -60,7 +54,9 @@ final class SecureJarLoader extends JarLoader {
         }
       }
       finally {
-        releaseZipFile(file);
+        if (!configuration.lockJars) {
+          file.close();
+        }
       }
     }
 
