@@ -183,11 +183,12 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     return super.getSecondaryElements();
   }
 
-  private static boolean askShouldSearchAccessors(@NotNull String fieldName) {
-    return Messages.showOkCancelDialog(JavaBundle.message("find.field.accessors.prompt", fieldName),
-                                       JavaBundle.message("find.field.accessors.title"),
-                                       JavaBundle.message("include.accessors"),
-                                       JavaBundle.message("exclude.accessors"), Messages.getQuestionIcon()) == Messages.OK;
+  public static boolean askShouldSearchAccessors(@NotNull String fieldName) {
+    int ret = Messages.showOkCancelDialog(JavaBundle.message("find.field.accessors.prompt", fieldName),
+                                        JavaBundle.message("find.field.accessors.title"),
+                                        JavaBundle.message("include.accessors"),
+                                        JavaBundle.message("exclude.accessors"), Messages.getQuestionIcon());
+    return ret == Messages.OK;
   }
 
   @Override
