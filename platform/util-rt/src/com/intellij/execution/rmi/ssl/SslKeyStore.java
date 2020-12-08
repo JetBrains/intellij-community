@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class SslKeyStore extends DelegateKeyStore {
   public static final String SSL_DEFERRED_KEY_LOADING = "sslDeferredKeyLoading";
-  private static final String NAME = "idea-key-store";
+  public static final String NAME = "idea-key-store";
   private static final Map<PrivateKey, X509Certificate> ourAutoAdded = new LinkedHashMap<PrivateKey, X509Certificate>();
   static {
     ourProvider.setProperty("KeyStore." + NAME, SslKeyStore.class.getName());
