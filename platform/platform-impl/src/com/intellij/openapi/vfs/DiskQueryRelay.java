@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,7 +32,8 @@ public final class DiskQueryRelay<Param, Result> {
   }
 
   public Result accessDiskWithCheckCanceled(@NotNull Param arg) {
-    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (indicator == null) {
       return myFunction.apply(arg);
     }
 
@@ -47,6 +49,6 @@ public final class DiskQueryRelay<Param, Result> {
       // maybe it was very fast and completed before being put into a map
       myTasks.remove(arg, future);
     }
-    return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future, indicator);
   }
 }
