@@ -8,6 +8,8 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.ide.lightEdit.LightEditServiceImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -283,7 +285,12 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   // return true if successful
   @Override
   public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
-    for (Project project : getOpenProjects()) {
+    Project[] projects = getOpenProjects();
+    Project lightEditProject = ((LightEditServiceImpl)LightEditService.getInstance()).getProjectAndClearIfCreated();
+    if (lightEditProject != null) {
+      projects = ArrayUtil.append(projects, lightEditProject);
+    }
+    for (Project project : projects) {
       if (!closeProject(project, /* isSaveProject = */ true, /* dispose = */ true, checkCanClose)) {
         return false;
       }

@@ -224,7 +224,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   override fun updateLastProjectPath() {
-    val openProjects = ProjectUtil.getOpenProjects()
+    val openProjects = ProjectUtil.getOpenProjects(true)
     synchronized(stateLock) {
       for (info in state.additionalInfo.values) {
         info.opened = false
@@ -668,7 +668,7 @@ int32 "extendedState"
         return
       }
 
-      val openProjects = ProjectUtil.getOpenProjects()
+      val openProjects = ProjectUtil.getOpenProjects(true)
       // do not delete info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
       if (openProjects.isEmpty()) {
         if (!isUseProjectFrameAsSplash()) {

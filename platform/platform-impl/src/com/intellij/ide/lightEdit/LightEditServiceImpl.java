@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -252,7 +253,6 @@ public final class LightEditServiceImpl implements LightEditService,
         LOG.info("No open projects or welcome frame, exiting");
         try {
           Disposer.dispose(myEditorManager);
-          myLightEditProjectManager.close();
           ApplicationManager.getApplication().exit();
         }
         catch (Throwable t) {
@@ -450,7 +450,10 @@ public final class LightEditServiceImpl implements LightEditService,
   @TestOnly
   public void disposeCurrentSession() {
     myEditorManager.releaseEditors();
-    myLightEditProjectManager.close();
+    Project project = myLightEditProjectManager.getProjectAndClearIfCreated();
+    if (project != null) {
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
+    }
   }
 
   private void saveSession() {
@@ -487,7 +490,6 @@ public final class LightEditServiceImpl implements LightEditService,
       disposeFrameWrapper();
     }
     Disposer.dispose(myEditorManager);
-    myLightEditProjectManager.close();
   }
 
   @Override
@@ -506,4 +508,7 @@ public final class LightEditServiceImpl implements LightEditService,
     }
   }
 
+  public @Nullable Project getProjectAndClearIfCreated() {
+    return myLightEditProjectManager.getProjectAndClearIfCreated();
+  }
 }

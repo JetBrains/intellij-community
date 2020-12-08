@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.project;
 
-import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,19 +15,23 @@ public final class LightEditProjectManager {
 
   private volatile LightEditProjectImpl myProject;
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
   public @NotNull Project getOrCreateProject() {
     LightEditProjectImpl project = myProject;
     if (project == null) {
+      boolean created = false;
       synchronized (LOCK) {
         if (myProject == null) {
           myProject = createProject();
+          created = true;
         }
         project = myProject;
+      }
+      if (created) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectManager.TOPIC).projectOpened(project);
       }
     }
     return project;
@@ -40,14 +44,11 @@ public final class LightEditProjectManager {
     return project;
   }
 
-  public void close() {
-    Project project = myProject;
-    if (project != null) {
-      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project);
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
-    }
+  public @Nullable Project getProjectAndClearIfCreated() {
     synchronized (LOCK) {
+      Project project = myProject;
       myProject = null;
+      return project;
     }
   }
 }
