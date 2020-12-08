@@ -447,6 +447,12 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
         return this;
       }
       // Overlaps head and tail.
+      if (end - start < BLOCK_SIZE) {
+        char[] data = new char[end - start];
+        ImmutableText.getChars(head, start, cesure, data, 0);
+        ImmutableText.getChars(tail, 0, end - cesure, data, cesure - start);
+        return new String(data);
+      }
       return concatNodes(head.subSequence(start, cesure), tail.subSequence(0, end - cesure));
     }
 
