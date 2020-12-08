@@ -43,11 +43,11 @@ class DeletedVirtualFileStub extends LightVirtualFile implements VirtualFileWith
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof DeletedVirtualFileStub) {
-      return ((DeletedVirtualFileStub)obj).getId() == myFileId;
-    }
-    return super.equals(obj);
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    DeletedVirtualFileStub stub = (DeletedVirtualFileStub)o;
+    return myFileId == stub.myFileId;
   }
 
   public boolean isResurrected() {
