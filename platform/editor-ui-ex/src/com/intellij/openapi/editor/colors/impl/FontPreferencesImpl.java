@@ -27,6 +27,7 @@ import java.util.Objects;
  * @author Denis Zhdanov
  */
 public class FontPreferencesImpl extends ModifiableFontPreferences {
+  private static final boolean NEW_FONT_SELECTION_LOGIC = SystemProperties.is("new.editor.font.selector");
   @NotNull private final Object2IntMap<String> myFontSizes = new Object2IntOpenHashMap<>();
   @NotNull private final List<String> myEffectiveFontFamilies = new ArrayList<>();
   @NotNull private final List<String> myRealFontFamilies = new ArrayList<>();
@@ -130,8 +131,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void register(@NotNull @NonNls String fontFamily, int size) {
-    String fallbackFontFamily = SystemProperties.is("new.editor.font.selector")
-                                ? null : FontPreferences.getFallbackName(fontFamily, size, null);
+    String fallbackFontFamily = NEW_FONT_SELECTION_LOGIC ? null : FontPreferences.getFallbackName(fontFamily, size, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
     }
@@ -155,8 +155,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void addFontFamily(@NotNull String fontFamily) {
-    String fallbackFontFamily = SystemProperties.is("new.editor.font.selector")
-                                ? null : FontPreferences.getFallbackName(fontFamily, DEFAULT_FONT_SIZE, null);
+    String fallbackFontFamily = NEW_FONT_SELECTION_LOGIC ? null : FontPreferences.getFallbackName(fontFamily, DEFAULT_FONT_SIZE, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
     }

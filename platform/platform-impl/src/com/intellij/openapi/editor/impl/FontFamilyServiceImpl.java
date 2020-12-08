@@ -26,17 +26,15 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
   private static final int PREFERRED_MAIN_WEIGHT = 400;
   private static final int PREFERRED_BOLD_WEIGHT_DIFF = 300;
 
-  private final SortedMap<String, FontFamily> myFamilies;
+  private final SortedMap<String, FontFamily> myFamilies = new TreeMap<>();
 
   private FontFamilyServiceImpl() {
-    SortedMap<String, FontFamily> families = null;
     if (SystemProperties.is("new.editor.font.selector")) {
       if (GET_FONT_2D_METHOD == null || GET_TYPO_FAMILY_METHOD == null || GET_TYPO_SUBFAMILY_METHOD == null || GET_WEIGHT_METHOD == null) {
         LOG.warn("Couldn't access required runtime API, will fall back to basic logic of font selection");
       }
       else {
         try {
-          SortedMap<String, FontFamily> result = new TreeMap<>();
           Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
           for (Font font : fonts) {
             Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
@@ -47,73 +45,51 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
             }
             String family = (String)GET_TYPO_FAMILY_METHOD.invoke(font2D);
             String subfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(font2D);
-            FontFamily fontFamily = result.computeIfAbsent(family, FontFamily::new);
+            FontFamily fontFamily = myFamilies.computeIfAbsent(family, FontFamily::new);
             fontFamily.addFont(subfamily, font);
           }
-          families = result;
         }
         catch (Throwable e) {
           LOG.error(e);
+          myFamilies.clear(); // fallback to old behaviour in case of any errors
         }
       }
     }
-    myFamilies = families;
   }
 
   @Override
   protected boolean isSupportedImpl() {
-    return myFamilies != null;
+    return !myFamilies.isEmpty();
   }
 
   @Override
   protected @NotNull List<String> getAvailableFamiliesImpl() {
-    return myFamilies == null ? super.getAvailableFamiliesImpl() : new ArrayList<>(myFamilies.keySet());
+    return myFamilies.isEmpty() ? super.getAvailableFamiliesImpl() : new ArrayList<>(myFamilies.keySet());
   }
 
   @Override
   protected boolean isMonospacedImpl(@NotNull String family) {
-    if (myFamilies != null) {
-      FontFamily fontFamily = myFamilies.get(family);
-      if (fontFamily != null) {
-        return fontFamily.isMonospaced();
-      }
-    }
-    return super.isMonospacedImpl(family);
+    FontFamily fontFamily = myFamilies.get(family);
+    return fontFamily == null ? super.isMonospacedImpl(family) : fontFamily.isMonospaced();
   }
 
   @Override
   protected @NotNull List<@NotNull String> getSubFamiliesImpl(@NotNull String family) {
-    if (myFamilies != null) {
-      FontFamily fontFamily = myFamilies.get(family);
-      if (fontFamily != null) {
-        return fontFamily.getBaseSubFamilies();
-      }
-    }
-    return super.getSubFamiliesImpl(family);
+    FontFamily fontFamily = myFamilies.get(family);
+    return fontFamily == null ? super.getSubFamiliesImpl(family) : fontFamily.getBaseSubFamilies();
   }
 
   @Override
   protected @NotNull String getRecommendedSubFamilyImpl(@NotNull String family) {
-    String result = null;
-    if (myFamilies != null) {
-      FontFamily fontFamily = myFamilies.get(family);
-      if (fontFamily != null) {
-        result = fontFamily.getRecommendedSubFamily();
-      }
-    }
-    return result == null ? super.getRecommendedSubFamilyImpl(family) : result;
+    FontFamily fontFamily = myFamilies.get(family);
+    return fontFamily == null ? super.getRecommendedSubFamilyImpl(family) : fontFamily.getRecommendedSubFamily();
   }
 
   @Override
   protected @NotNull String getRecommendedBoldSubFamilyImpl(@NotNull String family, @NotNull String mainSubFamily) {
-    String result = null;
-    if (myFamilies != null) {
-      FontFamily fontFamily = myFamilies.get(family);
-      if (fontFamily != null) {
-        result = fontFamily.getRecommendedBoldSubFamily(mainSubFamily);
-      }
-    }
-    return result == null ? super.getRecommendedBoldSubFamilyImpl(family, mainSubFamily) : result;
+    FontFamily fontFamily = myFamilies.get(family);
+    return fontFamily == null ? super.getRecommendedBoldSubFamilyImpl(family, mainSubFamily)
+                              : fontFamily.getRecommendedBoldSubFamily(mainSubFamily);
   }
 
   @Override
@@ -121,14 +97,9 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
                                       @Nullable String regularSubFamily,
                                       @Nullable String boldSubFamily,
                                       @JdkConstants.FontStyle int style) {
-    Font result = null;
-    if (myFamilies != null) {
-      FontFamily fontFamily = myFamilies.get(family);
-      if (fontFamily != null) {
-        result = fontFamily.getFont(regularSubFamily, boldSubFamily, style);
-      }
-    }
-    return result == null ? super.getFontImpl(family, regularSubFamily, boldSubFamily, style) : result;
+    FontFamily fontFamily = myFamilies.get(family);
+    return fontFamily == null ? super.getFontImpl(family, regularSubFamily, boldSubFamily, style)
+                              : fontFamily.getFont(regularSubFamily, boldSubFamily, style);
   }
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -251,7 +222,8 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
 
     private String getRecommendedBoldSubFamily(String mainSubFamily) {
       initIfNeeded();
-      return recommendedBoldSubFamilies.get(mainSubFamily);
+      String result = recommendedBoldSubFamilies.get(mainSubFamily);
+      return result == null ? recommendedBoldSubFamilies.get(recommendedSubFamily) : result;
     }
 
     private Font getFont(String regularSubFamily, String boldSubFamily, int style) {
