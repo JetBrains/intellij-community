@@ -39,7 +39,7 @@ public class DefaultSslSocketFactory extends DelegateSslSocketFactory {
     kmf.init(ks, null);
     KeyManager[] km = kmf.getKeyManagers();
     SSLContext ctx = SSLContext.getInstance("TLS");
-    ctx.init(km, new TrustManager[]{new SslSocketFactory.MyTrustEverybodyManager()}, null);
+    ctx.init(km, new TrustManager[]{new SslUtil.TrustEverybodyManager()}, null);
     return ctx.getSocketFactory();
   }
 }
