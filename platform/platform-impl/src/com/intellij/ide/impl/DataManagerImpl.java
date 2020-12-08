@@ -270,10 +270,9 @@ public class DataManagerImpl extends DataManager {
     return dataContext instanceof UserDataHolder ? ((UserDataHolder)dataContext).getUserData(dataKey) : null;
   }
 
-  public static @Nullable Editor validateEditor(Editor editor) {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focusOwner instanceof JComponent) {
-      final JComponent jComponent = (JComponent)focusOwner;
+  public static @Nullable Editor validateEditor(Editor editor, Component contextComponent) {
+    if (contextComponent instanceof JComponent) {
+      final JComponent jComponent = (JComponent)contextComponent;
       if (jComponent.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null) return null;
     }
 
@@ -359,7 +358,7 @@ public class DataManagerImpl extends DataManager {
       }
       Object data = calcData(dataId, component);
       if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
-        return validateEditor((Editor)data);
+        return validateEditor((Editor)data, component);
       }
       return data;
     }
