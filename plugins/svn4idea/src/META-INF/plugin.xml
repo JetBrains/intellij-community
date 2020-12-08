@@ -149,8 +149,10 @@
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnStatisticsCollector"/>
 
-    <changesViewContent tabName="Subversion Working Copies Information" className="org.jetbrains.idea.svn.WorkingCopiesContent"
-                        predicateClassName="org.jetbrains.idea.svn.WorkingCopiesContent$VisibilityPredicate"/>
+    <changesViewContent tabName="Subversion Working Copies Information"
+                        className="org.jetbrains.idea.svn.WorkingCopiesContent"
+                        predicateClassName="org.jetbrains.idea.svn.WorkingCopiesContent$VisibilityPredicate"
+                        displayNameSupplierClassName="org.jetbrains.idea.svn.WorkingCopiesContent$DisplayNameSupplier"/>
 
     <vcs.branchStateProvider implementation="org.jetbrains.idea.svn.branchConfig.SvnBranchStateProvider"/>
 
