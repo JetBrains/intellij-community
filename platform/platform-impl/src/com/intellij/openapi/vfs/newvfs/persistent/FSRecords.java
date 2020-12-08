@@ -206,7 +206,7 @@ public final class FSRecords {
   }
 
   private static void deleteContentAndAttributes(int id) throws IOException {
-    int content_page = getContentRecordId(id);
+    int content_page = ourConnection.getRecords().getContentRecordId(id);
     if (content_page != 0) {
       if (WE_HAVE_CONTENT_HASHES) {
         ourConnection.getContents().releaseRecord(content_page, false);
@@ -216,7 +216,7 @@ public final class FSRecords {
       }
     }
 
-    int att_page = getAttributeRecordId(id);
+    int att_page = ourConnection.getRecords().getAttributeRecordId(id);
     if (att_page != 0) {
       try (final DataInputStream attStream = ourConnection.getAttributes().readStream(att_page)) {
         if (bulkAttrReadSupport) skipRecordHeader(attStream, PersistentFSConnection.RESERVED_ATTR_ID, id);
@@ -297,7 +297,7 @@ public final class FSRecords {
 
   @PersistentFS.Attributes
   static int getFlags(int id) {
-    return FSRecords.readAndHandleErrors(() -> ourConnection.getRecords().doGetFlags(id));
+    return readAndHandleErrors(() -> ourConnection.getRecords().doGetFlags(id));
   }
 
   private static void saveNameIdSequenceWithDeltas(int[] names, int[] ids, DataOutputStream output) throws IOException {
@@ -480,7 +480,7 @@ public final class FSRecords {
       for (int i = 0; i < count; i++) {
         int id = DataInputOutputUtil.readINT(input) + prevId;
         prevId = id;
-        int nameId = doGetNameId(id);
+        int nameId = ourConnection.getRecords().getNameId(id);
         ChildInfo child = new ChildInfoImpl(id, nameId, null, null, null);
         result.add(child);
       }
@@ -663,11 +663,6 @@ public final class FSRecords {
   }
 
 
-
-  private static void incLocalModCount() {
-    ourConnection.incLocalModCount();
-  }
-
   static int getLocalModCount() {
     return ourConnection.getLocalModificationCount(); // This is volatile, only modified under Application.runWriteAction() lock.
   }
@@ -778,10 +773,6 @@ public final class FSRecords {
     });
   }
 
-  private static int doGetNameId(int id) {
-    return ourConnection.getRecords().getNameId(id);
-  }
-
   public static int getNameId(@NotNull String name) {
     return readAndHandleErrors(() -> ourConnection.getNames().enumerate(name));
   }
@@ -797,7 +788,7 @@ public final class FSRecords {
 
   @NotNull
   private static CharSequence doGetNameSequence(int id) throws IOException {
-    int nameId = doGetNameId(id);
+    int nameId = ourConnection.getRecords().getNameId(id);
     return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
   }
 
@@ -858,26 +849,6 @@ public final class FSRecords {
 
   static int getModCount(int id) {
     return readAndHandleErrors(() -> ourConnection.getRecords().getModCount(id));
-  }
-
-  private static void setModCount(int id, int value) {
-    ourConnection.getRecords().setModCount(id, value);
-  }
-
-  private static int getContentRecordId(int fileId) {
-    return ourConnection.getRecords().getContentRecordId(fileId);
-  }
-
-  private static void setContentRecordId(int id, int value) {
-    ourConnection.getRecords().setContentRecordId(id, value);
-  }
-
-  private static int getAttributeRecordId(int id) {
-    return ourConnection.getRecords().getAttributeRecordId(id);
-  }
-
-  private static void setAttributeRecordId(int id, int value) {
-    ourConnection.getRecords().setAttributeRecordId(id, value);
   }
 
   @Nullable
@@ -946,7 +917,7 @@ public final class FSRecords {
   private static DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
     checkFileIsValid(fileId);
 
-    int recordId = getAttributeRecordId(fileId);
+    int recordId = ourConnection.getRecords().getAttributeRecordId(fileId);
     if (recordId == 0) return null;
     int encodedAttrId = ourConnection.getAttributeId(attribute.getId());
 
@@ -994,7 +965,7 @@ public final class FSRecords {
   private static int findAttributePage(int fileId, @NotNull FileAttribute attr, boolean toWrite) throws IOException {
     checkFileIsValid(fileId);
 
-    int recordId = getAttributeRecordId(fileId);
+    int recordId = ourConnection.getRecords().getAttributeRecordId(fileId);
     int encodedAttrId = ourConnection.getAttributeId(attr.getId());
     boolean directoryRecord = false;
 
@@ -1004,7 +975,7 @@ public final class FSRecords {
       if (!toWrite) return 0;
 
       recordId = storage.createNewRecord();
-      setAttributeRecordId(fileId, recordId);
+      ourConnection.getRecords().setAttributeRecordId(fileId, recordId);
       directoryRecord = true;
     }
     else {
@@ -1044,11 +1015,11 @@ public final class FSRecords {
         DataInputOutputUtil.writeINT(appender, encodedAttrId);
         int attrAddress = storage.createNewRecord();
         DataInputOutputUtil.writeINT(appender, inlineAttributes ? attrAddress + MAX_SMALL_ATTR_SIZE : attrAddress);
-        ourConnection.REASONABLY_SMALL.myAttrPageRequested = true;
+        PersistentFSConnection.REASONABLY_SMALL.myAttrPageRequested = true;
         return attrAddress;
       }
       finally {
-        ourConnection.REASONABLY_SMALL.myAttrPageRequested = false;
+        PersistentFSConnection.REASONABLY_SMALL.myAttrPageRequested = false;
       }
     }
 
@@ -1073,7 +1044,7 @@ public final class FSRecords {
 
   static int acquireFileContent(int fileId) {
     return writeAndHandleErrors(() -> {
-      int record = getContentRecordId(fileId);
+      int record = ourConnection.getRecords().getContentRecordId(fileId);
       if (record > 0) ourConnection.getContents().acquireRecord(record);
       return record;
     });
@@ -1084,14 +1055,14 @@ public final class FSRecords {
   }
 
   static int getContentId(int fileId) {
-    return readAndHandleErrors(() -> getContentRecordId(fileId));
+    return readAndHandleErrors(() -> ourConnection.getRecords().getContentRecordId(fileId));
   }
 
   static byte[] getContentHash(int fileId) {
     if (!WE_HAVE_CONTENT_HASHES) return null;
 
     return readAndHandleErrors(() -> {
-      int contentId = getContentRecordId(fileId);
+      int contentId = ourConnection.getRecords().getContentRecordId(fileId);
       return contentId <= 0 ? null : ourConnection.getContentHashesEnumerator().valueOf(contentId);
     });
   }
@@ -1172,10 +1143,12 @@ public final class FSRecords {
 
           if (page < 0 || getContentId(myFileId) != page) {
             incModCount(myFileId);
-            setContentRecordId(myFileId, page > 0 ? page : -page);
+            int value = page > 0 ? page : -page;
+            ourConnection.getRecords().setContentRecordId(myFileId, value);
           }
 
-          setContentRecordId(myFileId, page > 0 ? page : -page);
+          int value = page > 0 ? page : -page;
+          ourConnection.getRecords().setContentRecordId(myFileId, value);
 
           if (page > 0) return;
           page = -page;
@@ -1183,10 +1156,10 @@ public final class FSRecords {
         }
         else {
           incModCount(myFileId);
-          page = getContentRecordId(myFileId);
+          page = ourConnection.getRecords().getContentRecordId(myFileId);
           if (page == 0 || contentStorage.getRefCount(page) > 1) {
             page = contentStorage.acquireNewRecord();
-            setContentRecordId(myFileId, page);
+            ourConnection.getRecords().setContentRecordId(myFileId, page);
           }
           fixedSize = myFixedSize;
         }
@@ -1282,10 +1255,10 @@ public final class FSRecords {
 
         if (inlineAttributes && _out.size() < MAX_SMALL_ATTR_SIZE) {
           rewriteDirectoryRecordWithAttrContent(_out);
-          incLocalModCount();
+          ourConnection.incLocalModCount();
         }
         else {
-          incLocalModCount();
+          ourConnection.incLocalModCount();
           int page = findAttributePage(myFileId, myAttribute, true);
           if (inlineAttributes && page < 0) {
             rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());
@@ -1307,7 +1280,7 @@ public final class FSRecords {
     }
 
     void rewriteDirectoryRecordWithAttrContent(@NotNull BufferExposingByteArrayOutputStream _out) throws IOException {
-      int recordId = getAttributeRecordId(myFileId);
+      int recordId = ourConnection.getRecords().getAttributeRecordId(myFileId);
       assert inlineAttributes;
       int encodedAttrId = ourConnection.getAttributeId(myAttribute.getId());
 
@@ -1318,7 +1291,7 @@ public final class FSRecords {
 
       if (recordId == 0) {
         recordId = storage.createNewRecord();
-        setAttributeRecordId(myFileId, recordId);
+        ourConnection.getRecords().setAttributeRecordId(myFileId, recordId);
         directoryRecord = true;
       }
       else {
@@ -1462,7 +1435,7 @@ public final class FSRecords {
   }
 
   private static void checkContentsStorageSanity(int id) {
-    int recordId = getContentRecordId(id);
+    int recordId = ourConnection.getRecords().getContentRecordId(id);
     assert recordId >= 0;
     if (recordId > 0) {
       ourConnection.getContents().checkSanity(recordId);
@@ -1470,7 +1443,7 @@ public final class FSRecords {
   }
 
   private static void checkAttributesStorageSanity(int id, IntList usedAttributeRecordIds, IntList validAttributeIds) {
-    int attributeRecordId = getAttributeRecordId(id);
+    int attributeRecordId = ourConnection.getRecords().getAttributeRecordId(id);
 
     assert attributeRecordId >= 0;
     if (attributeRecordId > 0) {
