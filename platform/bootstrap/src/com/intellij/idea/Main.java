@@ -87,7 +87,7 @@ public final class Main {
 
     try {
       if (Runtime.version().feature() < 11) {
-        String baseName = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
+        String baseName = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea").replace("AndroidStudio", "studio");
         @Nls StringBuilder message = new StringBuilder(BootstrapBundle.message("bootstrap.error.message.unsupported.jre", 11)).append('\n');
         int min = message.length();
 
@@ -110,7 +110,7 @@ public final class Main {
         }
 
         if (message.length() == min) {
-          message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.other"));
+          message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.other", supportUrl()));
         }
 
         message.append("\n\n").append(BootstrapBundle.message("bootstrap.error.message.jre.details", jreDetails()));
@@ -254,9 +254,7 @@ public final class Main {
       t = awtError;
     }
     else {
-      boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-      String bugReportLink = studio ? "https://code.google.com/p/android/issues" : "https://jb.gg/ide/critical-startup-errors";
-      message.append(BootstrapBundle.message("bootstrap.error.message.internal.error.please.refer.to.0", bugReportLink));
+      message.append(BootstrapBundle.message("bootstrap.error.message.internal.error.please.refer.to.0", supportUrl()));
       message.append("\n\n");
     }
 
@@ -265,6 +263,16 @@ public final class Main {
     message.append("\n-----\n").append(BootstrapBundle.message("bootstrap.error.message.jre.details", jreDetails()));
 
     showMessage(title, message.toString(), true); //NON-NLS
+  }
+
+  private static AWTError findGraphicsError(Throwable t) {
+    while (t != null) {
+      if (t instanceof AWTError) {
+        return (AWTError)t;
+      }
+      t = t.getCause();
+    }
+    return null;
   }
 
   private static @NlsSafe String jreDetails() {
@@ -276,14 +284,9 @@ public final class Main {
     return jre + ' ' + arch + " (" + vendor + ")\n" + home;
   }
 
-  private static AWTError findGraphicsError(Throwable t) {
-    while (t != null) {
-      if (t instanceof AWTError) {
-        return (AWTError)t;
-      }
-      t = t.getCause();
-    }
-    return null;
+  private static @NlsSafe String supportUrl() {
+    boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
+    return studio ? "https://code.google.com/p/android/issues" : "https://jb.gg/ide/critical-startup-errors";
   }
 
   @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
