@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
@@ -11,21 +12,33 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.CachedValueImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 abstract class IndexedFilesListener implements AsyncFileListener {
+  @NotNull
   private final VfsEventsMerger myEventMerger = new VfsEventsMerger();
 
-  private static final NullableLazyValue<VirtualFile> myConfig = AtomicNullableLazyValue.createValue(() -> {
+  @NotNull
+  private final NullableLazyValue<VirtualFile> myConfig = AtomicNullableLazyValue.createValue(() -> {
     return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
   });
 
-  private static final NullableLazyValue<VirtualFile> myLog = AtomicNullableLazyValue.createValue(() -> {
+  @NotNull
+  private final NullableLazyValue<VirtualFile> myLog = AtomicNullableLazyValue.createValue(() -> {
     return LocalFileSystem.getInstance().findFileByIoFile(new File(PathManager.getLogPath()));
   });
+
+  @NotNull
+  private final CachedValue<Collection<VirtualFile>> myScratchesAndConsolesRoots =
+    new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(ScratchFileService.getAllRootPaths(),
+                                                                 VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS));
 
   @NotNull
   VfsEventsMerger getEventMerger() {
@@ -49,10 +62,10 @@ abstract class IndexedFilesListener implements AsyncFileListener {
     }
   }
 
-  private static boolean invalidateIndicesForFile(@NotNull VirtualFile file,
-                                                  boolean contentChange,
-                                                  boolean forceRebuildRequested,
-                                                  @NotNull VfsEventsMerger eventMerger) {
+  private boolean invalidateIndicesForFile(@NotNull VirtualFile file,
+                                           boolean contentChange,
+                                           boolean forceRebuildRequested,
+                                           @NotNull VfsEventsMerger eventMerger) {
     if (isUnderConfigOrSystem(file)) {
       return false;
     }
@@ -159,10 +172,26 @@ abstract class IndexedFilesListener implements AsyncFileListener {
     }
   }
 
-  private static boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {
-    VirtualFile configValue = myConfig.getValue();
+  /**
+   * There's no sense to index files under config and system directories.
+   * But, actually, config directory contains scratches and consoles as well: these files we must index.
+   */
+  private boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {
+    // check log files
     VirtualFile logValue = myLog.getValue();
-    return (configValue != null && VfsUtilCore.isAncestor(configValue, file, false)) ||
-           (logValue != null && VfsUtilCore.isAncestor(logValue, file, false));
+    if (logValue != null && VfsUtilCore.isAncestor(logValue, file, false)) return true;
+
+    // check scratches & consoles first because they are placed under config
+    for (VirtualFile root : myScratchesAndConsolesRoots.getValue()) {
+      if (root != null && VfsUtilCore.isAncestor(root, file, false)) {
+        return false;
+      }
+    }
+
+    // check other config files
+    VirtualFile configValue = myConfig.getValue();
+    if (configValue != null && VfsUtilCore.isAncestor(configValue, file, false)) return true;
+
+    return false;
   }
 }

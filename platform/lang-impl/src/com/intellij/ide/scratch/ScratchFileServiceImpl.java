@@ -430,20 +430,4 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       return rootType == null ? null : ourUsageTypes.get(rootType);
     }
   }
-
-  public static class IndexSetContributor extends IndexableSetContributor {
-
-    @NotNull
-    @Override
-    public Set<VirtualFile> getAdditionalRootsToIndex() {
-      ScratchFileService instance = ScratchFileService.getInstance();
-      LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-      Set<VirtualFile> result = new HashSet<>();
-      for (RootType rootType : RootType.getAllRootTypes()) {
-        if (rootType.isHidden()) continue;
-        ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(instance.getRootPath(rootType)));
-      }
-      return result;
-    }
-  }
 }
