@@ -899,6 +899,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
             return element1.getTextOffset() - element2.getTextOffset();
           }
           else {
+            if (file2 == null) return -1;
+            if (file1 == null) return 1;
             return comparing(PsiFile::getVirtualFile, nullsLast(comparing(VirtualFile::getPath))).compare(file1, file2);
           }
         }
