@@ -34,6 +34,7 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -524,6 +525,40 @@ public class JBTabsImpl extends JComponent
                                         .filter(Conditions.not(Conditions.is(mySelectedInfo)))
                                         .transform(info -> info.getComponent()).iterator();
                                     });
+  }
+
+  @Override
+  protected void paintChildren(Graphics g) {
+    super.paintChildren(g);
+    if (Registry.is("ide.editor.tabs.show.fadeout") && !getTabsPosition().isSide() && myMoreToolbar.getComponent().isShowing()) {
+      int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
+      Rectangle labelsArea = null;
+      boolean showRightFadeout = false;
+      boolean showLeftFadeout = false;
+      for (TabLabel label : myInfo2Label.values()) {
+        if (labelsArea == null) {
+          labelsArea = label.getBounds();
+        } else {
+          labelsArea = labelsArea.union(label.getBounds());
+        }
+        showLeftFadeout |= label.getX() < 0;
+        showRightFadeout |= label.getWidth() < label.getPreferredSize().width - 1;
+      }
+      if (showLeftFadeout) {
+        Rectangle leftSide = new Rectangle(0, labelsArea.y, width, labelsArea.height);
+        ((Graphics2D)g).setPaint(
+          new GradientPaint(leftSide.x, leftSide.y, UIUtil.getBgFillColor(myMoreToolbar.getComponent()), leftSide.x + leftSide.width,
+                            leftSide.y, UIUtil.TRANSPARENT_COLOR));
+        ((Graphics2D)g).fill(leftSide);
+      }
+      if (showRightFadeout) {
+        Rectangle rightSide = new Rectangle(myMoreToolbar.getComponent().getX() - 1 - width, labelsArea.y, width, labelsArea.height);
+        ((Graphics2D)g).setPaint(
+          new GradientPaint(rightSide.x, rightSide.y, UIUtil.TRANSPARENT_COLOR, rightSide.x + rightSide.width, rightSide.y,
+                            UIUtil.getBgFillColor(myMoreToolbar.getComponent())));
+        ((Graphics2D)g).fill(rightSide);
+      }
+    }
   }
 
   @NotNull
