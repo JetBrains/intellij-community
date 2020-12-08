@@ -4,7 +4,7 @@ package com.intellij.space.chat.markdown
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
-import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
+import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.flavours.gfm.StrikeThroughParser
 import org.intellij.markdown.html.GeneratingProvider
@@ -26,7 +26,7 @@ internal fun convertToHtml(markdownText: String): String {
   return htmlText.removePrefix("<body>").removeSuffix("</body>")
 }
 
-private class SpaceFlavourDescriptor : CommonMarkFlavourDescriptor() {
+private class SpaceFlavourDescriptor : GFMFlavourDescriptor() {
   override val sequentialParserManager = object : SequentialParserManager() {
     override fun getParserSequence(): List<SequentialParser> = listOf(
       AutolinkParser(listOf(MarkdownTokenTypes.AUTOLINK, GFMTokenTypes.GFM_AUTOLINK)),

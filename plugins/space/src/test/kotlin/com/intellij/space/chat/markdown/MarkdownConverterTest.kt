@@ -62,6 +62,11 @@ internal class MarkdownConverterTest {
     markdownText shouldBe htmlText
   }
 
+  @Test
+  fun `inline link`() {
+    "https://hello.world.com" shouldBe """<p><a href="https://hello.world.com">https://hello.world.com</a></p>"""
+  }
+
 
   private infix fun String.shouldBe(htmlText: String) {
     assertEquals(htmlText, convertToHtml(this))
