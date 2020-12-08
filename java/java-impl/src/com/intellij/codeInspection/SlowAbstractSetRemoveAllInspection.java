@@ -44,10 +44,10 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
         final PsiType type = constraint.getPsiType(holder.getProject());
         if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_LIST)) return;
         final LongRangeSet setSizeRange = getSizeRangeOfCollection(qualifier);
-        if (setSizeRange != null && (setSizeRange.isEmpty() || setSizeRange.max() <= 1)) return;
+        if (setSizeRange.isEmpty() || setSizeRange.max() <= 1) return;
         final LongRangeSet listSizeRange = getSizeRangeOfCollection(arg);
-        if (listSizeRange != null && (listSizeRange.isEmpty() || listSizeRange.max() <= 2)) return;
-        if (setSizeRange != null && listSizeRange != null && setSizeRange.min() > listSizeRange.max()) return;
+        if (listSizeRange.isEmpty() || listSizeRange.max() <= 2) return;
+        if (setSizeRange.min() > listSizeRange.max()) return;
         final String replacement;
         final LocalQuickFix fix;
         if (PsiUtil.isLanguageLevel8OrHigher(call) && ExpressionUtils.isVoidContext(call)) {
@@ -67,12 +67,13 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
     };
   }
 
+  @NotNull
   private static LongRangeSet getSizeRangeOfCollection(PsiExpression expression) {
     final SpecialField lengthField = SpecialField.COLLECTION_SIZE;
     final DfType origType = CommonDataflow.getDfType(expression);
     final DfType length = lengthField.getFromQualifier(origType);
     final DfIntegralType dfType = ObjectUtils.tryCast(length, DfIntegralType.class);
-    if (dfType == null) return null;
+    if (dfType == null) return LongRangeSet.all();
     return dfType.getRange();
   }
 
