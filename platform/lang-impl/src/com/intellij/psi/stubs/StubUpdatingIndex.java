@@ -36,6 +36,8 @@ import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage;
 import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -438,20 +440,31 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       return;
     }
 
-    IntList staleIds = new IntArrayList();
+    Int2ObjectMap<String> staleTrees = new Int2ObjectOpenHashMap<>();
     for (int freeRecord : FSRecords.getRemainFreeRecords()) {
       Map<Integer, SerializedStubTree> data = stubIndex.getIndexedFileData(freeRecord);
       SerializedStubTree stubTree = ContainerUtil.getFirstItem(data.values());
       if (stubTree != null) {
-        staleIds.add(freeRecord);
+        String stub;
+        try {
+          stub = DebugUtil.stubTreeToString(stubTree.getStub());
+        }
+        catch (Exception e) {
+          stub = e.getMessage();
+        }
+        staleTrees.put(freeRecord, stub);
       }
     }
 
-    if (!staleIds.isEmpty()) {
+    if (!staleTrees.isEmpty()) {
+      Int2ObjectMap.Entry<String> singleEntry = staleTrees.int2ObjectEntrySet().iterator().next();
+      Attachment sampleEntryAttachment = new Attachment("id" + singleEntry.getIntKey(), singleEntry.getValue());
       LOG.error("Stub index contains several stale file ids (size = "
-                + staleIds.size()
-                + ". Sample stale ids: "
-                + StringUtil.first(staleIds.toString(), 300, true));
+                + staleTrees.size()
+                + "). Stale ids: "
+                + StringUtil.first(staleTrees.keySet().toString(), 300, true)
+                + "." + sampleEntryAttachment.getDisplayText(),
+                sampleEntryAttachment);
     }
   }
 }
