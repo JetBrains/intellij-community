@@ -146,8 +146,11 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     }
     InlineMethodDialog dialog = new InlineMethodDialog(project, method, reference, editor, allowInlineThisOnly);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      dialog.doAction();
-      dialog.close(DialogWrapper.OK_EXIT_CODE, true);
+      try {
+        dialog.doAction();
+      } finally {
+        dialog.close(DialogWrapper.OK_EXIT_CODE, true);
+      }
     }
     else {
       dialog.show();
