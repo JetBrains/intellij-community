@@ -67,12 +67,15 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     }
   }
 
+  protected open fun isPreviewOnDoubleClickAllowed(): Boolean = true
+  protected open fun isPreviewOnEnterAllowed(): Boolean = true
+
   private fun installDoubleClickHandler(tree: ChangesTree) {
     val oldDoubleClickHandler = tree.doubleClickHandler
     val newDoubleClickHandler = Processor<MouseEvent> { e ->
       if (isToggleEvent(tree, e)) return@Processor false
 
-      openPreview(true) || oldDoubleClickHandler?.process(e) == true
+      isPreviewOnDoubleClickAllowed() && openPreview(true) || oldDoubleClickHandler?.process(e) == true
     }
 
     tree.doubleClickHandler = newDoubleClickHandler
@@ -82,7 +85,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
   private fun installEnterKeyHandler(tree: ChangesTree) {
     val oldEnterKeyHandler = tree.enterKeyHandler
     val newEnterKeyHandler = Processor<KeyEvent> { e ->
-      openPreview(false) || oldEnterKeyHandler?.process(e) == true
+      isPreviewOnEnterAllowed() && openPreview(false) || oldEnterKeyHandler?.process(e) == true
     }
 
     tree.enterKeyHandler = newEnterKeyHandler
