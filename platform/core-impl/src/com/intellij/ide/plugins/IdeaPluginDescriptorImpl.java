@@ -175,9 +175,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myVersion == null) {
       myVersion = context.getDefaultVersion();
     }
-
     if (myVendor == null) {
-      myVendor = mainDescriptor.getVendor();
+      myVendor = mainDescriptor.myVendor;
+    }
+    if (myResourceBundleBaseName == null) {
+      myResourceBundleBaseName = mainDescriptor.myResourceBundleBaseName;
     }
 
     if (pluginDependencies != null) {
