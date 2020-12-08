@@ -60,7 +60,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr { td("Total updating time"); td(times.totalUpdatingTime.presentableDuration()) }
           tr { td("Interrupted"); td(times.wasInterrupted.toString()) }
           tr { td("Started at"); td(times.updatingStart.presentableDateTime()) }
-          tr { td("Finished at"); td(times.updatingStart.presentableDateTime()) }
+          tr { td("Finished at"); td(times.updatingEnd.presentableDateTime()) }
           tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
           tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
           tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
