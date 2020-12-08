@@ -225,6 +225,12 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
+  public @NotNull List<@NotNull FoldRegion> getRegionsOverlappingWith(int startOffset, int endOffset) {
+    assertReadAccess();
+    return myFoldTree.fetchOverlapping(startOffset, endOffset);
+  }
+
+  @Override
   @Nullable
   public FoldRegion getCollapsedRegionAtOffset(int offset) {
     return myFoldTree.fetchOutermost(offset);
@@ -725,7 +731,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
                                                  boolean greedyToRight,
                                                  boolean stickingToRight,
                                                  int layer) {
-      return new RMNode<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+      return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
         void onRemoved() {
           for (Getter<FoldRegionImpl> getter : intervals) {

@@ -243,6 +243,14 @@ abstract class FoldRegionsTree {
     return toFoldArray(regions);
   }
 
+
+  List<FoldRegion> fetchOverlapping(int startOffset, int endOffset) {
+    if (!isFoldingEnabled()) return Collections.emptyList();
+    List<FoldRegion> regions = new ArrayList<>();
+    myMarkerTree.processOverlappingWith(startOffset, endOffset, new CommonProcessors.CollectProcessor<>(regions));
+    return regions;
+  }
+
   private void forEach(@NotNull Consumer<? super FoldRegion> consumer) {
     myMarkerTree.processAll(region -> { consumer.consume(region); return true; });
   }
