@@ -330,8 +330,9 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       val fileUrl = getActualFileUrl(source)
       if (fileUrl != null) {
         processObsoleteSource(fileUrl, source in internalSourceConvertedToImported)
-        if (source is JpsFileEntitySource.FileInDirectory) {
-          fileIdToFileName.remove(source.fileNameId)
+        val actualSource = if (source is JpsImportedEntitySource) source.internalFile else source
+        if (actualSource is JpsFileEntitySource.FileInDirectory) {
+          fileIdToFileName.remove(actualSource.fileNameId)
         }
       }
     }
