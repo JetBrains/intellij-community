@@ -107,13 +107,9 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val replacedImport = FragmentState(importRange, document.getText(importRange.range))
     fragmentsToRevert.add(replacedImport)
 
-    var (callElements, method) = MethodExtractor().extractMethod(extractOptions)
-    val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
-    methodCallExpressionRange = editor.document.createRangeMarker(callExpression.methodExpression.textRange)
-    method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method)
-    methodNameRange = editor.document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
-    methodCallExpressionRange.isGreedyToRight = true
-    methodCallExpressionRange.isGreedyToLeft = true
+    val (method, callExpression) = extractMethod(document, extractOptions)
+    methodCallExpressionRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
+    methodNameRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
     editor.caretModel.moveToOffset(methodCallExpressionRange.range.startOffset)
     setElementToRename(method)
 
@@ -125,6 +121,17 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
     val methodLines = findLines(document, method.textRange).trimToLength(4)
     preview.addPreview(methodLines) { navigate(project, file, methodNameRange.endOffset) }
+  }
+
+  private fun extractMethod(document: Document, extractOptions: ExtractOptions): Pair<PsiMethod, PsiMethodCallExpression> {
+    val (callElements, method) = MethodExtractor().extractMethod(extractOptions)
+    val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
+    val methodPointer = SmartPointerManager.createPointer(method)
+    val callPointer = SmartPointerManager.createPointer(callExpression)
+    val manager = PsiDocumentManager.getInstance(extractOptions.project)
+    manager.doPostponedOperationsAndUnblockDocument(document)
+    manager.commitDocument(document)
+    return Pair(methodPointer.element!!, callPointer.element!!)
   }
 
   private fun createChangeBasedDisposable(editor: Editor): Disposable {
