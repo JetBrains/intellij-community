@@ -18,6 +18,8 @@ import java.util.function.Supplier;
 public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance(ProhibitAWTEvents.class);
 
+  private static long ourUseCount;
+
   private final String myActivityName;
   private boolean myReported;
 
@@ -42,9 +44,12 @@ public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
     }
     ProhibitAWTEvents dispatcher = new ProhibitAWTEvents(activityName);
     IdeEventQueue.getInstance().addPostprocessor(dispatcher, null);
+    ourUseCount ++;
     return new AccessToken() {
       @Override
       public void finish() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourUseCount--;
         IdeEventQueue.getInstance().removePostprocessor(dispatcher);
       }
     };
@@ -54,10 +59,16 @@ public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
     ProhibitAWTEvents dispatcher = new ProhibitAWTEvents(activityName);
     IdeEventQueue.getInstance().addPostprocessor(dispatcher, null);
     try {
+      ourUseCount++;
       return supplier.get();
     }
     finally {
+      ourUseCount--;
       IdeEventQueue.getInstance().removePostprocessor(dispatcher);
     }
+  }
+
+  public static boolean areEventsProhibited() {
+    return ourUseCount != 0;
   }
 }
