@@ -11,11 +11,13 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.*;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
@@ -155,9 +157,26 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       patchJavaCommandLineParams((JavaCommandLine)state, env);
     }
 
+    if (!isExecutorSupportedOnTarget(env)) {
+      throw new ExecutionException(
+        ExecutionBundle.message("run.configuration.action.is.supported.for.local.machine.only", env.getExecutor().getActionName())
+      );
+    }
+
     return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute java run configuration async", () -> {
       return executeJavaState(state, env, null);
     });
+  }
+
+  /**
+   * Running configurations under the profiler and with the coverage is not yet
+   * supported for execution on targets other than the local machine.
+   */
+  private static boolean isExecutorSupportedOnTarget(@NotNull ExecutionEnvironment env) {
+    String executorId = env.getExecutor().getId();
+    return env.getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory
+           || DefaultDebugExecutor.EXECUTOR_ID.equalsIgnoreCase(executorId)
+           || DefaultRunExecutor.EXECUTOR_ID.equalsIgnoreCase(executorId);
   }
 
   private @Nullable RunContentDescriptor executeJavaState(@NotNull RunProfileState state,
