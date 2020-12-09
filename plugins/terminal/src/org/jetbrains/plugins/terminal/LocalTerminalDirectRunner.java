@@ -140,6 +140,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put("TERM", "xterm-256color");
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
+    envs.put("TERM_SESSION_ID", UUID.randomUUID().toString());
 
     if (SystemInfo.isMac) {
       EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
