@@ -65,7 +65,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   private static final int BLOCK_MASK = -BLOCK_SIZE;
 
   // visible for tests
-  // CharSequence type in private fields/methods of this class means (String | CompositeNode)
+  // Here (String | CompositeNode | ByteArrayCharSequence) is stored
   final CharSequence myNode;
 
   private ImmutableText(CharSequence node) {
@@ -80,11 +80,17 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    */
   static ImmutableText valueOf(@NotNull Object obj) {
     if (obj instanceof ImmutableText) return (ImmutableText)obj;
-    if (obj instanceof CharSequence) return ((CharSequence)obj).length() == 0 ? EMPTY : valueOf((CharSequence)obj);
+    if (obj instanceof CharSequence) return valueOf((CharSequence)obj);
     return valueOf(String.valueOf(obj));
   }
 
   private static ImmutableText valueOf(@NotNull CharSequence str) {
+    if (str instanceof ByteArrayCharSequence) {
+      return new ImmutableText(str);
+    }
+    if (str.length() == 0) {
+      return EMPTY;
+    }
     return new ImmutableText(str.toString());
   }
 
@@ -93,18 +99,19 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    * modification-friendly as it disallows slightly changed texts to retain most of the internal structure of the
    * original document. Whoever retains old non-chunked version will use more memory than really needed.
    *
-   * @return a copy of this text better prepared for small modifications to fully enable structure-sharing capabilities
+   * @return a copy of the myNode better prepared for small modifications to fully enable structure-sharing capabilities
    */
-  private ImmutableText ensureChunked() {
-    if (myNode instanceof String && length() > BLOCK_SIZE) {
-      return new ImmutableText(nodeOf((String)myNode, 0, length()));
+  private CharSequence ensureChunked() {
+    if (length() > BLOCK_SIZE && !(myNode instanceof CompositeNode)) {
+      return nodeOf(myNode, 0, length());
     }
-    return this;
+    return myNode;
   }
 
-  private static CharSequence nodeOf(@NotNull String node, int offset, int length) {
+  private static CharSequence nodeOf(@NotNull CharSequence node, int offset, int length) {
     if (length <= BLOCK_SIZE) {
-      return node.substring(offset, offset + length);
+      // Use toString to avoid referencing the original byte[] array in case if node is ByteArrayCharSequence
+      return node.subSequence(offset, offset + length).toString();
     }
     // Splits on a block boundary.
     int half = ((length + BLOCK_SIZE) >> 1) & BLOCK_MASK;
@@ -133,7 +140,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    * @return {@code this + that}
    */
   private ImmutableText concat(ImmutableText that) {
-    return that.length() == 0 ? this : length() == 0 ? that : new ImmutableText(concatNodes(ensureChunked().myNode, that.ensureChunked().myNode));
+    return that.length() == 0 ? this : length() == 0 ? that : new ImmutableText(concatNodes(ensureChunked(), that.ensureChunked()));
   }
 
   @Override
@@ -151,6 +158,16 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    */
   private ImmutableText subtext(int start) {
     return subtext(start, length());
+  }
+
+  @Override
+  public ImmutableCharSequence replace(int start, int end, @NotNull CharSequence seq) {
+    if (start == end) return insert(start, seq);
+    if (seq.length() == 0) return delete(start, end);
+    if (start > end) {
+      throw new IndexOutOfBoundsException();
+    }
+    return subtext(0, start).concat(valueOf(seq)).concat(subtext(end));
   }
 
   @Override
@@ -230,8 +247,8 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
       if (index >= nodeLength) {
         throw outOfRange(index);
       }
-      if (node instanceof String) {
-        return new InnerLeaf((String)node, offset, offset + nodeLength);
+      if (!(node instanceof CompositeNode)) {
+        return new InnerLeaf(node, offset, offset + nodeLength);
       }
       CompositeNode composite = (CompositeNode)node;
       int headLength = composite.head.length();
@@ -253,11 +270,11 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   }
 
   private static final class InnerLeaf {
-    final String leafNode;
+    final CharSequence leafNode;
     final int start;
     final int end;
 
-    private InnerLeaf(@NotNull String leafNode, int start, int end) {
+    private InnerLeaf(@NotNull CharSequence leafNode, int start, int end) {
       this.leafNode = leafNode;
       this.start = start;
       this.end = end;
@@ -285,9 +302,6 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     if (start == end) {
       return EMPTY;
     }
-    if (end - start > BLOCK_SIZE) {
-      ensureChunked();
-    }
 
     return new ImmutableText(myNode.subSequence(start, end));
   }
@@ -311,6 +325,9 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   private static void getChars(CharSequence cs, int start, int end, char @NotNull [] dest, int destPos) {
     if (cs instanceof String) {
       ((String)cs).getChars(start, end, dest, destPos);
+    }
+    else if (cs instanceof ByteArrayCharSequence) {
+      ((ByteArrayCharSequence)cs).getChars(start, end, dest, destPos);
     }
     else {
       ((CompositeNode)cs).getChars(start, end, dest, destPos);
@@ -404,6 +421,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
       }
       CharSequence A = ((CompositeNode)P).head;
       CharSequence B = ((CompositeNode)P).tail;
+      //noinspection UnnecessaryLocalVariable
       CharSequence C = this.tail;
       return new CompositeNode(A, new CompositeNode(B, C));
     }
@@ -416,6 +434,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
       }
       CharSequence B = ((CompositeNode)Q).head;
       CharSequence C = ((CompositeNode)Q).tail;
+      //noinspection UnnecessaryLocalVariable
       CharSequence A = this.head;
       return new CompositeNode(new CompositeNode(A, B), C);
     }

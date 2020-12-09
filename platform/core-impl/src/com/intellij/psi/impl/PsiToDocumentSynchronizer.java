@@ -337,7 +337,7 @@ public class PsiToDocumentSynchronizer {
       TextRange startRange = findFragment(docStart);
       TextRange endRange = findFragment(docEnd);
 
-      myPsiText = myPsiText.delete(start, end).insert(start, replace);
+      myPsiText = myPsiText.replace(start, end, replace);
 
       TextRange newFragment = new TextRange(startRange != null ? startRange.getStartOffset() : docStart,
                                             endRange != null ? endRange.getEndOffset() : docEnd);

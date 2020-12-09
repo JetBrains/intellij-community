@@ -49,13 +49,19 @@ public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
   @NotNull
   @Override
   public CharSequence subSequence(int start, int end) {
-    return start == 0 && end == length() ? this : new CharSequenceSubSequence(this, start, end);
+    return start == 0 && end == length() ? this : new ByteArrayCharSequence(myChars, myStart + start, myStart + end);
   }
 
   @Override
   @NotNull
   public String toString() {
     return new String(myChars, myStart, length(), StandardCharsets.ISO_8859_1);
+  }
+
+  public void getChars(int start, int end, char[] dest, int pos) {
+    for (int idx = start; idx < end; idx++) {
+      dest[idx - start + pos] = (char)(myChars[idx + myStart] & 0xFF); 
+    }
   }
 
   /**
