@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.util.ui.FontInfo;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -132,6 +133,11 @@ public class FontFamilyService {
                                       @Nullable String regularSubFamily,
                                       @Nullable String boldSubFamily,
                                       @JdkConstants.FontStyle int style) {
-    return new Font(family, style, 1);
+    Font font = new Font(family, style, 1);
+    if (font.getFamily().equals(Font.DIALOG) && !Font.DIALOG.equals(family)) {
+      // requested family isn't available
+      return new Font(FontPreferences.DEFAULT_FONT_NAME, style, 1);
+    }
+    return font;
   }
 }
