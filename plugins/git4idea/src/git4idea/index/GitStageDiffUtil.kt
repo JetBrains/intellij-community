@@ -32,13 +32,13 @@ import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle
+import git4idea.index.KindTag.Companion.getTag
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.ui.NodeKind
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepositoryManager
-import git4idea.repo.GitSubmodule
 import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.Nls
 import java.io.IOException
@@ -48,7 +48,7 @@ fun createTwoSidesDiffRequestProducer(project: Project, statusNode: GitFileStatu
     NodeKind.STAGED -> StagedProducer(project, statusNode)
     NodeKind.UNSTAGED -> UnStagedProducer(project, statusNode)
     NodeKind.CONFLICTED -> MergedProducer(project, statusNode)
-    NodeKind.UNTRACKED -> UnversionedDiffRequestProducer.create(project, statusNode.filePath)
+    NodeKind.UNTRACKED -> UnversionedDiffRequestProducer.create(project, statusNode.filePath, getTag(NodeKind.UNSTAGED))
     NodeKind.IGNORED -> null
   }
 }
@@ -59,7 +59,7 @@ fun createThreeSidesDiffRequestProducer(project: Project, statusNode: GitFileSta
     NodeKind.STAGED -> if (hasThreeSides) ThreeSidesProducer(project, statusNode) else StagedProducer(project, statusNode)
     NodeKind.UNSTAGED -> if (hasThreeSides) ThreeSidesProducer(project, statusNode) else UnStagedProducer(project, statusNode)
     NodeKind.CONFLICTED -> MergedProducer(project, statusNode)
-    NodeKind.UNTRACKED -> UnversionedDiffRequestProducer.create(project, statusNode.filePath)
+    NodeKind.UNTRACKED -> UnversionedDiffRequestProducer.create(project, statusNode.filePath, getTag(NodeKind.UNSTAGED))
     NodeKind.IGNORED -> null
   }
 }
@@ -229,6 +229,8 @@ private class StagedDiffRequest(contents: List<DiffContent>, titles: List<String
 }
 
 abstract class GitFileStatusNodeProducerBase(val statusNode: GitFileStatusNode) : ChangeDiffRequestChain.Producer {
+  private val kind = statusNode.kind
+
   @Throws(VcsException::class, IOException::class)
   abstract fun processImpl(): DiffRequest
 
@@ -255,6 +257,10 @@ abstract class GitFileStatusNodeProducerBase(val statusNode: GitFileStatusNode) 
 
   override fun getName(): String {
     return statusNode.filePath.presentableUrl
+  }
+
+  override fun getPopupTag(): Any? {
+    return getTag(kind)
   }
 
   override fun equals(o: Any?): Boolean {
@@ -288,6 +294,30 @@ private class StagedContentRevision(val project: Project, val root: VirtualFile,
 
   @Throws(VcsException::class)
   override fun getContentAsBytes(): ByteArray = stagedContentFile(project, root, status).contentsToByteArray()
+}
+
+private class KindTag(private val kind: NodeKind) {
+  override fun toString(): String = GitBundle.message(kind.key)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as KindTag
+
+    if (kind != other.kind) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return kind.hashCode()
+  }
+
+  companion object {
+    private val tags = NodeKind.values().associateWith { KindTag(it) }
+    internal fun getTag(nodeKind: NodeKind) = tags[nodeKind]!!
+  }
 }
 
 private fun GitFileStatusNode.has(contentVersion: ContentVersion): Boolean = status.has(contentVersion)

@@ -27,10 +27,13 @@ import java.util.Objects;
 public final class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
   @Nullable private final Project myProject;
   @NotNull private final FilePath myPath;
+  @NotNull private final Object myTag;
 
-  private UnversionedDiffRequestProducer(@Nullable Project project, @NotNull FilePath path) {
+  private UnversionedDiffRequestProducer(@Nullable Project project, @NotNull FilePath path,
+                                         @NotNull Object tag) {
     myProject = project;
     myPath = path;
+    myTag = tag;
   }
 
   @NotNull
@@ -45,10 +48,9 @@ public final class UnversionedDiffRequestProducer implements ChangeDiffRequestCh
     return FileStatus.UNKNOWN;
   }
 
-  @Nullable
   @Override
   public Object getPopupTag() {
-    return ChangesBrowserNode.UNVERSIONED_FILES_TAG;
+    return myTag;
   }
 
   @NotNull
@@ -69,7 +71,13 @@ public final class UnversionedDiffRequestProducer implements ChangeDiffRequestCh
 
   @NotNull
   public static UnversionedDiffRequestProducer create(@Nullable Project project, @NotNull FilePath path) {
-    return new UnversionedDiffRequestProducer(project, path);
+    return create(project, path, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+  }
+
+  @NotNull
+  public static UnversionedDiffRequestProducer create(@Nullable Project project, @NotNull FilePath path,
+                                                      @NotNull Object tag) {
+    return new UnversionedDiffRequestProducer(project, path, tag);
   }
 
   @NotNull
