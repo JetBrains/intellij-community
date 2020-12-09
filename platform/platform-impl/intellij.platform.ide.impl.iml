@@ -95,5 +95,6 @@
     <orderEntry type="library" name="classgraph" level="project" />
     <orderEntry type="module" module-name="intellij.platform.elevation" scope="RUNTIME" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
   </component>
 </module>

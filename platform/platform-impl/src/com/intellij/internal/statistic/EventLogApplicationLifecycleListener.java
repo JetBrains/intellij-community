@@ -14,8 +14,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
-public class EventLogApplicationLifecycleListener implements AppLifecycleListener {
-
+final class EventLogApplicationLifecycleListener implements AppLifecycleListener {
   @Override
   public void appWillBeClosed(boolean isRestart) {
     if (!isRestart && !PluginManagerCore.isRunningFromSources() && isSendingOnExitEnabled()) {
@@ -32,7 +31,7 @@ public class EventLogApplicationLifecycleListener implements AppLifecycleListene
   }
 
   private static boolean isSendingOnExitEnabled() {
-    return Registry.get("feature.usage.event.log.send.on.ide.close").asBoolean();
+    return Registry.is("feature.usage.event.log.send.on.ide.close");
   }
 
   private static boolean isUpdateInProgress() {
