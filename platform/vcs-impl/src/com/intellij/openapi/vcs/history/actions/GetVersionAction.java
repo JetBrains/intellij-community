@@ -195,9 +195,7 @@ public class GetVersionAction extends AnAction implements DumbAware {
                                        VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
           }
         });
-        if (virtualFile != null) {
-          VcsDirtyScopeManager.getInstance(myProject).fileDirty(virtualFile);
-        }
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(myFilePath);
       }
       finally {
         action.finish();
