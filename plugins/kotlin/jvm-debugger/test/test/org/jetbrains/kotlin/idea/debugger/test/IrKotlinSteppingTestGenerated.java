@@ -477,6 +477,16 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/stepOver/lambdaToInlineMapFiltersDisabled.kt");
         }
 
+        @TestMetadata("localFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("idea/jvm-debugger/jvm-debugger-test/testData/stepping/stepOver/localFunction.kt");
+        }
+
+        @TestMetadata("localFunctionWithSingleLineExpressionBody.kt")
+        public void testLocalFunctionWithSingleLineExpressionBody() throws Exception {
+            runTest("idea/jvm-debugger/jvm-debugger-test/testData/stepping/stepOver/localFunctionWithSingleLineExpressionBody.kt");
+        }
+
         @TestMetadata("noParameterExtensionLambdaArgumentCallInInline.kt")
         public void testNoParameterExtensionLambdaArgumentCallInInline() throws Exception {
             runTest("testData/stepping/stepOver/noParameterExtensionLambdaArgumentCallInInline.kt");
