@@ -13,7 +13,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -36,7 +35,6 @@ import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -155,57 +153,55 @@ public class GetVersionAction extends AnAction implements DumbAware {
   private static class MyWriteVersionTask extends Task.Backgroundable {
     @NotNull private final FilePath myFilePath;
     @NotNull private final VcsFileRevision myRevision;
-    @Nullable private final VirtualFile myFile;
 
     MyWriteVersionTask(@NotNull Project project, @NotNull FilePath filePath, @NotNull VcsFileRevision revision) {
       super(project, VcsBundle.message("show.diff.progress.title"));
       myFilePath = filePath;
       myRevision = revision;
-      myFile = filePath.getVirtualFile();
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      final LocalHistoryAction action = myFile != null ? startLocalHistoryAction(myFilePath, myRevision) : LocalHistoryAction.NULL;
-      final byte[] revisionContent;
       try {
-        revisionContent = VcsHistoryUtil.loadRevisionContent(myRevision);
+        byte[] revisionContent = VcsHistoryUtil.loadRevisionContent(myRevision);
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          writeFileContent(revisionContent);
+        });
       }
-      catch (final IOException | VcsException e) {
+      catch (IOException | VcsException e) {
         LOG.info(e);
         ApplicationManager.getApplication().invokeLater(
           () -> Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
                                            VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon()));
-        return;
       }
-      catch (ProcessCanceledException ex) {
+    }
+
+    private void writeFileContent(byte @NotNull [] revisionContent) {
+      VirtualFile virtualFile = myFilePath.getVirtualFile();
+      if (virtualFile != null && !virtualFile.isWritable() &&
+          ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(virtualFile)).hasReadonlyFiles()) {
         return;
       }
 
-      ApplicationManager.getApplication().invokeLater(() -> {
-        try {
-          if (myFile != null && !myFile.isWritable() &&
-              ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(myFile)).hasReadonlyFiles()) {
-            return;
+      LocalHistoryAction action = virtualFile != null ? startLocalHistoryAction(myFilePath, myRevision) : LocalHistoryAction.NULL;
+      try {
+        WriteCommandAction.writeCommandAction(myProject).run(() -> {
+          try {
+            write(myFilePath, revisionContent, myProject);
           }
-
-          WriteCommandAction.writeCommandAction(myProject).run(() -> {
-            try {
-              write(myFilePath, revisionContent, myProject);
-            }
-            catch (IOException e) {
-              Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
-                                         VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
-            }
-          });
-          if (myFile != null) {
-            VcsDirtyScopeManager.getInstance(myProject).fileDirty(myFile);
+          catch (IOException e) {
+            Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
+                                       VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
           }
+        });
+        if (virtualFile != null) {
+          VcsDirtyScopeManager.getInstance(myProject).fileDirty(virtualFile);
         }
-        finally {
-          action.finish();
-        }
-      });
+      }
+      finally {
+        action.finish();
+      }
     }
   }
 }
