@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.facet.mock.MockFacet
+import com.intellij.facet.mock.MockFacetConfiguration
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.Disposable
@@ -22,6 +23,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -110,5 +112,21 @@ class FacetModelBridgeTest {
       assertEquals("MyFacet", facet.name)
       assertEquals("foo", facet.configuration.data)
     }
+  }
+
+  @Test
+  fun `update facet configuration via entity`() {
+    val module = projectModel.createModule()
+    val facet = projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("foo"))
+    assertEquals("foo", facet.configuration.data)
+    runWriteActionAndWait {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
+        val facetEntity = builder.entities(FacetEntity::class.java).single()
+        builder.modifyEntity(ModifiableFacetEntity::class.java, facetEntity) {
+          configurationXmlTag = """<configuration data="bar" />"""
+        }
+      }
+    }
+    assertEquals("bar", facet.configuration.data)
   }
 }

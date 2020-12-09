@@ -173,6 +173,13 @@ public class FacetManagerTest extends FacetTestCase {
     commit(model);
     assertEquals("before added[1]\nadded[1]\n", listener.getEvents());
 
+    FacetManager.getInstance(myModule).facetConfigurationChanged(facet);
+    assertEquals("changed[1]\n", listener.getEvents());
+
+    facet.getConfiguration().setData("updated");
+    FacetManager.getInstance(myModule).facetConfigurationChanged(facet);
+    assertEquals("changed[1]\n", listener.getEvents());
+
     model = manager.createModifiableModel();
     model.rename(facet, "3");
     assertEquals("", listener.getEvents());
