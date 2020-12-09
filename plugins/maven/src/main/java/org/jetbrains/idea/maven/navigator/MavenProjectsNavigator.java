@@ -235,7 +235,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       // fire content removed events, so subscribers could cleanup caches
       contentManager.removeAllContents(true);
       Disposer.dispose(contentManager);
-      toolWindow.remove();
+      if (!myProject.isDisposed()) {
+        toolWindow.remove();
+      }
     });
     toolWindow.setIcon(MavenIcons.ToolWindowMaven);
     final ContentFactory contentFactory = ApplicationManager.getApplication().getService(ContentFactory.class);
