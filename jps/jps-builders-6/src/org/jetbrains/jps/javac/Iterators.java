@@ -19,10 +19,11 @@ public class Iterators {
   };
 
   public static boolean isEmpty(Iterable<?> iterable) {
-    if (iterable instanceof Collection) {
-      return ((Collection<?>)iterable).isEmpty();
-    }
-    return iterable == null || !iterable.iterator().hasNext();
+    return isEmptyCollection(iterable) || !iterable.iterator().hasNext();
+  }
+
+  private static boolean isEmptyCollection(Iterable<?> iterable) {
+    return iterable == null || iterable instanceof Collection && ((Collection<?>)iterable).isEmpty();
   }
 
   public static <T> boolean contains(Iterable<? extends T> iterable, T obj) {
@@ -48,10 +49,10 @@ public class Iterators {
 
   @SuppressWarnings("unchecked")
   public static <T> Iterable<T> flat(final Iterable<? extends T> first, final Iterable<? extends T> second) {
-    if (isEmpty(first)) {
-      return isEmpty(second)? Collections.<T>emptyList() : (Iterable<T>)second;
+    if (isEmptyCollection(first)) {
+      return isEmptyCollection(second)? Collections.<T>emptyList() : (Iterable<T>)second;
     }
-    if (isEmpty(second)) {
+    if (isEmptyCollection(second)) {
       return (Iterable<T>)first;
     }
     return new Iterable<T>() {
@@ -88,7 +89,7 @@ public class Iterators {
   }
 
   public static <T> Iterable<T> flat(final Iterable<? extends Iterable<? extends T>> parts) {
-    return isEmpty(parts)? Collections.<T>emptyList() : new Iterable<T>() {
+    return isEmptyCollection(parts)? Collections.<T>emptyList() : new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {
@@ -168,7 +169,7 @@ public class Iterators {
   }
 
   public static <I,O> Iterable<O> map(final Iterable<? extends I> from, final Function<? super I, ? extends O> mapper) {
-    return isEmpty(from)? Collections.<O>emptyList() : new Iterable<O>() {
+    return isEmptyCollection(from)? Collections.<O>emptyList() : new Iterable<O>() {
       @NotNull
       @Override
       public Iterator<O> iterator() {
@@ -192,7 +193,7 @@ public class Iterators {
   }
 
   public static <T> Iterable<T> filter(final Iterable<? extends T> it, final BooleanFunction<? super T> predicate) {
-    return isEmpty(it)? Collections.<T>emptyList() : new Iterable<T>() {
+    return isEmptyCollection(it)? Collections.<T>emptyList() : new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {
@@ -247,7 +248,7 @@ public class Iterators {
   }
 
   public static <T> Iterable<T> filterWithOrder(final Iterable<? extends T> from, final Iterable<BooleanFunction<? super T>> predicates) {
-    return isEmpty(predicates) || isEmpty(from)? Collections.<T>emptyList() : new Iterable<T>() {
+    return isEmptyCollection(predicates) || isEmptyCollection(from)? Collections.<T>emptyList() : new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {
