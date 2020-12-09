@@ -33,7 +33,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     fragments.add(BeforeRunFragment.createBeforeRun(beforeRunComponent, CompileStepBeforeRun.ID));
     fragments.addAll(BeforeRunFragment.createGroup());
 
-    SettingsEditorFragment<T, ModuleClasspathCombo> moduleClasspath = createClasspathCombo();
+    SettingsEditorFragment<T, ModuleClasspathCombo> moduleClasspath = CommonJavaFragments.moduleClasspath(null, null, null);
     ModuleClasspathCombo classpathCombo = moduleClasspath.component();
     Computable<Boolean> hasModule = () -> classpathCombo.getSelectedModule() != null;
 
@@ -68,9 +68,6 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     fragments.add(new LogsFragment<>());
     return fragments;
   }
-
-  @NotNull
-  protected abstract SettingsEditorFragment<T, ModuleClasspathCombo> createClasspathCombo();
 
   @NotNull
   protected SettingsEditorFragment<T, LabeledComponent<ShortenCommandLineModeCombo>> createShortenClasspath(ModuleClasspathCombo classpathCombo,

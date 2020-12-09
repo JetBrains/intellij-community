@@ -23,6 +23,11 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
   protected void customizeFragments(List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments,
                                     ModuleClasspathCombo classpathCombo,
                                     CommonParameterFragments<ApplicationConfiguration> commonParameterFragments) {
+    fragments.add(SettingsEditorFragment.createTag("include.provided",
+                                                   ExecutionBundle.message("application.configuration.include.provided.scope"),
+                                                   ExecutionBundle.message("group.java.options"),
+                                     configuration -> configuration.getOptions().isIncludeProvidedScope(),
+                                     (configuration, value) -> configuration.getOptions().setIncludeProvidedScope(value)));
     fragments.add(commonParameterFragments.programArguments());
     fragments.add(commonParameterFragments.createRedirectFragment());
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment = createMainClass(classpathCombo);
@@ -31,14 +36,6 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(jreSelector);
     fragments.add(jrePath);
     fragments.add(createShortenClasspath(classpathCombo, jrePath, true));
-  }
-
-  @Override
-  @NotNull
-  protected SettingsEditorFragment<ApplicationConfiguration, ModuleClasspathCombo> createClasspathCombo() {
-    ModuleClasspathCombo.Item item = new ModuleClasspathCombo.Item(ExecutionBundle.message("application.configuration.include.provided.scope"));
-    return CommonJavaFragments.moduleClasspath(item, configuration -> configuration.getOptions().isIncludeProvidedScope(),
-                                               (configuration, value) -> configuration.getOptions().setIncludeProvidedScope(value));
   }
 
   @NotNull
