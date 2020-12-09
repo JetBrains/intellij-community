@@ -58,18 +58,6 @@ class InvokeAfterUpdateCallback {
     }
   }
 
-  private static void setDone(@NotNull Task task) {
-    if (task instanceof Waiter) {
-      ((Waiter)task).done();
-    }
-    else if (task instanceof FictiveBackgroundable) {
-      ((FictiveBackgroundable)task).done();
-    }
-    else {
-      throw new IllegalArgumentException("Unknown task type " + task.getClass());
-    }
-  }
-
   private abstract static class CallbackDataBase implements CallbackData {
     private final Project myProject;
     private final Runnable myAfterUpdate;
@@ -120,6 +108,8 @@ class InvokeAfterUpdateCallback {
   }
 
   private static class TaskCallbackData extends CallbackDataBase {
+    @NotNull private final Semaphore mySemaphore = new Semaphore(1);
+
     private final Task myTask;
 
     TaskCallbackData(@NotNull Project project,
@@ -130,8 +120,8 @@ class InvokeAfterUpdateCallback {
                      @Nullable ModalityState state) {
       super(project, afterUpdate, state);
       myTask = synchronous
-               ? new Waiter(project, afterUpdate, title, canBeCancelled)
-               : new FictiveBackgroundable(project, afterUpdate, title, canBeCancelled, state);
+               ? new Waiter(project, afterUpdate, mySemaphore, title, canBeCancelled)
+               : new FictiveBackgroundable(project, afterUpdate, mySemaphore, title, canBeCancelled, state);
     }
 
     @Override
@@ -141,19 +131,19 @@ class InvokeAfterUpdateCallback {
 
     @Override
     public void endProgress() {
-      setDone(myTask);
+      mySemaphore.up();
     }
   }
 
   private static class Waiter extends Task.Modal {
     @NotNull private final Runnable myRunnable;
     @NotNull private final AtomicBoolean myStarted = new AtomicBoolean();
-    @NotNull private final Semaphore mySemaphore = new Semaphore();
+    @NotNull private final Semaphore mySemaphore;
 
-    Waiter(@NotNull Project project, @NotNull Runnable runnable, String title, boolean cancellable) {
+    Waiter(@NotNull Project project, @NotNull Runnable runnable, @NotNull Semaphore semaphore, String title, boolean cancellable) {
       super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
       myRunnable = runnable;
-      mySemaphore.down();
+      mySemaphore = semaphore;
       setCancelText(VcsBundle.message("button.skip"));
     }
 
@@ -182,10 +172,6 @@ class InvokeAfterUpdateCallback {
         myRunnable.run();
       }
     }
-
-    public void done() {
-      mySemaphore.up();
-    }
   }
 
   private static class FictiveBackgroundable extends Task.Backgroundable {
@@ -193,17 +179,18 @@ class InvokeAfterUpdateCallback {
 
     @NotNull private final Runnable myRunnable;
     @NotNull private final AtomicBoolean myStarted = new AtomicBoolean();
-    @NotNull private final Semaphore mySemaphore = new Semaphore();
+    @NotNull private final Semaphore mySemaphore;
 
     FictiveBackgroundable(@NotNull Project project,
                           @NotNull Runnable runnable,
+                          @NotNull Semaphore semaphore,
                           String title,
                           boolean cancellable,
                           @Nullable ModalityState state) {
       super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
       myState = state;
       myRunnable = runnable;
-      mySemaphore.down();
+      mySemaphore = semaphore;
     }
 
     @Override
@@ -228,10 +215,6 @@ class InvokeAfterUpdateCallback {
     @Override
     public boolean isHeadless() {
       return false;
-    }
-
-    public void done() {
-      mySemaphore.up();
     }
   }
 }
