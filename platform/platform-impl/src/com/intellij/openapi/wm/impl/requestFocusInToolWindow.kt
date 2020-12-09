@@ -70,6 +70,9 @@ internal fun getShowingComponentToRequestFocus(toolWindow: ToolWindowImpl): Comp
   }
 
   val component: Component? = toolWindow.toolWindowManager.focusManager.getFocusTargetFor(container)
+  if (component == null && container.isFocusable) {
+    return container
+  }
   if (component == null || !component.isShowing) {
     LOG.debug { " tool window ${toolWindow.id} default component is hidden: $container" }
     return null
