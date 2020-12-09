@@ -168,8 +168,11 @@ class KotlinChangeSignature(
         }
 
         if (ApplicationManager.getApplication().isUnitTestMode) {
-            dialog.performOKAction()
-            dialog.close(DialogWrapper.OK_EXIT_CODE)
+            try {
+                dialog.performOKAction()
+            } finally {
+                dialog.close(DialogWrapper.OK_EXIT_CODE)
+            }
         } else {
             dialog.show()
         }
