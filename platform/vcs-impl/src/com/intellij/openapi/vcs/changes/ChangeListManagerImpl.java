@@ -191,7 +191,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
       if (!myEmptyListDeletionScheduled) {
         myEmptyListDeletionScheduled = true;
-        invokeAfterUpdate(this::deleteEmptyChangeLists, InvokeAfterUpdateMode.SILENT, null, null);
+        invokeAfterUpdate(true, this::deleteEmptyChangeLists);
       }
     }
   }
@@ -375,22 +375,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     assert ApplicationManager.getApplication().isHeadlessEnvironment() || !ApplicationManager.getApplication().isDispatchThread();
 
     myUpdater.setIgnoreBackgroundOperation(true);
-    Semaphore sem = new Semaphore();
-    sem.down();
+    Semaphore sem = new Semaphore(1);
 
-    invokeAfterUpdate(() -> {
+    invokeAfterUpdate(false, () -> {
       myUpdater.setIgnoreBackgroundOperation(false);
       myUpdater.pause();
       myFreezeName = reason;
       sem.up();
-    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
+    });
 
-    boolean free = false;
-    while (!free) {
-      ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-      if (pi != null) pi.checkCanceled();
-      free = sem.waitFor(500);
-    }
+    awaitWithCheckCanceled(sem, ProgressManager.getInstance().getProgressIndicator());
   }
 
   @Override
@@ -403,7 +397,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   public void waitForUpdate() {
     assert !ApplicationManager.getApplication().isDispatchThread();
     CountDownLatch waiter = new CountDownLatch(1);
-    invokeAfterUpdate(waiter::countDown, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, ModalityState.NON_MODAL);
+    invokeAfterUpdate(false, waiter::countDown);
     awaitWithCheckCanceled(waiter);
   }
 
@@ -1434,7 +1428,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     myScheduler.submit(() -> {
       ReadAction.run(() -> {
         if (Disposer.isDisposed(this)) return;
-        
+
         boolean enabled = shouldEnableChangeLists();
         synchronized (myDataLock) {
           if (enabled == myWorker.areChangeListsEnabled()) return;

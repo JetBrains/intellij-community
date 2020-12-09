@@ -118,12 +118,12 @@ public final class ChangelistConflictTracker {
     }
     if (files.isEmpty()) return;
 
-    myChangeListManager.invokeAfterUpdate(() -> {
+    myChangeListManager.invokeAfterUpdate(true, () -> {
       final LocalChangeList list = myChangeListManager.getDefaultChangeList();
       for (VirtualFile file : files) {
         checkOneFile(file, list);
       }
-    }, InvokeAfterUpdateMode.SILENT, null, null);
+    });
   }
 
   private void checkOneFile(@NotNull VirtualFile file, @NotNull LocalChangeList defaultList) {

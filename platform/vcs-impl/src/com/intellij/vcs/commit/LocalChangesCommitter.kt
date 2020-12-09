@@ -89,7 +89,7 @@ open class LocalChangesCommitter(
     if (!project.isDisposed) {
       // after vcs refresh is completed, outdated notifiers should be removed if some exists...
       VcsDirtyScopeManager.getInstance(project).filePathsDirty(pathsToRefresh, null)
-      ChangeListManager.getInstance(project).invokeAfterUpdate({ afterRefreshChanges() }, InvokeAfterUpdateMode.SILENT, null, null)
+      ChangeListManager.getInstance(project).invokeAfterUpdate(true) { afterRefreshChanges() }
 
       LocalHistory.getInstance().putSystemLabel(project, "$localHistoryActionName: $commitMessage")
     }

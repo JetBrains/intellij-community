@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.svn.SvnUtil.getWcDb
@@ -40,26 +39,23 @@ internal fun <T : Any> computeAfterUpdateChanges(project: Project, parent: Dispo
   }
 
   Disposer.register(parent, afterUpdateTracker)
-  ChangeListManager.getInstance(project).invokeAfterUpdate(
-    {
-      try {
-        afterUpdateStarted.set(true)
-        indicator.checkCanceled()
+  ChangeListManager.getInstance(project).invokeAfterUpdate(false) {
+    try {
+      afterUpdateStarted.set(true)
+      indicator.checkCanceled()
 
-        ProgressManager.getInstance().runProcess(
-          { promise.setResult(block()) },
-          indicator
-        )
-      }
-      catch (e: ProcessCanceledException) {
-        promise.cancel()
-      }
-      catch (e: Throwable) {
-        promise.setError(e)
-      }
-    },
-    InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, null
-  )
+      ProgressManager.getInstance().runProcess(
+        { promise.setResult(block()) },
+        indicator
+      )
+    }
+    catch (e: ProcessCanceledException) {
+      promise.cancel()
+    }
+    catch (e: Throwable) {
+      promise.setError(e)
+    }
+  }
 
   return try {
     promise.get()

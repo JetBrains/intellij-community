@@ -6,10 +6,11 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
@@ -74,20 +75,16 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       FutureResult<ListSelection<Producer>> resultRef = new FutureResult<>();
       // this trick is essential since we are under some conditions to refresh changes;
       // but we can only rely on callback after refresh
-      ChangeListManager.getInstance(project).invokeAfterUpdate(
-        () -> {
-          try {
-            ChangesViewManager.getInstanceEx(project).refreshImmediately();
-            List<Change> actualChanges = loadFakeRevisions(project, changes);
-            resultRef.set(collectRequestProducers(project, actualChanges, unversioned, view));
-          }
-          catch (Throwable err) {
-            resultRef.setException(err);
-          }
-        },
-        InvokeAfterUpdateMode.SILENT,
-        ActionsBundle.actionText(IdeActions.ACTION_SHOW_DIFF_COMMON),
-        ModalityState.current());
+      ChangeListManager.getInstance(project).invokeAfterUpdate(true, () -> {
+        try {
+          ChangesViewManager.getInstanceEx(project).refreshImmediately();
+          List<Change> actualChanges = loadFakeRevisions(project, changes);
+          resultRef.set(collectRequestProducers(project, actualChanges, unversioned, view));
+        }
+        catch (Throwable err) {
+          resultRef.setException(err);
+        }
+      });
 
       chain = new ChangeDiffRequestChain.Async() {
         @Override

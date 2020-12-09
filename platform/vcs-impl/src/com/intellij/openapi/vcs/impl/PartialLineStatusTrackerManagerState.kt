@@ -6,7 +6,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker.RangeState
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -73,9 +72,9 @@ class PartialLineStatusTrackerManagerState(private val project: Project) : Persi
     @JvmStatic
     private fun restoreState(project: Project, states: List<TrackerState>) {
       if (states.isNotEmpty()) {
-        ChangeListManager.getInstance(project).invokeAfterUpdate(
-          { LineStatusTrackerManager.getInstanceImpl(project).restoreTrackersForPartiallyChangedFiles(states) },
-          InvokeAfterUpdateMode.SILENT, null, null)
+        ChangeListManager.getInstance(project).invokeAfterUpdate(true) {
+          LineStatusTrackerManager.getInstanceImpl(project).restoreTrackersForPartiallyChangedFiles(states)
+        }
       }
     }
 

@@ -34,6 +34,13 @@ public abstract class ChangeListManager implements ChangeListModification {
     scheduleUpdate();
   }
 
+  /**
+   * Invoke callback when current CLM refresh is completed, without any visible progress.
+   */
+  public void invokeAfterUpdate(boolean callbackOnAwt, @NotNull Runnable afterUpdate) {
+    InvokeAfterUpdateMode mode = callbackOnAwt ? InvokeAfterUpdateMode.SILENT : InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED;
+    invokeAfterUpdate(afterUpdate, mode, null, null);
+  }
 
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,

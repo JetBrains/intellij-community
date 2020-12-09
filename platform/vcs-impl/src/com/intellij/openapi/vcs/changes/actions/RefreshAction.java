@@ -4,13 +4,11 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
@@ -67,11 +65,11 @@ public class RefreshAction extends AnAction implements DumbAware {
 
     VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
 
-    changeListManager.invokeAfterUpdate(() -> {
+    changeListManager.invokeAfterUpdate(true, () -> {
       Collection<Change> changesAfterUpdate = changeListManager.getAllChanges();
       Collection<FilePath> unversionedAfter = changeListManager.getUnversionedFilesPaths();
 
       logRefreshActionPerformed(changesBeforeUpdate, changesAfterUpdate, unversionedBefore, unversionedAfter, wasUpdatingBefore);
-    }, InvokeAfterUpdateMode.SILENT, VcsBundle.message("changes.progress.title.refresh.action"), ModalityState.current());
+    });
   }
 }
