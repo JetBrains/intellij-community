@@ -5,6 +5,8 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 
+import java.nio.file.Path
+
 /**
  * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
  * distribution of your product.
@@ -215,7 +217,7 @@ abstract class ProductProperties {
    * Paths to externally built plugins to be included into the IDE. They will be copied into the build, as well as included into
    * the IDE classpath when launching it to build search index, jar order, etc
    */
-  @NotNull List<String> getAdditionalPluginPaths(@NotNull BuildContext context) {
+  @NotNull List<Path> getAdditionalPluginPaths(@NotNull BuildContext context) {
     return Collections.emptyList()
   }
 

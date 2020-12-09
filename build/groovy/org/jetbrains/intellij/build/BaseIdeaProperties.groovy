@@ -3,8 +3,11 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.function.Consumer
 
 /**
@@ -182,11 +185,12 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
       }
     }
 
-    context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
-      fileset(dir: "$context.paths.kotlinHome")
-    }
-    context.ant.move(file: "$targetDirectory/lib/annotations.jar", tofile: "$targetDirectory/redist/annotations-java8.jar")
-    //for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
-    context.ant.move(file: "$targetDirectory/lib/annotations-java5.jar", tofile: "$targetDirectory/lib/annotations.jar")
+    Path targetDir = Paths.get(targetDirectory).toAbsolutePath().normalize()
+    BuildHelper.copyDir(Paths.get(context.paths.kotlinHome).toAbsolutePath().normalize(), targetDir.resolve("plugins/Kotlin"), context)
+
+    Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
+    BuildHelper.moveFile(java8AnnotationsJar, targetDir.resolve("redist/annotations-java8.jar"))
+    // for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
+    BuildHelper.moveFile(targetDir.resolve("lib/annotations-java5.jar"), java8AnnotationsJar)
   }
 }

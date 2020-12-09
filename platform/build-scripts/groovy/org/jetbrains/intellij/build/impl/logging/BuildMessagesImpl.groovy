@@ -60,6 +60,21 @@ class BuildMessagesImpl implements BuildMessages {
     log(level, null, message, null as Throwable)
   }
 
+  @Override
+  void log(System.Logger.Level level, String message, Object... params) {
+    log(level, null, message, null as Throwable)
+  }
+
+  @Override
+  void log(Level level, String message) {
+    log(level, null, message, null as Throwable)
+  }
+
+  @Override
+  void log(Level level, String message, Throwable thrown) {
+    log(level, null, message, thrown)
+  }
+
   static BuildMessagesImpl create(Project antProject) {
     String key = "IntelliJBuildMessages"
     def registered = antProject.getReference(key)

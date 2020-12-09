@@ -145,15 +145,13 @@ final class BuildTasksImpl extends BuildTasks {
     jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties))
     jvmArgs.addAll(vmOptions)
 
-    List<String> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
-    for (String pluginPath : additionalPluginPaths) {
-      File libFile = new File(pluginPath, "lib")
-      libFile.list { _, name ->
-        FileUtil.extensionEquals(name, "jar")
-      }.each { jarName ->
+    List<Path> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+    for (Path pluginPath : additionalPluginPaths) {
+      File libFile = pluginPath.resolve("lib").toFile()
+      for (String jarName : libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }) {
         File jarFile = new File(libFile, jarName)
         if (ideClasspath.add(jarFile.absolutePath)) {
-          context.messages.debug(" $jarFile from plugin ${libFile.parentFile.name}")
+          context.messages.debug("$jarFile from plugin ${libFile.parentFile.name}")
         }
       }
     }
@@ -273,12 +271,6 @@ idea.fatal.error.notification=disabled
       }
 
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
-
-      buildContext.productProperties.getAdditionalPluginPaths(buildContext)?.each { pluginPath ->
-        buildContext.ant.copy(todir: "$buildContext.paths.distAll/plugins/${new File(pluginPath).name}") {
-          fileset(dir: pluginPath)
-        }
-      }
     }
   }
 
@@ -380,7 +372,7 @@ idea.fatal.error.notification=disabled
 
     Path patchedApplicationInfo = patchApplicationInfo()
     logFreeDiskSpace("before compilation")
-    def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
     logFreeDiskSpace("after compilation")
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {

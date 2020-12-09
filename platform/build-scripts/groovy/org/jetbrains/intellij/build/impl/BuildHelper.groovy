@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -22,8 +23,9 @@ final class BuildHelper {
   private final MethodHandle zipForWindows
   private final MethodHandle runJavaHandle
   final MethodHandle brokenPluginsTask
-
   final MethodHandle reorderJars
+
+  private final MethodHandle copyDirHandle
 
   private BuildHelper(UrlClassLoader helperClassLoader) {
     this.helperClassLoader = helperClassLoader
@@ -31,6 +33,10 @@ final class BuildHelper {
     Class<?> voidClass = void.class as Class<?>
     Class<?> logger = System.Logger.class as Class<?>
     Class<?> path = Path.class as Class<?>
+
+    copyDirHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.FileKt"),
+                                      "copyDir",
+                                      MethodType.methodType(voidClass, path, path))
 
     zipForWindows = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ZipKt"),
                                       "zipForWindows",
@@ -51,6 +57,15 @@ final class BuildHelper {
                                                                            path, path, iterable, path,
                                                                            String.class as Class<?>, path,
                                                                            logger))
+  }
+
+  static void copyDir(Path fromDir, Path targetDir, BuildContext buildContext) {
+    getInstance(buildContext).copyDirHandle.invokeWithArguments(fromDir, targetDir)
+  }
+
+  static void moveFile(Path source, Path target) {
+    Files.createDirectories(target.parent)
+    Files.move(source, target)
   }
 
   static void zipForWindows(@NotNull BuildContext buildContext, @NotNull Path targetFile, Iterable<Path> dirs) {

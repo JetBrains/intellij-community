@@ -6,6 +6,23 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 
+fun copyDir(sourceDir: Path, targetDir: Path) {
+  Files.walkFileTree(sourceDir, CopyDirectoryVisitor(sourceDir, targetDir))
+}
+
+private class CopyDirectoryVisitor(private val sourceDir: Path, private val targetDir: Path) : SimpleFileVisitor<Path>() {
+  override fun preVisitDirectory(directory: Path, attributes: BasicFileAttributes): FileVisitResult {
+    Files.createDirectory(targetDir.resolve(sourceDir.relativize(directory)))
+    return FileVisitResult.CONTINUE
+  }
+
+  override fun visitFile(sourceFile: Path, attributes: BasicFileAttributes): FileVisitResult {
+    val targetFile = targetDir.resolve(sourceDir.relativize(sourceFile))
+    Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES)
+    return FileVisitResult.CONTINUE
+  }
+}
+
 internal fun deleteDir(startDir: Path) {
   Files.walkFileTree(startDir, object : SimpleFileVisitor<Path>() {
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {

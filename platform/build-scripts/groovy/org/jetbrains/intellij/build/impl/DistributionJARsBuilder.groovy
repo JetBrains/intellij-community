@@ -292,15 +292,26 @@ final class DistributionJARsBuilder {
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
 
-    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
-      reorderJars(buildContext)
+    // must be before reorderJars as these additional plugins maybe required for IDE start-up
+    List<Path> additionalPluginPaths = buildContext.productProperties.getAdditionalPluginPaths(buildContext)
+    if (!additionalPluginPaths.isEmpty()) {
+      Path pluginDir = buildContext.paths.distAllDir.resolve("plugins")
+      for (Path sourceDir : additionalPluginPaths) {
+        BuildHelper.copyDir(sourceDir, pluginDir.resolve(sourceDir.fileName), buildContext)
+      }
     }
+
+    reorderJars(buildContext)
 
     buildNonBundledPlugins()
     buildNonBundledPluginsBlockMaps()
   }
 
   static void reorderJars(@NotNull BuildContext buildContext) {
+    if (buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
+      return
+    }
+
     Path result = (Path)BuildHelper.getInstance(buildContext).reorderJars
       .invokeWithArguments(buildContext.paths.distAllDir, buildContext.paths.distAllDir,
                            buildContext.getBootClassPathJarNames(),
@@ -564,14 +575,14 @@ final class DistributionJARsBuilder {
   }
 
   private void buildOsSpecificBundledPlugins() {
-    def productLayout = buildContext.productProperties.productLayout
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     for (OsFamily osFamily in OsFamily.values()) {
       List<PluginLayout> osSpecificPlugins = getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {
         satisfiesBundlingRequirements(it, osFamily)
       }
 
       if (!osSpecificPlugins.isEmpty() && buildContext.shouldBuildDistributionForOS(osFamily.osId)) {
-        def layoutBuilder = createLayoutBuilder()
+        LayoutBuilder layoutBuilder = createLayoutBuilder()
         buildContext.messages.block("Build bundled plugins for $osFamily.osName") {
           buildPlugins(layoutBuilder, osSpecificPlugins,
                        "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins", projectStructureMapping)

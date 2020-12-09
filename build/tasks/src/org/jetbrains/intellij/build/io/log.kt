@@ -2,25 +2,26 @@
 package org.jetbrains.intellij.build.io
 
 import java.lang.System.Logger
+import java.util.*
 
 fun Logger.error(message: String) {
-  log(Logger.Level.ERROR, message)
+  log(Logger.Level.ERROR, null as ResourceBundle?, message)
 }
 
 fun Logger.info(message: String) {
-  log(Logger.Level.INFO, message)
+  log(Logger.Level.INFO, null as ResourceBundle?, message)
 }
 
 fun Logger.warn(message: String) {
-  log(Logger.Level.WARNING, message)
+  log(Logger.Level.WARNING, null as ResourceBundle?, message)
 }
 
 fun Logger.debug(message: String) {
-  log(Logger.Level.DEBUG, message)
+  log(Logger.Level.DEBUG, null as ResourceBundle?, message)
 }
 
 inline fun Logger.debug(message: () -> String) {
   if (isLoggable(Logger.Level.DEBUG)) {
-    log(Logger.Level.DEBUG, message())
+    log(Logger.Level.DEBUG, null as ResourceBundle?, message())
   }
 }
