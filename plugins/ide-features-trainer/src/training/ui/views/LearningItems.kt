@@ -41,7 +41,9 @@ class LearningItems : JPanel() {
     isFocusable = false
   }
 
-  fun updateItems() {
+  fun updateItems(showModule: Module? = null) {
+    if (showModule != null) expanded.add(showModule)
+
     layout = VerticalLayout(10)
     removeAll()
     for (module in modules) {

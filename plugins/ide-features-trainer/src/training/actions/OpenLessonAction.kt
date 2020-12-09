@@ -4,8 +4,6 @@ package training.actions
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.ide.startup.StartupManagerEx
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
@@ -15,7 +13,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.runBackgroundableTask
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -47,26 +44,11 @@ import training.util.findLanguageByID
 import training.util.isLearningProject
 import java.io.IOException
 
-class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
+internal object OpenLessonAction {
+  private val LOG = logger<OpenLessonAction>()
 
-  override fun actionPerformed(e: AnActionEvent) {
-    val whereToStartLessonProject = e.getData(PROJECT_WHERE_TO_OPEN_DATA_KEY)
-    val project = e.project
-
-    if (project != null && whereToStartLessonProject != null) {
-      LOG.debug("${project.name}: Action performed -> openLesson(${lesson.name})")
-      openLesson(whereToStartLessonProject, lesson)
-    }
-    else {
-      //in case of starting from Welcome Screen
-      // Or user activated `Open Lesson` action manually.
-      LOG.debug("${project?.name}: Action performed -> openLearnToolWindowAndShowModules(${lesson.name}))")
-      openLearnProjectFromWelcomeScreen(project, lesson)
-    }
-  }
-
-  @Synchronized
-  private fun openLesson(projectWhereToStartLesson: Project, lesson: Lesson) {
+  @RequiresEdt
+  fun openLesson(projectWhereToStartLesson: Project, lesson: Lesson) {
     LOG.debug("${projectWhereToStartLesson.name}: start openLesson method")
 
     // Stop the current lesson (if any)
@@ -262,17 +244,13 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       lesson.addLessonListener(statLessonListener)
   }
 
-  private fun openLearnProjectFromWelcomeScreen(projectToClose: Project?, lessonToOpen: Lesson) {
-    initLearnProject(projectToClose) { project ->
-      if (project.isOpen) {
-        showModules(project)
-        openLessonWhenLearnProjectStart(lessonToOpen, project)
-      }
-      else {
-        StartupManager.getInstance(project).registerPostStartupActivity {
+  fun openLearnProjectFromWelcomeScreen() {
+    initLearnProject(null) { project ->
+      StartupManager.getInstance(project).runAfterOpened {
+        invokeLater {
           hideOtherViews(project)
           showModules(project)
-          openLessonWhenLearnProjectStart(lessonToOpen, project)
+          CourseManager.instance.unfoldModuleOnInit = null
         }
       }
     }
@@ -432,8 +410,4 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
     return openProjects.firstOrNull { isLearningProject(it, langSupport) }
   }
 
-  companion object {
-    val PROJECT_WHERE_TO_OPEN_DATA_KEY = DataKey.create<Project>("PROJECT_WHERE_TO_OPEN_DATA_KEY")
-    private val LOG = logger<OpenLessonAction>()
-  }
 }
