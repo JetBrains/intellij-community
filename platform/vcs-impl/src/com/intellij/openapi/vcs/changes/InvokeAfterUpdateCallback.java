@@ -27,8 +27,6 @@ import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
-
 class InvokeAfterUpdateCallback {
   private final static Logger LOG = Logger.getInstance(InvokeAfterUpdateCallback.class);
 
@@ -171,8 +169,11 @@ class InvokeAfterUpdateCallback {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         awaitSemaphore(indicator);
+      }
 
-        runOrInvokeLaterAboveProgress(() -> invokeCallback(), null, myProject);
+      @Override
+      public void onSuccess() {
+        invokeCallback();
       }
 
       @Override
