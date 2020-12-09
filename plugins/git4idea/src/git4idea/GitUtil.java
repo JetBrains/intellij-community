@@ -389,6 +389,7 @@ public final class GitUtil {
       return null;
     }
     catch (InvalidPathException e) {
+      LOG.warn(e.getMessage());
       return null;
     }
   }
@@ -1026,6 +1027,7 @@ public final class GitUtil {
       return isGitRoot(Paths.get(rootDir));
     }
     catch (InvalidPathException e) {
+      LOG.warn(e.getMessage());
       return false;
     }
   }
