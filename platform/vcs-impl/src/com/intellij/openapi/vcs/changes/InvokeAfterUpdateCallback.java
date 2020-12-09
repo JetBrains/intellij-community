@@ -19,16 +19,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
@@ -59,9 +57,9 @@ class InvokeAfterUpdateCallback {
   }
 
   private abstract static class CallbackDataBase implements CallbackData {
-    private final Project myProject;
+    protected final Project myProject;
     private final Runnable myAfterUpdate;
-    private final ModalityState myModalityState;
+    protected final ModalityState myModalityState;
 
     CallbackDataBase(@NotNull Project project, @NotNull Runnable afterUpdate, @Nullable ModalityState modalityState) {
       myProject = project;
@@ -108,9 +106,11 @@ class InvokeAfterUpdateCallback {
   }
 
   private static class TaskCallbackData extends CallbackDataBase {
-    @NotNull private final Semaphore mySemaphore = new Semaphore(1);
+    private final boolean mySynchronous;
+    private final boolean myCanBeCancelled;
+    private final @NlsContexts.ProgressTitle String myTaskTitle;
 
-    private final Task myTask;
+    @NotNull private final Semaphore mySemaphore = new Semaphore(1);
 
     TaskCallbackData(@NotNull Project project,
                      @NotNull Runnable afterUpdate,
@@ -119,102 +119,66 @@ class InvokeAfterUpdateCallback {
                      String title,
                      @Nullable ModalityState state) {
       super(project, afterUpdate, state);
-      myTask = synchronous
-               ? new Waiter(project, afterUpdate, mySemaphore, title, canBeCancelled)
-               : new FictiveBackgroundable(project, afterUpdate, mySemaphore, title, canBeCancelled, state);
+      mySynchronous = synchronous;
+      myCanBeCancelled = canBeCancelled;
+      myTaskTitle = VcsBundle.message("change.list.manager.wait.lists.synchronization", title);
     }
 
     @Override
     public void startProgress() {
-      ProgressManager.getInstance().run(myTask);
+      if (mySynchronous) {
+        new ModalWaiterTask().queue();
+      }
+      else {
+        new BackgroundableWaiterTask().queue();
+      }
     }
 
     @Override
     public void endProgress() {
       mySemaphore.up();
     }
-  }
 
-  private static class Waiter extends Task.Modal {
-    @NotNull private final Runnable myRunnable;
-    @NotNull private final AtomicBoolean myStarted = new AtomicBoolean();
-    @NotNull private final Semaphore mySemaphore;
-
-    Waiter(@NotNull Project project, @NotNull Runnable runnable, @NotNull Semaphore semaphore, String title, boolean cancellable) {
-      super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
-      myRunnable = runnable;
-      mySemaphore = semaphore;
-      setCancelText(VcsBundle.message("button.skip"));
-    }
-
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
+    private void awaitSemaphore(@NotNull ProgressIndicator indicator) {
       indicator.setIndeterminate(true);
       indicator.setText2(VcsBundle.message("commit.wait.util.synched.text"));
-
-      if (!myStarted.compareAndSet(false, true)) {
-        LOG.error("Waiter running under progress being started again.");
-      }
-      else {
-        ProgressIndicatorUtils.awaitWithCheckCanceled(mySemaphore, indicator);
-      }
+      ProgressIndicatorUtils.awaitWithCheckCanceled(mySemaphore, indicator);
     }
 
-    @Override
-    public void onCancel() {
-      onSuccess();
-    }
-
-    @Override
-    public void onSuccess() {
-      // Be careful with changes here as "Waiter.onSuccess()" is explicitly invoked from "FictiveBackgroundable"
-      if (!myProject.isDisposed()) {
-        myRunnable.run();
-      }
-    }
-  }
-
-  private static class FictiveBackgroundable extends Task.Backgroundable {
-    @Nullable private final ModalityState myState;
-
-    @NotNull private final Runnable myRunnable;
-    @NotNull private final AtomicBoolean myStarted = new AtomicBoolean();
-    @NotNull private final Semaphore mySemaphore;
-
-    FictiveBackgroundable(@NotNull Project project,
-                          @NotNull Runnable runnable,
-                          @NotNull Semaphore semaphore,
-                          String title,
-                          boolean cancellable,
-                          @Nullable ModalityState state) {
-      super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
-      myState = state;
-      myRunnable = runnable;
-      mySemaphore = semaphore;
-    }
-
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      indicator.setIndeterminate(true);
-      indicator.setText2(VcsBundle.message("commit.wait.util.synched.text"));
-
-      if (!myStarted.compareAndSet(false, true)) {
-        LOG.error("Waiter running under progress being started again.");
-      }
-      else {
-        ProgressIndicatorUtils.awaitWithCheckCanceled(mySemaphore, indicator);
+    private class ModalWaiterTask extends Task.Modal {
+      ModalWaiterTask() {
+        super(TaskCallbackData.this.myProject, myTaskTitle, myCanBeCancelled);
+        setCancelText(VcsBundle.message("button.skip"));
       }
 
-      runOrInvokeLaterAboveProgress(() -> {
-        if (!myProject.isDisposed()) {
-          myRunnable.run();
-        }
-      }, notNull(myState, ModalityState.NON_MODAL), myProject);
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        awaitSemaphore(indicator);
+      }
+
+      @Override
+      public void onFinished() {
+        invokeCallback();
+      }
     }
 
-    @Override
-    public boolean isHeadless() {
-      return false;
+    private class BackgroundableWaiterTask extends Task.Backgroundable {
+      BackgroundableWaiterTask() {
+        super(TaskCallbackData.this.myProject, myTaskTitle, myCanBeCancelled);
+      }
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        awaitSemaphore(indicator);
+
+        ModalityState modalityState = notNull(myModalityState, ModalityState.NON_MODAL);
+        runOrInvokeLaterAboveProgress(() -> invokeCallback(), modalityState, myProject);
+      }
+
+      @Override
+      public boolean isHeadless() {
+        return false;
+      }
     }
   }
 }
