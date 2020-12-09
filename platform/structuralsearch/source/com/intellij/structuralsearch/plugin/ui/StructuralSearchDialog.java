@@ -566,7 +566,13 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         JBPopupFactory.getInstance()
           .createPopupChooserBuilder(ConfigurationManager.getInstance(getProject()).getHistoryConfigurations())
           .setRenderer(new ConfigurationCellRenderer())
-          .setItemChosenCallback(c -> loadConfiguration(c))
+          .setItemChosenCallback(c -> {
+            if (c instanceof ReplaceConfiguration) {
+              mySwitchAction.actionPerformed(
+                AnActionEvent.createFromAnAction(mySwitchAction, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
+            }
+            loadConfiguration(c);
+          })
           .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
           .createPopup()
           .showUnderneathOf((Component)source);
