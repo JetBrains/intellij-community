@@ -152,11 +152,11 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   private void checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(Map<Object, Object> map) {
     Object key = new Object();
-    class MyValue {}
-    map.put(key, strong = new MyValue());
+    class MyValue_ {}
+    map.put(key, strong = new MyValue_());
     map.put(key, this);
     strong = null;
-    LeakHunter.checkLeak(map, MyValue.class);
+    LeakHunter.checkLeak(map, MyValue_.class);
   }
 
   @Test(timeout = TIMEOUT)
@@ -370,16 +370,16 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test(timeout = TIMEOUT)
   public void testConcurrentLongObjectHashMap() {
     ConcurrentLongObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentLongObjectMap();
-    for (int i = 0; i < 1000; i++) {
+    for (long i = Long.MAX_VALUE-1000; i != Long.MAX_VALUE+1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
       Object ret = map.get(i);
-      assertTrue(ret instanceof Integer);
+      assertTrue(ret instanceof Long);
       assertEquals(i, ret);
 
-      if (i != 0) {
+      if (map.size() > 1) {
         Object remove = map.remove(i - 1);
-        assertTrue(remove instanceof Integer);
+        assertTrue(remove instanceof Long);
         assertEquals(i - 1, remove);
       }
       assertEquals(1, map.size());

@@ -18,13 +18,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ContainerUtilTest extends TestCase {
   private static final Logger LOG = Logger.getInstance(ContainerUtilTest.class);
-  public void testFindInstanceOf() {
+  public void testFindInstanceWorks() {
     Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList<>(), "1").iterator();
     String string = ContainerUtil.findInstance(iterator, String.class);
     assertEquals("1", string);
   }
 
-  public void testConcatTwo() {
+  public void testConcatTwoListsMustSupportListContracts() {
     Iterable<Object> concat = ContainerUtil.concat(Collections.emptySet(), Collections.emptySet());
     assertFalse(concat.iterator().hasNext());
     Iterable<Object> foo = ContainerUtil.concat(Collections.emptySet(), Collections.singletonList("foo"));
@@ -46,7 +46,7 @@ public class ContainerUtilTest extends TestCase {
     assertFalse(iterator.hasNext());
   }
 
-  public void testConcatMulti() {
+  public void testConcatMultipleListsWorks() {
     List<Integer> l = ContainerUtil.concat(Arrays.asList(1, 2), Collections.emptyList(), Arrays.asList(3, 4));
     assertEquals(4, l.size());
     assertEquals(1, (int)l.get(0));
@@ -69,7 +69,7 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
-  public void testConcatCME() {
+  public void testConcatedListsAfterModificationMustThrowCME() {
     List<Integer> a1 = new ArrayList<>(Arrays.asList(0, 1));
     List<Integer> l = ContainerUtil.concat(a1, Arrays.asList(2, 3), ContainerUtil.emptyList());
     assertEquals(4, l.size());
@@ -300,7 +300,7 @@ public class ContainerUtilTest extends TestCase {
     return new UnfairTextRange(start, end);
   }
 
-  private static List<Segment> mergeSegmentLists(List<Segment> list1, List<Segment> list2) {
+  private static List<Segment> mergeSegmentLists(List<? extends Segment> list1, List<? extends Segment> list2) {
     return ContainerUtil.mergeSortedLists(list1, list2, Segment.BY_START_OFFSET_THEN_END_OFFSET, true);
   }
 
