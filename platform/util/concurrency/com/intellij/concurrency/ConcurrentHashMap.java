@@ -575,7 +575,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         new ObjectStreamField("segmentMask", Integer.TYPE),
         new ObjectStreamField("segmentShift", Integer.TYPE),
     };
-  private final HashingStrategy<K> hashingStrategy;
+  private final HashingStrategy<? super K> hashingStrategy;
 
   /* ---------------- Nodes -------------- */
 
@@ -591,17 +591,17 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         final int hash;
         final K key;
         volatile V val;
-      @NotNull final HashingStrategy<K> hashingStrategy;
+      @NotNull final HashingStrategy<? super K> hashingStrategy;
       volatile Node<K,V> next;
 
-        Node(int hash, K key, V val, @NotNull HashingStrategy<K> hashingStrategy) {
+        Node(int hash, K key, V val, @NotNull HashingStrategy<? super K> hashingStrategy) {
             this.hash = hash;
             this.key = key;
             this.val = val;
           this.hashingStrategy = hashingStrategy;
         }
 
-        Node(int hash, K key, V val, Node<K,V> next, @NotNull HashingStrategy<K> hashingStrategy) {
+        Node(int hash, K key, V val, Node<K,V> next, @NotNull HashingStrategy<? super K> hashingStrategy) {
             this(hash, key, val, hashingStrategy);
             this.next = next;
         }
@@ -883,7 +883,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
       throw new IncorrectOperationException();
     }
   };
-  ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull HashingStrategy<K> hashingStrategy) {
+  ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull HashingStrategy<? super K> hashingStrategy) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();
     }
@@ -898,7 +898,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     this.hashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
   }
 
-  ConcurrentHashMap(@NotNull HashingStrategy<K> hashingStrategy) {
+  ConcurrentHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     this(DEFAULT_CAPACITY, LOAD_FACTOR, NCPU, hashingStrategy);
   }
     // Original (since JDK1.2) Map methods
@@ -2067,7 +2067,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      */
     static final class ForwardingNode<K,V> extends Node<K,V> {
         final Node<K,V>[] nextTable;
-        ForwardingNode(Node<K,V>[] tab, @NotNull HashingStrategy<K> hashingStrategy) {
+        ForwardingNode(Node<K,V>[] tab, @NotNull HashingStrategy<? super K> hashingStrategy) {
             super(MOVED, null, null, hashingStrategy);
             this.nextTable = tab;
         }
@@ -2103,7 +2103,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * A place-holder node used in computeIfAbsent and compute.
      */
     static final class ReservationNode<K,V> extends Node<K,V> {
-        ReservationNode(@NotNull HashingStrategy<K> hashingStrategy) {
+        ReservationNode(@NotNull HashingStrategy<? super K> hashingStrategy) {
             super(RESERVED, null, null, hashingStrategy);
         }
 
@@ -2561,7 +2561,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         boolean red;
 
         TreeNode(int hash, K key, V val, Node<K,V> next,
-                 TreeNode<K,V> parent, @NotNull HashingStrategy<K> hashingStrategy) {
+                 TreeNode<K,V> parent, @NotNull HashingStrategy<? super K> hashingStrategy) {
             super(hash, key, val, next, hashingStrategy);
             this.parent = parent;
         }
@@ -2643,7 +2643,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         /**
          * Creates bin with initial set of nodes headed by b.
          */
-        TreeBin(TreeNode<K,V> b, @NotNull HashingStrategy<K> hashingStrategy) {
+        TreeBin(TreeNode<K,V> b, @NotNull HashingStrategy<? super K> hashingStrategy) {
             super(TREEBIN, null, null, hashingStrategy);
             this.first = b;
             TreeNode<K,V> r = null;
@@ -6187,7 +6187,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     return isEqual(key1, key2, hashingStrategy);
   }
 
-  private static <K> boolean isEqual(@NotNull K key1, K key2, @NotNull HashingStrategy<K> hashingStrategy) {
+  private static <K> boolean isEqual(@NotNull K key1, K key2, @NotNull HashingStrategy<? super K> hashingStrategy) {
     return key1 == key2 || key2 != null && hashingStrategy.equals(key1, key2);
   }
 }

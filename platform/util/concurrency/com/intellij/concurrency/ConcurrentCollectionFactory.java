@@ -19,7 +19,7 @@ public final class ConcurrentCollectionFactory {
   }
 
   @Contract(pure = true)
-  public static @NotNull <T, V> ConcurrentMap<T, V> createConcurrentMap(@NotNull HashingStrategy<T> hashStrategy) {
+  public static @NotNull <T, V> ConcurrentMap<T, V> createConcurrentMap(@NotNull HashingStrategy<? super T> hashStrategy) {
     return new ConcurrentHashMap<>(hashStrategy);
   }
 
@@ -32,12 +32,12 @@ public final class ConcurrentCollectionFactory {
   public static @NotNull <T, V> ConcurrentMap<T, V> createConcurrentMap(int initialCapacity,
                                                                         float loadFactor,
                                                                         int concurrencyLevel,
-                                                                        @NotNull HashingStrategy<T> hashStrategy) {
+                                                                        @NotNull HashingStrategy<? super T> hashStrategy) {
     return new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashStrategy);
   }
 
   @Contract(pure = true)
-  public static @NotNull <T> Set<T> createConcurrentSet(@NotNull HashingStrategy<T> hashStrategy) {
+  public static @NotNull <T> Set<T> createConcurrentSet(@NotNull HashingStrategy<? super T> hashStrategy) {
     return Collections.newSetFromMap(createConcurrentMap(hashStrategy));
   }
 
@@ -52,7 +52,7 @@ public final class ConcurrentCollectionFactory {
   }
 
   @Contract(pure = true)
-  public static @NotNull <T> Set<T> createConcurrentSet(int initialCapacity, @NotNull HashingStrategy<T> hashStrategy) {
+  public static @NotNull <T> Set<T> createConcurrentSet(int initialCapacity, @NotNull HashingStrategy<? super T> hashStrategy) {
     return Collections.newSetFromMap(createConcurrentMap(initialCapacity, 0.75f, 16, hashStrategy));
   }
 
@@ -60,7 +60,7 @@ public final class ConcurrentCollectionFactory {
   public static @NotNull <T> Set<T> createConcurrentSet(int initialCapacity,
                                                         float loadFactor,
                                                         int concurrencyLevel,
-                                                        @NotNull HashingStrategy<T> hashStrategy) {
+                                                        @NotNull HashingStrategy<? super T> hashStrategy) {
     return Collections.newSetFromMap(createConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, hashStrategy));
   }
 
