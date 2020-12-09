@@ -24,24 +24,23 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
 import javax.swing.*
-import javax.swing.border.EmptyBorder
 import javax.swing.event.AncestorEvent
+import javax.swing.plaf.ComponentUI
 
 class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() {
 
+  //unscalable insets
+  val unscalable24px = 24
+
   private val interactiveCoursesPanel: JPanel = JPanel()
   private val interactiveCoursesPanelBottomGap = rigid(1, 32)
-
   private val helpAndResourcesPanel: JPanel = JPanel()
-
   private val viewComponent: JPanel = JPanel().apply { layout = BorderLayout(); background = WelcomeScreenUIManager.getProjectsBackground() }
   private val myScrollPane: JBScrollPane = JBScrollPane(viewComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply { border = JBUI.Borders.empty() }
   private val contentPanel: JPanel = JPanel()
-
   private val interactiveCoursesHeader: JTextPane = HeightLimitedPane(IdeBundle.message("welcome.screen.learnIde.interactive.courses.text"),
                                                                       5, HeaderColor, true)
-
   private val helpAndResourcesHeader: JTextPane = HeightLimitedPane(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text"),
                                                                     5, HeaderColor, true)
 
@@ -53,7 +52,7 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
 
     contentPanel.apply {
       layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
-      border = EmptyBorder(24, 24, 24, 24)
+      border = JBUI.Borders.empty(unscalable24px)
       isOpaque = false
       initInteractiveCoursesPanel()
       initHelpAndResourcePanel()
@@ -168,8 +167,24 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
   }
 
   private fun rigid(_width: Int, _height: Int): Component {
-    return Box.createRigidArea(
-      Dimension(JBUI.scale(_width), JBUI.scale(_height))).apply { (this as JComponent).alignmentX = LEFT_ALIGNMENT }
+    val d = Dimension(JBUI.scale(_width), JBUI.scale(_height))
+    return object: Box.Filler(d, d, d) {
+      init {
+        alignmentX = LEFT_ALIGNMENT
+      }
+
+      override fun updateUI() {
+        super.updateUI()
+        val newD = Dimension(JBUI.scale(_width), JBUI.scale(_height))
+        minimumSize = newD
+        preferredSize = newD
+        maximumSize = newD
+      }
+
+      override fun setUI(newUI: ComponentUI?) {
+        super.setUI(newUI)
+      }
+    }
   }
 
   private fun performActionOnWelcomeScreen(action: AnAction) {
