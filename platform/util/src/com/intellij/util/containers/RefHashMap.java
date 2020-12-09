@@ -39,11 +39,6 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     this(4);
   }
 
-  RefHashMap(@NotNull Map<? extends K, ? extends V> t) {
-    this(Math.max(2 * t.size(), 11), 0.75f);
-    putAll(t);
-  }
-
   RefHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     this(4, 0.8f, hashingStrategy);
   }
