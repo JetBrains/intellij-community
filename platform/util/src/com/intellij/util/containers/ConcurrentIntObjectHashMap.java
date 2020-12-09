@@ -20,8 +20,9 @@ import java.util.concurrent.locks.LockSupport;
  * - Null values are NOT allowed
  * @author Doug Lea
  * @param <V> the type of mapped values
- * Use {@link ConcurrentCollectionFactory#createConcurrentIntObjectMap()} to create this map
+ * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectMap()} instead
  */
+@Deprecated
 final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   /**
    * The largest possible table capacity.  This value must be

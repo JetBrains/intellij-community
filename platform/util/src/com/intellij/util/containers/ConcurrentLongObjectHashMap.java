@@ -20,8 +20,9 @@ import java.util.concurrent.locks.LockSupport;
  * - Null values are NOT allowed
  * @author Doug Lea
  * @param <V> the type of mapped values
- * Use {@link ConcurrentCollectionFactory#createConcurrentLongObjectMap()} to create this map
+ * @deprecated  Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} instead
  */
+@Deprecated
 final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
     /* ---------------- Constants -------------- */

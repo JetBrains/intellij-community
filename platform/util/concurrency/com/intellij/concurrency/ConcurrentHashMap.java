@@ -6136,7 +6136,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     private static final VarHandle TRANSFERINDEX;
     private static final VarHandle BASECOUNT;
     private static final VarHandle CELLSBUSY;
-    private static final VarHandle CELLVALUE;
+    static final VarHandle CELLVALUE;
     private static final VarHandle TAB_ARRAY;
 
     static {
