@@ -189,8 +189,11 @@ class InvokeAfterUpdateCallback {
   }
 
   private static class FictiveBackgroundable extends Task.Backgroundable {
-    @NotNull private final Waiter myWaiter;
     @Nullable private final ModalityState myState;
+
+    @NotNull private final Runnable myRunnable;
+    @NotNull private final AtomicBoolean myStarted = new AtomicBoolean();
+    @NotNull private final Semaphore mySemaphore = new Semaphore();
 
     FictiveBackgroundable(@NotNull Project project,
                           @NotNull Runnable runnable,
@@ -199,13 +202,27 @@ class InvokeAfterUpdateCallback {
                           @Nullable ModalityState state) {
       super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
       myState = state;
-      myWaiter = new Waiter(project, runnable, title, cancellable);
+      myRunnable = runnable;
+      mySemaphore.down();
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      myWaiter.run(indicator);
-      runOrInvokeLaterAboveProgress(() -> myWaiter.onSuccess(), notNull(myState, ModalityState.NON_MODAL), myProject);
+      indicator.setIndeterminate(true);
+      indicator.setText2(VcsBundle.message("commit.wait.util.synched.text"));
+
+      if (!myStarted.compareAndSet(false, true)) {
+        LOG.error("Waiter running under progress being started again.");
+      }
+      else {
+        ProgressIndicatorUtils.awaitWithCheckCanceled(mySemaphore, indicator);
+      }
+
+      runOrInvokeLaterAboveProgress(() -> {
+        if (!myProject.isDisposed()) {
+          myRunnable.run();
+        }
+      }, notNull(myState, ModalityState.NON_MODAL), myProject);
     }
 
     @Override
@@ -214,7 +231,7 @@ class InvokeAfterUpdateCallback {
     }
 
     public void done() {
-      myWaiter.done();
+      mySemaphore.up();
     }
   }
 }
