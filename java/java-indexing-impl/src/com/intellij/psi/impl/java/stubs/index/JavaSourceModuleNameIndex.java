@@ -25,13 +25,13 @@ import static java.util.Collections.singletonMap;
 public class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
   private static final ID<String, Void> NAME = ID.create("java.source.module.name");
 
-  private final FileType myManifestFileType = FileTypeRegistry.getInstance().getFileTypeByExtension("MF");
-  private final FileBasedIndex.InputFilter myFilter = new DefaultFileTypeSpecificInputFilter(myManifestFileType) {
-    @Override
-    public boolean acceptInput(@NotNull VirtualFile f) {
-      return f.isInLocalFileSystem();
-    }
-  };
+  private final FileBasedIndex.InputFilter myFilter =
+    new DefaultFileTypeSpecificInputFilter(FileTypeRegistry.getInstance().getFileTypeByExtension("MF")) {
+      @Override
+      public boolean acceptInput(@NotNull VirtualFile f) {
+        return f.isInLocalFileSystem() && "MANIFEST.MF".equalsIgnoreCase(f.getName());
+      }
+    };
 
   private final DataIndexer<String, Void, FileContent> myIndexer = data -> {
     try {
@@ -50,7 +50,7 @@ public class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   @NotNull
