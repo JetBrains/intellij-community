@@ -815,6 +815,13 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
+    public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
+      return myVirtualFile == null
+             ? Collections.emptyList()
+             : ContainerUtil.createMaybeSingletonList(ModelBranch.getFileBranch(myVirtualFile));
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || o.getClass() != getClass()) return false;

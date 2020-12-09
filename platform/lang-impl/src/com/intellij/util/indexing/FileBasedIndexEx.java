@@ -16,7 +16,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -353,7 +352,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public boolean processFilesContainingAllKeys(@NotNull Collection<AllKeysQuery<?, ?>> queries,
                                                @NotNull GlobalSearchScope filter,
                                                @NotNull Processor<? super VirtualFile> processor) {
-    ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
+    Project project = filter.getProject();
+    ProjectIndexableFilesFilter filesSet = projectIndexableFiles(project);
     IntSet set = null;
 
     if (filter instanceof GlobalSearchScope.FilesScope) {
@@ -378,7 +378,18 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         set = queryResult;
       }
     }
-    return set != null && processVirtualFiles(set, filter, processor);
+    if (set == null || !processVirtualFiles(set, filter, processor)) {
+      return false;
+    }
+    if (project == null) return true;
+    return ModelBranchImpl.processModifiedFilesInScope(filter, file -> {
+      for (AllKeysQuery<?, ?> query : queries) {
+        ID<?, ?> id = query.getIndexId();
+        Map<?, ?> data = getFileData(id, file, project);
+        if (!data.keySet().containsAll(query.getDataKeys())) return true;
+      }
+      return processor.process(file);
+    });
   }
 
   @Override
@@ -480,7 +491,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   private static boolean processVirtualFiles(@NotNull IntCollection ids,
-                                             @NotNull VirtualFileFilter filter,
+                                             @NotNull GlobalSearchScope filter,
                                              @NotNull Processor<? super VirtualFile> processor) {
     // ensure predictable order because result might be cached by consumer
     IntList sortedIds = new IntArrayList(ids);
@@ -491,11 +502,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       ProgressManager.checkCanceled();
       int id = iterator.nextInt();
       VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
-      if (file != null && filter.accept(file)) {
-        boolean processNext = processor.process(file);
-        ProgressManager.checkCanceled();
-        if (!processNext) {
-          return false;
+      if (file != null) {
+        for (VirtualFile fileInBranch : filesInScopeWithBranches(filter, file)) {
+          boolean processNext = processor.process(fileInBranch);
+          ProgressManager.checkCanceled();
+          if (!processNext) {
+            return false;
+          }
         }
       }
     }
