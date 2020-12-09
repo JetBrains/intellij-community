@@ -12,7 +12,7 @@ class StateWidgetStopAction : StopAction() {
   override fun update(e: AnActionEvent) {
     e.project?.let {
       val stateWidgetManager = StateWidgetManager.getInstance(it)
-      if(stateWidgetManager.getActiveCount() == 0) {
+      if(stateWidgetManager.getExecutionsCount() == 0) {
         e.presentation.isEnabledAndVisible = false
         return
       }

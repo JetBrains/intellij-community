@@ -5,6 +5,7 @@ import com.intellij.application.subscribe
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
@@ -53,23 +54,36 @@ class StateWidgetManager(val project: Project) {
 
       val processes = StateWidgetProcess.getProcesses()
       processes.forEach {
-        processByExecutorId[it.executorId] = it
         processById[it.ID] = it
       }
 
       ExecutionManager.EXECUTION_TOPIC.subscribe(project, object : ExecutionListener {
         override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
-          executions[env.executionId] = env
-
-          processes.forEach {
-            if (it.executorId == executorId) {
-              executionsByExecutorId.computeIfAbsent(executorId, Function { mutableSetOf() }).add(env.executionId)
-              processIdByExecutionId[env.executionId] = it.ID
-              update()
+          ExecutorGroup.getGroupIfProxy(env.executor)?.let { executorGroup ->
+            processes.forEach { process ->
+              if (process.executorId == executorGroup.id) {
+                collect(process, executorId, env)
+                return
+              }
             }
+            return
           }
 
+          processes.forEach { process ->
+            if (process.executorId == executorId) {
+              collect(process, executorId, env)
+              return
+            }
+          }
+        }
+
+        private fun collect(process: StateWidgetProcess, executorId: String, env: ExecutionEnvironment) {
+          executions[env.executionId] = env
+          executionsByExecutorId.computeIfAbsent(executorId, Function { mutableSetOf() }).add(env.executionId)
+          processIdByExecutionId[env.executionId] = process.ID
+          processByExecutorId[executorId] = process
           executionByConfiguration.computeIfAbsent(env.runnerAndConfigurationSettings, Function { mutableSetOf() }).add(env.executionId)
+          update()
         }
 
         override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
@@ -78,8 +92,8 @@ class StateWidgetManager(val project: Project) {
             it.remove(env.executionId)
             if (it.isEmpty()) executionsByExecutorId.remove(executorId)
           }
-
-          processIdByExecutionId[env.executionId]
+          processByExecutorId.remove(executorId)
+          processIdByExecutionId.remove(env.executionId)
           executionByConfiguration[env.runnerAndConfigurationSettings]?.remove(env.executionId)
           update()
         }
@@ -102,7 +116,7 @@ class StateWidgetManager(val project: Project) {
     }
   }
 
-  fun getActiveCount(): Int {
+  fun getExecutionsCount(): Int {
     return executions.count()
   }
 
@@ -112,12 +126,6 @@ class StateWidgetManager(val project: Project) {
 
   fun getActiveProcesses(): Set<StateWidgetProcess> {
     return executionsByExecutorId.keys.mapNotNull { processByExecutorId[it] }.toSet()
-  }
-
-  fun getExecutorProcesses(): MutableMap<String, StateWidgetProcess> = processByExecutorId
-
-  fun getProcessById(processId: String): StateWidgetProcess? {
-    return processByExecutorId[processId]
   }
 
   fun getActiveProcessesBySettings(configuration: RunnerAndConfigurationSettings): Set<StateWidgetProcess>? {

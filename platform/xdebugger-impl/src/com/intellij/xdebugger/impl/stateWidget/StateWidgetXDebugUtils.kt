@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.xdebugger.impl.actions
+package com.intellij.xdebugger.impl.stateWidget
 
 import com.intellij.execution.segmentedRunDebugWidget.StateWidgetManager
 import com.intellij.openapi.project.Project
@@ -14,7 +14,7 @@ class StateWidgetXDebugUtils {
     fun isAvailable(project: Project?): Boolean {
       project?.let {
         val stateWidgetManager = StateWidgetManager.getInstance(it)
-        if (stateWidgetManager.getActiveCount() == 1 && stateWidgetManager.getActiveProcesses().firstOrNull()?.ID == ToolWindowId.DEBUG) {
+        if (stateWidgetManager.getExecutionsCount() == 1 && stateWidgetManager.getActiveProcesses().firstOrNull()?.ID == ToolWindowId.DEBUG) {
           return true
         }
       }

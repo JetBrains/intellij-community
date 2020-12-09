@@ -50,7 +50,7 @@
 
     <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run" id="debug"/>
 
-    <stateWidgetProcess implementation="com.intellij.execution.stateExecutionWidget.StateWidgetDebugProcess"/>
+    <stateWidgetProcess implementation="com.intellij.xdebugger.impl.stateWidget.StateWidgetDebugProcess"/>
 
     <copyPastePreProcessor implementation="com.intellij.xdebugger.impl.ui.DebuggerCopyPastePreprocessor"/>
 
@@ -100,8 +100,8 @@
     </group>
 
     <group id="StateWidgetDebuggerAdditionalActions">
-      <action id="StateWidgetResumeAction" class="com.intellij.xdebugger.impl.actions.StateWidgetResumeAction" icon="AllIcons.Actions.Resume"/>
-      <action id="StateWidgetPauseAction" class="com.intellij.xdebugger.impl.actions.StateWidgetPauseAction" icon="AllIcons.Actions.Pause"/>
+      <action id="StateWidgetResumeAction" class="com.intellij.xdebugger.impl.stateWidget.StateWidgetResumeAction" icon="AllIcons.Actions.Resume"/>
+      <action id="StateWidgetPauseAction" class="com.intellij.xdebugger.impl.stateWidget.StateWidgetPauseAction" icon="AllIcons.Actions.Pause"/>
       <add-to-group group-id="StateWidgetAdditionalActions"/>
     </group>
 

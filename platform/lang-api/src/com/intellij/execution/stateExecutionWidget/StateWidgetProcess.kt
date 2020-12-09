@@ -21,4 +21,6 @@ interface StateWidgetProcess {
   val executorId: String
   val name: @Nls String
   val actionId: String
+
+  val showInBar: Boolean
 }

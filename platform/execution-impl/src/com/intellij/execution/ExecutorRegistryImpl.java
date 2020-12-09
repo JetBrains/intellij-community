@@ -104,15 +104,29 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     AnAction action = registerAction(actionManager, executor.getContextActionId(), runContextAction, myContextActionIdToAction);
     if (isExecutorInMainGroup(executor)) {
-      ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP)).add(action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE), actionManager);
+      ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP))
+        .add(action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE), actionManager);
     }
     else {
-      ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE)).add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
+      ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE))
+        .add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
     }
 
     List<StateWidgetProcess> processes = StateWidgetProcess.getProcesses();
-    processes.forEach(it -> {
-      if (it.getExecutorId().equals(executor.getId()) && !(executor instanceof ExecutorGroup)) {
+    processes.stream().filter(it -> it.getExecutorId().equals(executor.getId()) && it.getShowInBar()).forEach(it -> {
+
+      if (executor instanceof ExecutorGroup) {
+        ExecutorGroup<?> executorGroup = (ExecutorGroup<?>)executor;
+        ActionGroup wrappedAction = new SplitButtonAction(new StateWidgetGroup(executorGroup, ExecutorAction::new, it));
+        Presentation presentation = wrappedAction.getTemplatePresentation();
+        presentation.setIcon(executor.getIcon());
+        presentation.setText(it.getName());
+        presentation.setDescription(executor.getDescription());
+
+        registerActionInGroup(actionManager, it.getActionId(), wrappedAction, STATE_WIDGET_GROUP,
+                              myRunDebugIdToAction);
+      }
+      else {
         ExecutorAction wrappedAction = new StateWidget(executor, it);
         registerActionInGroup(actionManager, it.getActionId(), wrappedAction, STATE_WIDGET_GROUP,
                               myRunDebugIdToAction);
@@ -202,6 +216,35 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
+  private static final class StateWidgetGroup extends ExecutorGroupActionGroup {
+    final StateWidgetProcess myProcess;
+
+    private StateWidgetGroup(@NotNull ExecutorGroup<?> executorGroup,
+                             @NotNull Function<? super Executor, ? extends AnAction> childConverter, @NotNull StateWidgetProcess process) {
+      super(executorGroup, childConverter);
+      myProcess = process;
+    }
+
+    @Override
+    public boolean displayTextInToolbar() {
+      return true;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      if (project != null) {
+        if (StateWidgetManager.getInstance(project).getExecutionsCount() == 0) {
+          e.getPresentation().setEnabledAndVisible(true);
+          super.update(e);
+          e.getPresentation().setText(myExecutorGroup.getActionName());
+          return;
+        }
+      }
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+  }
+
   private static final class StateWidget extends ExecutorAction {
     final StateWidgetProcess myProcess;
 
@@ -219,7 +262,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project != null) {
-        if (StateWidgetManager.getInstance(project).getActiveCount() == 0) {
+        if (StateWidgetManager.getInstance(project).getExecutionsCount() == 0) {
           e.getPresentation().setEnabledAndVisible(true);
           super.update(e);
           e.getPresentation().setText(myExecutor.getActionName());
@@ -352,8 +395,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   // TODO: make private as soon as IDEA-207986 will be fixed
   // RunExecutorSettings configurations can be modified, so we request current childExecutors on each AnAction#update call
-  public final static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
-    private final ExecutorGroup<?> myExecutorGroup;
+  public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
+    protected final ExecutorGroup<?> myExecutorGroup;
     private final Function<? super Executor, ? extends AnAction> myChildConverter;
 
     private ExecutorGroupActionGroup(@NotNull ExecutorGroup<?> executorGroup, @NotNull Function<? super Executor, ? extends AnAction> childConverter) {

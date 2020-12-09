@@ -5,7 +5,9 @@ import com.intellij.execution.*
 import com.intellij.execution.ExecutorRegistryImpl.RunnerHelper
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.compound.SettingsAndEffectiveTarget
+import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
@@ -21,7 +23,7 @@ import javax.swing.JComponent
 class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
   override fun createFinalAction(configuration: RunnerAndConfigurationSettings, project: Project): AnAction {
     val stateWidgetManager = StateWidgetManager.getInstance(project)
-    val count = stateWidgetManager.getActiveCount()
+    val count = stateWidgetManager.getExecutionsCount()
 
     return if (count > 0) {
       FinalActionGroup(configuration, project)
@@ -54,7 +56,7 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
     e.project?.let { project ->
       val stateWidgetManager = StateWidgetManager.getInstance(project)
 
-      val count = stateWidgetManager.getActiveCount()
+      val count = stateWidgetManager.getExecutionsCount()
       if (count > 1) {
         e.presentation.text = ExecutionBundle.message("state.widget.active.processes.text", count)
         e.presentation.icon = AllIcons.RunConfigurations.Application
@@ -86,16 +88,26 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
       if (executorRegistry is ExecutorRegistryImpl) {
         stateWidgetManager.getExecutionBySettings(configuration)?.forEach { execution ->
           stateWidgetManager.getProcessByExecutionId(execution.executionId)?.let { process ->
-            actions.add(createStopAction(process, execution.contentToReuse))
+            actions.add(createStopAction(process, execution))
           }
         }
 
         availableProcesses.forEach { process ->
-          executorRegistry.getExecutorById(process.executorId)?.let {
-            val activeTarget = ExecutionTargetManager.getActiveTarget(project)
-            val target = SettingsAndEffectiveTarget(configuration.configuration, activeTarget)
-            if (RunnerHelper.canRun(project, listOf(target), it)) {
-              actions.add(createProcessAction(process, it))
+          executorRegistry.getExecutorById(process.executorId)?.let { mainExecutor ->
+            if (mainExecutor is ExecutorGroup<*>) {
+              val group = DefaultActionGroup.createPopupGroup(Supplier { mainExecutor.actionName })
+              mainExecutor.childExecutors().forEach { executor ->
+                if (canRun(process, executor)) {
+                  group.add(createProcessAction(process, executor))
+                }
+              }
+
+              group.templatePresentation.icon = mainExecutor.icon
+              if (group.childrenCount > 0)
+                actions.add(group)
+            }
+            else if (canRun(process, mainExecutor)) {
+              actions.add(createProcessAction(process, mainExecutor))
             }
           }
         }
@@ -124,44 +136,42 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
     }
 
     private fun createProcessAction(process: StateWidgetProcess, executor: Executor): AnAction {
-      return object : AnAction(Supplier { process.name }, executor.icon), DumbAware {
+      return object : AnAction(Supplier { executor.actionName }, executor.icon), DumbAware {
 
         override fun actionPerformed(e: AnActionEvent) {
-          if (executorRegistry is ExecutorRegistryImpl) {
-            if (canRun(process, executor)) {
-              RunnerHelper.run(project, configuration.configuration, configuration, e.dataContext, executor)
-            }
+          if (canRun(process, executor)) {
+            RunnerHelper.run(project, configuration.configuration, configuration, e.dataContext, executor)
           }
         }
 
         override fun update(e: AnActionEvent) {
-          if (executorRegistry is ExecutorRegistryImpl) {
-            e.presentation.isEnabled = canRun(process, executor)
-          }
+          e.presentation.isEnabled = canRun(process, executor)
         }
       }
     }
 
-    private fun createStopAction(process: StateWidgetProcess, descriptor: RunContentDescriptor?): AnAction {
-      return object : AnAction(Supplier { ExecutionBundle.message("state.widget.stop.process.action.item.name", process.name) },
+    private fun createStopAction(process: StateWidgetProcess, environment: ExecutionEnvironment): AnAction {
+      return object : AnAction(Supplier {
+        ExecutionBundle.message("state.widget.stop.process.action.item.name", environment.executor.actionName)
+      },
                                AllIcons.Actions.Suspend), DumbAware {
 
         override fun actionPerformed(e: AnActionEvent) {
-          ExecutionManagerImpl.stopProcess(descriptor)
+
+          ExecutionManagerImpl.stopProcess(environment.contentToReuse)
         }
       }
     }
 
     private fun canRun(process: StateWidgetProcess, executor: Executor): Boolean {
-      if (executorRegistry is ExecutorRegistryImpl) {
-        val activeTarget = ExecutionTargetManager.getActiveTarget(project)
-        val target = SettingsAndEffectiveTarget(configuration.configuration, activeTarget)
+      val activeTarget = ExecutionTargetManager.getActiveTarget(project)
+      val target = SettingsAndEffectiveTarget(configuration.configuration, activeTarget)
 
-        val activeProcesses = stateWidgetManager.getActiveProcessesBySettings(configuration)
+      val activeProcesses = stateWidgetManager.getActiveProcessesBySettings(configuration)
 
-        return (activeProcesses?.contains(process) != true && RunnerHelper.canRun(project, listOf(target), executor))
-      }
-      return false
+      val b = activeProcesses?.contains(process) != true || configuration.configuration.isAllowRunningInParallel
+      return (b && RunnerHelper.canRun(project, listOf(target), executor))
+
     }
   }
 

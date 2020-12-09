@@ -33,7 +33,7 @@ class StateWidgetAction : PillActionComponent(), DumbAware {
     e.presentation.isEnabledAndVisible = isNewRunDebug()
 
     e.presentation.putClientProperty(PILL_SHOWN, e.project?.let {
-      StateWidgetManager.getInstance(it).getActiveProcessesIDs().isNotEmpty()
+      StateWidgetManager.getInstance(it).getExecutionsCount() > 0
     } ?: false)
   }
 }

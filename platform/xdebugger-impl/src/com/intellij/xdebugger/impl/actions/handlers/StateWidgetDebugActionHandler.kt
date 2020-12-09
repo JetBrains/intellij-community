@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-import com.intellij.xdebugger.impl.actions.StateWidgetXDebugUtils.Companion.getSingleSession
-import com.intellij.xdebugger.impl.actions.StateWidgetXDebugUtils.Companion.isAvailable
+import com.intellij.xdebugger.impl.stateWidget.StateWidgetXDebugUtils.Companion.getSingleSession
+import com.intellij.xdebugger.impl.stateWidget.StateWidgetXDebugUtils.Companion.isAvailable
 
 abstract class StateWidgetDebugActionHandler : DebuggerActionHandler() {
   override fun perform(project: Project, event: AnActionEvent) {
