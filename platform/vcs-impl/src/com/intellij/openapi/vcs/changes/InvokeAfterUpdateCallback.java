@@ -62,10 +62,6 @@ class InvokeAfterUpdateCallback {
     Consumer<Runnable> callbackCaller = mode.isCallbackOnAwt()
                                         ? ApplicationManager.getApplication()::invokeLater
                                         : ApplicationManager.getApplication()::executeOnPooledThread;
-    Runnable callback = () -> {
-      logUpdateFinished(project, mode);
-      if (!project.isDisposed()) afterUpdate.run();
-    };
     return new CallbackDataBase(project, afterUpdate, state) {
       @Override
       public void startProgress() {
@@ -73,7 +69,7 @@ class InvokeAfterUpdateCallback {
 
       @Override
       public void endProgress() {
-        callbackCaller.accept(callback);
+        callbackCaller.accept(this::invokeCallback);
       }
     };
   }
@@ -88,7 +84,6 @@ class InvokeAfterUpdateCallback {
                 ? new Waiter(project, afterUpdate, title, mode.isCancellable())
                 : new FictiveBackgroundable(project, afterUpdate, title, mode.isCancellable(), state);
     Runnable callback = () -> {
-      logUpdateFinished(project, mode);
       setDone(task);
     };
     return new CallbackDataBase(project, afterUpdate, state) {
@@ -129,16 +124,14 @@ class InvokeAfterUpdateCallback {
 
     @Override
     public void handleStoppedQueue() {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myProject.isDisposed()) {
-          myAfterUpdate.run();
-        }
-      }, notNull(myModalityState, ModalityState.defaultModalityState()));
+      ApplicationManager.getApplication().invokeLater(this::invokeCallback,
+                                                      notNull(myModalityState, ModalityState.defaultModalityState()));
     }
-  }
 
-  private static void logUpdateFinished(@NotNull Project project, @NotNull InvokeAfterUpdateMode mode) {
-    LOG.debug(mode + " changes update finished for project " + project.getName());
+    protected final void invokeCallback() {
+      LOG.debug("changes update finished for project " + myProject.getName());
+      if (!myProject.isDisposed()) myAfterUpdate.run();
+    }
   }
 
   private static class Waiter extends Task.Modal {
