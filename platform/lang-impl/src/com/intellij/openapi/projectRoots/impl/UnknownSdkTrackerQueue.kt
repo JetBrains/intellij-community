@@ -16,7 +16,7 @@ class UnknownSdkTrackerQueue : Disposable {
   }
 
   private val myUpdateQueue = MergingUpdateQueue(javaClass.simpleName,
-                                                 700,
+                                                 6700,
                                                  true,
                                                  null,
                                                  this,

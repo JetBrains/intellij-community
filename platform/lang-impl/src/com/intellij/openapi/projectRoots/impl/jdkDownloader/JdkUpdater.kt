@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTrackerQueue
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.VersionComparatorUtil
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -96,11 +98,20 @@ internal class JdkUpdatesCollector(
     )
     Disposer.register(this, Disposable { future.cancel(false) })
 
+    val myLastKnownModificationId = AtomicLong(-100_500)
+
     project.messageBus
       .connect(this)
       .subscribe(
         ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
         override fun rootsChanged(event: ModuleRootEvent) {
+          if (event.isCausedByFileTypesChange) return
+
+          //an optimization - we do not scan for JDKs if there we no ProjectRootManager modifications change
+          //this avoids VirtualFilePointers invalidation
+          val newCounterValue = ProjectRootManager.getInstance(project).modificationCount
+          if (myLastKnownModificationId.getAndSet(newCounterValue) == newCounterValue) return
+
           updateNotifications()
         }
       })
