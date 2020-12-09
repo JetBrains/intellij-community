@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import sun.font.Font2D;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
@@ -25,6 +26,7 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
   private static final Method GET_TYPO_SUBFAMILY_METHOD = ReflectionUtil.getDeclaredMethod(Font2D.class, "getTypographicSubfamilyName");
   private static final Method GET_WEIGHT_METHOD = ReflectionUtil.getDeclaredMethod(Font2D.class, "getWeight");
 
+  private static final AffineTransform SYNTHETIC_ITALICS_TRANSFORM = AffineTransform.getShearInstance(-0.2, 0);
   private static final int PREFERRED_MAIN_WEIGHT = 400;
   private static final int PREFERRED_BOLD_WEIGHT_DIFF = 300;
 
@@ -180,7 +182,8 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
               }
             }
           }
-          italics.put(subFamily, italicSubFamily == null ? members.get(subFamily).deriveFont(Font.ITALIC) : members.get(italicSubFamily));
+          italics.put(subFamily, italicSubFamily == null ? members.get(subFamily).deriveFont(SYNTHETIC_ITALICS_TRANSFORM)
+                                                         : members.get(italicSubFamily));
 
           candidates.forEach((original, candidate) -> candidate.updateIfBetterMatch(weight, subFamily));
           candidates.put(subFamily, new Candidate(subFamily, weight + PREFERRED_BOLD_WEIGHT_DIFF));
