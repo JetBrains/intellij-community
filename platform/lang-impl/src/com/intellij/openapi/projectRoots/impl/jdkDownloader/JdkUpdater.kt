@@ -166,10 +166,8 @@ internal class JdkUpdatesCollector(
 
     val notifications = service<JdkUpdaterNotifications>()
 
-    val jdksToTest = notifications.filterNotPendingSdks(knownSdks)
-    val noUpdatesFor = HashSet<Sdk>(jdksToTest)
-
-    for (jdk in jdksToTest) {
+    val noUpdatesFor = HashSet<Sdk>(knownSdks)
+    for (jdk in knownSdks) {
       val actualItem = JdkInstaller.getInstance().findJdkItemForInstalledJdk(jdk.homePath) ?: continue
       val feedItem = jdkFeed[actualItem.suggestedSdkName] ?: continue
 
@@ -196,10 +194,6 @@ class JdkUpdaterNotifications : Disposable {
 
   override fun dispose() : Unit = lock.withLock {
     pendingNotifications.clear()
-  }
-
-  fun filterNotPendingSdks(sdks: List<Sdk>): List<Sdk> = lock.withLock {
-    sdks.filterNot { pendingNotifications.containsKey(it) }
   }
 
   fun showNotification(jdk: Sdk, actualItem: JdkItem, newItem: JdkItem) : Unit = lock.withLock {

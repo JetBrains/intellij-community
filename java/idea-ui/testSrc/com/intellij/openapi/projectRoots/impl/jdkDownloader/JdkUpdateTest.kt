@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -182,6 +183,40 @@ class JdkUpdateTest : LightPlatformTestCase() {
     Assert.assertTrue("$notifications", notifications.single().content.contains("17.0.777"))
     Assert.assertEquals("$expired", 1, expired.size)
     Assert.assertFalse("$notifications", expired.single().content.contains("17.0.777"))
+  }
+
+  fun `test replace notifications correctly 3`() {
+    val old1 = newNotification("old-1")
+    service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
+
+    Assert.assertEquals(1, listOurNotifications().size)
+    Assert.assertEquals(0, listOurExpiredNotifications().size)
+
+    runWriteAction {
+      old1.jdk.sdkModificator.also { it.versionString = "new JDK version" }.commitChanges()
+    }
+    service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
+
+    //notification must expire and update
+    Assert.assertEquals(1, listOurNotifications().size)
+    Assert.assertEquals(1, listOurExpiredNotifications().size)
+  }
+
+  fun `test replace notifications correctly 4`() {
+    val old1 = newNotification("old-1")
+    service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
+
+    Assert.assertEquals(1, listOurNotifications().size)
+    Assert.assertEquals(0, listOurExpiredNotifications().size)
+
+    runWriteAction {
+      old1.jdk.sdkModificator.also { it.homePath = it.homePath + "-123" }.commitChanges()
+    }
+    service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
+
+    //notification must expire and update
+    Assert.assertEquals(1, listOurNotifications().size)
+    Assert.assertEquals(1, listOurExpiredNotifications().size)
   }
 }
 
