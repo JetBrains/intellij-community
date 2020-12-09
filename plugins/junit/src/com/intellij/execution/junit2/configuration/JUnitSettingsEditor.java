@@ -13,7 +13,6 @@ import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,11 +25,6 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
 
   public JUnitSettingsEditor(JUnitConfiguration runConfiguration) {
     super(runConfiguration);
-  }
-
-  @Override
-  protected @NotNull SettingsEditorFragment<JUnitConfiguration, ModuleClasspathCombo> createClasspathCombo() {
-    return CommonJavaFragments.moduleClasspath(null, null, null);
   }
 
   @Override
