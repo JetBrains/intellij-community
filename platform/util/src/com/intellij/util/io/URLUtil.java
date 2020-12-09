@@ -4,8 +4,8 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ThreeState;
+import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,53 +179,7 @@ public final class URLUtil {
   }
 
   public static @NotNull CharSequence unescapePercentSequences(@NotNull CharSequence s, int from, int end) {
-    int i = Strings.indexOf(s, '%', from, end);
-    if (i == -1) {
-      return s.subSequence(from, end);
-    }
-
-    StringBuilder decoded = new StringBuilder();
-    decoded.append(s, from, i);
-
-    byte[] byteBuffer = null;
-    int byteBufferSize = 0;
-    while (i < end) {
-      char c = s.charAt(i);
-      if (c == '%') {
-        if (byteBuffer == null) {
-          byteBuffer = new byte[end - from];
-        }
-        else {
-          byteBufferSize = 0;
-        }
-        while (i + 2 < end && s.charAt(i) == '%') {
-          final int d1 = decode(s.charAt(i + 1));
-          final int d2 = decode(s.charAt(i + 2));
-          if (d1 != -1 && d2 != -1) {
-            byteBuffer[byteBufferSize++] = (byte)((d1 & 0xf) << 4 | d2 & 0xf);
-            i += 3;
-          }
-          else {
-            break;
-          }
-        }
-        if (byteBufferSize != 0) {
-          decoded.append(new String(byteBuffer, 0, byteBufferSize, StandardCharsets.UTF_8));
-          continue;
-        }
-      }
-
-      decoded.append(c);
-      i++;
-    }
-    return decoded;
-  }
-
-  private static int decode(char c) {
-    if ((c >= '0') && (c <= '9')) return c - '0';
-    if ((c >= 'a') && (c <= 'f')) return c - 'a' + 10;
-    if ((c >= 'A') && (c <= 'F')) return c - 'A' + 10;
-    return -1;
+    return UrlUtilRt.unescapePercentSequences(s, from, end);
   }
 
   public static boolean containsScheme(@NotNull String url) {
@@ -351,5 +305,9 @@ public final class URLUtil {
     }
     if (unmatchedCount > 0) return new TextRange(start, unmatchedPos);
     return new TextRange(start, end);
+  }
+
+  public static @Nullable URL internProtocol(@NotNull URL url) {
+    return UrlUtilRt.internProtocol(url);
   }
 }

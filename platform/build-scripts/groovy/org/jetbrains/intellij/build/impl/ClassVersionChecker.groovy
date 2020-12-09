@@ -14,6 +14,8 @@ import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.zip.ZipException
+
 /**
  * <p>
  *   Recursively checks .class files in directories and .jar/.zip files to ensure that their versions
@@ -131,7 +133,13 @@ final class ClassVersionChecker {
 
         String name = entry.name
         if (name.endsWith(".zip") || name.endsWith(".jar")) {
-          visitZip(zipPath + "!/" + name, join(zipRelPath, "!/", name), new ZipFile(new SeekableInMemoryByteChannel(file.getInputStream(entry).readAllBytes())))
+          String childZipPath = zipPath + "!/" + name
+          try {
+            visitZip(childZipPath, join(zipRelPath, "!/", name), new ZipFile(new SeekableInMemoryByteChannel(file.getInputStream(entry).readAllBytes())))
+          }
+          catch (ZipException e) {
+            throw new RuntimeException("Cannot read " + childZipPath, e)
+          }
         }
         else if (name.endsWith(".class") && !name.endsWith("module-info.class") && !isMultiVersion(name)) {
           checkVersion(join(zipRelPath, "!/", name), file.getInputStream(entry))

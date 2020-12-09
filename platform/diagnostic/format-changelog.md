@@ -1,3 +1,12 @@
+# 26
+
+* `stats.loadedClasses` map (plugin id to class count) is removed.
+* `plugins` is added. `classCount` for number of classes, `classLoadingEdtTime`, `classLoadingBackgroundTime` 
+
+# 25
+
+* add `classLoading`. Only if `idea.record.classloading.stats=true` is specified.
+
 # 24
 
 * add `icons.action-icon`.

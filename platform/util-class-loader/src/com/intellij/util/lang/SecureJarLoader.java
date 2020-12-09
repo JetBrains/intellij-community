@@ -5,66 +5,37 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Path;
 import java.security.CodeSource;
 import java.security.Permissions;
 import java.security.ProtectionDomain;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
 
 final class SecureJarLoader extends JarLoader {
-  private @Nullable ProtectionDomain myProtectionDomain;
-  private final Object myProtectionDomainMonitor = new Object();
+  private volatile @Nullable ProtectionDomain protectionDomain;
+  private final Object protectionDomainMonitor = new Object();
 
   SecureJarLoader(@NotNull Path file, @NotNull ClassPath configuration) throws IOException {
-    super(file, configuration, new JdkZipFile(file, configuration.lockJars, true));
+    super(file, configuration, new JdkZipResourceFile(file, configuration.lockJars, true));
   }
 
-  @Override
-  protected @NotNull Resource instantiateResource(@NotNull ZipEntry entry) throws IOException {
-    return new SecureJarResource(url, (JarEntry)entry);
-  }
-
-  private final class SecureJarResource extends ZipFileResource {
-    SecureJarResource(@NotNull URL baseUrl, @NotNull JarEntry entry) {
-      super(baseUrl, entry);
+  ProtectionDomain getProtectionDomain(@NotNull JarEntry entry, URL url) {
+    ProtectionDomain result = protectionDomain;
+    if (result != null) {
+      return result;
     }
 
-    @Override
-    public byte @NotNull [] getBytes() throws IOException {
-      JarFile file = (JarFile)((JdkZipFile)zipFile).getZipFile();
-      try {
-        InputStream stream = file.getInputStream(entry);
-        try {
-          byte[] result = Resource.loadBytes(stream, (int)entry.getSize());
-          synchronized (myProtectionDomainMonitor) {
-            if (myProtectionDomain == null) {
-              JarEntry jarEntry = file.getJarEntry(entry.getName());
-              CodeSource codeSource = new CodeSource(getURL(), jarEntry.getCodeSigners());
-              myProtectionDomain = new ProtectionDomain(codeSource, new Permissions());
-            }
-          }
-          return result;
-        }
-        finally {
-          stream.close();
-        }
+    synchronized (protectionDomainMonitor) {
+      result = protectionDomain;
+      if (result != null) {
+        return result;
       }
-      finally {
-        if (!configuration.lockJars) {
-          file.close();
-        }
-      }
-    }
 
-    @Override
-    public @Nullable ProtectionDomain getProtectionDomain() {
-      synchronized (myProtectionDomainMonitor) {
-        return myProtectionDomain;
-      }
+      CodeSource codeSource = new CodeSource(url, entry.getCodeSigners());
+      result = new ProtectionDomain(codeSource, new Permissions());
+      protectionDomain = result;
     }
+    return result;
   }
 }

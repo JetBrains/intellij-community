@@ -36,7 +36,6 @@ public final class CucumberMain {
                                                           path -> new File(path).toPath());
       UrlClassLoader loader = UrlClassLoader.build().files(files).parent(original.getParent()).useCache()
         .usePersistentClasspathIndexForLocalClassDirectories()
-        .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
         .autoAssignUrlsWithProtectionDomain().get();
       Thread.currentThread().setContextClassLoader(loader);
       exitStatus = (Integer)loader.loadClass(CucumberMain.class.getName()).getMethod("run", String[].class, ClassLoader.class)

@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,8 +14,10 @@ final class SubPluginClassLoader extends PluginClassLoader {
                        @NotNull UrlClassLoader.Builder urlClassLoaderBuilder,
                        @NotNull ClassLoader @NotNull [] parents,
                        @NotNull String @NotNull [] packagePrefixes,
-                       @NotNull ClassLoader coreLoader) {
-    super(urlClassLoaderBuilder, parents, pluginDescriptor, pluginDescriptor.getPluginPath(), coreLoader, pluginDescriptor.packagePrefix);
+                       @NotNull ClassLoader coreLoader,
+                       @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
+    super(urlClassLoaderBuilder, parents, pluginDescriptor, pluginDescriptor.getPluginPath(), coreLoader, pluginDescriptor.packagePrefix,
+          resourceFileFactory);
 
     this.packagePrefixes = packagePrefixes;
   }

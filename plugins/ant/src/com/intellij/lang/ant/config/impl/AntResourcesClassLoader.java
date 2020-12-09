@@ -14,16 +14,12 @@ import java.util.Set;
  * @author Eugene Zhuravlev
 */
 public final class AntResourcesClassLoader extends UrlClassLoader {
+  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+
   private final Set<String> myMisses = new HashSet<>();
 
-  static {
-    if (registerAsParallelCapable()) {
-      markParallelCapable(AntResourcesClassLoader.class);
-    }
-  }
-
   public AntResourcesClassLoader(List<Path> files, ClassLoader parentLoader, boolean canLockJars, boolean canUseCache) {
-    super(build().files(files).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload());
+    super(build().files(files).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload(), isParallelCapable);
   }
 
   @Override

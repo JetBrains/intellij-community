@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -21,11 +20,13 @@ import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
 public final class ClassPath {
-  private static final ResourceStringLoaderIterator ourResourceIterator = new ResourceStringLoaderIterator();
-  private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
+  private static final Loader[] EMPTY_LOADERS = new Loader[0];
+
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
 
   static final boolean recordLoadingInfo = Boolean.getBoolean("idea.record.classpath.info");
+  static final boolean recordLoadingTime = recordLoadingInfo || Boolean.getBoolean("idea.record.classloading.stats");
+
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
 
   private static final Collection<Map.Entry<String, Path>> loadedClasses;
@@ -34,27 +35,28 @@ public final class ClassPath {
   private static final ThreadLocal<Boolean> doingTiming = new ThreadLocal<>();
 
   private final List<Path> files;
+  private final @Nullable ResourceFileFactory resourceFileFactory;
   private final List<Loader> loaders = new ArrayList<>();
 
   private volatile boolean allUrlsWereProcessed;
 
   private final AtomicInteger lastLoaderProcessed = new AtomicInteger();
-  private final Map<Path, Loader> loadersMap = new HashMap<>();
+  private final Map<Path, Loader> loaderMap = new HashMap<>();
   private final ClasspathCache cache = new ClasspathCache();
   private final Set<Path> filesWithProtectionDomain;
 
-  final boolean lockJars; // true implies that the .jar file will not be modified in the lifetime of the JarLoader
+  // true implies that the .jar file will not be modified in the lifetime of the JarLoader
+  final boolean lockJars;
   private final boolean useCache;
   final boolean preloadJarContents;
   final boolean isClassPathIndexEnabled;
-  final boolean lazyClassloadingCaches;
   private final @Nullable CachePoolImpl cachePool;
   private final @Nullable Predicate<Path> cachingCondition;
   final boolean errorOnMissingJar;
 
   static {
     // insertion order must be preserved
-    loadedClasses = (recordLoadingInfo || Boolean.getBoolean("idea.record.classloading.stats")) ? new ConcurrentLinkedQueue<>() : null;
+    loadedClasses = recordLoadingInfo ? new ConcurrentLinkedQueue<>() : null;
 
     if (logLoadingInfo) {
       Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -66,10 +68,12 @@ public final class ClassPath {
     }
   }
 
-  ClassPath(List<Path> files, @NotNull Set<Path> filesWithProtectionDomain, @NotNull UrlClassLoader.Builder configuration) {
-    lazyClassloadingCaches = configuration.lazyClassloadingCaches;
+  ClassPath(@NotNull List<Path> files,
+            @NotNull Set<Path> filesWithProtectionDomain,
+            @NotNull UrlClassLoader.Builder configuration,
+            @Nullable ResourceFileFactory resourceFileFactory) {
     lockJars = configuration.lockJars;
-    useCache = configuration.useCache && !lazyClassloadingCaches;
+    useCache = configuration.useCache;
     preloadJarContents = configuration.preloadJarContents;
     cachePool = configuration.cachePool;
     cachingCondition = configuration.cachingCondition;
@@ -78,6 +82,7 @@ public final class ClassPath {
     this.filesWithProtectionDomain = filesWithProtectionDomain;
 
     this.files = new ArrayList<>(files.size());
+    this.resourceFileFactory = resourceFileFactory;
     if (!files.isEmpty()) {
       for (int i = files.size() - 1; i >= 0; i--) {
         this.files.add(files.get(i));
@@ -85,13 +90,21 @@ public final class ClassPath {
     }
   }
 
+  public @Nullable ResourceFileFactory getResourceFileFactory() {
+    return resourceFileFactory;
+  }
+
+  public interface ResourceFileFactory {
+    ResourceFile create(Path file) throws IOException;
+  }
+
   public synchronized void reset(@NotNull List<Path> paths) {
     lastLoaderProcessed.set(0);
     allUrlsWereProcessed = false;
     loaders.clear();
-    loadersMap.clear();
+    loaderMap.clear();
     cache.clearCache();
-    push(paths);
+    addFiles(paths);
   }
 
   public static @NotNull Collection<Map.Entry<String, Path>> getLoadedClasses() {
@@ -111,31 +124,29 @@ public final class ClassPath {
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   void addURL(Path path) {
-    push(Collections.singletonList(path));
+    addFiles(Collections.singletonList(path));
   }
 
-  private void push(List<Path> paths) {
-    if (!paths.isEmpty()) {
-      synchronized (this.files) {
-        for (int i = paths.size() - 1; i >= 0; i--) {
-          this.files.add(paths.get(i));
-        }
-        allUrlsWereProcessed = false;
-      }
+  private synchronized void addFiles(List<Path> files) {
+    for (int i = files.size() - 1; i >= 0; i--) {
+      this.files.add(files.get(i));
     }
+    allUrlsWereProcessed = false;
   }
 
   public @Nullable Resource getResource(@NotNull String resourceName) {
     long started = startTiming();
     try {
-      String shortName = ClasspathCache.transformName(resourceName);
+      String shortName;
       Resource resource;
       int i;
       if (useCache) {
+        shortName = ClasspathCache.transformName(resourceName);
+
         boolean allUrlsWereProcessed = this.allUrlsWereProcessed;
         i = allUrlsWereProcessed ? 0 : lastLoaderProcessed.get();
 
-        resource = cache.iterateLoaders(resourceName, ourResourceIterator, resourceName, this, shortName);
+        resource = cache.iterateLoaders(resourceName, resourceName, shortName);
         if (resource != null) {
           return resource;
         }
@@ -145,6 +156,7 @@ public final class ClassPath {
       }
       else {
         i = 0;
+        shortName = null;
       }
 
       Loader loader;
@@ -163,18 +175,37 @@ public final class ClassPath {
       }
     }
     finally {
-      logInfo(this, started, resourceName);
+      logInfo(started, resourceName);
     }
 
     return null;
   }
 
   public Enumeration<URL> getResources(@NotNull String name) {
-    return new ResourceEnumeration(name);
+    if (useCache && allUrlsWereProcessed) {
+      Collection<Loader> loaderSet = new LinkedHashSet<>();
+      cache.collectLoaders(name, loaderSet);
+
+      if (name.endsWith("/")) {
+        cache.collectLoaders(name.substring(0, name.length() - 1), loaderSet);
+      }
+      else {
+        cache.collectLoaders(name + "/", loaderSet);
+      }
+
+      if (loaderSet.isEmpty()) {
+        return Collections.emptyEnumeration();
+      }
+      return new ResourceEnumeration(name, loaderSet.toArray(EMPTY_LOADERS));
+    }
+    else {
+      return new UncachedResourceEnumeration(name, this);
+    }
   }
 
   private @Nullable Loader getLoader(int i) {
-    if (i < lastLoaderProcessed.get()) { // volatile read
+    // volatile read
+    if (i < lastLoaderProcessed.get()) {
       return loaders.get(i);
     }
 
@@ -184,23 +215,30 @@ public final class ClassPath {
   private synchronized @Nullable Loader getLoaderSlowPath(int i) {
     while (loaders.size() < i + 1) {
       Path path;
-      synchronized (files) {
-        int size = files.size();
-        if (size == 0) {
-          if (useCache) {
-            allUrlsWereProcessed = true;
-          }
-          return null;
+      int size = files.size();
+      if (size == 0) {
+        if (useCache) {
+          allUrlsWereProcessed = true;
         }
-        path = files.remove(size - 1);
+        return null;
       }
+      path = files.remove(size - 1);
 
-      if (loadersMap.containsKey(path)) {
+      if (loaderMap.containsKey(path)) {
         continue;
       }
 
       try {
-        initLoaders(path);
+        Loader loader = createLoader(path);
+        if (loader != null) {
+          if (useCache) {
+            initLoaderCache(path, loader);
+          }
+          loaders.add(loader);
+          // volatile write
+          loaderMap.put(path, loader);
+          lastLoaderProcessed.incrementAndGet();
+        }
       }
       catch (IOException e) {
         LoggerRt.getInstance(ClassPath.class).info("path: " + path, e);
@@ -218,15 +256,7 @@ public final class ClassPath {
     return result;
   }
 
-  private void initLoaders(@NotNull Path file) throws IOException {
-    String filePath = file.toString();
-    Loader loader = createLoader(file, filePath.startsWith(CLASSPATH_JAR_FILE_NAME_PREFIX, filePath.lastIndexOf('/') + 1));
-    if (loader != null) {
-      initLoader(file, loader);
-    }
-  }
-
-  private @Nullable Loader createLoader(@NotNull Path file, boolean processRecursively) throws IOException {
+  private @Nullable Loader createLoader(@NotNull Path file) throws IOException {
     BasicFileAttributes fileAttributes;
     try {
       fileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
@@ -242,54 +272,55 @@ public final class ClassPath {
       return null;
     }
 
-    boolean isSigned = filesWithProtectionDomain.contains(file);
-    JarLoader loader = isSigned ? new SecureJarLoader(file, this) : new JarLoader(file, this);
-    if (processRecursively) {
+    JarLoader loader;
+    if (filesWithProtectionDomain.contains(file)) {
+      loader = new SecureJarLoader(file, this);
+    }
+    else {
+      loader = new JarLoader(file, this,
+                             resourceFileFactory == null ? new JdkZipResourceFile(file, lockJars, false) : resourceFileFactory.create(file));
+    }
+
+    String filePath = file.toString();
+    if (filePath.startsWith(CLASSPATH_JAR_FILE_NAME_PREFIX, filePath.lastIndexOf('/') + 1)) {
       String[] referencedJars = loadManifestClasspath(loader);
       if (referencedJars != null) {
-        long s2 = recordLoadingInfo ? System.nanoTime() : 0;
+        long startReferenced = logLoadingInfo ? System.nanoTime() : 0;
         List<Path> urls = new ArrayList<>(referencedJars.length);
         for (String referencedJar : referencedJars) {
           try {
-            urls.add(Paths.get(new URI(referencedJar)));
+            urls.add(Paths.get(UrlClassLoader.urlToFilePath(referencedJar)));
           }
           catch (Exception e) {
             LoggerRt.getInstance(ClassPath.class).warn("file: " + file + " / " + referencedJar, e);
           }
         }
-        push(urls);
+        addFiles(urls);
         if (logLoadingInfo) {
           //noinspection UseOfSystemOutOrSystemErr
-          System.out.println("Loaded all " + referencedJars.length + " files " + (System.nanoTime() - s2) / 1000000 + "ms");
+          System.out.println("Loaded all " + referencedJars.length + " files " + (System.nanoTime() - startReferenced) / 1000000 + "ms");
         }
       }
     }
     return loader;
   }
 
-  private void initLoader(@NotNull Path path, @NotNull Loader loader) throws IOException {
-    if (useCache) {
-      ClasspathCache.LoaderData data = cachePool == null ? null : cachePool.getCachedData(path);
-      if (data == null) {
-        data = loader.buildData();
-        if (cachePool != null && cachingCondition != null && cachingCondition.test(path)) {
-          cachePool.cacheData(path, data);
-        }
-      }
-      cache.applyLoaderData(data, loader);
-
-      boolean lastOne;
-      synchronized (files) {
-        lastOne = files.isEmpty();
-      }
-
-      if (lastOne) {
-        allUrlsWereProcessed = true;
+  private void initLoaderCache(@NotNull Path file, @NotNull Loader loader) throws IOException {
+    ClasspathCache.IndexRegistrar data = cachePool == null ? null : cachePool.loaderIndexCache.get(file);
+    if (data == null) {
+      data = loader.buildData();
+      if (cachePool != null && cachingCondition != null && cachingCondition.test(file)) {
+        ClasspathCache.LoaderData loaderData =
+          data instanceof ClasspathCache.LoaderData ? (ClasspathCache.LoaderData)data : ((ClasspathCache.LoaderDataBuilder)data).build();
+        cachePool.loaderIndexCache.put(file, loaderData);
+        data = loaderData;
       }
     }
-    loaders.add(loader);
-    loadersMap.put(path, loader);
-    lastLoaderProcessed.incrementAndGet(); // volatile write
+    cache.applyLoaderData(data, loader);
+
+    if (files.isEmpty()) {
+      allUrlsWereProcessed = true;
+    }
   }
 
   Attributes getManifestData(@NotNull Path file) {
@@ -302,70 +333,41 @@ public final class ClassPath {
     }
   }
 
-  private final class ResourceEnumeration implements Enumeration<URL> {
-    private int myIndex;
-    private Resource myResource;
-    private final @NotNull String myName;
-    private final String myShortName;
-    private final List<Loader> myLoaders;
+  private static final class ResourceEnumeration implements Enumeration<URL> {
+    private int index;
+    private Resource resource;
+    private final String name;
+    private final String shortName;
+    private final Loader[] loaders;
 
-    ResourceEnumeration(@NotNull String name) {
-      myName = name;
-      myShortName = ClasspathCache.transformName(name);
-      List<Loader> loaders = null;
-
-      if (useCache && allUrlsWereProcessed) {
-        Collection<Loader> loadersSet = new LinkedHashSet<>();
-        cache.iterateLoaders(name, ourLoaderCollector, loadersSet, this, myShortName);
-
-        if (name.endsWith("/")) {
-          cache.iterateLoaders(name.substring(0, name.length() - 1), ourLoaderCollector, loadersSet, this, myShortName);
-        }
-        else {
-          cache.iterateLoaders(name + "/", ourLoaderCollector, loadersSet, this, myShortName);
-        }
-
-        loaders = new ArrayList<>(loadersSet);
-      }
-
-      myLoaders = loaders;
+    ResourceEnumeration(@NotNull String name, Loader[] loaders) {
+      this.name = name;
+      shortName = ClasspathCache.transformName(name);
+      this.loaders = loaders;
     }
 
     private boolean next() {
-      if (myResource != null) {
+      if (resource != null) {
         return true;
       }
 
       long started = startTiming();
       try {
         Loader loader;
-        if (myLoaders != null) {
-          while (myIndex < myLoaders.size()) {
-            loader = myLoaders.get(myIndex++);
-            if (!loader.containsName(myName, myShortName)) {
-              myResource = null;
-              continue;
-            }
-            myResource = loader.getResource(myName);
-            if (myResource != null) {
-              return true;
-            }
+        while (index < loaders.length) {
+          loader = loaders[index++];
+          if (!loader.containsName(name, shortName)) {
+            resource = null;
+            continue;
           }
-        }
-        else {
-          while ((loader = getLoader(myIndex++)) != null) {
-            if (useCache && !loader.containsName(myName, myShortName)) {
-              continue;
-            }
-            myResource = loader.getResource(myName);
-            if (myResource != null) {
-              return true;
-            }
+          resource = loader.getResource(name);
+          if (resource != null) {
+            return true;
           }
         }
       }
       finally {
-        logInfo(ClassPath.this, started, myName);
+        logInfo(started, name);
       }
 
       return false;
@@ -381,52 +383,89 @@ public final class ClassPath {
       if (!next()) {
         throw new NoSuchElementException();
       }
-      else {
-        Resource resource = myResource;
-        myResource = null;
-        return resource.getURL();
-      }
+
+      Resource resource = this.resource;
+      this.resource = null;
+      return resource.getURL();
     }
   }
 
-  private static final class ResourceStringLoaderIterator implements ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
-    @Override
-    public Resource process(@NotNull Loader loader, @NotNull String s, @NotNull ClassPath classPath, @NotNull String shortName) {
-      return loader.containsName(s, shortName) ? findInLoader(loader, s) : null;
+  private static final class UncachedResourceEnumeration implements Enumeration<URL> {
+    private int index;
+    private Resource resource;
+    private final String name;
+    private final String shortName;
+    private final ClassPath classPath;
+
+    UncachedResourceEnumeration(@NotNull String name, @NotNull ClassPath classPath) {
+      this.name = name;
+      shortName = ClasspathCache.transformName(name);
+      this.classPath = classPath;
     }
 
-    private static @Nullable Resource findInLoader(@NotNull Loader loader, @NotNull String resourceName) {
-      Resource resource = loader.getResource(resourceName);
-      if (resource != null && loadedClasses != null) {
-        loadedClasses.add(new AbstractMap.SimpleImmutableEntry<>(resourceName, loader.path));
+    private boolean next() {
+      if (resource != null) {
+        return true;
       }
-      return resource;
+
+      long started = startTiming();
+      try {
+        Loader loader;
+        while ((loader = classPath.getLoader(index++)) != null) {
+          if (classPath.useCache && !loader.containsName(name, shortName)) {
+            continue;
+          }
+          resource = loader.getResource(name);
+          if (resource != null) {
+            return true;
+          }
+        }
+      }
+      finally {
+        logInfo(started, name);
+      }
+
+      return false;
+    }
+
+    @Override
+    public boolean hasMoreElements() {
+      return next();
+    }
+
+    @Override
+    public URL nextElement() {
+      if (!next()) {
+        throw new NoSuchElementException();
+      }
+
+      Resource resource = this.resource;
+      this.resource = null;
+      return resource.getURL();
     }
   }
 
-  private static class LoaderCollector implements ClasspathCache.LoaderIterator<Object, Collection<Loader>, Object> {
-    @Override
-    public Object process(@NotNull Loader loader,
-                          @NotNull Collection<Loader> parameter,
-                          @NotNull Object parameter2,
-                          @NotNull String shortName) {
-      parameter.add(loader);
-      return null;
+  static @Nullable Resource findInLoader(@NotNull Loader loader, @NotNull String name) {
+    Resource resource = loader.getResource(name);
+    if (resource != null && loadedClasses != null) {
+      loadedClasses.add(new AbstractMap.SimpleImmutableEntry<>(name, loader.path));
     }
+    return resource;
   }
 
   private static long startTiming() {
-    if (loadedClasses == null || doingTiming.get() != null) {
+    if (!recordLoadingTime || doingTiming.get() != null) {
       return 0;
     }
-
-    doingTiming.set(Boolean.TRUE);
-    return System.nanoTime();
+    else {
+      doingTiming.set(Boolean.TRUE);
+      return System.nanoTime();
+    }
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void logInfo(ClassPath path, long started, String resourceName) {
-    if (started == 0 || loadedClasses == null) {
+  private static void logInfo(long started, String resourceName) {
+    if (started == 0 || !recordLoadingTime) {
       return;
     }
 
@@ -440,7 +479,7 @@ public final class ClassPath {
         System.out.println(time / 1000000 + " ms for " + resourceName);
       }
       if (totalRequests % 10000 == 0) {
-        System.out.println(path.getClass().getClassLoader() + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
+        System.out.println(ClassPath.class.getClassLoader() + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
       }
     }
   }

@@ -2,7 +2,10 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
@@ -11,6 +14,7 @@ import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -259,11 +263,11 @@ public final class PluginDescriptorLoader {
     try {
       Path file;
       if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
-        file = Paths.get(Strings.trimEnd(urlToFilePath(resource.getPath(), SystemInfoRt.isWindows).replace('\\', '/'), pathName)).getParent();
+        file = Paths.get(Strings.trimEnd(UrlClassLoader.urlToFilePath(resource.getPath()).replace('\\', '/'), pathName)).getParent();
         return loadDescriptorFromFileOrDir(file, pathName, loadingContext, Files.isDirectory(file));
       }
       else if (URLUtil.JAR_PROTOCOL.equals(resource.getProtocol())) {
-        file = Paths.get(urlToFilePath(resource.getPath(), SystemInfoRt.isWindows));
+        file = Paths.get(UrlClassLoader.urlToFilePath(resource.getPath()));
         Path parentFile = file.getParent();
         if (parentFile == null || !parentFile.endsWith("lib")) {
           return loadDescriptorFromJar(file, pathName, loadingContext.pathResolver, loadingContext, null);
@@ -292,20 +296,6 @@ public final class PluginDescriptorLoader {
     finally {
       loadingContext.close();
     }
-  }
-
-  // work around corrupted URLs produced by File.getURL()
-  // public for test
-  public static @NotNull String urlToFilePath(@NotNull String url, boolean isPoorOs) {
-    int start = url.startsWith("file:") ? "file:".length() : 0;
-    int end = url.indexOf(URLUtil.JAR_SEPARATOR);
-    if (isPoorOs && url.charAt(start) == '/') {
-      // trim leading slashes before drive letter
-      if (url.length() > (start + 2) && url.charAt(start + 2) == ':') {
-        start++;
-      }
-    }
-    return URLUtil.unescapePercentSequences(url, start, end < 0 ? url.length() : end).toString();
   }
 
   private static void loadDescriptorsFromProperty(@NotNull PluginLoadingResult result,

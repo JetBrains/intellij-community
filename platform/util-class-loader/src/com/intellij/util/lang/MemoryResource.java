@@ -5,20 +5,21 @@ import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-final class MemoryResource extends Resource {
+public final class MemoryResource extends Resource {
   private final URL url;
   private final byte[] content;
   private final Map<Resource.Attribute, String> attributes;
 
-  private MemoryResource(@NotNull URL url, byte @NotNull [] content, @Nullable Map<Resource.Attribute, String> attributes) {
-    this.url = url;
+  public MemoryResource(@NotNull String baseUrl,
+                         byte[] content,
+                         @NotNull String name,
+                         @Nullable Map<Attribute, String> attributes) throws MalformedURLException {
+    this.url = new URL("jar", "", -1, baseUrl + "!/" + name);
     this.content = content;
     this.attributes = attributes;
   }
@@ -39,18 +40,7 @@ final class MemoryResource extends Resource {
   }
 
   @Override
-  public String getValue(@NotNull Attribute key) {
-    return attributes != null ? attributes.get(key) : null;
-  }
-
-  static @NotNull MemoryResource load(@NotNull URL baseUrl,
-                                      @NotNull ZipFile zipFile,
-                                      @NotNull ZipEntry entry,
-                                      @Nullable Map<Attribute, String> attributes) throws IOException {
-    byte[] content;
-    try (InputStream stream = zipFile.getInputStream(entry)) {
-      content = loadBytes(stream, (int)entry.getSize());
-    }
-    return new MemoryResource(new URL(baseUrl, entry.getName()), content, attributes);
+  public @Nullable Map<Attribute, String> getAttributes() {
+    return attributes;
   }
 }

@@ -20,9 +20,9 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.UriUtil;
-import com.intellij.util.UrlUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.URLUtil;
 import org.apache.velocity.runtime.ParserPool;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
@@ -212,10 +212,10 @@ class FileTemplatesLoader implements Disposable {
     for (String path : children) {
       if (path.equals("default.html")) {
         result.setDefaultTemplateDescription(
-          UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
+          URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
       }
       else if (path.equals("includes/default.html")) {
-        result.setDefaultIncludeDescription(UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
+        result.setDefaultIncludeDescription(URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
       }
       else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
         descriptionPaths.add(path);
@@ -235,10 +235,10 @@ class FileTemplatesLoader implements Disposable {
         String filename = path.substring(prefix.isEmpty() ? 0 : prefix.length() + 1, path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
         String extension = FileUtilRt.getExtension(filename);
         String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-        URL templateUrl = UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
+        URL templateUrl = URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
         String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
         URL descriptionUrl = descriptionPath == null ? null :
-                             UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
+                             URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
         assert templateUrl != null;
         result.getResult().putValue(prefix, new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
         // FTManagers loop

@@ -7,7 +7,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.security.ProtectionDomain;
+import java.util.Map;
 
 public abstract class Resource {
   public enum Attribute {
@@ -20,7 +22,14 @@ public abstract class Resource {
 
   public abstract byte @NotNull [] getBytes() throws IOException;
 
-  public String getValue(@NotNull Attribute key) {
+  public @Nullable ByteBuffer getByteBuffer() throws IOException {
+    return null;
+  }
+
+  public void releaseByteBuffer(ByteBuffer buffer) {
+  }
+
+  public @Nullable Map<Attribute, String> getAttributes() throws IOException {
     return null;
   }
 

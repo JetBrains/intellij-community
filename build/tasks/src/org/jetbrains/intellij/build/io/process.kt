@@ -45,7 +45,7 @@ fun runJava(mainClass: String,
           logger.warn(line)
         }
       }
-    }.run()
+    }.start()
 
     process.inputStream.bufferedReader().use { reader ->
       while (true) {

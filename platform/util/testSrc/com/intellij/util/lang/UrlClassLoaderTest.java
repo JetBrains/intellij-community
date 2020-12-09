@@ -4,9 +4,8 @@ package com.intellij.util.lang;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableConsumer;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -77,15 +76,17 @@ public class UrlClassLoaderTest {
     List<String> resourceNames = new ArrayList<>();
     List<Path> files = new ArrayList<>();
 
-    File[] libs = Objects.requireNonNull(new File(PathManager.getHomePathFor(UrlClassLoader.class) + "/lib").listFiles());
-    for (File file : libs) {
+    for (File file : Objects.requireNonNull(new File(PathManager.getHomePathFor(UrlClassLoader.class) + "/lib").listFiles())) {
       if (file.getName().endsWith(".jar")) {
         files.add(file.toPath());
 
         try (ZipFile zipFile = new ZipFile(file)) {
           Enumeration<? extends ZipEntry> entries = zipFile.entries();
           while (entries.hasMoreElements()) {
-            resourceNames.add(entries.nextElement().getName());
+            ZipEntry entry = entries.nextElement();
+            if (!entry.isDirectory()) {
+              resourceNames.add(entry.getName());
+            }
           }
         }
       }
@@ -95,13 +96,13 @@ public class UrlClassLoaderTest {
     int threadCount = 3;
     int resourceCount = 20;
 
-    ExecutorService executor = Executors.newFixedThreadPool(threadCount, ConcurrencyUtil.newNamedThreadFactory("concurrent loading"));
+    ExecutorService executor = Executors.newWorkStealingPool(threadCount);
     try {
       Random random = new Random();
       UrlClassLoader.CachePool pool = UrlClassLoader.createCachePool();
       for (int attempt = 0; attempt < attemptCount; attempt++) {
         // fails also without cache pool (but with cache enabled), but takes much longer
-        UrlClassLoader loader = UrlClassLoader.build().files(files).parent(null).allowLock(true).useCache(pool, (url) -> true).get();
+        UrlClassLoader loader = UrlClassLoader.build().files(files).parent(null).useCache(pool, __ -> true).get();
         List<String> namesToLoad = new ArrayList<>();
         for (int j = 0; j < resourceCount; j++) {
           namesToLoad.add(resourceNames.get(random.nextInt(resourceNames.size())));
@@ -112,11 +113,11 @@ public class UrlClassLoaderTest {
           futures.add(executor.submit(() -> {
             for (String name : namesToLoad) {
               try {
-                assertNotNull(findResource(loader, name, random.nextBoolean()));
+                assertThat(findResource(loader, name, random.nextBoolean())).isNotNull();
               }
               catch (Throwable e) {
                 System.err.println("Failed loading " + name);
-                throw new RuntimeException(e);
+                ExceptionUtil.rethrow(e);
               }
             }
           }));
@@ -176,16 +177,11 @@ public class UrlClassLoaderTest {
     }
   }
 
-  private static URL findResource(UrlClassLoader loader, String name, boolean findAll) {
+  private static URL findResource(UrlClassLoader loader, String name, boolean findAll) throws IOException {
     if (findAll) {
-      try {
-        Enumeration<URL> resources = loader.getResources(name);
-        Assert.assertTrue(resources.hasMoreElements());
-        return resources.nextElement();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      Enumeration<URL> resources = loader.getResources(name);
+      assertThat(resources.hasMoreElements()).describedAs("No resources for " + name).isTrue();
+      return resources.nextElement();
     }
     else {
       return loader.findResource(name);

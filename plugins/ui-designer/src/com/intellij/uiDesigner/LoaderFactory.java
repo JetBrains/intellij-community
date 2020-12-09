@@ -135,16 +135,12 @@ public final class LoaderFactory implements Disposable {
   }
 
   private static final class DesignTimeClassLoader extends UrlClassLoader {
-    static {
-      if (registerAsParallelCapable()) {
-        markParallelCapable(DesignTimeClassLoader.class);
-      }
-    }
+    private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
 
     private final String myModuleName;
 
     DesignTimeClassLoader(List<Path> files, ClassLoader parent, String moduleName) {
-      super(UrlClassLoader.build().files(files).allowLock(false).parent(parent));
+      super(UrlClassLoader.build().files(files).allowLock(false).parent(parent), isParallelCapable);
 
       myModuleName = moduleName;
     }

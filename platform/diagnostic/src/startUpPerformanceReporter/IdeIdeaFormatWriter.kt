@@ -127,7 +127,7 @@ private fun writeServiceStats(writer: JsonGenerator) {
   val component = StatItem("component")
   val service = StatItem("service")
 
-  val plugins = PluginManagerCore.getLoadedPlugins()
+  val plugins = PluginManagerCore.getLoadedPlugins(null).sortedBy { it.pluginId }
   for (plugin in plugins) {
     service.app += (plugin as IdeaPluginDescriptorImpl).app.services.size
     service.project += plugin.project.services.size
@@ -147,14 +147,16 @@ private fun writeServiceStats(writer: JsonGenerator) {
         writer.writeNumberField("module", statItem.module)
       }
     }
+  }
 
-    writer.obj("loadedClasses") {
-      for (plugin in plugins) {
-        val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginAwareClassLoader ?: continue
-        val classCount = classLoader.loadedClassCount
-        if (classCount > 0) {
-          writer.writeNumberField(plugin.pluginId.idString, classCount)
-        }
+  writer.array("plugins") {
+    for (plugin in plugins) {
+      val classLoader = plugin.pluginClassLoader as? PluginAwareClassLoader ?: continue
+      writer.obj {
+        writer.writeStringField("id", plugin.pluginId.idString)
+        writer.writeNumberField("classCount", classLoader.loadedClassCount)
+        writer.writeNumberField("classLoadingEdtTime", TimeUnit.NANOSECONDS.toMillis(classLoader.edtTime))
+        writer.writeNumberField("classLoadingBackgroundTime", TimeUnit.NANOSECONDS.toMillis(classLoader.backgroundTime))
       }
     }
   }

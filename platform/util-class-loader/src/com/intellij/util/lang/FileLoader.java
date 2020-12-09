@@ -1,33 +1,48 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.io.DataInputOutputUtilRt;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 final class FileLoader extends Loader {
+  private static final EnumSet<StandardOpenOption> READ_OPTIONS = EnumSet.of(StandardOpenOption.READ);
+  private static final  EnumSet<StandardOpenOption> WRITE_OPTIONS = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+
   private static final AtomicInteger totalLoaders = new AtomicInteger();
   private static final AtomicLong totalScanning = new AtomicLong();
   private static final AtomicLong totalSaving = new AtomicLong();
   private static final AtomicLong totalReading = new AtomicLong();
 
   private static final Boolean doFsActivityLogging = false;
-  private static final int ourVersion = 1;
+  private static final short ourVersion = 22;
 
   private final Path rootDir;
   private final int rootDirAbsolutePathLength;
   private final ClassPath configuration;
 
-  private final DirEntry root = new DirEntry(0, "");
+  private static final BlockingDeque<Map.Entry<ClasspathCache.LoaderData, Path>> loaderDataToSave = new LinkedBlockingDeque<>();
+  private static final AtomicBoolean isSaveThreadStarted = new AtomicBoolean();
 
   FileLoader(@NotNull Path path, @NotNull ClassPath configuration) {
     super(path);
@@ -48,14 +63,15 @@ final class FileLoader extends Loader {
         boolean containsClasses = false;
         boolean containsResources = false;
         for (Path file : dirStream) {
-          String name = file.getFileName().toString();
-          context.addPossiblyDuplicateNameEntry(name);
-          if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
+          String path = file.toString();
+          if (path.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
+            context.transformClassNameAndAddPossiblyDuplicateNameEntry(path, path.lastIndexOf(File.separatorChar) + 1);
             containsClasses = true;
           }
           else {
+            context.addPossiblyDuplicateNameEntry(path, path.lastIndexOf(File.separatorChar) + 1, path.length());
             containsResources = true;
-            if (!name.endsWith(".svg") && !name.endsWith(".png")) {
+            if (!path.endsWith(".svg") && !path.endsWith(".png") && !path.endsWith(".xml")) {
               dirCandidates.addLast(file);
             }
           }
@@ -87,146 +103,50 @@ final class FileLoader extends Loader {
     return relativePath;
   }
 
-  private static final class DirEntry {
-    static final int[] EMPTY = new int[0];
-    volatile int[] childrenNameHashes;
-
-    volatile DirEntry[] childrenDirectories;
-    final int nameHash;
-    final @NotNull String name;
-
-    DirEntry(int nameHash, @NotNull String name) {
-      this.nameHash = nameHash;
-      this.name = name;
-    }
-  }
-
   @Override
   @Nullable Resource getResource(@NotNull String name) {
-    try {
-      if (configuration.lazyClassloadingCaches) {
-        DirEntry lastEntry = root;
-        // 0 .. prevIndex is package
-        int prevIndex = 0;
-        int nextIndex = name.indexOf('/', prevIndex);
-
-        while (true) {
-          // prevIndex, nameEnd is package or class name
-          int nameEnd = nextIndex == -1 ? name.length() : nextIndex;
-          int nameHash = StringUtilRt.stringHashCodeInsensitive(name, prevIndex, nameEnd, 0);
-          if (!nameHashIsPresentInChildren(lastEntry, name, prevIndex, nameHash)) {
-            return null;
-          }
-          if (nextIndex == -1 || nextIndex == name.length() - 1) {
-            break;
-          }
-
-          lastEntry = findOrCreateNextDirEntry(lastEntry, name, prevIndex, nameEnd, nameHash);
-          prevIndex = nextIndex + 1;
-          nextIndex = name.indexOf('/', prevIndex);
-        }
-      }
-
-      Path file = rootDir.resolve(name);
-      if (Files.exists(file)) {
-        return new FileResource(file);
-      }
-    }
-    catch (Exception ignore) {
-    }
-    return null;
+    Path file = rootDir.resolve(name);
+    return Files.exists(file) ? new FileResource(file) : null;
   }
 
-  private static @NotNull DirEntry findOrCreateNextDirEntry(@NotNull DirEntry lastEntry, @NotNull String name,
-                                                            int prevIndex,
-                                                            int nameEnd,
-                                                            int nameHash) {
-    DirEntry nextEntry = null;
-    DirEntry[] directories = lastEntry.childrenDirectories; // volatile read
-
-    if (directories != null) {
-      //noinspection ForLoopReplaceableByForEach
-      for (int index = 0, len = directories.length; index < len; ++index) {
-        DirEntry previouslyScannedDir = directories[index];
-        if (previouslyScannedDir.nameHash == nameHash &&
-            previouslyScannedDir.name.regionMatches(0, name, prevIndex, nameEnd - prevIndex)) {
-          nextEntry = previouslyScannedDir;
-          break;
-        }
-      }
-    }
-
-    if (nextEntry == null) {
-      nextEntry = new DirEntry(nameHash, name.substring(prevIndex, nameEnd));
-      DirEntry[] newChildrenDirectories;
-      if (directories != null) {
-        newChildrenDirectories = Arrays.copyOf(directories, directories.length + 1);
-        newChildrenDirectories[directories.length] = nextEntry;
-      }
-      else {
-        newChildrenDirectories = new DirEntry[]{nextEntry};
-      }
-      // volatile write with new copy of data
-      lastEntry.childrenDirectories = newChildrenDirectories;
-    }
-
-    lastEntry = nextEntry;
-    return lastEntry;
-  }
-
-  private boolean nameHashIsPresentInChildren(@NotNull DirEntry lastEntry, @NotNull String name, int prevIndex, int nameHash) {
-    // volatile read
-    int[] childrenNameHashes = lastEntry.childrenNameHashes;
-    if (childrenNameHashes == null) {
-      Path d = prevIndex == 0 ? rootDir : rootDir.resolve(name.substring(0, prevIndex));
-      List<String> list;
-      try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(d)) {
-        list = new ArrayList<>();
-        for (Path child : dirStream) {
-          list.add(child.toString());
-        }
-
-        childrenNameHashes = new int[list.size()];
-        for (int i = 0, n = list.size(); i < n; ++i) {
-          String chars = list.get(i);
-          childrenNameHashes[i] = StringUtilRt.stringHashCodeInsensitive(chars, 0, chars.length(), 0);
-        }
-      }
-      catch (IOException e) {
-        childrenNameHashes = DirEntry.EMPTY;
-      }
-
-      // volatile write
-      lastEntry.childrenNameHashes = childrenNameHashes;
-    }
-
-    for (int childNameHash : childrenNameHashes) {
-      if (childNameHash == nameHash) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private ClasspathCache.LoaderData tryReadFromIndex() {
-    if (!configuration.isClassPathIndexEnabled) {
-      return null;
-    }
-
+  private static ClasspathCache.LoaderData readFromIndex(Path index) {
     long started = System.nanoTime();
-    Path index = getIndexFileFile();
     boolean isOk = false;
-    try (DataInputStream reader = new DataInputStream(new BufferedInputStream(Files.newInputStream(index), 32_000))) {
-      if (DataInputOutputUtilRt.readINT(reader) == ourVersion) {
-        ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData(reader);
-        isOk = true;
-        return loaderData;
+    short version = -1;
+    try (SeekableByteChannel channel = Files.newByteChannel(index, READ_OPTIONS)) {
+      ByteBuffer buffer = DirectByteBufferPool.DEFAULT_POOL.allocate((int)channel.size());
+      try {
+        do {
+          channel.read(buffer);
+        }
+        while (buffer.hasRemaining());
+        buffer.flip();
+
+        // little endian - native order for Intel and Apple ARM
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        version = buffer.getShort();
+        if (version == ourVersion) {
+          int[] classPackageHashes = new int[buffer.getInt()];
+          int[] resourcePackageHashes = new int[buffer.getInt()];
+          IntBuffer intBuffer = buffer.asIntBuffer();
+          intBuffer.get(classPackageHashes);
+          intBuffer.get(resourcePackageHashes);
+          buffer.position(buffer.position() + intBuffer.position() * Integer.BYTES);
+          ClasspathCache.LoaderData loaderData =
+            new ClasspathCache.LoaderData(resourcePackageHashes, classPackageHashes, new ClasspathCache.NameFilter(buffer));
+          isOk = true;
+          return loaderData;
+        }
+      }
+      finally {
+        DirectByteBufferPool.DEFAULT_POOL.release(buffer);
       }
     }
     catch (NoSuchFileException ignore) {
       isOk = true;
     }
-    catch (IOException ignore) {
+    catch (Exception e) {
+      LoggerRt.getInstance(FileLoader.class).warn("Cannot read classpath index (version=" + version + ", module=" + index.getParent().getFileName() + ")", e);
     }
     finally {
       if (!isOk) {
@@ -242,34 +162,45 @@ final class FileLoader extends Loader {
     return null;
   }
 
-  private void trySaveToIndex(@NotNull ClasspathCache.LoaderData data) {
-    if (!configuration.isClassPathIndexEnabled) {
-      return;
-    }
-
+  private static void saveToIndex(@NotNull ClasspathCache.LoaderData data, @NotNull Path indexFile) throws IOException {
     long started = System.nanoTime();
-    Path index = getIndexFileFile();
-    DataOutput writer = null;
     boolean isOk = false;
+    SeekableByteChannel channel = null;
     try {
-      writer = new UnsyncDataOutputStream(new BufferedOutputStream(Files.newOutputStream(index), 32_000));
-      DataInputOutputUtilRt.writeINT(writer, ourVersion);
-      data.save(writer);
-      isOk = true;
-    }
-    catch (IOException ignore) {
+      ByteBuffer buffer = DirectByteBufferPool.DEFAULT_POOL.allocate(Short.BYTES + data.sizeInBytes());
+      try {
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        buffer.putShort(ourVersion);
+        data.save(buffer);
+        assert buffer.remaining() == 0;
+        buffer.flip();
+        channel = Files.newByteChannel(indexFile, WRITE_OPTIONS);
+        do {
+          channel.write(buffer);
+        }
+        while (buffer.hasRemaining());
+
+        isOk = true;
+      }
+      finally {
+        DirectByteBufferPool.DEFAULT_POOL.release(buffer);
+      }
     }
     finally {
-      if (writer != null) {
+      if (channel != null) {
         try {
-          ((OutputStream)writer).close();
+          channel.close();
         }
-        catch (IOException ignore) {
+        catch (Exception e) {
+          if (isOk) {
+            LoggerRt.getInstance(FileLoader.class).warn(e);
+          }
         }
       }
       if (!isOk) {
         try {
-          Files.deleteIfExists(index);
+          Files.deleteIfExists(indexFile);
         }
         catch (IOException ignore) {
         }
@@ -283,8 +214,12 @@ final class FileLoader extends Loader {
   }
 
   @Override
-  public @NotNull ClasspathCache.LoaderData buildData() {
-    ClasspathCache.LoaderData loaderData = tryReadFromIndex();
+  public @NotNull ClasspathCache.IndexRegistrar buildData() {
+    ClasspathCache.LoaderData loaderData = null;
+    Path indexFile = configuration.isClassPathIndexEnabled ? getIndexFileFile() : null;
+    if (indexFile != null) {
+      loaderData = readFromIndex(indexFile);
+    }
 
     int nsMsFactor = 1000000;
     int currentLoaders = totalLoaders.incrementAndGet();
@@ -292,7 +227,7 @@ final class FileLoader extends Loader {
     if (loaderData == null) {
       long started = System.nanoTime();
 
-      ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder();
+      ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder(true);
       buildPackageCache(rootDir, loaderDataBuilder);
       loaderData = loaderDataBuilder.build();
       long doneNanos = System.nanoTime() - started;
@@ -301,7 +236,11 @@ final class FileLoader extends Loader {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("Scanned: " + rootDir + " for " + (doneNanos / nsMsFactor) + "ms");
       }
-      trySaveToIndex(loaderData);
+
+      if (indexFile != null) {
+        loaderDataToSave.addLast(new AbstractMap.SimpleImmutableEntry<>(loaderData, indexFile));
+        startCacheSavingIfNeeded();
+      }
     }
     else {
       currentScanningTime = totalScanning.get();
@@ -309,11 +248,45 @@ final class FileLoader extends Loader {
 
     if (doFsActivityLogging) {
       //noinspection UseOfSystemOutOrSystemErr
-      System.out.println("Scanning: " + (currentScanningTime / nsMsFactor) + "ms, saving: " + (totalSaving.get() / nsMsFactor) +
-                         "ms, loading:" + (totalReading.get() / nsMsFactor) + "ms for " + currentLoaders + " loaders");
+      System.out.println("Scanning: " + (currentScanningTime / nsMsFactor) + "ms" +
+                         ", loading: " + (totalReading.get() / nsMsFactor) + "ms for " + currentLoaders + " loaders");
     }
 
     return loaderData;
+  }
+
+  private static void startCacheSavingIfNeeded() {
+    if (!isSaveThreadStarted.compareAndSet(false, true)) {
+      return;
+    }
+
+    //noinspection SSBasedInspection
+    Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+      new Thread(() -> {
+        while (true) {
+          try {
+            Map.Entry<ClasspathCache.LoaderData, Path> entry = loaderDataToSave.takeFirst();
+            Path finalFile = entry.getValue();
+            Path tempFile = finalFile.getParent().resolve("classpath.index.tmp");
+            try {
+              saveToIndex(entry.getKey(), tempFile);
+              try {
+                Files.move(tempFile, finalFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+              }
+              catch (AtomicMoveNotSupportedException e) {
+                Files.move(tempFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
+              }
+            }
+            catch (Exception e) {
+              LoggerRt.getInstance(FileLoader.class).warn("Cannot save classpath index for module " + finalFile.getParent().getFileName(), e);
+            }
+          }
+          catch (InterruptedException ignored) {
+            break;
+          }
+        }
+      }, "Save classpath indexes for file loader").start();
+    }, 10, TimeUnit.SECONDS);
   }
 
   private static final class FileResource extends Resource {
@@ -358,22 +331,5 @@ final class FileLoader extends Loader {
   @Override
   public String toString() {
     return "FileLoader [" + rootDir + "]";
-  }
-
-  @SuppressWarnings({"NonSynchronizedMethodOverridesSynchronizedMethod", "SpellCheckingInspection"})
-  private static final class UnsyncDataOutputStream extends DataOutputStream {
-    UnsyncDataOutputStream(@NotNull OutputStream out) {
-      super(out);
-    }
-
-    @Override
-    public void write(int b) throws IOException {
-      out.write(b);
-    }
-
-    @Override
-    public void write(byte[] b, int off, int len) throws IOException {
-      out.write(b, off, len);
-    }
   }
 }

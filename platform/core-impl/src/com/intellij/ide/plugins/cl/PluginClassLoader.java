@@ -4,18 +4,17 @@ package com.intellij.ide.plugins.cl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.*;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +26,6 @@ import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -36,6 +34,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @ApiStatus.NonExtendable
 public class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
+
+  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
 
   private static final @Nullable Writer logStream;
   private static final AtomicInteger instanceIdProducer = new AtomicInteger();
@@ -79,10 +79,6 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       }
     }
     KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = kotlinStdlibClassesUsedInSignatures;
-
-    if (registerAsParallelCapable()) {
-      markParallelCapable(PluginClassLoader.class);
-    }
 
     Writer logStreamCandidate = null;
     String debugFilePath = System.getProperty("plugin.classloader.debug", "");
@@ -136,8 +132,9 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
                            @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot,
                            @NotNull ClassLoader coreLoader,
-                           @Nullable String packagePrefix) {
-    super(builder);
+                           @Nullable String packagePrefix,
+                           @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
+    super(builder, resourceFileFactory, isParallelCapable);
 
     instanceId = instanceIdProducer.incrementAndGet();
 
@@ -245,10 +242,8 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     }
 
     if (startTime != -1) {
-      Application app = ApplicationManager.getApplication();
-      // JDK impl is not so fast as ours, use it only if no application
-      boolean isEdt = app == null ? EventQueue.isDispatchThread() : app.isDispatchThread();
-      (isEdt ? edtTime : backgroundTime).addAndGet(StartUpMeasurer.getCurrentTime() - startTime);
+      // EventQueue.isDispatchThread() is expensive
+      (EDT.isCurrentThreadEdt() ? edtTime : backgroundTime).addAndGet(StartUpMeasurer.getCurrentTime() - startTime);
     }
 
     return c;

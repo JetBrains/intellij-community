@@ -1,8 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.idea.IdeStarter
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.util.lang.ClassPath
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -18,21 +22,29 @@ import kotlin.system.exitProcess
  * Performance tests (mostly Windows) show 600ms startup performance improvement after reordering classes in jar files
  */
 @Suppress("UNCHECKED_CAST")
-internal class JarOrderStarter : ApplicationStarter {
+internal class JarOrderStarter : IdeStarter() {
   override fun getCommandName() = "jarOrder"
 
-  override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
+  override fun isHeadless() = true
 
   override fun main(args: List<String>) {
     try {
-      generateJarAccessLog(Paths.get(args[1]))
+      super.main(args)
+      IconLoader::class.java
+      WindowManagerImpl::class.java
+      ActionManager.getInstance()
+      // ensure that all EDT activities were processed
+      ApplicationManager.getApplication().invokeLater {
+        // and activities that were scheduled as part of invoke too
+        ApplicationManager.getApplication().invokeLater {
+          generateJarAccessLog(Paths.get(args[1]))
+          exitProcess(0)
+        }
+      }
     }
     catch (e: Throwable) {
       logger<JarOrderStarter>().error(e)
       exitProcess(1)
-    }
-    finally {
-      exitProcess(0)
     }
   }
 

@@ -5,7 +5,6 @@ import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtilRt;
-import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +68,7 @@ public class UrlClassLoader extends ClassLoader {
     try {
       URL url = new File(jar).toURI().toURL();
       //noinspection deprecation
-      getClassPath().addURL(UrlUtilRt.internProtocol(url));
+      getClassPath().addURL(url);
       myURLs.add(url);
     }
     catch (MalformedURLException ignore) { }
@@ -260,19 +259,10 @@ public class UrlClassLoader extends ClassLoader {
     );
   }
 
-  /**
-   * @deprecated Use {@link UrlUtilRt#internProtocol(URL)}
-   */
-  @Deprecated
-  @Nullable
-  public static URL internProtocol(@NotNull URL url) {
-    return UrlUtilRt.internProtocol(url);
-  }
-
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
   public final void addURL(@NotNull URL url) {
-    getClassPath().addURL(UrlUtilRt.internProtocol(url));
+    getClassPath().addURL(url);
     myURLs.add(url);
   }
 

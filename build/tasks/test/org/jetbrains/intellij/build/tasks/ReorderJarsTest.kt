@@ -5,7 +5,8 @@ package org.jetbrains.intellij.build.tasks
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.lang.JarMemoryLoader
-import com.intellij.util.lang.JdkZipFile
+import com.intellij.util.lang.JdkZipResourceFile
+import com.intellij.util.lang.ZipResourceFile
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
@@ -51,7 +52,22 @@ class ReorderJarsTest {
       assertThat(entries[3].name).isEqualTo("META-INF/MANIFEST.MF")
     }
 
-    val loader = JdkZipFile(file, true, false).preload(file, null)
+    testOldJarResourceImpl(file, data)
+    testNewJarResourceImpl(file, data)
+  }
+
+  private fun testOldJarResourceImpl(file: Path, data: ByteArray) {
+    val loader = JdkZipResourceFile(file, true, false).preload(file, null)
+    assertThat(loader).isNotNull()
+    val resource = loader!!.getResource("org/jetbrains/annotations/Nullable.class")
+    assertThat(resource).isNotNull()
+    val bytes = resource!!.getBytes()
+    assertThat(bytes).hasSize(548)
+    assertThat(data.contentEquals(bytes)).isTrue()
+  }
+
+  private fun testNewJarResourceImpl(file: Path, data: ByteArray) {
+    val loader = ZipResourceFile(file).preload(file, null)
     assertThat(loader).isNotNull()
     val resource = loader!!.getResource("org/jetbrains/annotations/Nullable.class")
     assertThat(resource).isNotNull()

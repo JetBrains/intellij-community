@@ -78,7 +78,7 @@ internal class LocalCompiler {
     }
     val pluginClassLoader = PluginClassLoader(UrlClassLoader.build().files(listOf(tempDir.toPath())).useCache(),
                                               classLoadersArray, DefaultPluginDescriptor("SubGuiScriptRecorder"), null as Path?,
-                                              PluginManagerCore::class.java.classLoader, null)
+                                              PluginManagerCore::class.java.classLoader, null, null)
     val currentTest = pluginClassLoader.loadClass(TEST_CLASS_NAME)
                       ?: throw Exception("Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
     val testCase = currentTest.getDeclaredConstructor().newInstance()

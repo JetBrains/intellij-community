@@ -60,8 +60,12 @@ final class IntObjectHashMap {
 
     int candidate;
     while ((candidate = keys[index]) != 0) {
-      if (candidate == key) return index;
-      if (index == 0) index = keys.length;
+      if (candidate == key) {
+        return index;
+      }
+      if (index == 0) {
+        index = keys.length;
+      }
       index--;
     }
 

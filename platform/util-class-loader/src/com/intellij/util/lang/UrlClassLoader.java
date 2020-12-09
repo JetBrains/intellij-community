@@ -4,6 +4,7 @@ package com.intellij.util.lang;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,38 +27,16 @@ import java.util.function.Predicate;
  * Should be constructed using {@link #build()} method.
  */
 public class UrlClassLoader extends ClassLoader {
+  protected static final boolean USE_PARALLEL_LOADING = Boolean.parseBoolean(System.getProperty("use.parallel.class.loading", "true"));
+  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+
   static final String CLASS_EXTENSION = ".class";
   private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<>();
-
-  private static final Set<Class<?>> ourParallelCapableLoaders;
 
   private final List<Path> files;
   private final ClassPath classPath;
   private final ClassLoadingLocks classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
-
-  static {
-    boolean ibmJvm = System.getProperty("java.vm.vendor", "unknown").toLowerCase(Locale.ENGLISH).contains("ibm");
-    boolean capable = !ibmJvm && Boolean.parseBoolean(System.getProperty("use.parallel.class.loading", "true"));
-    if (capable) {
-      ourParallelCapableLoaders = Collections.synchronizedSet(new HashSet<>());
-      try {
-        if (registerAsParallelCapable()) {
-          ourParallelCapableLoaders.add(UrlClassLoader.class);
-        }
-      }
-      catch (Exception ignored) {
-      }
-    }
-    else {
-      ourParallelCapableLoaders = null;
-    }
-  }
-
-  protected static void markParallelCapable(@NotNull Class<? extends UrlClassLoader> loaderClass) {
-    assert ourParallelCapableLoaders != null;
-    ourParallelCapableLoaders.add(loaderClass);
-  }
 
   /**
    * Called by the VM to support dynamic additions to the class path.
@@ -109,7 +88,7 @@ public class UrlClassLoader extends ClassLoader {
   @Deprecated
   @ReviseWhenPortedToJDK("9")
   public UrlClassLoader(@NotNull ClassLoader parent) {
-    this(createDefaultBuilderForJdk(parent));
+    this(createDefaultBuilderForJdk(parent), null, isParallelCapable);
 
     // without this ToolProvider.getSystemJavaCompiler() does not work in jdk 9+
     try {
@@ -144,12 +123,17 @@ public class UrlClassLoader extends ClassLoader {
     configuration.useCache = true;
     configuration.isClassPathIndexEnabled = true;
     configuration.isBootstrapResourcesAllowed = Boolean.parseBoolean(System.getProperty("idea.allow.bootstrap.resources", "true"));
-    configuration.lazyClassloadingCaches = Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false"));
     configuration.autoAssignUrlsWithProtectionDomain();
     return configuration;
   }
 
-  protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder) {
+  protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder, boolean isParallelCapable) {
+    this(builder, null, isParallelCapable);
+  }
+
+  protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder,
+                           @Nullable ClassPath.ResourceFileFactory resourceFileFactory,
+                           boolean isParallelCapable) {
     super(builder.parent);
 
     files = builder.files;
@@ -159,10 +143,10 @@ public class UrlClassLoader extends ClassLoader {
       urlsWithProtectionDomain = Collections.emptySet();
     }
 
-    classPath = new ClassPath(files, urlsWithProtectionDomain, builder);
+    classPath = new ClassPath(files, urlsWithProtectionDomain, builder, resourceFileFactory);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
-    classLoadingLocks = ourParallelCapableLoaders != null && ourParallelCapableLoaders.contains(getClass()) ? new ClassLoadingLocks() : null;
+    classLoadingLocks = isParallelCapable ? new ClassLoadingLocks() : null;
   }
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
@@ -221,18 +205,19 @@ public class UrlClassLoader extends ClassLoader {
   private Class<?> defineClass(@NotNull String name, @NotNull Resource resource) throws IOException {
     int i = name.lastIndexOf('.');
     if (i != -1) {
-      String pkgName = name.substring(0, i);
+      String packageName = name.substring(0, i);
       // Check if package already loaded.
-      Package pkg = getPackage(pkgName);
-      if (pkg == null) {
+      Package aPackage = getPackage(packageName);
+      if (aPackage == null) {
         try {
-          definePackage(pkgName,
-                        resource.getValue(Resource.Attribute.SPEC_TITLE),
-                        resource.getValue(Resource.Attribute.SPEC_VERSION),
-                        resource.getValue(Resource.Attribute.SPEC_VENDOR),
-                        resource.getValue(Resource.Attribute.IMPL_TITLE),
-                        resource.getValue(Resource.Attribute.IMPL_VERSION),
-                        resource.getValue(Resource.Attribute.IMPL_VENDOR),
+          Map<Resource.Attribute, String> attributes = resource.getAttributes();
+          definePackage(packageName,
+                        attributes == null ? null : attributes.get(Resource.Attribute.SPEC_TITLE),
+                        attributes == null ? null : attributes.get(Resource.Attribute.SPEC_VERSION),
+                        attributes == null ? null : attributes.get(Resource.Attribute.SPEC_VENDOR),
+                        attributes == null ? null : attributes.get(Resource.Attribute.IMPL_TITLE),
+                        attributes == null ? null : attributes.get(Resource.Attribute.IMPL_VERSION),
+                        attributes == null ? null : attributes.get(Resource.Attribute.IMPL_VENDOR),
                         null);
         }
         catch (IllegalArgumentException ignore) {
@@ -241,27 +226,20 @@ public class UrlClassLoader extends ClassLoader {
       }
     }
 
-    byte[] content = resource.getBytes();
     ProtectionDomain protectionDomain = resource.getProtectionDomain();
     if (protectionDomain == null) {
       protectionDomain = getProtectionDomain();
-      if (protectionDomain == null) {
-        return _defineClass(name, content);
-      }
     }
-    return _defineClass(name, content, protectionDomain);
+    return _defineClass(name, resource, protectionDomain);
   }
 
   protected ProtectionDomain getProtectionDomain() {
     return null;
   }
 
-  protected Class<?> _defineClass(final String name, final byte[] b) {
-    return defineClass(name, b, 0, b.length);
-  }
-
-  protected Class<?> _defineClass(final String name, final byte[] b, @Nullable ProtectionDomain protectionDomain) {
-    return defineClass(name, b, 0, b.length, protectionDomain);
+  protected Class<?> _defineClass(String name, Resource resource, @Nullable ProtectionDomain protectionDomain) throws IOException {
+    byte[] data = resource.getBytes();
+    return defineClass(name, data, 0, data.length, protectionDomain);
   }
 
   @Override
@@ -278,7 +256,7 @@ public class UrlClassLoader extends ClassLoader {
     Resource resource = classPath.getResource(n);
     // compatibility with existing code, non-standard classloader behavior
     if (resource == null && n.startsWith("/")) {
-      resource = classPath.getResource(n.substring(1));
+      return classPath.getResource(n.substring(1));
     }
     return resource;
   }
@@ -477,6 +455,20 @@ public class UrlClassLoader extends ClassLoader {
     return 0;
   }
 
+  // work around corrupted URLs produced by File.getURL()
+  // public for test
+  public static @NotNull String urlToFilePath(@NotNull String url) {
+    int start = url.startsWith("file:") ? "file:".length() : 0;
+    int end = url.indexOf("!/");
+    if (url.charAt(start) == '/') {
+      // trim leading slashes before drive letter
+      if (url.length() > (start + 2) && url.charAt(start + 2) == ':') {
+        start++;
+      }
+    }
+    return UrlUtilRt.unescapePercentSequences(url, start, end < 0 ? url.length() : end).toString();
+  }
+
   public static final class Builder {
     private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
@@ -489,7 +481,6 @@ public class UrlClassLoader extends ClassLoader {
     boolean preloadJarContents = true;
     boolean isBootstrapResourcesAllowed;
     boolean errorOnMissingJar = true;
-    boolean lazyClassloadingCaches;
     @Nullable CachePoolImpl cachePool;
     @Nullable Predicate<Path> cachingCondition;
 
@@ -596,16 +587,6 @@ public class UrlClassLoader extends ClassLoader {
       return this;
     }
 
-    /**
-     * Package contents information in Jar/File loaders will be lazily retrieved / cached upon classloading.
-     * Important: this option will result in much smaller initial overhead but for bulk classloading (like complete IDE start) it is less
-     * efficient (in number of disk / native code accesses / CPU spent) than combination of useCache / usePersistentClasspathIndexForLocalClassDirectories.
-     */
-    public @NotNull UrlClassLoader.Builder useLazyClassloadingCaches(boolean pleaseBeLazy) {
-      lazyClassloadingCaches = pleaseBeLazy;
-      return this;
-    }
-
     public @NotNull UrlClassLoader.Builder autoAssignUrlsWithProtectionDomain() {
       Set<Path> result = new HashSet<>();
       for (Path path : files) {
@@ -618,7 +599,7 @@ public class UrlClassLoader extends ClassLoader {
     }
 
     public @NotNull UrlClassLoader get() {
-      return new UrlClassLoader(this);
+      return new UrlClassLoader(this, null, isParallelCapable);
     }
 
     private static boolean isUrlNeedsProtectionDomain(@NotNull Path file) {

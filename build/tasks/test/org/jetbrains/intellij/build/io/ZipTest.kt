@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.io
 
 import com.intellij.testFramework.rules.InMemoryFsRule
-import org.apache.commons.compress.archivers.zip.ZipFile
+import com.intellij.util.lang.zip.ImmutableZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -10,6 +10,7 @@ import java.nio.file.Files
 import java.util.zip.ZipEntry
 import kotlin.random.Random
 
+@Suppress("UsePropertyAccessSyntax")
 class ZipTest {
   @JvmField
   @Rule
@@ -29,11 +30,33 @@ class ZipTest {
     val archiveFile = fsRule.fs.getPath("/archive.zip")
     zipForWindows(archiveFile, listOf(dir))
 
-    val zipFile = ZipFile(Files.newByteChannel(archiveFile))
+    val zipFile = ImmutableZipFile.load(archiveFile)
     for (entry in fileDescriptors) {
       assertThat(zipFile.getEntry(entry.path).method)
         .describedAs(entry.path)
         .isEqualTo(if (entry.isCompressed) ZipEntry.DEFLATED else ZipEntry.STORED)
+    }
+  }
+
+  @Test
+  fun `read zip file with more than 65K entries`() {
+    val random = Random(42)
+
+    val dir = fsRule.fs.getPath("/dir")
+    Files.createDirectories(dir)
+    val list = mutableListOf<String>()
+    for (i in 0..(Short.MAX_VALUE * 2)) {
+      val name = "entry-item${random.nextInt()}-$i"
+      list.add(name)
+      Files.write(dir.resolve(name), random.nextBytes(random.nextInt(128)))
+    }
+
+    val archiveFile = fsRule.fs.getPath("/archive.zip")
+    zipForWindows(archiveFile, listOf(dir))
+
+    val zipFile = ImmutableZipFile.load(archiveFile)
+    for (name in list) {
+      assertThat(zipFile.getEntry(name)).isNotNull()
     }
   }
 }

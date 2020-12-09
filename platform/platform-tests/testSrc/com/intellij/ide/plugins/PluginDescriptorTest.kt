@@ -370,7 +370,7 @@ class PluginDescriptorTest {
 
     }
 
-    class TestLoader(prefix: String, suffix: String) : UrlClassLoader(build()) {
+    class TestLoader(prefix: String, suffix: String) : UrlClassLoader(build(), false) {
       private val url = URL(prefix + File(testDataPath).toURI().toURL().toString() + suffix + "META-INF/plugin.xml")
 
       override fun getResource(name: String) = null

@@ -63,7 +63,7 @@ open class IdeStarter : ApplicationStarter {
 
   override fun getCommandName(): String? = null
 
-  override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
+  final override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
 
   override fun main(args: List<String>) {
     val app = ApplicationManagerEx.getApplicationEx()
