@@ -547,7 +547,7 @@ public class JBTabsImpl extends JComponent
       if (showLeftFadeout) {
         Rectangle leftSide = new Rectangle(0, labelsArea.y, width, labelsArea.height);
         ((Graphics2D)g).setPaint(
-          new GradientPaint(leftSide.x, leftSide.y, UIUtil.getBgFillColor(myMoreToolbar.getComponent()), leftSide.x + leftSide.width,
+          new GradientPaint(leftSide.x, leftSide.y, UIUtil.getPanelBackground(), leftSide.x + leftSide.width,
                             leftSide.y, UIUtil.TRANSPARENT_COLOR));
         ((Graphics2D)g).fill(leftSide);
       }
@@ -555,7 +555,7 @@ public class JBTabsImpl extends JComponent
         Rectangle rightSide = new Rectangle(myMoreToolbar.getComponent().getX() - 1 - width, labelsArea.y, width, labelsArea.height);
         ((Graphics2D)g).setPaint(
           new GradientPaint(rightSide.x, rightSide.y, UIUtil.TRANSPARENT_COLOR, rightSide.x + rightSide.width, rightSide.y,
-                            UIUtil.getBgFillColor(myMoreToolbar.getComponent())));
+                            UIUtil.getPanelBackground()));
         ((Graphics2D)g).fill(rightSide);
       }
     }
