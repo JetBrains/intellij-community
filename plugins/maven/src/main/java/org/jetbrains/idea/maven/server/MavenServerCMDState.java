@@ -124,6 +124,7 @@ public class MavenServerCMDState extends CommandLineState {
         params.getVMParametersList().add(param);
       }
     }
+    params.getVMParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
 
     Pair<File, String> homeAndVersion = getHomeAndVersion(myDistribution);
 
