@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
@@ -59,9 +58,6 @@ class InvokeAfterUpdateCallback {
                                            @NotNull InvokeAfterUpdateMode mode,
                                            @NotNull Runnable afterUpdate,
                                            @Nullable ModalityState state) {
-    Consumer<Runnable> callbackCaller = mode.isCallbackOnAwt()
-                                        ? ApplicationManager.getApplication()::invokeLater
-                                        : ApplicationManager.getApplication()::executeOnPooledThread;
     return new CallbackDataBase(project, afterUpdate, state) {
       @Override
       public void startProgress() {
@@ -69,7 +65,12 @@ class InvokeAfterUpdateCallback {
 
       @Override
       public void endProgress() {
-        callbackCaller.accept(this::invokeCallback);
+        if (mode.isCallbackOnAwt()) {
+          ApplicationManager.getApplication().invokeLater(this::invokeCallback);
+        }
+        else {
+          ApplicationManager.getApplication().executeOnPooledThread(this::invokeCallback);
+        }
       }
     };
   }
@@ -83,9 +84,6 @@ class InvokeAfterUpdateCallback {
     Task task = mode.isSynchronous()
                 ? new Waiter(project, afterUpdate, title, mode.isCancellable())
                 : new FictiveBackgroundable(project, afterUpdate, title, mode.isCancellable(), state);
-    Runnable callback = () -> {
-      setDone(task);
-    };
     return new CallbackDataBase(project, afterUpdate, state) {
       @Override
       public void startProgress() {
@@ -94,7 +92,7 @@ class InvokeAfterUpdateCallback {
 
       @Override
       public void endProgress() {
-        callback.run();
+        setDone(task);
       }
     };
   }
@@ -124,8 +122,8 @@ class InvokeAfterUpdateCallback {
 
     @Override
     public void handleStoppedQueue() {
-      ApplicationManager.getApplication().invokeLater(this::invokeCallback,
-                                                      notNull(myModalityState, ModalityState.defaultModalityState()));
+      ModalityState modalityState = notNull(myModalityState, ModalityState.defaultModalityState());
+      ApplicationManager.getApplication().invokeLater(this::invokeCallback, modalityState);
     }
 
     protected final void invokeCallback() {
