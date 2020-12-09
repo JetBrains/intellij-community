@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.semantic;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -176,7 +177,7 @@ public final class SemServiceImpl extends SemService {
   }
 
   private static class SemCacheChunk {
-    private final IntObjectMap<List<SemElement>> map = ContainerUtil.createConcurrentIntObjectMap();
+    private final IntObjectMap<List<SemElement>> map = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
     List<SemElement> getSemElements(SemKey<?> key) {
       return map.get(key.getUniqueId());

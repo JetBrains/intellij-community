@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Function
 
@@ -16,7 +15,7 @@ class MavenParsingContext(val ideaProject: Project,
   lateinit var projectsInReactor: List<String>
   val startedProjects = CopyOnWriteArrayList<String>()
 
-  private val context = ContainerUtil.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
+  private val context = ConcurrentCollectionFactory.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
   private var lastAddedThreadId: Int = 0
 
   val lastId: Any

@@ -2,14 +2,15 @@
 package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.Reference;
 
 public interface Iconable {
   int ICON_FLAG_VISIBILITY = 0x0001;
@@ -23,32 +24,39 @@ public interface Iconable {
   Icon getIcon(@IconFlags int flags);
 
   final class LastComputedIcon {
-    private static final Key<SoftReference<IntObjectMap<Icon>>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
+    private static final Key<Reference<Int2ObjectMap<Icon>>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
 
     public static @Nullable Icon get(@NotNull UserDataHolder holder, int flags) {
-      IntObjectMap<Icon> map = SoftReference.dereference(holder.getUserData(LAST_COMPUTED_ICON));
-      return map == null ? null : map.get(flags);
+      Int2ObjectMap<Icon> map = SoftReference.dereference(holder.getUserData(LAST_COMPUTED_ICON));
+      if (map == null) {
+        return null;
+      }
+      return map.get(flags);
     }
 
     public static void put(@NotNull UserDataHolder holder, Icon icon, int flags) {
-      SoftReference<IntObjectMap<Icon>> ref = holder.getUserData(LAST_COMPUTED_ICON);
-      IntObjectMap<Icon> map = SoftReference.dereference(ref);
+      Reference<Int2ObjectMap<Icon>> ref = holder.getUserData(LAST_COMPUTED_ICON);
+      Int2ObjectMap<Icon> map = SoftReference.dereference(ref);
       if (icon == null) {
-        if (map != null) {
-          map.remove(flags);
+        if (map == null) {
+          return;
         }
       }
       else {
         while (map == null) {
-          ConcurrentIntObjectMap<Icon> freshMap = ContainerUtil.createConcurrentIntObjectMap();
+          Int2ObjectMap<Icon> freshMap = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
           if (((UserDataHolderEx) holder).replace(LAST_COMPUTED_ICON, ref, new SoftReference<>(freshMap))) {
             map = freshMap;
           }
           else {
-            ref = holder.getUserData(LAST_COMPUTED_ICON);
-            map = SoftReference.dereference(ref);
+            map = SoftReference.dereference(holder.getUserData(LAST_COMPUTED_ICON));
           }
         }
+      }
+      if (icon == null) {
+        map.remove(flags);
+      }
+      else {
         map.put(flags, icon);
       }
     }

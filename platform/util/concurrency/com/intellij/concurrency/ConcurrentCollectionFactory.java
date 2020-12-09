@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
-import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,5 +62,34 @@ public final class ConcurrentCollectionFactory {
                                                         int concurrencyLevel,
                                                         @NotNull HashingStrategy<T> hashStrategy) {
     return Collections.newSetFromMap(createMap(initialCapacity, loadFactor, concurrencyLevel, hashStrategy));
+  }
+
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap() {
+    return new ConcurrentLongObjectHashMap<>();
+  }
+
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap(int initialCapacity) {
+    return new ConcurrentLongObjectHashMap<>(initialCapacity);
+  }
+
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap() {
+    return new ConcurrentIntObjectHashMap<>();
+  }
+
+  @Contract(value = "_,_,_ -> new", pure = true)
+  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
+    return new ConcurrentIntObjectHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
+  }
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
+    return new ConcurrentIntKeySoftValueHashMap<>();
+  }
+
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectWeakValueMap() {
+    return new ConcurrentIntKeyWeakValueHashMap<>();
   }
 }

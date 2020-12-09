@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.storage;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -10,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -40,7 +40,7 @@ class KeyHashLog<Key> implements Closeable {
   @NotNull
   private final AppendableObjectStorage<int[]> myKeyHashToVirtualFileMapping;
   @NotNull
-  private final ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = ContainerUtil.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private volatile int myLastScannedId;
 

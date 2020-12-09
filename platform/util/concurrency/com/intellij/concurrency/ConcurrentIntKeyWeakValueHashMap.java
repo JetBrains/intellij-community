@@ -1,6 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.util.containers;
+package com.intellij.concurrency;
 
 
 import com.intellij.openapi.util.Comparing;
@@ -12,7 +12,7 @@ import java.lang.ref.WeakReference;
 /**
  * Concurrent key:int -> weak value:V map
  * Null values are NOT allowed
- * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectWeakValueMap()} instead
+ * Use {@link ConcurrentCollectionFactory#createConcurrentIntObjectWeakValueMap()} to create this
  */
 class ConcurrentIntKeyWeakValueHashMap<V> extends ConcurrentIntKeyRefValueHashMap<V> {
   private static final class MyRef<V> extends WeakReference<V> implements IntReference<V> {

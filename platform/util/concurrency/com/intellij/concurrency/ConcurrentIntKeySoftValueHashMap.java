@@ -1,6 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.util.containers;
+package com.intellij.concurrency;
 
 
 import com.intellij.openapi.util.Comparing;
@@ -12,7 +12,7 @@ import java.lang.ref.SoftReference;
 /**
  * Concurrent key:int -> soft value:V map
  * Null values are NOT allowed
- * Use {@link ContainerUtil#createConcurrentIntObjectSoftValueMap()} to create this
+ * Use {@link ConcurrentCollectionFactory#createConcurrentIntObjectSoftValueMap()} to create this
  */
 class ConcurrentIntKeySoftValueHashMap<V> extends ConcurrentIntKeyRefValueHashMap<V> {
   private static final class MyRef<V> extends SoftReference<V> implements IntReference<V> {

@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.util.containers;
+package com.intellij.concurrency;
 
 
 import com.intellij.openapi.util.Getter;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SimpleEntry;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 

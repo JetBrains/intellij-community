@@ -369,7 +369,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentLongObjectHashMap() {
-    ConcurrentLongObjectMap<Object> map = ContainerUtil.createConcurrentLongObjectMap();
+    ConcurrentLongObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentLongObjectMap();
     for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
@@ -392,7 +392,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentIntObjectHashMap() {
-    IntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectMap();
+    IntObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
     for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
@@ -463,12 +463,12 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
   @Test
   public void testConcurrentIntKeyWeakValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
-    ConcurrentIntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectWeakValueMap();
+    ConcurrentIntObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentIntObjectWeakValueMap();
     checkPutIfAbsent(map);
   }
   @Test
   public void testConcurrentIntKeySoftValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
-    ConcurrentIntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectSoftValueMap();
+    ConcurrentIntObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap();
     checkPutIfAbsent(map);
   }
 
@@ -591,16 +591,16 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testEntrySet() {
-    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectMap());
-    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectSoftValueMap());
-    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectWeakValueMap());
+    checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectMap());
+    checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap());
+    checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectWeakValueMap());
     checkEntrySetIterator(ContainerUtil.createIntKeyWeakValueMap());
   }
 
   @Test
   public void testEntrySetTossesValue() {
-    checkEntrySetIteratorTossesValue(ContainerUtil.createConcurrentIntObjectSoftValueMap());
-    checkEntrySetIteratorTossesValue(ContainerUtil.createConcurrentIntObjectWeakValueMap());
+    checkEntrySetIteratorTossesValue(ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap());
+    checkEntrySetIteratorTossesValue(ConcurrentCollectionFactory.createConcurrentIntObjectWeakValueMap());
     checkEntrySetIteratorTossesValue(ContainerUtil.createIntKeyWeakValueMap());
   }
 

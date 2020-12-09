@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.storage;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.*;
@@ -25,7 +25,8 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
   private static final Logger LOG = Logger.getInstance(TransientFileContentIndex.class);
 
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
-  private final ConcurrentIntObjectMap<Map<Key, Value>> myInMemoryKeysAndValues = ContainerUtil.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<Map<Key, Value>> myInMemoryKeysAndValues =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
 
   public TransientFileContentIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,

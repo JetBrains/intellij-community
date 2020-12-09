@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Log4jBasedLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -9,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -119,7 +119,8 @@ final class VfsEventsMerger {
     return myChangeInfos.values().stream().map(ChangeInfo::getFile);
   }
 
-  private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos = ContainerUtil.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private static final short FILE_ADDED = 1;
   private static final short FILE_REMOVED = 2;

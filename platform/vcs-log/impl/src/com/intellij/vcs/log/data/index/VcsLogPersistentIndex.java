@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,7 +111,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myNumberOfTasks.put(root, new AtomicInteger());
       myIndexingTime.put(root, new AtomicLong());
       myIndexingLimit.put(root, new AtomicInteger(getIndexingLimit()));
-      myIndexingErrors.put(root, ContainerUtil.createConcurrentIntObjectMap());
+      myIndexingErrors.put(root, ConcurrentCollectionFactory.createConcurrentIntObjectMap());
     }
 
     mySingleTaskController = new MySingleTaskController(project, myIndexStorage != null ? myIndexStorage : this);

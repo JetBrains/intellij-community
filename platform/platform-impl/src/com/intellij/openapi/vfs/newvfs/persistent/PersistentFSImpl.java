@@ -58,7 +58,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
   // FS roots must be in this map too. findFileById() relies on this.
-  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();
+  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache =
+    ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap();
   private final ReadWriteLock myInputLock = new ReentrantReadWriteLock();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);

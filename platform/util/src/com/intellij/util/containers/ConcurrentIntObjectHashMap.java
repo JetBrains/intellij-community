@@ -20,7 +20,7 @@ import java.util.concurrent.locks.LockSupport;
  * - Null values are NOT allowed
  * @author Doug Lea
  * @param <V> the type of mapped values
- * Use {@link ContainerUtil#createConcurrentIntObjectMap()} to create this map
+ * Use {@link ConcurrentCollectionFactory#createConcurrentIntObjectMap()} to create this map
  */
 final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   /**
@@ -405,7 +405,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    *                                  nonpositive
    */
   ConcurrentIntObjectHashMap(int initialCapacity,
-                                     float loadFactor, int concurrencyLevel) {
+                             float loadFactor, int concurrencyLevel) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();
     }
@@ -939,7 +939,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * Legacy method testing if some key maps into the specified value
    * in this table.  This method is identical in functionality to
    * {@link #containsValue(Object)}, and exists solely to ensure
-   * full compatibility with class {@link java.util.Hashtable},
+   * full compatibility with class {@link Hashtable},
    * which supported this method prior to introduction of the
    * Java Collections framework.
    *

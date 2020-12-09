@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
@@ -17,7 +18,8 @@ import java.util.List;
 public class TopCommitsCache {
   private static final Logger LOG = Logger.getInstance(TopCommitsCache.class);
   @NotNull private final VcsLogStorage myStorage;
-  @NotNull private final IntObjectMap<VcsCommitMetadata> myCache = ContainerUtil.createConcurrentIntObjectMap();
+  @NotNull private final IntObjectMap<VcsCommitMetadata> myCache =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   @NotNull private List<VcsCommitMetadata> mySortedDetails = new ArrayList<>();
 
   public TopCommitsCache(@NotNull VcsLogStorage storage) {

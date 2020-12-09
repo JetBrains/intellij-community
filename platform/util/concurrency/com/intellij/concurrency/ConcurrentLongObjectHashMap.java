@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.util.containers;
+package com.intellij.concurrency;
 
 import com.intellij.util.concurrency.AtomicFieldUpdater;
+import com.intellij.util.containers.ConcurrentLongObjectMap;
+import com.intellij.util.containers.ThreadLocalRandom;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
@@ -381,7 +383,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    *                                  nonpositive
    */
   ConcurrentLongObjectHashMap(int initialCapacity,
-                              float loadFactor, int concurrencyLevel) {
+                                     float loadFactor, int concurrencyLevel) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();
     }
@@ -914,7 +916,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    * Legacy method testing if some key maps into the specified value
    * in this table.  This method is identical in functionality to
    * {@link #containsValue(Object)}, and exists solely to ensure
-   * full compatibility with class {@link Hashtable},
+   * full compatibility with class {@link java.util.Hashtable},
    * which supported this method prior to introduction of the
    * Java Collections framework.
    *

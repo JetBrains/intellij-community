@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +45,8 @@ import java.util.stream.Stream;
 public final class ChangedFilesCollector extends IndexedFilesListener {
   private static final Logger LOG = Logger.getInstance(ChangedFilesCollector.class);
 
-  private final IntObjectMap<VirtualFile> myFilesToUpdate = ContainerUtil.createConcurrentIntObjectMap();
+  private final IntObjectMap<VirtualFile> myFilesToUpdate =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
   private final Phaser myWorkersFinishedSync = new Phaser() {
     @Override

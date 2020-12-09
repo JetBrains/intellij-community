@@ -1,7 +1,7 @@
 package org.jetbrains.io.jsonRpc;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -16,7 +16,8 @@ import org.jetbrains.concurrency.Promise;
 public abstract class Client extends UserDataHolderBase {
   protected final Channel channel;
 
-  final IntObjectMap<AsyncPromise<Object>> messageCallbackMap = ContainerUtil.createConcurrentIntObjectMap();
+  final IntObjectMap<AsyncPromise<Object>> messageCallbackMap =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   protected Client(@NotNull Channel channel) {
     this.channel = channel;

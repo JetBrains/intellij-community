@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.fastCgi
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.addChannelListener
 import com.intellij.util.io.handler
 import io.netty.bootstrap.Bootstrap
@@ -25,7 +25,7 @@ internal val LOG = logger<FastCgiService>()
 // todo send FCGI_ABORT_REQUEST if client channel disconnected
 abstract class FastCgiService(project: Project) : SingleConnectionNetService(project) {
   private val requestIdCounter = AtomicInteger()
-  private val requests = ContainerUtil.createConcurrentIntObjectMap<ClientInfo>()
+  private val requests = ConcurrentCollectionFactory.createConcurrentIntObjectMap<ClientInfo>()
 
   override fun configureBootstrap(bootstrap: Bootstrap, errorOutputConsumer: Consumer<String>) {
     bootstrap.handler {
