@@ -85,6 +85,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.grazie",
     "intellij.featuresTrainer",
     "intellij.space",
+    "intellij.lombok"
   ]
 
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
