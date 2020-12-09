@@ -37,8 +37,11 @@ class KotlinInlineTypeAliasHandler : KotlinInlineActionHandler() {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
             dialog.show()
         } else {
-            dialog.doAction()
-            dialog.close(DialogWrapper.OK_EXIT_CODE, true)
+            try {
+                dialog.doAction()
+            } finally {
+                dialog.close(DialogWrapper.OK_EXIT_CODE, true)
+            }
         }
     }
 }

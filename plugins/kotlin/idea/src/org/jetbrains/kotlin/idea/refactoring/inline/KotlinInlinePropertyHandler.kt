@@ -81,8 +81,11 @@ class KotlinInlinePropertyHandler(private val withPrompt: Boolean = true) : Kotl
         if (withPrompt && !ApplicationManager.getApplication().isUnitTestMode && dialog.shouldBeShown()) {
             dialog.show()
         } else {
-            dialog.doAction()
-            dialog.close(OK_EXIT_CODE, true)
+            try {
+                dialog.doAction()
+            } finally {
+                dialog.close(OK_EXIT_CODE, true)
+            }
         }
     }
 }
