@@ -4,6 +4,8 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.lang.ClassPath
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -36,11 +38,9 @@ internal class JarOrderStarter : ApplicationStarter {
 
   fun generateJarAccessLog(outFile: Path) {
     val classLoader = JarOrderStarter::class.java.classLoader
-    val getClassPath = classLoader::class.java.getDeclaredMethod("getClassPath")
-    getClassPath.isAccessible = true
-    val getLoadedClasses = getClassPath.invoke(classLoader)::class.java.getDeclaredMethod("getLoadedClasses")
-    getLoadedClasses.isAccessible = true
-    val itemsFromBootstrap = getLoadedClasses.invoke(null) as Collection<Map.Entry<String, Path>>
+    val itemsFromBootstrap = MethodHandles.lookup()
+      .findStatic(classLoader::class.java, "getLoadedClasses", MethodType.methodType(Collection::class.java))
+      .invokeExact() as Collection<Map.Entry<String, Path>>
     val itemsFromCore = ClassPath.getLoadedClasses()
     val items = LinkedHashSet<Map.Entry<String, Path>>(itemsFromBootstrap.size + itemsFromCore.size)
     items.addAll(itemsFromBootstrap)

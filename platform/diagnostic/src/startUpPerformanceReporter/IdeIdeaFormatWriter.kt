@@ -17,6 +17,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.lang.management.ManagementFactory
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -60,9 +62,9 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
     writeIcons(writer)
 
     val classLoader = IdeIdeaFormatWriter::class.java.classLoader
-    val getClassPath = classLoader::class.java.getDeclaredMethod("getLoadingStats")
-    getClassPath.isAccessible = true
-    val stats = getClassPath.invoke(classLoader) as LongArray
+    val stats = MethodHandles.lookup()
+      .findVirtual(classLoader::class.java, "getLoadingStats", MethodType.methodType(LongArray::class.java))
+      .bindTo(classLoader).invokeExact() as LongArray
     writer.obj("classLoading") {
       writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats[0]))
       writer.writeNumberField("count", stats[1])

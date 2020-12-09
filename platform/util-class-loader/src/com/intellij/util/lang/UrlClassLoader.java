@@ -83,6 +83,11 @@ public class UrlClassLoader extends ClassLoader {
     return classPath;
   }
 
+  @ApiStatus.Internal
+  public static @NotNull Collection<Map.Entry<String, Path>> getLoadedClasses() {
+    return ClassPath.getLoadedClasses();
+  }
+
   /**
    * See com.intellij.TestAll#getClassRoots()
    */
