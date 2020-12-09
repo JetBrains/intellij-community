@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
-import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -83,7 +82,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   private var gotItBalloon: Balloon? = null
 
-  private lateinit var preview: EditorCodePreview
+  private val disposable = Disposer.newDisposable()
 
   fun prepareCodeForTemplate() {
     val project = extractOptions.project
@@ -106,14 +105,18 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val importRange = document.createGreedyRangeMarker(javaFile.importList?.textRange ?: TextRange(0, 0))
     val replacedImport = FragmentState(importRange, document.getText(importRange.range))
     fragmentsToRevert.add(replacedImport)
+    fragmentsToRevert.forEach { Disposer.register(disposable, it) }
 
     val (method, callExpression) = extractMethod(document, extractOptions)
     methodCallExpressionRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
+    Disposer.register(disposable, { methodCallExpressionRange.dispose() })
     methodNameRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
+    Disposer.register(disposable, { methodNameRange.dispose() })
     editor.caretModel.moveToOffset(methodCallExpressionRange.range.startOffset)
     setElementToRename(method)
 
-    preview = EditorCodePreview.create(editor)
+    val preview = EditorCodePreview.create(editor)
+    Disposer.register(disposable, preview)
 
     val callLines = findLines(document, callRange.range)
     val file = method.containingFile.virtualFile
@@ -215,8 +218,13 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
-    ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
-    return super.performInplaceRefactoring(nameSuggestions)
+    try {
+      ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
+      return super.performInplaceRefactoring(nameSuggestions)
+    } catch (e: Exception) {
+      Disposer.dispose(disposable)
+      throw e
+    }
   }
 
   override fun revertState() {
@@ -238,6 +246,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     popupProvider.setChangeListener { restartInplace() }
     popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
+    Disposer.register(templateState, disposable)
     val editor = templateState.editor as? EditorImpl ?: return
     val presentation = TemplateInlayUtil.createSettingsPresentation(editor) { onClickEvent -> logStatisticsOnShow(editor, onClickEvent) }
     val templateElement = object : TemplateInlayUtil.SelectableTemplateElement(presentation) {
@@ -249,13 +258,9 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val offset = templateState.currentVariableRange?.endOffset ?: return
     TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupProvider.panel,
                                                                       templateElement) { logStatisticsOnHide(popupProvider) }
-    fragmentsToRevert.forEach { Disposer.register(templateState, it) }
     setActiveExtractor(editor, this)
 
-    Disposer.register(templateState, preview)
     Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(extractOptions.project).reset() })
-    Disposer.register(templateState, { methodNameRange.dispose() })
-    Disposer.register(templateState, { methodCallExpressionRange.dispose() })
 
     templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
       override fun templateFinished(template: Template, brokenOff: Boolean) {
